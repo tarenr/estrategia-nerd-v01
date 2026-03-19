@@ -1,0 +1,11 @@
+Options -Indexes
+
+RewriteEngine On
+
+# Se existir arquivo/pasta, serve direto
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Caso contrário, manda tudo pro index.php
+RewriteRule ^ index.php [L]

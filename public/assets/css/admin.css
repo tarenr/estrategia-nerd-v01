@@ -1,0 +1,392 @@
+:root {
+    --neon-blue: #00d4ff;
+    --neon-purple: #b829dd;
+    --dark-bg: #0a0e17;
+}
+
+body {
+    font-family: 'Rajdhani', sans-serif;
+    background-color: var(--dark-bg);
+    color: #e2e8f0;
+}
+
+.font-orbitron {
+    font-family: 'Orbitron', sans-serif;
+}
+
+/* Cards do dashboard */
+.stat-card {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--neon-blue);
+    box-shadow: 0 10px 40px rgba(0, 212, 255, 0.15);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 16px;
+}
+
+.stat-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.neon-text {
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+/* Quick actions */
+.quick-action {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.quick-action:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--neon-blue);
+    transform: scale(1.02);
+}
+
+/* Atividades */
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: rgba(0, 212, 255, 0.1);
+}
+
+/* Lista de posts recentes */
+.post-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.post-item:hover {
+    background: rgba(0, 212, 255, 0.05);
+}
+
+/* Status geral (dashboard + listagem) */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-publicado {
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+}
+
+.status-rascunho {
+    background: #eab308;
+    box-shadow: 0 0 8px #eab308;
+}
+
+.status-agendado {
+    background: #a855f7;
+    box-shadow: 0 0 8px #a855f7;
+}
+
+/* Barra de progresso (dashboard) */
+.progress-bar {
+    height: 6px;
+    background: rgba(0, 212, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* Badges / alertas */
+.notification-badge {
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.1); }
+}
+
+.alert-indicator {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 12px;
+    height: 12px;
+    background: #eab308;
+    border-radius: 50%;
+    animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes ping {
+    75%, 100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+/* Inputs e botões da listagem */
+.nerd-input {
+    background: #0f172a;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: #e2e8f0;
+}
+
+.nerd-input:focus {
+    border-color: var(--neon-blue);
+    outline: none;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-badge.status-publicado {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-badge.status-rascunho {
+    background: rgba(234, 179, 8, 0.2);
+    color: #eab308;
+    border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.status-badge.status-agendado {
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.btn-edit {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: var(--neon-blue);
+    transition: all 0.3s;
+}
+
+.btn-edit:hover {
+    background: rgba(0, 212, 255, 0.2);
+}
+
+.btn-delete {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    transition: all 0.3s;
+}
+
+.btn-delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Scrollbar geral do admin */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0a0e17;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--neon-blue);
+    border-radius: 4px;
+}
+.nerd-input {
+    background-color: #0f172a !important;
+    border: 1px solid rgba(0, 212, 255, 0.3) !important;
+    color: #e2e8f0 !important;
+}
+
+.nerd-input:focus {
+    border-color: var(--neon-blue) !important;
+    outline: none !important;
+}
+
+.nerd-input::placeholder {
+    color: #64748b !important;
+}
+
+/* Garante para selects também */
+select.nerd-input {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+.editor-toolbar {
+    background: #1e293b;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 8px;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.editor-btn {
+    background: transparent;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: #94a3b8;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.editor-btn:hover {
+    background: rgba(0, 212, 255, 0.1);
+    color: var(--neon-blue);
+    border-color: var(--neon-blue);
+}
+
+.editor-content {
+    background: #0f172a;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 0 0 8px 8px;
+    min-height: 400px;
+    padding: 16px;
+    color: #e2e8f0;
+    line-height: 1.8;
+    overflow-y: auto;
+}
+
+.editor-content:focus {
+    outline: none;
+    border-color: var(--neon-blue);
+}
+
+.editor-content h2 {
+    color: var(--neon-blue);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    margin: 1.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+}
+
+.editor-content h3 {
+    color: var(--neon-purple);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.25rem;
+    margin: 1.25rem 0 0.75rem;
+}
+
+.editor-content blockquote {
+    border-left: 4px solid var(--neon-blue);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.editor-content ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.editor-content li {
+    margin: 0.5rem 0;
+}
+
+/* Cartões e inputs já existentes */
+.nerd-input {
+    background: #0f172a;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: #e2e8f0;
+    transition: all 0.3s;
+}
+
+.nerd-input:focus {
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+    outline: none;
+}
+
+.neon-border {
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+}
+
+/* Modal de preview */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #0f172a;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 12px;
+    max-width: 900px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+

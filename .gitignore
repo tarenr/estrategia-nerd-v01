@@ -1,0 +1,25 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Composer
+/vendor/
+
+# Env
+.env
+.env.*
+
+# Cache / logs
+/storage/
+/tmp/
+*.log
+
+# Uploads (ajuste conforme seu projeto)
+public/uploads/
+public/storage/
+
+# Node (se tiver)
+node_modules/
+dist/
