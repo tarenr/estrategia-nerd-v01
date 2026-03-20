@@ -8,8 +8,8 @@
  * @purpose     Dashboard do painel administrativo
  * @description Dashboard no estilo do admin do repositório, usando admin.css.
  * @usage       Renderizado por Admin\DashboardController em GET /admin.
- * @notes       Ajuste visual: deltas do período exibidos em “pílulas” para melhor leitura.
- * -----------------------------------------------------------------------------
+ * @notes       Mudanças mínimas no markup; tooltips extras nos pontos-chave da linha de views.
+ * ------------------------------------------------------------------------------
  */
 
 declare(strict_types=1);
@@ -50,14 +50,131 @@ function day_label(string $dateStr): string
     return $ts ? date('d/m', $ts) : '--/--';
 }
 
-/** visual helpers */
-function delta_sign(float $v): string { return $v >= 0 ? '+' : ''; }
-function delta_arrow(float $v): string { return $v > 0 ? '↗' : ($v < 0 ? '↘' : '→'); }
-function delta_style(float $v): string
+if (!function_exists('day_label_range')) {
+function day_label_range(string $startYmd, string $endYmd): string
 {
-    if ($v > 0) return 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200';
-    if ($v < 0) return 'border-red-400/30 bg-red-500/10 text-red-200';
-    return 'border-slate-500/30 bg-slate-500/10 text-slate-200';
+    $ts1 = strtotime($startYmd);
+    $ts2 = strtotime($endYmd);
+    if (!$ts1 || !$ts2) return '--/--';
+    if ($startYmd === $endYmd) return date('d/m', $ts1);
+    return date('d/m', $ts1) . '–' . date('d/m', $ts2);
+}
+}
+
+
+/**
+ * Agrupa série diária em buckets para melhorar legibilidade do gráfico.
+ * - views/posts_novos/inscricoes: soma por bucket
+ * - views_ma7: último valor não-nulo do bucket
+ */
+if (!function_exists('bucketize_series')) {
+function bucketize_series(array $series, int $bucketSize): array
+{
+    if ($bucketSize <= 1) return array_values($series);
+
+    $rows = array_values($series);
+    $out = [];
+    $n = count($rows);
+
+    for ($i = 0; $i < $n; $i += $bucketSize) {
+        $chunk = array_slice($rows, $i, $bucketSize);
+        if (!$chunk) continue;
+
+        $sumViews = 0;
+        $sumPosts = 0;
+        $sumSubs  = 0;
+        $lastMa7  = null;
+
+        $rangeStart = (string)($chunk[0]['data'] ?? '');
+        $rangeEnd   = (string)($chunk[count($chunk) - 1]['data'] ?? '');
+
+        foreach ($chunk as $r) {
+            $sumViews += (int)($r['views'] ?? 0);
+            $sumPosts += (int)($r['posts_novos'] ?? 0);
+            $sumSubs  += (int)($r['inscricoes'] ?? 0);
+
+            $mv = $r['views_ma7'] ?? null;
+            if ($mv !== null) $lastMa7 = $mv;
+        }
+
+        $out[] = [
+            'data'        => $rangeEnd,
+            'range_start' => $rangeStart,
+            'range_end'   => $rangeEnd,
+            'views'       => $sumViews,
+            'posts_novos' => $sumPosts,
+            'inscricoes'  => $sumSubs,
+            'views_ma7'   => $lastMa7,
+        ];
+    }
+
+    return $out;
+}
+}
+
+
+function parse_ymd(?string $s): ?string
+{
+    $v = is_string($s) ? trim($s) : '';
+    if ($v === '') return null;
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return null;
+    [$y, $m, $d] = array_map('intval', explode('-', $v));
+    return checkdate($m, $d, $y) ? sprintf('%04d-%02d-%02d', $y, $m, $d) : null;
+}
+
+function clamp_range_90(string $start, string $end): array
+{
+    try {
+        $ds = new DateTimeImmutable($start);
+        $de = new DateTimeImmutable($end);
+    } catch (Throwable) {
+        return [$start, $end];
+    }
+
+    if ($ds > $de) {
+        [$ds, $de] = [$de, $ds];
+    }
+
+    $days = (int)$ds->diff($de)->days + 1;
+    if ($days <= 90) {
+        return [$ds->format('Y-m-d'), $de->format('Y-m-d')];
+    }
+
+    $ds2 = $de->modify('-89 days');
+    return [$ds2->format('Y-m-d'), $de->format('Y-m-d')];
+}
+
+/**
+ * Intervalo por data (start/end) — default 30 dias corridos, máximo 90.
+ * Mantém $days para o resto do template (médias/labels).
+ */
+$todayYmd = date('Y-m-d');
+
+$defaultEnd = $todayYmd;
+$defaultStart = date('Y-m-d', strtotime('-29 days'));
+
+if ($days > 0) {
+    $defaultStart = date('Y-m-d', strtotime('-' . max(0, $days - 1) . ' days'));
+}
+
+$startIn = parse_ymd($_GET['start'] ?? ($start ?? null)) ?? $defaultStart;
+$endIn   = parse_ymd($_GET['end'] ?? ($end ?? null)) ?? $defaultEnd;
+
+[$startIn, $endIn] = clamp_range_90($startIn, $endIn);
+
+try {
+    $ds = new DateTimeImmutable($startIn);
+    $de = new DateTimeImmutable($endIn);
+    if ($ds > $de) {
+        [$ds, $de] = [$de, $ds];
+        $startIn = $ds->format('Y-m-d');
+        $endIn = $de->format('Y-m-d');
+    }
+    $days = (int)$ds->diff($de)->days + 1;
+} catch (Throwable) {
+    $startIn = $defaultStart;
+    $endIn = $defaultEnd;
+    $days = 30;
 }
 
 // KPIs
@@ -95,11 +212,6 @@ $categoriaPopular = is_array($categoria_popular ?? null) ? $categoria_popular : 
 // Série (para gráfico)
 $chart = is_array($chart ?? null) ? $chart : [];
 $series = is_array($chart['series'] ?? null) ? $chart['series'] : [];
-$delta = is_array($chart['delta_percent'] ?? null) ? $chart['delta_percent'] : [];
-
-$deltaViews = (float)($delta['views'] ?? 0);
-$deltaPosts = (float)($delta['posts_novos'] ?? 0);
-$deltaSubs = (float)($delta['inscricoes'] ?? 0);
 
 $current = is_array($chart['current'] ?? null) ? $chart['current'] : [];
 $curViews = (int)($current['views'] ?? 0);
@@ -112,6 +224,29 @@ $postsRecentes = is_array($posts_recentes ?? null) ? $posts_recentes : [];
 /**
  * Chart SVG: se não há série, desenha placeholder (linha reta)
  */
+// normaliza ordem por data (garante agrupamento consistente)
+if (is_array($series)) {
+    $series = array_values($series);
+    usort($series, static fn($a, $b) => strcmp((string)($a['data'] ?? ''), (string)($b['data'] ?? '')));
+}
+
+// bucketize (melhor legibilidade quando intervalo é grande)
+// regra por intervalo selecionado; fallback pelo tamanho real da série, se vier diferente do $days
+$effectiveDays = max((int)$days, is_array($series) ? (int)count($series) : 0);
+
+$bucketSize = 1;
+if ($effectiveDays <= 30) {
+    $bucketSize = 5;
+} elseif ($effectiveDays <= 60) {
+    $bucketSize = 7;
+} else {
+    $bucketSize = 10; // 61–90
+}
+
+if (is_array($series) && $bucketSize > 1) {
+    $series = bucketize_series($series, $bucketSize);
+}
+
 $chartRows = array_values($series);
 $hasChart = count($chartRows) >= 2;
 
@@ -153,6 +288,23 @@ foreach ($ma7Arr as $i => $mv) {
     $maPts[] = round($x, 2) . ',' . round($y, 2);
 }
 $maPoly = implode(' ', $maPts);
+
+/** tooltips extras: índices principais da linha de views */
+$mainViewIdx = [];
+if ($hasChart) {
+    $iMax = array_search(max($viewsArr), $viewsArr, true);
+    $iMin = array_search(min($viewsArr), $viewsArr, true);
+    $iLast = $n - 1;
+
+    foreach ([$iMax, $iMin, $iLast] as $idx) {
+        if (is_int($idx) && $idx >= 0 && $idx < $n) {
+            $mainViewIdx[$idx] = true;
+        }
+    }
+}
+
+$startLabel = date('d/m/Y', strtotime($startIn));
+$endLabel   = date('d/m/Y', strtotime($endIn));
 ?>
 
 <!-- HEADER -->
@@ -163,16 +315,101 @@ $maPoly = implode(' ', $maPts);
   </div>
 
   <div class="flex items-center gap-2">
-    <?php foreach ([7, 14, 30] as $opt): ?>
-      <a
-        href="<?= e(url('/admin?days=' . (int)$opt)) ?>"
-        class="px-3 py-2 rounded-xl text-xs font-black border transition-all
-          <?= $opt === $days
-            ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-200'
-            : 'bg-slate-800/40 border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-200' ?>">
-        <?= (int)$opt ?>d
-      </a>
-    <?php endforeach; ?>
+    <form action="<?= e(url('/admin')) ?>" method="get" class="flex items-center gap-2">
+      <input
+        type="date"
+        id="startDate"
+        name="start"
+        value="<?= e($startIn) ?>"
+        class="px-3 py-2 rounded-xl text-xs font-black border transition-all bg-slate-800/40 border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-200"
+        aria-label="Data inicial">
+
+      <input
+        type="date"
+        id="endDate"
+        name="end"
+        value="<?= e($endIn) ?>"
+        class="px-3 py-2 rounded-xl text-xs font-black border transition-all bg-slate-800/40 border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-200"
+        aria-label="Data final">
+
+      <button
+        type="submit"
+        class="px-3 py-2 rounded-xl text-xs font-black border transition-all bg-cyan-500/20 border-cyan-400/40 text-cyan-200">
+        Aplicar
+      </button>
+    </form>
+
+    <script>
+      (() => {
+        const startEl = document.getElementById('startDate');
+        const endEl = document.getElementById('endDate');
+        if (!startEl || !endEl) return;
+
+        const MS_DAY = 24 * 60 * 60 * 1000;
+
+        const parse = (v) => {
+          if (!v) return null;
+          const [y, m, d] = v.split('-').map(Number);
+          if (!y || !m || !d) return null;
+          return new Date(Date.UTC(y, m - 1, d));
+        };
+
+        const fmt = (dt) => {
+          const y = dt.getUTCFullYear();
+          const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+          const d = String(dt.getUTCDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        };
+
+        const clampTo90FromStart = () => {
+          const s = parse(startEl.value);
+          const e = parse(endEl.value);
+          if (!s) return;
+
+          const maxEnd = new Date(s.getTime() + (89 * MS_DAY));
+          endEl.min = fmt(s);
+          endEl.max = fmt(maxEnd);
+
+          if (e) {
+            if (e < s) endEl.value = fmt(s);
+            else if (e > maxEnd) endEl.value = fmt(maxEnd);
+          } else {
+            endEl.value = fmt(s);
+          }
+        };
+
+        const clampStartFromEnd = () => {
+          const s = parse(startEl.value);
+          const e = parse(endEl.value);
+          if (!e) return;
+
+          const minStart = new Date(e.getTime() - (89 * MS_DAY));
+          startEl.max = fmt(e);
+          startEl.min = fmt(minStart);
+
+          if (s) {
+            if (s > e) startEl.value = fmt(e);
+            else if (s < minStart) startEl.value = fmt(minStart);
+          } else {
+            startEl.value = fmt(minStart);
+          }
+        };
+
+        startEl.addEventListener('change', () => {
+          clampTo90FromStart();
+          clampStartFromEnd();
+        });
+
+        endEl.addEventListener('change', () => {
+          clampStartFromEnd();
+          clampTo90FromStart();
+        });
+
+        clampTo90FromStart();
+        clampStartFromEnd();
+      })();
+    </script>
+
   </div>
 </div>
 
@@ -180,44 +417,13 @@ $maPoly = implode(' ', $maPts);
 <div class="bg-slate-900/50 border border-cyan-500/20 rounded-2xl p-6 mb-8">
   <div class="flex items-start justify-between gap-4 mb-4">
     <div>
-      <h3 class="font-orbitron text-lg font-bold text-white">📈 Atividade (<?= (int)$days ?> dias)</h3>
+      <h3 class="font-orbitron text-lg font-bold text-white">📈 Atividade (<?= e($startLabel) ?> a <?= e($endLabel) ?> • <?= (int)$days ?> dias)</h3>
       <div class="text-xs text-slate-400 mt-1">
         <?php if ($hasChart): ?>
           Linha: <span class="text-cyan-300 font-bold">views</span> · Tracejado: <span class="text-slate-200 font-bold">MA7</span> · Barras: <span class="text-fuchsia-300 font-bold">posts</span> · Pontos: <span class="text-emerald-300 font-bold">inscrições</span>
         <?php else: ?>
           Sem dados em <code>estatisticas</code> no período selecionado. Exibindo zero/placeholder.
         <?php endif; ?>
-      </div>
-    </div>
-
-    <!-- ✅ NOVO: DELTAS EM “PÍLULAS” -->
-    <div class="flex flex-col items-end gap-2">
-      <div class="text-xs text-slate-400 uppercase tracking-widest">Comparação período anterior</div>
-
-      <div class="flex flex-wrap justify-end gap-2">
-        <div class="px-3 py-2 rounded-xl border <?= delta_style($deltaViews) ?>">
-          <div class="text-[10px] uppercase tracking-widest opacity-80">Views</div>
-          <div class="text-sm font-black">
-            <?= delta_arrow($deltaViews) ?>
-            <?= delta_sign($deltaViews) . number_format($deltaViews, 1, ',', '.') ?>%
-          </div>
-        </div>
-
-        <div class="px-3 py-2 rounded-xl border <?= delta_style($deltaPosts) ?>">
-          <div class="text-[10px] uppercase tracking-widest opacity-80">Posts</div>
-          <div class="text-sm font-black">
-            <?= delta_arrow($deltaPosts) ?>
-            <?= delta_sign($deltaPosts) . number_format($deltaPosts, 1, ',', '.') ?>%
-          </div>
-        </div>
-
-        <div class="px-3 py-2 rounded-xl border <?= delta_style($deltaSubs) ?>">
-          <div class="text-[10px] uppercase tracking-widest opacity-80">Inscrições</div>
-          <div class="text-sm font-black">
-            <?= delta_arrow($deltaSubs) ?>
-            <?= delta_sign($deltaSubs) . number_format($deltaSubs, 1, ',', '.') ?>%
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -261,8 +467,10 @@ $maPoly = implode(' ', $maPts);
             $bh = $p > 0 ? (($p / $postsMax) * $barMaxH) : 0;
             $bx = $x - ($barW / 2);
             $by = $padY + ($plotH - $bh);
-            $label = day_label((string)($d['data'] ?? ''));
-            $v = (int)($viewsArr[$i] ?? 0);
+            $rangeStart = (string)($d['range_start'] ?? ($d['data'] ?? ''));
+            $rangeEnd   = (string)($d['range_end'] ?? ($d['data'] ?? ''));
+            $label = day_label_range($rangeStart, $rangeEnd);
+          $v = (int)($viewsArr[$i] ?? 0);
             $ins = (int)($inscArr[$i] ?? 0);
             $mv = $ma7Arr[$i] ?? null;
             $tip = $label . " • " . fmt($v) . " views • " . fmt($p) . " posts • " . fmt($ins) . " insc";
@@ -284,11 +492,39 @@ $maPoly = implode(' ', $maPts);
       <?php endif; ?>
 
       <?php if ($hasChart): ?>
+        <!-- ✅ tooltips extras na linha de views: pico, vale, último -->
+        <?php foreach (array_keys($mainViewIdx) as $i):
+            $d = $chartRows[$i] ?? [];
+            $rangeStart = (string)($d['range_start'] ?? ($d['data'] ?? ''));
+            $rangeEnd   = (string)($d['range_end'] ?? ($d['data'] ?? ''));
+            $label = day_label_range($rangeStart, $rangeEnd);
+          $v = (int)($viewsArr[$i] ?? 0);
+            $p = (int)($postsArr[$i] ?? 0);
+            $ins = (int)($inscArr[$i] ?? 0);
+
+            $tag = 'Views';
+            if ($i === array_search(max($viewsArr), $viewsArr, true)) $tag = 'Pico de views';
+            if ($i === array_search(min($viewsArr), $viewsArr, true)) $tag = 'Vale de views';
+            if ($i === ($n - 1)) $tag = 'Último dia';
+
+            $tip = $tag . " • " . $label . " • " . fmt($v) . " views • " . fmt($p) . " posts • " . fmt($ins) . " insc";
+
+            $cx = (float)($pts[$i]['x'] ?? 0);
+            $cy = (float)($pts[$i]['y'] ?? 0);
+        ?>
+          <circle cx="<?= $cx ?>" cy="<?= $cy ?>" r="7"
+                  fill="rgba(34,211,238,0.35)" stroke="rgba(34,211,238,0.95)" stroke-width="2"
+                  data-tip="<?= e($tip) ?>" class="cursor-pointer" />
+        <?php endforeach; ?>
+
+        <!-- pontos: inscrições (já tinham tooltip) -->
         <?php foreach ($chartRows as $i => $d):
           $ins = (int)($inscArr[$i] ?? 0);
           $x = $padX + ($i * $stepX);
           $y = $padY + ($plotH - (($ins / $inscMax) * $plotH));
-          $label = day_label((string)($d['data'] ?? ''));
+          $rangeStart = (string)($d['range_start'] ?? ($d['data'] ?? ''));
+            $rangeEnd   = (string)($d['range_end'] ?? ($d['data'] ?? ''));
+            $label = day_label_range($rangeStart, $rangeEnd);
           $v = (int)($viewsArr[$i] ?? 0);
           $p = (int)($postsArr[$i] ?? 0);
           $mv = $ma7Arr[$i] ?? null;
@@ -305,7 +541,7 @@ $maPoly = implode(' ', $maPts);
     <?php if ($hasChart): ?>
       <div class="mt-2 grid" style="grid-template-columns: repeat(<?= (int)count($chartRows) ?>, minmax(0, 1fr));">
         <?php foreach ($chartRows as $d): ?>
-          <div class="text-center text-xs text-gray-500"><?= e(day_label((string)($d['data'] ?? ''))) ?></div>
+          <div class="text-center text-xs text-gray-500"><?= e(day_label_range((string)($d['range_start'] ?? ($d['data'] ?? '')), (string)($d['range_end'] ?? ($d['data'] ?? '')))) ?></div>
         <?php endforeach; ?>
       </div>
       <div id="chartTip"
@@ -339,7 +575,6 @@ $maPoly = implode(' ', $maPts);
   </div>
 </div>
 
-<!-- ✅ RESTO DO DASHBOARD (igual estava) -->
 <!-- KPIs -->
 <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
   <div class="stat-card">
@@ -385,7 +620,7 @@ $maPoly = implode(' ', $maPts);
   </div>
 </div>
 
-<!-- Destaques + Hoje (igual) -->
+<!-- Destaques + Hoje -->
 <div class="grid lg:grid-cols-3 gap-8 mb-8">
   <div class="lg:col-span-2 bg-slate-900/50 border border-cyan-500/20 rounded-2xl p-6">
     <h3 class="font-orbitron text-xl font-black text-white mb-6">🏆 Posts em Destaque</h3>
@@ -483,7 +718,7 @@ $maPoly = implode(' ', $maPts);
   </div>
 </div>
 
-<!-- Posts Recentes (igual) -->
+<!-- Posts Recentes -->
 <div class="bg-slate-900/50 border border-cyan-500/20 rounded-2xl p-6">
   <div class="flex items-center justify-between mb-6">
     <h3 class="font-orbitron text-xl font-black text-white">🕐 Posts Recentes</h3>
