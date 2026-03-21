@@ -4,7 +4,7 @@
  * @file        app/Support/View.php
  * @project     Estrategia Nerd
  * @author      Taren Felipe Ribeiro
- * @version     1.0.0
+ * @version     1.0.1
  * @purpose     Renderização de Views e Layouts
  * @description Resolve views, injeta dados e aplica layout automaticamente (admin/site).
  * @usage       View::render('site/home', [...]) ou View::render('admin/dashboard', [...]).
@@ -19,9 +19,6 @@ namespace App\Support;
 final class View
 {
     /**
-     * Renderiza uma view dentro do layout apropriado.
-     *
-     * @param string $view  Ex.: 'site/login' ou 'admin/dashboard'
      * @param array<string,mixed> $data
      */
     public static function render(string $view, array $data = []): void
@@ -48,20 +45,28 @@ final class View
     }
 
     /**
-     * Decide o layout baseado no prefixo da view.
+     * Renderiza um componente (partial) dentro de views/layouts.
+     *
+     * @param array<string,mixed> $data
      */
-    private static function resolveLayout(string $view): string
+    public static function component(string $component, array $data = []): void
     {
-        if (str_starts_with($view, 'admin/')) {
-            return 'layouts/admin.php';
+        $component = ltrim($component, '/');
+        $file = base_path('app/Views/components/' . $component . '.php');
+
+        if (!is_file($file)) {
+            throw new \RuntimeException("Component não encontrado: {$component} ({$file})");
         }
 
-        return 'layouts/site.php';
+        echo self::renderFile($file, $data);
+    }
+
+    private static function resolveLayout(string $view): string
+    {
+        return str_starts_with($view, 'admin/') ? 'layouts/admin.php' : 'layouts/site.php';
     }
 
     /**
-     * Renderiza um PHP template e devolve HTML.
-     *
      * @param array<string,mixed> $data
      */
     private static function renderFile(string $file, array $data): string
@@ -70,6 +75,7 @@ final class View
 
         ob_start();
         require $file;
-        return (string)ob_get_clean();
+
+        return (string) ob_get_clean();
     }
 }
