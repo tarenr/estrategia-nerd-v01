@@ -1,14 +1,13 @@
 <?php
+
 /**
  * -----------------------------------------------------------------------------
  * @file        app/Views/layouts/admin.php
  * @project     Estrategia Nerd
  * @author      Taren Felipe Ribeiro
- * @version     1.0.0
+ * @version     1.1.3
  * @purpose     Layout base do painel administrativo
- * @description Define a estrutura HTML do Admin com menu próprio e assets do admin.
- * @usage       Usado por views do namespace admin/* (ex.: admin/dashboard).
- * @notes       Carrega admin.css global do admin e admin-dashboard.js apenas em /admin.
+ * @description Sidebar colapsável + toggle flutuante. Header usa o mesmo ícone do login (fa-brain).
  * -----------------------------------------------------------------------------
  */
 
@@ -16,19 +15,18 @@ declare(strict_types=1);
 
 use App\Support\Auth;
 use App\Support\Csrf;
+use App\Support\View;
 
 $title = $title ?? 'Admin — Estratégia Nerd';
 
 $rawPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $rawPath = rtrim($rawPath, '/') ?: '/';
 
-/**
- * Detecta dashboard de forma robusta mesmo com base path (/projeto/public/admin).
- */
 $isAdminDashboard = (bool)preg_match('#/admin$#', $rawPath);
 ?>
 <!doctype html>
 <html lang="pt-br">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -39,7 +37,10 @@ $isAdminDashboard = (bool)preg_match('#/admin$#', $rawPath);
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CDN (repo reference) -->
+  <!-- Font Awesome (para usar o mesmo brain do login) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -54,79 +55,88 @@ $isAdminDashboard = (bool)preg_match('#/admin$#', $rawPath);
     };
   </script>
 
-  <!-- Admin CSS (repo reference) -->
+  <!-- Admin CSS -->
   <link rel="stylesheet" href="<?= url('/assets/css/admin.css') ?>">
 </head>
 
-<body class="bg-slate-950 text-slate-100">
-  <header class="border-b border-slate-800/70 bg-slate-950/70 backdrop-blur">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <span class="inline-flex w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 items-center justify-center shadow-lg shadow-cyan-500/20" aria-hidden="true">
-          🧠
-        </span>
-
-        <div>
-          <div class="font-orbitron font-black tracking-wider leading-none">
-            ADMIN <span class="text-cyan-400">NERD</span>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div class="min-h-screen flex flex-col">
+    <header class="border-b border-slate-800/70 bg-slate-950/70 backdrop-blur">
+      <div class="w-full px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3 min-w-0">
+          <!-- Mesma “caixa do cérebro” do login -->
+          <div class="logo-icon w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 shrink-0" aria-hidden="true">
+            <i class="fa-solid fa-brain text-white text-[18px]" aria-hidden="true"></i>
           </div>
-          <div class="text-[11px] text-slate-400 tracking-widest uppercase">
-            Painel Administrativo
+          <span class="sr-only">Logo</span>
+
+          <div class="min-w-0">
+            <div class="font-orbitron font-black tracking-wider leading-none truncate">
+              ADMIN <span class="text-cyan-400">NERD</span>
+            </div>
+            <div class="text-[11px] text-slate-400 tracking-widest uppercase truncate">
+              Painel Administrativo
+            </div>
           </div>
         </div>
+
+        <div class="flex items-center gap-4 text-sm shrink-0">
+          <span class="text-slate-400 hidden sm:inline">
+            <?= htmlspecialchars((string)(Auth::user()['usuario'] ?? '')) ?>
+          </span>
+
+          <form method="POST" action="<?= url('/logout') ?>">
+            <?= Csrf::field() ?>
+            <button type="submit" class="px-3 py-2 rounded-lg border border-slate-700 hover:border-cyan-400/60 hover:text-cyan-300 transition">
+              Sair
+            </button>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex-1 flex w-full min-w-0">
+      <div id="adminSidebarWrap" class="relative shrink-0">
+        <aside
+          id="adminSidebar"
+          data-collapsed="0"
+          class="w-[260px] border-r border-slate-800/70 bg-slate-950/60 backdrop-blur transition-[width] duration-200 ease-out overflow-visible">
+          <div class="h-full p-4 overflow-y-auto" id="adminSidebarScroll">
+            <?php View::component('admin/sidebar'); ?>
+          </div>
+        </aside>
+
+        <button
+          type="button"
+          id="sidebarToggle"
+          class="absolute top-6 -right-3 w-8 h-8 rounded-full border border-slate-800/70 bg-slate-950 flex items-center justify-center shadow-lg hover:border-cyan-400/60 hover:text-cyan-300 transition z-50"
+          aria-controls="adminSidebar"
+          aria-expanded="true"
+          data-tooltip="Recolher menu">
+          <span id="sidebarToggleIcon" aria-hidden="true">⟪</span>
+          <span class="sr-only" id="sidebarToggleSr">Recolher menu</span>
+        </button>
       </div>
 
-      <div class="flex items-center gap-4 text-sm">
-        <span class="text-slate-400">
-          <?= htmlspecialchars((string)(Auth::user()['usuario'] ?? '')) ?>
-        </span>
-
-        <form method="POST" action="<?= url('/logout') ?>">
-          <?= Csrf::field() ?>
-          <button type="submit" class="px-3 py-2 rounded-lg border border-slate-700 hover:border-cyan-400/60 hover:text-cyan-300 transition">
-            Sair
-          </button>
-        </form>
-      </div>
+      <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 relative z-0">
+        <div class="rounded-2xl border border-slate-800/70 bg-slate-950/40 backdrop-blur p-6">
+          <?= $content ?? '' ?>
+        </div>
+      </main>
     </div>
-  </header>
 
-  <div class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-    <aside class="rounded-2xl border border-slate-800/70 bg-slate-950/60 backdrop-blur p-4">
-      <nav class="space-y-1 text-sm">
-        <a href="<?= url('/admin') ?>" class="block px-3 py-2 rounded-xl hover:bg-slate-900/50 hover:text-cyan-300 transition">
-          Dashboard
-        </a>
-        <a href="<?= url('/') ?>" class="block px-3 py-2 rounded-xl hover:bg-slate-900/50 hover:text-cyan-300 transition">
-          Ver Site
-        </a>
+    <footer class="border-t border-slate-800/70 mt-10">
+      <div class="w-full px-4 py-8 text-xs text-slate-500">
+        © <?= date('Y') ?> Estratégia Nerd — Admin
+      </div>
+    </footer>
 
-        <div class="pt-2 mt-2 border-t border-slate-800/70 text-[11px] uppercase tracking-widest text-slate-500">
-          Em breve
-        </div>
-        <span class="block px-3 py-2 rounded-xl text-slate-600 cursor-not-allowed">
-          Posts
-        </span>
-        <span class="block px-3 py-2 rounded-xl text-slate-600 cursor-not-allowed">
-          Configurações
-        </span>
-      </nav>
-    </aside>
+    <script src="<?= url('/assets/js/admin-layout.js') ?>" defer></script>
 
-    <main class="rounded-2xl border border-slate-800/70 bg-slate-950/40 backdrop-blur p-6">
-      <?= $content ?? '' ?>
-    </main>
+    <?php if ($isAdminDashboard): ?>
+      <script src="<?= url('/assets/js/admin-dashboard.js') ?>" defer></script>
+    <?php endif; ?>
   </div>
-
-  <footer class="border-t border-slate-800/70 mt-10">
-    <div class="max-w-7xl mx-auto px-4 py-8 text-xs text-slate-500">
-      © <?= date('Y') ?> Estratégia Nerd — Admin
-    </div>
-  </footer>
-
-  <?php if ($isAdminDashboard): ?>
-    <!-- Admin Dashboard JS (live update) -->
-    <script src="<?= url('/assets/js/admin-dashboard.js') ?>" defer></script>
-  <?php endif; ?>
 </body>
+
 </html>
