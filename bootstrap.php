@@ -85,7 +85,7 @@ $GLOBALS['config'] = [
 | 3. Carregar helpers e suporte base
 |--------------------------------------------------------------------------
 */
-require_once __DIR__ . '/app/Support/helpers.php';
+require_once __DIR__ . '/app/Support/Helpers.php';
 require_once __DIR__ . '/app/Support/Session.php';
 require_once __DIR__ . '/app/Support/Csrf.php';
 require_once __DIR__ . '/app/Support/View.php';
