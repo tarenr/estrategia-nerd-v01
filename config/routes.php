@@ -21,8 +21,10 @@ return [
     ['POST', '/login',  [\App\Controllers\Site\AuthController::class, 'login'],     null],
     ['POST', '/logout', [\App\Controllers\Site\AuthController::class, 'logout'],    null],
 
-    ['GET',  '/admin',              [\App\Controllers\Admin\DashboardController::class, 'index'], 'auth'],
-    ['GET',  '/admin/api/dashboard',[\App\Controllers\Admin\DashboardController::class, 'data'],  'auth'],
+    ['GET',  '/admin',               [\App\Controllers\Admin\DashboardController::class, 'index'], 'auth'],
+    ['GET',  '/admin/api/dashboard', [\App\Controllers\Admin\DashboardController::class, 'data'],  'auth'],
 
-    ['GET',  '/dev',    [\App\Controllers\Site\DevController::class, 'index'], null],
+    ['GET',  '/admin/posts',         [\App\Controllers\Admin\PostsController::class, 'index'], 'auth'],
+
+    ['GET',  '/dev',                 [\App\Controllers\Site\DevController::class, 'index'], null],
 ];

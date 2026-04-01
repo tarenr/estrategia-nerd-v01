@@ -311,7 +311,7 @@ $endLabel   = date('d/m/Y', strtotime($endIn));
 <div class="flex items-start justify-between gap-4 mb-6">
   <div>
     <h1 class="font-orbitron text-2xl font-black text-white">Dashboard</h1>
-    <div class="text-xs text-slate-400 mt-1">Métricas do portal • estilo admin.css</div>
+    <div class="text-xs text-slate-400 mt-1">Metricas do portal e desempenho do conteudo</div>
   </div>
 
   <div class="flex items-center gap-2">
@@ -334,7 +334,7 @@ $endLabel   = date('d/m/Y', strtotime($endIn));
 
       <button
         type="submit"
-        class="px-3 py-2 rounded-xl text-xs font-black border transition-all bg-cyan-500/20 border-cyan-400/40 text-cyan-200">
+        class="admin-btn admin-btn-primary">
         Aplicar
       </button>
     </form>
@@ -783,3 +783,6 @@ $endLabel   = date('d/m/Y', strtotime($endIn));
     </div>
   <?php endif; ?>
 </div>
+
+
+

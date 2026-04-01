@@ -1,11 +1,20 @@
-Options -Indexes
+# -----------------------------------------------------------------------------
+# @file        public/.htaccess
+# @project     Estrategia Nerd
+# @purpose     Reescrita de URLs para front controller
+# @notes       Requer mod_rewrite + AllowOverride All
+# -----------------------------------------------------------------------------
 
+Options -Indexes
 RewriteEngine On
 
-# Se existir arquivo/pasta, serve direto
+# Base do projeto dentro do htdocs
+RewriteBase /estrategia-nerd/public/
+
+# Se o arquivo/pasta existir, não reescreve
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Caso contrário, manda tudo pro index.php
+# Tudo vai para o front controller
 RewriteRule ^ index.php [L]

@@ -7,7 +7,7 @@
  * @version     1.0.0
  * @purpose     Repository de Categorias de Post (SQL)
  * @description Centraliza queries SQL para categoria_post e métricas agregadas com posts.
- * @usage       Injetado em Services (ex.: DashboardService) para categoria mais popular.
+ * @usage       Injetado em Services (ex.: DashboardService / PostsService).
  * @notes       Somente SQL (sem regra de negócio). Assume:
  *              - categoria_post(id, nome, cor)
  *              - posts(categoria_post_id, views)
@@ -89,6 +89,34 @@ final class CategoriaPostRepository
                 'cor' => (string)($r['cor'] ?? ''),
                 'total_posts' => (int)($r['total_posts'] ?? 0),
                 'total_views' => (int)($r['total_views'] ?? 0),
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Lista categorias para select (Admin).
+     *
+     * @return array<int, array{id:int,nome:string,cor:string}>
+     */
+    public function listForSelect(): array
+    {
+        $sql = "
+            SELECT
+                id,
+                nome,
+                COALESCE(cor, '') AS cor
+            FROM categoria_post
+            ORDER BY nome ASC, id DESC
+        ";
+
+        $stmt = $this->pdo->query($sql);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        return array_map(static function (array $r): array {
+            return [
+                'id' => (int)($r['id'] ?? 0),
+                'nome' => (string)($r['nome'] ?? ''),
+                'cor' => (string)($r['cor'] ?? ''),
             ];
         }, $rows);
     }

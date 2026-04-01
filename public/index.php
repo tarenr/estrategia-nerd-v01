@@ -4,11 +4,11 @@
  * @file        public/index.php
  * @project     Estrategia Nerd
  * @author      Taren Felipe Ribeiro
- * @version     1.0.0
+ * @version     1.0.5
  * @purpose     Front controller
  * @description Resolve rotas via config/routes.php e despacha para controllers.
- * @usage       Local usa APP_URL com /estrategia-nerd/public; produção pode ser raiz.
- * @notes       Faz strip automático do base path a partir do APP_URL.
+ * @usage       Local usa /estrategia-nerd/public; produção pode ser raiz.
+ * @notes       Contorna OPcache no dev ao carregar routes.php.
  * -----------------------------------------------------------------------------
  */
 
@@ -20,33 +20,44 @@ use App\Support\Auth;
 
 $pdo = $GLOBALS['pdo'] ?? null;
 
-$routes = require __DIR__ . '/../config/routes.php';
-
+/** Request */
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
-/**
- * Base path detectado pelo APP_URL.
- * Ex.: APP_URL=http://localhost/estrategia-nerd/public => basePath=/estrategia-nerd/public
- * Ex.: APP_URL=https://seudominio.com => basePath=''
- */
-$appUrl = (string) env('APP_URL', '');
-$basePath = (string) (parse_url($appUrl, PHP_URL_PATH) ?: '');
-$basePath = rtrim($basePath, '/');
+/** Normaliza path (XAMPP) */
+$path = rawurldecode($uri);
+$path = preg_replace('#^.*?/public/index\.php#', '', $path) ?? $path;
+$path = preg_replace('#^.*?/public#', '', $path) ?? $path;
+$path = preg_replace('#^.*?/index\.php#', '', $path) ?? $path;
+$path = $path === '' ? '/' : $path;
+$path = rtrim($path, '/') ?: '/';
 
-/** Remove basePath do início da URI para casar com routes.php (que usa /login, /admin...) */
-$path = $uri;
+/** Load routes (anti-opcache) */
+$routesFile = realpath(__DIR__ . '/../config/routes.php') ?: (__DIR__ . '/../config/routes.php');
+clearstatcache(true, $routesFile);
 
-if ($basePath !== '' && str_starts_with($path, $basePath)) {
-    $path = substr($path, strlen($basePath));
-    $path = $path === '' ? '/' : $path;
+if (function_exists('opcache_invalidate')) {
+    @opcache_invalidate($routesFile, true);
+}
+if (function_exists('opcache_compile_file')) {
+    @opcache_compile_file($routesFile);
+}
+
+$routes = include $routesFile;
+if (!is_array($routes)) {
+    http_response_code(500);
+    echo 'Routes inválidas.';
+    exit;
 }
 
 /** Match */
 $match = null;
 foreach ($routes as $route) {
     [$m, $p, $handler, $middleware] = $route;
-    if ($m === $method && $p === $path) {
+
+    $p = rtrim((string)$p, '/') ?: '/';
+
+    if (strtoupper((string)$m) === $method && $p === $path) {
         $match = [$handler, $middleware];
         break;
     }
@@ -54,7 +65,19 @@ foreach ($routes as $route) {
 
 if (!$match) {
     http_response_code(404);
-    echo '404';
+
+    // Debug mínimo: mostra path e as rotas carregadas (apenas em dev)
+    header('Content-Type: text/plain; charset=utf-8');
+    echo "404\n";
+    echo "URI: {$uri}\n";
+    echo "PATH: {$path}\n";
+    echo "METHOD: {$method}\n";
+    echo "ROUTES FILE: {$routesFile}\n";
+    echo "ROUTES MD5:  " . md5_file($routesFile) . "\n";
+    echo "ROUTES:\n";
+    foreach ($routes as $r) {
+        echo "- {$r[0]} {$r[1]}\n";
+    }
     exit;
 }
 
@@ -62,7 +85,6 @@ if (!$match) {
 
 /** Middleware */
 if ($middleware === 'auth') {
-    // redirect absoluto (com APP_URL) para funcionar em qualquer ambiente
     Auth::require(url('/login'));
 }
 

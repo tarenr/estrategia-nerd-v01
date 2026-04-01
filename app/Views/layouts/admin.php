@@ -17,7 +17,15 @@ use App\Support\Auth;
 use App\Support\Csrf;
 use App\Support\View;
 
-$title = $title ?? 'Admin — Estratégia Nerd';
+$title = $title ?? 'Admin';
+
+$adminCssPath = dirname(__DIR__, 2) . '/public/assets/css/admin.css';
+$adminLayoutJsPath = dirname(__DIR__, 2) . '/public/assets/js/admin-layout.js';
+$adminDashboardJsPath = dirname(__DIR__, 2) . '/public/assets/js/admin-dashboard.js';
+
+$adminCssVersion = is_file($adminCssPath) ? (string) filemtime($adminCssPath) : '1';
+$adminLayoutJsVersion = is_file($adminLayoutJsPath) ? (string) filemtime($adminLayoutJsPath) : '1';
+$adminDashboardJsVersion = is_file($adminDashboardJsPath) ? (string) filemtime($adminDashboardJsPath) : '1';
 
 $rawPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $rawPath = rtrim($rawPath, '/') ?: '/';
@@ -56,7 +64,7 @@ $isAdminDashboard = (bool)preg_match('#/admin$#', $rawPath);
   </script>
 
   <!-- Admin CSS -->
-  <link rel="stylesheet" href="<?= url('/assets/css/admin.css') ?>">
+  <link rel="stylesheet" href="<?= url('/assets/css/admin.css?v=' . $adminCssVersion) ?>">
 </head>
 
 <body class="bg-slate-950 text-slate-100 min-h-screen">
@@ -131,12 +139,13 @@ $isAdminDashboard = (bool)preg_match('#/admin$#', $rawPath);
       </div>
     </footer>
 
-    <script src="<?= url('/assets/js/admin-layout.js') ?>" defer></script>
+    <script src="<?= url('/assets/js/admin-layout.js?v=' . $adminLayoutJsVersion) ?>" defer></script>
 
     <?php if ($isAdminDashboard): ?>
-      <script src="<?= url('/assets/js/admin-dashboard.js') ?>" defer></script>
+      <script src="<?= url('/assets/js/admin-dashboard.js?v=' . $adminDashboardJsVersion) ?>" defer></script>
     <?php endif; ?>
   </div>
 </body>
 
 </html>
+

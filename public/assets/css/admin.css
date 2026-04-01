@@ -390,3 +390,103 @@ select.nerd-input {
     overflow-y: auto;
 }
 
+
+/* Admin UI standard */
+.admin-page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.admin-page-heading {
+    min-width: 0;
+}
+
+.admin-page-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.1;
+}
+
+.admin-page-subtitle {
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.admin-page-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.admin-panel {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.admin-chip {
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    border: 1px solid rgba(51, 65, 85, 1);
+    background: rgba(30, 41, 59, 0.4);
+    color: #cbd5e1;
+    transition: all 0.3s ease;
+}
+
+.admin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.admin-btn-primary {
+    background: rgba(0, 212, 255, 0.2);
+    border-color: rgba(34, 211, 238, 0.4);
+    color: #a5f3fc;
+}
+
+.admin-btn-primary:hover {
+    background: rgba(0, 212, 255, 0.28);
+    color: #ecfeff;
+}
+
+.admin-btn-secondary {
+    background: rgba(30, 41, 59, 0.4);
+    border-color: rgba(51, 65, 85, 1);
+    color: #cbd5e1;
+}
+
+.admin-btn-secondary:hover {
+    border-color: rgba(34, 211, 238, 0.4);
+    color: #a5f3fc;
+}
+
+.admin-page-actions form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-page-title {
+    letter-spacing: 0.01em;
+}
+
