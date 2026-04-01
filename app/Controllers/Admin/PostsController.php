@@ -3,12 +3,7 @@
  * -----------------------------------------------------------------------------
  * @file        app/Controllers/Admin/PostsController.php
  * @project     Estrategia Nerd
- * @author      Taren Felipe Ribeiro
- * @version     1.0.0
- * @purpose     Controlar o fluxo da central de posts no painel admin
- * @description Recebe a requisição, delega para o Service e renderiza a View.
- * @usage       GET /admin/posts
- * @notes       Não conter SQL nem regra de negócio; apenas orquestração.
+ * @purpose     Fluxo da central de posts no painel admin
  * -----------------------------------------------------------------------------
  */
 
@@ -19,22 +14,52 @@ namespace App\Controllers\Admin;
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\PostRepository;
 use App\Services\Admin\PostsService;
+use App\Support\Auth;
+use App\Support\Csrf;
 use App\Support\View;
 
 final class PostsController
 {
     public function index(): void
     {
+        $viewModel = $this->service()->getIndexViewModel($_GET);
+        View::render('admin/posts/index', $viewModel);
+    }
+
+    public function create(): void
+    {
+        $viewModel = $this->service()->getCreateViewModel();
+        View::render('admin/posts/create', $viewModel);
+    }
+
+    public function store(): void
+    {
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo 'Token CSRF invalido.';
+            return;
+        }
+
+        $result = $this->service()->createPost($_POST, Auth::id());
+
+        if (($result['ok'] ?? false) !== true) {
+            http_response_code(422);
+            View::render('admin/posts/create', $result['viewModel'] ?? []);
+            return;
+        }
+
+        header('Location: ' . url('/admin/posts?created=1'));
+        exit;
+    }
+
+    private function service(): PostsService
+    {
         /** @var \PDO $pdo */
         $pdo = $GLOBALS['pdo'];
 
-        $postsRepo = new PostRepository($pdo);
-        $categoriasRepo = new CategoriaPostRepository($pdo);
-
-        $service = new PostsService($postsRepo, $categoriasRepo);
-
-        $viewModel = $service->getIndexViewModel($_GET);
-
-        View::render('admin/posts/index', $viewModel);
+        return new PostsService(
+            new PostRepository($pdo),
+            new CategoriaPostRepository($pdo),
+        );
     }
 }

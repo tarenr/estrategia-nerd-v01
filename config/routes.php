@@ -3,12 +3,7 @@
  * -----------------------------------------------------------------------------
  * @file        config/routes.php
  * @project     Estrategia Nerd
- * @author      Taren Felipe Ribeiro
- * @version     1.0.0
- * @purpose     Definir rotas da aplicação
- * @description Mapa de rotas HTTP (método + path) para handlers e middleware.
- * @usage       Carregado pelo front controller (public/index.php).
- * @notes       O path é relativo ao base (/estrategia-nerd/public).
+ * @purpose     Definir rotas da aplicacao
  * -----------------------------------------------------------------------------
  */
 
@@ -18,13 +13,15 @@ return [
     ['GET',  '/',       [\App\Controllers\Site\HomeController::class, 'index'], null],
 
     ['GET',  '/login',  [\App\Controllers\Site\AuthController::class, 'showLogin'], null],
-    ['POST', '/login',  [\App\Controllers\Site\AuthController::class, 'login'],     null],
-    ['POST', '/logout', [\App\Controllers\Site\AuthController::class, 'logout'],    null],
+    ['POST', '/login',  [\App\Controllers\Site\AuthController::class, 'login'], null],
+    ['POST', '/logout', [\App\Controllers\Site\AuthController::class, 'logout'], null],
 
     ['GET',  '/admin',               [\App\Controllers\Admin\DashboardController::class, 'index'], 'auth'],
-    ['GET',  '/admin/api/dashboard', [\App\Controllers\Admin\DashboardController::class, 'data'],  'auth'],
+    ['GET',  '/admin/api/dashboard', [\App\Controllers\Admin\DashboardController::class, 'data'], 'auth'],
 
     ['GET',  '/admin/posts',         [\App\Controllers\Admin\PostsController::class, 'index'], 'auth'],
+    ['GET',  '/admin/criar-post',    [\App\Controllers\Admin\PostsController::class, 'create'], 'auth'],
+    ['POST', '/admin/criar-post',    [\App\Controllers\Admin\PostsController::class, 'store'], 'auth'],
 
     ['GET',  '/dev',                 [\App\Controllers\Site\DevController::class, 'index'], null],
 ];

@@ -9,6 +9,7 @@ $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_pag
 $categorias = $categorias ?? [];
 $sort = (string)($sort ?? 'data');
 $dir = (string)($dir ?? 'desc');
+$created = isset($_GET['created']) && (string)$_GET['created'] === '1';
 ?>
 
 <div class="max-w-7xl mx-auto px-4 py-6" data-admin-posts-root>
@@ -29,6 +30,13 @@ $dir = (string)($dir ?? 'desc');
   </div>
 
   <div class="space-y-6">
+    <?php if ($created): ?>
+      <section class="admin-panel border border-emerald-500/30">
+        <div class="text-sm font-bold text-emerald-300">Post criado com sucesso.</div>
+        <div class="text-xs text-slate-400 mt-1">A publicacao ja esta disponivel na central para revisao, ordenacao e proximos ajustes.</div>
+      </section>
+    <?php endif; ?>
+
     <?php View::component('admin/posts/summary-cards', ['summary' => $summary]); ?>
     <?php View::component('admin/posts/filters', ['filters' => $filters,'categorias' => $categorias,'sort' => $sort,'dir' => $dir,'pagination' => $pagination]); ?>
     <?php View::component('admin/posts/table', ['items' => $pagination['items'] ?? [],'sort' => $sort,'dir' => $dir,'filters' => $filters,'pagination' => $pagination]); ?>
@@ -37,4 +45,3 @@ $dir = (string)($dir ?? 'desc');
 </div>
 
 <script src="<?= url('/assets/js/admin-posts.js') ?>" defer></script>
-
