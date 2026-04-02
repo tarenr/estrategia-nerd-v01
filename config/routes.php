@@ -36,5 +36,12 @@ return [
     ['GET',  '/admin/excluir-categoria',   [\App\Controllers\Admin\CategoriasController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-categoria',   [\App\Controllers\Admin\CategoriasController::class, 'destroy'], 'auth'],
 
+    ['GET',  '/admin/comentarios',         [\App\Controllers\Admin\ComentariosController::class, 'index'], 'auth'],
+    ['GET',  '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'reply'], 'auth'],
+    ['POST', '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'storeReply'], 'auth'],
+    ['POST', '/admin/moderar-comentario',  [\App\Controllers\Admin\ComentariosController::class, 'moderate'], 'auth'],
+    ['GET',  '/admin/excluir-comentario',  [\App\Controllers\Admin\ComentariosController::class, 'deleteConfirm'], 'auth'],
+    ['POST', '/admin/excluir-comentario',  [\App\Controllers\Admin\ComentariosController::class, 'destroy'], 'auth'],
+
     ['GET',  '/dev',                 [\App\Controllers\Site\DevController::class, 'index'], null],
 ];
