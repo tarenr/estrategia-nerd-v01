@@ -140,6 +140,23 @@ final class PostRepository
         return $row ? ['titulo' => (string) ($row['titulo'] ?? ''), 'comentarios_count' => (int) ($row['comentarios_count'] ?? 0)] : null;
     }
 
+    public function findAdminById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT id, titulo, slug, resumo, conteudo, categoria, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque FROM posts WHERE id = :id LIMIT 1');
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? $row : null;
+    }
+
+    public function deleteById(int $id): void
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM posts WHERE id = :id');
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
     public function nextAvailableSlug(string $baseSlug, ?int $ignoreId = null): string
     {
         $baseSlug = trim($baseSlug) !== '' ? trim($baseSlug) : 'post';
@@ -186,6 +203,31 @@ final class PostRepository
         $stmt->bindValue(':destaque', (int) ($data['destaque'] ?? 0), PDO::PARAM_INT);
         $stmt->execute();
         return (int) $this->pdo->lastInsertId();
+    }
+
+    public function updateAdmin(int $id, array $data): void
+    {
+        $sql = 'UPDATE posts SET titulo = :titulo, slug = :slug, resumo = :resumo, conteudo = :conteudo, categoria = :categoria, categoria_post_id = :categoria_post_id, imagem_capa = :imagem_capa, imagem_thumb = :imagem_thumb, autor_id = :autor_id, data_publicacao = :data_publicacao, tempo_leitura = :tempo_leitura, seo_title = :seo_title, seo_description = :seo_description, seo_keywords = :seo_keywords, tags = :tags, status = :status, destaque = :destaque WHERE id = :id';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->bindValue(':titulo', (string) ($data['titulo'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':slug', (string) ($data['slug'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':resumo', (string) ($data['resumo'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':conteudo', (string) ($data['conteudo'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':categoria', (string) ($data['categoria'] ?? 'gadgets'), PDO::PARAM_STR);
+        $stmt->bindValue(':categoria_post_id', (int) ($data['categoria_post_id'] ?? 0), PDO::PARAM_INT);
+        $stmt->bindValue(':imagem_capa', (string) ($data['imagem_capa'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':imagem_thumb', (string) ($data['imagem_thumb'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':autor_id', (int) ($data['autor_id'] ?? 1), PDO::PARAM_INT);
+        $stmt->bindValue(':data_publicacao', (string) ($data['data_publicacao'] ?? date('Y-m-d H:i:s')), PDO::PARAM_STR);
+        $stmt->bindValue(':tempo_leitura', (int) ($data['tempo_leitura'] ?? 5), PDO::PARAM_INT);
+        $stmt->bindValue(':seo_title', (string) ($data['seo_title'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':seo_description', (string) ($data['seo_description'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':seo_keywords', (string) ($data['seo_keywords'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':tags', (string) ($data['tags'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':status', (string) ($data['status'] ?? 'rascunho'), PDO::PARAM_STR);
+        $stmt->bindValue(':destaque', (int) ($data['destaque'] ?? 0), PDO::PARAM_INT);
+        $stmt->execute();
     }
 
     private function buildAdminWhere(array $filters): array

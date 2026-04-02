@@ -107,6 +107,7 @@ $statusClasses = static function (string $status): string {
               $status = (string) ($item['status'] ?? '');
               $destaque = (int) ($item['destaque'] ?? 0) === 1;
               $editUrl = function_exists('url') ? url('/admin/editar-post?id=' . (int) ($item['id'] ?? 0)) : '#';
+              $deleteUrl = function_exists('url') ? url('/admin/excluir-post?id=' . (int) ($item['id'] ?? 0)) : '#';
               $viewUrl = function_exists('url') ? url('/post/' . $slug) : '#';
             ?>
             <tr class="hover:bg-slate-800/40 transition">
@@ -121,7 +122,7 @@ $statusClasses = static function (string $status): string {
               <td class="px-4 py-4 align-top text-slate-200"><?= number_format((int) ($item['views'] ?? 0), 0, ',', '.') ?></td>
               <td class="px-4 py-4 align-top text-slate-200"><?= number_format((int) ($item['curtidas'] ?? 0), 0, ',', '.') ?></td>
               <td class="px-4 py-4 align-top text-slate-200"><?= number_format((int) ($item['comentarios_count'] ?? 0), 0, ',', '.') ?></td>
-              <td class="px-4 py-4 align-top"><div class="flex items-center justify-end gap-2"><a class="btn-edit px-3 py-2 rounded-lg text-xs font-bold" href="<?= htmlspecialchars($editUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Editar</a><a class="px-3 py-2 rounded-lg text-xs font-bold border border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-200 transition" href="<?= htmlspecialchars($viewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noreferrer">Ver</a></div></td>
+              <td class="px-4 py-4 align-top"><div class="flex items-center justify-end gap-2"><a class="btn-edit px-3 py-2 rounded-lg text-xs font-bold" href="<?= htmlspecialchars($editUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Editar</a><a class="px-3 py-2 rounded-lg text-xs font-bold border border-rose-500/30 text-rose-200 hover:bg-rose-500/10 transition" href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Excluir</a><a class="px-3 py-2 rounded-lg text-xs font-bold border border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-200 transition" href="<?= htmlspecialchars($viewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noreferrer">Ver</a></div></td>
             </tr>
           <?php endforeach; ?>
         </tbody>

@@ -52,6 +52,107 @@ final class PostsController
         exit;
     }
 
+    public function edit(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        $viewModel = $this->service()->getEditViewModel($id);
+
+        if ($viewModel === null) {
+            http_response_code(404);
+            echo 'Post nao encontrado.';
+            return;
+        }
+
+        View::render('admin/posts/edit', $viewModel);
+    }
+
+    public function update(): void
+    {
+        $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo 'Token CSRF invalido.';
+            return;
+        }
+
+        $result = $this->service()->updatePost($id, $_POST, Auth::id());
+
+        if (($result['not_found'] ?? false) === true) {
+            http_response_code(404);
+            echo 'Post nao encontrado.';
+            return;
+        }
+
+        if (($result['ok'] ?? false) !== true) {
+            http_response_code(422);
+            View::render('admin/posts/edit', $result['viewModel'] ?? []);
+            return;
+        }
+
+        header('Location: ' . url('/admin/editar-post?id=' . $id . '&updated=1'));
+        exit;
+    }
+
+    public function duplicate(): void
+    {
+        $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo 'Token CSRF invalido.';
+            return;
+        }
+
+        $result = $this->service()->duplicatePost($id, Auth::id());
+
+        if (($result['not_found'] ?? false) === true) {
+            http_response_code(404);
+            echo 'Post nao encontrado.';
+            return;
+        }
+
+        $newId = (int) ($result['id'] ?? 0);
+        header('Location: ' . url('/admin/editar-post?id=' . $newId . '&duplicated=1'));
+        exit;
+    }
+
+    public function deleteConfirm(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+        $viewModel = $this->service()->getDeleteViewModel($id);
+
+        if ($viewModel === null) {
+            http_response_code(404);
+            echo 'Post nao encontrado.';
+            return;
+        }
+
+        View::render('admin/posts/delete', $viewModel);
+    }
+
+    public function destroy(): void
+    {
+        $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo 'Token CSRF invalido.';
+            return;
+        }
+
+        $result = $this->service()->deletePost($id);
+
+        if (($result['not_found'] ?? false) === true) {
+            http_response_code(404);
+            echo 'Post nao encontrado.';
+            return;
+        }
+
+        header('Location: ' . url('/admin/posts?deleted=1'));
+        exit;
+    }
+
     private function service(): PostsService
     {
         /** @var \PDO $pdo */

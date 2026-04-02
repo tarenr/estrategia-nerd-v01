@@ -18,6 +18,9 @@ $conteudo = (string) ($form['conteudo'] ?? '');
 
 <form id="postForm" method="POST" action="<?= htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="space-y-6" novalidate>
   <?= Csrf::field() ?>
+  <?php if ((int) ($form['id'] ?? 0) > 0): ?>
+    <input type="hidden" name="id" value="<?= (int) ($form['id'] ?? 0) ?>">
+  <?php endif; ?>
 
   <?php if ($hasErrors): ?>
     <section class="admin-panel border border-rose-500/30">
@@ -39,4 +42,3 @@ $conteudo = (string) ($form['conteudo'] ?? '');
 </form>
 
 <?php View::component('admin/posts/form-preview'); ?>
-

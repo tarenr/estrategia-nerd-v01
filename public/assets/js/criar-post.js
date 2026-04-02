@@ -610,6 +610,70 @@
     btn.disabled = false;
     btn.classList.remove("opacity-50", "cursor-not-allowed");
   }
+
+  var formTracker = {
+    initialState: "",
+    submitting: false,
+  };
+
+  function serializeFormState(form) {
+    if (!form) return "";
+
+    window.atualizarTextarea();
+
+    var data = new window.FormData(form);
+    data.delete("_csrf_token");
+    var pairs = [];
+    data.forEach(function (value, key) {
+      pairs.push([key, String(value)]);
+    });
+
+    pairs.sort(function (a, b) {
+      if (a[0] === b[0]) {
+        return a[1] < b[1] ? -1 : (a[1] > b[1] ? 1 : 0);
+      }
+      return a[0] < b[0] ? -1 : 1;
+    });
+
+    return pairs.map(function (pair) {
+      return pair[0] + "=" + pair[1];
+    }).join("&");
+  }
+
+  function hasUnsavedChanges(form) {
+    if (!form) return false;
+    return serializeFormState(form) !== formTracker.initialState;
+  }
+
+  function initUnsavedChangesGuard() {
+    var form = byId("postForm");
+    if (!form) return;
+
+    var captureInitialState = function () {
+      formTracker.initialState = serializeFormState(form);
+    };
+
+    captureInitialState();
+    window.setTimeout(captureInitialState, 150);
+
+    window.addEventListener("beforeunload", function (event) {
+      if (formTracker.submitting || !hasUnsavedChanges(form)) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
+
+    document.querySelectorAll("[data-confirm-leave]").forEach(function (link) {
+      link.addEventListener("click", function (event) {
+        if (!hasUnsavedChanges(form) || formTracker.submitting) return;
+
+        var shouldLeave = window.confirm("Existem alteracoes nao salvas. Deseja sair mesmo assim?");
+        if (!shouldLeave) {
+          event.preventDefault();
+        }
+      });
+    });
+  }
+
   function getDefaultComparativoRows() {
     return [
       { label: "Performance", left: "", right: "" },
@@ -795,6 +859,7 @@
 
     form.addEventListener("submit", function () {
       window.atualizarTextarea();
+      formTracker.submitting = true;
 
       var btn = form.querySelector('button[type="submit"]');
       if (btn) {
@@ -820,6 +885,7 @@
 
     initCounts();
     initSubmitValidation();
+    initUnsavedChangesGuard();
     syncCategoriaIndicator();
     window.setTimeout(syncCategoriaIndicator, 0);
     window.setTimeout(syncCategoriaIndicator, 150);

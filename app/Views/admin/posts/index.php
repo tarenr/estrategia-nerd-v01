@@ -10,6 +10,8 @@ $categorias = $categorias ?? [];
 $sort = (string)($sort ?? 'data');
 $dir = (string)($dir ?? 'desc');
 $created = isset($_GET['created']) && (string)$_GET['created'] === '1';
+$updated = isset($_GET['updated']) && (string)$_GET['updated'] === '1';
+$deleted = isset($_GET['deleted']) && (string)$_GET['deleted'] === '1';
 ?>
 
 <div class="max-w-7xl mx-auto px-4 py-6" data-admin-posts-root>
@@ -34,6 +36,20 @@ $created = isset($_GET['created']) && (string)$_GET['created'] === '1';
       <section class="admin-panel border border-emerald-500/30">
         <div class="text-sm font-bold text-emerald-300">Post criado com sucesso.</div>
         <div class="text-xs text-slate-400 mt-1">A publicacao ja esta disponivel na central para revisao, ordenacao e proximos ajustes.</div>
+      </section>
+    <?php endif; ?>
+
+    <?php if ($updated): ?>
+      <section class="admin-panel border border-cyan-500/30">
+        <div class="text-sm font-bold text-cyan-300">Post atualizado com sucesso.</div>
+        <div class="text-xs text-slate-400 mt-1">As alteracoes foram salvas e a central ja reflete a versao mais recente do conteudo.</div>
+      </section>
+    <?php endif; ?>
+
+    <?php if ($deleted): ?>
+      <section class="admin-panel border border-rose-500/30">
+        <div class="text-sm font-bold text-rose-300">Post excluido com sucesso.</div>
+        <div class="text-xs text-slate-400 mt-1">O conteudo removido nao aparece mais na central e sua capa local foi limpa quando aplicavel.</div>
       </section>
     <?php endif; ?>
 
