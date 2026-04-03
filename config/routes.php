@@ -25,6 +25,7 @@ return [
     ['GET',  '/admin/editar-post',   [\App\Controllers\Admin\PostsController::class, 'edit'], 'auth'],
     ['POST', '/admin/editar-post',   [\App\Controllers\Admin\PostsController::class, 'update'], 'auth'],
     ['POST', '/admin/duplicar-post', [\App\Controllers\Admin\PostsController::class, 'duplicate'], 'auth'],
+    ['POST', '/admin/upload-post-imagem', [\App\Controllers\Admin\PostsController::class, 'uploadInlineImage'], 'auth'],
     ['GET',  '/admin/excluir-post',  [\App\Controllers\Admin\PostsController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-post',  [\App\Controllers\Admin\PostsController::class, 'destroy'], 'auth'],
 
@@ -35,6 +36,11 @@ return [
     ['POST', '/admin/editar-categoria',    [\App\Controllers\Admin\CategoriasController::class, 'update'], 'auth'],
     ['GET',  '/admin/excluir-categoria',   [\App\Controllers\Admin\CategoriasController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-categoria',   [\App\Controllers\Admin\CategoriasController::class, 'destroy'], 'auth'],
+
+    ['GET',  '/admin/midia',               [\App\Controllers\Admin\MidiaController::class, 'index'], 'auth'],
+    ['POST', '/admin/midia/upload',        [\App\Controllers\Admin\MidiaController::class, 'upload'], 'auth'],
+    ['GET',  '/admin/excluir-midia',       [\App\Controllers\Admin\MidiaController::class, 'deleteConfirm'], 'auth'],
+    ['POST', '/admin/excluir-midia',       [\App\Controllers\Admin\MidiaController::class, 'destroy'], 'auth'],
 
     ['GET',  '/admin/comentarios',         [\App\Controllers\Admin\ComentariosController::class, 'index'], 'auth'],
     ['GET',  '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'reply'], 'auth'],
