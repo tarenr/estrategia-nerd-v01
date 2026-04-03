@@ -14,7 +14,6 @@ namespace App\Services\Admin;
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\PostRepository;
 use DateTimeImmutable;
-use RuntimeException;
 use Throwable;
 
 final class PostsService
@@ -22,6 +21,7 @@ final class PostsService
     public function __construct(
         private PostRepository $posts,
         private CategoriaPostRepository $categorias,
+        private MidiaService $midia,
     ) {
     }
 
@@ -62,11 +62,16 @@ final class PostsService
         return $this->buildFormViewModel('edit', $form, $errors);
     }
 
-    public function createPost(array $input, ?int $authorId): array
+    public function createPost(array $input, array $files, ?int $authorId): array
     {
         $form = $this->normalizeForm($input);
         [$categorias, $categoriasById] = $this->categoriaMaps();
         $errors = $this->validateForm($form, $categoriasById);
+        $slug = $this->posts->nextAvailableSlug($this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']));
+
+        if ($errors === []) {
+            $this->applyMediaUploads($form, $files, $errors, $slug);
+        }
 
         if ($errors !== []) {
             return [
@@ -75,7 +80,6 @@ final class PostsService
             ];
         }
 
-        $slug = $this->posts->nextAvailableSlug($this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']));
         $categoriaSelecionada = $categoriasById[(int) $form['categoria_post_id']] ?? null;
 
         $postId = $this->posts->insertAdmin([
@@ -98,14 +102,10 @@ final class PostsService
             'destaque' => (int) $form['destaque'],
         ]);
 
-        return [
-            'ok' => true,
-            'id' => $postId,
-            'slug' => $slug,
-        ];
+        return ['ok' => true, 'id' => $postId, 'slug' => $slug];
     }
 
-    public function updatePost(int $id, array $input, ?int $authorId): array
+    public function updatePost(int $id, array $input, array $files, ?int $authorId): array
     {
         $post = $this->posts->findAdminById($id);
         if ($post === null) {
@@ -115,6 +115,11 @@ final class PostsService
         $form = $this->normalizeForm($input, $id);
         [$categorias, $categoriasById] = $this->categoriaMaps();
         $errors = $this->validateForm($form, $categoriasById, $id);
+        $slug = $this->posts->nextAvailableSlug($this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']), $id);
+
+        if ($errors === []) {
+            $this->applyMediaUploads($form, $files, $errors, $slug, $post);
+        }
 
         if ($errors !== []) {
             return [
@@ -123,7 +128,6 @@ final class PostsService
             ];
         }
 
-        $slug = $this->posts->nextAvailableSlug($this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']), $id);
         $categoriaSelecionada = $categoriasById[(int) $form['categoria_post_id']] ?? null;
 
         $this->posts->updateAdmin($id, [
@@ -146,11 +150,31 @@ final class PostsService
             'destaque' => (int) $form['destaque'],
         ]);
 
-        return [
-            'ok' => true,
-            'id' => $id,
-            'slug' => $slug,
-        ];
+        return ['ok' => true, 'id' => $id, 'slug' => $slug];
+    }
+
+    public function uploadInlineImage(array $input, array $files): array
+    {
+        $slugBase = $this->slugify(trim((string) ($input['slug'] ?? '')));
+        if ($slugBase === '') {
+            $slugBase = $this->slugify(trim((string) ($input['titulo'] ?? '')));
+        }
+
+        if ($slugBase === '') {
+            return ['ok' => false, 'error' => 'Informe um titulo ou slug antes de enviar a imagem do conteudo.'];
+        }
+
+        $result = $this->midia->storePostBodyImage($files['imagem'] ?? null, $slugBase);
+        if (($result['ok'] ?? false) !== true) {
+            return ['ok' => false, 'error' => (string) ($result['error'] ?? 'Falha no upload da imagem.')];
+        }
+
+        $path = trim((string) ($result['path'] ?? ''));
+        if ($path === '') {
+            return ['ok' => false, 'error' => 'Nenhuma imagem foi enviada.'];
+        }
+
+        return ['ok' => true, 'path' => $path, 'url' => url('/' . ltrim($path, '/'))];
     }
 
     public function duplicatePost(int $id, ?int $authorId): array
@@ -184,11 +208,7 @@ final class PostsService
             'destaque' => 0,
         ]);
 
-        return [
-            'ok' => true,
-            'id' => $newId,
-            'slug' => $slug,
-        ];
+        return ['ok' => true, 'id' => $newId, 'slug' => $slug];
     }
 
     public function getDeleteViewModel(int $id): ?array
@@ -198,10 +218,7 @@ final class PostsService
             return null;
         }
 
-        return [
-            'title' => 'Excluir Post',
-            'post' => $post,
-        ];
+        return ['title' => 'Excluir Post', 'post' => $post];
     }
 
     public function deletePost(int $id): array
@@ -225,10 +242,49 @@ final class PostsService
 
         $this->posts->deleteById($id);
 
-        return [
-            'ok' => true,
-            'id' => $id,
+        return ['ok' => true, 'id' => $id];
+    }
+
+    private function applyMediaUploads(array &$form, array $files, array &$errors, string $slug, ?array $existingPost = null): void
+    {
+        $map = [
+            'imagem_capa_upload' => ['field' => 'imagem_capa', 'error_key' => 'imagem_capa', 'role' => 'capa'],
+            'imagem_thumb_upload' => ['field' => 'imagem_thumb', 'error_key' => 'imagem_thumb', 'role' => 'thumb'],
         ];
+
+        foreach ($map as $uploadKey => $config) {
+            $result = $this->midia->storePostRoleImage($files[$uploadKey] ?? null, $slug, $config['role']);
+            if (($result['ok'] ?? false) !== true) {
+                $errors[$config['error_key']] = (string) ($result['error'] ?? 'Falha no upload da imagem.');
+                continue;
+            }
+
+            if (($result['skipped'] ?? false) === true) {
+                continue;
+            }
+
+            $newPath = trim((string) ($result['path'] ?? ''));
+            if ($newPath === '') {
+                continue;
+            }
+
+            $oldPath = trim((string) ($form[$config['field']] ?? ''));
+            $form[$config['field']] = $newPath;
+
+            if ($existingPost !== null) {
+                $fallbackOld = trim((string) ($existingPost[$config['field']] ?? ''));
+                if ($oldPath === '') {
+                    $oldPath = $fallbackOld;
+                }
+            }
+
+            if ($oldPath !== '' && $oldPath !== $newPath) {
+                $resolved = $this->resolveUploadFileForDelete($oldPath);
+                if ($resolved !== null && is_file($resolved)) {
+                    @unlink($resolved);
+                }
+            }
+        }
     }
 
     private function buildFormViewModel(string $mode, array $form, array $errors = [], ?array $categorias = null): array
@@ -241,6 +297,7 @@ final class PostsService
             'form' => $form,
             'errors' => $errors,
             'categorias' => $categorias ?? $this->categorias->listForSelect(),
+            'media_items' => $this->midia->recentImages(12),
         ];
     }
 
@@ -364,7 +421,7 @@ final class PostsService
         }
 
         if (!str_starts_with($raw, 'uploads/')) {
-            $raw = 'uploads/' . basename($raw);
+            return null;
         }
 
         $publicRoot = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public';

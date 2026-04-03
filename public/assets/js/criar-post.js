@@ -3,7 +3,7 @@
  * Purpose: Editor (abas/toolbar/sync), preview e Gerador Nerd para /admin/pages/criar-post.php
  *
  * Notes:
- * - Este arquivo expõe funções globais (switchTab, formatar, etc.) porque o HTML usa onclick="...".
+ * - Este arquivo expÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµe funÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes globais (switchTab, formatar, etc.) porque o HTML usa onclick="...".
  * - Carregue com `defer` no footer.
  */
 
@@ -26,7 +26,7 @@
   window.switchTab = function switchTab(tabName) {
     if (!existsEditor()) return;
 
-    // Esconde todos os painéis
+    // Esconde todos os painÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©is
     document.querySelectorAll(".editor-panel").forEach(function (p) {
       p.classList.add("hidden");
     });
@@ -34,7 +34,7 @@
     var panel = byId("panel-" + tabName);
     if (panel) panel.classList.remove("hidden");
 
-    // Botões de aba
+    // BotÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes de aba
     document.querySelectorAll('[id^="tab-btn-"]').forEach(function (btn) {
       btn.classList.remove(
         "bg-cyan-500/20",
@@ -61,8 +61,8 @@
     // Texto ajuda
     var ajudas = {
       visual: "Use a barra acima para formatar.",
-      html: "Edite diretamente o código HTML.",
-      gerador: "Preencha os campos e gere conteúdo automaticamente.",
+      html: "Edite diretamente o cÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³digo HTML.",
+      gerador: "Preencha os campos e gere conteÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºdo automaticamente.",
     };
 
     var ajudaEl = byId("editor-ajuda");
@@ -201,7 +201,358 @@
 
     dot.style.background = color || "#475569";
     label.textContent = text;
+  };
+
+  function appBasePath() {
+    var path = String(window.location.pathname || "");
+    var adminIndex = path.indexOf("/admin/");
+    if (adminIndex !== -1) {
+      return path.slice(0, adminIndex);
+    }
+    if (path.endsWith("/admin")) {
+      return path.slice(0, -6);
+    }
+    return "";
   }
+
+  function normalizeMediaUrl(value) {
+    var raw = String(value || "").trim();
+    if (!raw) return "";
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (raw.indexOf("//") === 0) return window.location.protocol + raw;
+
+    var base = appBasePath();
+    if (raw.charAt(0) === "/") {
+      if (base !== "" && raw.indexOf(base + "/") !== 0) {
+        return window.location.origin + base + raw;
+      }
+      return window.location.origin + raw;
+    }
+
+    return window.location.origin + (base !== "" ? base : "") + "/" + raw.replace(/^\/+/, "");
+  }
+
+  function syncMediaPreview(targetId) {
+    var input = byId(targetId);
+    var preview = byId(targetId + "_preview");
+    var empty = byId(targetId + "_preview_empty");
+    if (!input || !preview) return;
+
+    var url = normalizeMediaUrl(input.value);
+    if (url) {
+      preview.src = url;
+      preview.classList.remove("hidden");
+      if (empty) empty.classList.add("hidden");
+    } else {
+      preview.src = "";
+      preview.classList.add("hidden");
+      if (empty) empty.classList.remove("hidden");
+    }
+  }
+
+  window.selecionarMidia = function selecionarMidia(targetId, url) {
+    var input = byId(targetId);
+    if (!input) return;
+    input.value = url || "";
+    syncMediaPreview(targetId);
+  };
+
+  window.inserirImagem = function inserirImagem() {
+    if (!existsEditor()) return;
+
+    var url = window.prompt("Cole a URL/caminho da imagem:");
+    if (!url) return;
+
+    var alt = window.prompt("Texto alternativo (opcional):") || "";
+    var legenda = window.prompt("Legenda (opcional):") || "";
+    var html = '<figure><img src="' + url.replace(/"/g, "&quot;") + '" alt="' + alt.replace(/"/g, "&quot;") + '">' + (legenda ? '<figcaption>' + legenda + '</figcaption>' : '') + '</figure>';
+
+    try {
+      document.execCommand("insertHTML", false, html);
+    } catch (e) {
+      var visual = byId("editor-visual");
+      if (visual) visual.innerHTML += html;
+    }
+
+    window.atualizarTextarea();
+  };
+
+  function toYoutubeEmbed(url) {
+    var match = String(url || "").match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/i);
+    return match ? "https://www.youtube.com/embed/" + match[1] : "";
+  }
+
+  window.inserirVideo = function inserirVideo() {
+    if (!existsEditor()) return;
+
+    var url = window.prompt("Cole a URL do video (YouTube ou arquivo proprio):");
+    if (!url) return;
+
+    var embed = toYoutubeEmbed(url);
+    var html = embed
+      ? '<div class="content-block content-block-video"><div class="content-block-label">Video</div><div class="aspect-video"><iframe src="' + embed + '" title="Video incorporado" loading="lazy" allowfullscreen></iframe></div></div>'
+      : '<video controls preload="metadata" style="width:100%;border-radius:16px;overflow:hidden;"><source src="' + url.replace(/"/g, "&quot;") + '"></video>';
+
+    try {
+      document.execCommand("insertHTML", false, html);
+    } catch (e) {
+      var visual = byId("editor-visual");
+      if (visual) visual.innerHTML += html;
+    }
+
+    window.atualizarTextarea();
+  };
+
+  function initMediaHelpers() {
+    ["imagem_capa", "imagem_thumb"].forEach(function (targetId) {
+      var input = byId(targetId);
+      if (!input) return;
+      input.addEventListener("input", function () {
+        syncMediaPreview(targetId);
+      });
+      syncMediaPreview(targetId);
+    });
+
+    document.querySelectorAll("[data-media-pick]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var target = button.getAttribute("data-media-target") || "";
+        var url = button.getAttribute("data-media-url") || "";
+        window.selecionarMidia(target, url);
+      });
+    });
+  }
+
+  function getCsrfToken() {
+    var token = document.querySelector('input[name="_csrf_token"]');
+    return token ? token.value : "";
+  }
+
+  function getPostSlugBase() {
+    var slugEl = byId("slug");
+    var titleEl = byId("titulo");
+    return (slugEl && slugEl.value) ? slugEl.value : ((titleEl && titleEl.value) ? titleEl.value : "");
+  }
+
+  function insertHtmlIntoEditor(html) {
+    try {
+      document.execCommand("insertHTML", false, html);
+    } catch (e) {
+      var visual = byId("editor-visual");
+      if (visual) visual.innerHTML += html;
+    }
+    window.atualizarTextarea();
+  }
+
+  async function optimizeImageUploadFile(file, options) {
+    if (!(file instanceof File)) return file;
+
+    var type = String(file.type || "").toLowerCase();
+    if (["image/gif", "image/svg+xml", "image/webp"].indexOf(type) !== -1) {
+      return file;
+    }
+
+    if (["image/jpeg", "image/png"].indexOf(type) === -1) {
+      return file;
+    }
+
+    var source = await loadImageSource(file);
+    var maxWidth = options && options.maxWidth ? options.maxWidth : 1600;
+    var maxHeight = options && options.maxHeight ? options.maxHeight : 1600;
+    var quality = options && typeof options.quality === "number" ? options.quality : 0.84;
+    var cropAspect = options && options.cropAspect ? options.cropAspect : 0;
+    var targetWidth = options && options.targetWidth ? options.targetWidth : maxWidth;
+    var targetHeight = options && options.targetHeight ? options.targetHeight : maxHeight;
+
+    var canvas = document.createElement("canvas");
+    var ctx = canvas.getContext("2d");
+    if (!ctx) {
+      releaseImageSource(source);
+      return file;
+    }
+
+    if (cropAspect > 0) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+
+      var sourceRatio = source.width / source.height;
+      var targetRatio = targetWidth / targetHeight;
+      var sx = 0;
+      var sy = 0;
+      var sw = source.width;
+      var sh = source.height;
+
+      if (sourceRatio > targetRatio) {
+        sw = Math.round(source.height * targetRatio);
+        sx = Math.max(0, Math.round((source.width - sw) / 2));
+      } else if (sourceRatio < targetRatio) {
+        sh = Math.round(source.width / targetRatio);
+        sy = Math.max(0, Math.round((source.height - sh) / 2));
+      }
+
+      ctx.drawImage(source.node, sx, sy, sw, sh, 0, 0, targetWidth, targetHeight);
+    } else {
+      var fitted = fitImageSize(source.width, source.height, maxWidth, maxHeight);
+      canvas.width = fitted.width;
+      canvas.height = fitted.height;
+      ctx.drawImage(source.node, 0, 0, fitted.width, fitted.height);
+    }
+
+    releaseImageSource(source);
+
+    var blob = await new Promise(function (resolve) {
+      canvas.toBlob(resolve, "image/webp", quality);
+    });
+
+    if (!(blob instanceof Blob)) {
+      return file;
+    }
+
+    return new File([blob], renameFileToWebp(file.name || "imagem.webp"), {
+      type: "image/webp",
+      lastModified: Date.now(),
+    });
+  }
+
+  async function loadImageSource(file) {
+    if ("createImageBitmap" in window) {
+      try {
+        var bitmap = await createImageBitmap(file);
+        return {
+          node: bitmap,
+          width: bitmap.width,
+          height: bitmap.height,
+          close: function () { bitmap.close(); },
+        };
+      } catch (error) {}
+    }
+
+    return await new Promise(function (resolve, reject) {
+      var image = new Image();
+      var objectUrl = URL.createObjectURL(file);
+      image.onload = function () {
+        URL.revokeObjectURL(objectUrl);
+        resolve({
+          node: image,
+          width: image.naturalWidth || image.width,
+          height: image.naturalHeight || image.height,
+          close: null,
+        });
+      };
+      image.onerror = function () {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Falha ao carregar a imagem."));
+      };
+      image.src = objectUrl;
+    });
+  }
+
+  function releaseImageSource(source) {
+    if (source && typeof source.close === "function") {
+      source.close();
+    }
+  }
+
+  function fitImageSize(width, height, maxWidth, maxHeight) {
+    if (!width || !height) {
+      return { width: width || maxWidth, height: height || maxHeight };
+    }
+
+    var ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+    return {
+      width: Math.max(1, Math.round(width * ratio)),
+      height: Math.max(1, Math.round(height * ratio)),
+    };
+  }
+
+  function renameFileToWebp(name) {
+    return String(name || "imagem").replace(/\.[^.]+$/, "") + ".webp";
+  }
+
+  function replaceInputFile(input, file) {
+    if (!input || !(file instanceof File) || typeof DataTransfer === "undefined") {
+      return;
+    }
+
+    var transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+  }
+
+  async function optimizePostMediaInputs(form) {
+    var map = {
+      imagem_capa_upload: { cropAspect: 16 / 9, targetWidth: 1600, targetHeight: 900, quality: 0.84 },
+      imagem_thumb_upload: { cropAspect: 16 / 9, targetWidth: 640, targetHeight: 360, quality: 0.82 },
+    };
+
+    for (var field in map) {
+      if (!Object.prototype.hasOwnProperty.call(map, field)) continue;
+      var input = form.querySelector('[name="' + field + '"]');
+      var file = input && input.files ? input.files[0] : null;
+      if (!file) continue;
+
+      var optimized = await optimizeImageUploadFile(file, map[field]);
+      if (optimized !== file) {
+        replaceInputFile(input, optimized);
+      }
+    }
+  }
+
+  window.__optimizeImageUploadFile = optimizeImageUploadFile;
+
+  function uploadInlineEditorImage(file) {
+    if (!file) return;
+
+    var csrf = getCsrfToken();
+    var slugBase = getPostSlugBase();
+    if (!slugBase) {
+      window.alert("Informe um titulo ou slug antes de enviar a imagem do conteudo.");
+      return;
+    }
+
+    Promise.resolve(optimizeImageUploadFile(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.84 }))
+      .catch(function () {
+        return file;
+      })
+      .then(function (processedFile) {
+        var data = new window.FormData();
+        data.append("_csrf_token", csrf);
+        data.append("titulo", byId("titulo") ? byId("titulo").value : "");
+        data.append("slug", byId("slug") ? byId("slug").value : "");
+        data.append("imagem", processedFile);
+
+        return window.fetch("/estrategia-nerd/public/admin/upload-post-imagem", {
+          method: "POST",
+          body: data,
+          credentials: "same-origin"
+        });
+      })
+      .then(function (response) {
+        return response.json().catch(function () {
+          return { ok: false, error: "Nao foi possivel interpretar a resposta do upload." };
+        });
+      })
+      .then(function (payload) {
+        if (!payload || payload.ok !== true) {
+          window.alert(payload && payload.error ? payload.error : "Falha no upload da imagem.");
+          return;
+        }
+
+        var alt = window.prompt("Texto alternativo da imagem (opcional):") || "";
+        var legenda = window.prompt("Legenda da imagem (opcional):") || "";
+        var html = '<figure><img src="' + String(payload.url || "").replace(/"/g, "&quot;") + '" alt="' + alt.replace(/"/g, "&quot;") + '">' + (legenda ? '<figcaption>' + legenda + '</figcaption>' : '') + '</figure>';
+        insertHtmlIntoEditor(html);
+      })
+      .catch(function () {
+        window.alert("Falha ao enviar a imagem do conteudo.");
+      });
+  }
+
+  window.enviarImagemDoEditor = function enviarImagemDoEditor() {
+    var input = byId("editorImageUpload");
+    if (!input) return;
+    input.click();
+  };
+
   // -------------------------
   // Contadores (resumo/seo)
   // -------------------------
@@ -240,7 +591,7 @@
     window.atualizarTextarea();
 
     var tituloEl = byId("titulo");
-    var titulo = (tituloEl && tituloEl.value) ? tituloEl.value : "Sem título";
+    var titulo = (tituloEl && tituloEl.value) ? tituloEl.value : "Sem tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo";
 
     var visual = byId("editor-visual");
     var conteudo = visual ? visual.innerHTML : "";
@@ -265,7 +616,7 @@
         titulo +
         "</h1>" +
         '<div class="prose prose-invert max-w-none text-gray-300 leading-relaxed">' +
-        (conteudo || "<p><em>Sem conteúdo.</em></p>") +
+        (conteudo || "<p><em>Sem conteÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºdo.</em></p>") +
         "</div>";
     }
 
@@ -286,7 +637,7 @@
   };
 
   // -------------------------
-  // Gerador Nerd (compatível com seu HTML do criar-post)
+  // Gerador Nerd (compatÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­vel com seu HTML do criar-post)
   // -------------------------
   var geradorIniciado = false;
   var geradorHtmlAtual = "";
@@ -398,7 +749,7 @@
     review: {
       fields: [
         { id: "produto", label: "Produto", placeholder: "Ex.: Nintendo Switch 2" },
-        { id: "pontos", label: "Pontos (vírgula)", placeholder: "Design, bateria, tela..." },
+        { id: "pontos", label: "Pontos (vÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­rgula)", placeholder: "Design, bateria, tela..." },
       ],
       build: function (v) {
         var p = v.produto || "Produto";
@@ -406,14 +757,14 @@
           .split(",")
           .map(function (s) { return s.trim(); })
           .filter(Boolean)
-          .map(function (s) { return "<li>" + s + " …</li>"; })
+          .map(function (s) { return "<li>" + s + " ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li>"; })
           .join("");
         return (
           "<h2>Review: " + p + "</h2>" +
-          "<p>Visão geral do produto e para quem ele faz sentido.</p>" +
-          "<h3>Pontos principais</h3><ul>" + (pts || "<li>…</li>") + "</ul>" +
-          "<h3>Prós e contras</h3><ul><li><b>Prós:</b> …</li><li><b>Contras:</b> …</li></ul>" +
-          "<h3>Conclusão</h3><p>…</p>"
+          "<p>VisÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o geral do produto e para quem ele faz sentido.</p>" +
+          "<h3>Pontos principais</h3><ul>" + (pts || "<li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li>") + "</ul>" +
+          "<h3>PrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³s e contras</h3><ul><li><b>PrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³s:</b> ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li><li><b>Contras:</b> ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li></ul>" +
+          "<h3>ConclusÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o</h3><p>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</p>"
         );
       },
     },
@@ -524,25 +875,25 @@
     guia: {
       fields: [
         { id: "tema", label: "Tema do guia", placeholder: "Ex.: Como montar um PC gamer barato" },
-        { id: "nivel", label: "Nível", placeholder: "Iniciante / Intermediário / Avançado" },
+        { id: "nivel", label: "NÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­vel", placeholder: "Iniciante / IntermediÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡rio / AvanÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ado" },
       ],
       build: function (v) {
         return (
           "<h2>" + (v.tema || "Guia") + "</h2>" +
-          "<p><b>Nível:</b> " + (v.nivel || "") + "</p>" +
-          "<h3>O que você vai aprender</h3><ul><li>…</li></ul>" +
-          "<h3>Passo a passo</h3><ol><li>…</li><li>…</li><li>…</li></ol>" +
-          "<h3>Dicas finais</h3><ul><li>…</li></ul>"
+          "<p><b>NÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­vel:</b> " + (v.nivel || "") + "</p>" +
+          "<h3>O que vocÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âª vai aprender</h3><ul><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li></ul>" +
+          "<h3>Passo a passo</h3><ol><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li></ol>" +
+          "<h3>Dicas finais</h3><ul><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li></ul>"
         );
       },
     },
     noticia: {
       fields: [
-        { id: "assunto", label: "Assunto", placeholder: "Ex.: Lançamento do iPhone X" },
-        { id: "pontos", label: "Fatos-chave (vírgula)", placeholder: "Preço, data, novidades..." },
+        { id: "assunto", label: "Assunto", placeholder: "Ex.: LanÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento do iPhone X" },
+        { id: "pontos", label: "Fatos-chave (vÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­rgula)", placeholder: "PreÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§o, data, novidades..." },
       ],
       build: function (v) {
-        var a = v.assunto || "Notícia";
+        var a = v.assunto || "NotÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­cia";
         var pts = (v.pontos || "")
           .split(",")
           .map(function (s) { return s.trim(); })
@@ -551,16 +902,16 @@
           .join("");
         return (
           "<h2>" + a + "</h2>" +
-          "<p>Contexto rápido do que aconteceu.</p>" +
-          "<h3>O que foi anunciado</h3><ul>" + (pts || "<li>…</li>") + "</ul>" +
-          "<h3>Por que isso importa</h3><p>…</p>" +
-          "<h3>O que esperar agora</h3><p>…</p>"
+          "<p>Contexto rÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡pido do que aconteceu.</p>" +
+          "<h3>O que foi anunciado</h3><ul>" + (pts || "<li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li>") + "</ul>" +
+          "<h3>Por que isso importa</h3><p>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</p>" +
+          "<h3>O que esperar agora</h3><p>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</p>"
         );
       },
     },
     lista: {
       fields: [
-        { id: "titulo_lista", label: "Título da lista", placeholder: "Ex.: Top 7 teclados custo/benefício" },
+        { id: "titulo_lista", label: "TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo da lista", placeholder: "Ex.: Top 7 teclados custo/benefÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­cio" },
         { id: "qtd", label: "Quantidade", placeholder: "Ex.: 7" },
       ],
       build: function (v) {
@@ -570,14 +921,14 @@
 
         var items = "";
         for (var i = 1; i <= qtd; i += 1) {
-          items += "<li><b>#" + i + "</b> — …</li>";
+          items += "<li><b>#" + i + "</b> ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li>";
         }
 
         return (
           "<h2>" + t + "</h2>" +
-          "<p>Critérios usados e para quem a lista é.</p>" +
+          "<p>CritÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rios usados e para quem a lista ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©.</p>" +
           "<ol>" + items + "</ol>" +
-          "<h3>Como escolher</h3><ul><li>…</li></ul>"
+          "<h3>Como escolher</h3><ul><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li></ul>"
         );
       },
     },
@@ -615,6 +966,8 @@
     initialState: "",
     submitting: false,
   };
+
+  window.__postEditorAllowUnload = window.__postEditorAllowUnload === true;
 
   function serializeFormState(form) {
     if (!form) return "";
@@ -657,6 +1010,7 @@
     window.setTimeout(captureInitialState, 150);
 
     window.addEventListener("beforeunload", function (event) {
+      if (window.__postEditorAllowUnload) return;
       if (formTracker.submitting || !hasUnsavedChanges(form)) return;
       event.preventDefault();
       event.returnValue = "";
@@ -664,6 +1018,7 @@
 
     document.querySelectorAll("[data-confirm-leave]").forEach(function (link) {
       link.addEventListener("click", function (event) {
+        if (window.__postEditorAllowUnload) return;
         if (!hasUnsavedChanges(form) || formTracker.submitting) return;
 
         var shouldLeave = window.confirm("Existem alteracoes nao salvas. Deseja sair mesmo assim?");
@@ -857,17 +1212,39 @@
     var form = byId("postForm");
     if (!form) return;
 
-    form.addEventListener("submit", function () {
+    form.addEventListener("submit", function (event) {
+      if (form.dataset.optimized === "1") {
+        window.atualizarTextarea();
+        formTracker.submitting = true;
+
+        var submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = "Salvando...";
+        }
+
+        return true;
+      }
+
+      event.preventDefault();
       window.atualizarTextarea();
-      formTracker.submitting = true;
 
       var btn = form.querySelector('button[type="submit"]');
       if (btn) {
         btn.disabled = true;
-        btn.innerHTML = "Salvando...";
+        btn.innerHTML = "Otimizando...";
       }
 
-      return true;
+      optimizePostMediaInputs(form)
+        .catch(function () {
+        })
+        .then(function () {
+          formTracker.submitting = true;
+          form.dataset.optimized = "1";
+          form.submit();
+        });
+
+      return false;
     });
   }
 
@@ -877,13 +1254,11 @@
   function boot() {
     if (!existsEditor()) return;
 
-    // marcador visual (sem console)
     var ajuda = byId("editor-ajuda");
-    if (ajuda) ajuda.textContent = "✅ criar-post.js carregado";
-    window.__CRIAR_POST_JS_OK__ = true;
-
+    if (ajuda) ajuda.textContent = "Editor do post";
 
     initCounts();
+    initMediaHelpers();
     initSubmitValidation();
     initUnsavedChangesGuard();
     syncCategoriaIndicator();
@@ -893,17 +1268,26 @@
     var categoriaSelect = byId("categoria_post_id");
     if (categoriaSelect) categoriaSelect.addEventListener("change", syncCategoriaIndicator);
 
-    window.addEventListener("pageshow", syncCategoriaIndicator);
+    var editorUpload = byId("editorImageUpload");
+    if (editorUpload) {
+      editorUpload.addEventListener("change", function () {
+        var file = editorUpload.files && editorUpload.files[0] ? editorUpload.files[0] : null;
+        uploadInlineEditorImage(file);
+        editorUpload.value = "";
+      });
+    }
 
-    // ESC fecha modal
+    window.addEventListener("pageshow", function () {
+      syncCategoriaIndicator();
+      syncMediaPreview("imagem_capa");
+      syncMediaPreview("imagem_thumb");
+    });
+
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") window.fecharPreview();
     });
 
-    // Sync inicial
     window.atualizarTextarea();
-
-    // Garante que a aba visual está ativa no load
     window.switchTab("visual");
   }
 
@@ -913,6 +1297,9 @@
     boot();
   }
 })();
+
+
+
 
 
 

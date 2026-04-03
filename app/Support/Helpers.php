@@ -6,9 +6,9 @@
  * @author      Taren Felipe Ribeiro
  * @version     1.0.0
  * @purpose     Helpers globais do sistema
- * @description Funções utilitárias: env, config, base_path, app_url, url.
+ * @description Funcoes utilitarias: env, config, base_path, app_url, url.
  * @usage       config('app.timezone'), env('APP_DEBUG'), base_path('app/Views'), url('/login')
- * @notes       Arquivo de funções não entra no autoload.
+ * @notes       Arquivo de funcoes nao entra no autoload.
  * -----------------------------------------------------------------------------
  */
 
@@ -52,7 +52,7 @@ if (!function_exists('config')) {
 /**
  * Caminho absoluto para a raiz do projeto.
  * helpers.php fica em: /app/Support/helpers.php
- * raiz do projeto é: dirname(__DIR__, 2)
+ * raiz do projeto e: dirname(__DIR__, 2)
  */
 if (!function_exists('base_path')) {
     function base_path(string $path = ''): string
@@ -71,8 +71,20 @@ if (!function_exists('base_path')) {
 if (!function_exists('app_url')) {
     function app_url(): string
     {
-        $url = (string) env('APP_URL', '');
-        return rtrim($url, '/');
+        $url = trim((string) env('APP_URL', ''));
+        if ($url !== '') {
+            return rtrim($url, '/');
+        }
+
+        $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+        if ($scriptName === '') {
+            return '';
+        }
+
+        $base = preg_replace('~/index\.php$~', '', $scriptName) ?? $scriptName;
+        $base = rtrim($base, '/');
+
+        return $base === '' ? '' : $base;
     }
 }
 

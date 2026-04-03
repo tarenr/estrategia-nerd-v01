@@ -13,6 +13,7 @@ namespace App\Controllers\Admin;
 
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\PostRepository;
+use App\Services\Admin\MidiaService;
 use App\Services\Admin\PostsService;
 use App\Support\Auth;
 use App\Support\Csrf;
@@ -22,14 +23,12 @@ final class PostsController
 {
     public function index(): void
     {
-        $viewModel = $this->service()->getIndexViewModel($_GET);
-        View::render('admin/posts/index', $viewModel);
+        View::render('admin/posts/index', $this->service()->getIndexViewModel($_GET));
     }
 
     public function create(): void
     {
-        $viewModel = $this->service()->getCreateViewModel();
-        View::render('admin/posts/create', $viewModel);
+        View::render('admin/posts/create', $this->service()->getCreateViewModel());
     }
 
     public function store(): void
@@ -40,8 +39,7 @@ final class PostsController
             return;
         }
 
-        $result = $this->service()->createPost($_POST, Auth::id());
-
+        $result = $this->service()->createPost($_POST, $_FILES, Auth::id());
         if (($result['ok'] ?? false) !== true) {
             http_response_code(422);
             View::render('admin/posts/create', $result['viewModel'] ?? []);
@@ -56,7 +54,6 @@ final class PostsController
     {
         $id = (int) ($_GET['id'] ?? 0);
         $viewModel = $this->service()->getEditViewModel($id);
-
         if ($viewModel === null) {
             http_response_code(404);
             echo 'Post nao encontrado.';
@@ -69,15 +66,13 @@ final class PostsController
     public function update(): void
     {
         $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
-
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             http_response_code(419);
             echo 'Token CSRF invalido.';
             return;
         }
 
-        $result = $this->service()->updatePost($id, $_POST, Auth::id());
-
+        $result = $this->service()->updatePost($id, $_POST, $_FILES, Auth::id());
         if (($result['not_found'] ?? false) === true) {
             http_response_code(404);
             echo 'Post nao encontrado.';
@@ -94,10 +89,27 @@ final class PostsController
         exit;
     }
 
+    public function uploadInlineImage(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo json_encode(['ok' => false, 'error' => 'Token CSRF invalido.'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return;
+        }
+
+        $result = $this->service()->uploadInlineImage($_POST, $_FILES);
+        if (($result['ok'] ?? false) !== true) {
+            http_response_code(422);
+        }
+
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
     public function duplicate(): void
     {
         $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
-
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             http_response_code(419);
             echo 'Token CSRF invalido.';
@@ -105,7 +117,6 @@ final class PostsController
         }
 
         $result = $this->service()->duplicatePost($id, Auth::id());
-
         if (($result['not_found'] ?? false) === true) {
             http_response_code(404);
             echo 'Post nao encontrado.';
@@ -121,7 +132,6 @@ final class PostsController
     {
         $id = (int) ($_GET['id'] ?? 0);
         $viewModel = $this->service()->getDeleteViewModel($id);
-
         if ($viewModel === null) {
             http_response_code(404);
             echo 'Post nao encontrado.';
@@ -134,7 +144,6 @@ final class PostsController
     public function destroy(): void
     {
         $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
-
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             http_response_code(419);
             echo 'Token CSRF invalido.';
@@ -142,7 +151,6 @@ final class PostsController
         }
 
         $result = $this->service()->deletePost($id);
-
         if (($result['not_found'] ?? false) === true) {
             http_response_code(404);
             echo 'Post nao encontrado.';
@@ -161,6 +169,7 @@ final class PostsController
         return new PostsService(
             new PostRepository($pdo),
             new CategoriaPostRepository($pdo),
+            new MidiaService(),
         );
     }
 }

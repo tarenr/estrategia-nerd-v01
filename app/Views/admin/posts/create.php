@@ -6,6 +6,7 @@ use App\Support\View;
 $form = $form ?? [];
 $errors = $errors ?? [];
 $categorias = $categorias ?? [];
+$mediaItems = $media_items ?? [];
 $criarPostJsPath = dirname(__DIR__, 3) . '/public/assets/js/criar-post.js';
 $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJsPath) : '1';
 ?>
@@ -29,9 +30,10 @@ $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJ
       'form' => $form,
       'errors' => $errors,
       'categorias' => $categorias,
+      'media_items' => $mediaItems,
   ]); ?>
 </div>
 
 <script src="<?= url('/assets/js/criar-post.js?v=' . $criarPostJsVersion) ?>" defer></script>
-
-
+<?php View::component('admin/posts/editor-runtime'); ?>
+<?php View::component('admin/posts/editor-system-ui'); ?>

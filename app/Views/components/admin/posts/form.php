@@ -10,13 +10,14 @@ $submitLabel = (string) ($submitLabel ?? 'Salvar');
 $form = $form ?? [];
 $errors = $errors ?? [];
 $categorias = $categorias ?? [];
+$mediaItems = $media_items ?? [];
 
 $fieldError = static fn (string $key): string => (string) ($errors[$key] ?? '');
 $hasErrors = $errors !== [];
 $conteudo = (string) ($form['conteudo'] ?? '');
 ?>
 
-<form id="postForm" method="POST" action="<?= htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="space-y-6" novalidate>
+<form id="postForm" method="POST" action="<?= htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="space-y-6" enctype="multipart/form-data" novalidate>
   <?= Csrf::field() ?>
   <?php if ((int) ($form['id'] ?? 0) > 0): ?>
     <input type="hidden" name="id" value="<?= (int) ($form['id'] ?? 0) ?>">
@@ -37,7 +38,7 @@ $conteudo = (string) ($form['conteudo'] ?? '');
   <?php View::component('admin/posts/form-editor', ['conteudo' => $conteudo, 'fieldError' => $fieldError]); ?>
   <?php View::component('admin/posts/form-publication', ['form' => $form, 'fieldError' => $fieldError]); ?>
   <?php View::component('admin/posts/form-category', ['form' => $form, 'categorias' => $categorias, 'fieldError' => $fieldError]); ?>
-  <?php View::component('admin/posts/form-media-seo', ['form' => $form, 'fieldError' => $fieldError]); ?>
+  <?php View::component('admin/posts/form-media-seo', ['form' => $form, 'fieldError' => $fieldError, 'media_items' => $mediaItems]); ?>
   <?php View::component('admin/posts/form-actions', ['mode' => $mode, 'submitLabel' => $submitLabel]); ?>
 </form>
 
