@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\Repositories\LinkRepository;
+use Throwable;
 
 final class LinksService
 {
@@ -101,6 +102,9 @@ final class LinksService
             'url' => $form['url'],
             'tipo' => $form['tipo'],
             'descricao' => $form['descricao'],
+            'cta_curto' => $form['cta_curto'],
+            'texto_botao' => $form['texto_botao'],
+            'selo' => $form['selo'],
             'imagem' => $form['imagem'],
             'posicao' => $form['posicao'],
             'status' => $form['status'],
@@ -139,6 +143,9 @@ final class LinksService
             'url' => $form['url'],
             'tipo' => $form['tipo'],
             'descricao' => $form['descricao'],
+            'cta_curto' => $form['cta_curto'],
+            'texto_botao' => $form['texto_botao'],
+            'selo' => $form['selo'],
             'imagem' => $form['imagem'],
             'posicao' => $form['posicao'],
             'status' => $form['status'],
@@ -161,6 +168,50 @@ final class LinksService
         return ['ok' => true];
     }
 
+    public function quickAction(int $id, string $action): array
+    {
+        $link = $this->links->findById($id);
+        if ($link === null) {
+            return ['ok' => false, 'not_found' => true];
+        }
+
+        return match ($action) {
+            'toggle_status' => $this->toggleStatus($link),
+            'toggle_destaque' => $this->toggleDestaque($link),
+            'move_up' => $this->moveLink($link, 'up'),
+            'move_down' => $this->moveLink($link, 'down'),
+            'check_link' => $this->checkLink($link),
+            default => ['ok' => false, 'invalid_action' => true],
+        };
+    }
+
+    public function reorderLinks(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)));
+        if ($ids === []) {
+            return ['ok' => false, 'invalid_action' => true];
+        }
+
+        $existing = $this->links->listAdmin([], 'posicao', 'asc');
+        $existingIds = array_map(static fn (array $item): int => (int) ($item['id'] ?? 0), $existing);
+        $orderedIds = [];
+
+        foreach ($ids as $id) {
+            if (in_array($id, $existingIds, true)) {
+                $orderedIds[] = $id;
+            }
+        }
+
+        foreach ($existingIds as $id) {
+            if (!in_array($id, $orderedIds, true)) {
+                $orderedIds[] = $id;
+            }
+        }
+
+        $this->links->reorderPositions($orderedIds);
+        return ['ok' => true, 'mode' => 'order_drag'];
+    }
+
     private function buildFormViewModel(string $mode, array $form, array $errors = [], ?array $link = null): array
     {
         return [
@@ -171,6 +222,56 @@ final class LinksService
             'link' => $link,
             'media_items' => $this->midia->recentImages(12),
         ];
+    }
+
+    private function toggleStatus(array $link): array
+    {
+        $current = (string) ($link['status'] ?? 'ativo');
+        $next = $current === 'ativo' ? 'oculto' : 'ativo';
+        $this->links->updateQuickFields((int) ($link['id'] ?? 0), ['status' => $next]);
+
+        return ['ok' => true, 'mode' => 'status_' . $next];
+    }
+
+    private function toggleDestaque(array $link): array
+    {
+        $current = (int) ($link['destaque'] ?? 0) === 1 ? 1 : 0;
+        $next = $current === 1 ? 0 : 1;
+        $this->links->updateQuickFields((int) ($link['id'] ?? 0), ['destaque' => $next]);
+
+        return ['ok' => true, 'mode' => 'destaque_' . ($next === 1 ? 'on' : 'off')];
+    }
+
+    private function moveLink(array $link, string $direction): array
+    {
+        $items = $this->links->listAdmin([], 'posicao', 'asc');
+        $currentId = (int) ($link['id'] ?? 0);
+        $currentIndex = null;
+
+        foreach ($items as $index => $item) {
+            if ((int) ($item['id'] ?? 0) === $currentId) {
+                $currentIndex = $index;
+                break;
+            }
+        }
+
+        if ($currentIndex === null) {
+            return ['ok' => false, 'not_found' => true];
+        }
+
+        $targetIndex = $direction === 'up' ? $currentIndex - 1 : $currentIndex + 1;
+        if (!isset($items[$targetIndex])) {
+            return ['ok' => true, 'mode' => 'order_unchanged'];
+        }
+
+        $currentPosition = (int) ($items[$currentIndex]['posicao'] ?? 0);
+        $targetPosition = (int) ($items[$targetIndex]['posicao'] ?? 0);
+        $targetId = (int) ($items[$targetIndex]['id'] ?? 0);
+
+        $this->links->updatePositionById($currentId, $targetPosition);
+        $this->links->updatePositionById($targetId, $currentPosition);
+
+        return ['ok' => true, 'mode' => $direction === 'up' ? 'order_up' : 'order_down'];
     }
 
     private function applyImageUpload(array &$form, array $files, array &$errors, string $slug, ?array $existingLink = null): void
@@ -218,6 +319,9 @@ final class LinksService
             'url' => trim((string) ($link['url'] ?? '')),
             'tipo' => trim((string) ($link['tipo'] ?? 'conteudo')),
             'descricao' => trim((string) ($link['descricao'] ?? '')),
+            'cta_curto' => trim((string) ($link['cta_curto'] ?? '')),
+            'texto_botao' => trim((string) ($link['texto_botao'] ?? '')),
+            'selo' => trim((string) ($link['selo'] ?? '')),
             'imagem' => trim((string) ($link['imagem'] ?? '')),
             'posicao' => (int) ($link['posicao'] ?? 0),
             'status' => trim((string) ($link['status'] ?? 'ativo')),
@@ -246,6 +350,9 @@ final class LinksService
             'url' => trim((string) ($input['url'] ?? '')),
             'tipo' => $tipo,
             'descricao' => trim((string) ($input['descricao'] ?? '')),
+            'cta_curto' => trim((string) ($input['cta_curto'] ?? '')),
+            'texto_botao' => trim((string) ($input['texto_botao'] ?? '')),
+            'selo' => trim((string) ($input['selo'] ?? '')),
             'imagem' => trim((string) ($input['imagem'] ?? '')),
             'posicao' => max(0, (int) ($input['posicao'] ?? 0)),
             'status' => $status,
@@ -280,6 +387,18 @@ final class LinksService
             $errors['descricao'] = 'A descricao deve ter no maximo 255 caracteres.';
         }
 
+        if ($form['cta_curto'] !== '' && mb_strlen($form['cta_curto']) > 120) {
+            $errors['cta_curto'] = 'O CTA curto deve ter no maximo 120 caracteres.';
+        }
+
+        if ($form['texto_botao'] !== '' && mb_strlen($form['texto_botao']) > 80) {
+            $errors['texto_botao'] = 'O texto do botao deve ter no maximo 80 caracteres.';
+        }
+
+        if ($form['selo'] !== '' && mb_strlen($form['selo']) > 60) {
+            $errors['selo'] = 'O selo deve ter no maximo 60 caracteres.';
+        }
+
         if ($form['imagem'] !== '' && mb_strlen($form['imagem']) > 255) {
             $errors['imagem'] = 'O caminho da imagem deve ter no maximo 255 caracteres.';
         }
@@ -298,6 +417,7 @@ final class LinksService
             'tipo' => trim((string) ($query['tipo'] ?? '')),
             'status' => trim((string) ($query['status'] ?? '')),
             'destaque' => trim((string) ($query['destaque'] ?? '')),
+            'monitoramento' => trim((string) ($query['monitoramento'] ?? '')),
         ];
     }
 
@@ -417,5 +537,103 @@ final class LinksService
         }
 
         return is_file($target) ? $target : null;
+    }
+
+    private function checkLink(array $link): array
+    {
+        $url = trim((string) ($link['url'] ?? ''));
+        if ($url === '') {
+            return ['ok' => false, 'invalid_action' => true];
+        }
+
+        $targetUrl = $this->resolveCheckUrl($url);
+        $result = $this->performHttpCheck($targetUrl);
+
+        $currentStatus = (string) ($link['status'] ?? 'ativo');
+        $nextStatus = $currentStatus;
+        if ($currentStatus !== 'oculto' && $currentStatus !== 'expirado') {
+            $nextStatus = ($result['ok'] ?? false) === true ? 'ativo' : 'quebrado';
+        }
+
+        $this->links->updateMonitoringById((int) ($link['id'] ?? 0), [
+            'status' => $nextStatus,
+            'ultima_verificacao' => date('Y-m-d H:i:s'),
+            'codigo_http' => $result['codigo_http'] ?? null,
+            'url_final' => $result['url_final'] ?? $targetUrl,
+            'observacao_status' => $result['observacao_status'] ?? null,
+        ]);
+
+        return ['ok' => true, 'mode' => ($result['ok'] ?? false) === true ? 'checked_ok' : 'checked_fail'];
+    }
+
+    private function resolveCheckUrl(string $url): string
+    {
+        if (str_starts_with($url, '/')) {
+            return rtrim(url('/'), '/') . $url;
+        }
+
+        return $url;
+    }
+
+    private function performHttpCheck(string $url): array
+    {
+        $default = [
+            'ok' => false,
+            'codigo_http' => null,
+            'url_final' => $url,
+            'observacao_status' => 'Falha ao verificar o link.',
+        ];
+
+        if (function_exists('curl_init')) {
+            try {
+                $ch = curl_init($url);
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_NOBODY => true,
+                    CURLOPT_TIMEOUT => 12,
+                    CURLOPT_CONNECTTIMEOUT => 6,
+                    CURLOPT_USERAGENT => 'EstrategiaNerdBot/1.0',
+                ]);
+                curl_exec($ch);
+                $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $finalUrl = (string) curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+                $error = curl_error($ch);
+                curl_close($ch);
+
+                if ($error !== '') {
+                    return $default + ['observacao_status' => $error];
+                }
+
+                return [
+                    'ok' => $code >= 200 && $code < 400,
+                    'codigo_http' => $code > 0 ? $code : null,
+                    'url_final' => $finalUrl !== '' ? $finalUrl : $url,
+                    'observacao_status' => $code >= 200 && $code < 400 ? 'Link verificado com sucesso.' : 'Resposta HTTP ' . ($code > 0 ? (string) $code : 'indefinida') . '.',
+                ];
+            } catch (Throwable) {
+                return $default;
+            }
+        }
+
+        try {
+            $headers = @get_headers($url, true);
+            if (!is_array($headers) || $headers === []) {
+                return $default + ['observacao_status' => 'Sem resposta do destino.'];
+            }
+
+            $first = is_array($headers[0] ?? null) ? end($headers[0]) : ($headers[0] ?? '');
+            preg_match('/\s(\d{3})\s/', (string) $first, $matches);
+            $code = isset($matches[1]) ? (int) $matches[1] : null;
+
+            return [
+                'ok' => $code !== null && $code >= 200 && $code < 400,
+                'codigo_http' => $code,
+                'url_final' => $url,
+                'observacao_status' => $code !== null ? 'Resposta HTTP ' . $code . '.' : 'Resposta recebida sem codigo identificavel.',
+            ];
+        } catch (Throwable) {
+            return $default;
+        }
     }
 }

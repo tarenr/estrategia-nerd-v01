@@ -83,6 +83,96 @@
     fetchAndSwap(url.toString());
   };
 
+  const submitReorder = async (ids) => {
+    const root = getRoot();
+    if (!root || !Array.isArray(ids) || ids.length === 0) return;
+
+    const token = document.querySelector("input[name='_csrf_token']");
+    const url = new URL(window.location.href);
+    const formData = new FormData();
+    if (token) formData.append("_csrf_token", token.value);
+    formData.append("return_to", url.toString());
+    ids.forEach((id) => formData.append("ids[]", String(id)));
+
+    setLoading(root, true);
+
+    try {
+      const response = await fetch(new URL("/admin/links/reordenar", window.location.origin).toString(), {
+        method: "POST",
+        body: formData,
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "same-origin",
+      });
+
+      if (!response.ok) {
+        throw new Error("Falha ao reordenar os links.");
+      }
+
+      const html = await response.text();
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const nextRoot = doc.querySelector(rootSelector);
+      if (!nextRoot) {
+        throw new Error("Bloco de links nao encontrado apos reordenar.");
+      }
+
+      root.replaceWith(nextRoot);
+    } catch (error) {
+      console.error(error);
+      window.location.reload();
+    } finally {
+      const currentRoot = getRoot();
+      if (currentRoot) setLoading(currentRoot, false);
+    }
+  };
+
+  const submitActionForm = async (form) => {
+    const root = getRoot();
+    if (!root) return;
+
+    setLoading(root, true);
+
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "same-origin",
+      });
+
+      if (!response.ok) {
+        throw new Error("Falha ao executar a acao do link.");
+      }
+
+      const html = await response.text();
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const nextRoot = doc.querySelector(rootSelector);
+
+      if (!nextRoot) {
+        const fallbackUrl = response.url || form.action;
+        window.location.href = fallbackUrl;
+        return;
+      }
+
+      root.replaceWith(nextRoot);
+
+      const browserUrl = new URL(response.url || window.location.href, window.location.origin);
+      browserUrl.searchParams.delete("_partial");
+      window.history.pushState({}, "", browserUrl.toString());
+    } catch (error) {
+      console.error(error);
+      form.submit();
+    } finally {
+      const currentRoot = getRoot();
+      if (currentRoot) {
+        setLoading(currentRoot, false);
+      }
+    }
+  };
+
   document.addEventListener("click", (event) => {
     const link = event.target.closest("a[data-admin-links-link]");
     if (!link) return;
@@ -93,10 +183,17 @@
 
   document.addEventListener("submit", (event) => {
     const form = event.target.closest("form[data-admin-links-filters]");
-    if (!form) return;
+    if (form) {
+      event.preventDefault();
+      submitFilters(form);
+      return;
+    }
+
+    const actionForm = event.target.closest("form[data-admin-links-action]");
+    if (!actionForm) return;
 
     event.preventDefault();
-    submitFilters(form);
+    submitActionForm(actionForm);
   });
 
   document.addEventListener("input", (event) => {
@@ -125,5 +222,79 @@
 
   window.addEventListener("popstate", () => {
     fetchAndSwap(window.location.href, { pushState: false });
+  });
+
+  let draggedRow = null;
+
+  document.addEventListener("dragstart", (event) => {
+    const row = event.target.closest("tr[data-link-row-id]");
+    if (!row) return;
+
+    draggedRow = row;
+    row.classList.add("opacity-60");
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", row.getAttribute("data-link-row-id") || "");
+  });
+
+  document.addEventListener("dragend", (event) => {
+    const row = event.target.closest("tr[data-link-row-id]");
+    if (row) row.classList.remove("opacity-60");
+    document.querySelectorAll("tr[data-link-row-id]").forEach((item) => item.classList.remove("bg-cyan-500/5"));
+    draggedRow = null;
+  });
+
+  document.addEventListener("dragover", (event) => {
+    const row = event.target.closest("tr[data-link-row-id]");
+    if (!draggedRow || !row || row === draggedRow) return;
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  });
+
+  document.addEventListener("dragenter", (event) => {
+    const row = event.target.closest("tr[data-link-row-id]");
+    if (!draggedRow || !row || row === draggedRow) return;
+    row.classList.add("bg-cyan-500/5");
+  });
+
+  document.addEventListener("dragleave", (event) => {
+    const row = event.target.closest("tr[data-link-row-id]");
+    if (!row) return;
+    row.classList.remove("bg-cyan-500/5");
+  });
+
+  document.addEventListener("drop", (event) => {
+    const row = event.target.closest("tr[data-link-row-id]");
+    const tbody = event.target.closest("tbody[data-admin-links-sortable]");
+    if (!draggedRow || !row || !tbody || row === draggedRow) return;
+
+    event.preventDefault();
+    row.classList.remove("bg-cyan-500/5");
+
+    const rows = Array.from(tbody.querySelectorAll("tr[data-link-row-id]"));
+    const draggedIndex = rows.indexOf(draggedRow);
+    const targetIndex = rows.indexOf(row);
+
+    if (draggedIndex < targetIndex) {
+      row.after(draggedRow);
+    } else {
+      row.before(draggedRow);
+    }
+
+    const orderedIds = Array.from(tbody.querySelectorAll("tr[data-link-row-id]"))
+      .map((item) => parseInt(item.getAttribute("data-link-row-id") || "0", 10))
+      .filter((id) => id > 0);
+
+    submitReorder(orderedIds);
+  });
+
+  document.addEventListener("mousedown", (event) => {
+    const handle = event.target.closest("[data-link-drag-handle]");
+    if (!handle) return;
+
+    const row = handle.closest("tr[data-link-row-id]");
+    if (!row) return;
+
+    row.draggable = true;
   });
 })();

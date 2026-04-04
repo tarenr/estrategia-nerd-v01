@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-$filters = $filters ?? ['busca' => '', 'tipo' => '', 'status' => '', 'destaque' => ''];
+$filters = $filters ?? ['busca' => '', 'tipo' => '', 'status' => '', 'destaque' => '', 'monitoramento' => ''];
 $pagination = $pagination ?? ['page' => 1, 'per_page' => 10];
 $sort = (string) ($sort ?? 'posicao');
 $dir = (string) ($dir ?? 'asc');
@@ -19,7 +19,7 @@ $dir = (string) ($dir ?? 'asc');
     </div>
   </div>
 
-  <form method="GET" action="<?= url('/admin/links') ?>" class="mt-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1.5fr)_minmax(180px,0.55fr)_minmax(180px,0.55fr)_minmax(180px,0.55fr)_auto] gap-4 items-end" data-admin-links-filters>
+  <form method="GET" action="<?= url('/admin/links') ?>" class="mt-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1.35fr)_minmax(170px,0.52fr)_minmax(170px,0.52fr)_minmax(170px,0.52fr)_minmax(190px,0.62fr)_auto] gap-4 items-end" data-admin-links-filters>
     <input type="hidden" name="sort" value="<?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
     <input type="hidden" name="dir" value="<?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
 
@@ -57,6 +57,17 @@ $dir = (string) ($dir ?? 'asc');
         <option value="">Todos</option>
         <option value="1" <?= (string) ($filters['destaque'] ?? '') === '1' ? 'selected' : '' ?>>Somente destaque</option>
         <option value="0" <?= (string) ($filters['destaque'] ?? '') === '0' ? 'selected' : '' ?>>Sem destaque</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="links-monitoramento" class="block text-sm font-bold text-slate-200 mb-2">Monitoramento</label>
+      <select id="links-monitoramento" name="monitoramento" class="nerd-input w-full px-4 py-3 rounded-xl">
+        <option value="">Todos</option>
+        <option value="expirando" <?= (string) ($filters['monitoramento'] ?? '') === 'expirando' ? 'selected' : '' ?>>Expirando em 7 dias</option>
+        <option value="quebrados" <?= (string) ($filters['monitoramento'] ?? '') === 'quebrados' ? 'selected' : '' ?>>Somente quebrados</option>
+        <option value="verificados" <?= (string) ($filters['monitoramento'] ?? '') === 'verificados' ? 'selected' : '' ?>>Ja verificados</option>
+        <option value="sem_verificacao" <?= (string) ($filters['monitoramento'] ?? '') === 'sem_verificacao' ? 'selected' : '' ?>>Sem verificacao</option>
       </select>
     </div>
 

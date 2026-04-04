@@ -15,6 +15,7 @@ $descricao = (string) ($link['descricao'] ?? '');
 $imagem = trim((string) ($link['imagem'] ?? ''));
 $destaque = (int) ($link['destaque'] ?? 0) === 1;
 $expiraEm = (string) ($link['expira_em'] ?? '');
+$imagemUrl = $imagem !== '' ? (preg_match('#^https?://#i', $imagem) ? $imagem : url('/' . ltrim($imagem, '/'))) : '';
 ?>
 
 <div class="max-w-5xl mx-auto px-4 py-6">
@@ -33,7 +34,7 @@ $expiraEm = (string) ($link['expira_em'] ?? '');
     <div class="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 items-start">
       <div class="w-full aspect-video rounded-2xl border border-slate-800 bg-slate-900/70 overflow-hidden flex items-center justify-center">
         <?php if ($imagem !== ''): ?>
-          <img src="<?= htmlspecialchars($imagem, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="Imagem do link" class="w-full h-full object-cover">
+          <img src="<?= htmlspecialchars($imagemUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="Imagem do link" class="w-full h-full object-cover">
         <?php else: ?>
           <div class="text-center px-5">
             <div class="text-sm font-bold text-slate-200 uppercase tracking-[0.18em]"><?= htmlspecialchars($tipo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>

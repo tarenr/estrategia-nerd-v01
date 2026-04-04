@@ -53,6 +53,8 @@ return [
     ['POST', '/admin/criar-link',          [\App\Controllers\Admin\LinksController::class, 'store'], 'auth'],
     ['GET',  '/admin/editar-link',         [\App\Controllers\Admin\LinksController::class, 'edit'], 'auth'],
     ['POST', '/admin/editar-link',         [\App\Controllers\Admin\LinksController::class, 'update'], 'auth'],
+    ['POST', '/admin/links/acao',          [\App\Controllers\Admin\LinksController::class, 'quickAction'], 'auth'],
+    ['POST', '/admin/links/reordenar',     [\App\Controllers\Admin\LinksController::class, 'reorder'], 'auth'],
     ['GET',  '/admin/excluir-link',        [\App\Controllers\Admin\LinksController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-link',        [\App\Controllers\Admin\LinksController::class, 'destroy'], 'auth'],
 

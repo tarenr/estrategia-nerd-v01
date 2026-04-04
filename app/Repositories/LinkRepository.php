@@ -17,7 +17,7 @@ final class LinkRepository
         $orderBy = $this->buildAdminOrderBy($sort, $dir);
 
         $sql = '
-            SELECT id, titulo, slug, url, tipo, descricao, imagem, posicao, status, destaque,
+            SELECT id, titulo, slug, url, tipo, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque,
                    expira_em, ultima_verificacao, codigo_http, url_final, observacao_status,
                    created_at, updated_at
             FROM links
@@ -45,7 +45,7 @@ final class LinkRepository
         $total = (int) ($countStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
         $sql = '
-            SELECT id, titulo, slug, url, tipo, descricao, imagem, posicao, status, destaque,
+            SELECT id, titulo, slug, url, tipo, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque,
                    expira_em, ultima_verificacao, codigo_http, url_final, observacao_status,
                    created_at, updated_at
             FROM links
@@ -74,7 +74,7 @@ final class LinkRepository
     public function findById(int $id): ?array
     {
         $stmt = $this->pdo->prepare('
-            SELECT id, titulo, slug, url, tipo, descricao, imagem, posicao, status, destaque,
+            SELECT id, titulo, slug, url, tipo, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque,
                    expira_em, ultima_verificacao, codigo_http, url_final, observacao_status,
                    created_at, updated_at
             FROM links
@@ -90,8 +90,8 @@ final class LinkRepository
     public function insertAdmin(array $data): int
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO links (titulo, slug, url, tipo, descricao, imagem, posicao, status, destaque, expira_em, observacao_status)
-            VALUES (:titulo, :slug, :url, :tipo, :descricao, :imagem, :posicao, :status, :destaque, :expira_em, :observacao_status)
+            INSERT INTO links (titulo, slug, url, tipo, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque, expira_em, observacao_status)
+            VALUES (:titulo, :slug, :url, :tipo, :descricao, :cta_curto, :texto_botao, :selo, :imagem, :posicao, :status, :destaque, :expira_em, :observacao_status)
         ');
         $stmt->execute([
             'titulo' => $data['titulo'],
@@ -99,6 +99,9 @@ final class LinkRepository
             'url' => $data['url'],
             'tipo' => $data['tipo'],
             'descricao' => $this->nullableString($data['descricao'] ?? null),
+            'cta_curto' => $this->nullableString($data['cta_curto'] ?? null),
+            'texto_botao' => $this->nullableString($data['texto_botao'] ?? null),
+            'selo' => $this->nullableString($data['selo'] ?? null),
             'imagem' => $this->nullableString($data['imagem'] ?? null),
             'posicao' => (int) ($data['posicao'] ?? 0),
             'status' => $data['status'],
@@ -119,6 +122,9 @@ final class LinkRepository
                 url = :url,
                 tipo = :tipo,
                 descricao = :descricao,
+                cta_curto = :cta_curto,
+                texto_botao = :texto_botao,
+                selo = :selo,
                 imagem = :imagem,
                 posicao = :posicao,
                 status = :status,
@@ -135,6 +141,9 @@ final class LinkRepository
             'url' => $data['url'],
             'tipo' => $data['tipo'],
             'descricao' => $this->nullableString($data['descricao'] ?? null),
+            'cta_curto' => $this->nullableString($data['cta_curto'] ?? null),
+            'texto_botao' => $this->nullableString($data['texto_botao'] ?? null),
+            'selo' => $this->nullableString($data['selo'] ?? null),
             'imagem' => $this->nullableString($data['imagem'] ?? null),
             'posicao' => (int) ($data['posicao'] ?? 0),
             'status' => $data['status'],
@@ -144,6 +153,75 @@ final class LinkRepository
         ]);
 
         return $stmt->rowCount() > 0;
+    }
+
+    public function updateQuickFields(int $id, array $data): bool
+    {
+        $sets = [];
+        $params = ['id' => $id];
+
+        foreach (['status', 'destaque'] as $field) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $sets[] = $field . ' = :' . $field;
+            $params[$field] = $data[$field];
+        }
+
+        if ($sets === []) {
+            return false;
+        }
+
+        $sql = 'UPDATE links SET ' . implode(', ', $sets) . ' WHERE id = :id LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function updatePositionById(int $id, int $position): bool
+    {
+        $stmt = $this->pdo->prepare('UPDATE links SET posicao = :posicao WHERE id = :id LIMIT 1');
+        $stmt->execute([
+            'id' => $id,
+            'posicao' => $position,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function updateMonitoringById(int $id, array $data): bool
+    {
+        $stmt = $this->pdo->prepare('
+            UPDATE links
+            SET status = :status,
+                ultima_verificacao = :ultima_verificacao,
+                codigo_http = :codigo_http,
+                url_final = :url_final,
+                observacao_status = :observacao_status
+            WHERE id = :id
+            LIMIT 1
+        ');
+        $stmt->execute([
+            'id' => $id,
+            'status' => $data['status'],
+            'ultima_verificacao' => $data['ultima_verificacao'],
+            'codigo_http' => $data['codigo_http'],
+            'url_final' => $this->nullableString($data['url_final'] ?? null),
+            'observacao_status' => $this->nullableString($data['observacao_status'] ?? null),
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function reorderPositions(array $orderedIds): void
+    {
+        $position = 10;
+        foreach ($orderedIds as $id) {
+            $this->updatePositionById((int) $id, $position);
+            $position += 10;
+        }
     }
 
     public function deleteById(int $id): bool
@@ -221,6 +299,17 @@ final class LinkRepository
             $clauses[] = 'destaque = 1';
         } elseif ($destaque === '0') {
             $clauses[] = 'destaque = 0';
+        }
+
+        $monitoramento = trim((string) ($filters['monitoramento'] ?? ''));
+        if ($monitoramento === 'expirando') {
+            $clauses[] = 'expira_em IS NOT NULL AND expira_em >= NOW() AND expira_em <= DATE_ADD(NOW(), INTERVAL 7 DAY)';
+        } elseif ($monitoramento === 'quebrados') {
+            $clauses[] = 'status = "quebrado"';
+        } elseif ($monitoramento === 'sem_verificacao') {
+            $clauses[] = 'ultima_verificacao IS NULL';
+        } elseif ($monitoramento === 'verificados') {
+            $clauses[] = 'ultima_verificacao IS NOT NULL';
         }
 
         if ($clauses === []) {
