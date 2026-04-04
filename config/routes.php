@@ -48,6 +48,14 @@ return [
     ['GET',  '/admin/excluir-inscrito',    [\App\Controllers\Admin\NewsletterController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-inscrito',    [\App\Controllers\Admin\NewsletterController::class, 'destroy'], 'auth'],
 
+    ['GET',  '/admin/links',               [\App\Controllers\Admin\LinksController::class, 'index'], 'auth'],
+    ['GET',  '/admin/criar-link',          [\App\Controllers\Admin\LinksController::class, 'create'], 'auth'],
+    ['POST', '/admin/criar-link',          [\App\Controllers\Admin\LinksController::class, 'store'], 'auth'],
+    ['GET',  '/admin/editar-link',         [\App\Controllers\Admin\LinksController::class, 'edit'], 'auth'],
+    ['POST', '/admin/editar-link',         [\App\Controllers\Admin\LinksController::class, 'update'], 'auth'],
+    ['GET',  '/admin/excluir-link',        [\App\Controllers\Admin\LinksController::class, 'deleteConfirm'], 'auth'],
+    ['POST', '/admin/excluir-link',        [\App\Controllers\Admin\LinksController::class, 'destroy'], 'auth'],
+
     ['GET',  '/admin/comentarios',         [\App\Controllers\Admin\ComentariosController::class, 'index'], 'auth'],
     ['GET',  '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'reply'], 'auth'],
     ['POST', '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'storeReply'], 'auth'],
