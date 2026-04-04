@@ -50,6 +50,7 @@ return [
 
     ['GET',  '/admin/configuracoes',       [\App\Controllers\Admin\ConfiguracoesController::class, 'index'], 'auth'],
     ['POST', '/admin/configuracoes',       [\App\Controllers\Admin\ConfiguracoesController::class, 'update'], 'auth'],
+    ['GET',  '/admin/health',              [\App\Controllers\Admin\HealthCheckController::class, 'index'], 'auth'],
 
     ['GET',  '/admin/links',               [\App\Controllers\Admin\LinksController::class, 'index'], 'auth'],
     ['GET',  '/admin/criar-link',          [\App\Controllers\Admin\LinksController::class, 'create'], 'auth'],

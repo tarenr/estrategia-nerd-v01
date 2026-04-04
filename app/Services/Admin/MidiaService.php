@@ -498,6 +498,11 @@ final class MidiaService
         if (!is_dir($posts)) {
             mkdir($posts, 0775, true);
         }
+
+        $settings = $uploads . DIRECTORY_SEPARATOR . 'configuracoes';
+        if (!is_dir($settings)) {
+            mkdir($settings, 0775, true);
+        }
     }
 
     private function publicRoot(): string
