@@ -39,7 +39,7 @@ $latestPosts = $latest_posts ?? [];
                           ],
                       };
                   ?>
-                  <article class="nerd-card bg-slate-800/50 rounded-2xl overflow-hidden group cursor-pointer">
+                  <article class="nerd-card site-reveal bg-slate-800/50 rounded-2xl overflow-hidden group cursor-pointer" data-reveal>
                       <a href="<?= htmlspecialchars((string) ($post['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="block">
                           <div class="relative h-48 overflow-hidden">
                               <div class="absolute inset-0 bg-gradient-to-br <?= $cardTone['hero'] ?>"></div>

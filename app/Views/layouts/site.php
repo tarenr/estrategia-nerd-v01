@@ -100,7 +100,7 @@ $brandFavicon = $brandFavicon !== '' ? (preg_match('~^https?://~i', $brandFavico
   <?php if ($isLogin): ?>
     <script src="<?= url('/assets/js/login.js') ?>" defer></script>
   <?php endif; ?>
-  <?php if ($homePage): ?>
+  <?php if (!$isLogin): ?>
     <script src="<?= url('/assets/js/site-home.js?v=' . $siteHomeJsVersion) ?>" defer></script>
   <?php endif; ?>
 </body>

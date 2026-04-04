@@ -15,6 +15,7 @@ $brandWordAccent = (string) ($brand_word_accent ?? 'NERD');
     'brand_symbol' => $brandSymbol,
     'brand_word_primary' => $brandWordPrimary,
     'brand_word_accent' => $brandWordAccent,
+    'active_page' => 'home',
 ]) ?>
 
 <section id="home" class="site-hero-section relative min-h-screen flex items-center justify-center pt-24 overflow-hidden">

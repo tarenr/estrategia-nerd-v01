@@ -3,6 +3,9 @@
   const mobileMenu = document.querySelector('[data-site-mobile-menu]');
   const toast = document.getElementById('siteToast');
   const newsletterForm = document.getElementById('newsletter-form');
+  const getBlogSearchForm = () => document.querySelector('form[action$="/blog"]');
+  const getBlogDynamicContent = () => document.getElementById('blogDynamicContent');
+  const getCategoryFilters = () => document.getElementById('category-filters');
 
   const showToast = (message, type = 'success') => {
     if (!toast) return;
@@ -64,6 +67,7 @@
   });
 
   const counters = Array.from(document.querySelectorAll('[data-counter]'));
+  const revealItems = Array.from(document.querySelectorAll('[data-reveal]'));
   if (counters.length > 0 && 'IntersectionObserver' in window) {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -90,6 +94,120 @@
     counters.forEach((counter) => {
       counter.textContent = '0';
       observer.observe(counter);
+    });
+  }
+
+  const setupReveal = (items) => {
+    if (items.length === 0) return;
+    if (!('IntersectionObserver' in window)) {
+      items.forEach((item) => item.classList.add('is-visible'));
+      return;
+    }
+
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        revealObserver.unobserve(entry.target);
+      });
+    }, { threshold: 0.18, rootMargin: '0px 0px -6% 0px' });
+
+    items.forEach((item, index) => {
+      item.style.setProperty('--reveal-delay', `${Math.min(index % 3, 2) * 90}ms`);
+      revealObserver.observe(item);
+    });
+  };
+
+  setupReveal(revealItems);
+
+  const refreshBlogUi = () => {
+    setupReveal(Array.from(document.querySelectorAll('[data-reveal]:not(.is-visible)')));
+  };
+
+  const updateBlogPage = async (targetUrl, pushState = true) => {
+    const currentDynamicContent = getBlogDynamicContent();
+    const currentCategoryFilters = getCategoryFilters();
+
+    if (!currentDynamicContent || !currentCategoryFilters) {
+      window.location.href = targetUrl;
+      return;
+    }
+
+    try {
+      const response = await fetch(targetUrl, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin',
+      });
+      const html = await response.text();
+      if (!response.ok) {
+        throw new Error('Nao foi possivel atualizar o blog.');
+      }
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const nextFilters = doc.getElementById('category-filters');
+      const nextContent = doc.getElementById('blogDynamicContent');
+      const nextSearchInput = doc.getElementById('search-input');
+      const currentSearchInput = document.getElementById('search-input');
+
+      if (!nextFilters || !nextContent) {
+        window.location.href = targetUrl;
+        return;
+      }
+
+      currentCategoryFilters.outerHTML = nextFilters.outerHTML;
+      currentDynamicContent.outerHTML = nextContent.outerHTML;
+
+      if (currentSearchInput && nextSearchInput) {
+        currentSearchInput.value = nextSearchInput.value;
+      }
+
+      if (pushState) {
+        window.history.pushState({ blogUrl: targetUrl }, '', targetUrl);
+      }
+
+      refreshBlogUi();
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Erro ao atualizar o blog.', 'error');
+    }
+  };
+
+  if (getBlogSearchForm() && getBlogDynamicContent()) {
+    let searchTimer = null;
+
+    document.addEventListener('submit', (event) => {
+      const targetForm = event.target instanceof HTMLFormElement ? event.target : null;
+      if (!targetForm || targetForm !== getBlogSearchForm()) return;
+      event.preventDefault();
+      const formData = new FormData(targetForm);
+      const params = new URLSearchParams();
+      const q = String(formData.get('q') || '').trim();
+      const categoria = String(formData.get('categoria') || '').trim();
+      if (q !== '') params.set('q', q);
+      if (categoria !== '') params.set('categoria', categoria);
+      updateBlogPage(`${targetForm.action}${params.toString() ? `?${params.toString()}` : ''}`);
+    });
+
+    document.addEventListener('input', (event) => {
+      const target = event.target instanceof HTMLInputElement ? event.target : null;
+      if (!target || target.id !== 'search-input') return;
+      window.clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(() => {
+        getBlogSearchForm()?.requestSubmit();
+      }, 260);
+    });
+
+    document.addEventListener('click', (event) => {
+      const target = event.target instanceof Element ? event.target.closest('#category-filters a, .page-btn[href]') : null;
+      if (!target) return;
+      event.preventDefault();
+      const href = target.getAttribute('href');
+      if (!href) return;
+      updateBlogPage(href);
+    });
+
+    window.addEventListener('popstate', () => {
+      updateBlogPage(window.location.href, false);
     });
   }
 

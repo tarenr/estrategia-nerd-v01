@@ -4,6 +4,7 @@ $siteKicker = (string) ($site_kicker ?? '');
 $brandSymbol = (string) ($brand_symbol ?? '');
 $brandWordPrimary = (string) ($brand_word_primary ?? 'ESTRATEGIA');
 $brandWordAccent = (string) ($brand_word_accent ?? 'NERD');
+$activePage = (string) ($active_page ?? '');
 ?>
 
 <nav class="site-nav fixed top-0 inset-x-0 z-50">
@@ -22,9 +23,9 @@ $brandWordAccent = (string) ($brand_word_accent ?? 'NERD');
       </a>
 
       <div class="hidden md:flex items-center gap-8 text-sm font-semibold tracking-[0.16em] uppercase text-slate-300">
-        <a href="<?= htmlspecialchars(url('/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>#home" class="hover:text-cyan-300 transition">Home</a>
+        <a href="<?= htmlspecialchars(url('/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>#home" class="<?= $activePage === 'home' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'hover:text-cyan-300 transition' ?>">Home</a>
         <a href="<?= htmlspecialchars(url('/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>#sobre" class="hover:text-cyan-300 transition">Sobre</a>
-        <a href="<?= htmlspecialchars(url('/blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="hover:text-cyan-300 transition">Blog</a>
+        <a href="<?= htmlspecialchars(url('/blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="<?= $activePage === 'blog' ? 'text-cyan-400 border-b-2 border-cyan-400' : 'hover:text-cyan-300 transition' ?>">Blog</a>
         <a href="<?= htmlspecialchars(url('/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>#newsletter" class="site-nav-cta">Level Up</a>
       </div>
 

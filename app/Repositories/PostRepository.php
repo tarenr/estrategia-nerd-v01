@@ -118,6 +118,70 @@ final class PostRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function paginatePublic(array $filters, int $page, int $perPage): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, min(24, $perPage));
+        $offset = ($page - 1) * $perPage;
+
+        [$whereSql, $params] = $this->buildPublicWhere($filters);
+
+        $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM posts p LEFT JOIN categoria_post c ON c.id = p.categoria_post_id {$whereSql}");
+        $countStmt->execute($params);
+        $total = (int) ($countStmt->fetchColumn() ?: 0);
+        $pages = max(1, (int) ceil($total / $perPage));
+        if ($page > $pages) {
+            $page = $pages;
+            $offset = ($page - 1) * $perPage;
+        }
+
+        $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
+                       COALESCE(p.views, 0) AS views, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
+                       COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
+                       c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
+                FROM posts p
+                LEFT JOIN categoria_post c ON c.id = p.categoria_post_id
+                {$whereSql}
+                ORDER BY COALESCE(p.destaque, 0) DESC, p.data_publicacao DESC, p.id DESC
+                LIMIT :limit OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return [
+            'items' => $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [],
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'pages' => $pages,
+        ];
+    }
+
+    public function featuredPublicOne(array $filters = []): ?array
+    {
+        $filters['featured_first'] = true;
+        [$whereSql, $params] = $this->buildPublicWhere($filters);
+
+        $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
+                       COALESCE(p.views, 0) AS views, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
+                       COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
+                       c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
+                FROM posts p
+                LEFT JOIN categoria_post c ON c.id = p.categoria_post_id
+                {$whereSql}
+                ORDER BY COALESCE(p.destaque, 0) DESC, p.data_publicacao DESC, p.id DESC
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
     public function summaryFiltered(array $filters): array
     {
         [$whereSql, $params] = $this->buildAdminWhere($filters);
@@ -288,5 +352,34 @@ final class PostRepository
         if ($destaque !== '') { $where[] = 'COALESCE(p.destaque, 0) = :destaque'; $params[':destaque'] = $destaque === '1' ? 1 : 0; }
         if ($busca !== '') { $where[] = '(p.titulo LIKE :busca OR p.resumo LIKE :busca OR p.slug LIKE :busca)'; $params[':busca'] = '%' . $busca . '%'; }
         return [$where ? ('WHERE ' . implode(' AND ', $where)) : '', $params];
+    }
+
+    private function buildPublicWhere(array $filters): array
+    {
+        $where = ["p.status = 'publicado'"];
+        $params = [];
+
+        $search = trim((string) ($filters['busca'] ?? ''));
+        if ($search !== '') {
+            $where[] = '(p.titulo LIKE :busca_titulo OR p.resumo LIKE :busca_resumo OR p.conteudo LIKE :busca_conteudo)';
+            $searchLike = '%' . $search . '%';
+            $params[':busca_titulo'] = $searchLike;
+            $params[':busca_resumo'] = $searchLike;
+            $params[':busca_conteudo'] = $searchLike;
+        }
+
+        $category = trim((string) ($filters['categoria'] ?? ''));
+        if ($category !== '' && $category !== 'all') {
+            $where[] = 'c.slug = :categoria_slug';
+            $params[':categoria_slug'] = $category;
+        }
+
+        $excludeId = (int) ($filters['exclude_id'] ?? 0);
+        if ($excludeId > 0) {
+            $where[] = 'p.id <> :exclude_id';
+            $params[':exclude_id'] = $excludeId;
+        }
+
+        return ['WHERE ' . implode(' AND ', $where), $params];
     }
 }
