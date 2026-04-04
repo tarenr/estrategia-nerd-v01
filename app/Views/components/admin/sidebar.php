@@ -81,7 +81,7 @@ $items = [
     sidebar_item('/admin/categorias', 'fa-solid fa-tags', 'Categorias'),
     sidebar_item('/admin/comentarios', 'fa-solid fa-comments', 'Comentarios'),
     sidebar_item('/admin/midia', 'fa-solid fa-photo-film', 'Midia'),
-    sidebar_item('/admin/inscritos', 'fa-solid fa-users', 'Inscritos', true),
+    sidebar_item('/admin/newsletter', 'fa-solid fa-envelope-open-text', 'Newsletter', true),
     sidebar_item('/admin/campanhas', 'fa-solid fa-bullhorn', 'Campanhas'),
     sidebar_item('/admin/newsletter-stats', 'fa-solid fa-chart-column', 'Estatisticas'),
     sidebar_item('/admin/configuracoes', 'fa-solid fa-gear', 'Configuracoes', true),

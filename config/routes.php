@@ -42,6 +42,12 @@ return [
     ['GET',  '/admin/excluir-midia',       [\App\Controllers\Admin\MidiaController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-midia',       [\App\Controllers\Admin\MidiaController::class, 'destroy'], 'auth'],
 
+    ['GET',  '/admin/newsletter',          [\App\Controllers\Admin\NewsletterController::class, 'index'], 'auth'],
+    ['GET',  '/admin/inscritos',           [\App\Controllers\Admin\NewsletterController::class, 'index'], 'auth'],
+    ['POST', '/admin/newsletter/status',   [\App\Controllers\Admin\NewsletterController::class, 'updateStatus'], 'auth'],
+    ['GET',  '/admin/excluir-inscrito',    [\App\Controllers\Admin\NewsletterController::class, 'deleteConfirm'], 'auth'],
+    ['POST', '/admin/excluir-inscrito',    [\App\Controllers\Admin\NewsletterController::class, 'destroy'], 'auth'],
+
     ['GET',  '/admin/comentarios',         [\App\Controllers\Admin\ComentariosController::class, 'index'], 'auth'],
     ['GET',  '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'reply'], 'auth'],
     ['POST', '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'storeReply'], 'auth'],

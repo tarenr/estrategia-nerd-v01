@@ -1,0 +1,153 @@
+<?php
+declare(strict_types=1);
+
+use App\Support\Csrf;
+
+$items = $items ?? [];
+$filters = $filters ?? ['busca' => '', 'status' => ''];
+$sort = (string) ($sort ?? 'data_cadastro');
+$dir = (string) ($dir ?? 'desc');
+$pagination = $pagination ?? ['total' => 0, 'page' => 1, 'per_page' => 10, 'pages' => 1];
+
+$baseQuery = [
+    'busca' => (string) ($filters['busca'] ?? ''),
+    'status' => (string) ($filters['status'] ?? ''),
+    'per_page' => (int) ($pagination['per_page'] ?? 10),
+];
+$currentUrl = url('/admin/newsletter?' . http_build_query(array_filter([
+    'busca' => $baseQuery['busca'],
+    'status' => $baseQuery['status'],
+    'sort' => $sort,
+    'dir' => $dir,
+    'page' => (int) ($pagination['page'] ?? 1),
+    'per_page' => $baseQuery['per_page'],
+], static fn ($value): bool => $value !== '' && $value !== 0)));
+
+$sortUrl = static function (string $column) use ($baseQuery, $sort, $dir): string {
+    $nextDir = $sort === $column && $dir === 'asc' ? 'desc' : 'asc';
+    return url('/admin/newsletter?' . http_build_query(array_filter([
+        'busca' => $baseQuery['busca'],
+        'status' => $baseQuery['status'],
+        'sort' => $column,
+        'dir' => $nextDir,
+        'page' => 1,
+        'per_page' => $baseQuery['per_page'],
+    ], static fn ($value): bool => $value !== '' && $value !== 0)));
+};
+
+$pageUrl = static function (int $page) use ($baseQuery, $sort, $dir): string {
+    return url('/admin/newsletter?' . http_build_query(array_filter([
+        'busca' => $baseQuery['busca'],
+        'status' => $baseQuery['status'],
+        'sort' => $sort,
+        'dir' => $dir,
+        'page' => $page,
+        'per_page' => $baseQuery['per_page'],
+    ], static fn ($value): bool => $value !== '' && $value !== 0)));
+};
+
+$statusBadge = static function (string $status): array {
+    return match ($status) {
+        'ativo' => ['label' => 'ATIVO', 'class' => 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10'],
+        'inativo' => ['label' => 'INATIVO', 'class' => 'border-amber-500/30 text-amber-300 bg-amber-500/10'],
+        default => ['label' => 'DESINSCRITO', 'class' => 'border-rose-500/30 text-rose-300 bg-rose-500/10'],
+    };
+};
+
+$sortIcon = static function (string $column) use ($sort, $dir): string {
+    if ($sort !== $column) {
+        return '&#8596;';
+    }
+
+    return $dir === 'asc' ? '&#8593;' : '&#8595;';
+};
+?>
+
+<section class="admin-panel overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead>
+        <tr class="bg-cyan-500/10 text-slate-200">
+          <?php foreach (['nome' => 'Nome', 'email' => 'Email', 'status' => 'Status', 'data_cadastro' => 'Cadastro', 'ip' => 'IP'] as $column => $label): ?>
+            <th class="px-4 py-3 text-left font-bold uppercase tracking-[0.18em] text-xs">
+              <a href="<?= htmlspecialchars($sortUrl($column), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center gap-2 hover:text-cyan-300 transition" data-admin-newsletter-link>
+                <span><?= htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                <span class="text-cyan-300 text-xs"><?= $sortIcon($column) ?></span>
+              </a>
+            </th>
+          <?php endforeach; ?>
+          <th class="px-4 py-3 text-right font-bold uppercase tracking-[0.18em] text-xs">Acoes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if ($items === []): ?>
+          <tr>
+            <td colspan="6" class="px-4 py-12 text-center text-slate-400">
+              <div class="font-bold text-white mb-2">Nenhum inscrito encontrado.</div>
+              <div class="text-sm">Ajuste os filtros ou aguarde novas inscricoes publicas.</div>
+            </td>
+          </tr>
+        <?php else: ?>
+          <?php foreach ($items as $item): ?>
+            <?php
+            $id = (int) ($item['id'] ?? 0);
+            $status = (string) ($item['status'] ?? 'ativo');
+            $badge = $statusBadge($status);
+            $deleteUrl = url('/admin/excluir-inscrito?' . http_build_query(['id' => $id, 'return_to' => $currentUrl]));
+            ?>
+            <tr class="border-t border-slate-800/70 align-top">
+              <td class="px-4 py-4">
+                <div class="font-bold text-white"><?= htmlspecialchars((string) (($item['nome'] ?? '') !== '' ? $item['nome'] : 'Sem nome'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                <div class="text-xs text-slate-500 mt-1">#<?= $id ?></div>
+              </td>
+              <td class="px-4 py-4">
+                <div class="font-semibold text-cyan-300 break-all"><?= htmlspecialchars((string) ($item['email'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              </td>
+              <td class="px-4 py-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border <?= $badge['class'] ?>"><?= htmlspecialchars($badge['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+              </td>
+              <td class="px-4 py-4 text-slate-300"><?= htmlspecialchars((string) ($item['data_cadastro'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+              <td class="px-4 py-4 text-slate-400"><?= htmlspecialchars((string) (($item['ip'] ?? '') !== '' ? $item['ip'] : '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+              <td class="px-4 py-4">
+                <div class="flex flex-col items-end gap-2">
+                  <form method="POST" action="<?= url('/admin/newsletter/status') ?>" class="flex flex-wrap justify-end gap-2" data-admin-newsletter-action>
+                    <?= Csrf::field() ?>
+                    <input type="hidden" name="id" value="<?= $id ?>">
+                    <input type="hidden" name="return_to" value="<?= htmlspecialchars($currentUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    <?php if ($status !== 'ativo'): ?>
+                      <button type="submit" name="status" value="ativo" class="admin-btn admin-btn-secondary text-xs">Ativar</button>
+                    <?php endif; ?>
+                    <?php if ($status !== 'inativo'): ?>
+                      <button type="submit" name="status" value="inativo" class="admin-btn admin-btn-secondary text-xs">Inativar</button>
+                    <?php endif; ?>
+                    <?php if ($status !== 'desinscreve'): ?>
+                      <button type="submit" name="status" value="desinscreve" class="admin-btn admin-btn-secondary text-xs" style="border-color:rgba(244,114,182,.25);color:#f9a8d4;">Desinscrever</button>
+                    <?php endif; ?>
+                  </form>
+                  <a href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="px-3 py-2 rounded-lg text-xs font-bold border border-rose-500/30 text-rose-200 hover:bg-rose-500/10 transition">Excluir</a>
+                </div>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </tbody>
+    </table>
+  </div>
+
+  <?php if ((int) ($pagination['pages'] ?? 1) > 1): ?>
+    <div class="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-slate-800/70 mt-6">
+      <div class="text-sm text-slate-400">
+        Mostrando pagina <span class="font-bold text-white"><?= (int) ($pagination['page'] ?? 1) ?></span> de <span class="font-bold text-white"><?= (int) ($pagination['pages'] ?? 1) ?></span>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <?php
+        $page = (int) ($pagination['page'] ?? 1);
+        $pages = (int) ($pagination['pages'] ?? 1);
+        ?>
+        <a href="<?= htmlspecialchars($pageUrl(max(1, $page - 1)), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary <?= $page <= 1 ? 'opacity-50 pointer-events-none' : '' ?>" data-admin-newsletter-link>Anterior</a>
+        <a href="<?= htmlspecialchars($pageUrl(min($pages, $page + 1)), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary <?= $page >= $pages ? 'opacity-50 pointer-events-none' : '' ?>" data-admin-newsletter-link>Proxima</a>
+      </div>
+    </div>
+  <?php endif; ?>
+</section>
