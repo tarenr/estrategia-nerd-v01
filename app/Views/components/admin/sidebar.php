@@ -59,32 +59,48 @@ function sidebar_item_class(string $current, string $target): string
 }
 
 /**
- * @return array{href:string,icon:string,label:string,separator_before:bool}
+ * @return array{type:string,label:string}
  */
-function sidebar_item(string $href, string $icon, string $label, bool $separator = false): array
+function sidebar_section(string $label): array
 {
     return [
+        'type' => 'section',
+        'label' => $label,
+    ];
+}
+
+/**
+ * @return array{type:string,href:string,icon:string,label:string}
+ */
+function sidebar_item(string $href, string $icon, string $label): array
+{
+    return [
+        'type' => 'item',
         'href' => $href,
         'icon' => $icon,
         'label' => $label,
-        'separator_before' => $separator,
     ];
 }
 
 $current = strip_base($currentPath, $basePath);
 
 $items = [
+    sidebar_section('Geral'),
     sidebar_item('/admin', 'fa-solid fa-chart-line', 'Dashboard'),
     sidebar_item('/', 'fa-solid fa-globe', 'Ver Site'),
-    sidebar_item('/admin/posts', 'fa-solid fa-newspaper', 'Posts', true),
+    sidebar_section('Conteudo'),
+    sidebar_item('/admin/posts', 'fa-solid fa-newspaper', 'Posts'),
     sidebar_item('/admin/criar-post', 'fa-solid fa-square-plus', 'Criar Post'),
     sidebar_item('/admin/categorias', 'fa-solid fa-tags', 'Categorias'),
     sidebar_item('/admin/comentarios', 'fa-solid fa-comments', 'Comentarios'),
     sidebar_item('/admin/midia', 'fa-solid fa-photo-film', 'Midia'),
-    sidebar_item('/admin/newsletter', 'fa-solid fa-envelope-open-text', 'Newsletter', true),
-    sidebar_item('/admin/campanhas', 'fa-solid fa-bullhorn', 'Campanhas'),
-    sidebar_item('/admin/newsletter-stats', 'fa-solid fa-chart-column', 'Estatisticas'),
-    sidebar_item('/admin/configuracoes', 'fa-solid fa-gear', 'Configuracoes', true),
+    sidebar_section('Alcance'),
+    sidebar_item('/admin/newsletter', 'fa-solid fa-envelope-open-text', 'Newsletter'),
+    sidebar_section('Monetizacao'),
+    sidebar_item('/admin/links', 'fa-solid fa-link', 'Links'),
+    sidebar_item('/admin/ofertas', 'fa-solid fa-bag-shopping', 'Ofertas'),
+    sidebar_section('Sistema'),
+    sidebar_item('/admin/configuracoes', 'fa-solid fa-gear', 'Configuracoes'),
     sidebar_item('/admin/usuarios', 'fa-solid fa-user', 'Usuarios'),
     sidebar_item('/admin/permissoes', 'fa-solid fa-lock', 'Permissoes'),
     sidebar_item('/admin/health', 'fa-solid fa-heart-pulse', 'Health Check'),
@@ -92,10 +108,14 @@ $items = [
 ?>
 <nav class="space-y-1 text-sm" aria-label="Navegacao Admin">
   <?php foreach ($items as $item): ?>
-    <?php if ($item['separator_before']): ?>
-      <hr data-sb-sep class="my-2 border-slate-800/70">
+    <?php if (($item['type'] ?? 'item') === 'section'): ?>
+      <div class="sidebar-section-label pt-4 pb-2 first:pt-0" data-sb-section>
+        <div class="sidebar-section-text">
+          <?= htmlspecialchars($item['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+        </div>
+      </div>
+      <?php continue; ?>
     <?php endif; ?>
-
     <a href="<?= url($item['href']) ?>" class="<?= sidebar_item_class($current, $item['href']) ?>" data-sb-item aria-label="<?= htmlspecialchars($item['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
       <span class="sidebar-icon w-7 text-center shrink-0 text-[18px]" aria-hidden="true" data-tooltip="<?= htmlspecialchars($item['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
         <i class="<?= htmlspecialchars($item['icon'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"></i>

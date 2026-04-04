@@ -18,12 +18,12 @@
 
   function apply(collapsed) {
     sidebar.dataset.collapsed = collapsed ? '1' : '0';
+    document.body.dataset.adminSidebarCollapsed = collapsed ? '1' : '0';
 
     sidebar.classList.toggle(expandedW, !collapsed);
     sidebar.classList.toggle(collapsedW, collapsed);
 
-    scroll.classList.toggle('p-4', !collapsed);
-    scroll.classList.toggle('p-2', collapsed);
+    scroll.classList.add('p-4');
 
     scroll.querySelectorAll('[data-sb-text]').forEach((el) => el.classList.toggle('hidden', collapsed));
     scroll.querySelectorAll('[data-sb-item]').forEach((el) => {
@@ -31,16 +31,21 @@
       el.classList.toggle('gap-0', collapsed);
       el.classList.toggle('gap-3', !collapsed);
     });
+
     scroll.querySelectorAll('[data-sb-sep]').forEach((el) => {
       el.classList.toggle('w-8', collapsed);
       el.classList.toggle('mx-auto', collapsed);
     });
-
+    scroll.querySelectorAll('[data-sb-section]').forEach((el) => {
+      el.classList.toggle('justify-center', collapsed);
+    });
     toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 
     if (toggleIcon) {
-      toggleIcon.textContent = collapsed ? '>' : '<';
+      toggleIcon.classList.toggle('rotate-180', collapsed);
     }
+
+    toggle.classList.toggle('mx-auto', collapsed);
 
     const label = collapsed ? 'Expandir menu' : 'Recolher menu';
     toggle.dataset.tooltip = label;
