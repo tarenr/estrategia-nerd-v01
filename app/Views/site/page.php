@@ -1,19 +1,17 @@
 <?php
-use App\Support\View;
+declare(strict_types=1);
 
-$latestPosts = $latest_posts ?? [];
 $siteMeta = $site_meta ?? [];
-
+$pageTitle = (string) ($page_title ?? 'Pagina');
+$pageIntro = (string) ($page_intro ?? '');
+$sections = is_array($page_sections ?? null) ? $page_sections : [];
 $siteName = (string) ($siteMeta['name'] ?? 'Estrategia Nerd');
-$siteDescription = (string) ($siteMeta['description'] ?? 'Conteudo, tecnologia, cultura geek e oportunidades em um so lugar.');
-$bioTitle = (string) ($siteMeta['bio_title'] ?? $siteName);
-$footerText = (string) ($siteMeta['footer'] ?? $siteName);
+$siteDescription = (string) ($siteMeta['description'] ?? '');
 $siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estrategico');
 $siteEmail = (string) ($siteMeta['email'] ?? '');
+$footerText = (string) ($siteMeta['footer'] ?? $siteName);
 $brandSymbol = (string) ($siteMeta['brand_symbol'] ?? '');
-$aboutMark = (string) ($siteMeta['about_image'] ?? '');
 $brandSymbol = $brandSymbol !== '' ? $brandSymbol : url('/assets/brand/logo-symbol.png');
-$aboutMark = $aboutMark !== '' ? $aboutMark : url('/assets/brand/logo-about.png');
 $brandWordPrimary = 'ESTRATEGIA';
 $brandWordAccent = 'NERD';
 $socialLinks = [
@@ -53,35 +51,46 @@ $hasSocialLinks = array_reduce(
     static fn (bool $carry, array $social): bool => $carry || trim((string) ($social['url'] ?? '')) !== '',
     false
 );
-$contactHref = $siteEmail !== '' ? 'mailto:' . $siteEmail : '#newsletter';
+$contactHref = $siteEmail !== '' ? 'mailto:' . $siteEmail : url('/') . '#newsletter';
 ?>
 
 <div class="site-home-page">
   <div class="circuit-bg"></div>
   <div class="scanline"></div>
-  <div id="siteToast" class="site-toast" aria-live="polite"></div>
 
-  <?= View::component('site/home/header-hero', [
+  <?= \App\Support\View::component('site/shared/nav', [
       'site_name' => $siteName,
-      'site_description' => $siteDescription,
       'site_kicker' => $siteKicker,
       'brand_symbol' => $brandSymbol,
       'brand_word_primary' => $brandWordPrimary,
       'brand_word_accent' => $brandWordAccent,
   ]) ?>
 
-  <?= View::component('site/home/about', [
-      'about_mark' => $aboutMark,
-      'bio_title' => $bioTitle,
-  ]) ?>
+  <section class="site-about-section min-h-screen py-28 pt-36 relative overflow-hidden">
+    <div class="site-about-backdrop" aria-hidden="true"></div>
+    <div class="site-about-grid" aria-hidden="true"></div>
 
-  <?= View::component('site/home/posts', [
-      'latest_posts' => $latestPosts,
-  ]) ?>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <header class="mb-12">
+        <span class="site-section-kicker">Institucional</span>
+        <h1 class="font-orbitron text-4xl md:text-5xl font-black text-white mt-3"><?= htmlspecialchars($pageTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h1>
+        <?php if ($pageIntro !== ''): ?>
+          <p class="text-slate-400 text-lg mt-4 leading-8"><?= htmlspecialchars($pageIntro, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+        <?php endif; ?>
+      </header>
 
-  <?= View::component('site/home/newsletter') ?>
+      <div class="space-y-6">
+        <?php foreach ($sections as $section): ?>
+          <article class="site-value-box site-value-cyan">
+            <h2><?= htmlspecialchars((string) ($section['title'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h2>
+            <p><?= htmlspecialchars((string) ($section['body'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+          </article>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </section>
 
-  <?= View::component('site/home/footer', [
+  <?= \App\Support\View::component('site/shared/footer', [
       'site_name' => $siteName,
       'site_description' => $siteDescription,
       'site_kicker' => $siteKicker,

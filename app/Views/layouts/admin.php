@@ -35,6 +35,10 @@ $user = Auth::user() ?? [];
 $userName = trim((string) ($user['usuario'] ?? 'Equipe'));
 $userRole = 'Administrador';
 $userInitial = strtoupper(substr($userName !== '' ? $userName : 'E', 0, 1));
+$adminFavicon = (string) portal_config('favicon_url', '');
+$adminFavicon = $adminFavicon !== ''
+    ? (preg_match('~^https?://~i', $adminFavicon) ? $adminFavicon : url('/' . ltrim($adminFavicon, '/')))
+    : url('/assets/brand/favicon.ico');
 ?>
 <!doctype html>
 <html lang="pt-br">
@@ -43,6 +47,7 @@ $userInitial = strtoupper(substr($userName !== '' ? $userName : 'E', 0, 1));
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= htmlspecialchars((string) $title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></title>
+  <link rel="icon" type="image/x-icon" href="<?= htmlspecialchars($adminFavicon, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

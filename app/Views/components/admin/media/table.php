@@ -71,6 +71,8 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
           $deleteUrl = url('/admin/excluir-midia?path=' . rawurlencode((string) ($item['relative_path'] ?? '')));
           $copyUrl = (string) ($item['public_url'] ?? '');
           $previewUrl = (string) ($item['public_url'] ?? '');
+          $libraryLabel = (string) ($item['library'] ?? 'Upload');
+          $isManagedUpload = (bool) ($item['is_managed_upload'] ?? false);
         ?>
         <article class="rounded-2xl border border-slate-800 bg-slate-900/40 overflow-hidden flex flex-col">
           <div class="aspect-[16/10] bg-slate-950/70 flex items-center justify-center border-b border-slate-800 overflow-hidden">
@@ -88,10 +90,11 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
             </div>
 
             <dl class="grid grid-cols-2 gap-3 text-xs">
+              <div><dt class="text-slate-500 uppercase tracking-wide">Origem</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars($libraryLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
               <div><dt class="text-slate-500 uppercase tracking-wide">Tamanho</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars((string) ($item['size_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
               <div><dt class="text-slate-500 uppercase tracking-wide">Tipo</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars((string) ($item['mime'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
               <div><dt class="text-slate-500 uppercase tracking-wide">Pasta</dt><dd class="text-slate-200 mt-1 break-all"><?= htmlspecialchars((string) ($item['directory'] ?? 'uploads'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
-              <div><dt class="text-slate-500 uppercase tracking-wide">Dimensoes</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars((string) ($item['dimensions_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
+              <div class="col-span-2"><dt class="text-slate-500 uppercase tracking-wide">Dimensoes</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars((string) ($item['dimensions_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
             </dl>
 
             <div class="text-xs text-slate-500">Atualizado em <?= htmlspecialchars((string) ($item['modified_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
@@ -99,7 +102,11 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
             <div class="mt-auto flex items-center gap-2 flex-wrap">
               <a class="admin-btn admin-btn-secondary" href="<?= htmlspecialchars($previewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noreferrer">Ver</a>
               <button type="button" class="admin-btn admin-btn-primary" data-copy-url="<?= htmlspecialchars($copyUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Copiar URL</button>
-              <a class="admin-btn admin-btn-danger" href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Excluir</a>
+              <?php if ($isManagedUpload): ?>
+                <a class="admin-btn admin-btn-danger" href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Excluir</a>
+              <?php else: ?>
+                <span class="admin-chip">Asset institucional</span>
+              <?php endif; ?>
             </div>
           </div>
         </article>

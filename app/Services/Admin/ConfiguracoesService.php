@@ -12,16 +12,21 @@ final class ConfiguracoesService
         'nome_site' => 'Estrategia Nerd',
         'site_url' => '',
         'descricao_site' => '',
+        'site_kicker' => 'Portal geek estrategico',
         'email_contato' => '',
         'logo_url' => '',
+        'brand_symbol_url' => '',
         'favicon_url' => '',
         'bio_avatar_url' => '',
+        'sobre_imagem_url' => '',
         'bio_titulo' => 'Estrategia Nerd',
         'bio_descricao' => '',
         'meta_title_padrao' => '',
         'meta_description_padrao' => '',
         'footer_texto' => '',
         'instagram_url' => '',
+        'tiktok_url' => '',
+        'kwai_url' => '',
         'youtube_url' => '',
         'telegram_url' => '',
         'whatsapp_url' => '',
@@ -62,8 +67,10 @@ final class ConfiguracoesService
 
         $uploads = [
             'logo_upload' => ['field' => 'logo_url', 'base' => 'portal-logo'],
+            'brand_symbol_upload' => ['field' => 'brand_symbol_url', 'base' => 'brand-symbol'],
             'favicon_upload' => ['field' => 'favicon_url', 'base' => 'portal-favicon'],
             'bio_avatar_upload' => ['field' => 'bio_avatar_url', 'base' => 'bio-avatar'],
+            'sobre_imagem_upload' => ['field' => 'sobre_imagem_url', 'base' => 'sobre-imagem'],
         ];
 
         foreach ($uploads as $input => $meta) {
@@ -121,7 +128,7 @@ final class ConfiguracoesService
             $errors['bio_titulo'] = 'Use ate 120 caracteres no titulo da bio.';
         }
 
-        foreach (['descricao_site' => 255, 'bio_descricao' => 255] as $field => $max) {
+        foreach (['descricao_site' => 255, 'bio_descricao' => 255, 'site_kicker' => 120] as $field => $max) {
             if (mb_strlen($data[$field]) > $max) {
                 $errors[$field] = 'Use ate ' . $max . ' caracteres neste campo.';
             }
@@ -137,13 +144,13 @@ final class ConfiguracoesService
             $errors['email_contato'] = 'Informe um email valido.';
         }
 
-        foreach (['site_url', 'logo_url', 'favicon_url', 'bio_avatar_url', 'instagram_url', 'youtube_url', 'telegram_url', 'whatsapp_url'] as $field) {
+        foreach (['site_url', 'logo_url', 'brand_symbol_url', 'favicon_url', 'bio_avatar_url', 'sobre_imagem_url', 'instagram_url', 'tiktok_url', 'kwai_url', 'youtube_url', 'telegram_url', 'whatsapp_url'] as $field) {
             if (mb_strlen($data[$field]) > 255) {
                 $errors[$field] = 'Use ate 255 caracteres neste campo.';
             }
         }
 
-        foreach (['site_url', 'instagram_url', 'youtube_url', 'telegram_url', 'whatsapp_url'] as $field) {
+        foreach (['site_url', 'instagram_url', 'tiktok_url', 'kwai_url', 'youtube_url', 'telegram_url', 'whatsapp_url'] as $field) {
             $value = $data[$field];
             if ($value === '') {
                 continue;

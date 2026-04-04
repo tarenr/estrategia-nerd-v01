@@ -20,8 +20,10 @@ $resolvePreview = static function (string $value): string {
 };
 
 $logoPreview = $resolvePreview((string) ($form['logo_url'] ?? ''));
+$brandSymbolPreview = $resolvePreview((string) ($form['brand_symbol_url'] ?? ''));
 $faviconPreview = $resolvePreview((string) ($form['favicon_url'] ?? ''));
 $bioPreview = $resolvePreview((string) ($form['bio_avatar_url'] ?? ''));
+$aboutPreview = $resolvePreview((string) ($form['sobre_imagem_url'] ?? ''));
 ?>
 
 <form method="POST" action="<?= htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" enctype="multipart/form-data" class="space-y-6" novalidate>
@@ -70,6 +72,12 @@ $bioPreview = $resolvePreview((string) ($form['bio_avatar_url'] ?? ''));
       </div>
 
       <div>
+        <label for="site_kicker" class="block text-sm font-bold text-slate-200 mb-2">Texto curto da marca</label>
+        <input id="site_kicker" name="site_kicker" type="text" value="<?= htmlspecialchars((string) ($form['site_kicker'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Portal geek estrategico">
+        <?php if ($fieldError('site_kicker') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('site_kicker'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+      </div>
+
+      <div>
         <label for="meta_title_padrao" class="block text-sm font-bold text-slate-200 mb-2">Meta title padrao</label>
         <input id="meta_title_padrao" name="meta_title_padrao" type="text" value="<?= htmlspecialchars((string) ($form['meta_title_padrao'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Estrategia Nerd | Conteudo, ofertas e tecnologia geek">
         <?php if ($fieldError('meta_title_padrao') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('meta_title_padrao'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
@@ -107,6 +115,14 @@ $bioPreview = $resolvePreview((string) ($form['bio_avatar_url'] ?? ''));
               'empty' => 'Sem logo selecionada',
           ],
           [
+              'key' => 'brand_symbol_url',
+              'upload' => 'brand_symbol_upload',
+              'title' => 'Simbolo da marca',
+              'description' => 'Icone reduzido do topo, footer e pontos compactos do site.',
+              'preview' => $brandSymbolPreview,
+              'empty' => 'Sem simbolo selecionado',
+          ],
+          [
               'key' => 'favicon_url',
               'upload' => 'favicon_upload',
               'title' => 'Favicon',
@@ -121,6 +137,14 @@ $bioPreview = $resolvePreview((string) ($form['bio_avatar_url'] ?? ''));
               'description' => 'Imagem principal da futura pagina de links.',
               'preview' => $bioPreview,
               'empty' => 'Sem avatar selecionado',
+          ],
+          [
+              'key' => 'sobre_imagem_url',
+              'upload' => 'sobre_imagem_upload',
+              'title' => 'Imagem da secao Sobre',
+              'description' => 'Arte principal exibida no bloco institucional da Home.',
+              'preview' => $aboutPreview,
+              'empty' => 'Sem imagem da secao Sobre',
           ],
       ];
       ?>
@@ -218,6 +242,8 @@ $bioPreview = $resolvePreview((string) ($form['bio_avatar_url'] ?? ''));
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <?php foreach ([
           'instagram_url' => 'Instagram',
+          'tiktok_url' => 'TikTok',
+          'kwai_url' => 'Kwai',
           'youtube_url' => 'YouTube',
           'telegram_url' => 'Telegram',
           'whatsapp_url' => 'WhatsApp',

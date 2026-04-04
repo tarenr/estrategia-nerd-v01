@@ -170,6 +170,30 @@ final class NewsletterRepository
         return $stmt->rowCount() > 0;
     }
 
+    public function emailExists(string $email): bool
+    {
+        $stmt = $this->pdo->prepare('SELECT id FROM newsletter WHERE email = :email LIMIT 1');
+        $stmt->execute(['email' => $email]);
+
+        return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function subscribe(string $email, ?string $nome = null, ?string $ip = null): int
+    {
+        $stmt = $this->pdo->prepare('
+            INSERT INTO newsletter (email, nome, ip, status)
+            VALUES (:email, :nome, :ip, :status)
+        ');
+        $stmt->execute([
+            'email' => $email,
+            'nome' => $nome,
+            'ip' => $ip,
+            'status' => 'ativo',
+        ]);
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
     private function buildAdminWhere(array $filters): array
     {
         $clauses = [];

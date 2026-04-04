@@ -250,6 +250,29 @@ final class LinkRepository
         return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function countPublicActive(): int
+    {
+        $stmt = $this->pdo->query('SELECT COUNT(*) AS total FROM links WHERE status = "ativo" AND (expira_em IS NULL OR expira_em >= NOW())');
+        return (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
+    }
+
+    public function listForHome(int $limit = 6): array
+    {
+        $limit = max(1, min(12, $limit));
+        $stmt = $this->pdo->prepare('
+            SELECT id, titulo, slug, url, tipo, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque
+            FROM links
+            WHERE status = "ativo"
+              AND (expira_em IS NULL OR expira_em >= NOW())
+            ORDER BY destaque DESC, posicao ASC, id DESC
+            LIMIT :limit
+        ');
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function nextAvailableSlug(string $baseSlug, ?int $ignoreId = null): string
     {
         $baseSlug = trim($baseSlug);

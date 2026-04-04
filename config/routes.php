@@ -11,6 +11,10 @@ declare(strict_types=1);
 
 return [
     ['GET',  '/',       [\App\Controllers\Site\HomeController::class, 'index'], null],
+    ['GET',  '/blog',   [\App\Controllers\Site\BlogController::class, 'index'], null],
+    ['GET',  '/politica-de-privacidade', [\App\Controllers\Site\PagesController::class, 'privacy'], null],
+    ['GET',  '/termos-de-uso', [\App\Controllers\Site\PagesController::class, 'terms'], null],
+    ['POST', '/newsletter', [\App\Controllers\Site\NewsletterController::class, 'subscribe'], null],
 
     ['GET',  '/login',  [\App\Controllers\Site\AuthController::class, 'showLogin'], null],
     ['POST', '/login',  [\App\Controllers\Site\AuthController::class, 'login'], null],

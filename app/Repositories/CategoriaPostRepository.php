@@ -103,6 +103,36 @@ final class CategoriaPostRepository
         }, $rows);
     }
 
+    public function listForHome(int $limit = 4): array
+    {
+        $limit = max(1, min(12, $limit));
+        $sql = "SELECT c.id, c.nome, c.slug, COALESCE(c.cor, '') AS cor,
+                       COUNT(p.id) AS total_posts,
+                       COALESCE(SUM(p.views), 0) AS total_views
+                FROM categoria_post c
+                LEFT JOIN posts p ON p.categoria_post_id = c.id AND p.status = 'publicado'
+                WHERE COALESCE(c.ativo, 1) = 1
+                GROUP BY c.id, c.nome, c.slug, c.cor, c.ordem
+                HAVING COUNT(p.id) > 0
+                ORDER BY total_posts DESC, total_views DESC, c.ordem ASC, c.nome ASC
+                LIMIT :limit";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        return array_map(static function (array $row): array {
+            return [
+                'id' => (int) ($row['id'] ?? 0),
+                'nome' => (string) ($row['nome'] ?? ''),
+                'slug' => (string) ($row['slug'] ?? ''),
+                'cor' => (string) ($row['cor'] ?? ''),
+                'total_posts' => (int) ($row['total_posts'] ?? 0),
+                'total_views' => (int) ($row['total_views'] ?? 0),
+            ];
+        }, $rows);
+    }
+
     public function findById(int $id): ?array
     {
         $sql = "SELECT c.id, c.nome, c.slug, COALESCE(c.cor, '') AS cor, COALESCE(c.ativo, 1) AS ativo, COALESCE(c.ordem, 0) AS ordem, COUNT(p.id) AS total_posts, COALESCE(SUM(p.views), 0) AS total_views FROM categoria_post c LEFT JOIN posts p ON p.categoria_post_id = c.id WHERE c.id = :id GROUP BY c.id, c.nome, c.slug, c.cor, c.ativo, c.ordem LIMIT 1";

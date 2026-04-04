@@ -9,6 +9,10 @@ final class MidiaService
 {
     private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'];
     private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+    private const LIBRARY_DIRECTORIES = [
+        ['relative' => 'uploads', 'label' => 'Upload'],
+        ['relative' => 'assets/brand', 'label' => 'Institucional'],
+    ];
 
     public function getIndexViewModel(array $query = [], array $errors = []): array
     {
@@ -152,47 +156,55 @@ final class MidiaService
 
     private function scanMediaItems(): array
     {
-        $root = $this->uploadsRoot();
-        if (!is_dir($root)) {
-            return [];
-        }
-
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
         $items = [];
 
-        foreach ($iterator as $fileInfo) {
-            if (!$fileInfo instanceof \SplFileInfo || !$fileInfo->isFile()) {
+        foreach (self::LIBRARY_DIRECTORIES as $library) {
+            $relativeRoot = (string) ($library['relative'] ?? '');
+            $label = (string) ($library['label'] ?? 'Midia');
+            $root = $this->publicRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeRoot);
+            if (!is_dir($root)) {
                 continue;
             }
 
-            $absolutePath = $fileInfo->getPathname();
-            $relativePath = str_replace('\\', '/', substr($absolutePath, strlen($this->publicRoot()) + 1));
-            $extension = strtolower($fileInfo->getExtension());
-            $isImage = in_array($extension, self::IMAGE_EXTENSIONS, true);
-            $size = (int) $fileInfo->getSize();
-            $modifiedAt = (int) $fileInfo->getMTime();
-            $directory = trim(str_replace('\\', '/', substr($fileInfo->getPath(), strlen($this->publicRoot()) + 1)), '/');
-            $mime = $this->detectMimeType($absolutePath);
-            [$width, $height] = $isImage ? $this->detectDimensions($absolutePath) : [null, null];
+            $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
 
-            $items[] = [
-                'name' => $fileInfo->getFilename(),
-                'basename' => pathinfo($fileInfo->getFilename(), PATHINFO_FILENAME),
-                'extension' => $extension,
-                'relative_path' => $relativePath,
-                'absolute_path' => $absolutePath,
-                'public_url' => url('/' . $relativePath),
-                'directory' => $directory,
-                'size' => $size,
-                'size_label' => $this->formatBytes($size),
-                'modified_at' => $modifiedAt,
-                'modified_label' => date('d/m/Y H:i', $modifiedAt),
-                'mime' => $mime,
-                'is_image' => $isImage,
-                'width' => $width,
-                'height' => $height,
-                'dimensions_label' => ($width && $height) ? ($width . ' x ' . $height) : '-',
-            ];
+            foreach ($iterator as $fileInfo) {
+                if (!$fileInfo instanceof \SplFileInfo || !$fileInfo->isFile()) {
+                    continue;
+                }
+
+                $absolutePath = $fileInfo->getPathname();
+                $relativePath = str_replace('\\', '/', substr($absolutePath, strlen($this->publicRoot()) + 1));
+                $extension = strtolower($fileInfo->getExtension());
+                $isImage = in_array($extension, self::IMAGE_EXTENSIONS, true);
+                $size = (int) $fileInfo->getSize();
+                $modifiedAt = (int) $fileInfo->getMTime();
+                $directory = trim(str_replace('\\', '/', substr($fileInfo->getPath(), strlen($this->publicRoot()) + 1)), '/');
+                $mime = $this->detectMimeType($absolutePath);
+                [$width, $height] = $isImage ? $this->detectDimensions($absolutePath) : [null, null];
+
+                $items[] = [
+                    'name' => $fileInfo->getFilename(),
+                    'basename' => pathinfo($fileInfo->getFilename(), PATHINFO_FILENAME),
+                    'extension' => $extension,
+                    'relative_path' => $relativePath,
+                    'absolute_path' => $absolutePath,
+                    'public_url' => url('/' . $relativePath),
+                    'directory' => $directory,
+                    'library' => $label,
+                    'library_key' => $relativeRoot,
+                    'is_managed_upload' => str_starts_with($relativePath, 'uploads/'),
+                    'size' => $size,
+                    'size_label' => $this->formatBytes($size),
+                    'modified_at' => $modifiedAt,
+                    'modified_label' => date('d/m/Y H:i', $modifiedAt),
+                    'mime' => $mime,
+                    'is_image' => $isImage,
+                    'width' => $width,
+                    'height' => $height,
+                    'dimensions_label' => ($width && $height) ? ($width . ' x ' . $height) : '-',
+                ];
+            }
         }
 
         return $items;
@@ -268,6 +280,7 @@ final class MidiaService
         $directories = [];
         $images = 0;
         $size = 0;
+        $institutional = 0;
 
         foreach ($items as $item) {
             $directory = (string) ($item['directory'] ?? 'uploads');
@@ -276,9 +289,12 @@ final class MidiaService
             if (($item['is_image'] ?? false) === true) {
                 $images++;
             }
+            if ((string) ($item['library'] ?? '') === 'Institucional') {
+                $institutional++;
+            }
         }
 
-        return ['total' => count($items), 'images' => $images, 'others' => max(0, count($items) - $images), 'directories' => count($directories), 'size_label' => $this->formatBytes($size)];
+        return ['total' => count($items), 'images' => $images, 'others' => max(0, count($items) - $images), 'directories' => count($directories), 'institutional' => $institutional, 'size_label' => $this->formatBytes($size)];
     }
 
     private function validateUpload(mixed $file): array
