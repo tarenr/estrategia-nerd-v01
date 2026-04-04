@@ -104,3 +104,48 @@ if (!function_exists('url')) {
         return $base !== '' ? $base . $path : $path;
     }
 }
+
+if (!function_exists('portal_configs')) {
+    /**
+     * @return array<string, string>
+     */
+    function portal_configs(): array
+    {
+        static $cache = null;
+        if (is_array($cache)) {
+            return $cache;
+        }
+
+        $cache = [];
+
+        $pdo = $GLOBALS['pdo'] ?? null;
+        if (!$pdo instanceof \PDO) {
+            return $cache;
+        }
+
+        try {
+            $stmt = $pdo->query('SELECT chave, valor FROM configuracoes');
+            $rows = $stmt !== false ? $stmt->fetchAll(\PDO::FETCH_ASSOC) : [];
+            foreach ($rows as $row) {
+                $key = (string) ($row['chave'] ?? '');
+                if ($key === '') {
+                    continue;
+                }
+
+                $cache[$key] = (string) ($row['valor'] ?? '');
+            }
+        } catch (\Throwable) {
+            return $cache;
+        }
+
+        return $cache;
+    }
+}
+
+if (!function_exists('portal_config')) {
+    function portal_config(string $key, mixed $default = null): mixed
+    {
+        $configs = portal_configs();
+        return $configs[$key] ?? $default;
+    }
+}

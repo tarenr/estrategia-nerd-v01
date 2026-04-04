@@ -48,6 +48,9 @@ return [
     ['GET',  '/admin/excluir-inscrito',    [\App\Controllers\Admin\NewsletterController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-inscrito',    [\App\Controllers\Admin\NewsletterController::class, 'destroy'], 'auth'],
 
+    ['GET',  '/admin/configuracoes',       [\App\Controllers\Admin\ConfiguracoesController::class, 'index'], 'auth'],
+    ['POST', '/admin/configuracoes',       [\App\Controllers\Admin\ConfiguracoesController::class, 'update'], 'auth'],
+
     ['GET',  '/admin/links',               [\App\Controllers\Admin\LinksController::class, 'index'], 'auth'],
     ['GET',  '/admin/criar-link',          [\App\Controllers\Admin\LinksController::class, 'create'], 'auth'],
     ['POST', '/admin/criar-link',          [\App\Controllers\Admin\LinksController::class, 'store'], 'auth'],
