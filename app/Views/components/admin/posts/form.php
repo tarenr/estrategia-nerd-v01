@@ -38,7 +38,7 @@ $conteudo = (string) ($form['conteudo'] ?? '');
   <?php View::component('admin/posts/form-editor', ['conteudo' => $conteudo, 'fieldError' => $fieldError]); ?>
   <?php View::component('admin/posts/form-publication', ['form' => $form, 'fieldError' => $fieldError]); ?>
   <?php View::component('admin/posts/form-category', ['form' => $form, 'categorias' => $categorias, 'fieldError' => $fieldError]); ?>
-  <?php View::component('admin/posts/form-media-seo', ['form' => $form, 'fieldError' => $fieldError, 'media_items' => $mediaItems]); ?>
+  <?php View::component('admin/posts/form-media-seo', ['form' => $form, 'fieldError' => $fieldError, 'media_items' => $mediaItems, 'orphan_images' => $orphan_images ?? []]); ?>
   <?php View::component('admin/posts/form-actions', ['mode' => $mode, 'submitLabel' => $submitLabel]); ?>
 </form>
 

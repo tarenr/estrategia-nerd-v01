@@ -12,6 +12,9 @@ declare(strict_types=1);
 return [
     ['GET',  '/',       [\App\Controllers\Site\HomeController::class, 'index'], null],
     ['GET',  '/blog',   [\App\Controllers\Site\BlogController::class, 'index'], null],
+    ['GET',  '/post/{slug}', [\App\Controllers\Site\PostController::class, 'show'], null],
+    ['POST', '/post/{slug}/comentarios', [\App\Controllers\Site\PostController::class, 'comment'], null],
+    ['POST', '/post/{slug}/curtir', [\App\Controllers\Site\PostController::class, 'like'], null],
     ['GET',  '/politica-de-privacidade', [\App\Controllers\Site\PagesController::class, 'privacy'], null],
     ['GET',  '/termos-de-uso', [\App\Controllers\Site\PagesController::class, 'terms'], null],
     ['POST', '/newsletter', [\App\Controllers\Site\NewsletterController::class, 'subscribe'], null],
@@ -30,6 +33,7 @@ return [
     ['POST', '/admin/editar-post',   [\App\Controllers\Admin\PostsController::class, 'update'], 'auth'],
     ['POST', '/admin/duplicar-post', [\App\Controllers\Admin\PostsController::class, 'duplicate'], 'auth'],
     ['POST', '/admin/upload-post-imagem', [\App\Controllers\Admin\PostsController::class, 'uploadInlineImage'], 'auth'],
+    ['POST', '/admin/limpar-post-imagens-orfas', [\App\Controllers\Admin\PostsController::class, 'cleanupOrphanImages'], 'auth'],
     ['GET',  '/admin/excluir-post',  [\App\Controllers\Admin\PostsController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-post',  [\App\Controllers\Admin\PostsController::class, 'destroy'], 'auth'],
 
@@ -43,6 +47,7 @@ return [
 
     ['GET',  '/admin/midia',               [\App\Controllers\Admin\MidiaController::class, 'index'], 'auth'],
     ['POST', '/admin/midia/upload',        [\App\Controllers\Admin\MidiaController::class, 'upload'], 'auth'],
+    ['POST', '/admin/midia/limpar-orfas',  [\App\Controllers\Admin\MidiaController::class, 'cleanupOrphans'], 'auth'],
     ['GET',  '/admin/excluir-midia',       [\App\Controllers\Admin\MidiaController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-midia',       [\App\Controllers\Admin\MidiaController::class, 'destroy'], 'auth'],
 

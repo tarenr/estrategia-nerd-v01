@@ -59,7 +59,9 @@ final class PostsService
             ? array_replace($this->mapPostToForm($post), $this->normalizeForm($old, $id))
             : $this->mapPostToForm($post);
 
-        return $this->buildFormViewModel('edit', $form, $errors);
+        return $this->buildFormViewModel('edit', $form, $errors, null, [
+            'orphan_images' => $this->findOrphanBodyImages($form),
+        ]);
     }
 
     public function createPost(array $input, array $files, ?int $authorId): array
@@ -121,6 +123,14 @@ final class PostsService
             $this->applyMediaUploads($form, $files, $errors, $slug, $post);
         }
 
+        if ($errors === []) {
+            $this->migratePostMediaForSlugChange($form, $post, $slug, $errors);
+        }
+
+        if ($errors === []) {
+            $this->reconcilePostMediaReferences($form, $slug, $errors);
+        }
+
         if ($errors !== []) {
             return [
                 'ok' => false,
@@ -129,6 +139,7 @@ final class PostsService
         }
 
         $categoriaSelecionada = $categoriasById[(int) $form['categoria_post_id']] ?? null;
+        $oldSlug = trim((string) ($post['slug'] ?? ''));
 
         $this->posts->updateAdmin($id, [
             'titulo' => (string) $form['titulo'],
@@ -149,6 +160,10 @@ final class PostsService
             'status' => (string) $form['status'],
             'destaque' => (int) $form['destaque'],
         ]);
+
+        if ($oldSlug !== '' && $oldSlug !== $slug) {
+            $this->posts->storeSlugHistory($id, $oldSlug);
+        }
 
         return ['ok' => true, 'id' => $id, 'slug' => $slug];
     }
@@ -209,6 +224,27 @@ final class PostsService
         ]);
 
         return ['ok' => true, 'id' => $newId, 'slug' => $slug];
+    }
+
+    public function cleanupOrphanBodyImages(int $id): array
+    {
+        $post = $this->posts->findAdminById($id);
+        if ($post === null) {
+            return ['ok' => false, 'not_found' => true];
+        }
+
+        $form = $this->mapPostToForm($post);
+        $orphans = $this->findOrphanBodyImages($form);
+        $removed = 0;
+
+        foreach ($orphans as $item) {
+            $resolved = $this->resolveUploadFileForDelete((string) ($item['relative_path'] ?? ''));
+            if ($resolved !== null && is_file($resolved) && @unlink($resolved)) {
+                $removed++;
+            }
+        }
+
+        return ['ok' => true, 'removed' => $removed];
     }
 
     public function getDeleteViewModel(int $id): ?array
@@ -287,18 +323,248 @@ final class PostsService
         }
     }
 
-    private function buildFormViewModel(string $mode, array $form, array $errors = [], ?array $categorias = null): array
+    private function migratePostMediaForSlugChange(array &$form, array $existingPost, string $newSlug, array &$errors): void
+    {
+        $oldSlug = $this->slugify((string) ($existingPost['slug'] ?? ''));
+        $newSlug = $this->slugify($newSlug);
+
+        if ($oldSlug === '' || $newSlug === '' || $oldSlug === $newSlug) {
+            return;
+        }
+
+        $migration = $this->movePostMediaDirectory($oldSlug, $newSlug);
+        if (($migration['ok'] ?? false) !== true) {
+            $errors['slug'] = (string) ($migration['error'] ?? 'Nao foi possivel migrar a midia do post ao alterar o slug.');
+            return;
+        }
+
+        $replacements = is_array($migration['replacements'] ?? null) ? $migration['replacements'] : [];
+
+        foreach (['imagem_capa', 'imagem_thumb'] as $field) {
+            $form[$field] = $this->applyPostMediaReplacements((string) ($form[$field] ?? ''), $replacements, $oldSlug, $newSlug);
+        }
+
+        $form['conteudo'] = $this->applyPostMediaReplacements((string) ($form['conteudo'] ?? ''), $replacements, $oldSlug, $newSlug);
+    }
+
+    private function reconcilePostMediaReferences(array &$form, string $slug, array &$errors): void
+    {
+        $targetSlug = $this->slugify($slug);
+        if ($targetSlug === '') {
+            return;
+        }
+
+        $candidates = [];
+        foreach (['imagem_capa', 'imagem_thumb', 'conteudo'] as $field) {
+            $candidates = array_merge($candidates, $this->extractPostMediaSlugs((string) ($form[$field] ?? '')));
+        }
+
+        $sourceSlugs = array_values(array_unique(array_filter($candidates, static fn (string $value): bool => $value !== '' && $value !== $targetSlug)));
+        foreach ($sourceSlugs as $sourceSlug) {
+            $migration = $this->movePostMediaDirectory($sourceSlug, $targetSlug);
+            if (($migration['ok'] ?? false) !== true) {
+                $errors['slug'] = (string) ($migration['error'] ?? 'Nao foi possivel reconciliar a midia do post com o slug atual.');
+                return;
+            }
+
+            $replacements = is_array($migration['replacements'] ?? null) ? $migration['replacements'] : [];
+            foreach (['imagem_capa', 'imagem_thumb'] as $field) {
+                $form[$field] = $this->applyPostMediaReplacements((string) ($form[$field] ?? ''), $replacements, $sourceSlug, $targetSlug);
+            }
+            $form['conteudo'] = $this->applyPostMediaReplacements((string) ($form['conteudo'] ?? ''), $replacements, $sourceSlug, $targetSlug);
+        }
+    }
+
+    private function movePostMediaDirectory(string $oldSlug, string $newSlug): array
+    {
+        $postsRoot = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'posts';
+        $oldDir = $postsRoot . DIRECTORY_SEPARATOR . $oldSlug;
+        $newDir = $postsRoot . DIRECTORY_SEPARATOR . $newSlug;
+        $replacements = [];
+
+        if (!is_dir($oldDir)) {
+            return ['ok' => true, 'replacements' => []];
+        }
+
+        if (!file_exists($newDir)) {
+            if (@rename($oldDir, $newDir)) {
+                $replacements = array_merge($replacements, $this->renamePostMediaFiles($newDir, $oldSlug, $newSlug));
+                return ['ok' => true, 'replacements' => $replacements];
+            }
+        }
+
+        if (!is_dir($newDir) && !@mkdir($newDir, 0775, true) && !is_dir($newDir)) {
+            return ['ok' => false, 'error' => 'Nao foi possivel preparar a nova pasta de midia do post.'];
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($oldDir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            if (!$item instanceof \SplFileInfo) {
+                continue;
+            }
+
+            $source = $item->getPathname();
+            $relative = substr($source, strlen($oldDir) + 1);
+            $target = $newDir . DIRECTORY_SEPARATOR . $relative;
+
+            if ($item->isDir()) {
+                if (!is_dir($target) && !@mkdir($target, 0775, true) && !is_dir($target)) {
+                    return ['ok' => false, 'error' => 'Nao foi possivel recriar a estrutura da pasta do post.'];
+                }
+                @rmdir($source);
+                continue;
+            }
+
+            $targetDir = dirname($target);
+            if (!is_dir($targetDir) && !@mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+                return ['ok' => false, 'error' => 'Nao foi possivel preparar a pasta de destino da midia do post.'];
+            }
+
+            if (is_file($target)) {
+                @unlink($source);
+                continue;
+            }
+
+            if (!@rename($source, $target)) {
+                return ['ok' => false, 'error' => 'Nao foi possivel mover os arquivos de midia do post para o novo slug.'];
+            }
+        }
+
+        @rmdir($oldDir);
+
+        $replacements = array_merge($replacements, $this->renamePostMediaFiles($newDir, $oldSlug, $newSlug));
+
+        return ['ok' => true, 'replacements' => $replacements];
+    }
+
+    private function renamePostMediaFiles(string $directory, string $oldSlug, string $newSlug): array
+    {
+        if (!is_dir($directory)) {
+            return [];
+        }
+
+        $publicRoot = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR;
+        $replacements = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $item) {
+            if (!$item instanceof \SplFileInfo || !$item->isFile()) {
+                continue;
+            }
+
+            $basename = $item->getBasename();
+            if (!str_contains($basename, $oldSlug)) {
+                continue;
+            }
+
+            $newBasename = str_replace($oldSlug, $newSlug, $basename);
+            if ($newBasename === $basename) {
+                continue;
+            }
+
+            $oldAbsolute = $item->getPathname();
+            $newAbsolute = $item->getPath() . DIRECTORY_SEPARATOR . $newBasename;
+
+            if (is_file($newAbsolute)) {
+                @unlink($oldAbsolute);
+                continue;
+            }
+
+            if (!@rename($oldAbsolute, $newAbsolute)) {
+                continue;
+            }
+
+            $oldRelative = str_replace('\\', '/', substr($oldAbsolute, strlen($publicRoot)));
+            $newRelative = str_replace('\\', '/', substr($newAbsolute, strlen($publicRoot)));
+            $replacements[] = ['from' => $oldRelative, 'to' => $newRelative];
+        }
+
+        return $replacements;
+    }
+
+    private function applyPostMediaReplacements(string $value, array $replacements, string $oldSlug, string $newSlug): string
+    {
+        if ($value === '') {
+            return $value;
+        }
+
+        $oldSegment = 'uploads/posts/' . $oldSlug . '/';
+        $newSegment = 'uploads/posts/' . $newSlug . '/';
+        $result = str_replace(
+            [$oldSegment, '/' . $oldSegment, url('/' . $oldSegment)],
+            [$newSegment, '/' . $newSegment, url('/' . $newSegment)],
+            $value
+        );
+
+        usort($replacements, static function (array $left, array $right): int {
+            return strlen((string) ($right['from'] ?? '')) <=> strlen((string) ($left['from'] ?? ''));
+        });
+
+        foreach ($replacements as $replacement) {
+            $from = trim((string) ($replacement['from'] ?? ''));
+            $to = trim((string) ($replacement['to'] ?? ''));
+            if ($from === '' || $to === '') {
+                continue;
+            }
+
+            $result = str_replace(
+                [$from, '/' . $from, url('/' . $from)],
+                [$to, '/' . $to, url('/' . $to)],
+                $result
+            );
+        }
+
+        return $result;
+    }
+
+    private function extractPostMediaSlugs(string $value): array
+    {
+        if ($value === '') {
+            return [];
+        }
+
+        preg_match_all('~uploads/posts/([^/"\'\s<>]+)/~i', $value, $matches);
+        $items = $matches[1] ?? [];
+        if (!is_array($items)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(fn (mixed $item): string => $this->slugify((string) $item), $items)));
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $size = max(0, $bytes);
+        $index = 0;
+
+        while ($size >= 1024 && $index < count($units) - 1) {
+            $size /= 1024;
+            $index++;
+        }
+
+        return number_format($size, $index === 0 ? 0 : 1, ',', '.') . ' ' . $units[$index];
+    }
+
+    private function buildFormViewModel(string $mode, array $form, array $errors = [], ?array $categorias = null, array $extra = []): array
     {
         $isEdit = $mode === 'edit';
 
-        return [
+        return array_merge([
             'title' => $isEdit ? 'Editar Post' : 'Criar Post',
             'mode' => $mode,
             'form' => $form,
             'errors' => $errors,
             'categorias' => $categorias ?? $this->categorias->listForSelect(),
             'media_items' => $this->midia->recentImages(12),
-        ];
+            'orphan_images' => [],
+        ], $extra);
     }
 
     private function mapPostToForm(array $post): array
@@ -321,6 +587,65 @@ final class PostsService
             'data_publicacao' => $this->formatDateTimeForInput((string) ($post['data_publicacao'] ?? '')),
             'tempo_leitura' => max(1, (int) ($post['tempo_leitura'] ?? 5)),
         ];
+    }
+
+    private function findOrphanBodyImages(array $form): array
+    {
+        $slug = $this->slugify((string) ($form['slug'] ?? ''));
+        if ($slug === '') {
+            return [];
+        }
+
+        $directory = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'posts' . DIRECTORY_SEPARATOR . $slug;
+        if (!is_dir($directory)) {
+            return [];
+        }
+
+        $protected = array_fill_keys(array_filter([
+            ltrim(trim((string) ($form['imagem_capa'] ?? '')), '/'),
+            ltrim(trim((string) ($form['imagem_thumb'] ?? '')), '/'),
+        ]), true);
+
+        $referenced = [];
+        preg_match_all('~uploads/posts/' . preg_quote($slug, '~') . '/[^"\')\s<>]+~i', (string) ($form['conteudo'] ?? ''), $matches);
+        foreach (($matches[0] ?? []) as $path) {
+            $clean = ltrim((string) $path, '/');
+            if ($clean !== '') {
+                $referenced[$clean] = true;
+            }
+        }
+
+        $items = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if (!$file instanceof \SplFileInfo || !$file->isFile()) {
+                continue;
+            }
+
+            $relativePath = 'uploads/posts/' . $slug . '/' . str_replace('\\', '/', substr($file->getPathname(), strlen($directory) + 1));
+            if (isset($protected[$relativePath]) || isset($referenced[$relativePath])) {
+                continue;
+            }
+
+            $extension = strtolower($file->getExtension());
+            $items[] = [
+                'name' => $file->getFilename(),
+                'relative_path' => $relativePath,
+                'public_url' => url('/' . $relativePath),
+                'size_label' => $this->formatBytes((int) $file->getSize()),
+                'modified_label' => date('d/m/Y H:i', (int) $file->getMTime()),
+                'is_image' => in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'], true),
+            ];
+        }
+
+        usort($items, static function (array $left, array $right): int {
+            return strcmp((string) ($left['name'] ?? ''), (string) ($right['name'] ?? ''));
+        });
+
+        return $items;
     }
 
     private function normalizeForm(array $input, int $id = 0): array

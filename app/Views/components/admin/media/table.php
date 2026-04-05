@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 $items = $items ?? [];
-$filters = $filters ?? ['busca' => '', 'tipo' => ''];
+$filters = $filters ?? ['busca' => '', 'tipo' => '', 'estado' => ''];
 $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 12, 'pages' => 1];
 $sort = (string) ($sort ?? 'data');
 $dir = (string) ($dir ?? 'desc');
@@ -12,6 +12,7 @@ $buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $pa
     $query = [
         'busca' => (string) ($filters['busca'] ?? ''),
         'tipo' => (string) ($filters['tipo'] ?? ''),
+        'estado' => (string) ($filters['estado'] ?? ''),
         'sort' => $sort,
         'dir' => $dir,
         'page' => (int) ($pagination['page'] ?? 1),
@@ -55,7 +56,18 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
       <h3 class="font-orbitron text-xl font-black text-white">Biblioteca de Midia</h3>
       <div class="text-xs text-slate-400 mt-1"><?= number_format($total, 0, ',', '.') ?> arquivo(s) encontrados</div>
     </div>
-    <span class="text-cyan-400 text-sm font-bold uppercase"><?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> / <?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+    <div class="flex items-center gap-2 flex-wrap">
+      <?php if (($filters['estado'] ?? '') === 'orfa' && $items !== []): ?>
+        <form method="POST" action="<?= htmlspecialchars(url('/admin/midia/limpar-orfas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex">
+          <?= \App\Support\Csrf::field() ?>
+          <input type="hidden" name="busca" value="<?= htmlspecialchars((string) ($filters['busca'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+          <input type="hidden" name="tipo" value="<?= htmlspecialchars((string) ($filters['tipo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+          <input type="hidden" name="estado" value="orfa">
+          <button type="submit" class="admin-btn admin-btn-secondary">Remover orfas visiveis</button>
+        </form>
+      <?php endif; ?>
+      <span class="text-cyan-400 text-sm font-bold uppercase"><?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> / <?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+    </div>
   </div>
 
   <?php if ($items === []): ?>
@@ -94,6 +106,8 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
               <div><dt class="text-slate-500 uppercase tracking-wide">Tamanho</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars((string) ($item['size_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
               <div><dt class="text-slate-500 uppercase tracking-wide">Tipo</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars((string) ($item['mime'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
               <div><dt class="text-slate-500 uppercase tracking-wide">Pasta</dt><dd class="text-slate-200 mt-1 break-all"><?= htmlspecialchars((string) ($item['directory'] ?? 'uploads'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
+              <div><dt class="text-slate-500 uppercase tracking-wide">Status</dt><dd class="text-slate-200 mt-1"><?= ($item['is_orphan'] ?? false) === true ? 'Orfa' : 'Em uso' ?></dd></div>
+              <div><dt class="text-slate-500 uppercase tracking-wide">Post</dt><dd class="text-slate-200 mt-1 break-all"><?= htmlspecialchars((string) ($item['post_slug'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?: '-' ?></dd></div>
               <div class="col-span-2"><dt class="text-slate-500 uppercase tracking-wide">Dimensoes</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars((string) ($item['dimensions_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
             </dl>
 

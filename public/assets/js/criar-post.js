@@ -69,6 +69,8 @@
     if (ajudaEl) ajudaEl.textContent = ajudas[tabName] || "";
 
     // Sync visual <-> html
+    titulo = renderHighlightedTitle(titulo);
+
     var visual = byId("editor-visual");
     var htmlArea = byId("editor-html");
 
@@ -230,6 +232,22 @@
     }
 
     return window.location.origin + (base !== "" ? base : "") + "/" + raw.replace(/^\/+/, "");
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function renderHighlightedTitle(value) {
+    var raw = String(value || "").trim();
+    if (!raw) return "Sem titulo";
+
+    return escapeHtml(raw).replace(/\[\[(.+?)\]\]/g, '<span class="post-preview-title-accent">$1</span>');
   }
 
   function syncMediaPreview(targetId) {
@@ -608,6 +626,7 @@
     var previewContent = byId("previewContent");
     if (previewContent) {
       previewContent.innerHTML =
+        '<style>.post-preview-title-accent{background:linear-gradient(90deg,#38bdf8 0%,#60a5fa 34%,#8b5cf6 68%,#22d3ee 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}</style>' +
         '<div class="mb-4">' +
         '<span class="px-3 py-1 bg-cyan-500 text-slate-900 text-xs font-bold rounded-full uppercase">' +
         categoriaNome +
@@ -1213,6 +1232,13 @@
     if (!form) return;
 
     form.addEventListener("submit", function (event) {
+      var submitter = event.submitter || null;
+      if (submitter && submitter.name === "cleanup_orphan_images") {
+        formTracker.submitting = true;
+        window.__postEditorAllowUnload = true;
+        return true;
+      }
+
       if (form.dataset.optimized === "1") {
         window.atualizarTextarea();
         formTracker.submitting = true;

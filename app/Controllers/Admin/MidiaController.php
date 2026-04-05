@@ -33,6 +33,20 @@ final class MidiaController
         exit;
     }
 
+    public function cleanupOrphans(): void
+    {
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo 'Token CSRF invalido.';
+            return;
+        }
+
+        $result = $this->service()->cleanupVisibleOrphans($_GET + $_POST);
+        $removed = max(0, (int) ($result['removed'] ?? 0));
+        header('Location: ' . url('/admin/midia?orphan_cleaned=1&orphan_removed=' . $removed));
+        exit;
+    }
+
     public function deleteConfirm(): void
     {
         $path = (string) ($_GET['path'] ?? '');
@@ -68,6 +82,8 @@ final class MidiaController
 
     private function service(): MidiaService
     {
-        return new MidiaService();
+        /** @var \PDO|null $pdo */
+        $pdo = $GLOBALS['pdo'] ?? null;
+        return new MidiaService($pdo);
     }
 }

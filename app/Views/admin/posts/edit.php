@@ -8,12 +8,15 @@ $form = $form ?? [];
 $errors = $errors ?? [];
 $categorias = $categorias ?? [];
 $mediaItems = $media_items ?? [];
+$orphanImages = $orphan_images ?? [];
 $mode = (string) ($mode ?? 'edit');
 $editId = (int) ($form['id'] ?? 0);
 $slug = trim((string) ($form['slug'] ?? ''));
 $status = trim((string) ($form['status'] ?? 'rascunho'));
 $updated = isset($_GET['updated']) && (string) $_GET['updated'] === '1';
 $duplicated = isset($_GET['duplicated']) && (string) $_GET['duplicated'] === '1';
+$orphanCleaned = isset($_GET['orphan_cleaned']) && (string) $_GET['orphan_cleaned'] === '1';
+$orphanRemoved = max(0, (int) ($_GET['orphan_removed'] ?? 0));
 $criarPostJsPath = dirname(__DIR__, 3) . '/public/assets/js/criar-post.js';
 $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJsPath) : '1';
 ?>
@@ -57,6 +60,13 @@ $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJ
     </section>
   <?php endif; ?>
 
+  <?php if ($orphanCleaned): ?>
+    <section class="admin-panel border border-amber-500/30 mb-6">
+      <div class="text-sm font-bold text-amber-200">Limpeza de imagens concluida.</div>
+      <div class="text-xs text-slate-400 mt-1"><?= $orphanRemoved > 0 ? $orphanRemoved . ' arquivo(s) removido(s) da pasta do conteudo.' : 'Nenhuma imagem orfa foi encontrada para remover.' ?></div>
+    </section>
+  <?php endif; ?>
+
   <?php View::component('admin/posts/form', [
       'mode' => $mode,
       'action' => url('/admin/editar-post?id=' . $editId),
@@ -65,6 +75,7 @@ $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJ
       'errors' => $errors,
       'categorias' => $categorias,
       'media_items' => $mediaItems,
+      'orphan_images' => $orphanImages,
   ]); ?>
 </div>
 

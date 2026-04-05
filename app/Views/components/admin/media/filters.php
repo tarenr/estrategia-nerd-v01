@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-$filters = $filters ?? ['busca' => '', 'tipo' => ''];
+$filters = $filters ?? ['busca' => '', 'tipo' => '', 'estado' => ''];
 $sort = (string) ($sort ?? 'data');
 $dir = (string) ($dir ?? 'desc');
 $page = (int) ($pagination['page'] ?? 1);
@@ -19,16 +19,24 @@ $action = url('/admin/midia');
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-    <div class="md:col-span-8">
+    <div class="md:col-span-6">
       <label class="block text-xs text-slate-400 mb-1">Buscar</label>
       <input name="busca" value="<?= htmlspecialchars((string) ($filters['busca'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" placeholder="Nome do arquivo, pasta ou MIME..." class="nerd-input w-full px-4 py-3 rounded-xl">
     </div>
-    <div class="md:col-span-4">
+    <div class="md:col-span-3">
       <label class="block text-xs text-slate-400 mb-1">Tipo</label>
       <select name="tipo" class="nerd-input w-full px-4 py-3 rounded-xl">
         <option value="" <?= ($filters['tipo'] ?? '') === '' ? 'selected' : '' ?>>Todos</option>
         <option value="imagem" <?= ($filters['tipo'] ?? '') === 'imagem' ? 'selected' : '' ?>>Somente imagens</option>
         <option value="outros" <?= ($filters['tipo'] ?? '') === 'outros' ? 'selected' : '' ?>>Outros arquivos</option>
+      </select>
+    </div>
+    <div class="md:col-span-3">
+      <label class="block text-xs text-slate-400 mb-1">Estado</label>
+      <select name="estado" class="nerd-input w-full px-4 py-3 rounded-xl">
+        <option value="" <?= ($filters['estado'] ?? '') === '' ? 'selected' : '' ?>>Todos</option>
+        <option value="uso" <?= ($filters['estado'] ?? '') === 'uso' ? 'selected' : '' ?>>Em uso</option>
+        <option value="orfa" <?= ($filters['estado'] ?? '') === 'orfa' ? 'selected' : '' ?>>Somente orfas</option>
       </select>
     </div>
   </div>

@@ -3,14 +3,16 @@ declare(strict_types=1);
 
 use App\Support\View;
 
-$summary = $summary ?? ['total' => 0, 'images' => 0, 'others' => 0, 'directories' => 0, 'size_label' => '0 B'];
-$filters = $filters ?? ['busca' => '', 'tipo' => ''];
+$summary = $summary ?? ['total' => 0, 'images' => 0, 'others' => 0, 'directories' => 0, 'orphans' => 0, 'size_label' => '0 B'];
+$filters = $filters ?? ['busca' => '', 'tipo' => '', 'estado' => ''];
 $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 12, 'pages' => 1];
 $sort = (string) ($sort ?? 'data');
 $dir = (string) ($dir ?? 'desc');
 $errors = $errors ?? [];
 $uploaded = isset($_GET['uploaded']) && (string) $_GET['uploaded'] === '1';
 $deleted = isset($_GET['deleted']) && (string) $_GET['deleted'] === '1';
+$orphanCleaned = isset($_GET['orphan_cleaned']) && (string) $_GET['orphan_cleaned'] === '1';
+$orphanRemoved = max(0, (int) ($_GET['orphan_removed'] ?? 0));
 ?>
 
 <div class="max-w-7xl mx-auto px-4 py-6">
@@ -32,6 +34,10 @@ $deleted = isset($_GET['deleted']) && (string) $_GET['deleted'] === '1';
 
     <?php if ($deleted): ?>
       <section class="admin-panel border border-rose-500/30"><div class="text-sm font-bold text-rose-300">Arquivo excluido com sucesso.</div><div class="text-xs text-slate-400 mt-1">A midia removida nao aparece mais na biblioteca de uploads.</div></section>
+    <?php endif; ?>
+
+    <?php if ($orphanCleaned): ?>
+      <section class="admin-panel border border-amber-500/30"><div class="text-sm font-bold text-amber-200">Limpeza global concluida.</div><div class="text-xs text-slate-400 mt-1"><?= $orphanRemoved > 0 ? $orphanRemoved . ' arquivo(s) orfao(s) removido(s) da biblioteca.' : 'Nenhuma imagem orfa visivel foi removida.' ?></div></section>
     <?php endif; ?>
 
     <?php View::component('admin/media/summary-cards', ['summary' => $summary]); ?>

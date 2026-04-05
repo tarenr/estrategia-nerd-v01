@@ -52,15 +52,52 @@ if (!is_array($routes)) {
 
 /** Match */
 $match = null;
+$routeParams = [];
 foreach ($routes as $route) {
     [$m, $p, $handler, $middleware] = $route;
 
     $p = rtrim((string)$p, '/') ?: '/';
-
-    if (strtoupper((string)$m) === $method && $p === $path) {
-        $match = [$handler, $middleware];
-        break;
+    if (strtoupper((string) $m) !== $method) {
+        continue;
     }
+
+    if (strpos($p, '{') === false) {
+        if ($p === $path) {
+            $match = [$handler, $middleware];
+            break;
+        }
+
+        continue;
+    }
+
+    $routeSegments = $p === '/' ? [] : explode('/', trim($p, '/'));
+    $pathSegments = $path === '/' ? [] : explode('/', trim($path, '/'));
+    if (count($routeSegments) !== count($pathSegments)) {
+        continue;
+    }
+
+    $currentParams = [];
+    $matched = true;
+    foreach ($routeSegments as $index => $segment) {
+        $currentValue = (string) ($pathSegments[$index] ?? '');
+        if (preg_match('/^\{([a-zA-Z_][a-zA-Z0-9_]*)\}$/', $segment, $paramMatch) === 1) {
+            $currentParams[$paramMatch[1]] = rawurldecode($currentValue);
+            continue;
+        }
+
+        if ($segment !== $currentValue) {
+            $matched = false;
+            break;
+        }
+    }
+
+    if (!$matched) {
+        continue;
+    }
+
+    $routeParams = $currentParams;
+    $match = [$handler, $middleware];
+    break;
 }
 
 if (!$match) {
@@ -117,7 +154,7 @@ if (is_array($handler) && count($handler) === 2) {
         exit;
     }
 
-    $controller->{$controllerMethod}();
+    $controller->{$controllerMethod}(...array_values($routeParams));
     exit;
 }
 

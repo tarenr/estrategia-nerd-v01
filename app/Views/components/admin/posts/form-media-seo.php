@@ -4,6 +4,7 @@ declare(strict_types=1);
 $fieldError = $fieldError ?? static fn (string $key): string => '';
 $form = $form ?? [];
 $mediaItems = $media_items ?? [];
+$orphanImages = $orphan_images ?? [];
 
 $coverValue = trim((string) ($form['imagem_capa'] ?? ''));
 $thumbValue = trim((string) ($form['imagem_thumb'] ?? ''));
@@ -112,6 +113,58 @@ $thumbPreview = $thumbValue !== '' ? (preg_match('~^https?://~i', $thumbValue) ?
               <div class="grid grid-cols-2 gap-2">
                 <button type="button" class="admin-btn admin-btn-secondary !px-2 !py-2 text-[11px]" data-media-pick data-media-target="imagem_capa" data-media-url="<?= htmlspecialchars($itemPath, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Usar capa</button>
                 <button type="button" class="admin-btn admin-btn-secondary !px-2 !py-2 text-[11px]" data-media-pick data-media-target="imagem_thumb" data-media-url="<?= htmlspecialchars($itemPath, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Usar thumb</button>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <div class="rounded-2xl border border-amber-500/15 bg-slate-950/40 p-4 space-y-4">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div>
+        <h3 class="text-sm font-black text-white">Limpeza manual do conteudo</h3>
+        <div class="text-xs text-slate-400 mt-1">Revise imagens do corpo que estao na pasta do post, mas nao aparecem mais no HTML salvo.</div>
+      </div>
+      <?php if ($orphanImages !== [] && (int) ($form['id'] ?? 0) > 0): ?>
+        <button
+          type="submit"
+          name="cleanup_orphan_images"
+          value="1"
+          formaction="<?= htmlspecialchars(url('/admin/limpar-post-imagens-orfas?id=' . (int) ($form['id'] ?? 0)), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+          formmethod="post"
+          formnovalidate
+          class="admin-btn admin-btn-secondary !px-3 !py-2 text-xs"
+        >Remover imagens orfas</button>
+      <?php endif; ?>
+    </div>
+
+    <?php if ($orphanImages === []): ?>
+      <div class="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-6 text-sm text-slate-400">
+        Nenhuma imagem orfa encontrada neste post.
+      </div>
+    <?php else: ?>
+      <div class="rounded-xl border border-amber-500/15 bg-slate-950/30 px-4 py-3 text-xs text-amber-100">
+        Encontramos <?= count($orphanImages) ?> arquivo(s) na pasta do post que nao estao mais referenciados no conteudo atual. A limpeza abaixo remove apenas esses arquivos.
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <?php foreach ($orphanImages as $item): ?>
+          <div class="rounded-2xl border border-amber-500/15 bg-slate-900/50 overflow-hidden">
+            <div class="aspect-video bg-slate-950/70 overflow-hidden flex items-center justify-center">
+              <?php if (($item['is_image'] ?? false) === true): ?>
+                <img src="<?= htmlspecialchars((string) ($item['public_url'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['name'] ?? 'Imagem orfa'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="w-full h-full object-cover">
+              <?php else: ?>
+                <div class="px-4 text-center text-xs text-slate-500">Arquivo sem preview</div>
+              <?php endif; ?>
+            </div>
+            <div class="p-3 space-y-2">
+              <div class="text-[11px] leading-4 text-slate-200 break-all"><?= htmlspecialchars((string) ($item['name'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <div class="text-[11px] text-slate-400 break-all"><?= htmlspecialchars((string) ($item['relative_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <div class="flex items-center justify-between gap-3 text-[11px] text-slate-500">
+                <span><?= htmlspecialchars((string) ($item['size_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                <span><?= htmlspecialchars((string) ($item['modified_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
               </div>
             </div>
           </div>

@@ -14,6 +14,11 @@ final class MidiaService
         ['relative' => 'assets/brand', 'label' => 'Institucional'],
     ];
 
+    public function __construct(
+        private ?\PDO $pdo = null,
+    ) {
+    }
+
     public function getIndexViewModel(array $query = [], array $errors = []): array
     {
         $this->ensureDirectories();
@@ -23,7 +28,8 @@ final class MidiaService
         $perPage = $this->clampInt((int) ($query['per_page'] ?? 12), 8, 48);
         [$sort, $dir] = $this->normalizeSortDir((string) ($query['sort'] ?? 'data'), (string) ($query['dir'] ?? 'desc'));
 
-        $allItems = $this->scanMediaItems();
+        $usage = $this->collectPostMediaUsage();
+        $allItems = $this->scanMediaItems($usage);
         $filteredItems = $this->applyFilters($allItems, $filters);
         $sortedItems = $this->sortItems($filteredItems, $sort, $dir);
 
@@ -41,7 +47,7 @@ final class MidiaService
 
     public function recentImages(int $limit = 12): array
     {
-        $items = array_values(array_filter($this->scanMediaItems(), static fn (array $item): bool => ($item['is_image'] ?? false) === true));
+        $items = array_values(array_filter($this->scanMediaItems($this->collectPostMediaUsage()), static fn (array $item): bool => ($item['is_image'] ?? false) === true));
         $items = $this->sortItems($items, 'data', 'desc');
         return array_slice($items, 0, max(1, $limit));
     }
@@ -154,7 +160,28 @@ final class MidiaService
         return ['ok' => true];
     }
 
-    private function scanMediaItems(): array
+    public function cleanupVisibleOrphans(array $query = []): array
+    {
+        $filters = $this->normalizeFilters($query);
+        $filters['estado'] = 'orfa';
+        $items = $this->applyFilters($this->scanMediaItems($this->collectPostMediaUsage()), $filters);
+        $removed = 0;
+
+        foreach ($items as $item) {
+            if (($item['is_orphan'] ?? false) !== true || ($item['is_managed_upload'] ?? false) !== true) {
+                continue;
+            }
+
+            $resolved = $this->resolveManagedFile((string) ($item['relative_path'] ?? ''));
+            if ($resolved !== null && is_file($resolved['absolute_path']) && @unlink($resolved['absolute_path'])) {
+                $removed++;
+            }
+        }
+
+        return ['ok' => true, 'removed' => $removed];
+    }
+
+    private function scanMediaItems(array $usage = []): array
     {
         $items = [];
 
@@ -194,6 +221,8 @@ final class MidiaService
                     'library' => $label,
                     'library_key' => $relativeRoot,
                     'is_managed_upload' => str_starts_with($relativePath, 'uploads/'),
+                    'is_orphan' => $this->isOrphanMediaItem($relativePath, $usage),
+                    'post_slug' => $this->extractPostSlug($relativePath),
                     'size' => $size,
                     'size_label' => $this->formatBytes($size),
                     'modified_at' => $modifiedAt,
@@ -214,10 +243,11 @@ final class MidiaService
     {
         $busca = mb_strtolower((string) ($filters['busca'] ?? ''));
         $tipo = (string) ($filters['tipo'] ?? '');
+        $estado = (string) ($filters['estado'] ?? '');
 
-        return array_values(array_filter($items, static function (array $item) use ($busca, $tipo): bool {
+        return array_values(array_filter($items, static function (array $item) use ($busca, $tipo, $estado): bool {
             if ($busca !== '') {
-                $haystack = mb_strtolower(implode(' ', [(string) ($item['name'] ?? ''), (string) ($item['directory'] ?? ''), (string) ($item['mime'] ?? '')]));
+                $haystack = mb_strtolower(implode(' ', [(string) ($item['name'] ?? ''), (string) ($item['directory'] ?? ''), (string) ($item['mime'] ?? ''), (string) ($item['post_slug'] ?? '')]));
                 if (!str_contains($haystack, $busca)) {
                     return false;
                 }
@@ -228,6 +258,14 @@ final class MidiaService
             }
 
             if ($tipo === 'outros' && (($item['is_image'] ?? false) === true)) {
+                return false;
+            }
+
+            if ($estado === 'orfa' && (($item['is_orphan'] ?? false) !== true)) {
+                return false;
+            }
+
+            if ($estado === 'uso' && (($item['is_orphan'] ?? false) === true)) {
                 return false;
             }
 
@@ -294,7 +332,8 @@ final class MidiaService
             }
         }
 
-        return ['total' => count($items), 'images' => $images, 'others' => max(0, count($items) - $images), 'directories' => count($directories), 'institutional' => $institutional, 'size_label' => $this->formatBytes($size)];
+        $orphans = count(array_filter($items, static fn (array $item): bool => ($item['is_orphan'] ?? false) === true));
+        return ['total' => count($items), 'images' => $images, 'others' => max(0, count($items) - $images), 'directories' => count($directories), 'institutional' => $institutional, 'orphans' => $orphans, 'size_label' => $this->formatBytes($size)];
     }
 
     private function validateUpload(mixed $file): array
@@ -378,7 +417,72 @@ final class MidiaService
 
     private function normalizeFilters(array $query): array
     {
-        return ['busca' => trim((string) ($query['busca'] ?? '')), 'tipo' => trim((string) ($query['tipo'] ?? ''))];
+        return [
+            'busca' => trim((string) ($query['busca'] ?? '')),
+            'tipo' => trim((string) ($query['tipo'] ?? '')),
+            'estado' => trim((string) ($query['estado'] ?? '')),
+        ];
+    }
+
+    private function collectPostMediaUsage(): array
+    {
+        if (!$this->pdo instanceof \PDO) {
+            return ['protected' => [], 'content' => []];
+        }
+
+        $protected = [];
+        $content = [];
+
+        $stmt = $this->pdo->query('SELECT imagem_capa, imagem_thumb, conteudo FROM posts');
+        if (!$stmt) {
+            return ['protected' => [], 'content' => []];
+        }
+
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [] as $row) {
+            foreach (['imagem_capa', 'imagem_thumb'] as $field) {
+                $path = ltrim(trim((string) ($row[$field] ?? '')), '/');
+                if ($path !== '') {
+                    $protected[$path] = true;
+                }
+            }
+
+            preg_match_all('~uploads/posts/[^"\')\s<>]+~i', (string) ($row['conteudo'] ?? ''), $matches);
+            foreach (($matches[0] ?? []) as $path) {
+                $clean = ltrim((string) $path, '/');
+                if ($clean !== '') {
+                    $content[$clean] = true;
+                }
+            }
+        }
+
+        return ['protected' => $protected, 'content' => $content];
+    }
+
+    private function isOrphanMediaItem(string $relativePath, array $usage): bool
+    {
+        $relativePath = ltrim($relativePath, '/');
+        if (!str_starts_with($relativePath, 'uploads/posts/')) {
+            return false;
+        }
+
+        if (isset(($usage['protected'] ?? [])[$relativePath])) {
+            return false;
+        }
+
+        if (isset(($usage['content'] ?? [])[$relativePath])) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function extractPostSlug(string $relativePath): string
+    {
+        if (preg_match('~^uploads/posts/([^/]+)/~', $relativePath, $match)) {
+            return (string) ($match[1] ?? '');
+        }
+
+        return '';
     }
 
     private function normalizeSortDir(string $sort, string $dir): array

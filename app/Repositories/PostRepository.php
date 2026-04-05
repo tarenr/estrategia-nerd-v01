@@ -182,6 +182,163 @@ final class PostRepository
         return is_array($row) ? $row : null;
     }
 
+    public function findPublicBySlug(string $slug): ?array
+    {
+        $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.conteudo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
+                       COALESCE(p.views, 0) AS views, COALESCE(p.curtidas, 0) AS curtidas, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
+                       COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
+                       p.seo_title, p.seo_description, p.tags, p.autor_id,
+                       c.id AS categoria_id, c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
+                FROM posts p
+                LEFT JOIN categoria_post c ON c.id = p.categoria_post_id
+                WHERE p.slug = :slug
+                  AND p.status = 'publicado'
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    public function findPublicByHistoricalSlug(string $slug): ?array
+    {
+        $sql = "SELECT p.id, p.slug
+                FROM post_slug_history h
+                INNER JOIN posts p ON p.id = h.post_id
+                WHERE h.slug = :slug
+                  AND p.status = 'publicado'
+                ORDER BY h.id DESC
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    public function incrementViews(int $id): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE posts SET views = COALESCE(views, 0) + 1 WHERE id = :id LIMIT 1');
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function incrementLikes(int $id): int
+    {
+        $stmt = $this->pdo->prepare('UPDATE posts SET curtidas = COALESCE(curtidas, 0) + 1, likes_count = COALESCE(likes_count, 0) + 1 WHERE id = :id LIMIT 1');
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $countStmt = $this->pdo->prepare('SELECT COALESCE(curtidas, 0) FROM posts WHERE id = :id LIMIT 1');
+        $countStmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $countStmt->execute();
+
+        return (int) ($countStmt->fetchColumn() ?: 0);
+    }
+
+    public function incrementCommentsCount(int $id, int $amount = 1): void
+    {
+        $amount = max(1, $amount);
+        $stmt = $this->pdo->prepare('UPDATE posts SET comentarios_count = COALESCE(comentarios_count, 0) + :amount WHERE id = :id LIMIT 1');
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->bindValue(':amount', $amount, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function relatedPublicByCategoria(int $categoriaId, int $excludeId, int $limit = 3): array
+    {
+        $limit = max(1, min(6, $limit));
+        $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
+                       COALESCE(p.views, 0) AS views, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
+                       COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
+                       c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
+                FROM posts p
+                LEFT JOIN categoria_post c ON c.id = p.categoria_post_id
+                WHERE p.status = 'publicado'
+                  AND p.id <> :exclude_id
+                  AND p.categoria_post_id = :categoria_id
+                ORDER BY COALESCE(p.destaque, 0) DESC, p.data_publicacao DESC, p.id DESC
+                LIMIT :limit";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':exclude_id', $excludeId, PDO::PARAM_INT);
+        $stmt->bindValue(':categoria_id', $categoriaId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function latestPublicExcluding(array $excludeIds, int $limit = 3): array
+    {
+        $limit = max(1, min(6, $limit));
+        $excludeIds = array_values(array_filter(array_map('intval', $excludeIds), static fn (int $id): bool => $id > 0));
+
+        $where = ["p.status = 'publicado'"];
+        if ($excludeIds !== []) {
+            $where[] = 'p.id NOT IN (' . implode(',', $excludeIds) . ')';
+        }
+
+        $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
+                       COALESCE(p.views, 0) AS views, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
+                       COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
+                       c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
+                FROM posts p
+                LEFT JOIN categoria_post c ON c.id = p.categoria_post_id
+                WHERE " . implode(' AND ', $where) . "
+                ORDER BY p.data_publicacao DESC, p.id DESC
+                LIMIT :limit";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function previousPublicPost(string $publishedAt, int $id): ?array
+    {
+        $sql = "SELECT id, titulo, slug
+                FROM posts
+                WHERE status = 'publicado'
+                  AND (
+                      data_publicacao < :published_at_before
+                      OR (data_publicacao = :published_at_equal AND id < :id_before)
+                  )
+                ORDER BY data_publicacao DESC, id DESC
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':published_at_before', $publishedAt, PDO::PARAM_STR);
+        $stmt->bindValue(':published_at_equal', $publishedAt, PDO::PARAM_STR);
+        $stmt->bindValue(':id_before', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    public function nextPublicPost(string $publishedAt, int $id): ?array
+    {
+        $sql = "SELECT id, titulo, slug
+                FROM posts
+                WHERE status = 'publicado'
+                  AND (
+                      data_publicacao > :published_at_after
+                      OR (data_publicacao = :published_at_equal AND id > :id_after)
+                  )
+                ORDER BY data_publicacao ASC, id ASC
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':published_at_after', $publishedAt, PDO::PARAM_STR);
+        $stmt->bindValue(':published_at_equal', $publishedAt, PDO::PARAM_STR);
+        $stmt->bindValue(':id_after', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
     public function summaryFiltered(array $filters): array
     {
         [$whereSql, $params] = $this->buildAdminWhere($filters);
@@ -336,6 +493,27 @@ final class PostRepository
         $stmt->bindValue(':tags', (string) ($data['tags'] ?? ''), PDO::PARAM_STR);
         $stmt->bindValue(':status', (string) ($data['status'] ?? 'rascunho'), PDO::PARAM_STR);
         $stmt->bindValue(':destaque', (int) ($data['destaque'] ?? 0), PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function storeSlugHistory(int $postId, string $slug): void
+    {
+        $slug = trim($slug);
+        if ($postId <= 0 || $slug === '') {
+            return;
+        }
+
+        $check = $this->pdo->prepare('SELECT id FROM post_slug_history WHERE post_id = :post_id AND slug = :slug LIMIT 1');
+        $check->bindValue(':post_id', $postId, PDO::PARAM_INT);
+        $check->bindValue(':slug', $slug, PDO::PARAM_STR);
+        $check->execute();
+        if ($check->fetch(PDO::FETCH_ASSOC)) {
+            return;
+        }
+
+        $stmt = $this->pdo->prepare('INSERT INTO post_slug_history (post_id, slug, created_at) VALUES (:post_id, :slug, NOW())');
+        $stmt->bindValue(':post_id', $postId, PDO::PARAM_INT);
+        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
         $stmt->execute();
     }
 

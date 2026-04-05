@@ -107,6 +107,27 @@ final class PostsController
         echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
+    public function cleanupOrphanImages(): void
+    {
+        $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo 'Token CSRF invalido.';
+            return;
+        }
+
+        $result = $this->service()->cleanupOrphanBodyImages($id);
+        if (($result['not_found'] ?? false) === true) {
+            http_response_code(404);
+            echo 'Post nao encontrado.';
+            return;
+        }
+
+        $removed = max(0, (int) ($result['removed'] ?? 0));
+        header('Location: ' . url('/admin/editar-post?id=' . $id . '&orphan_cleaned=1&orphan_removed=' . $removed));
+        exit;
+    }
+
     public function duplicate(): void
     {
         $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
