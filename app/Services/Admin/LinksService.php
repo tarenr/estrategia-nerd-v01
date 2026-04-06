@@ -27,8 +27,9 @@ final class LinksService
 
         $total = count($filteredItems);
         $ativos = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'ativo'));
-        $destaques = count(array_filter($filteredItems, static fn (array $item): bool => (int) ($item['destaque'] ?? 0) === 1));
-        $expirados = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'expirado'));
+        $promocoes = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'produto' && (int) ($item['promocao'] ?? 0) === 1));
+        $produtos = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'produto' && (int) ($item['promocao'] ?? 0) === 0));
+        $cupons = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'cupom'));
         $sociais = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'rede_social'));
 
         return [
@@ -41,8 +42,9 @@ final class LinksService
             'summary' => [
                 'total' => $total,
                 'ativos' => $ativos,
-                'destaques' => $destaques,
-                'expirados' => $expirados,
+                'promocoes' => $promocoes,
+                'produtos' => $produtos,
+                'cupons' => $cupons,
                 'sociais' => $sociais,
             ],
         ];
@@ -96,24 +98,9 @@ final class LinksService
 
         $slugBase = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']);
         $slug = $this->links->nextAvailableSlug($slugBase);
-        $id = $this->links->insertAdmin([
-            'titulo' => $form['titulo'],
-            'slug' => $slug,
-            'url' => $form['url'],
-            'tipo' => $form['tipo'],
-            'descricao' => $form['descricao'],
-            'cta_curto' => $form['cta_curto'],
-            'texto_botao' => $form['texto_botao'],
-            'selo' => $form['selo'],
-            'imagem' => $form['imagem'],
-            'posicao' => $form['posicao'],
-            'status' => $form['status'],
-            'destaque' => $form['destaque'],
-            'expira_em' => $form['expira_em'],
-            'observacao_status' => $form['observacao_status'],
-        ]);
+        $this->links->insertAdmin($this->payloadFromForm($form, $slug));
 
-        return ['ok' => true, 'id' => $id, 'slug' => $slug];
+        return ['ok' => true, 'slug' => $slug];
     }
 
     public function updateLink(int $id, array $input): array
@@ -137,22 +124,7 @@ final class LinksService
 
         $slugBase = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']);
         $slug = $this->links->nextAvailableSlug($slugBase, $id);
-        $this->links->updateAdmin($id, [
-            'titulo' => $form['titulo'],
-            'slug' => $slug,
-            'url' => $form['url'],
-            'tipo' => $form['tipo'],
-            'descricao' => $form['descricao'],
-            'cta_curto' => $form['cta_curto'],
-            'texto_botao' => $form['texto_botao'],
-            'selo' => $form['selo'],
-            'imagem' => $form['imagem'],
-            'posicao' => $form['posicao'],
-            'status' => $form['status'],
-            'destaque' => $form['destaque'],
-            'expira_em' => $form['expira_em'],
-            'observacao_status' => $form['observacao_status'],
-        ]);
+        $this->links->updateAdmin($id, $this->payloadFromForm($form, $slug));
 
         return ['ok' => true, 'id' => $id, 'slug' => $slug];
     }
@@ -224,10 +196,52 @@ final class LinksService
         ];
     }
 
+    private function payloadFromForm(array $form, string $slug): array
+    {
+        return [
+            'titulo' => $form['titulo'],
+            'slug' => $slug,
+            'url' => $form['url'],
+            'tipo' => $form['tipo'],
+            'promocao' => $form['promocao'],
+            'desconto_percentual' => $form['desconto_percentual'],
+            'desconto_contexto' => $form['desconto_contexto'],
+            'codigo_cupom' => $form['codigo_cupom'],
+            'secao_publica' => $this->derivePublicSection($form['tipo'], $form['promocao']),
+            'subgrupo_publico' => $form['subgrupo_publico'],
+            'descricao' => $form['descricao'],
+            'cta_curto' => $form['cta_curto'],
+            'texto_botao' => $form['texto_botao'],
+            'selo' => $form['selo'],
+            'imagem' => $form['imagem'],
+            'posicao' => $form['posicao'],
+            'status' => $form['status'],
+            'destaque' => $form['destaque'],
+            'expira_em' => $form['expira_em'],
+            'observacao_status' => $form['observacao_status'],
+        ];
+    }
+
+    private function derivePublicSection(string $tipo, int $promocao): string
+    {
+        if ($tipo === 'produto' && $promocao === 1) {
+            return 'promocoes';
+        }
+
+        return match ($tipo) {
+            'produto' => 'produtos',
+            'cupom' => 'cupons',
+            'conteudo' => 'conteudo',
+            'rede_social' => 'rede_social',
+            'servico' => 'servicos',
+            default => 'produtos',
+        };
+    }
+
     private function toggleStatus(array $link): array
     {
         $current = (string) ($link['status'] ?? 'ativo');
-        $next = $current === 'ativo' ? 'oculto' : 'ativo';
+        $next = $current === 'oculto' ? 'ativo' : 'oculto';
         $this->links->updateQuickFields((int) ($link['id'] ?? 0), ['status' => $next]);
 
         return ['ok' => true, 'mode' => 'status_' . $next];
@@ -317,7 +331,12 @@ final class LinksService
             'titulo' => trim((string) ($link['titulo'] ?? '')),
             'slug' => trim((string) ($link['slug'] ?? '')),
             'url' => trim((string) ($link['url'] ?? '')),
-            'tipo' => trim((string) ($link['tipo'] ?? 'conteudo')),
+            'tipo' => trim((string) ($link['tipo'] ?? 'produto')),
+            'promocao' => (int) ($link['promocao'] ?? 0) === 1 ? 1 : 0,
+            'subgrupo_publico' => trim((string) ($link['subgrupo_publico'] ?? '')),
+            'desconto_percentual' => trim((string) ($link['desconto_percentual'] ?? '')),
+            'desconto_contexto' => trim((string) ($link['desconto_contexto'] ?? '')),
+            'codigo_cupom' => trim((string) ($link['codigo_cupom'] ?? '')),
             'descricao' => trim((string) ($link['descricao'] ?? '')),
             'cta_curto' => trim((string) ($link['cta_curto'] ?? '')),
             'texto_botao' => trim((string) ($link['texto_botao'] ?? '')),
@@ -333,14 +352,29 @@ final class LinksService
 
     private function normalizeForm(array $input, int $id = 0): array
     {
-        $tipo = trim((string) ($input['tipo'] ?? 'conteudo'));
-        if (!in_array($tipo, ['afiliado', 'oferta', 'conteudo', 'rede_social', 'servico'], true)) {
-            $tipo = 'conteudo';
+        $tipo = trim((string) ($input['tipo'] ?? 'produto'));
+        if (!in_array($tipo, ['produto', 'cupom', 'conteudo', 'rede_social', 'servico'], true)) {
+            $tipo = 'produto';
         }
 
         $status = trim((string) ($input['status'] ?? 'ativo'));
         if (!in_array($status, ['ativo', 'oculto', 'expirado', 'quebrado'], true)) {
             $status = 'ativo';
+        }
+
+        $promocao = $tipo === 'produto' && (int) ($input['promocao'] ?? 0) === 1 ? 1 : 0;
+        $subgrupoPublico = trim((string) ($input['subgrupo_publico'] ?? ''));
+        if ($tipo !== 'produto') {
+            $subgrupoPublico = '';
+        }
+
+        $descontoPercentual = trim((string) ($input['desconto_percentual'] ?? ''));
+        $descontoContexto = trim((string) ($input['desconto_contexto'] ?? ''));
+        $codigoCupom = trim((string) ($input['codigo_cupom'] ?? ''));
+        if ($tipo !== 'cupom') {
+            $descontoPercentual = '';
+            $descontoContexto = '';
+            $codigoCupom = '';
         }
 
         return [
@@ -349,6 +383,11 @@ final class LinksService
             'slug' => trim((string) ($input['slug'] ?? '')),
             'url' => trim((string) ($input['url'] ?? '')),
             'tipo' => $tipo,
+            'promocao' => $promocao,
+            'subgrupo_publico' => $subgrupoPublico,
+            'desconto_percentual' => $descontoPercentual,
+            'desconto_contexto' => $descontoContexto,
+            'codigo_cupom' => $codigoCupom,
             'descricao' => trim((string) ($input['descricao'] ?? '')),
             'cta_curto' => trim((string) ($input['cta_curto'] ?? '')),
             'texto_botao' => trim((string) ($input['texto_botao'] ?? '')),
@@ -383,6 +422,38 @@ final class LinksService
             $errors['url'] = 'Informe uma URL valida. Use http(s):// ou um caminho interno iniciando com /.';
         }
 
+        if ($form['tipo'] === 'produto' && $form['subgrupo_publico'] === '') {
+            $errors['subgrupo_publico'] = 'Informe o grupo de produto que sera exibido na Central Nerd.';
+        }
+
+        if ($form['subgrupo_publico'] !== '' && mb_strlen($form['subgrupo_publico']) > 80) {
+            $errors['subgrupo_publico'] = 'O grupo de produto deve ter no maximo 80 caracteres.';
+        }
+
+        if ($form['tipo'] === 'cupom' && $form['desconto_percentual'] === '') {
+            $errors['desconto_percentual'] = 'Informe o percentual do cupom.';
+        }
+
+        if ($form['desconto_percentual'] !== '' && mb_strlen($form['desconto_percentual']) > 20) {
+            $errors['desconto_percentual'] = 'O percentual deve ter no maximo 20 caracteres.';
+        }
+
+        if ($form['tipo'] === 'cupom' && $form['desconto_contexto'] === '') {
+            $errors['desconto_contexto'] = 'Explique onde o cupom se aplica.';
+        }
+
+        if ($form['desconto_contexto'] !== '' && mb_strlen($form['desconto_contexto']) > 160) {
+            $errors['desconto_contexto'] = 'A descricao do cupom deve ter no maximo 160 caracteres.';
+        }
+
+        if ($form['tipo'] === 'cupom' && $form['codigo_cupom'] === '') {
+            $errors['codigo_cupom'] = 'Informe o codigo do cupom.';
+        }
+
+        if ($form['codigo_cupom'] !== '' && mb_strlen($form['codigo_cupom']) > 80) {
+            $errors['codigo_cupom'] = 'O codigo do cupom deve ter no maximo 80 caracteres.';
+        }
+
         if ($form['descricao'] !== '' && mb_strlen($form['descricao']) > 255) {
             $errors['descricao'] = 'A descricao deve ter no maximo 255 caracteres.';
         }
@@ -415,6 +486,7 @@ final class LinksService
         return [
             'busca' => trim((string) ($query['busca'] ?? '')),
             'tipo' => trim((string) ($query['tipo'] ?? '')),
+            'promocao' => trim((string) ($query['promocao'] ?? '')),
             'status' => trim((string) ($query['status'] ?? '')),
             'destaque' => trim((string) ($query['destaque'] ?? '')),
             'monitoramento' => trim((string) ($query['monitoramento'] ?? '')),

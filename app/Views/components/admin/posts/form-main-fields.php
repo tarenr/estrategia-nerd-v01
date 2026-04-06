@@ -15,6 +15,7 @@ $form = $form ?? [];
     <div class="md:col-span-2">
       <label for="titulo" class="block text-sm font-bold text-slate-200 mb-2">Titulo</label>
       <input id="titulo" name="titulo" type="text" value="<?= htmlspecialchars((string) ($form['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" style="background:#0f172a !important;background-color:#0f172a !important;color:#e2e8f0 !important;" placeholder="Ex.: RTX 5070 vs RX 9070: qual vale mais a pena?">
+      <div class="mt-2 text-xs text-slate-400">Para destacar um trecho no titulo publico, use <code>[[ ... ]]</code>. Ex.: <code>O Futuro dos Processadores: [[Intel vs AMD vs ARM]] em 2026</code></div>
       <?php if ($fieldError('titulo') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('titulo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
     </div>
 

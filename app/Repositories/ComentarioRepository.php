@@ -92,7 +92,7 @@ final class ComentarioRepository
     public function summaryFiltered(array $filters): array
     {
         [$whereSql, $params] = $this->buildAdminWhere($filters);
-        $sql = "SELECT COUNT(*) AS total, SUM(CASE WHEN c.status = 'pendente' THEN 1 ELSE 0 END) AS pendentes, SUM(CASE WHEN c.status = 'aprovado' THEN 1 ELSE 0 END) AS aprovados, SUM(CASE WHEN c.status = 'reprovado' THEN 1 ELSE 0 END) AS reprovados, SUM(CASE WHEN c.status = 'spam' THEN 1 ELSE 0 END) AS spam, SUM(CASE WHEN EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id) THEN 1 ELSE 0 END) AS respondidos FROM comentarios c LEFT JOIN posts p ON p.id = c.post_id {$whereSql}";
+        $sql = "SELECT COUNT(*) AS total, SUM(CASE WHEN c.status = 'pendente' THEN 1 ELSE 0 END) AS pendentes, SUM(CASE WHEN c.status = 'aprovado' THEN 1 ELSE 0 END) AS aprovados, SUM(CASE WHEN c.status = 'reprovado' THEN 1 ELSE 0 END) AS reprovados, SUM(CASE WHEN c.status = 'spam' THEN 1 ELSE 0 END) AS spam, SUM(CASE WHEN c.parent_id IS NOT NULL THEN 1 ELSE 0 END) AS respondidos FROM comentarios c LEFT JOIN posts p ON p.id = c.post_id {$whereSql}";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -143,7 +143,7 @@ final class ComentarioRepository
         }
         $offset = ($page - 1) * $perPage;
 
-        $sql = "SELECT c.id, c.post_id, c.nome, c.email, c.comentario, c.status, c.parent_id, COALESCE(c.respondido, 0) AS respondido_legacy, EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id) AS has_reply, c.data, COALESCE(p.titulo, 'Post removido') AS post_titulo, p.slug AS post_slug FROM comentarios c LEFT JOIN posts p ON p.id = c.post_id {$whereSql} ORDER BY {$orderBy} LIMIT :limit OFFSET :offset";
+        $sql = "SELECT c.id, c.post_id, c.nome, c.email, c.comentario, c.status, c.parent_id, COALESCE(c.respondido, 0) AS respondido_legacy, EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id) AS has_reply, parent.nome AS parent_nome, parent.status AS parent_status, c.data, COALESCE(p.titulo, 'Post removido') AS post_titulo, p.slug AS post_slug FROM comentarios c LEFT JOIN posts p ON p.id = c.post_id LEFT JOIN comentarios parent ON parent.id = c.parent_id {$whereSql} ORDER BY {$orderBy} LIMIT :limit OFFSET :offset";
         $stmt = $this->pdo->prepare($sql);
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
@@ -179,9 +179,21 @@ final class ComentarioRepository
 
     public function findAdminById(int $id): ?array
     {
-        $sql = "SELECT c.id, c.post_id, c.nome, c.email, c.comentario, c.status, c.parent_id, EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id) AS has_reply, c.data, COALESCE(p.titulo, 'Post removido') AS post_titulo, p.slug AS post_slug FROM comentarios c LEFT JOIN posts p ON p.id = c.post_id WHERE c.id = :id LIMIT 1";
+        $sql = "SELECT c.id, c.post_id, c.nome, c.email, c.comentario, c.status, c.parent_id, EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id) AS has_reply, parent.nome AS parent_nome, parent.status AS parent_status, c.data, COALESCE(p.titulo, 'Post removido') AS post_titulo, p.slug AS post_slug FROM comentarios c LEFT JOIN posts p ON p.id = c.post_id LEFT JOIN comentarios parent ON parent.id = c.parent_id WHERE c.id = :id LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? $row : null;
+    }
+
+    public function findApprovedById(int $id): ?array
+    {
+        $sql = 'SELECT id, post_id, nome, email, comentario, status, parent_id, data FROM comentarios WHERE id = :id AND status = :status LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->bindValue(':status', 'aprovado', PDO::PARAM_STR);
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -211,6 +223,40 @@ final class ComentarioRepository
         return (int) $this->pdo->lastInsertId();
     }
 
+    public function listApprovedByPost(int $postId): array
+    {
+        $sql = "SELECT id, post_id, nome, email, comentario, status, parent_id, data
+                FROM comentarios
+                WHERE post_id = :post_id
+                  AND status = 'aprovado'
+                ORDER BY parent_id IS NOT NULL, COALESCE(parent_id, id), data ASC, id ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':post_id', $postId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function insertPublic(array $data): int
+    {
+        $sql = 'INSERT INTO comentarios (post_id, nome, email, comentario, status, parent_id, respondido) VALUES (:post_id, :nome, :email, :comentario, :status, :parent_id, 0)';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':post_id', (int) ($data['post_id'] ?? 0), PDO::PARAM_INT);
+        $stmt->bindValue(':nome', (string) ($data['nome'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':email', (string) ($data['email'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':comentario', (string) ($data['comentario'] ?? ''), PDO::PARAM_STR);
+        $stmt->bindValue(':status', (string) ($data['status'] ?? 'pendente'), PDO::PARAM_STR);
+        $parentId = (int) ($data['parent_id'] ?? 0);
+        if ($parentId > 0) {
+            $stmt->bindValue(':parent_id', $parentId, PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue(':parent_id', null, PDO::PARAM_NULL);
+        }
+        $stmt->execute();
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
     public function deleteThreadById(int $id): void
     {
         $stmt = $this->pdo->prepare('DELETE FROM comentarios WHERE id = :id OR parent_id = :id');
@@ -220,7 +266,7 @@ final class ComentarioRepository
 
     private function buildAdminWhere(array $filters): array
     {
-        $where = ['c.parent_id IS NULL'];
+        $where = ['1 = 1'];
         $params = [];
         $busca = trim((string) ($filters['busca'] ?? ''));
         $status = trim((string) ($filters['status'] ?? ''));

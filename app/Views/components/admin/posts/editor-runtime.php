@@ -152,6 +152,22 @@ declare(strict_types=1);
     return wrapper.innerHTML;
   }
 
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function renderHighlightedTitle(title) {
+    var raw = String(title || '').trim();
+    if (!raw) return 'Sem titulo';
+
+    return escapeHtml(raw).replace(/\[\[(.+?)\]\]/g, '<span class="article-title-accent">$1</span>');
+  }
+
   function currentCoverUrl() {
     var input = byId('imagem_capa');
     return input ? normalizeMediaUrl(input.value) : '';
@@ -205,7 +221,7 @@ declare(strict_types=1);
 
   function buildPreviewHtml() {
     var tituloEl = byId('titulo');
-    var title = tituloEl && tituloEl.value ? tituloEl.value : 'Sem titulo';
+    var title = renderHighlightedTitle(tituloEl && tituloEl.value ? tituloEl.value : 'Sem titulo');
     var content = editor() ? normalizePreviewContent(editor().innerHTML) : '<p><em>Sem conteudo.</em></p>';
     var category = currentCategoryLabel();
     var coverUrl = currentCoverUrl();
@@ -217,6 +233,7 @@ declare(strict_types=1);
       '.article-header{margin-bottom:32px;}' +
       '.article-chip{display:inline-flex;align-items:center;padding:6px 12px;background:#00d4ff;color:#020617;font-size:12px;font-weight:900;border-radius:999px;text-transform:uppercase;margin-bottom:18px;}' +
       '.article-title{font-family:Orbitron,sans-serif;font-size:2.4rem;line-height:1.1;margin:0 0 24px;color:#fff;}' +
+      '.article-title-accent{background:linear-gradient(90deg,#38bdf8 0%,#60a5fa 34%,#8b5cf6 68%,#22d3ee 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}' +
       '.article-cover{width:100%;border-radius:20px;display:block;margin:0 0 28px;border:1px solid rgba(0,212,255,.18);}' +
       '.article-body{color:#cbd5e1;line-height:1.85;}' +
       '.article-body h2{font-family:Orbitron,sans-serif;font-size:2rem;font-weight:700;color:#00d4ff;margin:2.5rem 0 1.5rem;padding-bottom:.5rem;border-bottom:2px solid rgba(0,212,255,.3);}' +

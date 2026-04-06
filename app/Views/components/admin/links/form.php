@@ -36,7 +36,7 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
     <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
       <div>
         <h2 class="font-orbitron text-lg font-black text-white">Dados do link</h2>
-        <div class="text-xs text-slate-400 mt-1">Defina o destino, a posicao e como esse link sera exibido na base publica.</div>
+        <div class="text-xs text-slate-400 mt-1">Essa tela alimenta diretamente a Central Nerd, com a mesma tipagem publica usada no link da bio.</div>
       </div>
       <div class="admin-chip">Modo: <?= $mode === 'edit' ? 'edicao' : 'criacao' ?></div>
     </div>
@@ -44,14 +44,14 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <div>
         <label for="titulo" class="block text-sm font-bold text-slate-200 mb-2">Titulo</label>
-        <input id="titulo" name="titulo" type="text" value="<?= htmlspecialchars((string) ($form['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: Canal do YouTube">
+        <input id="titulo" name="titulo" type="text" value="<?= htmlspecialchars((string) ($form['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: SSD NVMe Gen4 ou Cupom Hostinger Brasil">
         <?php if ($fieldError('titulo') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('titulo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
       </div>
 
       <div>
         <label for="slug" class="block text-sm font-bold text-slate-200 mb-2">Slug</label>
         <div class="flex gap-2">
-          <input id="slug" name="slug" type="text" value="<?= htmlspecialchars((string) ($form['slug'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="canal-youtube">
+          <input id="slug" name="slug" type="text" value="<?= htmlspecialchars((string) ($form['slug'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="ssd-nvme-gen4">
           <button type="button" class="admin-btn admin-btn-secondary" id="gerarLinkSlug">Gerar</button>
         </div>
         <?php if ($fieldError('slug') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('slug'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
@@ -65,9 +65,9 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
 
       <div>
         <label for="tipo" class="block text-sm font-bold text-slate-200 mb-2">Tipo</label>
-        <select id="tipo" name="tipo" class="nerd-input w-full px-4 py-3 rounded-xl">
-          <?php foreach (['afiliado' => 'Afiliado', 'oferta' => 'Oferta', 'conteudo' => 'Conteudo', 'rede_social' => 'Rede social', 'servico' => 'Servico'] as $value => $label): ?>
-            <option value="<?= $value ?>" <?= (string) ($form['tipo'] ?? 'conteudo') === $value ? 'selected' : '' ?>><?= htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
+        <select id="tipo" name="tipo" class="nerd-input w-full px-4 py-3 rounded-xl" data-link-type-select>
+          <?php foreach (['produto' => 'Produto', 'cupom' => 'Cupom de Desconto', 'conteudo' => 'Conteudo', 'rede_social' => 'Rede Social', 'servico' => 'Servicos'] as $value => $label): ?>
+            <option value="<?= $value ?>" <?= (string) ($form['tipo'] ?? 'produto') === $value ? 'selected' : '' ?>><?= htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
           <?php endforeach; ?>
         </select>
       </div>
@@ -75,7 +75,7 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
       <div>
         <label for="status" class="block text-sm font-bold text-slate-200 mb-2">Status</label>
         <select id="status" name="status" class="nerd-input w-full px-4 py-3 rounded-xl">
-          <?php foreach (['ativo' => 'Ativo', 'oculto' => 'Oculto', 'expirado' => 'Expirado', 'quebrado' => 'Quebrado'] as $value => $label): ?>
+          <?php foreach (['ativo' => 'Ativo', 'oculto' => 'Oculto', 'expirado' => 'Expirado', 'quebrado' => 'Revisar'] as $value => $label): ?>
             <option value="<?= $value ?>" <?= (string) ($form['status'] ?? 'ativo') === $value ? 'selected' : '' ?>><?= htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
           <?php endforeach; ?>
         </select>
@@ -91,43 +91,75 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
         <input id="expira_em" name="expira_em" type="datetime-local" value="<?= htmlspecialchars((string) ($form['expira_em'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl">
       </div>
 
+      <div data-link-product-wrap class="<?= (string) ($form['tipo'] ?? 'produto') === 'produto' ? '' : 'hidden' ?>">
+        <label for="subgrupo_publico" class="block text-sm font-bold text-slate-200 mb-2">Grupo de produtos</label>
+        <input id="subgrupo_publico" name="subgrupo_publico" type="text" value="<?= htmlspecialchars((string) ($form['subgrupo_publico'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: Action Figures, Upgrade Monstro, Gadgets">
+        <div class="mt-2 text-xs text-slate-500">Esse nome vira o botao/accordion da secao de produtos na Central Nerd.</div>
+        <?php if ($fieldError('subgrupo_publico') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('subgrupo_publico'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+      </div>
+
+      <div data-link-product-wrap class="<?= (string) ($form['tipo'] ?? 'produto') === 'produto' ? '' : 'hidden' ?>">
+        <label class="block text-sm font-bold text-slate-200 mb-2">Promocao</label>
+        <label class="inline-flex items-center gap-3 text-sm text-slate-200">
+          <input type="hidden" name="promocao" value="0">
+          <input type="checkbox" name="promocao" value="1" class="rounded border-slate-700 bg-slate-900" <?= (int) ($form['promocao'] ?? 0) === 1 ? 'checked' : '' ?>>
+          Marcar este produto como promocao para subir ao topo da Central Nerd
+        </label>
+      </div>
+
+      <div data-link-coupon-wrap class="<?= (string) ($form['tipo'] ?? '') === 'cupom' ? '' : 'hidden' ?>">
+        <label for="codigo_cupom" class="block text-sm font-bold text-slate-200 mb-2">Codigo do cupom</label>
+        <input id="codigo_cupom" name="codigo_cupom" type="text" value="<?= htmlspecialchars((string) ($form['codigo_cupom'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: PROMO100">
+        <?php if ($fieldError('codigo_cupom') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('codigo_cupom'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+      </div>
+
+      <div data-link-coupon-wrap class="<?= (string) ($form['tipo'] ?? '') === 'cupom' ? '' : 'hidden' ?>">
+        <label for="desconto_percentual" class="block text-sm font-bold text-slate-200 mb-2">Percentual de desconto</label>
+        <input id="desconto_percentual" name="desconto_percentual" type="text" value="<?= htmlspecialchars((string) ($form['desconto_percentual'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: 15%">
+        <?php if ($fieldError('desconto_percentual') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('desconto_percentual'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+      </div>
+
+      <div data-link-coupon-wrap class="lg:col-span-2 <?= (string) ($form['tipo'] ?? '') === 'cupom' ? '' : 'hidden' ?>">
+        <label for="desconto_contexto" class="block text-sm font-bold text-slate-200 mb-2">Onde esse cupom se aplica?</label>
+        <input id="desconto_contexto" name="desconto_contexto" type="text" value="<?= htmlspecialchars((string) ($form['desconto_contexto'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: Loja toda ou produtos selecionados.">
+        <?php if ($fieldError('desconto_contexto') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('desconto_contexto'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+      </div>
+
       <div class="lg:col-span-2">
         <label for="descricao" class="block text-sm font-bold text-slate-200 mb-2">Descricao curta</label>
-        <textarea id="descricao" name="descricao" rows="3" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Resumo rapido do link, oferta ou destino."><?= htmlspecialchars((string) ($form['descricao'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></textarea>
+        <textarea id="descricao" name="descricao" rows="3" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Resumo rapido para exibir na Central Nerd."><?= htmlspecialchars((string) ($form['descricao'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></textarea>
         <?php if ($fieldError('descricao') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('descricao'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
       </div>
 
       <div>
         <label for="cta_curto" class="block text-sm font-bold text-slate-200 mb-2">CTA curto</label>
         <input id="cta_curto" name="cta_curto" type="text" value="<?= htmlspecialchars((string) ($form['cta_curto'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: Oferta da semana">
-        <?php if ($fieldError('cta_curto') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('cta_curto'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
       </div>
 
       <div>
         <label for="texto_botao" class="block text-sm font-bold text-slate-200 mb-2">Texto do botao</label>
-        <input id="texto_botao" name="texto_botao" type="text" value="<?= htmlspecialchars((string) ($form['texto_botao'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: Ver oferta">
-        <?php if ($fieldError('texto_botao') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('texto_botao'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+        <input id="texto_botao" name="texto_botao" type="text" value="<?= htmlspecialchars((string) ($form['texto_botao'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: Ver produto">
       </div>
 
       <div class="lg:col-span-2">
         <label for="selo" class="block text-sm font-bold text-slate-200 mb-2">Selo</label>
-        <input id="selo" name="selo" type="text" value="<?= htmlspecialchars((string) ($form['selo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: Mais clicado, Novo, Destaque da semana">
-        <?php if ($fieldError('selo') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('selo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+        <input id="selo" name="selo" type="text" value="<?= htmlspecialchars((string) ($form['selo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: Mais clicado, Novo, Oferta relampago">
       </div>
 
       <div class="lg:col-span-2">
         <label for="observacao_status" class="block text-sm font-bold text-slate-200 mb-2">Observacao de status</label>
-        <input id="observacao_status" name="observacao_status" type="text" value="<?= htmlspecialchars((string) ($form['observacao_status'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Opcional: contexto sobre expiracao, campanha ou verificacao.">
-        <?php if ($fieldError('observacao_status') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('observacao_status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+        <input id="observacao_status" name="observacao_status" type="text" value="<?= htmlspecialchars((string) ($form['observacao_status'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Opcional: contexto sobre campanha, revisao ou verificacao.">
       </div>
     </div>
 
     <div class="mt-5">
+      <div class="text-sm font-bold text-slate-200 mb-2">Destaque principal</div>
       <label class="inline-flex items-center gap-3 text-sm text-slate-200">
         <input type="hidden" name="destaque" value="0">
         <input type="checkbox" name="destaque" value="1" class="rounded border-slate-700 bg-slate-900" <?= (int) ($form['destaque'] ?? 0) === 1 ? 'checked' : '' ?>>
-        Marcar como link em destaque
+        Enviar este link para o destaque principal da Central Nerd
       </label>
+      <div class="mt-2 text-xs text-slate-500">Quando ativado, este item pode aparecer no topo da Central Nerd como destaque principal.</div>
     </div>
   </section>
 
@@ -141,7 +173,7 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h3 class="text-sm font-black text-white">Midia principal</h3>
-          <div class="text-xs text-slate-400 mt-1">Ideal para botoes visuais, ofertas e cards destacados na pagina de bio.</div>
+          <div class="text-xs text-slate-400 mt-1">Ideal para botoes visuais, ofertas e cards destacados na Central Nerd.</div>
         </div>
         <button type="button" class="admin-btn admin-btn-secondary !px-3 !py-2 text-xs" id="limparImagemLink">Limpar</button>
       </div>
@@ -201,75 +233,8 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
     </div>
   </section>
 
-  <section class="admin-panel space-y-5">
-    <div>
-      <h2 class="font-orbitron text-lg font-black text-white">Variacoes de preview</h2>
-      <div class="text-xs text-slate-400 mt-1">Leituras rapidas de como o link pode aparecer na futura pagina de bio.</div>
-    </div>
-
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-    <div class="rounded-[28px] border border-cyan-500/15 bg-slate-950/45 p-4">
-      <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 mb-3">Card principal</div>
-      <div id="linkCardPreviewImageWrap" class="aspect-[16/9] rounded-2xl border border-cyan-500/15 bg-slate-900/70 overflow-hidden flex items-center justify-center text-xs text-slate-500">
-        <?php if ($imagePreview !== ''): ?>
-          <img id="linkCardPreviewImage" src="<?= htmlspecialchars($imagePreview, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="Preview do card do link" class="w-full h-full object-cover">
-          <div id="linkCardPreviewImageEmpty" class="hidden px-4 text-center">Imagem do link</div>
-        <?php else: ?>
-          <img id="linkCardPreviewImage" src="" alt="Preview do card do link" class="hidden w-full h-full object-cover">
-          <div id="linkCardPreviewImageEmpty" class="px-4 text-center">Imagem do link</div>
-        <?php endif; ?>
-      </div>
-
-      <div class="mt-4 flex items-center gap-2 flex-wrap">
-        <span id="linkCardPreviewType" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border border-slate-500/30 text-slate-100 bg-slate-500/10">
-          <i id="linkCardPreviewTypeIcon" class="fa-solid fa-link text-slate-300"></i>
-          <span id="linkCardPreviewTypeLabel">Conteudo</span>
-        </span>
-        <span id="linkCardPreviewDestaque" class="admin-chip <?= (int) ($form['destaque'] ?? 0) === 1 ? '' : 'hidden' ?>" style="border-color:rgba(168,85,247,.30);color:#d8b4fe;background:rgba(168,85,247,.12);">Destaque</span>
-      </div>
-
-      <div class="mt-4">
-        <div id="linkCardPreviewTitle" class="font-orbitron text-xl font-black text-white">Titulo do link</div>
-        <div id="linkCardPreviewDescription" class="mt-2 text-sm leading-6 text-slate-300">Descricao curta do link para a pagina de bio.</div>
-        <div id="linkCardPreviewUrl" class="mt-3 text-xs font-bold text-cyan-300 break-all">https://exemplo.com</div>
-      </div>
-
-      <div class="mt-5">
-        <button type="button" id="linkCardPreviewButton" class="inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold border border-cyan-500/25 text-cyan-100 bg-cyan-500/12">
-          Abrir link
-        </button>
-      </div>
-    </div>
-
-    <div class="rounded-[28px] border border-slate-800/80 bg-slate-950/45 p-4">
-      <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 mb-3">Social / perfil</div>
-      <div class="flex items-center gap-3">
-        <div class="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-center">
-          <i id="linkPreviewSocialIcon" class="fa-solid fa-share-nodes text-indigo-300 text-xl"></i>
-        </div>
-        <div class="min-w-0">
-          <div id="linkPreviewSocialTitle" class="font-black text-white truncate">Titulo do link</div>
-          <div id="linkPreviewSocialCta" class="text-xs text-slate-400 mt-1">CTA rapido</div>
-        </div>
-      </div>
-      <button type="button" id="linkPreviewSocialButton" class="mt-4 w-full inline-flex items-center justify-center rounded-2xl px-4 py-3 text-sm font-bold border border-indigo-500/25 text-indigo-100 bg-indigo-500/12">Visitar perfil</button>
-    </div>
-
-    <div class="rounded-[28px] border border-slate-800/80 bg-slate-950/45 p-4">
-      <div class="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 mb-3">Bloco editorial</div>
-      <div class="flex items-center gap-2 flex-wrap">
-        <span id="linkPreviewEditorialSelo" class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold border border-slate-500/25 text-slate-100 bg-slate-500/10">Selo</span>
-        <span id="linkPreviewEditorialTipo" class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Conteudo</span>
-      </div>
-      <div id="linkPreviewEditorialTitle" class="mt-4 font-orbitron text-lg font-black text-white">Titulo do link</div>
-      <div id="linkPreviewEditorialDesc" class="mt-2 text-sm leading-6 text-slate-300">Descricao curta do link para a pagina de bio.</div>
-      <div id="linkPreviewEditorialUrl" class="mt-3 text-xs font-bold text-cyan-300 break-all">https://exemplo.com</div>
-    </div>
-    </div>
-  </section>
-
   <section class="admin-panel flex flex-wrap items-center justify-between gap-3">
-    <div class="text-xs text-slate-400">Os links desta tela devem alimentar a futura pagina de bio, ofertas e distribuicao de campanhas.</div>
+    <div class="text-xs text-slate-400">Os links desta tela alimentam exclusivamente a Central Nerd do Instagram e futuras secoes publicas de servicos.</div>
     <div class="flex flex-wrap gap-2">
       <a href="<?= url('/admin/links') ?>" class="admin-btn admin-btn-secondary">Cancelar</a>
       <button type="submit" class="admin-btn admin-btn-primary"><?= htmlspecialchars($submitLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></button>
@@ -282,51 +247,45 @@ document.addEventListener('DOMContentLoaded', function () {
   var titulo = document.getElementById('titulo');
   var slug = document.getElementById('slug');
   var gerar = document.getElementById('gerarLinkSlug');
-
-  if (gerar && titulo && slug) {
-    gerar.addEventListener('click', function () {
-      var value = titulo.value || '';
-      value = value.toLowerCase();
-      try {
-        value = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      } catch (e) {}
-      value = value.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-      slug.value = value;
-    });
-  }
-
+  var tipoInput = document.querySelector('[data-link-type-select]');
+  var productWraps = document.querySelectorAll('[data-link-product-wrap]');
+  var couponWraps = document.querySelectorAll('[data-link-coupon-wrap]');
   var imageInput = document.getElementById('imagem');
   var fileInput = document.getElementById('imagem_upload');
   var preview = document.getElementById('imagem_link_preview');
   var previewEmpty = document.getElementById('imagem_link_preview_empty');
   var clearButton = document.getElementById('limparImagemLink');
   var publicBase = <?= json_encode(rtrim(url('/'), '/'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
-  var descricaoInput = document.getElementById('descricao');
-  var urlInput = document.getElementById('url');
-  var tipoInput = document.getElementById('tipo');
-  var destaqueInput = document.querySelector('input[name="destaque"][value="1"]');
-  var ctaInput = document.getElementById('cta_curto');
-  var buttonTextInput = document.getElementById('texto_botao');
-  var seloInput = document.getElementById('selo');
-  var previewTitle = document.getElementById('linkCardPreviewTitle');
-  var previewDescription = document.getElementById('linkCardPreviewDescription');
-  var previewUrl = document.getElementById('linkCardPreviewUrl');
-  var previewType = document.getElementById('linkCardPreviewType');
-  var previewTypeLabel = document.getElementById('linkCardPreviewTypeLabel');
-  var previewTypeIcon = document.getElementById('linkCardPreviewTypeIcon');
-  var previewDestaque = document.getElementById('linkCardPreviewDestaque');
-  var previewButton = document.getElementById('linkCardPreviewButton');
-  var previewSocialIcon = document.getElementById('linkPreviewSocialIcon');
-  var previewSocialTitle = document.getElementById('linkPreviewSocialTitle');
-  var previewSocialCta = document.getElementById('linkPreviewSocialCta');
-  var previewSocialButton = document.getElementById('linkPreviewSocialButton');
-  var previewEditorialSelo = document.getElementById('linkPreviewEditorialSelo');
-  var previewEditorialTipo = document.getElementById('linkPreviewEditorialTipo');
-  var previewEditorialTitle = document.getElementById('linkPreviewEditorialTitle');
-  var previewEditorialDesc = document.getElementById('linkPreviewEditorialDesc');
-  var previewEditorialUrl = document.getElementById('linkPreviewEditorialUrl');
-  var cardImage = document.getElementById('linkCardPreviewImage');
-  var cardImageEmpty = document.getElementById('linkCardPreviewImageEmpty');
+
+  if (gerar && titulo && slug) {
+    gerar.addEventListener('click', function () {
+      var value = titulo.value || '';
+      value = value.toLowerCase();
+      try { value = value.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {}
+      value = value.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      slug.value = value;
+    });
+  }
+
+  var syncTypeFields = function () {
+    var type = tipoInput ? tipoInput.value : 'produto';
+    productWraps.forEach(function (wrap) { wrap.classList.toggle('hidden', type !== 'produto'); });
+    couponWraps.forEach(function (wrap) { wrap.classList.toggle('hidden', type !== 'cupom'); });
+    if (type !== 'produto') {
+      var group = document.getElementById('subgrupo_publico');
+      var promo = document.querySelector('input[name="promocao"][value="1"]');
+      if (group) group.value = '';
+      if (promo) promo.checked = false;
+    }
+    if (type !== 'cupom') {
+      var code = document.getElementById('codigo_cupom');
+      var percent = document.getElementById('desconto_percentual');
+      var context = document.getElementById('desconto_contexto');
+      if (code) code.value = '';
+      if (percent) percent.value = '';
+      if (context) context.value = '';
+    }
+  };
 
   var resolveUrl = function (value) {
     value = (value || '').trim();
@@ -343,98 +302,20 @@ document.addEventListener('DOMContentLoaded', function () {
       preview.src = '';
       preview.classList.add('hidden');
       if (previewEmpty) previewEmpty.classList.remove('hidden');
-      if (cardImage) cardImage.classList.add('hidden');
-      if (cardImageEmpty) cardImageEmpty.classList.remove('hidden');
       return;
     }
     preview.src = resolved;
     preview.classList.remove('hidden');
     if (previewEmpty) previewEmpty.classList.add('hidden');
-    if (cardImage) {
-      cardImage.src = resolved;
-      cardImage.classList.remove('hidden');
-    }
-    if (cardImageEmpty) cardImageEmpty.classList.add('hidden');
   };
 
-  var syncCardPreview = function () {
-    if (previewTitle && titulo) {
-      previewTitle.textContent = (titulo.value || '').trim() || 'Titulo do link';
-    }
-
-    if (previewDescription && descricaoInput) {
-      previewDescription.textContent = (descricaoInput.value || '').trim() || 'Descricao curta do link para a pagina de bio.';
-    }
-
-    if (previewSocialTitle && titulo) {
-      previewSocialTitle.textContent = (titulo.value || '').trim() || 'Titulo do link';
-    }
-
-    if (previewEditorialTitle && titulo) {
-      previewEditorialTitle.textContent = (titulo.value || '').trim() || 'Titulo do link';
-    }
-
-    if (previewUrl && urlInput) {
-      previewUrl.textContent = (urlInput.value || '').trim() || 'https://exemplo.com';
-    }
-
-    if (previewEditorialUrl && urlInput) {
-      previewEditorialUrl.textContent = (urlInput.value || '').trim() || 'https://exemplo.com';
-    }
-
-    var buttonText = 'Abrir link';
-    if (previewButton && tipoInput) {
-      if (tipoInput.value === 'rede_social') buttonText = 'Visitar perfil';
-      if (tipoInput.value === 'oferta') buttonText = 'Ver oferta';
-      if (tipoInput.value === 'servico') buttonText = 'Conhecer servico';
-      if (tipoInput.value === 'afiliado') buttonText = 'Conferir produto';
-      if (buttonTextInput && (buttonTextInput.value || '').trim()) buttonText = buttonTextInput.value.trim();
-      previewButton.textContent = buttonText;
-    }
-
-    if (previewSocialButton) {
-      previewSocialButton.textContent = buttonText;
-    }
-
-    if (previewType && previewTypeLabel && previewTypeIcon && tipoInput) {
-      var map = {
-        afiliado: { label: 'Afiliado', icon: 'fa-solid fa-coins', iconClass: 'text-teal-300' },
-        oferta: { label: 'Oferta', icon: 'fa-solid fa-bolt', iconClass: 'text-pink-300' },
-        rede_social: { label: 'Rede social', icon: 'fa-solid fa-share-nodes', iconClass: 'text-indigo-300' },
-        servico: { label: 'Servico', icon: 'fa-solid fa-briefcase', iconClass: 'text-orange-300' },
-        conteudo: { label: 'Conteudo', icon: 'fa-solid fa-newspaper', iconClass: 'text-slate-300' }
-      };
-      var current = map[tipoInput.value] || map.conteudo;
-      previewTypeLabel.textContent = current.label;
-      previewTypeIcon.className = current.icon + ' ' + current.iconClass;
-      if (previewSocialIcon) previewSocialIcon.className = current.icon + ' ' + current.iconClass + ' text-xl';
-      if (previewEditorialTipo) previewEditorialTipo.textContent = current.label;
-    }
-
-    if (previewDestaque && destaqueInput) {
-      previewDestaque.classList.toggle('hidden', !destaqueInput.checked);
-    }
-
-    if (previewSocialCta) {
-      previewSocialCta.textContent = (ctaInput && (ctaInput.value || '').trim()) || 'CTA rapido';
-    }
-
-    if (previewEditorialDesc) {
-      previewEditorialDesc.textContent = (descricaoInput && (descricaoInput.value || '').trim()) || 'Descricao curta do link para a pagina de bio.';
-    }
-
-    if (previewEditorialSelo) {
-      var seloValue = (seloInput && (seloInput.value || '').trim()) || ((destaqueInput && destaqueInput.checked) ? 'Destaque' : 'Selo');
-      previewEditorialSelo.textContent = seloValue;
-      previewEditorialSelo.classList.toggle('hidden', seloValue === '');
-    }
-  };
+  if (tipoInput) {
+    tipoInput.addEventListener('change', syncTypeFields);
+    syncTypeFields();
+  }
 
   if (imageInput) {
-    imageInput.addEventListener('input', function () {
-      syncPreview(imageInput.value);
-      syncCardPreview();
-    });
+    imageInput.addEventListener('input', function () { syncPreview(imageInput.value); });
   }
 
   if (fileInput) {
@@ -445,11 +326,6 @@ document.addEventListener('DOMContentLoaded', function () {
       preview.src = objectUrl;
       preview.classList.remove('hidden');
       if (previewEmpty) previewEmpty.classList.add('hidden');
-      if (cardImage) {
-        cardImage.src = objectUrl;
-        cardImage.classList.remove('hidden');
-      }
-      if (cardImageEmpty) cardImageEmpty.classList.add('hidden');
     });
   }
 
@@ -458,7 +334,6 @@ document.addEventListener('DOMContentLoaded', function () {
       imageInput.value = '';
       if (fileInput) fileInput.value = '';
       syncPreview('');
-      syncCardPreview();
     });
   }
 
@@ -468,24 +343,9 @@ document.addEventListener('DOMContentLoaded', function () {
       imageInput.value = button.getAttribute('data-link-image-pick') || '';
       if (fileInput) fileInput.value = '';
       syncPreview(imageInput.value);
-      syncCardPreview();
     });
   });
 
-  [titulo, descricaoInput, urlInput, ctaInput, buttonTextInput, seloInput].forEach(function (input) {
-    if (!input) return;
-    input.addEventListener('input', syncCardPreview);
-  });
-
-  if (tipoInput) {
-    tipoInput.addEventListener('change', syncCardPreview);
-  }
-
-  if (destaqueInput) {
-    destaqueInput.addEventListener('change', syncCardPreview);
-  }
-
   syncPreview(imageInput ? imageInput.value : '');
-  syncCardPreview();
 });
 </script>

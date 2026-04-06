@@ -4,9 +4,9 @@ declare(strict_types=1);
 use App\Support\View;
 
 $items = $items ?? [];
-$summary = $summary ?? ['total' => 0, 'ativos' => 0, 'destaques' => 0, 'expirados' => 0, 'sociais' => 0];
+$summary = $summary ?? ['total' => 0, 'ativos' => 0, 'promocoes' => 0, 'produtos' => 0, 'cupons' => 0, 'sociais' => 0];
 $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 10, 'pages' => 1];
-$filters = $filters ?? ['busca' => '', 'tipo' => '', 'status' => '', 'destaque' => '', 'monitoramento' => ''];
+$filters = $filters ?? ['busca' => '', 'tipo' => '', 'promocao' => '', 'status' => '', 'destaque' => '', 'monitoramento' => ''];
 $sort = (string) ($sort ?? 'posicao');
 $dir = (string) ($dir ?? 'asc');
 $created = isset($_GET['created']) && (string) $_GET['created'] === '1';
@@ -15,15 +15,11 @@ $deleted = isset($_GET['deleted']) && (string) $_GET['deleted'] === '1';
 $mode = (string) ($_GET['mode'] ?? '');
 ?>
 
-<?php if (isset($_GET['_partial']) && (string) $_GET['_partial'] === '1'): ?>
 <div class="max-w-7xl mx-auto px-4 py-6" data-admin-links-root>
-<?php else: ?>
-<div class="max-w-7xl mx-auto px-4 py-6" data-admin-links-root>
-<?php endif; ?>
   <div class="admin-page-header">
     <div class="admin-page-heading">
       <h1 class="admin-page-title">Links</h1>
-      <div class="admin-page-subtitle">Gerencie a base da pagina de bio, afiliados e links de distribuicao em um unico lugar.</div>
+      <div class="admin-page-subtitle">Gerencie toda a base da Central Nerd em um unico lugar: produtos, cupons, conteudo, redes e servicos.</div>
     </div>
 
     <div class="admin-page-actions">
@@ -50,7 +46,7 @@ $mode = (string) ($_GET['mode'] ?? '');
               'order_drag' => 'Links reordenados com sucesso.',
               'order_unchanged' => 'Esse link ja esta no limite da ordenacao.',
               'checked_ok' => 'Link verificado com sucesso.',
-              'checked_fail' => 'A verificacao encontrou problema no link.',
+              'checked_fail' => 'A verificacao marcou o link para revisao.',
           ];
           echo htmlspecialchars($modeLabels[$mode] ?? 'Link atualizado com sucesso.', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
           ?>
@@ -66,9 +62,9 @@ $mode = (string) ($_GET['mode'] ?? '');
       $cards = [
           ['label' => 'Total', 'value' => (int) ($summary['total'] ?? 0)],
           ['label' => 'Ativos', 'value' => (int) ($summary['ativos'] ?? 0)],
-          ['label' => 'Destaques', 'value' => (int) ($summary['destaques'] ?? 0)],
-          ['label' => 'Expirados', 'value' => (int) ($summary['expirados'] ?? 0)],
-          ['label' => 'Redes Sociais', 'value' => (int) ($summary['sociais'] ?? 0)],
+          ['label' => 'Promocoes', 'value' => (int) ($summary['promocoes'] ?? 0)],
+          ['label' => 'Produtos', 'value' => (int) ($summary['produtos'] ?? 0)],
+          ['label' => 'Cupons', 'value' => (int) ($summary['cupons'] ?? 0)],
       ];
       ?>
       <?php foreach ($cards as $card): ?>

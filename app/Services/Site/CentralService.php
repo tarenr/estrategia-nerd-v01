@@ -1,0 +1,228 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Services\Site;
+
+use App\Repositories\LinkRepository;
+
+final class CentralService
+{
+    public function __construct(private LinkRepository $links)
+    {
+    }
+
+    public function getViewModel(): array
+    {
+        $items = $this->normalizeLinks($this->links->listForCentral(120));
+        [$featuredLink, $groups] = $this->partitionLinks($items);
+
+        return [
+            'title' => 'Central Nerd | ' . (string) portal_config('nome_site', 'Estrategia Nerd'),
+            'meta_description' => (string) portal_config('bio_descricao', portal_config('descricao_site', 'Links, ofertas e atalhos oficiais da Estrategia Nerd.')),
+            'site_chrome' => false,
+            'body_class' => 'central-nerd-body',
+            'site_meta' => $this->buildSiteMeta(),
+            'central_featured_link' => $featuredLink,
+            'central_groups' => $groups,
+            'central_theme' => 'cyan-blue',
+            'central_total_links' => count($items),
+        ];
+    }
+
+    private function buildSiteMeta(): array
+    {
+        return [
+            'name' => (string) portal_config('nome_site', 'Estrategia Nerd'),
+            'description' => (string) portal_config('descricao_site', 'Conteudo, tecnologia, cultura geek e oportunidades em um so lugar.'),
+            'kicker' => (string) portal_config('site_kicker', 'Portal geek estrategico'),
+            'footer' => (string) portal_config('footer_texto', 'Estrategia Nerd - Conteudo, links e ofertas geek'),
+            'bio_title' => (string) portal_config('bio_titulo', 'Central Nerd'),
+            'bio_description' => (string) portal_config('bio_descricao', 'Ofertas, descontos e novidades para geeks e tech lovers!'),
+            'email' => (string) portal_config('email_contato', ''),
+            'instagram' => (string) portal_config('instagram_url', ''),
+            'tiktok' => (string) portal_config('tiktok_url', ''),
+            'kwai' => (string) portal_config('kwai_url', ''),
+            'youtube' => (string) portal_config('youtube_url', ''),
+            'telegram' => (string) portal_config('telegram_url', ''),
+            'whatsapp' => (string) portal_config('whatsapp_url', ''),
+            'logo' => $this->toPublicUrl((string) portal_config('logo_url', '')),
+            'brand_symbol' => $this->toPublicUrl((string) portal_config('brand_symbol_url', '')),
+            'avatar' => $this->toPublicUrl((string) portal_config('bio_avatar_url', '')),
+        ];
+    }
+
+    private function normalizeLinks(array $items): array
+    {
+        return array_map(function (array $item): array {
+            $tipo = (string) ($item['tipo'] ?? 'produto');
+            $promocao = (int) ($item['promocao'] ?? 0) === 1;
+
+            return [
+                'id' => (int) ($item['id'] ?? 0),
+                'titulo' => trim((string) ($item['titulo'] ?? '')),
+                'slug' => (string) ($item['slug'] ?? ''),
+                'url' => trim((string) ($item['url'] ?? '#')),
+                'tipo' => $tipo,
+                'promocao' => $promocao,
+                'group' => trim((string) ($item['subgrupo_publico'] ?? '')),
+                'descricao' => trim((string) ($item['descricao'] ?? '')),
+                'cta' => trim((string) ($item['texto_botao'] ?? '')) ?: trim((string) ($item['cta_curto'] ?? '')) ?: $this->defaultCta($tipo),
+                'cta_short' => trim((string) ($item['cta_curto'] ?? '')),
+                'selo' => trim((string) ($item['selo'] ?? '')),
+                'imagem' => $this->toPublicUrl((string) ($item['imagem'] ?? '')),
+                'destaque' => (int) ($item['destaque'] ?? 0) === 1,
+                'posicao' => (int) ($item['posicao'] ?? 0),
+                'tone' => $this->toneFor($tipo, $promocao),
+                'discount' => trim((string) ($item['desconto_percentual'] ?? '')),
+                'discount_context' => trim((string) ($item['desconto_contexto'] ?? '')),
+                'coupon_code' => trim((string) ($item['codigo_cupom'] ?? '')),
+            ];
+        }, $items);
+    }
+
+    private function partitionLinks(array $items): array
+    {
+        $featured = null;
+        $promoItems = [];
+        $productGroups = [];
+        $couponItems = [];
+        $contentItems = [];
+        $socialItems = [];
+        $serviceItems = [];
+
+        foreach ($items as $item) {
+            if ($featured === null && $item['tipo'] === 'produto' && $item['promocao']) {
+                $featured = $item;
+            }
+
+            if ($item['tipo'] === 'produto' && $item['promocao']) {
+                $promoItems[] = $item;
+                continue;
+            }
+
+            if ($item['tipo'] === 'produto') {
+                $groupLabel = $item['group'] !== '' ? $item['group'] : 'Produtos';
+                $groupKey = $this->slugifyGroup($groupLabel);
+                if (!isset($productGroups[$groupKey])) {
+                    $productGroups[$groupKey] = [
+                        'slug' => $groupKey,
+                        'label' => $groupLabel,
+                        'subtitle' => 'Selecao especial de produtos da Central Nerd.',
+                        'tone' => 'product',
+                        'items' => [],
+                    ];
+                }
+                $productGroups[$groupKey]['items'][] = $item;
+                continue;
+            }
+
+            match ($item['tipo']) {
+                'cupom' => $couponItems[] = $item,
+                'conteudo' => $contentItems[] = $item,
+                'rede_social' => $socialItems[] = $item,
+                'servico' => $serviceItems[] = $item,
+                default => null,
+            };
+        }
+
+        if ($featured === null) {
+            $featured = $items[0] ?? null;
+        }
+
+        $groups = [];
+        if ($promoItems !== []) {
+            $groups[] = [
+                'slug' => 'promocoes',
+                'label' => 'Promocoes',
+                'subtitle' => 'Ofertas quentes e oportunidades selecionadas.',
+                'tone' => 'promo',
+                'open' => true,
+                'items' => $promoItems,
+            ];
+        }
+
+        uasort($productGroups, static function (array $a, array $b): int {
+            $aFirst = (int) ($a['items'][0]['posicao'] ?? 999999);
+            $bFirst = (int) ($b['items'][0]['posicao'] ?? 999999);
+            return $aFirst <=> $bFirst;
+        });
+
+        foreach ($productGroups as $group) {
+            $group['open'] = $groups === [];
+            $groups[] = $group;
+        }
+
+        $tailGroups = [
+            ['slug' => 'cupons', 'label' => 'Cupons de desconto', 'subtitle' => 'Copie o codigo e aproveite as campanhas ativas.', 'tone' => 'coupon', 'items' => $couponItems],
+            ['slug' => 'conteudo', 'label' => 'Conteudo', 'subtitle' => 'Acessos oficiais, leituras e recomendacoes.', 'tone' => 'content', 'items' => $contentItems],
+            ['slug' => 'rede-social', 'label' => 'Rede Social', 'subtitle' => 'Acompanhe a Estrategia Nerd fora do portal.', 'tone' => 'social', 'items' => $socialItems],
+            ['slug' => 'servicos', 'label' => 'Servicos', 'subtitle' => 'Solucoes, trabalhos e acessos especiais.', 'tone' => 'service', 'items' => $serviceItems],
+        ];
+
+        foreach ($tailGroups as $group) {
+            if ($group['items'] === []) {
+                continue;
+            }
+            $group['open'] = $groups === [];
+            $groups[] = $group;
+        }
+
+        return [$featured, $groups];
+    }
+
+    private function defaultCta(string $tipo): string
+    {
+        return match ($tipo) {
+            'cupom' => 'Abrir site',
+            'rede_social' => 'Abrir perfil',
+            'servico' => 'Conhecer servico',
+            'conteudo' => 'Acessar conteudo',
+            default => 'Ver produto',
+        };
+    }
+
+    private function toneFor(string $tipo, bool $promocao): string
+    {
+        if ($tipo === 'produto' && $promocao) {
+            return 'promo';
+        }
+
+        return match ($tipo) {
+            'cupom' => 'coupon',
+            'conteudo' => 'content',
+            'rede_social' => 'social',
+            'servico' => 'service',
+            default => 'product',
+        };
+    }
+
+    private function toPublicUrl(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        return preg_match('~^https?://~i', $value) ? $value : url('/' . ltrim($value, '/'));
+    }
+
+    private function slugifyGroup(string $label): string
+    {
+        $value = trim(mb_strtolower($label));
+        if ($value === '') {
+            return 'produtos';
+        }
+
+        if (function_exists('iconv')) {
+            $normalized = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+            if (is_string($normalized) && $normalized !== '') {
+                $value = $normalized;
+            }
+        }
+
+        $value = preg_replace('/[^a-z0-9]+/i', '-', $value) ?? 'produtos';
+        $value = trim($value, '-');
+
+        return $value !== '' ? $value : 'produtos';
+    }
+}

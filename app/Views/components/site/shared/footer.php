@@ -46,6 +46,7 @@ $contactHref = (string) ($contact_href ?? '#newsletter');
           <li><a href="<?= htmlspecialchars(url('/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>#home">Home</a></li>
           <li><a href="<?= htmlspecialchars(url('/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>#sobre">Sobre</a></li>
           <li><a href="<?= htmlspecialchars(url('/blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Blog</a></li>
+          <li><a href="<?= htmlspecialchars(url('/central-nerd'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Central Nerd</a></li>
           <li><a href="<?= htmlspecialchars(url('/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>#newsletter">Newsletter</a></li>
         </ul>
       </div>

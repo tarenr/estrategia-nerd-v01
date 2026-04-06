@@ -40,6 +40,27 @@
     window.setTimeout(() => host.remove(), 1800);
   };
 
+  const copyTextToClipboard = async (value) => {
+    const text = String(value || '').trim();
+    if (!text) return false;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+
+    const input = document.createElement('textarea');
+    input.value = text;
+    input.setAttribute('readonly', 'readonly');
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(input);
+    return ok;
+  };
+
   if (menuToggle && mobileMenu) {
     menuToggle.addEventListener('click', () => {
       const expanded = menuToggle.getAttribute('aria-expanded') === 'true';
@@ -262,5 +283,297 @@
         if (loading) loading.classList.add('hidden');
       }
     });
+  }
+
+  const centralAccordions = Array.from(document.querySelectorAll('[data-central-accordion]'));
+  if (centralAccordions.length > 0) {
+    centralAccordions.forEach((accordion) => {
+      accordion.addEventListener('toggle', () => {
+        if (!accordion.open) return;
+        centralAccordions.forEach((other) => {
+          if (other !== accordion) {
+            other.open = false;
+          }
+        });
+      });
+    });
+  }
+
+  const bindCouponCopyButtons = (scope = document) => {
+    scope.querySelectorAll('[data-copy-coupon-trigger]').forEach((trigger) => {
+      if (trigger.dataset.bound === '1') return;
+      trigger.dataset.bound = '1';
+      let resetTimer = null;
+
+      trigger.addEventListener('click', async () => {
+        const raw = trigger.getAttribute('data-copy-coupon') || '';
+        const feedback = trigger.querySelector('[data-copy-coupon-feedback]');
+
+        try {
+          const copied = await copyTextToClipboard(raw);
+          if (!copied) {
+            throw new Error('Nao foi possivel copiar o cupom agora.');
+          }
+
+          trigger.classList.add('is-copied');
+          window.clearTimeout(resetTimer);
+          resetTimer = window.setTimeout(() => {
+            trigger.classList.remove('is-copied');
+          }, 2200);
+
+          showToast(`Cupom ${raw} copiado para a area de transferencia.`, 'success');
+        } catch (error) {
+          trigger.classList.remove('is-copied');
+          showToast(error instanceof Error ? error.message : 'Nao foi possivel copiar o cupom agora.', 'error');
+        }
+      });
+    });
+  };
+
+  bindCouponCopyButtons(document);
+
+  const progressBar = document.getElementById('postProgressBar');
+  const articleContent = document.querySelector('.article-content');
+  if (progressBar && articleContent) {
+    const updateProgress = () => {
+      const rect = articleContent.getBoundingClientRect();
+      const total = articleContent.offsetHeight - window.innerHeight;
+      if (total <= 0) {
+        progressBar.style.width = '100%';
+        return;
+      }
+
+      const scrolled = Math.min(Math.max(-rect.top, 0), total);
+      const percent = Math.min((scrolled / total) * 100, 100);
+      progressBar.style.width = `${percent}%`;
+    };
+
+    updateProgress();
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress);
+  }
+
+  const tocLinks = Array.from(document.querySelectorAll('.toc-link'));
+  const articleSections = Array.from(document.querySelectorAll('.article-content h2[id]'));
+  if (tocLinks.length > 0 && articleSections.length > 0) {
+    const activateCurrentSection = () => {
+      let currentId = articleSections[0]?.id || '';
+      articleSections.forEach((section) => {
+        const top = section.getBoundingClientRect().top;
+        if (top <= 140) {
+          currentId = section.id;
+        }
+      });
+
+      tocLinks.forEach((link) => {
+        const isActive = link.getAttribute('href') === `#${currentId}`;
+        link.classList.toggle('active', isActive);
+      });
+    };
+
+    activateCurrentSection();
+    window.addEventListener('scroll', activateCurrentSection, { passive: true });
+  }
+
+  const shareButtons = Array.from(document.querySelectorAll('[data-share]'));
+  shareButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const type = button.getAttribute('data-share');
+      const pageUrl = window.location.href;
+      const pageTitle = document.title;
+      let targetUrl = '';
+
+      switch (type) {
+        case 'twitter':
+          targetUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(pageTitle)}`;
+          break;
+        case 'facebook':
+          targetUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
+          break;
+        case 'linkedin':
+          targetUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
+          break;
+        default:
+          return;
+      }
+
+      window.open(targetUrl, '_blank', 'noopener,noreferrer,width=640,height=640');
+    });
+  });
+
+  const copyLinkButton = document.querySelector('[data-copy-link]');
+  if (copyLinkButton) {
+    copyLinkButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('Link copiado com sucesso.', 'success');
+      } catch (error) {
+        showToast('Nao foi possivel copiar o link agora.', 'error');
+      }
+    });
+  }
+
+  const likeForm = document.querySelector('[data-like-form]');
+  const likeButton = document.querySelector('[data-like-button]');
+  const likeCountTargets = Array.from(document.querySelectorAll('[data-like-count]'));
+  if (likeForm && likeButton) {
+    const likedKey = `liked:${window.location.pathname}`;
+    if (window.localStorage.getItem(likedKey) === '1') {
+      likeButton.classList.add('is-liked');
+    }
+
+    likeForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (likeButton.classList.contains('is-liked')) {
+        showToast('Voce ja curtiu este post neste navegador.', 'success');
+        return;
+      }
+
+      likeButton.setAttribute('disabled', 'disabled');
+      try {
+        const response = await fetch(likeForm.action, {
+          method: 'POST',
+          body: new FormData(likeForm),
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          credentials: 'same-origin',
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+          throw new Error(result.message || 'Nao foi possivel registrar a curtida.');
+        }
+
+        likeCountTargets.forEach((target) => {
+          target.textContent = Number(result.likes || 0).toLocaleString('pt-BR');
+        });
+        likeButton.classList.add('is-liked');
+        window.localStorage.setItem(likedKey, '1');
+        showToast(result.message || 'Curtida registrada.', 'success');
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Erro ao curtir o post.', 'error');
+      } finally {
+        likeButton.removeAttribute('disabled');
+      }
+    });
+  }
+
+  const commentsList = document.querySelector('[data-comments-list]');
+  const showMoreCommentsButton = document.querySelector('[data-show-more-comments]');
+  const mainCommentForm = document.querySelector('.comment-form-card');
+  const commentTotalTargets = Array.from(document.querySelectorAll('[data-comments-total]'));
+  const visibleRootLimit = 3;
+
+  const updateCommentTotals = (total) => {
+    commentTotalTargets.forEach((target) => {
+      target.textContent = String(total);
+    });
+  };
+
+  const applyCommentVisibilityLimit = () => {
+    if (!commentsList) return;
+    const rootComments = Array.from(commentsList.querySelectorAll('[data-comment-root]'));
+    let hiddenCount = 0;
+
+    rootComments.forEach((item, index) => {
+      const shouldHide = index >= visibleRootLimit;
+      item.hidden = shouldHide;
+      item.classList.toggle('comment-hidden', shouldHide);
+      if (shouldHide) hiddenCount += 1;
+    });
+
+    if (!showMoreCommentsButton) return;
+    showMoreCommentsButton.hidden = hiddenCount === 0;
+  };
+
+  const bindReplyToggles = (scope = document) => {
+    scope.querySelectorAll('[data-reply-toggle]').forEach((button) => {
+      if (button.dataset.bound === '1') return;
+      button.dataset.bound = '1';
+      button.addEventListener('click', () => {
+        const id = button.getAttribute('data-reply-toggle');
+        const form = document.querySelector(`[data-reply-form="${id}"]`);
+        if (!form) return;
+        const isHidden = form.hidden;
+        form.hidden = !isHidden;
+        if (isHidden) {
+          form.querySelector('input[name="nome"]')?.focus();
+        }
+      });
+    });
+  };
+
+  bindReplyToggles(document);
+
+  if (showMoreCommentsButton && commentsList) {
+    showMoreCommentsButton.addEventListener('click', () => {
+      commentsList.querySelectorAll('.comment-hidden').forEach((item) => {
+        item.hidden = false;
+        item.classList.remove('comment-hidden');
+      });
+      showMoreCommentsButton.remove();
+    });
+  }
+
+  const submitCommentForm = async (form, onSuccess) => {
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin',
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        throw new Error(result.message || 'Nao foi possivel publicar seu comentario.');
+      }
+
+      if (typeof onSuccess === 'function') {
+        onSuccess(result);
+      }
+      form.reset();
+      showToast(result.message || 'Comentario publicado com sucesso.', 'success');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Erro ao enviar comentario.', 'error');
+    }
+  };
+
+  if (mainCommentForm && commentsList) {
+    mainCommentForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await submitCommentForm(mainCommentForm, (result) => {
+        if (!result.html) return;
+
+        const template = document.createElement('div');
+        template.innerHTML = String(result.html).trim();
+
+        const emptyPanel = commentsList.querySelector('.site-empty-panel');
+        if (emptyPanel) {
+          emptyPanel.remove();
+        }
+        commentsList.prepend(template.firstElementChild);
+        bindReplyToggles(commentsList);
+        updateCommentTotals(result.comment_total || 0);
+        applyCommentVisibilityLimit();
+      });
+    });
+
+    commentsList.addEventListener('submit', async (event) => {
+      const form = event.target instanceof HTMLFormElement ? event.target : null;
+      if (!form || !form.matches('.comment-reply-form')) return;
+      event.preventDefault();
+      await submitCommentForm(form, (result) => {
+        form.hidden = true;
+        if (!result.html) return;
+        const parentId = form.getAttribute('data-reply-form');
+        const childrenHost = document.querySelector(`[data-comment-children="${parentId}"]`);
+        if (!childrenHost) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = String(result.html).trim();
+        childrenHost.append(wrapper.firstElementChild);
+        updateCommentTotals(result.comment_total || 0);
+      });
+    });
+
+    applyCommentVisibilityLimit();
   }
 })();

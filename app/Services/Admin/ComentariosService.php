@@ -36,10 +36,6 @@ final class ComentariosService
             return null;
         }
 
-        if ((int) ($comment['parent_id'] ?? 0) > 0) {
-            return null;
-        }
-
         $form = [
             'id' => $id,
             'resposta' => trim((string) ($old['resposta'] ?? '')),
@@ -48,6 +44,7 @@ final class ComentariosService
         return [
             'title' => 'Responder Comentario',
             'comment' => $comment,
+            'reply_target' => $this->resolveReplyTarget($comment),
             'form' => $form,
             'errors' => $errors,
             'return_to' => $returnTo,
@@ -57,7 +54,7 @@ final class ComentariosService
     public function replyToComment(int $id, array $input, ?array $adminUser): array
     {
         $comment = $this->comentarios->findAdminById($id);
-        if ($comment === null || (int) ($comment['parent_id'] ?? 0) > 0) {
+        if ($comment === null) {
             return ['ok' => false, 'not_found' => true];
         }
 
@@ -91,7 +88,7 @@ final class ComentariosService
 
         $this->comentarios->insertReply([
             'post_id' => (int) ($comment['post_id'] ?? 0),
-            'parent_id' => $id,
+            'parent_id' => (int) ($comment['id'] ?? 0),
             'nome' => $usuario,
             'email' => $email,
             'comentario' => $replyBody,
@@ -99,6 +96,28 @@ final class ComentariosService
         ]);
 
         return ['ok' => true];
+    }
+
+    private function resolveReplyTarget(array $comment): array
+    {
+        $target = $comment;
+        $parentId = (int) ($comment['parent_id'] ?? 0);
+        if ($parentId > 0) {
+            $parent = $this->comentarios->findAdminById($parentId);
+            if (is_array($parent)) {
+                $target = $parent;
+            }
+        }
+
+        return [
+            'id' => (int) ($comment['id'] ?? 0),
+            'parent_id' => $parentId,
+            'nome' => (string) ($comment['nome'] ?? 'Anonimo'),
+            'comentario' => (string) ($comment['comentario'] ?? ''),
+            'thread_root_id' => (int) ($target['id'] ?? 0),
+            'thread_root_nome' => (string) ($target['nome'] ?? 'Anonimo'),
+            'thread_root_comentario' => (string) ($target['comentario'] ?? ''),
+        ];
     }
 
     public function moderateComment(int $id, string $action): array

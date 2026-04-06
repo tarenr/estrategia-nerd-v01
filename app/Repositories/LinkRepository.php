@@ -17,7 +17,8 @@ final class LinkRepository
         $orderBy = $this->buildAdminOrderBy($sort, $dir);
 
         $sql = '
-            SELECT id, titulo, slug, url, tipo, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque,
+            SELECT id, titulo, slug, url, tipo, promocao, desconto_percentual, desconto_contexto, codigo_cupom, secao_publica, subgrupo_publico,
+                   descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque,
                    expira_em, ultima_verificacao, codigo_http, url_final, observacao_status,
                    created_at, updated_at
             FROM links
@@ -45,7 +46,8 @@ final class LinkRepository
         $total = (int) ($countStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
         $sql = '
-            SELECT id, titulo, slug, url, tipo, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque,
+            SELECT id, titulo, slug, url, tipo, promocao, desconto_percentual, desconto_contexto, codigo_cupom, secao_publica, subgrupo_publico,
+                   descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque,
                    expira_em, ultima_verificacao, codigo_http, url_final, observacao_status,
                    created_at, updated_at
             FROM links
@@ -74,7 +76,8 @@ final class LinkRepository
     public function findById(int $id): ?array
     {
         $stmt = $this->pdo->prepare('
-            SELECT id, titulo, slug, url, tipo, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque,
+            SELECT id, titulo, slug, url, tipo, promocao, desconto_percentual, desconto_contexto, codigo_cupom, secao_publica, subgrupo_publico,
+                   descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque,
                    expira_em, ultima_verificacao, codigo_http, url_final, observacao_status,
                    created_at, updated_at
             FROM links
@@ -90,14 +93,26 @@ final class LinkRepository
     public function insertAdmin(array $data): int
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO links (titulo, slug, url, tipo, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque, expira_em, observacao_status)
-            VALUES (:titulo, :slug, :url, :tipo, :descricao, :cta_curto, :texto_botao, :selo, :imagem, :posicao, :status, :destaque, :expira_em, :observacao_status)
+            INSERT INTO links (
+                titulo, slug, url, tipo, promocao, desconto_percentual, desconto_contexto, codigo_cupom, secao_publica, subgrupo_publico,
+                descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque, expira_em, observacao_status
+            )
+            VALUES (
+                :titulo, :slug, :url, :tipo, :promocao, :desconto_percentual, :desconto_contexto, :codigo_cupom, :secao_publica, :subgrupo_publico,
+                :descricao, :cta_curto, :texto_botao, :selo, :imagem, :posicao, :status, :destaque, :expira_em, :observacao_status
+            )
         ');
         $stmt->execute([
             'titulo' => $data['titulo'],
             'slug' => $data['slug'],
             'url' => $data['url'],
             'tipo' => $data['tipo'],
+            'promocao' => (int) ($data['promocao'] ?? 0),
+            'desconto_percentual' => $this->nullableString($data['desconto_percentual'] ?? null),
+            'desconto_contexto' => $this->nullableString($data['desconto_contexto'] ?? null),
+            'codigo_cupom' => $this->nullableString($data['codigo_cupom'] ?? null),
+            'secao_publica' => $data['secao_publica'],
+            'subgrupo_publico' => $this->nullableString($data['subgrupo_publico'] ?? null),
             'descricao' => $this->nullableString($data['descricao'] ?? null),
             'cta_curto' => $this->nullableString($data['cta_curto'] ?? null),
             'texto_botao' => $this->nullableString($data['texto_botao'] ?? null),
@@ -121,6 +136,12 @@ final class LinkRepository
                 slug = :slug,
                 url = :url,
                 tipo = :tipo,
+                promocao = :promocao,
+                desconto_percentual = :desconto_percentual,
+                desconto_contexto = :desconto_contexto,
+                codigo_cupom = :codigo_cupom,
+                secao_publica = :secao_publica,
+                subgrupo_publico = :subgrupo_publico,
                 descricao = :descricao,
                 cta_curto = :cta_curto,
                 texto_botao = :texto_botao,
@@ -140,6 +161,12 @@ final class LinkRepository
             'slug' => $data['slug'],
             'url' => $data['url'],
             'tipo' => $data['tipo'],
+            'promocao' => (int) ($data['promocao'] ?? 0),
+            'desconto_percentual' => $this->nullableString($data['desconto_percentual'] ?? null),
+            'desconto_contexto' => $this->nullableString($data['desconto_contexto'] ?? null),
+            'codigo_cupom' => $this->nullableString($data['codigo_cupom'] ?? null),
+            'secao_publica' => $data['secao_publica'],
+            'subgrupo_publico' => $this->nullableString($data['subgrupo_publico'] ?? null),
             'descricao' => $this->nullableString($data['descricao'] ?? null),
             'cta_curto' => $this->nullableString($data['cta_curto'] ?? null),
             'texto_botao' => $this->nullableString($data['texto_botao'] ?? null),
@@ -252,7 +279,7 @@ final class LinkRepository
 
     public function countPublicActive(): int
     {
-        $stmt = $this->pdo->query('SELECT COUNT(*) AS total FROM links WHERE status = "ativo" AND (expira_em IS NULL OR expira_em >= NOW())');
+        $stmt = $this->pdo->query('SELECT COUNT(*) AS total FROM links WHERE status NOT IN ("oculto", "expirado") AND (expira_em IS NULL OR expira_em >= NOW())');
         return (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
     }
 
@@ -260,11 +287,30 @@ final class LinkRepository
     {
         $limit = max(1, min(12, $limit));
         $stmt = $this->pdo->prepare('
-            SELECT id, titulo, slug, url, tipo, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque
+            SELECT id, titulo, slug, url, tipo, promocao, desconto_percentual, desconto_contexto, codigo_cupom, secao_publica, subgrupo_publico,
+                   descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque
             FROM links
-            WHERE status = "ativo"
+            WHERE status NOT IN ("oculto", "expirado")
               AND (expira_em IS NULL OR expira_em >= NOW())
-            ORDER BY destaque DESC, posicao ASC, id DESC
+            ORDER BY promocao DESC, destaque DESC, posicao ASC, id DESC
+            LIMIT :limit
+        ');
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function listForCentral(int $limit = 60): array
+    {
+        $limit = max(1, min(120, $limit));
+        $stmt = $this->pdo->prepare('
+            SELECT id, titulo, slug, url, tipo, promocao, desconto_percentual, desconto_contexto, codigo_cupom, secao_publica, subgrupo_publico,
+                   descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque
+            FROM links
+            WHERE status NOT IN ("oculto", "expirado")
+              AND (expira_em IS NULL OR expira_em >= NOW())
+            ORDER BY promocao DESC, destaque DESC, posicao ASC, id DESC
             LIMIT :limit
         ');
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -297,18 +343,27 @@ final class LinkRepository
 
         $busca = trim((string) ($filters['busca'] ?? ''));
         if ($busca !== '') {
-            $clauses[] = '(titulo LIKE :busca_titulo OR slug LIKE :busca_slug OR url LIKE :busca_url OR descricao LIKE :busca_descricao)';
+            $clauses[] = '(titulo LIKE :busca_titulo OR slug LIKE :busca_slug OR url LIKE :busca_url OR descricao LIKE :busca_descricao OR subgrupo_publico LIKE :busca_grupo OR codigo_cupom LIKE :busca_cupom)';
             $like = '%' . $busca . '%';
             $params['busca_titulo'] = $like;
             $params['busca_slug'] = $like;
             $params['busca_url'] = $like;
             $params['busca_descricao'] = $like;
+            $params['busca_grupo'] = $like;
+            $params['busca_cupom'] = $like;
         }
 
         $tipo = trim((string) ($filters['tipo'] ?? ''));
-        if ($tipo !== '' && in_array($tipo, ['afiliado', 'oferta', 'conteudo', 'rede_social', 'servico'], true)) {
+        if ($tipo !== '' && in_array($tipo, ['produto', 'cupom', 'conteudo', 'rede_social', 'servico'], true)) {
             $clauses[] = 'tipo = :tipo';
             $params['tipo'] = $tipo;
+        }
+
+        $promocao = trim((string) ($filters['promocao'] ?? ''));
+        if ($promocao === '1') {
+            $clauses[] = 'promocao = 1';
+        } elseif ($promocao === '0') {
+            $clauses[] = 'promocao = 0';
         }
 
         $status = trim((string) ($filters['status'] ?? ''));
@@ -355,7 +410,7 @@ final class LinkRepository
         ];
 
         $column = $map[$sort] ?? 'posicao';
-        return $column . ' ' . $dir . ', id DESC';
+        return $column . ' ' . $dir . ', promocao DESC, destaque DESC, id DESC';
     }
 
     private function nullableString(mixed $value): ?string
