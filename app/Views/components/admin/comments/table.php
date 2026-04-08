@@ -44,6 +44,28 @@ $sortIcon = static function (string $column) use ($sort, $dir): string {
     return $dir === 'asc' ? '<span class="text-cyan-300">&uarr;</span>' : '<span class="text-cyan-300">&darr;</span>';
 };
 
+$truncate = static function (string $value, int $limit = 180): string {
+    $value = trim(preg_replace('/\s+/', ' ', strip_tags($value)) ?? $value);
+    if (mb_strlen($value) <= $limit) {
+        return $value;
+    }
+
+    return rtrim(mb_substr($value, 0, $limit - 1)) . '...';
+};
+
+$cleanTitle = static function (?string $value): string {
+    $value = trim((string) $value);
+    if ($value === '') {
+        return 'Post removido';
+    }
+
+    $value = preg_replace('/\[\[(.*?)\]\]/u', '$1', $value) ?? $value;
+    $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
+    $value = trim($value);
+
+    return $value !== '' ? $value : 'Post removido';
+};
+
 $formatDate = static function ($value): string {
     if (!$value) {
         return '-';
@@ -56,38 +78,58 @@ $formatDate = static function ($value): string {
     }
 };
 
-$truncate = static function (string $value, int $limit = 140): string {
-    $value = trim(preg_replace('/\s+/', ' ', strip_tags($value)) ?? $value);
-    if (mb_strlen($value) <= $limit) {
-        return $value;
-    }
-
-    return rtrim(mb_substr($value, 0, $limit - 1)) . '...';
+$statusMeta = static function (string $status): array {
+    return match ($status) {
+        'aprovado' => ['label' => 'Aprovado', 'class' => 'comments-table-status-toggle comments-table-status-toggle-approved'],
+        'reprovado' => ['label' => 'Reprovado', 'class' => 'comments-table-status-toggle comments-table-status-toggle-rejected'],
+        'spam' => ['label' => 'Spam', 'class' => 'comments-table-status-toggle comments-table-status-toggle-spam'],
+        default => ['label' => 'AG. moderacao', 'class' => 'comments-table-status-toggle comments-table-status-toggle-pending'],
+    };
 };
 
-$statusBadge = static function (string $status): string {
+$moderationOptions = static function (string $status): array {
     return match ($status) {
-        'aprovado' => 'background:rgba(34,197,94,.15); color:#86efac; border:1px solid rgba(34,197,94,.3);',
-        'reprovado' => 'background:rgba(248,113,113,.12); color:#fda4af; border:1px solid rgba(248,113,113,.28);',
-        'spam' => 'background:rgba(168,85,247,.12); color:#d8b4fe; border:1px solid rgba(168,85,247,.28);',
-        default => 'background:rgba(250,204,21,.12); color:#fde68a; border:1px solid rgba(250,204,21,.28);',
+        'aprovado' => [
+            ['value' => 'reject', 'label' => 'Reprovar', 'class' => 'comments-table-status-action comments-table-status-action-reject'],
+            ['value' => 'pending', 'label' => 'Pendente', 'class' => 'comments-table-status-action comments-table-status-action-pending'],
+        ],
+        'reprovado' => [
+            ['value' => 'approve', 'label' => 'Aprovar', 'class' => 'comments-table-status-action comments-table-status-action-approve'],
+            ['value' => 'pending', 'label' => 'Pendente', 'class' => 'comments-table-status-action comments-table-status-action-pending'],
+        ],
+        'spam' => [
+            ['value' => 'approve', 'label' => 'Aprovar', 'class' => 'comments-table-status-action comments-table-status-action-approve'],
+            ['value' => 'pending', 'label' => 'Pendente', 'class' => 'comments-table-status-action comments-table-status-action-pending'],
+        ],
+        default => [
+            ['value' => 'approve', 'label' => 'Aprovar', 'class' => 'comments-table-status-action comments-table-status-action-approve'],
+            ['value' => 'reject', 'label' => 'Reprovar', 'class' => 'comments-table-status-action comments-table-status-action-reject'],
+        ],
     };
 };
 
 $currentUrl = $buildUrl();
-$page = (int) ($pagination['page'] ?? 1);
+$page = max(1, (int) ($pagination['page'] ?? 1));
 $pages = max(1, (int) ($pagination['pages'] ?? 1));
-$total = (int) ($pagination['total'] ?? count($items));
-$perPage = (int) ($pagination['per_page'] ?? 10);
+$total = max(0, (int) ($pagination['total'] ?? count($items)));
+$perPage = max(5, (int) ($pagination['per_page'] ?? 10));
+$start = max(1, $page - 2);
+$end = min($pages, $page + 2);
+if (($end - $start) < 4) {
+    $start = max(1, $end - 4);
+    $end = min($pages, $start + 4);
+}
+$firstItem = $total > 0 ? (($page - 1) * $perPage) + 1 : 0;
+$lastItem = $total > 0 ? min($total, $page * $perPage) : 0;
 ?>
 
-<section class="admin-panel">
-  <div class="flex items-center justify-between mb-6 gap-4">
+<section class="admin-panel comments-table-panel">
+  <div class="posts-table-head">
     <div>
-      <h3 class="font-orbitron text-xl font-black text-white">Central de Comentarios</h3>
+      <h3 class="font-orbitron text-xl font-black text-white">Lista de comentarios</h3>
       <div class="text-xs text-slate-400 mt-1"><?= number_format($total, 0, ',', '.') ?> comentario(s) encontrado(s)</div>
     </div>
-    <span class="text-cyan-400 text-sm font-bold uppercase"><?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> / <?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+    <span class="posts-table-order"><?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> / <?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
   </div>
 
   <?php if ($items === []): ?>
@@ -97,62 +139,147 @@ $perPage = (int) ($pagination['per_page'] ?? 10);
       <div class="text-slate-400 text-sm">Ajuste os filtros para encontrar comentarios especificos.</div>
     </div>
   <?php else: ?>
-    <div class="overflow-x-auto rounded-xl border border-slate-800">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-800/70 text-slate-300">
-          <tr class="text-left">
-            <th class="px-4 py-3 font-semibold"><a data-admin-comments-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('autor'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Autor <?= $sortIcon('autor') ?></a></th>
-            <th class="px-4 py-3 font-semibold">Comentario</th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-comments-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('post'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Post <?= $sortIcon('post') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-comments-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Status <?= $sortIcon('status') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-comments-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('respondido'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Resposta <?= $sortIcon('respondido') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-comments-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('data'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Data <?= $sortIcon('data') ?></a></th>
-            <th class="px-4 py-3 font-semibold text-right">Acoes</th>
+    <div class="comments-table-wrap">
+      <table class="comments-table">
+        <colgroup>
+          <col class="comments-table-col-main">
+          <col class="comments-table-col-post">
+          <col class="comments-table-col-state">
+          <col class="comments-table-col-date">
+          <col class="comments-table-col-actions">
+        </colgroup>
+        <thead class="posts-table-thead">
+          <tr>
+            <th class="posts-table-th posts-table-th-left"><a data-admin-comments-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('autor'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Comentario <?= $sortIcon('autor') ?></a></th>
+            <th class="posts-table-th posts-table-th-left"><a data-admin-comments-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('post'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Post <?= $sortIcon('post') ?></a></th>
+            <th class="posts-table-th posts-table-th-left"><a data-admin-comments-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Estado <?= $sortIcon('status') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-comments-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('data'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Data <?= $sortIcon('data') ?></a></th>
+            <th class="posts-table-th posts-table-th-center">Acoes</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/70">
+        <tbody class="comments-table-body">
           <?php foreach ($items as $item): ?>
             <?php
               $id = (int) ($item['id'] ?? 0);
               $status = (string) ($item['status'] ?? 'pendente');
-              $hasReply = (int) ($item['has_reply'] ?? 0) === 1;
+              $statusInfo = $statusMeta($status);
+              $options = $moderationOptions($status);
+              $hasAdminReply = (int) ($item['has_admin_reply'] ?? 0) === 1;
+              $adminReplyCount = (int) ($item['admin_reply_count'] ?? 0);
               $isReply = (int) ($item['parent_id'] ?? 0) > 0;
               $postId = (int) ($item['post_id'] ?? 0);
-              $postTitulo = (string) ($item['post_titulo'] ?? 'Post removido');
+              $postTitulo = $cleanTitle((string) ($item['post_titulo'] ?? 'Post removido'));
+              $postSlug = trim((string) ($item['post_slug'] ?? ''));
               $deleteUrl = url('/admin/excluir-comentario?id=' . $id . '&return_to=' . rawurlencode($currentUrl));
               $replyUrl = url('/admin/responder-comentario?id=' . $id . '&return_to=' . rawurlencode($currentUrl));
               $editPostUrl = $postId > 0 ? url('/admin/editar-post?id=' . $postId) : '';
+              $publicPostUrl = $postSlug !== '' ? url('/post/' . $postSlug) : '';
+              $responseLabel = $hasAdminReply ? 'Respondido' : 'Sem resposta';
+              $email = trim((string) ($item['email'] ?? ''));
+              $showEmail = $email !== '' && !str_ends_with(strtolower($email), '@admin.estrategia-nerd.local');
+              $authorName = trim((string) ($item['nome'] ?? 'Anonimo'));
+              $authorName = $authorName !== '' ? $authorName : 'Anonimo';
+              $parentAuthor = trim((string) ($item['parent_nome'] ?? 'Leitor'));
+              $parentAuthor = $parentAuthor !== '' ? $parentAuthor : 'Leitor';
             ?>
-            <tr class="hover:bg-slate-800/40 transition">
-              <td class="px-4 py-4 align-top">
-                <div class="font-semibold text-slate-100"><?= htmlspecialchars((string) ($item['nome'] ?? 'Anonimo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                <div class="mt-1 text-xs text-slate-400"><?= htmlspecialchars((string) ($item['email'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                <?php if ($isReply): ?>
-                  <div class="mt-2 text-[11px] text-cyan-300 font-semibold uppercase tracking-[0.18em]">Resposta ao comentario #<?= (int) ($item['parent_id'] ?? 0) ?></div>
-                  <div class="mt-1 text-[11px] text-slate-500">Autor original: <?= htmlspecialchars((string) ($item['parent_nome'] ?? 'Leitor'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <tr class="comments-table-row">
+              <td class="comments-table-td comments-table-main-cell">
+                <div class="comments-table-main-top">
+                  <div class="comments-table-author"><?= htmlspecialchars($authorName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <span class="comments-table-id">#<?= $id ?></span>
+                </div>
+
+                <?php if ($showEmail): ?>
+                  <div class="comments-table-email"><?= htmlspecialchars($email, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 <?php endif; ?>
-                <div class="mt-2 text-[11px] text-slate-500">#<?= $id ?></div>
+
+                <div class="comments-table-message"><?= htmlspecialchars($truncate((string) ($item['comentario'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+
+                <?php if ($isReply): ?>
+                  <div class="comments-table-context">Em resposta a <strong><?= htmlspecialchars($parentAuthor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong> (#<?= (int) ($item['parent_id'] ?? 0) ?>)</div>
+                <?php endif; ?>
               </td>
-              <td class="px-4 py-4 align-top"><div class="text-slate-200 leading-relaxed"><?= htmlspecialchars($truncate((string) ($item['comentario'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div></td>
-              <td class="px-4 py-4 align-top"><?php if ($editPostUrl !== ''): ?><a href="<?= htmlspecialchars($editPostUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="text-cyan-200 hover:text-cyan-100 transition font-semibold"><?= htmlspecialchars($postTitulo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a><?php else: ?><span class="text-slate-400"><?= htmlspecialchars($postTitulo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?><div class="mt-1 text-xs text-slate-500">Post #<?= $postId ?></div></td>
-              <td class="px-4 py-4 align-top"><span class="status-badge" style="<?= htmlspecialchars($statusBadge($status), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($status, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></td>
-              <td class="px-4 py-4 align-top"><span class="admin-chip inline-flex whitespace-nowrap"><?= $isReply ? 'e resposta' : ($hasReply ? 'respondido' : 'sem resposta') ?></span></td>
-              <td class="px-4 py-4 align-top text-slate-300"><?= htmlspecialchars($formatDate($item['data'] ?? null), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
-              <td class="px-4 py-4 align-top"><div class="flex flex-col items-end gap-2"><form method="POST" action="<?= url('/admin/moderar-comentario') ?>" class="flex flex-wrap justify-end gap-2"><?= Csrf::field() ?><input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="return_to" value="<?= htmlspecialchars($currentUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?php if ($status !== 'aprovado'): ?><button type="submit" name="action" value="approve" class="btn-edit px-3 py-2 rounded-lg text-xs font-bold">Aprovar</button><?php endif; ?><?php if ($status !== 'reprovado'): ?><button type="submit" name="action" value="reject" class="admin-btn admin-btn-secondary text-xs">Reprovar</button><?php endif; ?><?php if ($status !== 'spam'): ?><button type="submit" name="action" value="spam" class="admin-btn admin-btn-secondary text-xs" style="border-color:rgba(168,85,247,.25); color:#d8b4fe;">Spam</button><?php endif; ?><?php if ($status !== 'pendente'): ?><button type="submit" name="action" value="pending" class="admin-btn admin-btn-secondary text-xs">Pendente</button><?php endif; ?></form><div class="flex flex-wrap justify-end gap-2"><a class="admin-btn admin-btn-secondary text-xs" href="<?= htmlspecialchars($replyUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= $isReply ? 'Responder na thread' : ($hasReply ? 'Responder novamente' : 'Responder') ?></a><a class="px-3 py-2 rounded-lg text-xs font-bold border border-rose-500/30 text-rose-200 hover:bg-rose-500/10 transition" href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Excluir</a></div></div></td>
+
+              <td class="comments-table-td comments-table-post-cell">
+                <div class="comments-table-post-stack">
+                  <?php if ($editPostUrl !== ''): ?>
+                    <a class="comments-table-post-link" href="<?= htmlspecialchars($editPostUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($postTitulo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+                  <?php else: ?>
+                    <span class="comments-table-post-link is-disabled"><?= htmlspecialchars($postTitulo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                  <?php endif; ?>
+                  <div class="comments-table-post-actions-inline">
+                    <?php if ($publicPostUrl !== ''): ?>
+                      <a class="comments-table-post-preview" href="<?= htmlspecialchars($publicPostUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noreferrer" title="Abrir post publico" aria-label="Abrir post publico">
+                        <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                      </a>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              </td>
+
+              <td class="comments-table-td comments-table-state-cell">
+                <form method="POST" action="<?= url('/admin/moderar-comentario') ?>" class="comments-table-moderation-form">
+                  <?= Csrf::field() ?>
+                  <input type="hidden" name="id" value="<?= $id ?>">
+                  <input type="hidden" name="return_to" value="<?= htmlspecialchars($currentUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+
+                  <div class="comments-table-status-stack" data-comment-status-menu>
+                    <button
+                      type="button"
+                      class="<?= htmlspecialchars((string) $statusInfo['class'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                      data-comment-status-toggle
+                      aria-expanded="false"
+                    >
+                      <?= htmlspecialchars((string) $statusInfo['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                    </button>
+
+                    <div class="comments-table-status-actions" data-comment-status-actions hidden>
+                      <?php foreach ($options as $option): ?>
+                        <button
+                          type="submit"
+                          name="action"
+                          value="<?= htmlspecialchars((string) $option['value'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                          class="<?= htmlspecialchars((string) $option['class'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                        >
+                          <?= htmlspecialchars((string) $option['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                        </button>
+                      <?php endforeach; ?>
+                    </div>
+                  </div>
+                </form>
+
+                <div class="comments-table-state-note"><?= htmlspecialchars($responseLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php if ($hasAdminReply && $adminReplyCount > 1): ?><div class="comments-table-state-subnote"><?= $adminReplyCount ?> respostas da equipe</div><?php endif; ?>
+              </td>
+
+              <td class="comments-table-td comments-table-td-center comments-table-date-cell">
+                <div class="comments-table-date"><?= htmlspecialchars($formatDate($item['data'] ?? null), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              </td>
+
+              <td class="comments-table-td comments-table-td-center">
+                <div class="comments-table-actions">
+                  <a
+                    class="comments-table-action comments-table-action-reply"
+                    href="<?= htmlspecialchars($replyUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    aria-label="Responder comentario"
+                    title="Responder comentario"
+                  >
+                    <i class="fa-solid fa-reply" aria-hidden="true"></i>
+                  </a>
+                  <a
+                    class="comments-table-action comments-table-action-delete"
+                    href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    aria-label="Excluir comentario"
+                    title="Excluir comentario"
+                  >
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                  </a>
+                </div>
+              </td>
             </tr>
           <?php endforeach; ?>
         </tbody>
       </table>
     </div>
 
-    <div class="mt-5 flex items-center justify-between gap-4 flex-wrap rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
-      <div class="text-xs text-slate-400">Pagina atual: <?= $page ?> - <?= $perPage ?> por pagina</div>
-      <div class="flex items-center gap-2">
-        <?php $prevUrl = $buildUrl(['page' => max(1, $page - 1)]); $nextUrl = $buildUrl(['page' => min($pages, $page + 1)]); $prevDisabled = $page <= 1; $nextDisabled = $page >= $pages; ?>
-        <a data-admin-comments-link class="admin-btn admin-btn-secondary <?= $prevDisabled ? 'pointer-events-none opacity-50' : '' ?>" href="<?= htmlspecialchars($prevUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Anterior</a>
-        <span class="admin-chip"><?= $page ?> / <?= $pages ?></span>
-        <a data-admin-comments-link class="admin-btn admin-btn-secondary <?= $nextDisabled ? 'pointer-events-none opacity-50' : '' ?>" href="<?= htmlspecialchars($nextUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Proxima</a>
-      </div>
-    </div>
   <?php endif; ?>
 </section>

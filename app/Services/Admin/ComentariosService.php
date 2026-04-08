@@ -23,7 +23,7 @@ final class ComentariosService
             'filters' => $filters,
             'sort' => $sort,
             'dir' => $dir,
-            'summary' => $this->comentarios->summaryFiltered($filters),
+            'summary' => $this->decorateSummary($this->comentarios->summaryFiltered($filters)),
             'pagination' => $this->comentarios->paginateAdmin($filters, $page, $perPage, $sort, $dir),
             'posts' => $this->comentarios->listPostsForFilter(),
         ];
@@ -45,6 +45,7 @@ final class ComentariosService
             'title' => 'Responder Comentario',
             'comment' => $comment,
             'reply_target' => $this->resolveReplyTarget($comment),
+            'thread_replies' => $this->decorateThreadReplies($this->comentarios->listDirectRepliesByParent($id)),
             'form' => $form,
             'errors' => $errors,
             'return_to' => $returnTo,
@@ -119,6 +120,23 @@ final class ComentariosService
             'thread_root_comentario' => (string) ($target['comentario'] ?? ''),
         ];
     }
+    private function decorateThreadReplies(array $items): array
+    {
+        return array_map(static function (array $item): array {
+            $email = trim((string) ($item['email'] ?? ''));
+            $isAdmin = $email !== '' && str_ends_with(strtolower($email), '@admin.estrategia-nerd.local');
+
+            return [
+                'id' => (int) ($item['id'] ?? 0),
+                'nome' => trim((string) ($item['nome'] ?? 'Anonimo')) ?: 'Anonimo',
+                'email' => $isAdmin ? '' : $email,
+                'comentario' => (string) ($item['comentario'] ?? ''),
+                'status' => (string) ($item['status'] ?? 'pendente'),
+                'data' => (string) ($item['data'] ?? ''),
+                'is_admin' => $isAdmin,
+            ];
+        }, $items);
+    }
 
     public function moderateComment(int $id, string $action): array
     {
@@ -169,6 +187,35 @@ final class ComentariosService
 
         $this->comentarios->deleteThreadById($id);
         return ['ok' => true];
+    }
+
+    private function decorateSummary(array $summary): array
+    {
+        $total = (int) ($summary['total'] ?? 0);
+        $pendentes = (int) ($summary['pendentes'] ?? 0);
+        $aprovados = (int) ($summary['aprovados'] ?? 0);
+        $reprovados = (int) ($summary['reprovados'] ?? 0);
+        $spam = (int) ($summary['spam'] ?? 0);
+        $comentariosRaiz = (int) ($summary['comentarios_raiz'] ?? 0);
+        $respostas = (int) ($summary['respostas'] ?? 0);
+        $threadsRespondidas = (int) ($summary['threads_respondidas'] ?? ($summary['respondidos'] ?? 0));
+        $moderados = $aprovados + $reprovados + $spam;
+        $bloqueados = $reprovados + $spam;
+        $semResposta = max(0, $comentariosRaiz - $threadsRespondidas);
+
+        $summary['moderados'] = $moderados;
+        $summary['bloqueados'] = $bloqueados;
+        $summary['comentarios_raiz'] = $comentariosRaiz;
+        $summary['respostas'] = $respostas;
+        $summary['threads_respondidas'] = $threadsRespondidas;
+        $summary['respondidos'] = $threadsRespondidas;
+        $summary['sem_resposta'] = $semResposta;
+        $summary['fila_percentual'] = $total > 0 ? ($pendentes / $total) * 100 : 0.0;
+        $summary['taxa_aprovacao'] = $moderados > 0 ? ($aprovados / $moderados) * 100 : 0.0;
+        $summary['pressao_defensiva'] = $total > 0 ? ($bloqueados / $total) * 100 : 0.0;
+        $summary['cobertura_resposta'] = $comentariosRaiz > 0 ? ($threadsRespondidas / $comentariosRaiz) * 100 : 0.0;
+
+        return $summary;
     }
 
     private function normalizeFilters(array $query): array

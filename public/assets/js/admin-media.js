@@ -83,6 +83,24 @@
     return String(name || 'imagem').replace(/\.[^.]+$/, '') + '.webp';
   }
 
+  function setInputFiles(input, files) {
+    if (!input || !files || typeof DataTransfer === 'undefined') {
+      return false;
+    }
+
+    const transfer = new DataTransfer();
+    Array.from(files).forEach((file) => transfer.items.add(file));
+    input.files = transfer.files;
+    return true;
+  }
+
+  function updateFileLabel(label, input) {
+    if (!label || !input) return;
+
+    const file = input.files && input.files[0] ? input.files[0] : null;
+    label.textContent = file ? file.name : 'Nenhum arquivo selecionado';
+  }
+
   if (buttons.length) {
     buttons.forEach((button) => {
       button.addEventListener('click', async () => {
@@ -116,8 +134,55 @@
   }
 
   if (uploadForm) {
-    const fileInput = uploadForm.querySelector('input[type="file"][name="arquivo"]');
+    const fileInput = uploadForm.querySelector('[data-media-file-input]');
+    const dropzone = uploadForm.querySelector('[data-media-dropzone]');
+    const fileLabel = uploadForm.querySelector('[data-media-file-label]');
     const submitButton = uploadForm.querySelector('button[type="submit"]');
+
+    if (fileInput && fileLabel) {
+      updateFileLabel(fileLabel, fileInput);
+      fileInput.addEventListener('change', () => updateFileLabel(fileLabel, fileInput));
+    }
+
+    if (dropzone && fileInput) {
+      dropzone.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          dropzone.classList.add('is-dragover');
+        });
+      });
+
+      ['dragleave', 'dragend'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!dropzone.contains(event.relatedTarget)) {
+            dropzone.classList.remove('is-dragover');
+          }
+        });
+      });
+
+      dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropzone.classList.remove('is-dragover');
+
+        const files = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files : null;
+        if (!files || !files.length) return;
+
+        if (setInputFiles(fileInput, [files[0]])) {
+          updateFileLabel(fileLabel, fileInput);
+        }
+      });
+    }
 
     uploadForm.addEventListener('submit', async (event) => {
       if (uploadForm.dataset.optimized === '1') {
@@ -136,10 +201,9 @@
         const file = fileInput && fileInput.files ? fileInput.files[0] : null;
         if (file) {
           const optimized = await optimizeUploadFile(file, { maxWidth: 2200, maxHeight: 2200, quality: 0.84 });
-          if (optimized !== file && typeof DataTransfer !== 'undefined') {
-            const transfer = new DataTransfer();
-            transfer.items.add(optimized);
-            fileInput.files = transfer.files;
+          if (optimized !== file) {
+            setInputFiles(fileInput, [optimized]);
+            updateFileLabel(fileLabel, fileInput);
           }
         }
       } catch (error) {

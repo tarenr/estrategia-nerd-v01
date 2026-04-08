@@ -29,28 +29,13 @@ $buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $pa
     return $queryString !== '' ? $baseUrl . '?' . $queryString : $baseUrl;
 };
 
-$sortLink = static function (string $column) use ($sort, $dir, $buildUrl): string {
-    $nextDir = ($sort === $column && $dir === 'asc') ? 'desc' : 'asc';
-    return $buildUrl(['sort' => $column, 'dir' => $nextDir, 'page' => 1]);
-};
-
-$sortIcon = static function (string $column) use ($sort, $dir): string {
-    if ($sort !== $column) {
-        return '<span class="text-slate-600">&harr;</span>';
-    }
-
-    return $dir === 'asc'
-        ? '<span class="text-cyan-300">&uarr;</span>'
-        : '<span class="text-cyan-300">&darr;</span>';
-};
-
 $page = (int) ($pagination['page'] ?? 1);
 $pages = max(1, (int) ($pagination['pages'] ?? 1));
 $total = (int) ($pagination['total'] ?? count($items));
 $perPage = (int) ($pagination['per_page'] ?? 12);
 ?>
 
-<section class="admin-panel">
+<section class="admin-panel media-library-panel">
   <div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
     <div>
       <h3 class="font-orbitron text-xl font-black text-white">Biblioteca de Midia</h3>
@@ -77,7 +62,7 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
       <div class="text-slate-400 text-sm">Envie a primeira imagem ou ajuste os filtros para explorar a biblioteca.</div>
     </div>
   <?php else: ?>
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div class="media-library-grid">
       <?php foreach ($items as $item): ?>
         <?php
           $deleteUrl = url('/admin/excluir-midia?path=' . rawurlencode((string) ($item['relative_path'] ?? '')));
@@ -85,56 +70,98 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
           $previewUrl = (string) ($item['public_url'] ?? '');
           $libraryLabel = (string) ($item['library'] ?? 'Upload');
           $isManagedUpload = (bool) ($item['is_managed_upload'] ?? false);
+          $postSlug = trim((string) ($item['post_slug'] ?? ''));
+          $postTitle = trim((string) ($item['post_title'] ?? ''));
+          $postFilterUrl = trim((string) ($item['post_filter_url'] ?? ''));
+          $linkedPostsCount = max(0, (int) ($item['linked_posts_count'] ?? 0));
+          $usageState = (string) ($item['usage_state'] ?? 'available');
+          $statusLabel = (string) ($item['status_label'] ?? 'Disponivel');
+          $statusClass = match ($usageState) {
+              'in_use' => ' is-positive',
+              'orphan' => ' is-warning',
+              'available' => ' is-available',
+              default => ' is-muted',
+          };
         ?>
-        <article class="rounded-2xl border border-slate-800 bg-slate-900/40 overflow-hidden flex flex-col">
-          <div class="aspect-[16/10] bg-slate-950/70 flex items-center justify-center border-b border-slate-800 overflow-hidden">
+        <article class="media-library-card">
+          <div class="media-library-preview">
             <?php if (($item['is_image'] ?? false) === true): ?>
-              <img src="<?= htmlspecialchars($previewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['name'] ?? 'midia'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="w-full h-full object-cover">
+              <img src="<?= htmlspecialchars($previewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['name'] ?? 'midia'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="media-library-image">
             <?php else: ?>
-              <div class="text-slate-400 text-sm font-bold uppercase tracking-[0.2em]"><?= htmlspecialchars((string) ($item['extension'] ?? 'ARQ'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <div class="media-library-file-fallback">
+                <span class="media-library-file-ext"><?= htmlspecialchars((string) strtoupper((string) ($item['extension'] ?? 'ARQ')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+              </div>
             <?php endif; ?>
           </div>
 
-          <div class="p-4 flex-1 flex flex-col gap-3">
-            <div>
-              <div class="font-semibold text-slate-100 break-all"><?= htmlspecialchars((string) ($item['name'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-              <div class="text-xs text-slate-500 mt-1 break-all"><?= htmlspecialchars((string) ($item['relative_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div class="media-library-body">
+            <div class="media-library-header">
+              <div class="media-library-title-wrap">
+                <div class="media-library-title"><?= htmlspecialchars((string) ($item['name'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                <div class="media-library-path"><?= htmlspecialchars((string) ($item['relative_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              </div>
+              <div class="media-library-flags">
+                <span class="media-library-flag"><?= htmlspecialchars($libraryLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+              </div>
             </div>
 
-            <dl class="grid grid-cols-2 gap-3 text-xs">
-              <div><dt class="text-slate-500 uppercase tracking-wide">Origem</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars($libraryLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
-              <div><dt class="text-slate-500 uppercase tracking-wide">Tamanho</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars((string) ($item['size_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
-              <div><dt class="text-slate-500 uppercase tracking-wide">Tipo</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars((string) ($item['mime'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
-              <div><dt class="text-slate-500 uppercase tracking-wide">Pasta</dt><dd class="text-slate-200 mt-1 break-all"><?= htmlspecialchars((string) ($item['directory'] ?? 'uploads'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
-              <div><dt class="text-slate-500 uppercase tracking-wide">Status</dt><dd class="text-slate-200 mt-1"><?= ($item['is_orphan'] ?? false) === true ? 'Orfa' : 'Em uso' ?></dd></div>
-              <div><dt class="text-slate-500 uppercase tracking-wide">Post</dt><dd class="text-slate-200 mt-1 break-all"><?= htmlspecialchars((string) ($item['post_slug'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?: '-' ?></dd></div>
-              <div class="col-span-2"><dt class="text-slate-500 uppercase tracking-wide">Dimensoes</dt><dd class="text-slate-200 mt-1"><?= htmlspecialchars((string) ($item['dimensions_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></dd></div>
-            </dl>
+            <div class="media-library-meta-grid">
+              <div class="media-library-meta-item">
+                <div class="media-library-meta-label">Tipo</div>
+                <div class="media-library-meta-value"><?= htmlspecialchars((string) ($item['mime'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              </div>
+              <div class="media-library-meta-item">
+                <div class="media-library-meta-label">Tamanho</div>
+                <div class="media-library-meta-value"><?= htmlspecialchars((string) ($item['size_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              </div>
+              <div class="media-library-meta-item">
+                <div class="media-library-meta-label">Dimensoes</div>
+                <div class="media-library-meta-value"><?= htmlspecialchars((string) ($item['dimensions_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              </div>
+              <div class="media-library-meta-item">
+                <div class="media-library-meta-label">Pasta</div>
+                <div class="media-library-meta-value media-library-meta-value-break"><?= htmlspecialchars((string) ($item['directory'] ?? 'uploads'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              </div>
+            </div>
 
-            <div class="text-xs text-slate-500">Atualizado em <?= htmlspecialchars((string) ($item['modified_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <div class="media-library-linkage-row">
+              <div class="media-library-linkage-block">
+                <div class="media-library-linkage-label">Status</div>
+                <div class="media-library-linkage-value<?= $statusClass ?>"><?= htmlspecialchars($statusLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              </div>
+              <div class="media-library-linkage-block">
+                <div class="media-library-linkage-label">Post</div>
+                <?php if ($postFilterUrl !== ''): ?>
+                  <a class="media-library-linkage-link" href="<?= htmlspecialchars($postFilterUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($postTitle !== '' ? $postTitle : $postSlug, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+                  <?php if ($linkedPostsCount > 1): ?>
+                    <div class="media-library-linkage-note">+<?= $linkedPostsCount - 1 ?> outro(s) post(s)</div>
+                  <?php endif; ?>
+                <?php else: ?>
+                  <div class="media-library-linkage-value is-muted">Sem vinculo</div>
+                <?php endif; ?>
+              </div>
+            </div>
 
-            <div class="mt-auto flex items-center gap-2 flex-wrap">
-              <a class="admin-btn admin-btn-secondary" href="<?= htmlspecialchars($previewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noreferrer">Ver</a>
-              <button type="button" class="admin-btn admin-btn-primary" data-copy-url="<?= htmlspecialchars($copyUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Copiar URL</button>
-              <?php if ($isManagedUpload): ?>
-                <a class="admin-btn admin-btn-danger" href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Excluir</a>
-              <?php else: ?>
-                <span class="admin-chip">Asset institucional</span>
-              <?php endif; ?>
+            <div class="media-library-updated">Atualizado em <?= htmlspecialchars((string) ($item['modified_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+
+            <div class="media-library-actions">
+              <button type="button" class="admin-btn admin-btn-primary media-library-copy" data-copy-url="<?= htmlspecialchars($copyUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Copiar URL</button>
+              <div class="media-library-actions-side">
+                <a class="media-library-icon-btn" href="<?= htmlspecialchars($previewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noreferrer" aria-label="Ver arquivo" title="Ver arquivo">
+                  <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </a>
+                <?php if ($isManagedUpload): ?>
+                  <a class="media-library-icon-btn media-library-icon-btn-danger" href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" aria-label="Excluir arquivo" title="Excluir arquivo">
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                  </a>
+                <?php else: ?>
+                  <span class="media-library-asset-note">Asset institucional</span>
+                <?php endif; ?>
+              </div>
             </div>
           </div>
         </article>
       <?php endforeach; ?>
-    </div>
-
-    <div class="mt-5 flex items-center justify-between gap-4 flex-wrap rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
-      <div class="text-xs text-slate-400">Pagina atual: <?= $page ?> - <?= $perPage ?> por pagina</div>
-      <div class="flex items-center gap-2">
-        <?php $prevUrl = $buildUrl(['page' => max(1, $page - 1)]); $nextUrl = $buildUrl(['page' => min($pages, $page + 1)]); $prevDisabled = $page <= 1; $nextDisabled = $page >= $pages; ?>
-        <a class="admin-btn admin-btn-secondary <?= $prevDisabled ? 'pointer-events-none opacity-50' : '' ?>" href="<?= htmlspecialchars($prevUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Anterior</a>
-        <span class="admin-chip"><?= $page ?> / <?= $pages ?></span>
-        <a class="admin-btn admin-btn-secondary <?= $nextDisabled ? 'pointer-events-none opacity-50' : '' ?>" href="<?= htmlspecialchars($nextUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Proxima</a>
-      </div>
     </div>
   <?php endif; ?>
 </section>

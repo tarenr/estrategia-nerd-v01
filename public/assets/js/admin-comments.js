@@ -34,12 +34,24 @@
     return url;
   };
 
+  const closeStatusMenus = (except = null) => {
+    document.querySelectorAll("[data-comment-status-menu].is-open").forEach((menu) => {
+      if (menu === except) return;
+      menu.classList.remove("is-open");
+      const toggle = menu.querySelector("[data-comment-status-toggle]");
+      const actions = menu.querySelector("[data-comment-status-actions]");
+      if (toggle) toggle.setAttribute("aria-expanded", "false");
+      if (actions) actions.hidden = true;
+    });
+  };
+
   const fetchAndSwap = async (url, { pushState = true } = {}) => {
     const root = getRoot();
     if (!root) return;
 
     const requestUrl = normalizeUrl(url);
     setLoading(root, true);
+    closeStatusMenus();
 
     try {
       const response = await fetch(requestUrl.toString(), {
@@ -84,6 +96,32 @@
   };
 
   document.addEventListener("click", (event) => {
+    const statusToggle = event.target.closest("[data-comment-status-toggle]");
+    if (statusToggle) {
+      event.preventDefault();
+      const menu = statusToggle.closest("[data-comment-status-menu]");
+      if (!menu) return;
+
+      const actions = menu.querySelector("[data-comment-status-actions]");
+      const isOpen = menu.classList.contains("is-open");
+      closeStatusMenus(menu);
+
+      if (isOpen) {
+        menu.classList.remove("is-open");
+        statusToggle.setAttribute("aria-expanded", "false");
+        if (actions) actions.hidden = true;
+      } else {
+        menu.classList.add("is-open");
+        statusToggle.setAttribute("aria-expanded", "true");
+        if (actions) actions.hidden = false;
+      }
+      return;
+    }
+
+    if (!event.target.closest("[data-comment-status-menu]")) {
+      closeStatusMenus();
+    }
+
     const link = event.target.closest("a[data-admin-comments-link]");
     if (!link) return;
 

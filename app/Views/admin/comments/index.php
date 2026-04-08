@@ -3,7 +3,23 @@ declare(strict_types=1);
 
 use App\Support\View;
 
-$summary = $summary ?? ['total' => 0, 'pendentes' => 0, 'aprovados' => 0, 'reprovados' => 0, 'spam' => 0, 'respondidos' => 0];
+$summary = $summary ?? [
+    'total' => 0,
+    'pendentes' => 0,
+    'aprovados' => 0,
+    'reprovados' => 0,
+    'spam' => 0,
+    'respondidos' => 0,
+    'comentarios_raiz' => 0,
+    'respostas' => 0,
+    'moderados' => 0,
+    'bloqueados' => 0,
+    'sem_resposta' => 0,
+    'fila_percentual' => 0.0,
+    'taxa_aprovacao' => 0.0,
+    'pressao_defensiva' => 0.0,
+    'cobertura_resposta' => 0.0,
+];
 $filters = $filters ?? ['busca' => '', 'status' => '', 'respondido' => '', 'post' => 0];
 $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 10, 'pages' => 1];
 $posts = $posts ?? [];
@@ -45,18 +61,11 @@ $moderationMessage = match ($mode) {
       <section class="admin-panel border border-rose-500/30"><div class="text-sm font-bold text-rose-300">Comentario excluido com sucesso.</div></section>
     <?php endif; ?>
 
-    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-      <?php $cards = [['label' => 'Total', 'value' => (int) $summary['total']], ['label' => 'Pendentes', 'value' => (int) $summary['pendentes']], ['label' => 'Aprovados', 'value' => (int) $summary['aprovados']], ['label' => 'Spam', 'value' => (int) $summary['spam']], ['label' => 'Respondidos', 'value' => (int) $summary['respondidos']]]; ?>
-      <?php foreach ($cards as $card): ?>
-        <article class="stat-card">
-          <div class="text-sm text-slate-400"><?= htmlspecialchars($card['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-          <div class="mt-3 text-4xl font-orbitron font-black text-white"><?= number_format((int) $card['value'], 0, ',', '.') ?></div>
-        </article>
-      <?php endforeach; ?>
-    </section>
+    <?php View::component('admin/comments/summary-cards', ['summary' => $summary]); ?>
 
     <?php View::component('admin/comments/filters', ['filters' => $filters, 'posts' => $posts, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/comments/table', ['items' => $pagination['items'] ?? [], 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
+    <?php View::component('admin/comments/pagination', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
   </div>
 </div>
 

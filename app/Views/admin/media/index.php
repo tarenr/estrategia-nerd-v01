@@ -44,6 +44,7 @@ $orphanRemoved = max(0, (int) ($_GET['orphan_removed'] ?? 0));
     <?php View::component('admin/media/upload-panel', ['errors' => $errors]); ?>
     <?php View::component('admin/media/filters', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/media/table', ['items' => $pagination['items'] ?? [], 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
+    <?php View::component('admin/media/pagination', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
   </div>
 </div>
 

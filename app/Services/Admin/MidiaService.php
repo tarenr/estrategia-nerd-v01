@@ -210,6 +210,16 @@ final class MidiaService
                 $mime = $this->detectMimeType($absolutePath);
                 [$width, $height] = $isImage ? $this->detectDimensions($absolutePath) : [null, null];
 
+                $isManagedUpload = str_starts_with($relativePath, 'uploads/');
+                $usageState = $this->resolveUsageState($relativePath, $usage, $isManagedUpload, $relativeRoot);
+                $linkedPosts = $this->linkedPostsForPath($relativePath, $usage);
+                $primaryPost = $linkedPosts[0] ?? null;
+                $primaryPostSlug = trim((string) ($primaryPost['slug'] ?? ''));
+                $primaryPostTitle = trim((string) ($primaryPost['title'] ?? ''));
+                $fallbackSlug = $this->extractPostSlug($relativePath);
+                $postSlug = $primaryPostSlug !== '' ? $primaryPostSlug : $fallbackSlug;
+                $postFilterUrl = $postSlug !== '' ? url('/admin/posts?busca=' . rawurlencode($postSlug)) : '';
+
                 $items[] = [
                     'name' => $fileInfo->getFilename(),
                     'basename' => pathinfo($fileInfo->getFilename(), PATHINFO_FILENAME),
@@ -220,9 +230,16 @@ final class MidiaService
                     'directory' => $directory,
                     'library' => $label,
                     'library_key' => $relativeRoot,
-                    'is_managed_upload' => str_starts_with($relativePath, 'uploads/'),
-                    'is_orphan' => $this->isOrphanMediaItem($relativePath, $usage),
-                    'post_slug' => $this->extractPostSlug($relativePath),
+                    'is_managed_upload' => $isManagedUpload,
+                    'usage_state' => $usageState,
+                    'status_label' => $this->statusLabel($usageState),
+                    'is_in_use' => $usageState === 'in_use',
+                    'is_orphan' => $usageState === 'orphan',
+                    'linked_posts' => $linkedPosts,
+                    'linked_posts_count' => count($linkedPosts),
+                    'post_slug' => $postSlug,
+                    'post_title' => $primaryPostTitle,
+                    'post_filter_url' => $postFilterUrl,
                     'size' => $size,
                     'size_label' => $this->formatBytes($size),
                     'modified_at' => $modifiedAt,
@@ -261,11 +278,13 @@ final class MidiaService
                 return false;
             }
 
-            if ($estado === 'orfa' && (($item['is_orphan'] ?? false) !== true)) {
+            $usageState = (string) ($item['usage_state'] ?? 'available');
+
+            if ($estado === 'orfa' && $usageState !== 'orphan') {
                 return false;
             }
 
-            if ($estado === 'uso' && (($item['is_orphan'] ?? false) === true)) {
+            if ($estado === 'uso' && $usageState !== 'in_use') {
                 return false;
             }
 
@@ -319,21 +338,54 @@ final class MidiaService
         $images = 0;
         $size = 0;
         $institutional = 0;
+        $managedUploads = 0;
+        $postMedia = 0;
 
         foreach ($items as $item) {
             $directory = (string) ($item['directory'] ?? 'uploads');
             $directories[$directory] = true;
             $size += (int) ($item['size'] ?? 0);
+
             if (($item['is_image'] ?? false) === true) {
                 $images++;
             }
+
             if ((string) ($item['library'] ?? '') === 'Institucional') {
                 $institutional++;
             }
+
+            if (($item['is_managed_upload'] ?? false) === true) {
+                $managedUploads++;
+            }
+
+            if ((string) ($item['usage_state'] ?? '') === 'in_use') {
+                $postMedia++;
+            }
         }
 
+        $total = count($items);
+        $others = max(0, $total - $images);
         $orphans = count(array_filter($items, static fn (array $item): bool => ($item['is_orphan'] ?? false) === true));
-        return ['total' => count($items), 'images' => $images, 'others' => max(0, count($items) - $images), 'directories' => count($directories), 'institutional' => $institutional, 'orphans' => $orphans, 'size_label' => $this->formatBytes($size)];
+        $coveragePosts = $managedUploads > 0 ? ($postMedia / $managedUploads) * 100 : 0.0;
+        $orphanRate = $managedUploads > 0 ? ($orphans / $managedUploads) * 100 : 0.0;
+        $averageSize = $total > 0 ? (int) round($size / $total) : 0;
+
+        return [
+            'total' => $total,
+            'images' => $images,
+            'others' => $others,
+            'directories' => count($directories),
+            'institutional' => $institutional,
+            'managed_uploads' => $managedUploads,
+            'post_media' => $postMedia,
+            'orphans' => $orphans,
+            'coverage_posts' => $coveragePosts,
+            'orphan_rate' => $orphanRate,
+            'size_bytes' => $size,
+            'size_label' => $this->formatBytes($size),
+            'average_size_bytes' => $averageSize,
+            'average_size_label' => $this->formatBytes($averageSize),
+        ];
     }
 
     private function validateUpload(mixed $file): array
@@ -433,29 +485,54 @@ final class MidiaService
         $protected = [];
         $content = [];
 
-        $stmt = $this->pdo->query('SELECT imagem_capa, imagem_thumb, conteudo FROM posts');
+        $stmt = $this->pdo->query('SELECT id, titulo, slug, imagem_capa, imagem_thumb, conteudo FROM posts');
         if (!$stmt) {
             return ['protected' => [], 'content' => []];
         }
 
+        $references = [];
+
         foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [] as $row) {
+            $postRef = [
+                'id' => (int) ($row['id'] ?? 0),
+                'slug' => trim((string) ($row['slug'] ?? '')),
+                'title' => $this->cleanPostTitle((string) ($row['titulo'] ?? '')),
+            ];
+
             foreach (['imagem_capa', 'imagem_thumb'] as $field) {
                 $path = ltrim(trim((string) ($row[$field] ?? '')), '/');
                 if ($path !== '') {
                     $protected[$path] = true;
+                    $this->registerMediaReference($references, $path, $postRef);
                 }
             }
 
-            preg_match_all('~uploads/posts/[^"\')\s<>]+~i', (string) ($row['conteudo'] ?? ''), $matches);
+            preg_match_all('~uploads/[^"\')\s<>]+~i', (string) ($row['conteudo'] ?? ''), $matches);
             foreach (($matches[0] ?? []) as $path) {
                 $clean = ltrim((string) $path, '/');
                 if ($clean !== '') {
                     $content[$clean] = true;
+                    $this->registerMediaReference($references, $clean, $postRef);
                 }
             }
         }
 
-        return ['protected' => $protected, 'content' => $content];
+        return ['protected' => $protected, 'content' => $content, 'references' => $references];
+    }
+
+    private function isMediaInUse(string $relativePath, array $usage): bool
+    {
+        $relativePath = ltrim($relativePath, '/');
+
+        if (isset(($usage['protected'] ?? [])[$relativePath])) {
+            return true;
+        }
+
+        if (isset(($usage['content'] ?? [])[$relativePath])) {
+            return true;
+        }
+
+        return false;
     }
 
     private function isOrphanMediaItem(string $relativePath, array $usage): bool
@@ -465,15 +542,79 @@ final class MidiaService
             return false;
         }
 
-        if (isset(($usage['protected'] ?? [])[$relativePath])) {
-            return false;
+        return !$this->isMediaInUse($relativePath, $usage);
+    }
+
+    private function resolveUsageState(string $relativePath, array $usage, bool $isManagedUpload, string $libraryKey): string
+    {
+        if ($libraryKey === 'assets/brand' || !$isManagedUpload) {
+            return 'institutional';
         }
 
-        if (isset(($usage['content'] ?? [])[$relativePath])) {
-            return false;
+        if ($this->isMediaInUse($relativePath, $usage)) {
+            return 'in_use';
         }
 
-        return true;
+        if ($this->isOrphanMediaItem($relativePath, $usage)) {
+            return 'orphan';
+        }
+
+        return 'available';
+    }
+
+    private function statusLabel(string $usageState): string
+    {
+        return match ($usageState) {
+            'in_use' => 'Em uso',
+            'orphan' => 'Orfa',
+            'institutional' => 'Institucional',
+            default => 'Disponivel',
+        };
+    }
+
+    private function linkedPostsForPath(string $relativePath, array $usage): array
+    {
+        $relativePath = ltrim($relativePath, '/');
+        $references = $usage['references'] ?? [];
+        $items = $references[$relativePath] ?? [];
+
+        if (!is_array($items)) {
+            return [];
+        }
+
+        return array_values(array_filter($items, static fn (mixed $item): bool => is_array($item)));
+    }
+
+    private function registerMediaReference(array &$references, string $path, array $postRef): void
+    {
+        $path = ltrim(trim($path), '/');
+        $postId = (int) ($postRef['id'] ?? 0);
+        if ($path === '' || $postId <= 0) {
+            return;
+        }
+
+        if (!isset($references[$path]) || !is_array($references[$path])) {
+            $references[$path] = [];
+        }
+
+        foreach ($references[$path] as $existing) {
+            if ((int) ($existing['id'] ?? 0) === $postId) {
+                return;
+            }
+        }
+
+        $references[$path][] = [
+            'id' => $postId,
+            'slug' => trim((string) ($postRef['slug'] ?? '')),
+            'title' => trim((string) ($postRef['title'] ?? '')),
+        ];
+    }
+
+    private function cleanPostTitle(string $title): string
+    {
+        $title = preg_replace('/\[\[(.*?)\]\]/u', '$1', $title) ?? $title;
+        $title = preg_replace('/\s+/', ' ', trim($title)) ?? trim($title);
+        return $title;
     }
 
     private function extractPostSlug(string $relativePath): string

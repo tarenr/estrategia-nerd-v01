@@ -538,7 +538,13 @@ final class PostRepository
         if ($status !== '') { $where[] = 'p.status = :status'; $params[':status'] = $status; }
         if ($categoria > 0) { $where[] = 'p.categoria_post_id = :categoria'; $params[':categoria'] = $categoria; }
         if ($destaque !== '') { $where[] = 'COALESCE(p.destaque, 0) = :destaque'; $params[':destaque'] = $destaque === '1' ? 1 : 0; }
-        if ($busca !== '') { $where[] = '(p.titulo LIKE :busca OR p.resumo LIKE :busca OR p.slug LIKE :busca)'; $params[':busca'] = '%' . $busca . '%'; }
+        if ($busca !== '') {
+            $where[] = '(p.titulo LIKE :busca_titulo OR p.resumo LIKE :busca_resumo OR p.slug LIKE :busca_slug)';
+            $searchLike = '%' . $busca . '%';
+            $params[':busca_titulo'] = $searchLike;
+            $params[':busca_resumo'] = $searchLike;
+            $params[':busca_slug'] = $searchLike;
+        }
         return [$where ? ('WHERE ' . implode(' AND ', $where)) : '', $params];
     }
 

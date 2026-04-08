@@ -5,10 +5,22 @@ use App\Support\Csrf;
 
 $comment = $comment ?? [];
 $replyTarget = $reply_target ?? [];
+$threadReplies = $thread_replies ?? [];
 $form = $form ?? ['id' => 0, 'resposta' => ''];
 $errors = $errors ?? [];
 $returnTo = (string) ($return_to ?? url('/admin/comentarios'));
 $fieldError = static fn (string $key): string => (string) ($errors[$key] ?? '');
+$formatDate = static function ($value): string {
+    if (!$value) {
+        return '-';
+    }
+
+    try {
+        return (new DateTimeImmutable((string) $value))->format('d/m/Y H:i');
+    } catch (Throwable) {
+        return (string) $value;
+    }
+};
 ?>
 
 <div class="max-w-5xl mx-auto px-4 py-6">
@@ -53,6 +65,35 @@ $fieldError = static fn (string $key): string => (string) ($errors[$key] ?? '');
         </div>
       <?php endif; ?>
     </section>
+
+    <?php if ($threadReplies !== []): ?>
+      <section class="admin-panel">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="font-orbitron text-lg font-black text-white">Respostas da conversa</h3>
+            <div class="text-xs text-slate-400">As respostas da equipe saem da tabela principal e ficam centralizadas aqui.</div>
+          </div>
+          <span class="admin-chip"><?= count($threadReplies) ?> resposta(s)</span>
+        </div>
+
+        <div class="space-y-3">
+          <?php foreach ($threadReplies as $reply): ?>
+            <article class="rounded-2xl border border-slate-800 bg-slate-900/55 p-4">
+              <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                <span class="font-bold text-slate-100"><?= htmlspecialchars((string) ($reply['nome'] ?? 'Anonimo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                <?php if (!empty($reply['is_admin'])): ?><span class="admin-chip">Equipe</span><?php endif; ?>
+                <span>#<?= (int) ($reply['id'] ?? 0) ?></span>
+                <span><?= htmlspecialchars($formatDate($reply['data'] ?? null), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+              </div>
+              <?php if (!empty($reply['email'])): ?>
+                <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) $reply['email'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <?php endif; ?>
+              <div class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-200"><?= htmlspecialchars((string) ($reply['comentario'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            </article>
+          <?php endforeach; ?>
+        </div>
+      </section>
+    <?php endif; ?>
 
     <form method="POST" action="<?= url('/admin/responder-comentario?id=' . (int) ($comment['id'] ?? 0)) ?>" class="space-y-6" novalidate>
       <?= Csrf::field() ?>

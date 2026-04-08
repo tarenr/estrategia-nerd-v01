@@ -92,7 +92,29 @@ final class ComentarioRepository
     public function summaryFiltered(array $filters): array
     {
         [$whereSql, $params] = $this->buildAdminWhere($filters);
-        $sql = "SELECT COUNT(*) AS total, SUM(CASE WHEN c.status = 'pendente' THEN 1 ELSE 0 END) AS pendentes, SUM(CASE WHEN c.status = 'aprovado' THEN 1 ELSE 0 END) AS aprovados, SUM(CASE WHEN c.status = 'reprovado' THEN 1 ELSE 0 END) AS reprovados, SUM(CASE WHEN c.status = 'spam' THEN 1 ELSE 0 END) AS spam, SUM(CASE WHEN c.parent_id IS NOT NULL THEN 1 ELSE 0 END) AS respondidos FROM comentarios c LEFT JOIN posts p ON p.id = c.post_id {$whereSql}";
+        $sql = "SELECT
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN c.status = 'pendente' THEN 1 ELSE 0 END) AS pendentes,
+                    SUM(CASE WHEN c.status = 'aprovado' THEN 1 ELSE 0 END) AS aprovados,
+                    SUM(CASE WHEN c.status = 'reprovado' THEN 1 ELSE 0 END) AS reprovados,
+                    SUM(CASE WHEN c.status = 'spam' THEN 1 ELSE 0 END) AS spam,
+                    SUM(CASE WHEN c.parent_id IS NULL THEN 1 ELSE 0 END) AS comentarios_raiz,
+                    SUM(CASE WHEN c.parent_id IS NOT NULL THEN 1 ELSE 0 END) AS respostas,
+                    SUM(
+                        CASE
+                            WHEN c.parent_id IS NULL
+                             AND EXISTS (
+                                SELECT 1
+                                FROM comentarios cr
+                                WHERE cr.parent_id = c.id
+                                  AND LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local'
+                            )
+                            THEN 1 ELSE 0
+                        END
+                    ) AS threads_respondidas
+                FROM comentarios c
+                LEFT JOIN posts p ON p.id = c.post_id
+                {$whereSql}";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -103,7 +125,10 @@ final class ComentarioRepository
             'aprovados' => (int) ($row['aprovados'] ?? 0),
             'reprovados' => (int) ($row['reprovados'] ?? 0),
             'spam' => (int) ($row['spam'] ?? 0),
-            'respondidos' => (int) ($row['respondidos'] ?? 0),
+            'comentarios_raiz' => (int) ($row['comentarios_raiz'] ?? 0),
+            'respostas' => (int) ($row['respostas'] ?? 0),
+            'threads_respondidas' => (int) ($row['threads_respondidas'] ?? 0),
+            'respondidos' => (int) ($row['threads_respondidas'] ?? 0),
         ];
     }
 
@@ -117,7 +142,7 @@ final class ComentarioRepository
             'email' => 'c.email',
             'post' => "COALESCE(p.titulo, 'Post removido')",
             'status' => 'c.status',
-            'respondido' => 'has_reply',
+            'respondido' => 'has_admin_reply',
             'data' => 'c.data',
         ];
         if (!isset($sortMap[$sort])) {
@@ -143,7 +168,38 @@ final class ComentarioRepository
         }
         $offset = ($page - 1) * $perPage;
 
-        $sql = "SELECT c.id, c.post_id, c.nome, c.email, c.comentario, c.status, c.parent_id, COALESCE(c.respondido, 0) AS respondido_legacy, EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id) AS has_reply, parent.nome AS parent_nome, parent.status AS parent_status, c.data, COALESCE(p.titulo, 'Post removido') AS post_titulo, p.slug AS post_slug FROM comentarios c LEFT JOIN posts p ON p.id = c.post_id LEFT JOIN comentarios parent ON parent.id = c.parent_id {$whereSql} ORDER BY {$orderBy} LIMIT :limit OFFSET :offset";
+        $sql = "SELECT
+                    c.id,
+                    c.post_id,
+                    c.nome,
+                    c.email,
+                    c.comentario,
+                    c.status,
+                    c.parent_id,
+                    COALESCE(c.respondido, 0) AS respondido_legacy,
+                    EXISTS (
+                        SELECT 1
+                        FROM comentarios cr
+                        WHERE cr.parent_id = c.id
+                          AND LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local'
+                    ) AS has_admin_reply,
+                    (
+                        SELECT COUNT(*)
+                        FROM comentarios cr_count
+                        WHERE cr_count.parent_id = c.id
+                          AND LOWER(COALESCE(cr_count.email, '')) LIKE '%@admin.estrategia-nerd.local'
+                    ) AS admin_reply_count,
+                    parent.nome AS parent_nome,
+                    parent.status AS parent_status,
+                    c.data,
+                    COALESCE(p.titulo, 'Post removido') AS post_titulo,
+                    p.slug AS post_slug
+                FROM comentarios c
+                LEFT JOIN posts p ON p.id = c.post_id
+                LEFT JOIN comentarios parent ON parent.id = c.parent_id
+                {$whereSql}
+                ORDER BY {$orderBy}
+                LIMIT :limit OFFSET :offset";
         $stmt = $this->pdo->prepare($sql);
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
@@ -164,7 +220,15 @@ final class ComentarioRepository
 
     public function listPostsForFilter(): array
     {
-        $sql = "SELECT p.id, p.titulo, COUNT(c.id) AS total_comentarios FROM posts p INNER JOIN comentarios c ON c.post_id = p.id GROUP BY p.id, p.titulo ORDER BY p.titulo ASC, p.id DESC";
+        $sql = "SELECT
+                    p.id,
+                    p.titulo,
+                    COUNT(c.id) AS total_comentarios
+                FROM posts p
+                INNER JOIN comentarios c ON c.post_id = p.id
+                   AND LOWER(COALESCE(c.email, '')) NOT LIKE '%@admin.estrategia-nerd.local'
+                GROUP BY p.id, p.titulo
+                ORDER BY p.titulo ASC, p.id DESC";
         $stmt = $this->pdo->query($sql);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
@@ -198,6 +262,26 @@ final class ComentarioRepository
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $row !== false ? $row : null;
+    }
+    public function listDirectRepliesByParent(int $parentId): array
+    {
+        $sql = "SELECT
+                    c.id,
+                    c.post_id,
+                    c.nome,
+                    c.email,
+                    c.comentario,
+                    c.status,
+                    c.parent_id,
+                    c.data
+                FROM comentarios c
+                WHERE c.parent_id = :parent_id
+                ORDER BY c.data ASC, c.id ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':parent_id', $parentId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
     public function updateStatus(int $id, string $status): void
@@ -266,7 +350,7 @@ final class ComentarioRepository
 
     private function buildAdminWhere(array $filters): array
     {
-        $where = ['1 = 1'];
+        $where = ["LOWER(COALESCE(c.email, '')) NOT LIKE '%@admin.estrategia-nerd.local'"];
         $params = [];
         $busca = trim((string) ($filters['busca'] ?? ''));
         $status = trim((string) ($filters['status'] ?? ''));
@@ -287,9 +371,9 @@ final class ComentarioRepository
         }
 
         if ($respondido === '1') {
-            $where[] = 'EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id)';
+            $where[] = "EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id AND LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local')";
         } elseif ($respondido === '0') {
-            $where[] = 'NOT EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id)';
+            $where[] = "NOT EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id AND LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local')";
         }
 
         if ($postId > 0) {
