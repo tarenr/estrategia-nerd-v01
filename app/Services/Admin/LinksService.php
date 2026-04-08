@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Repositories\LinkClickRepository;
 use App\Repositories\LinkRepository;
 use Throwable;
 
@@ -10,6 +11,7 @@ final class LinksService
 {
     public function __construct(
         private LinkRepository $links,
+        private LinkClickRepository $linkClicks,
         private MidiaService $midia,
     )
     {
@@ -23,14 +25,37 @@ final class LinksService
         [$sort, $dir] = $this->normalizeSortDir((string) ($query['sort'] ?? 'posicao'), (string) ($query['dir'] ?? 'asc'));
 
         $filteredItems = $this->links->listAdmin($filters, $sort, $dir);
+        $filteredItemsWithMetrics = $this->attachClickMetrics($filteredItems);
         $pagination = $this->links->paginateAdmin($filters, $page, $perPage, $sort, $dir);
+        $pagination['items'] = $this->attachClickMetrics(is_array($pagination['items'] ?? null) ? $pagination['items'] : []);
 
-        $total = count($filteredItems);
-        $ativos = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'ativo'));
-        $promocoes = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'produto' && (int) ($item['promocao'] ?? 0) === 1));
-        $produtos = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'produto' && (int) ($item['promocao'] ?? 0) === 0));
-        $cupons = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'cupom'));
-        $sociais = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'rede_social'));
+        $total = count($filteredItemsWithMetrics);
+        $ativos = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'ativo'));
+        $ocultos = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'oculto'));
+        $revisar = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'quebrado'));
+        $destaques = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (int) ($item['destaque'] ?? 0) === 1));
+
+        $promocoes = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'produto' && (int) ($item['promocao'] ?? 0) === 1));
+        $produtosCatalogo = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'produto' && (int) ($item['promocao'] ?? 0) === 0));
+        $produtosTotal = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'produto'));
+        $gruposProdutos = $this->countDistinctNonEmpty(array_map(
+            static fn (array $item): string => (string) ($item['tipo'] ?? '') === 'produto' ? (string) ($item['subgrupo_publico'] ?? '') : '',
+            $filteredItemsWithMetrics
+        ));
+
+        $cupons = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'cupom'));
+        $cuponsComCodigo = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'cupom' && trim((string) ($item['codigo_cupom'] ?? '')) !== ''));
+        $cuponsComContexto = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'cupom' && trim((string) ($item['desconto_contexto'] ?? '')) !== ''));
+
+        $conteudo = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'conteudo'));
+        $redes = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'rede_social'));
+        $servicos = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (string) ($item['tipo'] ?? '') === 'servico'));
+        $canaisTotal = $conteudo + $redes + $servicos;
+
+        $clickTotal = array_sum(array_map(static fn (array $item): int => (int) ($item['click_total'] ?? 0), $filteredItemsWithMetrics));
+        $clickToday = array_sum(array_map(static fn (array $item): int => (int) ($item['click_today'] ?? 0), $filteredItemsWithMetrics));
+        $linksComClique = count(array_filter($filteredItemsWithMetrics, static fn (array $item): bool => (int) ($item['click_total'] ?? 0) > 0));
+        $avgClicks = $linksComClique > 0 ? round($clickTotal / $linksComClique, 1) : 0.0;
 
         return [
             'title' => 'Links',
@@ -42,10 +67,24 @@ final class LinksService
             'summary' => [
                 'total' => $total,
                 'ativos' => $ativos,
+                'ocultos' => $ocultos,
+                'revisar' => $revisar,
+                'destaques' => $destaques,
                 'promocoes' => $promocoes,
-                'produtos' => $produtos,
+                'produtos_catalogo' => $produtosCatalogo,
+                'produtos_total' => $produtosTotal,
+                'grupos_produtos' => $gruposProdutos,
                 'cupons' => $cupons,
-                'sociais' => $sociais,
+                'cupons_codigo' => $cuponsComCodigo,
+                'cupons_contexto' => $cuponsComContexto,
+                'conteudo' => $conteudo,
+                'redes' => $redes,
+                'servicos' => $servicos,
+                'canais_total' => $canaisTotal,
+                'click_total' => $clickTotal,
+                'click_today' => $clickToday,
+                'links_com_clique' => $linksComClique,
+                'click_avg' => $avgClicks,
             ],
         ];
     }
@@ -184,6 +223,44 @@ final class LinksService
         return ['ok' => true, 'mode' => 'order_drag'];
     }
 
+    /**
+     * @param array<int, array<string,mixed>> $items
+     * @return array<int, array<string,mixed>>
+     */
+    private function attachClickMetrics(array $items): array
+    {
+        if ($items === []) {
+            return [];
+        }
+
+        $ids = array_map(static fn (array $item): int => (int) ($item['id'] ?? 0), $items);
+        $metrics = $this->linkClicks->metricsByLinkIds($ids);
+
+        foreach ($items as $index => $item) {
+            $id = (int) ($item['id'] ?? 0);
+            $metric = $metrics[$id] ?? ['total_clicks' => 0, 'clicks_today' => 0, 'last_click_at' => ''];
+            $items[$index]['click_total'] = (int) ($metric['total_clicks'] ?? 0);
+            $items[$index]['click_today'] = (int) ($metric['clicks_today'] ?? 0);
+            $items[$index]['last_click_at'] = (string) ($metric['last_click_at'] ?? '');
+        }
+
+        return $items;
+    }
+
+
+    private function countDistinctNonEmpty(array $values): int
+    {
+        $clean = [];
+        foreach ($values as $value) {
+            $normalized = trim((string) $value);
+            if ($normalized === '') {
+                continue;
+            }
+            $clean[mb_strtolower($normalized)] = true;
+        }
+
+        return count($clean);
+    }
     private function buildFormViewModel(string $mode, array $form, array $errors = [], ?array $link = null): array
     {
         return [

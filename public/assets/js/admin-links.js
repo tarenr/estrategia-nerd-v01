@@ -34,11 +34,60 @@
     return url;
   };
 
-  const fetchAndSwap = async (url, { pushState = true } = {}) => {
+  const captureViewState = (source = null) => {
+    const root = getRoot();
+    const anchorRow = source && typeof source.closest === "function"
+      ? source.closest("tr[data-link-row-id]")
+      : null;
+
+    return {
+      x: window.scrollX || window.pageXOffset || 0,
+      y: window.scrollY || window.pageYOffset || 0,
+      rootTop: root ? root.getBoundingClientRect().top : 0,
+      anchorId: anchorRow ? anchorRow.getAttribute("data-link-row-id") || "" : "",
+      anchorTop: anchorRow ? anchorRow.getBoundingClientRect().top : null,
+    };
+  };
+
+  const restoreViewState = (state) => {
+    if (!state) return;
+
+    const apply = () => {
+      const root = getRoot();
+      if (!root) return;
+
+      if (state.anchorId && state.anchorTop !== null) {
+        const nextAnchor = root.querySelector(`tr[data-link-row-id="${state.anchorId}"]`);
+        if (nextAnchor) {
+          const nextTop = nextAnchor.getBoundingClientRect().top;
+          const delta = nextTop - state.anchorTop;
+          if (Math.abs(delta) > 1) {
+            window.scrollBy(0, delta);
+          }
+          return;
+        }
+      }
+
+      const rootDelta = root.getBoundingClientRect().top - state.rootTop;
+      if (Math.abs(rootDelta) > 1) {
+        window.scrollBy(0, rootDelta);
+        return;
+      }
+
+      window.scrollTo(state.x, state.y);
+    };
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(apply);
+    });
+  };
+
+  const fetchAndSwap = async (url, { pushState = true, source = null } = {}) => {
     const root = getRoot();
     if (!root) return;
 
     const requestUrl = normalizeUrl(url);
+    const viewState = captureViewState(source);
     setLoading(root, true);
 
     try {
@@ -61,6 +110,7 @@
       }
 
       root.replaceWith(nextRoot);
+      restoreViewState(viewState);
 
       if (pushState) {
         const browserUrl = new URL(url, window.location.origin);
@@ -78,9 +128,9 @@
     }
   };
 
-  const submitFilters = (form) => {
+  const submitFilters = (form, source = null) => {
     const url = buildFormUrl(form);
-    fetchAndSwap(url.toString());
+    fetchAndSwap(url.toString(), { source });
   };
 
   const submitReorder = async (ids) => {
@@ -90,6 +140,7 @@
     const token = document.querySelector("input[name='_csrf_token']");
     const url = new URL(window.location.href);
     const formData = new FormData();
+    const viewState = captureViewState(draggedRow);
     if (token) formData.append("_csrf_token", token.value);
     formData.append("return_to", url.toString());
     ids.forEach((id) => formData.append("ids[]", String(id)));
@@ -118,6 +169,7 @@
       }
 
       root.replaceWith(nextRoot);
+      restoreViewState(viewState);
     } catch (error) {
       console.error(error);
       window.location.reload();
@@ -131,6 +183,7 @@
     const root = getRoot();
     if (!root) return;
 
+    const viewState = captureViewState(form);
     setLoading(root, true);
 
     try {
@@ -158,6 +211,7 @@
       }
 
       root.replaceWith(nextRoot);
+      restoreViewState(viewState);
 
       const browserUrl = new URL(response.url || window.location.href, window.location.origin);
       browserUrl.searchParams.delete("_partial");
@@ -178,14 +232,14 @@
     if (!link) return;
 
     event.preventDefault();
-    fetchAndSwap(link.href);
+    fetchAndSwap(link.href, { source: link });
   });
 
   document.addEventListener("submit", (event) => {
     const form = event.target.closest("form[data-admin-links-filters]");
     if (form) {
       event.preventDefault();
-      submitFilters(form);
+      submitFilters(form, event.submitter || form);
       return;
     }
 
@@ -205,7 +259,7 @@
 
     window.clearTimeout(searchTimer);
     searchTimer = window.setTimeout(() => {
-      submitFilters(form);
+      submitFilters(form, input);
     }, searchDelay);
   });
 
@@ -217,7 +271,7 @@
     if (!form) return;
 
     window.clearTimeout(searchTimer);
-    submitFilters(form);
+    submitFilters(form, control);
   });
 
   window.addEventListener("popstate", () => {

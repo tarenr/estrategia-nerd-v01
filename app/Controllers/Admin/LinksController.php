@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controllers\Admin;
 
+use App\Repositories\LinkClickRepository;
 use App\Repositories\LinkRepository;
 use App\Services\Admin\LinksService;
 use App\Services\Admin\MidiaService;
@@ -187,7 +188,11 @@ final class LinksController
         /** @var \PDO $pdo */
         $pdo = $GLOBALS['pdo'];
 
-        return new LinksService(new LinkRepository($pdo), new MidiaService());
+        return new LinksService(
+            new LinkRepository($pdo),
+            new LinkClickRepository($pdo),
+            new MidiaService(),
+        );
     }
 
     private function sanitizeReturnUrl(string $returnTo): string

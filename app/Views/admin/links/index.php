@@ -57,26 +57,11 @@ $mode = (string) ($_GET['mode'] ?? '');
       <section class="admin-panel border border-rose-500/30"><div class="text-sm font-bold text-rose-300">Link excluido com sucesso.</div></section>
     <?php endif; ?>
 
-    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-      <?php
-      $cards = [
-          ['label' => 'Total', 'value' => (int) ($summary['total'] ?? 0)],
-          ['label' => 'Ativos', 'value' => (int) ($summary['ativos'] ?? 0)],
-          ['label' => 'Promocoes', 'value' => (int) ($summary['promocoes'] ?? 0)],
-          ['label' => 'Produtos', 'value' => (int) ($summary['produtos'] ?? 0)],
-          ['label' => 'Cupons', 'value' => (int) ($summary['cupons'] ?? 0)],
-      ];
-      ?>
-      <?php foreach ($cards as $card): ?>
-        <article class="stat-card">
-          <div class="text-sm text-slate-400"><?= htmlspecialchars($card['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-          <div class="mt-3 text-4xl font-orbitron font-black text-white"><?= number_format((int) $card['value'], 0, ',', '.') ?></div>
-        </article>
-      <?php endforeach; ?>
-    </section>
+    <?php View::component('admin/links/summary-cards', ['summary' => $summary]); ?>
 
     <?php View::component('admin/links/filters', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/links/table', ['items' => $items, 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
+    <?php View::component('admin/links/pagination', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
   </div>
 </div>
 
