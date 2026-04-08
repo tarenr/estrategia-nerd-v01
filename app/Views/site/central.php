@@ -27,6 +27,9 @@ $socialLinks = [
 
 $hasSocialLinks = array_reduce($socialLinks, static fn (bool $carry, array $social): bool => $carry || trim((string) ($social['url'] ?? '')) !== '', false);
 $featuredTone = (string) ($featuredLink['tone'] ?? 'product');
+$featuredTrackedUrl = $featuredLink !== null && trim((string) ($featuredLink['slug'] ?? '')) !== ''
+    ? url('/link/' . rawurlencode((string) $featuredLink['slug']) . '?origem=central-destaque')
+    : trim((string) ($featuredLink['url'] ?? '#'));
 ?>
 
 <div class="site-home-page central-nerd-page">
@@ -85,7 +88,7 @@ $featuredTone = (string) ($featuredLink['tone'] ?? 'product');
             <?php endif; ?>
           </div>
 
-          <a href="<?= htmlspecialchars((string) ($featuredLink['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="central-featured-button">
+          <a href="<?= htmlspecialchars((string) $featuredTrackedUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="central-featured-button">
             <span>Abrir</span>
           </a>
         </article>

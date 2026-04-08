@@ -13,6 +13,7 @@ return [
     ['GET',  '/',       [\App\Controllers\Site\HomeController::class, 'index'], null],
     ['GET',  '/blog',   [\App\Controllers\Site\BlogController::class, 'index'], null],
     ['GET',  '/central-nerd',   [\App\Controllers\Site\CentralController::class, 'index'], null],
+    ['GET',  '/link/{slug}', [\App\Controllers\Site\LinkController::class, 'go'], null],
     ['GET',  '/post/{slug}', [\App\Controllers\Site\PostController::class, 'show'], null],
     ['POST', '/post/{slug}/comentarios', [\App\Controllers\Site\PostController::class, 'comment'], null],
     ['POST', '/post/{slug}/curtir', [\App\Controllers\Site\PostController::class, 'like'], null],

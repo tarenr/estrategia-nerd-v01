@@ -40,6 +40,42 @@ function cover_url(?string $imagemCapa): string
 
     return url('/uploads/' . basename($raw));
 }
+function link_type_label(string $tipo, bool $promocao = false): string
+{
+    if ($tipo === 'produto' && $promocao) {
+        return 'Promocao';
+    }
+
+    return match ($tipo) {
+        'produto' => 'Produto',
+        'cupom' => 'Cupom',
+        'conteudo' => 'Conteudo',
+        'rede_social' => 'Rede Social',
+        'servico' => 'Servicos',
+        default => 'Link',
+    };
+}
+
+function admin_clean_post_title(?string $value): string
+{
+    $value = trim((string) $value);
+    if ($value === '') {
+        return 'Sem titulo';
+    }
+
+    $value = preg_replace('/\[\[(.*?)\]\]/u', '$1', $value) ?? $value;
+    $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
+    $value = trim($value);
+
+    return $value !== '' ? $value : 'Sem titulo';
+}
+
+function dashboard_post_url(?array $post): string
+{
+    $slug = trim((string) ($post['slug'] ?? ''));
+    return $slug !== '' ? url('/post/' . rawurlencode($slug)) : '';
+}
+
 function status_badge_class(string $status): string
 {
     $normalized = strtolower(trim($status));
@@ -218,14 +254,8 @@ if (is_array($series)) {
 }
 
 $effectiveDays = max((int) $days, is_array($series) ? (int) count($series) : 0);
-$bucketSize = 1;
-if ($effectiveDays <= 30) {
-    $bucketSize = 5;
-} elseif ($effectiveDays <= 60) {
-    $bucketSize = 7;
-} else {
-    $bucketSize = 10;
-}
+$bucketSize = $effectiveDays <= 30 ? 1 : 7;
+$bucketModeLabel = $bucketSize <= 1 ? 'Leitura diaria' : 'Agregacao semanal';
 
 if (is_array($series) && $bucketSize > 1) {
     $series = bucketize_series($series, $bucketSize);
@@ -235,7 +265,7 @@ $chartRows = array_values($series);
 $hasChart = count($chartRows) >= 2;
 $w = 920;
 $h = 260;
-$padX = 24;
+$padX = 52;
 $padY = 18;
 $plotW = $w - ($padX * 2);
 $plotH = $h - ($padY * 2);
@@ -273,21 +303,126 @@ foreach ($ma7Arr as $index => $ma7Value) {
 }
 $maPoly = implode(' ', $maPoints);
 
+$peakViewsIndex = $hasChart ? array_search(max($viewsArr), $viewsArr, true) : null;
+$peakPostsIndex = $hasChart ? array_search(max($postsArr), $postsArr, true) : null;
+$peakSubsIndex = $hasChart ? array_search(max($inscArr), $inscArr, true) : null;
+$latestIndex = $hasChart ? ($n - 1) : null;
+$previousIndex = $hasChart && $n > 1 ? ($n - 2) : null;
+
 $mainViewIdx = [];
 if ($hasChart) {
-    $maxIndex = array_search(max($viewsArr), $viewsArr, true);
     $minIndex = array_search(min($viewsArr), $viewsArr, true);
-    $lastIndex = $n - 1;
 
-    foreach ([$maxIndex, $minIndex, $lastIndex] as $index) {
+    foreach ([$peakViewsIndex, $minIndex, $latestIndex] as $index) {
         if (is_int($index) && $index >= 0 && $index < $n) {
             $mainViewIdx[$index] = true;
         }
     }
 }
 
+$activityInsights = [];
+if ($hasChart && is_int($peakViewsIndex)) {
+    $peakRow = $chartRows[$peakViewsIndex] ?? [];
+    $activityInsights[] = [
+        'title' => 'Pico de views',
+        'value' => fmt($viewsArr[$peakViewsIndex] ?? 0) . ' views',
+        'meta' => day_label_range((string) ($peakRow['range_start'] ?? ($peakRow['data'] ?? '')), (string) ($peakRow['range_end'] ?? ($peakRow['data'] ?? ''))),
+        'tone' => 'views',
+    ];
+}
+if ($hasChart && is_int($peakPostsIndex) && (int) ($postsArr[$peakPostsIndex] ?? 0) > 0) {
+    $postRow = $chartRows[$peakPostsIndex] ?? [];
+    $activityInsights[] = [
+        'title' => 'Maior ritmo de publicacao',
+        'value' => fmt($postsArr[$peakPostsIndex] ?? 0) . ' posts',
+        'meta' => day_label_range((string) ($postRow['range_start'] ?? ($postRow['data'] ?? '')), (string) ($postRow['range_end'] ?? ($postRow['data'] ?? ''))),
+        'tone' => 'posts',
+    ];
+}
+if ($hasChart && is_int($peakSubsIndex) && (int) ($inscArr[$peakSubsIndex] ?? 0) > 0) {
+    $subsRow = $chartRows[$peakSubsIndex] ?? [];
+    $activityInsights[] = [
+        'title' => 'Maior captacao',
+        'value' => fmt($inscArr[$peakSubsIndex] ?? 0) . ' inscricoes',
+        'meta' => day_label_range((string) ($subsRow['range_start'] ?? ($subsRow['data'] ?? '')), (string) ($subsRow['range_end'] ?? ($subsRow['data'] ?? ''))),
+        'tone' => 'subs',
+    ];
+}
+if ($hasChart && is_int($latestIndex)) {
+    $latestRow = $chartRows[$latestIndex] ?? [];
+    $currentViewsBucket = (int) ($viewsArr[$latestIndex] ?? 0);
+    $trendValue = fmt($currentViewsBucket) . ' views';
+    $trendMeta = 'Ultima janela do periodo';
+    $trendTone = 'flat';
+
+    if (is_int($previousIndex)) {
+        $previousViewsBucket = (int) ($viewsArr[$previousIndex] ?? 0);
+        if ($previousViewsBucket === 0 && $currentViewsBucket > 0) {
+            $trendValue = 'Saiu do zero';
+            $trendMeta = 'Ultima janela com retomada de views';
+            $trendTone = 'up';
+        } elseif ($previousViewsBucket > 0) {
+            $deltaPct = (($currentViewsBucket - $previousViewsBucket) / $previousViewsBucket) * 100;
+            if (abs($deltaPct) < 0.5) {
+                $trendValue = 'Janela estavel';
+                $trendMeta = 'Variacao pequena frente a janela anterior';
+                $trendTone = 'flat';
+            } elseif ($deltaPct > 0) {
+                $trendValue = 'Subiu ' . number_format(abs($deltaPct), 1, ',', '.') . '%';
+                $trendMeta = 'Comparado a janela anterior';
+                $trendTone = 'up';
+            } else {
+                $trendValue = 'Caiu ' . number_format(abs($deltaPct), 1, ',', '.') . '%';
+                $trendMeta = 'Comparado a janela anterior';
+                $trendTone = 'down';
+            }
+        }
+    }
+
+    $activityInsights[] = [
+        'title' => 'Tendencia final',
+        'value' => $trendValue,
+        'meta' => day_label_range((string) ($latestRow['range_start'] ?? ($latestRow['data'] ?? '')), (string) ($latestRow['range_end'] ?? ($latestRow['data'] ?? ''))) . ' - ' . $trendMeta,
+        'tone' => $trendTone,
+    ];
+}
+
 $startLabel = date('d/m/Y', strtotime($startIn));
 $endLabel = date('d/m/Y', strtotime($endIn));
+
+$editorialCards = [
+    [
+        'eyebrow' => 'Mais visto',
+        'tone' => 'views',
+        'context' => 'Puxa audiencia',
+        'post' => $topViews,
+        'metric' => fmt_k((int) ($topViews['views'] ?? 0)),
+        'unit' => 'visualizacoes',
+    ],
+    [
+        'eyebrow' => 'Mais curtido',
+        'tone' => 'likes',
+        'context' => 'Gera reacao',
+        'post' => $topLikes,
+        'metric' => fmt_k((int) ($topLikes['curtidas'] ?? 0)),
+        'unit' => 'curtidas',
+    ],
+    [
+        'eyebrow' => 'Mais comentado',
+        'tone' => 'comments',
+        'context' => 'Gera conversa',
+        'post' => $topComments,
+        'metric' => fmt_k((int) ($topComments['comentarios_count'] ?? 0)),
+        'unit' => 'comentarios',
+    ],
+];
+
+$todayCards = [
+    ['label' => 'Posts', 'value' => fmt($postsHoje), 'tone' => 'neutral'],
+    ['label' => 'Views', 'value' => fmt_k($viewsHoje), 'tone' => 'views'],
+    ['label' => 'Inscritos', 'value' => fmt($inscritosHoje), 'tone' => 'subs'],
+    ['label' => 'Comentarios', 'value' => fmt($comentariosHoje), 'tone' => 'comments'],
+];
 ?>
 
 <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -314,88 +449,150 @@ $endLabel = date('d/m/Y', strtotime($endIn));
     </div>
   </div>
 
-  <section class="grid grid-cols-2 xl:grid-cols-4 gap-4 max-[520px]:grid-cols-1">
-    <article class="stat-card">
+  <section class="dashboard-kpi-grid">
+    <article class="stat-card stat-card-compact">
       <div class="stat-icon" style="background: rgba(59,130,246,0.18);"><i class="fa-solid fa-newspaper"></i></div>
       <div class="stat-value neon-text" style="color:#60a5fa;"><?= fmt($totalPosts) ?></div>
-      <div class="text-slate-400 text-sm mt-2">Total de posts</div>
-      <div class="flex flex-wrap gap-2 text-xs mt-3">
+      <div class="stat-label">Total de posts</div>
+      <div class="stat-chip-row">
         <span class="status-badge status-publicado"><?= fmt($postsPublicados) ?> publicados</span>
         <span class="status-badge status-rascunho"><?= fmt($postsRascunho) ?> rascunhos</span>
         <span class="status-badge status-agendado"><?= fmt($postsAgendados) ?> agendados</span>
       </div>
     </article>
 
-    <article class="stat-card">
+    <article class="stat-card stat-card-compact">
       <div class="stat-icon" style="background: rgba(34,211,238,0.16);"><i class="fa-solid fa-eye"></i></div>
       <div class="stat-value neon-text" style="color: var(--neon-blue);"><?= fmt_k($totalViews) ?></div>
-      <div class="text-slate-400 text-sm mt-2">Views totais</div>
-      <div class="flex flex-wrap gap-2 text-xs mt-3">
-        <span class="px-2 py-1 rounded-full" style="background: rgba(0,212,255,0.12); color: var(--neon-blue);">+<?= fmt_k($viewsHoje) ?> hoje</span>
-        <span class="px-2 py-1 rounded-full" style="background: rgba(0,212,255,0.12); color: var(--neon-blue);">+<?= fmt_k($viewsSemana) ?> em 7 dias</span>
+      <div class="stat-label">Views totais</div>
+      <div class="stat-support">
+        <div class="stat-support-line">
+          <span class="stat-support-label">Hoje</span>
+          <span class="stat-support-value" style="color: var(--neon-blue);">+<?= fmt_k($viewsHoje) ?></span>
+        </div>
+        <div class="stat-support-line">
+          <span class="stat-support-label">Ultimos 7 dias</span>
+          <span class="stat-support-value" style="color: var(--neon-blue);">+<?= fmt_k($viewsSemana) ?></span>
+        </div>
       </div>
     </article>
 
-    <article class="stat-card">
+    <article class="stat-card stat-card-compact">
       <div class="stat-icon" style="background: rgba(168,85,247,0.16);"><i class="fa-solid fa-heart"></i></div>
       <div class="stat-value neon-text" style="color:#c084fc;"><?= fmt_k($likesTotal) ?></div>
-      <div class="text-slate-400 text-sm mt-2">Curtidas e engajamento</div>
-      <div class="text-xs mt-3" style="color:#c084fc;">
-        <div><?= fmt_k($totalComentarios) ?> comentarios</div>
-        <?php if ($engagementRate > 0): ?>
-          <div><?= number_format($engagementRate, 2, ',', '.') ?>% de engajamento</div>
-        <?php endif; ?>
+      <div class="stat-label">Curtidas</div>
+      <div class="stat-support">
+        <div class="stat-support-line">
+          <span class="stat-support-label">Comentarios</span>
+          <span class="stat-support-value" style="color:#c084fc;"><?= fmt_k($totalComentarios) ?></span>
+        </div>
+        <div class="stat-support-line">
+          <span class="stat-support-label">Engajamento</span>
+          <span class="stat-support-value" style="color:#c084fc;"><?= number_format($engagementRate, 2, ',', '.') ?>%</span>
+        </div>
       </div>
     </article>
 
-    <article class="stat-card">
+    <article class="stat-card stat-card-compact">
+      <div class="stat-icon" style="background: rgba(14,165,233,0.16);"><i class="fa-solid fa-link"></i></div>
+      <div class="stat-value neon-text" style="color:#38bdf8;"><?= fmt_k((int) ($link_clicks_periodo ?? 0)) ?></div>
+      <div class="stat-label">Cliques em links</div>
+      <div class="stat-support">
+        <div class="stat-support-line">
+          <span class="stat-support-label">Hoje</span>
+          <span class="stat-support-value" style="color:#38bdf8;">+<?= fmt((int) ($link_clicks_hoje ?? 0)) ?></span>
+        </div>
+        <div class="stat-support-line">
+          <span class="stat-support-label">Unicos</span>
+          <span class="stat-support-value" style="color:#38bdf8;"><?= fmt((int) ($link_clicks_unicos ?? 0)) ?></span>
+        </div>
+      </div>
+    </article>
+
+    <article class="stat-card stat-card-compact">
       <div class="stat-icon" style="background: rgba(16,185,129,0.16);"><i class="fa-solid fa-envelope"></i></div>
       <div class="stat-value neon-text" style="color:#34d399;"><?= fmt_k($totalInscritos) ?></div>
-      <div class="text-slate-400 text-sm mt-2">Inscritos ativos</div>
-      <div class="text-xs mt-3" style="color:#34d399;">+<?= fmt($inscritosNovos30) ?> nos ultimos 30 dias</div>
+      <div class="stat-label">Inscritos ativos</div>
+      <div class="stat-support">
+        <div class="stat-support-line">
+          <span class="stat-support-label">Hoje</span>
+          <span class="stat-support-value" style="color:#34d399;">+<?= fmt($inscritosHoje) ?></span>
+        </div>
+        <div class="stat-support-line">
+          <span class="stat-support-label">Ultimos 30 dias</span>
+          <span class="stat-support-value" style="color:#34d399;">+<?= fmt($inscritosNovos30) ?></span>
+        </div>
+      </div>
     </article>
   </section>
 
   <section class="admin-panel">
-    <div class="flex items-start justify-between gap-4 mb-4 flex-wrap">
+    <div class="activity-panel-head">
       <div>
         <div class="admin-panel-title">
           <i class="fa-solid fa-chart-line text-cyan-300"></i>
           <span>Atividade</span>
         </div>
-        <div class="admin-panel-subtitle">
-          <?= e($startLabel) ?> a <?= e($endLabel) ?> - <?= (int) $days ?> dias monitorados.
+        <div class="activity-panel-copy">
+          <div class="activity-panel-range"><span><?= e($startLabel) ?> a <?= e($endLabel) ?></span><span class="activity-panel-divider">&bull;</span><span><?= (int) $days ?> dias monitorados</span><span class="activity-panel-mode"><?= e($bucketModeLabel) ?></span></div>
           <?php if ($hasChart): ?>
-            Linha principal: views. Tracejado: media movel de 7 dias. Barras: posts novos. Pontos: inscricoes.
+            <div class="activity-panel-legend">
+              <span class="activity-legend-item"><span class="activity-legend-dot activity-legend-views"></span>Views</span>
+              <span class="activity-legend-item"><span class="activity-legend-dot activity-legend-ma"></span>Media movel 7 dias</span>
+              <span class="activity-legend-item"><span class="activity-legend-dot activity-legend-posts"></span>Posts novos</span>
+              <span class="activity-legend-item"><span class="activity-legend-dot activity-legend-subs"></span>Inscricoes</span>
+            </div>
           <?php else: ?>
-            Ainda nao ha dados suficientes no periodo selecionado.
+            <div class="activity-panel-empty">Ainda nao ha dados suficientes no periodo selecionado.</div>
           <?php endif; ?>
         </div>
       </div>
     </div>
 
-    <div class="grid sm:grid-cols-3 gap-3 mb-4">
-      <div class="px-4 py-3 rounded-2xl bg-slate-800/30 border border-slate-700">
-        <div class="text-xs text-slate-400">Views no periodo</div>
-        <div class="text-white text-2xl font-black"><?= fmt($curViews) ?></div>
-        <div class="text-xs text-slate-500">Media de <?= fmt((int) round($days > 0 ? $curViews / $days : 0)) ?> por dia</div>
+    <div class="activity-summary-grid">
+      <div class="activity-summary-card">
+        <div class="activity-summary-top">
+          <div class="activity-summary-icon activity-summary-icon-views"><i class="fa-solid fa-eye"></i></div>
+          <div class="activity-summary-label">Views no periodo</div>
+        </div>
+        <div class="activity-summary-value activity-summary-value-views"><?= fmt($curViews) ?></div>
+        <div class="activity-summary-meta">Media de <?= fmt((int) round($days > 0 ? $curViews / $days : 0)) ?> por dia</div>
       </div>
-      <div class="px-4 py-3 rounded-2xl bg-slate-800/30 border border-slate-700">
-        <div class="text-xs text-slate-400">Posts novos</div>
-        <div class="text-white text-2xl font-black"><?= fmt($curPosts) ?></div>
-        <div class="text-xs text-slate-500">Media de <?= number_format(($days > 0 ? $curPosts / $days : 0), 1, ',', '.') ?> por dia</div>
+      <div class="activity-summary-card">
+        <div class="activity-summary-top">
+          <div class="activity-summary-icon activity-summary-icon-posts"><i class="fa-solid fa-pen-nib"></i></div>
+          <div class="activity-summary-label">Posts novos</div>
+        </div>
+        <div class="activity-summary-value activity-summary-value-posts"><?= fmt($curPosts) ?></div>
+        <div class="activity-summary-meta">Media de <?= number_format(($days > 0 ? $curPosts / $days : 0), 1, ',', '.') ?> por dia</div>
       </div>
-      <div class="px-4 py-3 rounded-2xl bg-slate-800/30 border border-slate-700">
-        <div class="text-xs text-slate-400">Inscricoes</div>
-        <div class="text-white text-2xl font-black"><?= fmt($curSubs) ?></div>
-        <div class="text-xs text-slate-500">Media de <?= number_format(($days > 0 ? $curSubs / $days : 0), 1, ',', '.') ?> por dia</div>
+      <div class="activity-summary-card">
+        <div class="activity-summary-top">
+          <div class="activity-summary-icon activity-summary-icon-subs"><i class="fa-solid fa-envelope"></i></div>
+          <div class="activity-summary-label">Inscricoes</div>
+        </div>
+        <div class="activity-summary-value activity-summary-value-subs"><?= fmt($curSubs) ?></div>
+        <div class="activity-summary-meta">Media de <?= number_format(($days > 0 ? $curSubs / $days : 0), 1, ',', '.') ?> por dia</div>
       </div>
     </div>
 
+    <?php if (!empty($activityInsights)): ?>
+      <div class="activity-insights-grid">
+        <?php foreach ($activityInsights as $insight): ?>
+          <div class="activity-insight-card activity-insight-<?= e((string) ($insight['tone'] ?? 'flat')) ?>">
+            <div class="activity-insight-title"><?= e((string) ($insight['title'] ?? 'Insight')) ?></div>
+            <div class="activity-insight-value"><?= e((string) ($insight['value'] ?? '--')) ?></div>
+            <div class="activity-insight-meta"><?= e((string) ($insight['meta'] ?? '')) ?></div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
     <div class="relative bg-slate-800/20 p-4 rounded-xl border border-slate-800/70">
       <svg id="activitySvg" viewBox="0 0 <?= (int) $w ?> <?= (int) $h ?>" class="w-full h-72">
-        <?php for ($grid = 0; $grid <= 4; $grid++): $gridY = $padY + ($grid * ($plotH / 4)); ?>
+        <?php for ($grid = 0; $grid <= 4; $grid++): $gridY = $padY + ($grid * ($plotH / 4)); $gridValue = (int) round($viewsMax - ($grid * ($viewsMax / 4))); ?>
           <line x1="<?= (int) $padX ?>" y1="<?= (float) $gridY ?>" x2="<?= (int) ($w - $padX) ?>" y2="<?= (float) $gridY ?>" stroke="rgba(148,163,184,0.12)" stroke-width="1" />
+          <text x="<?= (int) ($padX - 10) ?>" y="<?= (float) ($gridY + 4) ?>" fill="rgba(148,163,184,0.5)" font-size="11" text-anchor="end"><?= e(fmt($gridValue)) ?></text>
         <?php endfor; ?>
 
         <?php if ($hasChart): ?>
@@ -452,87 +649,199 @@ $endLabel = date('d/m/Y', strtotime($endIn));
     </div>
   </section>
 
-  <section class="grid lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 admin-panel">
+  <section class="grid lg:grid-cols-[minmax(0,2fr)_360px] gap-6">
+    <div class="admin-panel dashboard-editorial-panel">
       <div class="admin-panel-title">
         <i class="fa-solid fa-trophy text-amber-300"></i>
         <span>Destaques editoriais</span>
       </div>
       <div class="admin-panel-subtitle">Os posts com melhor desempenho ajudam a orientar pauta, capa e chamadas.</div>
 
-      <div class="grid md:grid-cols-3 gap-4 mt-6">
-        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-cyan-500/50 transition-all">
-          <div class="text-cyan-400 text-sm font-bold mb-2">Mais visto</div>
-          <?php if ($topViews): ?>
-            <h4 class="text-white font-bold text-sm line-clamp-2 mb-2" title="<?= e((string) $topViews['titulo']) ?>"><?= e((string) $topViews['titulo']) ?></h4>
-            <div class="text-2xl font-black text-cyan-400"><?= fmt_k((int) $topViews['views']) ?></div>
-            <div class="text-xs text-gray-500">visualizacoes</div>
-          <?php else: ?>
-            <div class="text-gray-500 text-sm">Nenhum post disponivel.</div>
-          <?php endif; ?>
-        </div>
-
-        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-purple-500/50 transition-all">
-          <div class="text-purple-400 text-sm font-bold mb-2">Mais curtido</div>
-          <?php if ($topLikes): ?>
-            <h4 class="text-white font-bold text-sm line-clamp-2 mb-2" title="<?= e((string) $topLikes['titulo']) ?>"><?= e((string) $topLikes['titulo']) ?></h4>
-            <div class="text-2xl font-black text-purple-400"><?= fmt_k((int) $topLikes['curtidas']) ?></div>
-            <div class="text-xs text-gray-500">curtidas</div>
-          <?php else: ?>
-            <div class="text-gray-500 text-sm">Nenhum post disponivel.</div>
-          <?php endif; ?>
-        </div>
-
-        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-yellow-500/50 transition-all">
-          <div class="text-yellow-400 text-sm font-bold mb-2">Mais comentado</div>
-          <?php if ($topComments): ?>
-            <h4 class="text-white font-bold text-sm line-clamp-2 mb-2" title="<?= e((string) $topComments['titulo']) ?>"><?= e((string) $topComments['titulo']) ?></h4>
-            <div class="text-2xl font-black text-yellow-400"><?= fmt_k((int) $topComments['comentarios_count']) ?></div>
-            <div class="text-xs text-gray-500">comentarios</div>
-          <?php else: ?>
-            <div class="text-gray-500 text-sm">Nenhum post disponivel.</div>
-          <?php endif; ?>
-        </div>
+      <div class="dashboard-editorial-grid mt-6">
+        <?php foreach ($editorialCards as $editorialCard): ?>
+          <?php
+            $editorialPost = is_array($editorialCard['post'] ?? null) ? $editorialCard['post'] : null;
+            $editorialTitle = admin_clean_post_title((string) ($editorialPost['titulo'] ?? ''));
+            $editorialHref = dashboard_post_url($editorialPost);
+          ?>
+          <article class="dashboard-editorial-card dashboard-editorial-card-<?= e((string) ($editorialCard['tone'] ?? 'views')) ?>">
+            <div class="dashboard-editorial-card-top">
+              <span class="dashboard-editorial-eyebrow"><?= e((string) ($editorialCard['eyebrow'] ?? 'Destaque')) ?></span>
+              <span class="dashboard-editorial-context"><?= e((string) ($editorialCard['context'] ?? '')) ?></span>
+            </div>
+            <?php if ($editorialPost !== null): ?>
+              <h4 class="dashboard-editorial-title" title="<?= e($editorialTitle) ?>">
+                <?php if ($editorialHref !== ''): ?>
+                  <a href="<?= e($editorialHref) ?>" target="_blank" rel="noopener noreferrer"><?= e($editorialTitle) ?></a>
+                <?php else: ?>
+                  <span><?= e($editorialTitle) ?></span>
+                <?php endif; ?>
+              </h4>
+              <div class="dashboard-editorial-metric"><?= e((string) ($editorialCard['metric'] ?? '0')) ?></div>
+              <div class="dashboard-editorial-unit"><?= e((string) ($editorialCard['unit'] ?? 'interacoes')) ?></div>
+            <?php else: ?>
+              <div class="dashboard-editorial-empty">Nenhum post disponivel.</div>
+            <?php endif; ?>
+          </article>
+        <?php endforeach; ?>
       </div>
 
       <?php if ($categoriaPopular): ?>
-        <div class="mt-6 p-4 bg-slate-800/30 rounded-xl border border-slate-700">
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <div class="text-gray-400 text-sm">Categoria com maior tracao</div>
-              <div class="flex items-center gap-2 mt-1">
-                <span class="w-3 h-3 rounded-full" style="background: <?= e((string) $categoriaPopular['cor']) ?>"></span>
-                <span class="text-white font-bold"><?= e((string) $categoriaPopular['nome']) ?></span>
-              </div>
+        <div class="dashboard-editorial-traction mt-6">
+          <div class="dashboard-editorial-traction-copy">
+            <div class="dashboard-editorial-traction-label">Categoria com maior tracao</div>
+            <div class="dashboard-editorial-traction-name">
+              <span class="dashboard-editorial-traction-dot" style="background: <?= e((string) ($categoriaPopular['cor'] ?? '#22d3ee')) ?>"></span>
+              <strong><?= e((string) ($categoriaPopular['nome'] ?? 'Sem categoria')) ?></strong>
             </div>
-            <div class="text-right">
-              <div class="text-2xl font-black text-cyan-400"><?= fmt_k((int) $categoriaPopular['total_views']) ?></div>
-              <div class="text-xs text-gray-500">views acumuladas</div>
-            </div>
+            <div class="dashboard-editorial-traction-meta">Categoria que mais sustentou o volume de leitura no periodo.</div>
+          </div>
+          <div class="dashboard-editorial-traction-metric">
+            <strong><?= fmt_k((int) ($categoriaPopular['total_views'] ?? 0)) ?></strong>
+            <span>views acumuladas</span>
           </div>
         </div>
       <?php endif; ?>
     </div>
 
-    <div class="admin-panel">
+    <div class="admin-panel dashboard-today-panel">
       <div class="admin-panel-title">
         <i class="fa-solid fa-bolt text-yellow-300"></i>
         <span>Hoje</span>
       </div>
       <div class="admin-panel-subtitle">Leitura rapida do dia para moderar, publicar e ajustar prioridades.</div>
 
-      <div class="space-y-3 mt-6">
-        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg"><span class="text-gray-400 text-sm">Posts</span><span class="text-white font-bold"><?= fmt($postsHoje) ?></span></div>
-        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg"><span class="text-gray-400 text-sm">Views</span><span class="text-cyan-400 font-bold"><?= fmt_k($viewsHoje) ?></span></div>
-        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg"><span class="text-gray-400 text-sm">Inscritos</span><span class="text-emerald-400 font-bold"><?= fmt($inscritosHoje) ?></span></div>
-        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg"><span class="text-gray-400 text-sm">Comentarios</span><span class="text-purple-400 font-bold"><?= fmt($comentariosHoje) ?></span></div>
-        <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-yellow-500/30"><span class="text-gray-400 text-sm">Pendentes</span><span class="text-yellow-400 font-bold"><?= fmt($comentariosPendentes) ?></span></div>
+      <div class="dashboard-today-grid mt-6">
+        <?php foreach ($todayCards as $todayCard): ?>
+          <div class="dashboard-today-card dashboard-today-card-<?= e((string) ($todayCard['tone'] ?? 'neutral')) ?>">
+            <span class="dashboard-today-card-label"><?= e((string) ($todayCard['label'] ?? 'Metrica')) ?></span>
+            <strong class="dashboard-today-card-value"><?= e((string) ($todayCard['value'] ?? '0')) ?></strong>
+          </div>
+        <?php endforeach; ?>
       </div>
 
-      <div class="mt-4 p-3 bg-slate-800/50 rounded-lg">
-        <div class="flex items-center justify-between text-sm"><span class="text-gray-400">Taxa de aprovacao</span><span class="text-green-400 font-bold"><?= number_format($taxaAprovacao, 2, ',', '.') ?>%</span></div>
-        <div class="progress-bar mt-2"><div class="progress-fill" style="width: <?= max(0, min(100, $taxaAprovacao)) ?>%"></div></div>
+      <div class="dashboard-today-pending mt-4">
+        <div>
+          <div class="dashboard-today-pending-label">Pendentes</div>
+          <div class="dashboard-today-pending-copy">Comentarios aguardando moderacao e resposta da equipe.</div>
+        </div>
+        <strong><?= fmt($comentariosPendentes) ?></strong>
       </div>
+
+      <div class="dashboard-today-approval mt-4">
+        <div class="dashboard-today-approval-head">
+          <span>Taxa de aprovacao</span>
+          <strong><?= number_format($taxaAprovacao, 2, ',', '.') ?>%</strong>
+        </div>
+        <div class="dashboard-today-approval-copy">Leitura rapida da qualidade da moderacao no periodo recente.</div>
+        <div class="progress-bar mt-3"><div class="progress-fill" style="width: <?= max(0, min(100, $taxaAprovacao)) ?>%"></div></div>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 admin-panel">
+      <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <div class="admin-panel-title">
+            <i class="fa-solid fa-link text-cyan-300"></i>
+            <span>Links e Central Nerd</span>
+          </div>
+          <div class="admin-panel-subtitle">Cliques monitorados na Central Nerd dentro do periodo selecionado.</div>
+        </div>
+        <a href="<?= e(url('/admin/links')) ?>" class="admin-btn admin-btn-secondary">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          Abrir links
+        </a>
+      </div>
+
+      <div class="dashboard-link-kpi-grid">
+        <div class="dashboard-link-kpi-card">
+          <div class="dashboard-link-kpi-label">Cliques no periodo</div>
+          <div class="dashboard-link-kpi-value text-cyan-300"><?= fmt((int) ($link_clicks_periodo ?? 0)) ?></div>
+          <div class="dashboard-link-kpi-meta">Interacoes registradas por redirect interno</div>
+        </div>
+        <div class="dashboard-link-kpi-card">
+          <div class="dashboard-link-kpi-label">Cliques unicos</div>
+          <div class="dashboard-link-kpi-value text-sky-200"><?= fmt((int) ($link_clicks_unicos ?? 0)) ?></div>
+          <div class="dashboard-link-kpi-meta">Estimativa baseada em sessao</div>
+        </div>
+        <div class="dashboard-link-kpi-card">
+          <div class="dashboard-link-kpi-label">Links ativos</div>
+          <div class="dashboard-link-kpi-value text-emerald-300"><?= fmt((int) ($links_ativos ?? 0)) ?></div>
+          <div class="dashboard-link-kpi-meta">Itens visiveis no publico agora</div>
+        </div>
+        <div class="dashboard-link-kpi-card">
+          <div class="dashboard-link-kpi-label">Em revisao</div>
+          <div class="dashboard-link-kpi-value text-amber-300"><?= fmt((int) ($links_revisao ?? 0)) ?></div>
+          <div class="dashboard-link-kpi-meta">Links que pedem nova verificacao</div>
+        </div>
+      </div>
+
+      <div class="dashboard-link-list">
+        <div class="dashboard-link-list-head">
+          <div class="dashboard-link-list-title">Links com melhor tracao</div>
+          <div class="dashboard-link-list-meta">Mais clicados no periodo filtrado</div>
+        </div>
+
+        <?php if (empty($top_links_clicks ?? [])): ?>
+          <div class="dashboard-link-empty">Ainda nao ha cliques registrados para montar este ranking.</div>
+        <?php else: ?>
+          <div class="dashboard-link-stack">
+            <?php foreach (($top_links_clicks ?? []) as $topLink): ?>
+              <div class="dashboard-link-row">
+                <div class="dashboard-link-copy">
+                  <div class="dashboard-link-title"><?= e((string) ($topLink['titulo'] ?? 'Link')) ?></div>
+                  <div class="dashboard-link-subtitle"><?= e(link_type_label((string) ($topLink['tipo'] ?? ''), (int) ($topLink['promocao'] ?? 0) === 1)) ?><?php if (trim((string) ($topLink['slug'] ?? '')) !== ''): ?> &bull; /link/<?= e((string) ($topLink['slug'] ?? '')) ?><?php endif; ?></div>
+                </div>
+                <div class="dashboard-link-metric">
+                  <strong><?= fmt((int) ($topLink['total_clicks'] ?? 0)) ?></strong>
+                  <span>cliques</span>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <div class="admin-panel">
+      <div class="admin-panel-title">
+        <i class="fa-solid fa-bullseye text-cyan-300"></i>
+        <span>Secoes mais clicadas</span>
+      </div>
+      <div class="admin-panel-subtitle">Leitura comercial da Central Nerd no periodo filtrado.</div>
+
+      <div class="dashboard-link-side-meta">
+        <div class="dashboard-link-side-chip">
+          <span>Hoje</span>
+          <strong><?= fmt((int) ($link_clicks_hoje ?? 0)) ?></strong>
+        </div>
+        <div class="dashboard-link-side-chip">
+          <span>Periodo</span>
+          <strong><?= fmt((int) ($link_clicks_periodo ?? 0)) ?></strong>
+        </div>
+      </div>
+
+      <?php $sectionClicks = is_array($link_section_clicks ?? null) ? $link_section_clicks : []; ?>
+      <?php $sectionTotal = max(1, array_sum(array_map(static fn(array $row): int => (int) ($row['total_clicks'] ?? 0), $sectionClicks))); ?>
+      <?php if ($sectionClicks === []): ?>
+        <div class="dashboard-link-empty">Assim que os links receberem cliques, esta area vai mostrar quais secoes puxam mais resultado.</div>
+      <?php else: ?>
+        <div class="dashboard-link-section-stack">
+          <?php foreach ($sectionClicks as $sectionRow): ?>
+            <?php $sectionCount = (int) ($sectionRow['total_clicks'] ?? 0); $sectionPct = (int) round(($sectionCount / $sectionTotal) * 100); ?>
+            <div class="dashboard-link-section-row">
+              <div class="dashboard-link-section-copy">
+                <div class="dashboard-link-section-label"><?= e((string) ($sectionRow['secao'] ?? 'Secao')) ?></div>
+                <div class="dashboard-link-section-bar"><span style="width: <?= max(6, min(100, $sectionPct)) ?>%"></span></div>
+              </div>
+              <div class="dashboard-link-section-value"><?= fmt($sectionCount) ?></div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
     </div>
   </section>
 
@@ -558,37 +867,64 @@ $endLabel = date('d/m/Y', strtotime($endIn));
         <div class="text-slate-400 text-sm">Crie seu primeiro post para comecar a alimentar o portal.</div>
       </div>
     <?php else: ?>
-      <div class="flex flex-col gap-3">
+      <div class="dashboard-recent-stack">
         <?php foreach ($postsRecentes as $post): ?>
-          <?php $cover = cover_url($post['imagem_capa'] ?? null); $titulo = (string) ($post['titulo'] ?? ''); $status = (string) ($post['status'] ?? ''); $dataPub = (string) ($post['data_publicacao'] ?? ''); $views = (int) ($post['views'] ?? 0); $catNome = (string) ($post['categoria_nome'] ?? ''); $catCor = (string) ($post['categoria_cor'] ?? '#00d4ff'); $postId = (int) ($post['id'] ?? 0); ?>
-          <div class="group bg-slate-800/40 hover:bg-slate-800/70 border border-slate-700 hover:border-cyan-500/50 rounded-xl p-4 transition-all flex items-center gap-4">
-            <div class="w-20 h-14 rounded-lg overflow-hidden bg-slate-700/50 flex items-center justify-center flex-shrink-0 text-cyan-300">
+          <?php
+            $cover = cover_url($post['imagem_capa'] ?? null);
+            $tituloLimpo = admin_clean_post_title((string) ($post['titulo'] ?? ''));
+            $status = (string) ($post['status'] ?? '');
+            $dataPub = (string) ($post['data_publicacao'] ?? '');
+            $views = (int) ($post['views'] ?? 0);
+            $curtidasRecentes = (int) ($post['curtidas'] ?? 0);
+            $comentariosRecentes = (int) ($post['comentarios_count'] ?? 0);
+            $catNome = (string) ($post['categoria_nome'] ?? '');
+            $catCor = (string) ($post['categoria_cor'] ?? '#00d4ff');
+            $postId = (int) ($post['id'] ?? 0);
+            $postPublicUrl = dashboard_post_url($post);
+          ?>
+          <article class="dashboard-recent-row group">
+            <div class="dashboard-recent-media <?= $cover === '' ? 'dashboard-recent-media-fallback' : '' ?>">
               <?php if ($cover !== ''): ?>
-                <img src="<?= e($cover) ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.style.display='none'">
+                <img src="<?= e($cover) ?>" alt="<?= e($tituloLimpo) ?>" class="dashboard-recent-image" onerror="this.style.display='none'">
               <?php else: ?>
                 <i class="fa-solid fa-image"></i>
               <?php endif; ?>
             </div>
 
-            <div class="min-w-0 flex-1">
-              <div class="flex items-start justify-between gap-3">
-                <h4 class="font-bold text-white text-sm md:text-base leading-snug line-clamp-1" title="<?= e($titulo) ?>"><?= e($titulo) ?></h4>
-                <div class="hidden md:flex items-center gap-2 text-xs text-gray-400 flex-shrink-0"><span><?= $dataPub !== '' ? e(date('d/m', strtotime($dataPub))) : '--/--' ?></span><span class="flex items-center gap-1"><i class="fa-regular fa-eye"></i> <?= fmt_k($views) ?></span></div>
+            <div class="dashboard-recent-body">
+              <h4 class="dashboard-recent-title" title="<?= e($tituloLimpo) ?>">
+                <?php if ($postPublicUrl !== ''): ?>
+                  <a href="<?= e($postPublicUrl) ?>" target="_blank" rel="noopener noreferrer"><?= e($tituloLimpo) ?></a>
+                <?php else: ?>
+                  <span><?= e($tituloLimpo) ?></span>
+                <?php endif; ?>
+              </h4>
+
+              <div class="dashboard-recent-tags">
+                <?php if ($catNome !== ''): ?>
+                  <span class="dashboard-recent-category">
+                    <span class="dashboard-recent-category-dot" style="background: <?= e($catCor) ?>"></span>
+                    <span><?= e($catNome) ?></span>
+                  </span>
+                <?php endif; ?>
+                <span class="<?= e(status_badge_class($status)) ?>"><?= e($status) ?></span>
               </div>
 
-              <div class="flex items-center gap-2 mt-1 text-xs text-gray-400 flex-wrap">
-                <?php if ($catNome !== ''): ?><span class="w-2 h-2 rounded-full" style="background: <?= e($catCor) ?>"></span><span class="truncate"><?= e($catNome) ?></span><?php endif; ?>
-                <span class="ml-0 md:ml-2 <?= e(status_badge_class($status)) ?>"><?= e($status) ?></span>
+              <div class="dashboard-recent-meta">
+                <span><i class="fa-regular fa-calendar"></i><?= $dataPub !== '' ? e(date('d/m', strtotime($dataPub))) : '--/--' ?></span>
+                <span><i class="fa-regular fa-eye"></i><?= fmt_k($views) ?></span>
+                <span><i class="fa-regular fa-heart"></i><?= fmt_k($curtidasRecentes) ?></span>
+                <span><i class="fa-regular fa-comments"></i><?= fmt_k($comentariosRecentes) ?></span>
               </div>
             </div>
 
             <?php if ($postId > 0): ?>
-              <div class="flex items-center gap-2 flex-shrink-0">
+              <div class="dashboard-recent-actions">
                 <a href="<?= e(url('/admin/editar-post?id=' . $postId)) ?>" class="admin-btn admin-btn-secondary">Editar</a>
                 <a href="<?= e(url('/admin/excluir-post?id=' . $postId)) ?>" class="admin-btn admin-btn-danger">Excluir</a>
               </div>
             <?php endif; ?>
-          </div>
+          </article>
         <?php endforeach; ?>
       </div>
     <?php endif; ?>

@@ -37,6 +37,9 @@ $groupOpen = (bool) ($group['open'] ?? false);
         $discountContext = trim((string) ($item['discount_context'] ?? ''));
         $copyValue = $couponCode !== '' ? $couponCode : ($title !== '' ? $title : 'CUPOM');
         $hasExternalUrl = $url !== '' && $url !== '#';
+        $trackedUrl = trim((string) ($item['slug'] ?? '')) !== ''
+            ? url('/link/' . rawurlencode((string) $item['slug']) . '?origem=central-' . rawurlencode($groupSlug))
+            : $url;
         ?>
         <article class="central-link-card central-link-card-<?= htmlspecialchars((string) ($item['tone'] ?? 'product'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> <?= $isCoupon ? 'central-link-card-coupon-mode' : '' ?>" data-reveal>
           <?php if ($isCoupon): ?>
@@ -73,7 +76,7 @@ $groupOpen = (bool) ($group['open'] ?? false);
                   </button>
 
                   <?php if ($hasExternalUrl): ?>
-                    <a href="<?= htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="central-coupon-site-button" aria-label="Abrir site do cupom <?= htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    <a href="<?= htmlspecialchars($trackedUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="central-coupon-site-button" aria-label="Abrir site do cupom <?= htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                       <span>Ir ao site</span>
                       <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
                         <path d="M6.5 10h7m0 0-2.8-2.8M13.5 10l-2.8 2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -84,7 +87,7 @@ $groupOpen = (bool) ($group['open'] ?? false);
               </span>
             </div>
           <?php else: ?>
-            <a href="<?= htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="central-bio-card central-bio-card-link">
+            <a href="<?= htmlspecialchars($trackedUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="central-bio-card central-bio-card-link">
               <span class="central-bio-media <?= $image === '' ? 'central-bio-media-fallback' : '' ?>">
                 <?php if ($image !== ''): ?>
                   <img src="<?= htmlspecialchars($image, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">

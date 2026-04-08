@@ -387,23 +387,23 @@ final class PostRepository
 
     public function topByViews(): ?array
     {
-        $stmt = $this->pdo->query("SELECT titulo, views FROM posts ORDER BY views DESC, id DESC LIMIT 1");
+        $stmt = $this->pdo->query("SELECT titulo, slug, views FROM posts ORDER BY views DESC, id DESC LIMIT 1");
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ? ['titulo' => (string) ($row['titulo'] ?? ''), 'views' => (int) ($row['views'] ?? 0)] : null;
+        return $row ? ['titulo' => (string) ($row['titulo'] ?? ''), 'slug' => (string) ($row['slug'] ?? ''), 'views' => (int) ($row['views'] ?? 0)] : null;
     }
 
     public function topByLikes(): ?array
     {
-        $stmt = $this->pdo->query("SELECT titulo, curtidas FROM posts ORDER BY curtidas DESC, id DESC LIMIT 1");
+        $stmt = $this->pdo->query("SELECT titulo, slug, curtidas FROM posts ORDER BY curtidas DESC, id DESC LIMIT 1");
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ? ['titulo' => (string) ($row['titulo'] ?? ''), 'curtidas' => (int) ($row['curtidas'] ?? 0)] : null;
+        return $row ? ['titulo' => (string) ($row['titulo'] ?? ''), 'slug' => (string) ($row['slug'] ?? ''), 'curtidas' => (int) ($row['curtidas'] ?? 0)] : null;
     }
 
     public function topByComments(): ?array
     {
-        $stmt = $this->pdo->query("SELECT titulo, comentarios_count FROM posts ORDER BY comentarios_count DESC, id DESC LIMIT 1");
+        $stmt = $this->pdo->query("SELECT titulo, slug, comentarios_count FROM posts ORDER BY comentarios_count DESC, id DESC LIMIT 1");
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ? ['titulo' => (string) ($row['titulo'] ?? ''), 'comentarios_count' => (int) ($row['comentarios_count'] ?? 0)] : null;
+        return $row ? ['titulo' => (string) ($row['titulo'] ?? ''), 'slug' => (string) ($row['slug'] ?? ''), 'comentarios_count' => (int) ($row['comentarios_count'] ?? 0)] : null;
     }
 
     public function findAdminById(int $id): ?array

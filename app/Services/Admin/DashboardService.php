@@ -6,10 +6,10 @@
  * @author      Taren Felipe Ribeiro
  * @version     1.0.0
  * @purpose     Service do Dashboard Admin
- * @description Orquestra métricas do dashboard e calcula indicadores, série e comparativos.
+ * @description Orquestra metricas do dashboard e calcula indicadores, serie e comparativos.
  * @usage       getDashboardData(30) OU getDashboardData('YYYY-MM-DD','YYYY-MM-DD')
- * @notes       Range por data (start/end) com default 30 dias e clamp máximo 90 dias.
- *              Delta_abs é sempre real; delta_percent só existe se previous > 0 (senão null).
+ * @notes       Range por data (start/end) com default 30 dias e clamp maximo 90 dias.
+ *              Delta_abs e sempre real; delta_percent so existe se previous > 0.
  * -----------------------------------------------------------------------------
  */
 
@@ -20,6 +20,8 @@ namespace App\Services\Admin;
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\ComentarioRepository;
 use App\Repositories\EstatisticaRepository;
+use App\Repositories\LinkClickRepository;
+use App\Repositories\LinkRepository;
 use App\Repositories\NewsletterRepository;
 use App\Repositories\PostRepository;
 use DateTimeImmutable;
@@ -34,6 +36,8 @@ final class DashboardService
         private NewsletterRepository $newsletter,
         private ComentarioRepository $comentarios,
         private CategoriaPostRepository $categorias,
+        private LinkRepository $links,
+        private LinkClickRepository $linkClicks,
     ) {
     }
 
@@ -73,28 +77,28 @@ final class DashboardService
         [$start, $end] = $this->clampRange90($start, $end);
         $days = $this->diffDaysInclusive($start, $end);
 
-        $totalPosts = (int)$this->posts->countAll();
-        $postsByStatus = (array)$this->posts->countByStatus();
+        $totalPosts = (int) $this->posts->countAll();
+        $postsByStatus = (array) $this->posts->countByStatus();
 
-        $totalViews = (int)$this->posts->sumViews();
-        $viewsToday = (int)$this->estatisticas->viewsToday();
-        $viewsWeek = (int)$this->estatisticas->viewsLastDays(7);
+        $totalViews = (int) $this->posts->sumViews();
+        $viewsToday = (int) $this->estatisticas->viewsToday();
+        $viewsWeek = (int) $this->estatisticas->viewsLastDays(7);
 
-        $likesTotal = (int)$this->posts->sumLikes();
-        $totalComentarios = (int)$this->posts->sumComentariosCount();
+        $likesTotal = (int) $this->posts->sumLikes();
+        $totalComentarios = (int) $this->posts->sumComentariosCount();
         $engagementRate = $this->safePercent($likesTotal + $totalComentarios, $totalViews);
 
-        $totalInscritos = (int)$this->newsletter->countAll();
-        $inscritosNovos30 = (int)$this->newsletter->countLastDays(30);
-        $inscritosHoje = (int)$this->newsletter->countToday();
+        $totalInscritos = (int) $this->newsletter->countAll();
+        $inscritosNovos30 = (int) $this->newsletter->countLastDays(30);
+        $inscritosHoje = (int) $this->newsletter->countToday();
 
-        $comentariosHoje = (int)$this->comentarios->countToday();
-        $comentariosPendentes = (int)$this->comentarios->countPending();
+        $comentariosHoje = (int) $this->comentarios->countToday();
+        $comentariosPendentes = (int) $this->comentarios->countPending();
 
-        $approvalBase = (array)$this->comentarios->approvalBaseCounts();
+        $approvalBase = (array) $this->comentarios->approvalBaseCounts();
         $taxaAprovacao = $this->safePercent(
-            (int)($approvalBase['aprovados'] ?? 0),
-            (int)($approvalBase['aprovados'] ?? 0) + (int)($approvalBase['reprovados'] ?? 0)
+            (int) ($approvalBase['aprovados'] ?? 0),
+            (int) ($approvalBase['aprovados'] ?? 0) + (int) ($approvalBase['reprovados'] ?? 0)
         );
 
         $topViews = $this->posts->topByViews();
@@ -102,7 +106,7 @@ final class DashboardService
         $topComments = $this->posts->topByComments();
 
         $categoriaPopular = $this->categorias->mostPopular();
-        $postsHoje = (int)$this->posts->countToday();
+        $postsHoje = (int) $this->posts->countToday();
 
         $series = $this->seriesByRange($start, $end);
         $seriesWithMa7 = $this->addMovingAverage($series, 7, 'views', 'views_ma7');
@@ -118,15 +122,22 @@ final class DashboardService
         $previousInscricoes = $this->sumByRange('inscricoes', $prevStart, $prevEnd);
         $previousPostsNovos = $this->sumByRange('posts_novos', $prevStart, $prevEnd);
 
+        $linksAtivos = (int) $this->links->countPublicActive();
+        $linksRevisao = (int) $this->links->countReview();
+        $linkClicksResumo = $this->linkClicks->summaryByRange($start, $end);
+        $linkClicksHoje = (int) $this->linkClicks->countToday();
+        $topLinksClicks = $this->linkClicks->topLinksByRange($start, $end, 5);
+        $linkSectionClicks = $this->linkClicks->sectionBreakdownByRange($start, $end);
+
         return [
             'days' => $days,
             'start' => $start,
             'end' => $end,
 
             'total_posts' => $totalPosts,
-            'posts_publicados' => (int)($postsByStatus['publicados'] ?? 0),
-            'posts_rascunho' => (int)($postsByStatus['rascunhos'] ?? 0),
-            'posts_agendados' => (int)($postsByStatus['agendados'] ?? 0),
+            'posts_publicados' => (int) ($postsByStatus['publicados'] ?? 0),
+            'posts_rascunho' => (int) ($postsByStatus['rascunhos'] ?? 0),
+            'posts_agendados' => (int) ($postsByStatus['agendados'] ?? 0),
 
             'total_views' => $totalViews,
             'views_hoje' => $viewsToday,
@@ -150,6 +161,14 @@ final class DashboardService
             'comentarios_hoje' => $comentariosHoje,
             'comentarios_pendentes' => $comentariosPendentes,
             'taxa_aprovacao_comentarios' => $taxaAprovacao,
+
+            'links_ativos' => $linksAtivos,
+            'links_revisao' => $linksRevisao,
+            'link_clicks_periodo' => (int) ($linkClicksResumo['total'] ?? 0),
+            'link_clicks_unicos' => (int) ($linkClicksResumo['unique_sessions'] ?? 0),
+            'link_clicks_hoje' => $linkClicksHoje,
+            'top_links_clicks' => $topLinksClicks,
+            'link_section_clicks' => $linkSectionClicks,
 
             'chart' => [
                 'series' => $seriesWithMa7,
@@ -190,16 +209,16 @@ final class DashboardService
         $sum = 0;
         $queue = [];
 
-        foreach ($series as $i => $row) {
-            $value = (int)($row[$valueKey] ?? 0);
+        foreach ($series as $index => $row) {
+            $value = (int) ($row[$valueKey] ?? 0);
             $queue[] = $value;
             $sum += $value;
 
             if (count($queue) > $window) {
-                $sum -= (int)array_shift($queue);
+                $sum -= (int) array_shift($queue);
             }
 
-            $series[$i][$targetKey] = (int)round($sum / count($queue));
+            $series[$index][$targetKey] = (int) round($sum / count($queue));
         }
 
         return $series;
@@ -207,7 +226,10 @@ final class DashboardService
 
     private function safePercent(int $num, int $den): float
     {
-        if ($den <= 0) return 0.0;
+        if ($den <= 0) {
+            return 0.0;
+        }
+
         return round(($num / $den) * 100, 2);
     }
 
@@ -216,6 +238,7 @@ final class DashboardService
         if ($previous <= 0) {
             return $current <= 0 ? 0.0 : null;
         }
+
         return round((($current - $previous) / $previous) * 100, 2);
     }
 
@@ -246,34 +269,37 @@ final class DashboardService
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         $map = [];
-        foreach ($rows as $r) {
-            $k = (string)($r['data'] ?? '');
-            if ($k === '') continue;
-            $map[$k] = [
-                'data' => $k,
-                'views' => (int)($r['views'] ?? 0),
-                'posts_novos' => (int)($r['posts_novos'] ?? 0),
-                'inscricoes' => (int)($r['inscricoes'] ?? 0),
+        foreach ($rows as $row) {
+            $key = (string) ($row['data'] ?? '');
+            if ($key === '') {
+                continue;
+            }
+
+            $map[$key] = [
+                'data' => $key,
+                'views' => (int) ($row['views'] ?? 0),
+                'posts_novos' => (int) ($row['posts_novos'] ?? 0),
+                'inscricoes' => (int) ($row['inscricoes'] ?? 0),
             ];
         }
 
         $out = [];
         try {
-            $ds = new DateTimeImmutable($start);
-            $de = new DateTimeImmutable($end);
+            $startDate = new DateTimeImmutable($start);
+            $endDate = new DateTimeImmutable($end);
         } catch (Throwable) {
             return array_values($map);
         }
 
-        if ($ds > $de) {
-            [$ds, $de] = [$de, $ds];
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
         }
 
-        $cur = $ds;
-        while ($cur <= $de) {
-            $k = $cur->format('Y-m-d');
-            $out[] = $map[$k] ?? ['data' => $k, 'views' => 0, 'posts_novos' => 0, 'inscricoes' => 0];
-            $cur = $cur->modify('+1 day');
+        $cursor = $startDate;
+        while ($cursor <= $endDate) {
+            $key = $cursor->format('Y-m-d');
+            $out[] = $map[$key] ?? ['data' => $key, 'views' => 0, 'posts_novos' => 0, 'inscricoes' => 0];
+            $cursor = $cursor->modify('+1 day');
         }
 
         return $out;
@@ -281,10 +307,11 @@ final class DashboardService
 
     private function sumByRange(string $column, string $start, string $end): int
     {
-        if (!in_array($column, ['views', 'posts_novos', 'inscricoes'], true)) return 0;
+        if (!in_array($column, ['views', 'posts_novos', 'inscricoes'], true)) {
+            return 0;
+        }
 
         $pdo = $this->pdo();
-
         $sql = "
             SELECT COALESCE(SUM($column), 0) AS total
             FROM estatisticas
@@ -297,28 +324,36 @@ final class DashboardService
         $stmt->execute();
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-        return (int)($row['total'] ?? 0);
+        return (int) ($row['total'] ?? 0);
     }
 
     private function pdo(): PDO
     {
         $pdo = $GLOBALS['pdo'] ?? null;
         if (!$pdo instanceof PDO) {
-            throw new \RuntimeException('PDO não disponível em $GLOBALS["pdo"]');
+            throw new \RuntimeException('PDO nao disponivel em $GLOBALS["pdo"]');
         }
+
         return $pdo;
     }
 
-    private function parseYmd(?string $s): ?string
+    private function parseYmd(?string $value): ?string
     {
-        $v = is_string($s) ? trim($s) : '';
-        if ($v === '') return null;
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return null;
+        $value = is_string($value) ? trim($value) : '';
+        if ($value === '') {
+            return null;
+        }
 
-        [$y, $m, $d] = array_map('intval', explode('-', $v));
-        if (!checkdate($m, $d, $y)) return null;
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
 
-        return sprintf('%04d-%02d-%02d', $y, $m, $d);
+        [$year, $month, $day] = array_map('intval', explode('-', $value));
+        if (!checkdate($month, $day, $year)) {
+            return null;
+        }
+
+        return sprintf('%04d-%02d-%02d', $year, $month, $day);
     }
 
     /**
@@ -327,13 +362,15 @@ final class DashboardService
     private function orderRange(string $start, string $end): array
     {
         try {
-            $ds = new DateTimeImmutable($start);
-            $de = new DateTimeImmutable($end);
+            $startDate = new DateTimeImmutable($start);
+            $endDate = new DateTimeImmutable($end);
         } catch (Throwable) {
             return [$start, $end];
         }
 
-        return $ds > $de ? [$de->format('Y-m-d'), $ds->format('Y-m-d')] : [$ds->format('Y-m-d'), $de->format('Y-m-d')];
+        return $startDate > $endDate
+            ? [$endDate->format('Y-m-d'), $startDate->format('Y-m-d')]
+            : [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')];
     }
 
     /**
@@ -342,35 +379,42 @@ final class DashboardService
     private function clampRange90(string $start, string $end): array
     {
         try {
-            $ds = new DateTimeImmutable($start);
-            $de = new DateTimeImmutable($end);
+            $startDate = new DateTimeImmutable($start);
+            $endDate = new DateTimeImmutable($end);
         } catch (Throwable) {
             return [$start, $end];
         }
 
-        if ($ds > $de) [$ds, $de] = [$de, $ds];
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
 
-        $days = (int)$ds->diff($de)->days + 1;
-        if ($days <= 90) return [$ds->format('Y-m-d'), $de->format('Y-m-d')];
+        $days = (int) $startDate->diff($endDate)->days + 1;
+        if ($days <= 90) {
+            return [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')];
+        }
 
-        return [$de->modify('-89 days')->format('Y-m-d'), $de->format('Y-m-d')];
+        return [$endDate->modify('-89 days')->format('Y-m-d'), $endDate->format('Y-m-d')];
     }
 
     private function diffDaysInclusive(string $start, string $end): int
     {
         try {
-            $ds = new DateTimeImmutable($start);
-            $de = new DateTimeImmutable($end);
+            $startDate = new DateTimeImmutable($start);
+            $endDate = new DateTimeImmutable($end);
         } catch (Throwable) {
             return 30;
         }
 
-        if ($ds > $de) [$ds, $de] = [$de, $ds];
-        return (int)$ds->diff($de)->days + 1;
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        return (int) $startDate->diff($endDate)->days + 1;
     }
 
-    private function clampInt(int $v, int $min, int $max): int
+    private function clampInt(int $value, int $min, int $max): int
     {
-        return max($min, min($max, $v));
+        return max($min, min($max, $value));
     }
 }

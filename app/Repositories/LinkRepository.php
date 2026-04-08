@@ -90,6 +90,23 @@ final class LinkRepository
         return is_array($item) ? $item : null;
     }
 
+    public function findPublicBySlug(string $slug): ?array
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT id, titulo, slug, url, tipo, promocao, secao_publica, subgrupo_publico,
+                   descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque, expira_em
+            FROM links
+            WHERE slug = :slug
+              AND status NOT IN ("oculto", "expirado")
+              AND (expira_em IS NULL OR expira_em >= NOW())
+            LIMIT 1
+        ');
+        $stmt->execute(['slug' => trim($slug)]);
+
+        $item = $stmt->fetch(PDO::FETCH_ASSOC);
+        return is_array($item) ? $item : null;
+    }
+
     public function insertAdmin(array $data): int
     {
         $stmt = $this->pdo->prepare('
@@ -280,6 +297,12 @@ final class LinkRepository
     public function countPublicActive(): int
     {
         $stmt = $this->pdo->query('SELECT COUNT(*) AS total FROM links WHERE status NOT IN ("oculto", "expirado") AND (expira_em IS NULL OR expira_em >= NOW())');
+        return (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
+    }
+
+    public function countReview(): int
+    {
+        $stmt = $this->pdo->query('SELECT COUNT(*) AS total FROM links WHERE status = "quebrado"');
         return (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
     }
 
