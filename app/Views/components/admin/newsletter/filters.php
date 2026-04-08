@@ -5,42 +5,41 @@ $filters = $filters ?? ['busca' => '', 'status' => ''];
 $pagination = $pagination ?? ['page' => 1, 'per_page' => 10];
 $sort = (string) ($sort ?? 'data_cadastro');
 $dir = (string) ($dir ?? 'desc');
+$action = url('/admin/newsletter');
 ?>
 
-<section class="admin-panel">
-  <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-6">
+<form method="GET" action="<?= htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-panel admin-filter-panel" data-admin-newsletter-filters>
+  <div class="admin-filter-head">
     <div>
-      <h2 class="font-orbitron text-xl font-black text-white">Filtros</h2>
-      <p class="text-sm text-slate-400 mt-2">Busque por email, nome ou IP e refine a base por status.</p>
+      <h3 class="font-orbitron text-xl font-black text-white">Filtros</h3>
+      <div class="text-xs text-slate-400 mt-1">Busque por email, nome ou IP e refine a base por status.</div>
     </div>
-
-    <div class="text-sm text-slate-400">
-      Pagina atual <span class="font-bold text-white"><?= (int) ($pagination['page'] ?? 1) ?></span> - <?= (int) ($pagination['per_page'] ?? 10) ?> por pagina
-    </div>
+    <div class="text-xs text-slate-400">Pagina atual <span class="text-cyan-300 font-bold"><?= (int) ($pagination['page'] ?? 1) ?></span> - <span class="text-slate-200 font-bold"><?= (int) ($pagination['per_page'] ?? 10) ?></span> por pagina</div>
   </div>
 
-  <form method="GET" action="<?= url('/admin/newsletter') ?>" class="mt-6 grid grid-cols-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(220px,0.7fr)_auto] gap-4 items-end" data-admin-newsletter-filters>
-    <input type="hidden" name="sort" value="<?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-    <input type="hidden" name="dir" value="<?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-
-    <div>
-      <label for="newsletter-busca" class="block text-sm font-bold text-slate-200 mb-2">Buscar</label>
-      <input id="newsletter-busca" type="text" name="busca" value="<?= htmlspecialchars((string) ($filters['busca'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Email, nome ou IP...">
+  <div class="admin-filter-grid admin-filter-grid-newsletter">
+    <div class="admin-filter-field admin-filter-field-search">
+      <label class="admin-filter-label" for="newsletter-busca">Buscar</label>
+      <input id="newsletter-busca" type="text" name="busca" value="<?= htmlspecialchars((string) ($filters['busca'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input admin-filter-control" placeholder="Email, nome ou IP...">
     </div>
 
-    <div>
-      <label for="newsletter-status" class="block text-sm font-bold text-slate-200 mb-2">Status</label>
-      <select id="newsletter-status" name="status" class="nerd-input w-full px-4 py-3 rounded-xl">
-        <option value="">Todos</option>
+    <div class="admin-filter-field">
+      <label class="admin-filter-label" for="newsletter-status">Status</label>
+      <select id="newsletter-status" name="status" class="nerd-input admin-filter-control">
+        <option value="" <?= (string) ($filters['status'] ?? '') === '' ? 'selected' : '' ?>>Todos</option>
         <option value="ativo" <?= (string) ($filters['status'] ?? '') === 'ativo' ? 'selected' : '' ?>>Ativos</option>
         <option value="inativo" <?= (string) ($filters['status'] ?? '') === 'inativo' ? 'selected' : '' ?>>Inativos</option>
         <option value="desinscreve" <?= (string) ($filters['status'] ?? '') === 'desinscreve' ? 'selected' : '' ?>>Desinscritos</option>
       </select>
     </div>
+  </div>
 
-    <div class="flex flex-wrap gap-3">
-      <button type="submit" class="admin-btn admin-btn-primary">Filtrar</button>
-      <a href="<?= url('/admin/newsletter') ?>" class="admin-btn admin-btn-secondary" data-admin-newsletter-link>Limpar</a>
-    </div>
-  </form>
-</section>
+  <div class="admin-filter-actions">
+    <input type="hidden" name="sort" value="<?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+    <input type="hidden" name="dir" value="<?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+    <input type="hidden" name="page" value="1">
+    <input type="hidden" name="per_page" value="<?= (int) ($pagination['per_page'] ?? 10) ?>">
+    <button type="submit" class="admin-btn admin-btn-primary admin-filter-button">Filtrar</button>
+    <a href="<?= htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary admin-filter-button" data-admin-newsletter-link>Limpar</a>
+  </div>
+</form>

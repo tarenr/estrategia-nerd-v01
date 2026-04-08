@@ -42,24 +42,7 @@ $mode = (string) ($_GET['mode'] ?? '');
       <section class="admin-panel border border-rose-500/30"><div class="text-sm font-bold text-rose-300">Inscrito excluido com sucesso.</div></section>
     <?php endif; ?>
 
-    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-      <?php
-      $cards = [
-          ['label' => 'Total', 'value' => (int) ($summary['total'] ?? 0)],
-          ['label' => 'Ativos', 'value' => (int) ($summary['ativos'] ?? 0)],
-          ['label' => 'Inativos', 'value' => (int) ($summary['inativos'] ?? 0)],
-          ['label' => 'Desinscritos', 'value' => (int) ($summary['desinscritos'] ?? 0)],
-          ['label' => 'Hoje', 'value' => (int) ($summary['hoje'] ?? 0)],
-      ];
-      ?>
-      <?php foreach ($cards as $card): ?>
-        <article class="stat-card">
-          <div class="text-sm text-slate-400"><?= htmlspecialchars($card['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-          <div class="mt-3 text-4xl font-orbitron font-black text-white"><?= number_format((int) $card['value'], 0, ',', '.') ?></div>
-        </article>
-      <?php endforeach; ?>
-    </section>
-
+    <?php View::component('admin/newsletter/summary-cards', ['summary' => $summary]); ?>
     <?php View::component('admin/newsletter/filters', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/newsletter/table', ['items' => $items, 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
   </div>

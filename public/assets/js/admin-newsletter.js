@@ -78,16 +78,37 @@
     }
   };
 
-  const submitActionForm = async (form) => {
+  const fallbackSubmit = (form, submitter) => {
+    if (submitter && submitter.name) {
+      let fallbackField = form.querySelector("input[data-newsletter-submitter-fallback]");
+      if (!fallbackField) {
+        fallbackField = document.createElement("input");
+        fallbackField.type = "hidden";
+        fallbackField.setAttribute("data-newsletter-submitter-fallback", "1");
+        form.appendChild(fallbackField);
+      }
+      fallbackField.name = submitter.name;
+      fallbackField.value = submitter.value || "";
+    }
+
+    form.submit();
+  };
+
+  const submitActionForm = async (form, submitter = null) => {
     const root = getRoot();
     if (!root) return;
+
+    const formData = new FormData(form);
+    if (submitter && submitter.name) {
+      formData.set(submitter.name, submitter.value || "");
+    }
 
     setLoading(root, true);
 
     try {
       const response = await fetch(form.action, {
         method: "POST",
-        body: new FormData(form),
+        body: formData,
         headers: {
           "X-Requested-With": "XMLHttpRequest",
         },
@@ -115,7 +136,7 @@
       window.history.pushState({}, "", browserUrl.toString());
     } catch (error) {
       console.error(error);
-      form.submit();
+      fallbackSubmit(form, submitter);
     } finally {
       const currentRoot = getRoot();
       if (currentRoot) {
@@ -138,10 +159,10 @@
   });
 
   document.addEventListener("submit", (event) => {
-    const form = event.target.closest("form[data-admin-newsletter-filters]");
-    if (form) {
+    const filterForm = event.target.closest("form[data-admin-newsletter-filters]");
+    if (filterForm) {
       event.preventDefault();
-      submitFilters(form);
+      submitFilters(filterForm);
       return;
     }
 
@@ -149,7 +170,7 @@
     if (!actionForm) return;
 
     event.preventDefault();
-    submitActionForm(actionForm);
+    submitActionForm(actionForm, event.submitter || null);
   });
 
   document.addEventListener("input", (event) => {

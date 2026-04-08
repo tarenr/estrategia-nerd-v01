@@ -25,7 +25,9 @@ final class NewsletterService
         $ativos = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'ativo'));
         $inativos = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'inativo'));
         $desinscritos = count(array_filter($filteredItems, static fn (array $item): bool => (string) ($item['status'] ?? '') === 'desinscreve'));
-        $today = count(array_filter($filteredItems, static fn (array $item): bool => substr((string) ($item['data_cadastro'] ?? ''), 0, 10) === date('Y-m-d')));
+        $today = count(array_filter($filteredItems, fn (array $item): bool => $this->isWithinLastDays((string) ($item['data_cadastro'] ?? ''), 1)));
+        $last7 = count(array_filter($filteredItems, fn (array $item): bool => $this->isWithinLastDays((string) ($item['data_cadastro'] ?? ''), 7)));
+        $activeLast7 = count(array_filter($filteredItems, fn (array $item): bool => (string) ($item['status'] ?? '') === 'ativo' && $this->isWithinLastDays((string) ($item['data_cadastro'] ?? ''), 7)));
 
         return [
             'title' => 'Newsletter',
@@ -40,6 +42,12 @@ final class NewsletterService
                 'inativos' => $inativos,
                 'desinscritos' => $desinscritos,
                 'hoje' => $today,
+                'last7' => $last7,
+                'active_last7' => $activeLast7,
+                'ativos_rate' => $total > 0 ? round(($ativos / $total) * 100, 1) : 0.0,
+                'inativos_rate' => $total > 0 ? round(($inativos / $total) * 100, 1) : 0.0,
+                'desinscritos_rate' => $total > 0 ? round(($desinscritos / $total) * 100, 1) : 0.0,
+                'daily_avg_7' => $last7 > 0 ? round($last7 / 7, 1) : 0.0,
             ],
         ];
     }
@@ -101,6 +109,23 @@ final class NewsletterService
         }
 
         return [$sort, strtolower(trim($dir)) === 'asc' ? 'asc' : 'desc'];
+    }
+
+    private function isWithinLastDays(string $value, int $days): bool
+    {
+        $days = max(1, $days);
+        $timestamp = strtotime($value);
+        if ($timestamp === false) {
+            return false;
+        }
+
+        $start = strtotime('-' . ($days - 1) . ' days 00:00:00');
+        $end = strtotime('today 23:59:59');
+        if ($start === false || $end === false) {
+            return false;
+        }
+
+        return $timestamp >= $start && $timestamp <= $end;
     }
 
     private function clampInt(int $value, int $min, int $max): int
