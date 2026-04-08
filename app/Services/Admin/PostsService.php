@@ -31,13 +31,14 @@ final class PostsService
         $page = $this->clampInt($this->readInt($query, ['pagina', 'page'], 1), 1, 9999);
         $perPage = $this->clampInt($this->readInt($query, ['por_pagina', 'per_page'], 10), 5, 50);
         [$sort, $dir] = $this->normalizeSortDir((string) ($query['sort'] ?? 'data'), (string) ($query['dir'] ?? 'desc'));
+        $summary = $this->decorateIndexSummary($this->posts->summaryFiltered($filters));
 
         return [
             'title' => 'Posts',
             'filters' => $filters,
             'sort' => $sort,
             'dir' => $dir,
-            'summary' => $this->posts->summaryFiltered($filters),
+            'summary' => $summary,
             'pagination' => $this->posts->paginateAdmin($filters, $page, $perPage, $sort, $dir),
             'categorias' => $this->categorias->listForSelect(),
         ];
@@ -321,6 +322,34 @@ final class PostsService
                 }
             }
         }
+    }
+
+    private function decorateIndexSummary(array $summary): array
+    {
+        $totalPosts = max(0, (int) ($summary['total_posts'] ?? 0));
+        $publicados = max(0, (int) ($summary['publicados'] ?? 0));
+        $destaques = max(0, (int) ($summary['destaques'] ?? 0));
+        $destaquesPublicados = max(0, (int) ($summary['destaques_publicados'] ?? 0));
+        $totalViews = max(0, (int) ($summary['total_views'] ?? 0));
+        $totalCurtidas = max(0, (int) ($summary['total_curtidas'] ?? 0));
+        $totalComentarios = max(0, (int) ($summary['total_comentarios'] ?? 0));
+        $totalInteracoes = $totalCurtidas + $totalComentarios;
+
+        return array_merge($summary, [
+            'destaque_cobertura_publicados' => $publicados > 0
+                ? round(($destaquesPublicados / $publicados) * 100, 1)
+                : 0.0,
+            'views_por_post' => $totalPosts > 0
+                ? (int) round($totalViews / $totalPosts)
+                : 0,
+            'views_por_publicado' => $publicados > 0
+                ? (int) round($totalViews / $publicados)
+                : 0,
+            'total_interacoes' => $totalInteracoes,
+            'taxa_engajamento' => $totalViews > 0
+                ? round(($totalInteracoes / $totalViews) * 100, 1)
+                : 0.0,
+        ]);
     }
 
     private function migratePostMediaForSlugChange(array &$form, array $existingPost, string $newSlug, array &$errors): void

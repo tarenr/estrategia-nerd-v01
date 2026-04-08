@@ -19,10 +19,6 @@ final class CategoriasService
         [$sort, $dir] = $this->normalizeSortDir((string) ($query['sort'] ?? 'ordem'), (string) ($query['dir'] ?? 'asc'));
         $filteredItems = $this->categorias->listAdmin($filters);
         $pagination = $this->categorias->paginateAdmin($filters, $page, $perPage, $sort, $dir);
-        $total = count($filteredItems);
-        $ativos = count(array_filter($filteredItems, static fn (array $item): bool => (int) ($item['ativo'] ?? 0) === 1));
-        $inativos = max(0, $total - $ativos);
-        $comPosts = count(array_filter($filteredItems, static fn (array $item): bool => (int) ($item['total_posts'] ?? 0) > 0));
 
         return [
             'title' => 'Categorias',
@@ -31,12 +27,7 @@ final class CategoriasService
             'sort' => $sort,
             'dir' => $dir,
             'pagination' => $pagination,
-            'summary' => [
-                'total' => $total,
-                'ativas' => $ativos,
-                'inativas' => $inativos,
-                'com_posts' => $comPosts,
-            ],
+            'summary' => $this->buildIndexSummary($filteredItems),
         ];
     }
 
@@ -127,6 +118,36 @@ final class CategoriasService
     private function buildFormViewModel(string $mode, array $form, array $errors = [], ?array $categoria = null): array
     {
         return ['title' => $mode === 'edit' ? 'Editar Categoria' : 'Criar Categoria', 'mode' => $mode, 'form' => $form, 'errors' => $errors, 'categoria' => $categoria];
+    }
+
+    private function buildIndexSummary(array $items): array
+    {
+        $total = count($items);
+        $ativos = count(array_filter($items, static fn (array $item): bool => (int) ($item['ativo'] ?? 0) === 1));
+        $inativos = max(0, $total - $ativos);
+        $comPosts = count(array_filter($items, static fn (array $item): bool => (int) ($item['total_posts'] ?? 0) > 0));
+        $semPosts = max(0, $total - $comPosts);
+        $totalPosts = 0;
+        $totalViews = 0;
+
+        foreach ($items as $item) {
+            $totalPosts += (int) ($item['total_posts'] ?? 0);
+            $totalViews += (int) ($item['total_views'] ?? 0);
+        }
+
+        return [
+            'total' => $total,
+            'ativas' => $ativos,
+            'inativas' => $inativos,
+            'com_posts' => $comPosts,
+            'sem_posts' => $semPosts,
+            'total_posts_vinculados' => $totalPosts,
+            'total_views' => $totalViews,
+            'cobertura_ativas' => $total > 0 ? ($ativos / $total) * 100 : 0.0,
+            'cobertura_editorial' => $total > 0 ? ($comPosts / $total) * 100 : 0.0,
+            'media_posts_por_categoria' => $comPosts > 0 ? ($totalPosts / $comPosts) : 0.0,
+            'media_views_por_categoria' => $comPosts > 0 ? ($totalViews / $comPosts) : 0.0,
+        ];
     }
 
     private function mapCategoriaToForm(array $categoria): array

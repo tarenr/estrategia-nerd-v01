@@ -342,7 +342,16 @@ final class PostRepository
     public function summaryFiltered(array $filters): array
     {
         [$whereSql, $params] = $this->buildAdminWhere($filters);
-        $sql = "SELECT COUNT(*) AS total_posts, SUM(CASE WHEN p.status = 'publicado' THEN 1 ELSE 0 END) AS publicados, SUM(CASE WHEN p.status = 'rascunho' THEN 1 ELSE 0 END) AS rascunhos, SUM(CASE WHEN p.status = 'agendado' THEN 1 ELSE 0 END) AS agendados, SUM(CASE WHEN COALESCE(p.destaque, 0) = 1 THEN 1 ELSE 0 END) AS destaques, COALESCE(SUM(p.views), 0) AS total_views, COALESCE(SUM(p.curtidas), 0) AS total_curtidas, COALESCE(SUM(p.comentarios_count), 0) AS total_comentarios FROM posts p {$whereSql}";
+        $sql = "SELECT COUNT(*) AS total_posts,
+                       SUM(CASE WHEN p.status = 'publicado' THEN 1 ELSE 0 END) AS publicados,
+                       SUM(CASE WHEN p.status = 'rascunho' THEN 1 ELSE 0 END) AS rascunhos,
+                       SUM(CASE WHEN p.status = 'agendado' THEN 1 ELSE 0 END) AS agendados,
+                       SUM(CASE WHEN COALESCE(p.destaque, 0) = 1 THEN 1 ELSE 0 END) AS destaques,
+                       SUM(CASE WHEN COALESCE(p.destaque, 0) = 1 AND p.status = 'publicado' THEN 1 ELSE 0 END) AS destaques_publicados,
+                       COALESCE(SUM(p.views), 0) AS total_views,
+                       COALESCE(SUM(p.curtidas), 0) AS total_curtidas,
+                       COALESCE(SUM(p.comentarios_count), 0) AS total_comentarios
+                FROM posts p {$whereSql}";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
@@ -353,6 +362,7 @@ final class PostRepository
             'rascunhos' => (int) ($row['rascunhos'] ?? 0),
             'agendados' => (int) ($row['agendados'] ?? 0),
             'destaques' => (int) ($row['destaques'] ?? 0),
+            'destaques_publicados' => (int) ($row['destaques_publicados'] ?? 0),
             'total_views' => (int) ($row['total_views'] ?? 0),
             'total_curtidas' => (int) ($row['total_curtidas'] ?? 0),
             'total_comentarios' => (int) ($row['total_comentarios'] ?? 0),

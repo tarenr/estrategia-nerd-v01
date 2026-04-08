@@ -57,6 +57,19 @@ $formatDate = static function ($value): string {
     }
 };
 
+$cleanTitle = static function (?string $value): string {
+    $value = trim((string) $value);
+    if ($value === '') {
+        return 'Sem titulo';
+    }
+
+    $value = preg_replace('/\[\[(.*?)\]\]/u', '$1', $value) ?? $value;
+    $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
+    $value = trim($value);
+
+    return $value !== '' ? $value : 'Sem titulo';
+};
+
 $statusClasses = static function (string $status): string {
     return match ($status) {
         'publicado' => 'status-badge status-publicado',
@@ -67,13 +80,13 @@ $statusClasses = static function (string $status): string {
 };
 ?>
 
-<section class="admin-panel">
-  <div class="flex items-center justify-between mb-6 gap-4">
+<section class="admin-panel posts-table-panel">
+  <div class="posts-table-head">
     <div>
       <h3 class="font-orbitron text-xl font-black text-white">Lista de Posts</h3>
       <div class="text-xs text-slate-400 mt-1"><?= number_format((int) ($pagination['total'] ?? 0), 0, ',', '.') ?> resultado(s) encontrado(s)</div>
     </div>
-    <span class="text-cyan-400 text-sm font-bold uppercase"><?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> / <?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+    <span class="posts-table-order"><?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> / <?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
   </div>
 
   <?php if ($items === []): ?>
@@ -83,24 +96,34 @@ $statusClasses = static function (string $status): string {
       <div class="text-slate-400 text-sm">Ajuste os filtros ou limpe a busca para ver mais resultados.</div>
     </div>
   <?php else: ?>
-    <div class="overflow-x-auto rounded-xl border border-slate-800">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-800/70 text-slate-300">
-          <tr class="text-left">
-            <th class="px-4 py-3 font-semibold"><a data-admin-posts-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('titulo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Titulo <?= $sortIcon('titulo') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-posts-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('categoria'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Categoria <?= $sortIcon('categoria') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-posts-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Status <?= $sortIcon('status') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-posts-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('data'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Publicacao <?= $sortIcon('data') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-posts-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('views'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Views <?= $sortIcon('views') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-posts-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('curtidas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Curtidas <?= $sortIcon('curtidas') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-posts-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('comentarios'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Comentarios <?= $sortIcon('comentarios') ?></a></th>
-            <th class="px-4 py-3 font-semibold text-right">Acoes</th>
+    <div class="posts-table-wrap">
+      <table class="posts-table">
+        <colgroup>
+          <col class="posts-table-col-title">
+          <col class="posts-table-col-category">
+          <col class="posts-table-col-status">
+          <col class="posts-table-col-date">
+          <col class="posts-table-col-metric">
+          <col class="posts-table-col-metric">
+          <col class="posts-table-col-metric">
+          <col class="posts-table-col-actions">
+        </colgroup>
+        <thead class="posts-table-thead">
+          <tr>
+            <th class="posts-table-th posts-table-th-left"><a data-admin-posts-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('titulo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Titulo <?= $sortIcon('titulo') ?></a></th>
+            <th class="posts-table-th posts-table-th-left"><a data-admin-posts-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('categoria'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Categoria <?= $sortIcon('categoria') ?></a></th>
+            <th class="posts-table-th posts-table-th-left"><a data-admin-posts-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Status <?= $sortIcon('status') ?></a></th>
+            <th class="posts-table-th posts-table-th-left"><a data-admin-posts-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('data'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Publicacao <?= $sortIcon('data') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-posts-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('views'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Views <?= $sortIcon('views') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-posts-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('curtidas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Curtidas <?= $sortIcon('curtidas') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-posts-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('comentarios'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Comentarios <?= $sortIcon('comentarios') ?></a></th>
+            <th class="posts-table-th posts-table-th-center">Acoes</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/70">
+        <tbody class="posts-table-body">
           <?php foreach ($items as $item): ?>
             <?php
-              $titulo = (string) ($item['titulo'] ?? '');
+              $titulo = $cleanTitle((string) ($item['titulo'] ?? ''));
               $slug = (string) ($item['slug'] ?? '');
               $categoriaNome = (string) ($item['categoria_nome'] ?? 'Sem categoria');
               $categoriaCor = (string) ($item['categoria_cor'] ?? '#00d4ff');
@@ -108,21 +131,53 @@ $statusClasses = static function (string $status): string {
               $destaque = (int) ($item['destaque'] ?? 0) === 1;
               $editUrl = function_exists('url') ? url('/admin/editar-post?id=' . (int) ($item['id'] ?? 0)) : '#';
               $deleteUrl = function_exists('url') ? url('/admin/excluir-post?id=' . (int) ($item['id'] ?? 0)) : '#';
-              $viewUrl = function_exists('url') ? url('/post/' . $slug) : '#';
+              $viewUrl = $slug !== '' && function_exists('url') ? url('/post/' . $slug) : '#';
+              $views = (int) ($item['views'] ?? 0);
+              $curtidas = (int) ($item['curtidas'] ?? 0);
+              $comentarios = (int) ($item['comentarios_count'] ?? 0);
             ?>
-            <tr class="hover:bg-slate-800/40 transition">
-              <td class="px-4 py-4 align-top">
-                <div class="font-semibold text-slate-100"><?= htmlspecialchars($titulo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                <div class="mt-1 text-xs text-slate-400">#<?= (int) ($item['id'] ?? 0) ?><?php if ($slug !== ''): ?> - <?= htmlspecialchars($slug, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?><?php endif; ?></div>
-                <?php if ($destaque): ?><div class="mt-2 text-[11px] text-cyan-300 font-bold uppercase">Destaque</div><?php endif; ?>
+            <tr class="posts-table-row<?= $destaque ? ' is-highlight' : '' ?>">
+              <td class="posts-table-td posts-table-title-cell">
+                <div class="posts-table-title-top">
+                  <a class="posts-table-title-link" href="<?= htmlspecialchars($editUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($titulo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+                  <?php if ($destaque): ?><span class="posts-table-highlight">Destaque</span><?php endif; ?>
+                </div>
+                <div class="posts-table-subline">#<?= (int) ($item['id'] ?? 0) ?><?php if ($slug !== ''): ?> <span class="posts-table-subline-dot">•</span> <?= htmlspecialchars($slug, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?><?php endif; ?></div>
               </td>
-              <td class="px-4 py-4 align-top"><div class="flex items-center gap-2 text-slate-200 text-xs"><span class="w-2 h-2 rounded-full" style="background: <?= htmlspecialchars($categoriaCor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"></span><span><?= htmlspecialchars($categoriaNome, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div></td>
-              <td class="px-4 py-4 align-top"><span class="<?= htmlspecialchars($statusClasses($status), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($status, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></td>
-              <td class="px-4 py-4 align-top text-slate-300"><?= htmlspecialchars($formatDate($item['data_publicacao'] ?? null), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
-              <td class="px-4 py-4 align-top text-slate-200"><?= number_format((int) ($item['views'] ?? 0), 0, ',', '.') ?></td>
-              <td class="px-4 py-4 align-top text-slate-200"><?= number_format((int) ($item['curtidas'] ?? 0), 0, ',', '.') ?></td>
-              <td class="px-4 py-4 align-top text-slate-200"><?= number_format((int) ($item['comentarios_count'] ?? 0), 0, ',', '.') ?></td>
-              <td class="px-4 py-4 align-top"><div class="flex items-center justify-end gap-2"><a class="btn-edit px-3 py-2 rounded-lg text-xs font-bold" href="<?= htmlspecialchars($editUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Editar</a><a class="px-3 py-2 rounded-lg text-xs font-bold border border-rose-500/30 text-rose-200 hover:bg-rose-500/10 transition" href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Excluir</a><a class="px-3 py-2 rounded-lg text-xs font-bold border border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-200 transition" href="<?= htmlspecialchars($viewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noreferrer">Ver</a></div></td>
+              <td class="posts-table-td">
+                <div class="posts-table-category"><span class="posts-table-category-dot" style="background: <?= htmlspecialchars($categoriaCor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"></span><span><?= htmlspecialchars($categoriaNome, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+              </td>
+              <td class="posts-table-td">
+                <span class="<?= htmlspecialchars($statusClasses($status), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($status, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+              </td>
+              <td class="posts-table-td">
+                <div class="posts-table-date"><?= htmlspecialchars($formatDate($item['data_publicacao'] ?? null), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              </td>
+              <td class="posts-table-td posts-table-td-center"><span class="posts-table-metric<?= $views === 0 ? ' is-zero' : '' ?>"><?= number_format($views, 0, ',', '.') ?></span></td>
+              <td class="posts-table-td posts-table-td-center"><span class="posts-table-metric<?= $curtidas === 0 ? ' is-zero' : '' ?>"><?= number_format($curtidas, 0, ',', '.') ?></span></td>
+              <td class="posts-table-td posts-table-td-center"><span class="posts-table-metric<?= $comentarios === 0 ? ' is-zero' : '' ?>"><?= number_format($comentarios, 0, ',', '.') ?></span></td>
+              <td class="posts-table-td">
+                <div class="posts-table-actions">
+                  <a
+                    class="posts-table-action posts-table-action-view"
+                    href="<?= htmlspecialchars($viewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Ver post"
+                    title="Ver post"
+                  >
+                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                  </a>
+                  <a
+                    class="posts-table-action posts-table-action-delete"
+                    href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    aria-label="Excluir post"
+                    title="Excluir post"
+                  >
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                  </a>
+                </div>
+              </td>
             </tr>
           <?php endforeach; ?>
         </tbody>

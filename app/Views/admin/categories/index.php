@@ -4,7 +4,19 @@ declare(strict_types=1);
 use App\Support\View;
 
 $items = $items ?? [];
-$summary = $summary ?? ['total' => 0, 'ativas' => 0, 'inativas' => 0, 'com_posts' => 0];
+$summary = $summary ?? [
+    'total' => 0,
+    'ativas' => 0,
+    'inativas' => 0,
+    'com_posts' => 0,
+    'sem_posts' => 0,
+    'total_posts_vinculados' => 0,
+    'total_views' => 0,
+    'cobertura_ativas' => 0.0,
+    'cobertura_editorial' => 0.0,
+    'media_posts_por_categoria' => 0.0,
+    'media_views_por_categoria' => 0.0,
+];
 $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 10, 'pages' => 1];
 $filters = $filters ?? ['busca' => '', 'status' => ''];
 $sort = (string) ($sort ?? 'ordem');
@@ -45,15 +57,7 @@ $deactivated = isset($_GET['deactivated']) && (string) $_GET['deactivated'] === 
       </section>
     <?php endif; ?>
 
-    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      <?php $cards = [['label' => 'Total', 'value' => (int) ($summary['total'] ?? 0)], ['label' => 'Ativas', 'value' => (int) ($summary['ativas'] ?? 0)], ['label' => 'Inativas', 'value' => (int) ($summary['inativas'] ?? 0)], ['label' => 'Com posts', 'value' => (int) ($summary['com_posts'] ?? 0)]]; ?>
-      <?php foreach ($cards as $card): ?>
-        <article class="stat-card">
-          <div class="text-sm text-slate-400"><?= htmlspecialchars($card['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-          <div class="mt-3 text-4xl font-orbitron font-black text-white"><?= number_format((int) $card['value'], 0, ',', '.') ?></div>
-        </article>
-      <?php endforeach; ?>
-    </section>
+    <?php View::component('admin/categories/summary-cards', ['summary' => $summary]); ?>
 
     <?php View::component('admin/categories/filters', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/categories/table', ['items' => $items, 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>

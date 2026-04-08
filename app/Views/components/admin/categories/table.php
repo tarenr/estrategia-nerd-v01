@@ -43,19 +43,27 @@ $sortIcon = static function (string $column) use ($sort, $dir): string {
         : '<span class="text-cyan-300">&darr;</span>';
 };
 
-$page = (int) ($pagination['page'] ?? 1);
+$page = max(1, (int) ($pagination['page'] ?? 1));
 $pages = max(1, (int) ($pagination['pages'] ?? 1));
-$total = (int) ($pagination['total'] ?? count($items));
-$perPage = (int) ($pagination['per_page'] ?? 10);
+$total = max(0, (int) ($pagination['total'] ?? count($items)));
+$perPage = max(5, (int) ($pagination['per_page'] ?? 10));
+$start = max(1, $page - 2);
+$end = min($pages, $page + 2);
+if (($end - $start) < 4) {
+    $start = max(1, $end - 4);
+    $end = min($pages, $start + 4);
+}
+$firstItem = $total > 0 ? (($page - 1) * $perPage) + 1 : 0;
+$lastItem = $total > 0 ? min($total, $page * $perPage) : 0;
 ?>
 
-<section class="admin-panel">
-  <div class="flex items-center justify-between mb-6 gap-4">
+<section class="admin-panel categories-table-panel">
+  <div class="posts-table-head">
     <div>
       <h3 class="font-orbitron text-xl font-black text-white">Lista de Categorias</h3>
       <div class="text-xs text-slate-400 mt-1"><?= number_format($total, 0, ',', '.') ?> categoria(s) encontrada(s)</div>
     </div>
-    <span class="text-cyan-400 text-sm font-bold uppercase"><?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> / <?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+    <span class="posts-table-order"><?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> / <?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
   </div>
 
   <?php if ($items === []): ?>
@@ -65,59 +73,133 @@ $perPage = (int) ($pagination['per_page'] ?? 10);
       <div class="text-slate-400 text-sm">Ajuste os filtros ou crie uma nova categoria para organizar o fluxo editorial.</div>
     </div>
   <?php else: ?>
-    <div class="overflow-x-auto rounded-xl border border-slate-800">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-800/70 text-slate-300">
-          <tr class="text-left">
-            <th class="px-4 py-3 font-semibold"><a data-admin-categories-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('nome'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Categoria <?= $sortIcon('nome') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-categories-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('slug'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Slug <?= $sortIcon('slug') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-categories-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('cor'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Cor <?= $sortIcon('cor') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-categories-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('ativo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Status <?= $sortIcon('ativo') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-categories-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('ordem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Ordem <?= $sortIcon('ordem') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-categories-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('total_posts'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Posts <?= $sortIcon('total_posts') ?></a></th>
-            <th class="px-4 py-3 font-semibold"><a data-admin-categories-link class="inline-flex items-center gap-2 hover:text-cyan-300 transition" href="<?= htmlspecialchars($sortLink('total_views'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Views <?= $sortIcon('total_views') ?></a></th>
-            <th class="px-4 py-3 font-semibold text-right">Acoes</th>
+    <div class="categories-table-wrap">
+      <table class="categories-table">
+        <colgroup>
+          <col class="categories-table-col-title">
+          <col class="categories-table-col-status">
+          <col class="categories-table-col-order">
+          <col class="categories-table-col-posts">
+          <col class="categories-table-col-views">
+          <col class="categories-table-col-actions">
+        </colgroup>
+        <thead class="posts-table-thead">
+          <tr>
+            <th class="posts-table-th posts-table-th-left"><a data-admin-categories-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('nome'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Categoria <?= $sortIcon('nome') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-categories-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('ativo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Status <?= $sortIcon('ativo') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-categories-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('ordem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Ordem <?= $sortIcon('ordem') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-categories-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('total_posts'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Posts <?= $sortIcon('total_posts') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-categories-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('total_views'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Views <?= $sortIcon('total_views') ?></a></th>
+            <th class="posts-table-th posts-table-th-center">Acoes</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/70">
+        <tbody class="categories-table-body">
           <?php foreach ($items as $item): ?>
             <?php
               $id = (int) ($item['id'] ?? 0);
+              $nome = trim((string) ($item['nome'] ?? ''));
+              $slug = trim((string) ($item['slug'] ?? ''));
+              $cor = trim((string) ($item['cor'] ?? '#00d4ff'));
               $ativo = (int) ($item['ativo'] ?? 1) === 1;
+              $ordem = (int) ($item['ordem'] ?? 0);
               $postsCount = (int) ($item['total_posts'] ?? 0);
+              $viewsCount = (int) ($item['total_views'] ?? 0);
               $editUrl = url('/admin/editar-categoria?id=' . $id);
               $deleteUrl = url('/admin/excluir-categoria?id=' . $id);
               $postsUrl = url('/admin/posts?categoria=' . $id);
             ?>
-            <tr class="hover:bg-slate-800/40 transition">
-              <td class="px-4 py-4 align-top"><div class="font-semibold text-slate-100"><?= htmlspecialchars((string) ($item['nome'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><div class="mt-1 text-xs text-slate-400">#<?= $id ?></div></td>
-              <td class="px-4 py-4 align-top text-slate-300"><?= htmlspecialchars((string) ($item['slug'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
-              <td class="px-4 py-4 align-top"><div class="flex items-center gap-2 text-slate-200 text-xs"><span class="w-3 h-3 rounded-full border border-slate-700" style="background: <?= htmlspecialchars((string) ($item['cor'] ?? '#00d4ff'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"></span><span><?= htmlspecialchars((string) ($item['cor'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div></td>
-              <td class="px-4 py-4 align-top"><span class="<?= $ativo ? 'status-badge status-publicado' : 'status-badge status-rascunho' ?>"><?= $ativo ? 'ativa' : 'inativa' ?></span></td>
-              <td class="px-4 py-4 align-top text-slate-200"><?= number_format((int) ($item['ordem'] ?? 0), 0, ',', '.') ?></td>
-              <td class="px-4 py-4 align-top text-slate-200">
+            <tr class="categories-table-row">
+              <td class="categories-table-td categories-table-title-cell">
+                <a class="categories-table-title-link" href="<?= htmlspecialchars($editUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($nome !== '' ? $nome : 'Sem nome', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+                <div class="categories-table-subline">#<?= $id ?><?php if ($slug !== ''): ?> <span class="categories-table-subline-dot">&bull;</span> <?= htmlspecialchars($slug, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?><?php endif; ?></div>
+                <div class="categories-table-color-row">
+                  <span class="categories-table-color-dot" style="background: <?= htmlspecialchars($cor !== '' ? $cor : '#00d4ff', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"></span>
+                  <span class="categories-table-color-chip"><?= htmlspecialchars($cor !== '' ? $cor : '#00d4ff', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                </div>
+              </td>
+              <td class="categories-table-td categories-table-td-center">
+                <span class="<?= $ativo ? 'status-badge status-publicado' : 'status-badge status-rascunho' ?>"><?= $ativo ? 'ativa' : 'inativa' ?></span>
+              </td>
+              <td class="categories-table-td categories-table-td-center">
+                <span class="categories-table-metric<?= $ordem === 0 ? ' is-zero' : '' ?>"><?= number_format($ordem, 0, ',', '.') ?></span>
+              </td>
+              <td class="categories-table-td categories-table-td-center">
                 <?php if ($postsCount > 0): ?>
-                  <a class="inline-flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-bold text-cyan-200 hover:bg-cyan-500/15 transition" href="<?= htmlspecialchars($postsUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= number_format($postsCount, 0, ',', '.') ?><span class="text-[11px] text-cyan-300/80">ver posts</span></a>
+                  <a class="categories-table-metric-link" href="<?= htmlspecialchars($postsUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    <span class="categories-table-metric"><?= number_format($postsCount, 0, ',', '.') ?></span>
+                    <span class="categories-table-metric-caption">ver posts</span>
+                  </a>
                 <?php else: ?>
-                  <span class="text-slate-500">0</span>
+                  <span class="categories-table-metric is-zero">0</span>
                 <?php endif; ?>
               </td>
-              <td class="px-4 py-4 align-top text-slate-200"><?= number_format((int) ($item['total_views'] ?? 0), 0, ',', '.') ?></td>
-              <td class="px-4 py-4 align-top"><div class="flex items-center justify-end gap-2"><a class="btn-edit px-3 py-2 rounded-lg text-xs font-bold" href="<?= htmlspecialchars($editUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Editar</a><a class="px-3 py-2 rounded-lg text-xs font-bold border border-rose-500/30 text-rose-200 hover:bg-rose-500/10 transition" href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Excluir</a></div></td>
+              <td class="categories-table-td categories-table-td-center">
+                <span class="categories-table-metric<?= $viewsCount === 0 ? ' is-zero' : '' ?>"><?= number_format($viewsCount, 0, ',', '.') ?></span>
+              </td>
+              <td class="categories-table-td categories-table-td-center">
+                <div class="categories-table-actions">
+                  <a
+                    class="categories-table-action categories-table-action-delete"
+                    href="<?= htmlspecialchars($deleteUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    aria-label="Excluir categoria"
+                    title="Excluir categoria"
+                  >
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                  </a>
+                </div>
+              </td>
             </tr>
           <?php endforeach; ?>
         </tbody>
       </table>
     </div>
 
-    <div class="mt-5 flex items-center justify-between gap-4 flex-wrap rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
-      <div class="text-xs text-slate-400">Pagina atual: <?= $page ?> - <?= $perPage ?> por pagina</div>
-      <div class="flex items-center gap-2">
-        <?php $prevUrl = $buildUrl(['page' => max(1, $page - 1)]); $nextUrl = $buildUrl(['page' => min($pages, $page + 1)]); $prevDisabled = $page <= 1; $nextDisabled = $page >= $pages; ?>
-        <a data-admin-categories-link class="admin-btn admin-btn-secondary <?= $prevDisabled ? 'pointer-events-none opacity-50' : '' ?>" href="<?= htmlspecialchars($prevUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Anterior</a>
-        <span class="admin-chip"><?= $page ?> / <?= $pages ?></span>
-        <a data-admin-categories-link class="admin-btn admin-btn-secondary <?= $nextDisabled ? 'pointer-events-none opacity-50' : '' ?>" href="<?= htmlspecialchars($nextUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Proxima</a>
+    <section class="admin-panel posts-pagination-panel mt-5">
+      <div class="posts-pagination-shell">
+        <div class="posts-pagination-summary">
+          Exibindo <span><?= number_format($firstItem, 0, ',', '.') ?></span> ate <span><?= number_format($lastItem, 0, ',', '.') ?></span> de <span><?= number_format($total, 0, ',', '.') ?></span> categorias
+        </div>
+
+        <div class="posts-pagination-controls">
+          <div class="posts-pagination-per-page">
+            <span class="posts-pagination-kicker">Por pagina</span>
+            <div class="posts-pagination-chip-group">
+              <?php foreach ([10, 20, 50] as $option): ?>
+                <?php $active = $perPage === $option; ?>
+                <a
+                  data-admin-categories-link
+                  class="posts-pagination-chip<?= $active ? ' is-active' : '' ?>"
+                  href="<?= htmlspecialchars($buildUrl(['page' => 1, 'per_page' => $option]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                >
+                  <?= $option ?>
+                </a>
+              <?php endforeach; ?>
+            </div>
+          </div>
+
+          <nav class="posts-pagination-nav" aria-label="Paginacao das categorias">
+            <a
+              data-admin-categories-link
+              class="posts-pagination-link posts-pagination-link-wide<?= $page <= 1 ? ' is-disabled' : '' ?>"
+              href="<?= htmlspecialchars($buildUrl(['page' => max(1, $page - 1)]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            >Anterior</a>
+
+            <?php for ($current = $start; $current <= $end; $current++): ?>
+              <a
+                data-admin-categories-link
+                class="posts-pagination-link<?= $current === $page ? ' is-active' : '' ?>"
+                href="<?= htmlspecialchars($buildUrl(['page' => $current]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+              ><?= $current ?></a>
+            <?php endfor; ?>
+
+            <a
+              data-admin-categories-link
+              class="posts-pagination-link posts-pagination-link-wide<?= $page >= $pages ? ' is-disabled' : '' ?>"
+              href="<?= htmlspecialchars($buildUrl(['page' => min($pages, $page + 1)]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            >Proxima</a>
+          </nav>
+        </div>
       </div>
-    </div>
+    </section>
   <?php endif; ?>
 </section>

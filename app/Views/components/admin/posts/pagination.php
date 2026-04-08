@@ -23,17 +23,54 @@ $firstItem = $total > 0 ? (($page - 1) * $perPage) + 1 : 0;
 $lastItem = $total > 0 ? min($total, $page * $perPage) : 0;
 ?>
 
-<section class="admin-panel">
-  <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-    <div class="text-sm text-slate-300"><?php if ($total > 0): ?>Exibindo <span class="font-semibold text-slate-100"><?= number_format($firstItem, 0, ',', '.') ?></span> ate <span class="font-semibold text-slate-100"><?= number_format($lastItem, 0, ',', '.') ?></span> de <span class="font-semibold text-slate-100"><?= number_format($total, 0, ',', '.') ?></span> posts<?php else: ?>Nenhum post para paginar no momento.<?php endif; ?></div>
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <div class="flex items-center gap-2 text-sm"><span class="text-slate-400">Por pagina</span><?php foreach ([10, 20, 50] as $option): ?><?php $active = $perPage === $option; ?><a data-admin-posts-link class="px-3 py-2 rounded-xl text-xs font-black border transition-all <?= $active ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-200' : 'bg-slate-800/40 border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-200' ?>" href="<?= htmlspecialchars($buildUrl(1, $option), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= $option ?></a><?php endforeach; ?></div>
-      <nav class="flex items-center gap-2" aria-label="Paginacao dos posts">
-        <a data-admin-posts-link class="px-3 py-2 rounded-xl text-xs font-black border transition-all <?= $total === 0 || $page <= 1 ? 'pointer-events-none border-slate-800 text-slate-600' : 'bg-slate-800/40 border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-200' ?>" href="<?= htmlspecialchars($buildUrl($page - 1), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Anterior</a>
-        <?php for ($current = $start; $current <= $end; $current++): ?><a data-admin-posts-link class="min-w-[40px] px-3 py-2 rounded-xl text-center text-xs font-black border transition-all <?= $current === $page ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-200' : 'bg-slate-800/40 border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-200' ?>" href="<?= htmlspecialchars($buildUrl($current), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= $current ?></a><?php endfor; ?>
-        <a data-admin-posts-link class="px-3 py-2 rounded-xl text-xs font-black border transition-all <?= $total === 0 || $page >= $pages ? 'pointer-events-none border-slate-800 text-slate-600' : 'bg-slate-800/40 border-slate-700 text-slate-300 hover:border-cyan-500/40 hover:text-cyan-200' ?>" href="<?= htmlspecialchars($buildUrl($page + 1), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Proxima</a>
+<section class="admin-panel posts-pagination-panel">
+  <div class="posts-pagination-shell">
+    <div class="posts-pagination-summary">
+      <?php if ($total > 0): ?>
+        Exibindo <span><?= number_format($firstItem, 0, ',', '.') ?></span> ate <span><?= number_format($lastItem, 0, ',', '.') ?></span> de <span><?= number_format($total, 0, ',', '.') ?></span> posts
+      <?php else: ?>
+        Nenhum post para paginar no momento.
+      <?php endif; ?>
+    </div>
+
+    <div class="posts-pagination-controls">
+      <div class="posts-pagination-per-page">
+        <span class="posts-pagination-kicker">Por pagina</span>
+        <div class="posts-pagination-chip-group">
+          <?php foreach ([10, 20, 50] as $option): ?>
+            <?php $active = $perPage === $option; ?>
+            <a
+              data-admin-posts-link
+              class="posts-pagination-chip<?= $active ? ' is-active' : '' ?>"
+              href="<?= htmlspecialchars($buildUrl(1, $option), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            >
+              <?= $option ?>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </div>
+
+      <nav class="posts-pagination-nav" aria-label="Paginacao dos posts">
+        <a
+          data-admin-posts-link
+          class="posts-pagination-link posts-pagination-link-wide<?= $total === 0 || $page <= 1 ? ' is-disabled' : '' ?>"
+          href="<?= htmlspecialchars($buildUrl($page - 1), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+        >Anterior</a>
+
+        <?php for ($current = $start; $current <= $end; $current++): ?>
+          <a
+            data-admin-posts-link
+            class="posts-pagination-link<?= $current === $page ? ' is-active' : '' ?>"
+            href="<?= htmlspecialchars($buildUrl($current), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+          ><?= $current ?></a>
+        <?php endfor; ?>
+
+        <a
+          data-admin-posts-link
+          class="posts-pagination-link posts-pagination-link-wide<?= $total === 0 || $page >= $pages ? ' is-disabled' : '' ?>"
+          href="<?= htmlspecialchars($buildUrl($page + 1), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+        >Proxima</a>
       </nav>
     </div>
   </div>
 </section>
-
