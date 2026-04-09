@@ -3,7 +3,7 @@
  * Purpose: Editor (abas/toolbar/sync), preview e Gerador Nerd para /admin/pages/criar-post.php
  *
  * Notes:
- * - Este arquivo expÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµe funÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes globais (switchTab, formatar, etc.) porque o HTML usa onclick="...".
+ * - Este arquivo expoe funcoes globais (switchTab, formatar, etc.) porque o HTML usa onclick="...".
  * - Carregue com `defer` no footer.
  */
 
@@ -25,16 +25,14 @@
   // -------------------------
   window.switchTab = function switchTab(tabName) {
     if (!existsEditor()) return;
-
-    // Esconde todos os painÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©is
+    // Esconde todos os paineis
     document.querySelectorAll(".editor-panel").forEach(function (p) {
       p.classList.add("hidden");
     });
 
     var panel = byId("panel-" + tabName);
     if (panel) panel.classList.remove("hidden");
-
-    // BotÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes de aba
+    // Botoes de aba
     document.querySelectorAll('[id^="tab-btn-"]').forEach(function (btn) {
       btn.classList.remove(
         "bg-cyan-500/20",
@@ -61,15 +59,14 @@
     // Texto ajuda
     var ajudas = {
       visual: "Use a barra acima para formatar.",
-      html: "Edite diretamente o cÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³digo HTML.",
-      gerador: "Preencha os campos e gere conteÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºdo automaticamente.",
+      html: "Edite diretamente o codigo HTML.",
+      gerador: "Preencha os campos e gere conteudo automaticamente.",
     };
 
     var ajudaEl = byId("editor-ajuda");
     if (ajudaEl) ajudaEl.textContent = ajudas[tabName] || "";
 
     // Sync visual <-> html
-    titulo = renderHighlightedTitle(titulo);
 
     var visual = byId("editor-visual");
     var htmlArea = byId("editor-html");
@@ -189,20 +186,45 @@
   };
 
   // -------------------------
-  // Categoria
+  // Categoria / destaque
   // -------------------------
+  window.syncDestaqueToggle = function syncDestaqueToggle() {
+    var input = document.querySelector('input[name="destaque"]');
+    if (!input) return;
+
+    var toggle = input.closest('.post-destaque-toggle');
+    var state = toggle ? toggle.querySelector('.post-destaque-toggle-state') : null;
+    if (!toggle) return;
+
+    toggle.classList.toggle('is-active', Boolean(input.checked));
+    if (state) {
+      state.textContent = input.checked ? 'Ativo' : 'Desligado';
+    }
+  };
+
   window.syncCategoriaIndicator = function syncCategoriaIndicator() {
     var categoriaSelect = byId("categoria_post_id");
     var dot = byId("categoria-indicator-dot");
     var label = byId("categoria-indicator-label");
+    var indicator = byId("categoria-indicator");
+    var state = byId("categoria-indicator-state");
     if (!categoriaSelect || !dot || !label) return;
 
     var option = categoriaSelect.options[categoriaSelect.selectedIndex] || null;
+    var hasCategoria = Boolean(option && option.value && option.value !== "0");
     var color = option && option.getAttribute("data-category-color") ? option.getAttribute("data-category-color") : "#475569";
-    var text = option && option.value && option.value !== "0" ? option.textContent.trim() : "Nenhuma categoria selecionada";
+    var text = hasCategoria ? option.textContent.trim() : "Nenhuma categoria selecionada";
 
     dot.style.background = color || "#475569";
     label.textContent = text;
+
+    if (indicator) {
+      indicator.classList.toggle("is-active", hasCategoria);
+    }
+
+    if (state) {
+      state.textContent = hasCategoria ? "Selecionada" : "Pendente";
+    }
   };
 
   function appBasePath() {
@@ -252,11 +274,26 @@
 
   function syncMediaPreview(targetId) {
     var input = byId(targetId);
+    var wrap = byId(targetId + "_preview_wrap");
     var preview = byId(targetId + "_preview");
     var empty = byId(targetId + "_preview_empty");
-    if (!input || !preview) return;
+    var trigger = wrap ? wrap.querySelector("[data-media-preview-open]") : null;
+    if (!input || !wrap || !preview || !trigger) return;
 
-    var url = normalizeMediaUrl(input.value);
+    var rawPath = String(input.value || "").trim();
+    var url = normalizeMediaUrl(rawPath);
+    var titles = {
+      imagem_capa: "Imagem de capa",
+      imagem_thumb: "Thumbnail"
+    };
+
+    trigger.setAttribute("data-media-preview-src", url);
+    trigger.setAttribute("data-media-preview-title", titles[targetId] || "Preview da imagem");
+    trigger.setAttribute("data-media-preview-path", rawPath);
+    trigger.disabled = !url;
+    trigger.classList.toggle("is-disabled", !url);
+    wrap.classList.toggle("has-media", Boolean(url));
+
     if (url) {
       preview.src = url;
       preview.classList.remove("hidden");
@@ -321,6 +358,29 @@
     window.atualizarTextarea();
   };
 
+  window.abrirPreviewMidiaPost = function abrirPreviewMidiaPost(src, title, path) {
+    var panel = byId("postMediaPreviewPanel");
+    var image = byId("postMediaPreviewImage");
+    var titleEl = byId("postMediaPreviewTitle");
+    var pathEl = byId("postMediaPreviewPath");
+    if (!src || !panel || !image) return;
+
+    image.src = src || "";
+    if (titleEl) titleEl.textContent = title || "Preview da imagem";
+    if (pathEl) pathEl.textContent = path || "";
+    panel.classList.remove("hidden");
+    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  window.fecharPreviewMidiaPost = function fecharPreviewMidiaPost() {
+    var panel = byId("postMediaPreviewPanel");
+    var image = byId("postMediaPreviewImage");
+    if (!panel || !image) return;
+
+    panel.classList.add("hidden");
+    image.src = "";
+  };
+
   function initMediaHelpers() {
     ["imagem_capa", "imagem_thumb"].forEach(function (targetId) {
       var input = byId(targetId);
@@ -336,6 +396,15 @@
         var target = button.getAttribute("data-media-target") || "";
         var url = button.getAttribute("data-media-url") || "";
         window.selecionarMidia(target, url);
+      });
+    });
+
+    document.querySelectorAll("[data-media-preview-open]").forEach(function (trigger) {
+      trigger.addEventListener("click", function () {
+        var src = trigger.getAttribute("data-media-preview-src") || "";
+        var title = trigger.getAttribute("data-media-preview-title") || "Preview da imagem";
+        var path = trigger.getAttribute("data-media-preview-path") || "";
+        window.abrirPreviewMidiaPost(src, title, path);
       });
     });
   }
@@ -609,8 +678,7 @@
     window.atualizarTextarea();
 
     var tituloEl = byId("titulo");
-    var titulo = (tituloEl && tituloEl.value) ? tituloEl.value : "Sem tÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo";
-
+    var titulo = (tituloEl && tituloEl.value) ? tituloEl.value : "Sem titulo";
     var visual = byId("editor-visual");
     var conteudo = visual ? visual.innerHTML : "";
 
@@ -635,7 +703,7 @@
         titulo +
         "</h1>" +
         '<div class="prose prose-invert max-w-none text-gray-300 leading-relaxed">' +
-        (conteudo || "<p><em>Sem conteÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºdo.</em></p>") +
+        (conteudo || "<p><em>Sem conteudo.</em></p>") +
         "</div>";
     }
 
@@ -656,7 +724,7 @@
   };
 
   // -------------------------
-  // Gerador Nerd (compatÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­vel com seu HTML do criar-post)
+  // Gerador Nerd (compativel com o HTML do criar-post)
   // -------------------------
   var geradorIniciado = false;
   var geradorHtmlAtual = "";
@@ -768,7 +836,7 @@
     review: {
       fields: [
         { id: "produto", label: "Produto", placeholder: "Ex.: Nintendo Switch 2" },
-        { id: "pontos", label: "Pontos (vÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­rgula)", placeholder: "Design, bateria, tela..." },
+        { id: "pontos", label: "Pontos (separados por virgula)", placeholder: "Design, bateria, tela..." },
       ],
       build: function (v) {
         var p = v.produto || "Produto";
@@ -776,14 +844,14 @@
           .split(",")
           .map(function (s) { return s.trim(); })
           .filter(Boolean)
-          .map(function (s) { return "<li>" + s + " ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li>"; })
+          .map(function (s) { return "<li>" + s + "</li>"; })
           .join("");
         return (
           "<h2>Review: " + p + "</h2>" +
-          "<p>VisÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o geral do produto e para quem ele faz sentido.</p>" +
-          "<h3>Pontos principais</h3><ul>" + (pts || "<li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li>") + "</ul>" +
-          "<h3>PrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³s e contras</h3><ul><li><b>PrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³s:</b> ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li><li><b>Contras:</b> ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li></ul>" +
-          "<h3>ConclusÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o</h3><p>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</p>"
+          "<p>Visao geral do produto e para quem ele faz sentido.</p>" +
+          "<h3>Pontos principais</h3><ul>" + (pts || "<li>Liste os pontos principais.</li>") + "</ul>" +
+          "<h3>Pros e contras</h3><ul><li><b>Pros:</b> ...</li><li><b>Contras:</b> ...</li></ul>" +
+          "<h3>Conclusao</h3><p>Compartilhe o veredito final.</p>"
         );
       },
     },
@@ -894,25 +962,25 @@
     guia: {
       fields: [
         { id: "tema", label: "Tema do guia", placeholder: "Ex.: Como montar um PC gamer barato" },
-        { id: "nivel", label: "NÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­vel", placeholder: "Iniciante / IntermediÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡rio / AvanÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ado" },
+        { id: "nivel", label: "Nivel", placeholder: "Iniciante / Intermediario / Avancado" },
       ],
       build: function (v) {
         return (
           "<h2>" + (v.tema || "Guia") + "</h2>" +
-          "<p><b>NÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­vel:</b> " + (v.nivel || "") + "</p>" +
-          "<h3>O que vocÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âª vai aprender</h3><ul><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li></ul>" +
-          "<h3>Passo a passo</h3><ol><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li></ol>" +
-          "<h3>Dicas finais</h3><ul><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li></ul>"
+          "<p><b>Nivel:</b> " + (v.nivel || "") + "</p>" +
+          "<h3>O que voce vai aprender</h3><ul><li>Explique o resultado esperado para o leitor.</li></ul>" +
+          "<h3>Passo a passo</h3><ol><li>Abra com o primeiro passo.</li><li>Detalhe a execucao principal.</li><li>Feche com a validacao final.</li></ol>" +
+          "<h3>Dicas finais</h3><ul><li>Inclua ajustes, erros comuns e observacoes praticas.</li></ul>"
         );
       },
     },
     noticia: {
       fields: [
-        { id: "assunto", label: "Assunto", placeholder: "Ex.: LanÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§amento do iPhone X" },
-        { id: "pontos", label: "Fatos-chave (vÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­rgula)", placeholder: "PreÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§o, data, novidades..." },
+        { id: "assunto", label: "Assunto", placeholder: "Ex.: Lancamento do iPhone X" },
+        { id: "pontos", label: "Fatos-chave (separados por virgula)", placeholder: "Preco, data, novidades..." },
       ],
       build: function (v) {
-        var a = v.assunto || "NotÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­cia";
+        var a = v.assunto || "Noticia";
         var pts = (v.pontos || "")
           .split(",")
           .map(function (s) { return s.trim(); })
@@ -921,16 +989,16 @@
           .join("");
         return (
           "<h2>" + a + "</h2>" +
-          "<p>Contexto rÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡pido do que aconteceu.</p>" +
-          "<h3>O que foi anunciado</h3><ul>" + (pts || "<li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li>") + "</ul>" +
-          "<h3>Por que isso importa</h3><p>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</p>" +
-          "<h3>O que esperar agora</h3><p>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</p>"
+          "<p>Contexto rapido do que aconteceu.</p>" +
+          "<h3>O que foi anunciado</h3><ul>" + (pts || "<li>Resuma os pontos principais.</li>") + "</ul>" +
+          "<h3>Por que isso importa</h3><p>Explique o impacto para o leitor.</p>" +
+          "<h3>O que esperar agora</h3><p>Feche com proximos passos, prazos ou repercussao.</p>"
         );
       },
     },
     lista: {
       fields: [
-        { id: "titulo_lista", label: "TÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­tulo da lista", placeholder: "Ex.: Top 7 teclados custo/benefÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­cio" },
+        { id: "titulo_lista", label: "Titulo da lista", placeholder: "Ex.: Top 7 teclados custo-beneficio" },
         { id: "qtd", label: "Quantidade", placeholder: "Ex.: 7" },
       ],
       build: function (v) {
@@ -940,14 +1008,14 @@
 
         var items = "";
         for (var i = 1; i <= qtd; i += 1) {
-          items += "<li><b>#" + i + "</b> ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li>";
+          items += "<li><b>#" + i + "</b> Descreva aqui o item e o diferencial dele.</li>";
         }
 
         return (
           "<h2>" + t + "</h2>" +
-          "<p>CritÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©rios usados e para quem a lista ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©.</p>" +
+          "<p>Explique os criterios usados e para quem a lista faz sentido.</p>" +
           "<ol>" + items + "</ol>" +
-          "<h3>Como escolher</h3><ul><li>ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</li></ul>"
+          "<h3>Como escolher</h3><ul><li>Adicione uma dica final para ajudar na decisao.</li></ul>"
         );
       },
     },
@@ -1281,15 +1349,20 @@
     if (!existsEditor()) return;
 
     var ajuda = byId("editor-ajuda");
-    if (ajuda) ajuda.textContent = "Editor do post";
-
+    if (ajuda) ajuda.textContent = "Use a barra acima para formatar.";
     initCounts();
     initMediaHelpers();
     initSubmitValidation();
     initUnsavedChangesGuard();
+    syncDestaqueToggle();
     syncCategoriaIndicator();
+    window.setTimeout(syncDestaqueToggle, 0);
     window.setTimeout(syncCategoriaIndicator, 0);
+    window.setTimeout(syncDestaqueToggle, 150);
     window.setTimeout(syncCategoriaIndicator, 150);
+
+    var destaqueInput = document.querySelector('input[name="destaque"]');
+    if (destaqueInput) destaqueInput.addEventListener("change", syncDestaqueToggle);
 
     var categoriaSelect = byId("categoria_post_id");
     if (categoriaSelect) categoriaSelect.addEventListener("change", syncCategoriaIndicator);
@@ -1310,7 +1383,10 @@
     });
 
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") window.fecharPreview();
+      if (e.key === "Escape") {
+        window.fecharPreview();
+        if (window.fecharPreviewMidiaPost) window.fecharPreviewMidiaPost();
+      }
     });
 
     window.atualizarTextarea();

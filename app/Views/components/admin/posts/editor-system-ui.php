@@ -442,6 +442,139 @@ declare(strict_types=1);
     });
   }
 
+
+  function editorHelpByTab(tabName) {
+    var messages = {
+      visual: 'Use a barra acima para formatar.',
+      html: 'Edite diretamente o codigo HTML.',
+      gerador: 'Preencha os campos e gere conteudo automaticamente.'
+    };
+    return messages[tabName] || messages.visual;
+  }
+
+  function detectActiveEditorTab() {
+    if (!byId('panel-html') || byId('panel-html').classList.contains('hidden') === false) return 'html';
+    if (!byId('panel-gerador') || byId('panel-gerador').classList.contains('hidden') === false) return 'gerador';
+    return 'visual';
+  }
+
+  function setEditorHelp(tabName) {
+    var help = byId('editor-ajuda');
+    if (!help) return;
+    help.textContent = editorHelpByTab(tabName || detectActiveEditorTab());
+  }
+
+  function patchGeradorField(fieldId, label, placeholder) {
+    var input = byId('gerador-' + fieldId);
+    if (!input) return;
+    var wrapper = input.parentElement;
+    var labelEl = wrapper ? wrapper.querySelector('label') : null;
+    if (labelEl && label) labelEl.textContent = label;
+    if (typeof placeholder === 'string') input.placeholder = placeholder;
+  }
+
+  function normalizeGeradorUi() {
+    var panel = byId('panel-gerador');
+    if (!panel) return;
+
+    var note = panel.querySelector('.post-gerador-fields-note');
+    if (note) {
+      note.innerHTML = 'No comparativo, use <strong class="text-slate-200">Adicionar linha</strong> para montar cada criterio da tabela em campos separados.';
+    }
+
+    var applyLabel = panel.querySelector('label[for="gerador-apply-mode"]');
+    if (applyLabel) applyLabel.textContent = 'Modo de insercao';
+
+    var select = byId('gerador-template');
+    if (!select) return;
+
+    var template = select.value || 'comparativo';
+    if (template === 'guia') {
+      patchGeradorField('tema', 'Tema do guia', 'Ex.: Como montar um PC gamer barato');
+      patchGeradorField('nivel', 'Nivel', 'Iniciante / Intermediario / Avancado');
+      return;
+    }
+
+    if (template === 'noticia') {
+      patchGeradorField('assunto', 'Assunto', 'Ex.: Lancamento do iPhone X');
+      patchGeradorField('pontos', 'Fatos-chave (separados por virgula)', 'Preco, data, novidades...');
+      return;
+    }
+
+    if (template === 'review') {
+      patchGeradorField('produto', 'Produto', 'Ex.: Nintendo Switch 2');
+      patchGeradorField('pontos', 'Pontos (separados por virgula)', 'Design, bateria, tela...');
+      return;
+    }
+
+    if (template === 'lista') {
+      patchGeradorField('titulo_lista', 'Titulo da lista', 'Ex.: Top 7 teclados custo-beneficio');
+      patchGeradorField('qtd', 'Quantidade', 'Ex.: 7');
+    }
+  }
+
+  function safeSwitchTab(tabName) {
+    document.querySelectorAll('.editor-panel').forEach(function (panel) {
+      panel.classList.add('hidden');
+    });
+
+    var panel = byId('panel-' + tabName);
+    if (panel) panel.classList.remove('hidden');
+
+    document.querySelectorAll('[id^="tab-btn-"]').forEach(function (btn) {
+      btn.classList.remove('bg-cyan-500/20', 'text-cyan-400', 'border-t', 'border-x', 'border-cyan-500/30');
+      btn.classList.add('bg-slate-800', 'text-gray-400');
+    });
+
+    var activeBtn = byId('tab-btn-' + tabName);
+    if (activeBtn) {
+      activeBtn.classList.remove('bg-slate-800', 'text-gray-400');
+      activeBtn.classList.add('bg-cyan-500/20', 'text-cyan-400', 'border-t', 'border-x', 'border-cyan-500/30');
+    }
+
+    setEditorHelp(tabName);
+
+    var visual = byId('editor-visual');
+    var htmlArea = byId('editor-html');
+    if (tabName === 'html' && visual && htmlArea) {
+      htmlArea.value = visual.innerHTML;
+    } else if (tabName === 'visual' && visual && htmlArea) {
+      visual.innerHTML = htmlArea.value;
+      syncHiddenFields();
+    }
+
+    if (tabName === 'gerador' && typeof window.initGerador === 'function') {
+      window.initGerador();
+    }
+
+    window.setTimeout(function () {
+      normalizeGeradorUi();
+    }, 0);
+  }
+
+  function installEditorTabFixes() {
+    window.switchTab = safeSwitchTab;
+    setEditorHelp(detectActiveEditorTab());
+
+    var geradorTemplate = byId('gerador-template');
+    if (geradorTemplate && !geradorTemplate.dataset.uiPatched) {
+      geradorTemplate.dataset.uiPatched = '1';
+      geradorTemplate.addEventListener('change', function () {
+        window.setTimeout(normalizeGeradorUi, 0);
+      });
+    }
+
+    var geradorCampos = byId('gerador-campos');
+    if (geradorCampos && !geradorCampos.dataset.uiObserved && typeof MutationObserver !== 'undefined') {
+      geradorCampos.dataset.uiObserved = '1';
+      var observer = new MutationObserver(function () {
+        normalizeGeradorUi();
+      });
+      observer.observe(geradorCampos, { childList: true, subtree: true });
+    }
+
+    normalizeGeradorUi();
+  }
   function bindMediaButtons() {
     [
       ['editor-upload-trigger', function () { if (typeof window.enviarImagemDoEditor === 'function') window.enviarImagemDoEditor(); }],
