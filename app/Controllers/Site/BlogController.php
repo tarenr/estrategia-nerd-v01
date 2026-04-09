@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controllers\Site;
@@ -12,6 +13,12 @@ final class BlogController
 {
     public function index(): void
     {
+        if (!site_section_public_active('blog')) {
+            http_response_code(404);
+            echo 'Blog indisponivel no momento.';
+            return;
+        }
+
         View::render('site/blog', $this->service()->getViewModel([
             'busca' => (string) ($_GET['q'] ?? ''),
             'categoria' => (string) ($_GET['categoria'] ?? ''),

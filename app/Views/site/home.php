@@ -16,6 +16,7 @@ $brandSymbol = $brandSymbol !== '' ? $brandSymbol : url('/assets/brand/logo-symb
 $aboutMark = $aboutMark !== '' ? $aboutMark : url('/assets/brand/logo-about.png');
 $brandWordPrimary = 'ESTRATEGIA';
 $brandWordAccent = 'NERD';
+$showNewsletterHome = site_section_visible_on_home('newsletter');
 $socialLinks = [
     'instagram' => [
         'url' => (string) ($siteMeta['instagram'] ?? ''),
@@ -53,7 +54,7 @@ $hasSocialLinks = array_reduce(
     static fn (bool $carry, array $social): bool => $carry || trim((string) ($social['url'] ?? '')) !== '',
     false
 );
-$contactHref = $siteEmail !== '' ? 'mailto:' . $siteEmail : '#newsletter';
+$contactHref = site_contact_fallback_href($siteEmail);
 ?>
 
 <div class="site-home-page">
@@ -79,7 +80,9 @@ $contactHref = $siteEmail !== '' ? 'mailto:' . $siteEmail : '#newsletter';
       'latest_posts' => $latestPosts,
   ]) ?>
 
-  <?= View::component('site/home/newsletter') ?>
+  <?php if ($showNewsletterHome): ?>
+    <?= View::component('site/home/newsletter') ?>
+  <?php endif; ?>
 
   <?= View::component('site/home/footer', [
       'site_name' => $siteName,

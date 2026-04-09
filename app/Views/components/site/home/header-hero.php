@@ -7,6 +7,26 @@ $siteKicker = (string) ($site_kicker ?? '');
 $brandSymbol = (string) ($brand_symbol ?? '');
 $brandWordPrimary = (string) ($brand_word_primary ?? 'ESTRATEGIA');
 $brandWordAccent = (string) ($brand_word_accent ?? 'NERD');
+
+$showHero = site_section_visible_on_home('hero');
+$blogHomeVisible = site_section_visible_on_home('blog');
+$blogPublic = site_section_public_active('blog');
+$newsletterHomeVisible = site_section_visible_on_home('newsletter');
+$centralPublic = site_section_public_active('central_nerd');
+
+$primaryCtaHref = $blogHomeVisible
+    ? '#blog'
+    : ($blogPublic ? site_section_href('blog') : ($centralPublic ? site_section_href('central_nerd') : url('/')));
+$primaryCtaLabel = $blogPublic ? 'Explorar conteudo' : ($centralPublic ? 'Abrir central' : 'Explorar');
+
+$secondaryCta = null;
+if ($newsletterHomeVisible) {
+    $secondaryCta = ['href' => '#newsletter', 'label' => 'Inscrever-se'];
+} elseif ($centralPublic) {
+    $secondaryCta = ['href' => site_section_href('central_nerd'), 'label' => 'Ver links'];
+} elseif ($blogPublic) {
+    $secondaryCta = ['href' => site_section_href('blog'), 'label' => 'Ver blog'];
+}
 ?>
 
 <?= View::component('site/shared/nav', [
@@ -18,6 +38,7 @@ $brandWordAccent = (string) ($brand_word_accent ?? 'NERD');
     'active_page' => 'home',
 ]) ?>
 
+<?php if ($showHero): ?>
 <section id="home" class="site-hero-section relative min-h-screen flex items-center justify-center pt-24 overflow-hidden">
   <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/10 via-transparent to-slate-950"></div>
   <div class="absolute inset-0 site-grid-fade"></div>
@@ -64,11 +85,14 @@ $brandWordAccent = (string) ($brand_word_accent ?? 'NERD');
     </p>
 
     <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-      <a href="#blog" class="site-primary-btn">Explorar conteudo</a>
-      <a href="#newsletter" class="site-secondary-btn">Inscrever-se</a>
+      <a href="<?= htmlspecialchars($primaryCtaHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-primary-btn"><?= htmlspecialchars($primaryCtaLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+      <?php if (is_array($secondaryCta)): ?>
+        <a href="<?= htmlspecialchars((string) ($secondaryCta['href'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-secondary-btn"><?= htmlspecialchars((string) ($secondaryCta['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+      <?php endif; ?>
     </div>
 
     <div class="absolute top-1/4 left-10 w-20 h-20 border border-cyan-500/20 rounded-full animate-pulse hidden lg:block"></div>
     <div class="absolute bottom-1/4 right-10 w-32 h-32 border border-purple-500/20 rounded-full animate-pulse hidden lg:block" style="animation-delay: 1s;"></div>
   </div>
 </section>
+<?php endif; ?>

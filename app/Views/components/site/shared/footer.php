@@ -9,7 +9,8 @@ $socialLinks = is_array($social_links ?? null) ? $social_links : [];
 $brandWordPrimary = (string) ($brand_word_primary ?? 'ESTRATEGIA');
 $brandWordAccent = (string) ($brand_word_accent ?? 'NERD');
 $hasSocialLinks = (bool) ($has_social_links ?? false);
-$contactHref = (string) ($contact_href ?? '#newsletter');
+$contactHref = site_contact_fallback_href($siteEmail);
+$footerItems = site_footer_items();
 ?>
 
 <footer class="site-footer">
@@ -43,11 +44,13 @@ $contactHref = (string) ($contact_href ?? '#newsletter');
       <div>
         <h3 class="site-footer-title">Links rapidos</h3>
         <ul class="site-footer-links">
-          <li><a href="<?= htmlspecialchars(url('/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>#home">Home</a></li>
-          <li><a href="<?= htmlspecialchars(url('/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>#sobre">Sobre</a></li>
-          <li><a href="<?= htmlspecialchars(url('/blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Blog</a></li>
-          <li><a href="<?= htmlspecialchars(url('/central-nerd'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Central Nerd</a></li>
-          <li><a href="<?= htmlspecialchars(url('/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>#newsletter">Newsletter</a></li>
+          <?php foreach ($footerItems as $item): ?>
+            <li>
+              <a href="<?= htmlspecialchars((string) ($item['href'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                <?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+              </a>
+            </li>
+          <?php endforeach; ?>
         </ul>
       </div>
 
@@ -56,7 +59,7 @@ $contactHref = (string) ($contact_href ?? '#newsletter');
         <ul class="site-footer-links">
           <li><a href="<?= htmlspecialchars(url('/politica-de-privacidade'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Politica de privacidade</a></li>
           <li><a href="<?= htmlspecialchars(url('/termos-de-uso'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Termos de uso</a></li>
-          <li><a href="<?= htmlspecialchars($contactHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= $siteEmail !== '' ? 'Contato' : 'Newsletter' ?></a></li>
+          <li><a href="<?= htmlspecialchars($contactHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= $siteEmail !== '' ? 'Contato' : 'Explorar portal' ?></a></li>
         </ul>
       </div>
     </div>

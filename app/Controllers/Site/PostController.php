@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controllers\Site;
@@ -13,6 +14,12 @@ final class PostController
 {
     public function show(string $slug): void
     {
+        if (!$this->blogPublicActive()) {
+            http_response_code(404);
+            echo 'Blog indisponivel no momento.';
+            return;
+        }
+
         $state = [
             'status' => (string) ($_GET['comment_status'] ?? ''),
             'message' => (string) ($_GET['comment_message'] ?? ''),
@@ -38,6 +45,17 @@ final class PostController
 
     public function comment(string $slug): void
     {
+        if (!$this->blogPublicActive()) {
+            if ($this->isAjaxRequest()) {
+                $this->json(['ok' => false, 'message' => 'Blog indisponivel no momento.'], 404);
+                return;
+            }
+
+            http_response_code(404);
+            echo 'Blog indisponivel no momento.';
+            return;
+        }
+
         $isAjax = $this->isAjaxRequest();
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             if ($isAjax) {
@@ -78,6 +96,11 @@ final class PostController
 
     public function like(string $slug): void
     {
+        if (!$this->blogPublicActive()) {
+            $this->json(['ok' => false, 'message' => 'Blog indisponivel no momento.'], 404);
+            return;
+        }
+
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             $this->json(['ok' => false, 'message' => 'Sessao expirada. Atualize a pagina e tente novamente.'], 419);
             return;
@@ -120,6 +143,11 @@ final class PostController
         ]);
 
         return trim((string) ob_get_clean());
+    }
+
+    private function blogPublicActive(): bool
+    {
+        return site_section_public_active('blog');
     }
 
     private function service(): PostService

@@ -1,37 +1,17 @@
 <?php
+
 declare(strict_types=1);
 
-$summary = $summary ?? [
-    'total' => 0,
-    'ativos' => 0,
-    'inativos' => 0,
-    'desinscritos' => 0,
-    'hoje' => 0,
-    'last7' => 0,
-    'active_last7' => 0,
-    'ativos_rate' => 0.0,
-    'inativos_rate' => 0.0,
-    'desinscritos_rate' => 0.0,
-    'daily_avg_7' => 0.0,
-];
+$summary = $summary ?? [];
 
-$fmtNumber = static function (int $value): string {
-    return number_format($value, 0, ',', '.');
-};
-
-$fmtPercent = static function (float $value): string {
-    return number_format((float) $value, 1, ',', '.') . '%';
-};
-
-$fmtAverage = static function (float $value): string {
-    return number_format((float) $value, 1, ',', '.');
-};
+$fmtNumber = static fn (int $value): string => number_format($value, 0, ',', '.');
+$fmtPercent = static fn (float $value): string => number_format($value, 1, ',', '.') . '%';
 
 $cards = [
     [
-        'icon' => 'fa-envelope-open-text',
+        'icon' => 'fa-users',
         'label' => 'Base total',
-        'hint' => 'Leitura geral dos contatos filtrados na central.',
+        'hint' => 'Equipe filtrada no admin.',
         'value' => $fmtNumber((int) ($summary['total'] ?? 0)),
         'color' => '#60a5fa',
         'iconBg' => 'linear-gradient(135deg, rgba(34,211,238,.92), rgba(37,99,235,.92))',
@@ -41,58 +21,58 @@ $cards = [
         ],
     ],
     [
-        'icon' => 'fa-circle-check',
-        'label' => 'Ativos na base',
-        'hint' => 'Contatos prontos para seguir na lista principal.',
+        'icon' => 'fa-user-check',
+        'label' => 'Usuarios ativos',
+        'hint' => 'Perfis aptos a entrar.',
         'value' => $fmtNumber((int) ($summary['ativos'] ?? 0)),
         'color' => '#34d399',
         'iconBg' => 'linear-gradient(135deg, rgba(34,197,94,.88), rgba(6,182,212,.88))',
         'support' => [
             ['label' => 'Cobertura', 'value' => $fmtPercent((float) ($summary['ativos_rate'] ?? 0.0))],
-            ['label' => 'Novos ativos em 7 dias', 'value' => $fmtNumber((int) ($summary['active_last7'] ?? 0)), 'accent' => '#34d399'],
+            ['label' => 'Nunca acessaram', 'value' => $fmtNumber((int) ($summary['nunca_acessaram'] ?? 0)), 'accent' => '#34d399'],
         ],
     ],
     [
-        'icon' => 'fa-triangle-exclamation',
-        'label' => 'Inativos para revisar',
-        'hint' => 'Contatos fora do fluxo principal que pedem triagem.',
-        'value' => $fmtNumber((int) ($summary['inativos'] ?? 0)),
+        'icon' => 'fa-user-shield',
+        'label' => 'Admins ativos',
+        'hint' => 'Controle total do painel.',
+        'value' => $fmtNumber((int) ($summary['admins'] ?? 0)),
         'color' => '#facc15',
         'iconBg' => 'linear-gradient(135deg, rgba(234,179,8,.88), rgba(249,115,22,.88))',
         'support' => [
-            ['label' => 'Peso na base', 'value' => $fmtPercent((float) ($summary['inativos_rate'] ?? 0.0))],
-            ['label' => 'Desinscritos', 'value' => $fmtNumber((int) ($summary['desinscritos'] ?? 0)), 'accent' => '#facc15'],
+            ['label' => 'Editores', 'value' => $fmtNumber((int) ($summary['editores'] ?? 0))],
+            ['label' => 'Cobertura admin', 'value' => $fmtPercent((float) ($summary['admins_rate'] ?? 0.0)), 'accent' => '#facc15'],
         ],
     ],
     [
-        'icon' => 'fa-user-minus',
-        'label' => 'Saidas da base',
-        'hint' => 'Indicador de desgaste ou limpeza de contatos.',
-        'value' => $fmtNumber((int) ($summary['desinscritos'] ?? 0)),
+        'icon' => 'fa-camera-retro',
+        'label' => 'Avatar com foto',
+        'hint' => 'Perfis personalizados.',
+        'value' => $fmtNumber((int) ($summary['com_foto'] ?? 0)),
         'color' => '#f472b6',
         'iconBg' => 'linear-gradient(135deg, rgba(244,63,94,.88), rgba(168,85,247,.88))',
         'support' => [
-            ['label' => 'Taxa da base', 'value' => $fmtPercent((float) ($summary['desinscritos_rate'] ?? 0.0))],
-            ['label' => 'Base restante', 'value' => $fmtNumber(max(0, (int) (($summary['total'] ?? 0) - ($summary['desinscritos'] ?? 0)))), 'accent' => '#f472b6'],
+            ['label' => 'Com icone', 'value' => $fmtNumber((int) ($summary['com_icone'] ?? 0))],
+            ['label' => 'Cobertura foto', 'value' => $fmtPercent((float) ($summary['foto_rate'] ?? 0.0)), 'accent' => '#f472b6'],
         ],
     ],
     [
         'icon' => 'fa-bolt',
-        'label' => 'Captacao recente',
-        'hint' => 'Ritmo de entrada para leitura operacional rapida.',
-        'value' => $fmtNumber((int) ($summary['hoje'] ?? 0)),
+        'label' => 'Acesso recente',
+        'hint' => 'Ritmo operacional.',
+        'value' => $fmtNumber((int) ($summary['acesso_hoje'] ?? 0)),
         'color' => '#38bdf8',
         'iconBg' => 'linear-gradient(135deg, rgba(59,130,246,.88), rgba(34,211,238,.88))',
         'support' => [
-            ['label' => 'Ultimos 7 dias', 'value' => $fmtNumber((int) ($summary['last7'] ?? 0))],
-            ['label' => 'Media diaria', 'value' => $fmtAverage((float) ($summary['daily_avg_7'] ?? 0)), 'accent' => '#38bdf8'],
+            ['label' => 'Ultimos 7 dias', 'value' => $fmtNumber((int) ($summary['acesso_7_dias'] ?? 0))],
+            ['label' => 'Novos 30 dias', 'value' => $fmtNumber((int) ($summary['novos_30_dias'] ?? 0)), 'accent' => '#38bdf8'],
         ],
     ],
 ];
 ?>
-<section class="newsletter-summary-grid">
+<section class="users-summary-grid">
   <?php foreach ($cards as $card): ?>
-    <article class="stat-card stat-card-compact admin-summary-card newsletter-summary-card">
+    <article class="stat-card stat-card-compact admin-summary-card users-summary-card">
       <div class="stat-icon" style="background: <?= htmlspecialchars((string) $card['iconBg'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>; color: <?= htmlspecialchars((string) $card['color'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>;"><i class="fa-solid <?= htmlspecialchars((string) $card['icon'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"></i></div>
       <div class="stat-value neon-text" style="color: <?= htmlspecialchars((string) $card['color'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>;"><?= htmlspecialchars((string) $card['value'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
       <div class="stat-label"><?= htmlspecialchars((string) $card['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>

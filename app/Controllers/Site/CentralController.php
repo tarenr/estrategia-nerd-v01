@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controllers\Site;
@@ -11,6 +12,12 @@ final class CentralController
 {
     public function index(): void
     {
+        if (!site_section_public_active('central_nerd')) {
+            http_response_code(404);
+            echo 'Central Nerd indisponivel no momento.';
+            return;
+        }
+
         View::render('site/central', $this->service()->getViewModel());
     }
 

@@ -100,6 +100,7 @@ $items = [
     sidebar_item('/admin/links', 'fa-solid fa-link', 'Links'),
     sidebar_item('/admin/ofertas', 'fa-solid fa-bag-shopping', 'Ofertas'),
     sidebar_section('Sistema'),
+    sidebar_item('/admin/home-e-menus', 'fa-solid fa-diagram-project', 'Home e Menus'),
     sidebar_item('/admin/configuracoes', 'fa-solid fa-gear', 'Configuracoes'),
     sidebar_item('/admin/usuarios', 'fa-solid fa-user', 'Usuarios'),
     sidebar_item('/admin/permissoes', 'fa-solid fa-lock', 'Permissoes'),

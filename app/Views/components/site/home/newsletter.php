@@ -1,5 +1,9 @@
 <?php
 use App\Support\Csrf;
+
+if (!site_section_public_active('newsletter')) {
+    return;
+}
 ?>
 
 <section id="newsletter" class="py-28 relative">

@@ -449,79 +449,60 @@ $todayCards = [
     </div>
   </div>
 
-  <section class="dashboard-kpi-grid">
-    <article class="stat-card stat-card-compact">
-      <div class="stat-icon" style="background: rgba(59,130,246,0.18);"><i class="fa-solid fa-newspaper"></i></div>
+    <section class="dashboard-kpi-grid">
+    <article class="stat-card stat-card-compact admin-summary-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, rgba(96,165,250,.92), rgba(59,130,246,.92)); color:#60a5fa;"><i class="fa-solid fa-newspaper"></i></div>
       <div class="stat-value neon-text" style="color:#60a5fa;"><?= fmt($totalPosts) ?></div>
       <div class="stat-label">Total de posts</div>
-      <div class="stat-chip-row">
-        <span class="status-badge status-publicado"><?= fmt($postsPublicados) ?> publicados</span>
-        <span class="status-badge status-rascunho"><?= fmt($postsRascunho) ?> rascunhos</span>
-        <span class="status-badge status-agendado"><?= fmt($postsAgendados) ?> agendados</span>
+      <div class="admin-summary-card__hint">Volume editorial disponivel no painel.</div>
+      <div class="stat-support">
+        <div class="stat-support-line"><span class="stat-support-label">Publicados</span><span class="stat-support-value" style="color:#60a5fa;"><?= fmt($postsPublicados) ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Rascunhos</span><span class="stat-support-value"><?= fmt($postsRascunho) ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Agendados</span><span class="stat-support-value"><?= fmt($postsAgendados) ?></span></div>
       </div>
     </article>
 
-    <article class="stat-card stat-card-compact">
-      <div class="stat-icon" style="background: rgba(34,211,238,0.16);"><i class="fa-solid fa-eye"></i></div>
+    <article class="stat-card stat-card-compact admin-summary-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, rgba(34,211,238,.92), rgba(37,99,235,.92)); color: var(--neon-blue);"><i class="fa-solid fa-eye"></i></div>
       <div class="stat-value neon-text" style="color: var(--neon-blue);"><?= fmt_k($totalViews) ?></div>
       <div class="stat-label">Views totais</div>
+      <div class="admin-summary-card__hint">Alcance acumulado do portal no periodo.</div>
       <div class="stat-support">
-        <div class="stat-support-line">
-          <span class="stat-support-label">Hoje</span>
-          <span class="stat-support-value" style="color: var(--neon-blue);">+<?= fmt_k($viewsHoje) ?></span>
-        </div>
-        <div class="stat-support-line">
-          <span class="stat-support-label">Ultimos 7 dias</span>
-          <span class="stat-support-value" style="color: var(--neon-blue);">+<?= fmt_k($viewsSemana) ?></span>
-        </div>
+        <div class="stat-support-line"><span class="stat-support-label">Hoje</span><span class="stat-support-value" style="color: var(--neon-blue);">+<?= fmt_k($viewsHoje) ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Ultimos 7 dias</span><span class="stat-support-value" style="color: var(--neon-blue);">+<?= fmt_k($viewsSemana) ?></span></div>
       </div>
     </article>
 
-    <article class="stat-card stat-card-compact">
-      <div class="stat-icon" style="background: rgba(168,85,247,0.16);"><i class="fa-solid fa-heart"></i></div>
+    <article class="stat-card stat-card-compact admin-summary-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, rgba(168,85,247,.88), rgba(236,72,153,.88)); color:#c084fc;"><i class="fa-solid fa-heart"></i></div>
       <div class="stat-value neon-text" style="color:#c084fc;"><?= fmt_k($likesTotal) ?></div>
       <div class="stat-label">Curtidas</div>
+      <div class="admin-summary-card__hint">Resposta direta do publico ao conteudo.</div>
       <div class="stat-support">
-        <div class="stat-support-line">
-          <span class="stat-support-label">Comentarios</span>
-          <span class="stat-support-value" style="color:#c084fc;"><?= fmt_k($totalComentarios) ?></span>
-        </div>
-        <div class="stat-support-line">
-          <span class="stat-support-label">Engajamento</span>
-          <span class="stat-support-value" style="color:#c084fc;"><?= number_format($engagementRate, 2, ',', '.') ?>%</span>
-        </div>
+        <div class="stat-support-line"><span class="stat-support-label">Comentarios</span><span class="stat-support-value" style="color:#c084fc;"><?= fmt_k($totalComentarios) ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Engajamento</span><span class="stat-support-value" style="color:#c084fc;"><?= number_format($engagementRate, 2, ',', '.') ?>%</span></div>
       </div>
     </article>
 
-    <article class="stat-card stat-card-compact">
-      <div class="stat-icon" style="background: rgba(14,165,233,0.16);"><i class="fa-solid fa-link"></i></div>
+    <article class="stat-card stat-card-compact admin-summary-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, rgba(56,189,248,.92), rgba(37,99,235,.92)); color:#38bdf8;"><i class="fa-solid fa-link"></i></div>
       <div class="stat-value neon-text" style="color:#38bdf8;"><?= fmt_k((int) ($link_clicks_periodo ?? 0)) ?></div>
       <div class="stat-label">Cliques em links</div>
+      <div class="admin-summary-card__hint">Saida rastreada para Central Nerd e destinos externos.</div>
       <div class="stat-support">
-        <div class="stat-support-line">
-          <span class="stat-support-label">Hoje</span>
-          <span class="stat-support-value" style="color:#38bdf8;">+<?= fmt((int) ($link_clicks_hoje ?? 0)) ?></span>
-        </div>
-        <div class="stat-support-line">
-          <span class="stat-support-label">Unicos</span>
-          <span class="stat-support-value" style="color:#38bdf8;"><?= fmt((int) ($link_clicks_unicos ?? 0)) ?></span>
-        </div>
+        <div class="stat-support-line"><span class="stat-support-label">Hoje</span><span class="stat-support-value" style="color:#38bdf8;">+<?= fmt((int) ($link_clicks_hoje ?? 0)) ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Unicos</span><span class="stat-support-value" style="color:#38bdf8;"><?= fmt((int) ($link_clicks_unicos ?? 0)) ?></span></div>
       </div>
     </article>
 
-    <article class="stat-card stat-card-compact">
-      <div class="stat-icon" style="background: rgba(16,185,129,0.16);"><i class="fa-solid fa-envelope"></i></div>
+    <article class="stat-card stat-card-compact admin-summary-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, rgba(34,197,94,.88), rgba(6,182,212,.88)); color:#34d399;"><i class="fa-solid fa-envelope"></i></div>
       <div class="stat-value neon-text" style="color:#34d399;"><?= fmt_k($totalInscritos) ?></div>
       <div class="stat-label">Inscritos ativos</div>
+      <div class="admin-summary-card__hint">Base pronta para ativacao e distribuicao propria.</div>
       <div class="stat-support">
-        <div class="stat-support-line">
-          <span class="stat-support-label">Hoje</span>
-          <span class="stat-support-value" style="color:#34d399;">+<?= fmt($inscritosHoje) ?></span>
-        </div>
-        <div class="stat-support-line">
-          <span class="stat-support-label">Ultimos 30 dias</span>
-          <span class="stat-support-value" style="color:#34d399;">+<?= fmt($inscritosNovos30) ?></span>
-        </div>
+        <div class="stat-support-line"><span class="stat-support-label">Hoje</span><span class="stat-support-value" style="color:#34d399;">+<?= fmt($inscritosHoje) ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Ultimos 30 dias</span><span class="stat-support-value" style="color:#34d399;">+<?= fmt($inscritosNovos30) ?></span></div>
       </div>
     </article>
   </section>
@@ -740,8 +721,8 @@ $todayCards = [
   </section>
 
 
-  <section class="grid lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 admin-panel">
+  <section class="grid lg:grid-cols-[minmax(0,2fr)_360px] gap-6">
+    <div class="admin-panel">
       <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
         <div>
           <div class="admin-panel-title">
@@ -790,10 +771,18 @@ $todayCards = [
         <?php else: ?>
           <div class="dashboard-link-stack">
             <?php foreach (($top_links_clicks ?? []) as $topLink): ?>
+              <?php $topLinkSlug = trim((string) ($topLink['slug'] ?? '')); ?>
+              <?php $topLinkAdminHref = $topLinkSlug !== '' ? url('/admin/links?busca=' . rawurlencode($topLinkSlug)) : ''; ?>
               <div class="dashboard-link-row">
                 <div class="dashboard-link-copy">
-                  <div class="dashboard-link-title"><?= e((string) ($topLink['titulo'] ?? 'Link')) ?></div>
-                  <div class="dashboard-link-subtitle"><?= e(link_type_label((string) ($topLink['tipo'] ?? ''), (int) ($topLink['promocao'] ?? 0) === 1)) ?><?php if (trim((string) ($topLink['slug'] ?? '')) !== ''): ?> &bull; /link/<?= e((string) ($topLink['slug'] ?? '')) ?><?php endif; ?></div>
+                  <div class="dashboard-link-title">
+                    <?php if ($topLinkAdminHref !== ''): ?>
+                      <a href="<?= e($topLinkAdminHref) ?>"><?= e((string) ($topLink['titulo'] ?? 'Link')) ?></a>
+                    <?php else: ?>
+                      <span><?= e((string) ($topLink['titulo'] ?? 'Link')) ?></span>
+                    <?php endif; ?>
+                  </div>
+                  <div class="dashboard-link-subtitle"><?= e(link_type_label((string) ($topLink['tipo'] ?? ''), (int) ($topLink['promocao'] ?? 0) === 1)) ?><?php if ($topLinkSlug !== ''): ?> &bull; /link/<?= e($topLinkSlug) ?><?php endif; ?></div>
                 </div>
                 <div class="dashboard-link-metric">
                   <strong><?= fmt((int) ($topLink['total_clicks'] ?? 0)) ?></strong>
@@ -920,8 +909,12 @@ $todayCards = [
 
             <?php if ($postId > 0): ?>
               <div class="dashboard-recent-actions">
-                <a href="<?= e(url('/admin/editar-post?id=' . $postId)) ?>" class="admin-btn admin-btn-secondary">Editar</a>
-                <a href="<?= e(url('/admin/excluir-post?id=' . $postId)) ?>" class="admin-btn admin-btn-danger">Excluir</a>
+                <a href="<?= e(url('/admin/editar-post?id=' . $postId)) ?>" class="dashboard-recent-action" title="Editar post" aria-label="Editar post">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </a>
+                <a href="<?= e(url('/admin/excluir-post?id=' . $postId)) ?>" class="dashboard-recent-action dashboard-recent-action-danger" title="Excluir post" aria-label="Excluir post">
+                  <i class="fa-solid fa-trash"></i>
+                </a>
               </div>
             <?php endif; ?>
           </article>

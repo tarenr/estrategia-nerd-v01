@@ -1,4 +1,8 @@
 <?php
+if (!site_section_visible_on_home('sobre')) {
+    return;
+}
+
 $aboutMark = (string) ($about_mark ?? '');
 $bioTitle = (string) ($bio_title ?? 'Estrategia Nerd');
 ?>

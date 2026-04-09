@@ -1,4 +1,8 @@
 <?php
+if (!site_section_visible_on_home('blog')) {
+    return;
+}
+
 $latestPosts = $latest_posts ?? [];
 ?>
 
@@ -78,7 +82,7 @@ $latestPosts = $latest_posts ?? [];
           </div>
 
           <div class="text-center mt-12">
-              <a href="<?= htmlspecialchars(url('/blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-block px-8 py-4 border-2 border-cyan-500/50 text-cyan-400 font-bold text-lg rounded-full hover:bg-cyan-500/10 transition-all hover:border-cyan-400">
+              <a href="<?= htmlspecialchars(site_section_href('blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-block px-8 py-4 border-2 border-cyan-500/50 text-cyan-400 font-bold text-lg rounded-full hover:bg-cyan-500/10 transition-all hover:border-cyan-400">
                   Ver todos os posts
               </a>
           </div>

@@ -32,9 +32,40 @@ $rawPath = rtrim($rawPath, '/') ?: '/';
 
 $isAdminDashboard = (bool) preg_match('#/admin$#', $rawPath);
 $user = Auth::user() ?? [];
-$userName = trim((string) ($user['usuario'] ?? 'Equipe'));
-$userRole = 'Administrador';
-$userInitial = strtoupper(substr($userName !== '' ? $userName : 'E', 0, 1));
+$userName = trim((string) ($user['nome'] ?? $user['usuario'] ?? 'Equipe'));
+if ($userName === '') {
+    $userName = 'Equipe';
+}
+
+$userRoleKey = trim((string) ($user['papel'] ?? 'admin'));
+$userRoleMap = [
+    'admin' => 'Administrador',
+    'editor' => 'Editor',
+];
+$userRole = $userRoleMap[$userRoleKey] ?? 'Equipe';
+
+$userAvatarType = trim((string) ($user['avatar_tipo'] ?? 'icone'));
+$userAvatarIcon = trim((string) ($user['avatar_icone'] ?? 'fa-solid fa-user'));
+$userAvatarColor = trim((string) ($user['avatar_cor'] ?? '#38bdf8'));
+if (!preg_match('/^#[0-9a-fA-F]{6}$/', $userAvatarColor)) {
+    $userAvatarColor = '#38bdf8';
+}
+
+$userAvatarImage = trim((string) ($user['avatar_imagem'] ?? ''));
+$userAvatarFocalX = max(0.0, min(100.0, (float) ($user['avatar_focal_x'] ?? 50.0)));
+$userAvatarFocalY = max(0.0, min(100.0, (float) ($user['avatar_focal_y'] ?? 50.0)));
+$userAvatarObjectPosition = 'object-position: ' . number_format($userAvatarFocalX, 2, '.', '') . '% ' . number_format($userAvatarFocalY, 2, '.', '') . '%;';
+$userAvatarUrl = '';
+if ($userAvatarType === 'foto' && $userAvatarImage !== '') {
+    $userAvatarUrl = preg_match('~^https?://~i', $userAvatarImage)
+        ? $userAvatarImage
+        : url('/' . ltrim($userAvatarImage, '/'));
+}
+
+$userAvatarStyle = $userAvatarUrl === ''
+    ? 'background: linear-gradient(135deg, ' . $userAvatarColor . ', rgba(15, 23, 42, 0.92));'
+    : '';
+
 $adminFavicon = (string) portal_config('favicon_url', '');
 $adminFavicon = $adminFavicon !== ''
     ? (preg_match('~^https?://~i', $adminFavicon) ? $adminFavicon : url('/' . ltrim($adminFavicon, '/')))
@@ -95,7 +126,13 @@ $adminFavicon = $adminFavicon !== ''
 
               <div class="admin-sidebar-footer">
                 <div class="admin-sidebar-user-card">
-                  <div class="admin-sidebar-user-thumb" aria-hidden="true"><?= htmlspecialchars($userInitial, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="admin-sidebar-user-thumb<?= $userAvatarUrl !== '' ? ' has-photo' : '' ?>" aria-hidden="true"<?php if ($userAvatarStyle !== ''): ?> style="<?= htmlspecialchars($userAvatarStyle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"<?php endif; ?>>
+                    <?php if ($userAvatarUrl !== ''): ?>
+                      <img src="<?= htmlspecialchars($userAvatarUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($userName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" style="<?= htmlspecialchars($userAvatarObjectPosition, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    <?php else: ?>
+                      <i class="<?= htmlspecialchars($userAvatarIcon, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"></i>
+                    <?php endif; ?>
+                  </div>
                   <div class="min-w-0" data-sb-text>
                     <div class="admin-sidebar-user-name"><?= htmlspecialchars($userName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                     <div class="admin-sidebar-user-role"><?= htmlspecialchars($userRole, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>

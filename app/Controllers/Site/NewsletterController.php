@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controllers\Site;
@@ -12,6 +13,12 @@ final class NewsletterController
     public function subscribe(): void
     {
         header('Content-Type: application/json; charset=UTF-8');
+
+        if (!site_section_public_active('newsletter')) {
+            http_response_code(404);
+            echo json_encode(['ok' => false, 'message' => 'Newsletter indisponivel no momento.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
 
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             http_response_code(419);
