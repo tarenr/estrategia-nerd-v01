@@ -159,7 +159,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
           <div class="grid lg:grid-cols-2">
             <div class="h-64 lg:h-auto bg-gradient-to-br from-cyan-600 via-blue-700 to-purple-800 relative">
               <?php if ((string) ($featured['imagem'] ?? '') !== ''): ?>
-                <img src="<?= htmlspecialchars((string) $featured['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($featured['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
+                <img src="<?= htmlspecialchars((string) $featured['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars(public_title((string) ($featured['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
               <?php else: ?>
                 <div class="absolute inset-0 flex items-center justify-center">
                   <svg class="w-32 h-32 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +180,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
                 <span><?= (int) ($featured['tempo_leitura'] ?? 5) ?> min leitura</span>
               </div>
               <h2 class="font-orbitron text-3xl lg:text-4xl font-bold text-white mb-4 hover:text-cyan-400 transition-colors">
-                <a href="<?= htmlspecialchars((string) ($featured['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars((string) ($featured['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+                <a href="<?= htmlspecialchars((string) ($featured['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars(public_title((string) ($featured['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
               </h2>
               <p class="text-gray-400 text-lg mb-6 leading-relaxed">
                 <?= htmlspecialchars((string) ($featured['resumo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
@@ -233,7 +233,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
                 <div class="relative h-48 overflow-hidden">
                   <div class="absolute inset-0 bg-gradient-to-br <?= $tone['hero'] ?>"></div>
                   <?php if ((string) ($post['imagem'] ?? '') !== ''): ?>
-                    <img src="<?= htmlspecialchars((string) $post['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($post['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
+                    <img src="<?= htmlspecialchars((string) $post['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
                     <div class="absolute inset-0 bg-slate-950/20"></div>
                   <?php else: ?>
                     <div class="absolute inset-0 flex items-center justify-center">
@@ -251,7 +251,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
                     <span><?= (int) ($post['tempo_leitura'] ?? 5) ?> min leitura</span>
                   </div>
                   <h3 class="font-orbitron text-xl font-bold text-white mb-3 transition-colors line-clamp-2 <?= $tone['title'] ?>">
-                    <?= htmlspecialchars((string) ($post['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                    <?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                   </h3>
                   <p class="text-gray-400 text-sm mb-4">
                     <?= htmlspecialchars((string) ($post['resumo'] ?? 'Materia publicada no portal.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>

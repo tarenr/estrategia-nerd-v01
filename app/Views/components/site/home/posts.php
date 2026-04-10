@@ -48,7 +48,7 @@ $latestPosts = $latest_posts ?? [];
                           <div class="relative h-48 overflow-hidden">
                               <div class="absolute inset-0 bg-gradient-to-br <?= $cardTone['hero'] ?>"></div>
                               <?php if ((string) ($post['imagem'] ?? '') !== ''): ?>
-                                  <img src="<?= htmlspecialchars((string) $post['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($post['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
+                                  <img src="<?= htmlspecialchars((string) $post['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
                                   <div class="absolute inset-0 bg-slate-950/20"></div>
                               <?php else: ?>
                                   <div class="absolute inset-0 flex items-center justify-center">
@@ -64,7 +64,7 @@ $latestPosts = $latest_posts ?? [];
                                   <span><?= (int) ($post['tempo_leitura'] ?? 5) ?> min leitura</span>
                               </div>
                               <h3 class="font-orbitron text-xl font-bold text-white mb-3 transition-colors <?= $cardTone['title'] ?>">
-                                  <?= htmlspecialchars((string) ($post['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                                  <?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                               </h3>
                               <p class="text-gray-400 text-sm mb-4">
                                   <?= htmlspecialchars((string) ($post['resumo'] ?? 'Materia publicada no portal.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>

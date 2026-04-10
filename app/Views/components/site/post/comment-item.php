@@ -10,6 +10,33 @@ $isHidden = (bool) ($is_hidden ?? false);
 $postSlug = (string) ($post_slug ?? '');
 $brandSymbol = (string) ($brand_symbol ?? '');
 $isAdmin = (bool) ($comment['is_admin'] ?? false);
+$commentName = trim((string) ($comment['nome'] ?? 'Leitor'));
+if ($commentName === '') {
+    $commentName = 'Leitor';
+}
+$initialsSource = function_exists('mb_substr') ? mb_substr($commentName, 0, 2) : substr($commentName, 0, 2);
+$commentInitials = strtoupper((string) $initialsSource);
+
+$adminAvatarType = trim((string) ($comment['admin_avatar_type'] ?? ''));
+$adminAvatarIcon = trim((string) ($comment['admin_avatar_icon'] ?? 'fa-solid fa-user'));
+$adminAvatarColor = trim((string) ($comment['admin_avatar_color'] ?? '#38bdf8'));
+if (!preg_match('/^#[0-9a-fA-F]{6}$/', $adminAvatarColor)) {
+    $adminAvatarColor = '#38bdf8';
+}
+$adminAvatarImage = trim((string) ($comment['admin_avatar_image'] ?? ''));
+$adminAvatarFocalX = max(0.0, min(100.0, (float) ($comment['admin_avatar_focal_x'] ?? 50.0)));
+$adminAvatarFocalY = max(0.0, min(100.0, (float) ($comment['admin_avatar_focal_y'] ?? 50.0)));
+$adminAvatarObjectPosition = 'object-position: ' . number_format($adminAvatarFocalX, 2, '.', '') . '% ' . number_format($adminAvatarFocalY, 2, '.', '') . '%;';
+
+$avatarClassName = 'comment-avatar' . ($isAdmin ? ' comment-avatar-admin' : '');
+$avatarStyle = '';
+if ($isAdmin && $adminAvatarType === 'foto' && $adminAvatarImage !== '') {
+    $avatarClassName .= ' has-photo';
+} elseif ($isAdmin) {
+    $avatarClassName .= ' has-icon';
+    $avatarStyle = '--comment-admin-avatar-color: ' . $adminAvatarColor . ';';
+}
+
 $className = 'comment';
 if ($level > 0) {
     $className .= ' comment-child';
@@ -25,16 +52,20 @@ if ($isHidden) {
   <div class="comment-header">
     <div class="comment-header-top">
       <div class="comment-author">
-        <div class="comment-avatar<?= $isAdmin ? ' comment-avatar-admin' : '' ?>">
-          <?php if ($isAdmin && $brandSymbol !== ''): ?>
+        <div class="<?= htmlspecialchars($avatarClassName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"<?= $avatarStyle !== '' ? ' style="' . htmlspecialchars($avatarStyle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"' : '' ?>>
+          <?php if ($isAdmin && $adminAvatarType === 'foto' && $adminAvatarImage !== ''): ?>
+            <img src="<?= htmlspecialchars($adminAvatarImage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($commentName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="comment-admin-user-photo" style="<?= htmlspecialchars($adminAvatarObjectPosition, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+          <?php elseif ($isAdmin && $adminAvatarIcon !== ''): ?>
+            <i class="<?= htmlspecialchars($adminAvatarIcon, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> comment-admin-user-icon" aria-hidden="true"></i>
+          <?php elseif ($isAdmin && $brandSymbol !== ''): ?>
             <img src="<?= htmlspecialchars($brandSymbol, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="Equipe Estrategia Nerd" class="comment-admin-mark">
           <?php else: ?>
-            <?= htmlspecialchars(strtoupper(substr((string) ($comment['nome'] ?? 'L'), 0, 2)), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+            <?= htmlspecialchars($commentInitials, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
           <?php endif; ?>
         </div>
         <div>
           <div class="comment-author-name">
-            <?= htmlspecialchars((string) ($comment['nome'] ?? 'Leitor'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+            <?= htmlspecialchars($commentName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
             <?php if ($isAdmin): ?>
               <span class="comment-admin-badge">Equipe</span>
             <?php endif; ?>

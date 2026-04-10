@@ -261,12 +261,31 @@ final class PostService
         $roots = [];
 
         foreach ($items as $item) {
+            $storedName = trim((string) ($item['nome'] ?? ''));
+            $adminUserId = (int) ($item['admin_user_id'] ?? 0);
+            $adminDisplayName = trim((string) ($item['admin_usuario'] ?? ''));
+            if ($adminDisplayName === '') {
+                $adminDisplayName = trim((string) ($item['admin_nome'] ?? ''));
+            }
+
+            $isAdmin = $adminUserId > 0 || $this->isAdminComment((string) ($item['email'] ?? ''), (string) ($item['nome'] ?? ''));
+            $displayName = $isAdmin && $adminDisplayName !== ''
+                ? $adminDisplayName
+                : ($storedName !== '' ? $storedName : 'Leitor');
+
             $comment = [
                 'id' => (int) ($item['id'] ?? 0),
-                'nome' => (string) ($item['nome'] ?? 'Leitor'),
+                'nome' => $displayName,
                 'email' => (string) ($item['email'] ?? ''),
                 'parent_id' => (int) ($item['parent_id'] ?? 0),
-                'is_admin' => $this->isAdminComment((string) ($item['email'] ?? ''), (string) ($item['nome'] ?? '')),
+                'is_admin' => $isAdmin,
+                'admin_user_id' => $adminUserId,
+                'admin_avatar_type' => trim((string) ($item['admin_avatar_tipo'] ?? '')),
+                'admin_avatar_icon' => trim((string) ($item['admin_avatar_icone'] ?? 'fa-solid fa-user')),
+                'admin_avatar_color' => trim((string) ($item['admin_avatar_cor'] ?? '#38bdf8')),
+                'admin_avatar_image' => $this->toPublicUrl((string) ($item['admin_avatar_imagem'] ?? '')),
+                'admin_avatar_focal_x' => max(0.0, min(100.0, (float) ($item['admin_avatar_focal_x'] ?? 50.0))),
+                'admin_avatar_focal_y' => max(0.0, min(100.0, (float) ($item['admin_avatar_focal_y'] ?? 50.0))),
                 'comentario' => nl2br(htmlspecialchars((string) ($item['comentario'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')),
                 'data' => $this->formatCommentDate((string) ($item['data'] ?? '')),
                 'children' => [],
@@ -511,12 +530,12 @@ final class PostService
     {
         $value = strtolower(trim($value));
         $map = [
-            'á' => 'a', 'à' => 'a', 'ã' => 'a', 'â' => 'a', 'ä' => 'a',
-            'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e',
-            'í' => 'i', 'ì' => 'i', 'î' => 'i', 'ï' => 'i',
-            'ó' => 'o', 'ò' => 'o', 'õ' => 'o', 'ô' => 'o', 'ö' => 'o',
-            'ú' => 'u', 'ù' => 'u', 'û' => 'u', 'ü' => 'u',
-            'ç' => 'c',
+            'Ã¡' => 'a', 'Ã ' => 'a', 'Ã£' => 'a', 'Ã¢' => 'a', 'Ã¤' => 'a',
+            'Ã©' => 'e', 'Ã¨' => 'e', 'Ãª' => 'e', 'Ã«' => 'e',
+            'Ã­' => 'i', 'Ã¬' => 'i', 'Ã®' => 'i', 'Ã¯' => 'i',
+            'Ã³' => 'o', 'Ã²' => 'o', 'Ãµ' => 'o', 'Ã´' => 'o', 'Ã¶' => 'o',
+            'Ãº' => 'u', 'Ã¹' => 'u', 'Ã»' => 'u', 'Ã¼' => 'u',
+            'Ã§' => 'c',
         ];
         $value = strtr($value, $map);
         $value = preg_replace('/[^a-z0-9]+/i', '-', $value) ?? $value;
@@ -556,7 +575,8 @@ final class PostService
                 continue;
             }
 
-            if ($this->isAdminComment((string) ($item['email'] ?? ''), (string) ($item['nome'] ?? ''))) {
+            $adminUserId = (int) ($item['admin_user_id'] ?? 0);
+            if ($adminUserId > 0 || $this->isAdminComment((string) ($item['email'] ?? ''), (string) ($item['nome'] ?? ''))) {
                 continue;
             }
 

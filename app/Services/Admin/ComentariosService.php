@@ -80,6 +80,10 @@ final class ComentariosService
         if ($usuario === '') {
             $usuario = 'Equipe Estrategia Nerd';
         }
+        $displayName = trim((string) ($adminUser['usuario'] ?? $adminUser['nome'] ?? $usuario));
+        if ($displayName === '') {
+            $displayName = $usuario;
+        }
         $email = strtolower(preg_replace('/[^a-z0-9]+/i', '.', $usuario) ?? 'equipe');
         $email = trim($email, '.');
         if ($email === '') {
@@ -90,10 +94,11 @@ final class ComentariosService
         $this->comentarios->insertReply([
             'post_id' => (int) ($comment['post_id'] ?? 0),
             'parent_id' => (int) ($comment['id'] ?? 0),
-            'nome' => $usuario,
+            'nome' => $displayName,
             'email' => $email,
             'comentario' => $replyBody,
             'status' => 'aprovado',
+            'admin_user_id' => (int) ($adminUser['id'] ?? 0),
         ]);
 
         return ['ok' => true];
@@ -124,7 +129,8 @@ final class ComentariosService
     {
         return array_map(static function (array $item): array {
             $email = trim((string) ($item['email'] ?? ''));
-            $isAdmin = $email !== '' && str_ends_with(strtolower($email), '@admin.estrategia-nerd.local');
+            $adminUserId = (int) ($item['admin_user_id'] ?? 0);
+            $isAdmin = $adminUserId > 0 || ($email !== '' && str_ends_with(strtolower($email), '@admin.estrategia-nerd.local'));
 
             return [
                 'id' => (int) ($item['id'] ?? 0),

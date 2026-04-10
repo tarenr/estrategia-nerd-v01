@@ -289,3 +289,10 @@ if (!function_exists('site_contact_fallback_href')) {
         return url('/');
     }
 }
+if (!function_exists('public_title')) {
+    function public_title(string $title): string
+    {
+        $clean = preg_replace('/\[\[(.*?)\]\]/u', '$1', $title);
+        return is_string($clean) ? $clean : $title;
+    }
+}

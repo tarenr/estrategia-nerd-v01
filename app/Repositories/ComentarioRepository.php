@@ -107,7 +107,7 @@ final class ComentarioRepository
                                 SELECT 1
                                 FROM comentarios cr
                                 WHERE cr.parent_id = c.id
-                                  AND LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local'
+                                  AND (cr.admin_user_id IS NOT NULL OR LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local')
                             )
                             THEN 1 ELSE 0
                         END
@@ -181,13 +181,13 @@ final class ComentarioRepository
                         SELECT 1
                         FROM comentarios cr
                         WHERE cr.parent_id = c.id
-                          AND LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local'
+                          AND (cr.admin_user_id IS NOT NULL OR LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local')
                     ) AS has_admin_reply,
                     (
                         SELECT COUNT(*)
                         FROM comentarios cr_count
                         WHERE cr_count.parent_id = c.id
-                          AND LOWER(COALESCE(cr_count.email, '')) LIKE '%@admin.estrategia-nerd.local'
+                          AND (cr_count.admin_user_id IS NOT NULL OR LOWER(COALESCE(cr_count.email, '')) LIKE '%@admin.estrategia-nerd.local')
                     ) AS admin_reply_count,
                     parent.nome AS parent_nome,
                     parent.status AS parent_status,
@@ -226,7 +226,7 @@ final class ComentarioRepository
                     COUNT(c.id) AS total_comentarios
                 FROM posts p
                 INNER JOIN comentarios c ON c.post_id = p.id
-                   AND LOWER(COALESCE(c.email, '')) NOT LIKE '%@admin.estrategia-nerd.local'
+                   AND COALESCE(c.admin_user_id, 0) = 0 AND LOWER(COALESCE(c.email, '')) NOT LIKE '%@admin.estrategia-nerd.local'
                 GROUP BY p.id, p.titulo
                 ORDER BY p.titulo ASC, p.id DESC";
         $stmt = $this->pdo->query($sql);
@@ -254,7 +254,7 @@ final class ComentarioRepository
 
     public function findApprovedById(int $id): ?array
     {
-        $sql = 'SELECT id, post_id, nome, email, comentario, status, parent_id, data FROM comentarios WHERE id = :id AND status = :status LIMIT 1';
+        $sql = 'SELECT id, post_id, nome, email, comentario, status, parent_id, admin_user_id, data FROM comentarios WHERE id = :id AND status = :status LIMIT 1';
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->bindValue(':status', 'aprovado', PDO::PARAM_STR);
@@ -273,6 +273,7 @@ final class ComentarioRepository
                     c.comentario,
                     c.status,
                     c.parent_id,
+                    c.admin_user_id,
                     c.data
                 FROM comentarios c
                 WHERE c.parent_id = :parent_id
@@ -294,7 +295,7 @@ final class ComentarioRepository
 
     public function insertReply(array $data): int
     {
-        $sql = 'INSERT INTO comentarios (post_id, nome, email, comentario, status, parent_id, respondido) VALUES (:post_id, :nome, :email, :comentario, :status, :parent_id, 0)';
+        $sql = 'INSERT INTO comentarios (post_id, nome, email, comentario, status, parent_id, admin_user_id, respondido) VALUES (:post_id, :nome, :email, :comentario, :status, :parent_id, :admin_user_id, 0)';
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':post_id', (int) ($data['post_id'] ?? 0), PDO::PARAM_INT);
         $stmt->bindValue(':nome', (string) ($data['nome'] ?? ''), PDO::PARAM_STR);
@@ -302,6 +303,11 @@ final class ComentarioRepository
         $stmt->bindValue(':comentario', (string) ($data['comentario'] ?? ''), PDO::PARAM_STR);
         $stmt->bindValue(':status', (string) ($data['status'] ?? 'aprovado'), PDO::PARAM_STR);
         $stmt->bindValue(':parent_id', (int) ($data['parent_id'] ?? 0), PDO::PARAM_INT);
+        if ((int) ($data['admin_user_id'] ?? 0) > 0) {
+            $stmt->bindValue(':admin_user_id', (int) ($data['admin_user_id'] ?? 0), PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue(':admin_user_id', null, PDO::PARAM_NULL);
+        }
         $stmt->execute();
 
         return (int) $this->pdo->lastInsertId();
@@ -309,11 +315,29 @@ final class ComentarioRepository
 
     public function listApprovedByPost(int $postId): array
     {
-        $sql = "SELECT id, post_id, nome, email, comentario, status, parent_id, data
-                FROM comentarios
-                WHERE post_id = :post_id
-                  AND status = 'aprovado'
-                ORDER BY parent_id IS NOT NULL, COALESCE(parent_id, id), data ASC, id ASC";
+        $sql = "SELECT
+                    c.id,
+                    c.post_id,
+                    c.nome,
+                    c.email,
+                    c.comentario,
+                    c.status,
+                    c.parent_id,
+                    c.admin_user_id,
+                    c.data,
+                    u.nome AS admin_nome,
+                    u.usuario AS admin_usuario,
+                    u.avatar_tipo AS admin_avatar_tipo,
+                    u.avatar_icone AS admin_avatar_icone,
+                    u.avatar_cor AS admin_avatar_cor,
+                    u.avatar_imagem AS admin_avatar_imagem,
+                    u.avatar_focal_x AS admin_avatar_focal_x,
+                    u.avatar_focal_y AS admin_avatar_focal_y
+                FROM comentarios c
+                LEFT JOIN usuarios u ON u.id = c.admin_user_id
+                WHERE c.post_id = :post_id
+                  AND c.status = 'aprovado'
+                ORDER BY c.parent_id IS NOT NULL, COALESCE(c.parent_id, c.id), c.data ASC, c.id ASC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':post_id', $postId, PDO::PARAM_INT);
         $stmt->execute();
@@ -323,7 +347,7 @@ final class ComentarioRepository
 
     public function insertPublic(array $data): int
     {
-        $sql = 'INSERT INTO comentarios (post_id, nome, email, comentario, status, parent_id, respondido) VALUES (:post_id, :nome, :email, :comentario, :status, :parent_id, 0)';
+        $sql = 'INSERT INTO comentarios (post_id, nome, email, comentario, status, parent_id, admin_user_id, respondido) VALUES (:post_id, :nome, :email, :comentario, :status, :parent_id, :admin_user_id, 0)';
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':post_id', (int) ($data['post_id'] ?? 0), PDO::PARAM_INT);
         $stmt->bindValue(':nome', (string) ($data['nome'] ?? ''), PDO::PARAM_STR);
@@ -336,6 +360,7 @@ final class ComentarioRepository
         } else {
             $stmt->bindValue(':parent_id', null, PDO::PARAM_NULL);
         }
+        $stmt->bindValue(':admin_user_id', null, PDO::PARAM_NULL);
         $stmt->execute();
 
         return (int) $this->pdo->lastInsertId();
@@ -350,7 +375,7 @@ final class ComentarioRepository
 
     private function buildAdminWhere(array $filters): array
     {
-        $where = ["LOWER(COALESCE(c.email, '')) NOT LIKE '%@admin.estrategia-nerd.local'"];
+        $where = ["COALESCE(c.admin_user_id, 0) = 0", "LOWER(COALESCE(c.email, '')) NOT LIKE '%@admin.estrategia-nerd.local'"];
         $params = [];
         $busca = trim((string) ($filters['busca'] ?? ''));
         $status = trim((string) ($filters['status'] ?? ''));
@@ -371,9 +396,9 @@ final class ComentarioRepository
         }
 
         if ($respondido === '1') {
-            $where[] = "EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id AND LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local')";
+            $where[] = "EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id AND (cr.admin_user_id IS NOT NULL OR LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local'))";
         } elseif ($respondido === '0') {
-            $where[] = "NOT EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id AND LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local')";
+            $where[] = "NOT EXISTS (SELECT 1 FROM comentarios cr WHERE cr.parent_id = c.id AND (cr.admin_user_id IS NOT NULL OR LOWER(COALESCE(cr.email, '')) LIKE '%@admin.estrategia-nerd.local'))";
         }
 
         if ($postId > 0) {
