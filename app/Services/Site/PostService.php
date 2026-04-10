@@ -62,6 +62,70 @@ final class PostService
         ];
     }
 
+    public function getUnavailableViewModel(string $slug): array
+    {
+        $matched = $this->posts->findAnyBySlug($slug);
+        $matchedViaHistory = false;
+
+        if (!is_array($matched)) {
+            $matched = $this->posts->findAnyByHistoricalSlug($slug);
+            $matchedViaHistory = is_array($matched);
+        }
+
+        $reason = 'not_found';
+        $headline = 'Post nao encontrado';
+        $message = 'Talvez esse conteudo tenha mudado de endereco, sido removido ou ainda nao esteja disponivel.';
+        $note = 'Voce pode voltar para o blog ou continuar explorando os artigos mais recentes.';
+
+        if (is_array($matched)) {
+            $status = trim((string) ($matched['status'] ?? ''));
+            $publishedAt = trim((string) ($matched['data_publicacao'] ?? ''));
+            $publishedLabel = $publishedAt !== '' ? $this->formatDate($publishedAt) : '';
+
+            if ($status === 'agendado') {
+                $reason = 'scheduled';
+                $headline = 'Este post ainda nao foi publicado';
+                $message = $publishedLabel !== ''
+                    ? 'O conteudo existe e esta agendado para ' . $publishedLabel . '.'
+                    : 'O conteudo existe, mas ainda esta agendado para publicacao.';
+                $note = 'Quando a publicacao for liberada, esse endereco abrira normalmente.';
+            } elseif ($status !== 'publicado') {
+                $reason = 'unavailable';
+                $headline = 'Este post nao esta disponivel no momento';
+                $message = 'O conteudo existe, mas ainda nao esta publico.';
+                $note = 'Isso pode acontecer quando o post esta em rascunho ou temporariamente fora do ar.';
+            }
+
+            if ($matchedViaHistory && $reason !== 'not_found') {
+                $note .= ' Esse endereco tambem pode ser um slug antigo desse post.';
+            }
+        }
+
+        $recent = array_map(
+            fn (array $item): array => $this->normalizeRelatedPost($item),
+            $this->posts->latestPublicWithCategoria(3)
+        );
+
+        return [
+            'title' => $headline . ' | ' . (string) portal_config('nome_site', 'Estrategia Nerd'),
+            'meta_description' => $message,
+            'site_chrome' => false,
+            'post_unavailable' => true,
+            'reason' => $reason,
+            'headline' => $headline,
+            'message' => $message,
+            'note' => $note,
+            'requested_slug' => $slug,
+            'matched_post' => is_array($matched) ? [
+                'titulo' => (string) ($matched['titulo'] ?? ''),
+                'slug' => (string) ($matched['slug'] ?? ''),
+                'status' => (string) ($matched['status'] ?? ''),
+                'data' => isset($publishedLabel) ? $publishedLabel : '',
+            ] : null,
+            'recent_posts' => $recent,
+            'site_meta' => $this->siteMeta(),
+        ];
+    }
     public function submitComment(string $slug, array $payload): array
     {
         $row = $this->posts->findPublicBySlug($slug);

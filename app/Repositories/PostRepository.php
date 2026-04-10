@@ -219,6 +219,36 @@ final class PostRepository
         return is_array($row) ? $row : null;
     }
 
+    public function findAnyBySlug(string $slug): ?array
+    {
+        $sql = "SELECT id, titulo, slug, status, data_publicacao
+                FROM posts
+                WHERE slug = :slug
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    public function findAnyByHistoricalSlug(string $slug): ?array
+    {
+        $sql = "SELECT p.id, p.titulo, p.slug, p.status, p.data_publicacao
+                FROM post_slug_history h
+                INNER JOIN posts p ON p.id = h.post_id
+                WHERE h.slug = :slug
+                ORDER BY h.id DESC
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
     public function incrementViews(int $id): void
     {
         $stmt = $this->pdo->prepare('UPDATE posts SET views = COALESCE(views, 0) + 1 WHERE id = :id LIMIT 1');

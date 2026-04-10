@@ -28,7 +28,7 @@ final class PostController
         $viewModel = $this->service()->getViewModel($slug, $state);
         if (!is_array($viewModel)) {
             http_response_code(404);
-            echo 'Post nao encontrado.';
+            View::render('site/post-unavailable', $this->service()->getUnavailableViewModel($slug));
             return;
         }
 
