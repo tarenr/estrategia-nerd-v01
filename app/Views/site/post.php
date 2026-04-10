@@ -66,7 +66,10 @@ $commentMessage = trim((string) ($commentState['message'] ?? ''));
 $commentStatus = trim((string) ($commentState['status'] ?? ''));
 $commentOld = is_array($commentState['old'] ?? null) ? $commentState['old'] : [];
 $rawTitle = (string) ($post['titulo'] ?? '');
-$plainTitle = preg_replace('/\[\[(.*?)\]\]/u', '$1', $rawTitle) ?? $rawTitle;
+$stripHighlightedTitle = static function (string $value): string {
+    return preg_replace('/\[\[(.*?)\]\]/u', '$1', $value) ?? $value;
+};
+$plainTitle = $stripHighlightedTitle($rawTitle);
 $renderHighlightedTitle = static function (string $value): string {
     $parts = preg_split('/(\[\[.*?\]\])/u', $value, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
     if (!is_array($parts) || $parts === []) {
@@ -171,8 +174,8 @@ $renderHighlightedTitle = static function (string $value): string {
           <?php endif; ?>
         </aside>
 
-        <div class="lg:col-span-9">
-          <div class="article-content max-w-3xl mx-auto">
+        <div class="lg:col-span-9 min-w-0">
+          <div class="article-content max-w-3xl mx-auto w-full min-w-0">
             <?php if ((string) ($post['imagem'] ?? '') !== ''): ?>
               <div class="rounded-2xl overflow-hidden mb-8 article-featured-media">
                 <img src="<?= htmlspecialchars((string) ($post['imagem'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($plainTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
@@ -204,9 +207,9 @@ $renderHighlightedTitle = static function (string $value): string {
               <div class="post-nav">
                 <?php if (is_array($previous)): ?>
                   <a href="<?= htmlspecialchars((string) ($previous['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="post-nav-item">
-                    <span class="text-gray-400 text-sm mb-2 block">← Post anterior</span>
+                    <span class="text-gray-400 text-sm mb-2 block">&larr; Post anterior</span>
                     <h4 class="font-orbitron font-bold text-white hover:text-cyan-400 transition-colors">
-                      <?= htmlspecialchars((string) ($previous['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                      <?= htmlspecialchars($stripHighlightedTitle((string) ($previous['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                     </h4>
                   </a>
                 <?php else: ?>
@@ -215,9 +218,9 @@ $renderHighlightedTitle = static function (string $value): string {
 
                 <?php if (is_array($next)): ?>
                   <a href="<?= htmlspecialchars((string) ($next['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="post-nav-item next">
-                    <span class="text-gray-400 text-sm mb-2 block">Proximo post →</span>
+                    <span class="text-gray-400 text-sm mb-2 block">Proximo post &rarr;</span>
                     <h4 class="font-orbitron font-bold text-white hover:text-cyan-400 transition-colors">
-                      <?= htmlspecialchars((string) ($next['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                      <?= htmlspecialchars($stripHighlightedTitle((string) ($next['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                     </h4>
                   </a>
                 <?php else: ?>
@@ -299,7 +302,7 @@ $renderHighlightedTitle = static function (string $value): string {
             <a href="<?= htmlspecialchars((string) ($item['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="related-card bg-slate-800/50 rounded-2xl overflow-hidden group">
               <div class="h-48 bg-gradient-to-br <?= $tone ?> flex items-center justify-center relative overflow-hidden">
                 <?php if ((string) ($item['imagem'] ?? '') !== ''): ?>
-                  <img src="<?= htmlspecialchars((string) ($item['imagem'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
+                  <img src="<?= htmlspecialchars((string) ($item['imagem'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($stripHighlightedTitle((string) ($item['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
                   <div class="absolute inset-0 bg-slate-950/20"></div>
                 <?php else: ?>
                   <svg class="w-16 h-16 text-white/30 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,7 +313,7 @@ $renderHighlightedTitle = static function (string $value): string {
               <div class="p-6">
                 <div class="text-cyan-300 text-xs font-semibold tracking-[0.16em] uppercase mb-3"><?= htmlspecialchars((string) ($item['categoria_nome'] ?? 'Blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 <h3 class="font-orbitron text-xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">
-                  <?= htmlspecialchars((string) ($item['titulo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                  <?= htmlspecialchars($stripHighlightedTitle((string) ($item['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                 </h3>
                 <p class="text-gray-400 text-sm">
                   <?= htmlspecialchars((string) ($item['resumo'] ?? 'Conteudo relacionado do portal.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>

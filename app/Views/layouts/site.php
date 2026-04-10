@@ -15,8 +15,8 @@ $isLogin = (bool) preg_match('#/login$#', $rawPath);
 $showSiteChrome = !$isLogin && (($site_chrome ?? true) === true);
 $homePage = (bool) ($home_page ?? false);
 
-$siteCssPath = dirname(__DIR__, 2) . '/public/assets/css/site.css';
-$siteHomeJsPath = dirname(__DIR__, 2) . '/public/assets/js/site-home.js';
+$siteCssPath = dirname(__DIR__, 3) . '/public/assets/css/site.css';
+$siteHomeJsPath = dirname(__DIR__, 3) . '/public/assets/js/site-home.js';
 $siteCssVersion = is_file($siteCssPath) ? (string) filemtime($siteCssPath) : '1';
 $siteHomeJsVersion = is_file($siteHomeJsPath) ? (string) filemtime($siteHomeJsPath) : '1';
 $brandLogo = (string) portal_config('logo_url', '');

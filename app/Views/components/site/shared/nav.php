@@ -26,12 +26,12 @@ $getDesktopClass = static function (array $item) use ($activePage): string {
 
 <nav class="site-nav fixed top-0 inset-x-0 z-50">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-20">
-      <a href="<?= htmlspecialchars($brandHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="flex items-center gap-3">
-        <div class="site-brand-orb pulse-glow">
+    <div class="site-nav-inner flex items-center justify-between h-16 sm:h-20 gap-3">
+      <a href="<?= htmlspecialchars($brandHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-brand-link flex items-center gap-3 min-w-0">
+        <div class="site-brand-orb pulse-glow shrink-0">
           <img src="<?= htmlspecialchars($brandSymbol, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($siteName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-brand-mark">
         </div>
-        <div>
+        <div class="site-brand-copy min-w-0">
           <div class="site-brand-title">
             <span class="site-brand-title-main"><?= htmlspecialchars($brandWordPrimary, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><span class="site-brand-title-accent"><?= htmlspecialchars($brandWordAccent, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
           </div>
@@ -47,7 +47,7 @@ $getDesktopClass = static function (array $item) use ($activePage): string {
         <?php endforeach; ?>
       </div>
 
-      <button type="button" class="md:hidden site-mobile-toggle" data-site-menu-toggle aria-expanded="false" aria-controls="siteMobileMenu">
+      <button type="button" class="md:hidden site-mobile-toggle shrink-0" data-site-menu-toggle aria-expanded="false" aria-controls="siteMobileMenu">
         <span></span><span></span><span></span>
       </button>
     </div>
