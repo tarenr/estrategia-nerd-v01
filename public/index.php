@@ -7,7 +7,7 @@
  * @version     1.0.5
  * @purpose     Front controller
  * @description Resolve rotas via config/routes.php e despacha para controllers.
- * @usage       Local usa /estrategia-nerd/public; produção pode ser raiz.
+ * @usage       Local usa /estrategia-nerd/public; producao pode ser raiz.
  * @notes       Contorna OPcache no dev ao carregar routes.php.
  * -----------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../bootstrap.php';
 
 use App\Support\Auth;
+use App\Support\View;
 
 $pdo = $GLOBALS['pdo'] ?? null;
 
@@ -46,7 +47,7 @@ if (function_exists('opcache_compile_file')) {
 $routes = include $routesFile;
 if (!is_array($routes)) {
     http_response_code(500);
-    echo 'Routes inválidas.';
+    echo 'Routes invalidas.';
     exit;
 }
 
@@ -56,7 +57,7 @@ $routeParams = [];
 foreach ($routes as $route) {
     [$m, $p, $handler, $middleware] = $route;
 
-    $p = rtrim((string)$p, '/') ?: '/';
+    $p = rtrim((string) $p, '/') ?: '/';
     if (strtoupper((string) $m) !== $method) {
         continue;
     }
@@ -103,18 +104,32 @@ foreach ($routes as $route) {
 if (!$match) {
     http_response_code(404);
 
-    // Debug mínimo: mostra path e as rotas carregadas (apenas em dev)
-    header('Content-Type: text/plain; charset=utf-8');
-    echo "404\n";
-    echo "URI: {$uri}\n";
-    echo "PATH: {$path}\n";
-    echo "METHOD: {$method}\n";
-    echo "ROUTES FILE: {$routesFile}\n";
-    echo "ROUTES MD5:  " . md5_file($routesFile) . "\n";
-    echo "ROUTES:\n";
-    foreach ($routes as $r) {
-        echo "- {$r[0]} {$r[1]}\n";
+    if (config('app.debug', false)) {
+        header('Content-Type: text/plain; charset=utf-8');
+        echo "404\n";
+        echo "URI: {$uri}\n";
+        echo "PATH: {$path}\n";
+        echo "METHOD: {$method}\n";
+        echo "ROUTES FILE: {$routesFile}\n";
+        echo "ROUTES MD5:  " . md5_file($routesFile) . "\n";
+        echo "ROUTES:\n";
+        foreach ($routes as $r) {
+            echo "- {$r[0]} {$r[1]}\n";
+        }
+        exit;
     }
+
+    if (str_starts_with($path, '/admin')) {
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Pagina nao encontrada.';
+        exit;
+    }
+
+    View::render('site/error-404', [
+        'title' => 'Pagina nao encontrada | Estrategia Nerd',
+        'meta_description' => 'A pagina solicitada nao foi encontrada no portal Estrategia Nerd.',
+        'requested_path' => $path,
+    ]);
     exit;
 }
 
@@ -131,7 +146,7 @@ if (is_array($handler) && count($handler) === 2) {
 
     if (!class_exists($controllerClass)) {
         http_response_code(500);
-        echo 'Controller não encontrado.';
+        echo 'Controller nao encontrado.';
         exit;
     }
 
@@ -150,7 +165,7 @@ if (is_array($handler) && count($handler) === 2) {
 
     if (!method_exists($controller, $controllerMethod)) {
         http_response_code(500);
-        echo 'Método do controller não encontrado.';
+        echo 'Metodo do controller nao encontrado.';
         exit;
     }
 
@@ -159,4 +174,4 @@ if (is_array($handler) && count($handler) === 2) {
 }
 
 http_response_code(500);
-echo 'Handler inválido.';
+echo 'Handler invalido.';

@@ -5,13 +5,13 @@
  * @project     Estrategia Nerd
  * @author      Taren Felipe Ribeiro
  * @version     1.0.0
- * @purpose     Inicializar a base técnica da aplicação.
- * @description Carrega variáveis de ambiente, configurações, sessão, helpers,
- *              tratamento de erros e conexão com o banco de dados.
+ * @purpose     Inicializar a base tecnica da aplicacao.
+ * @description Carrega variaveis de ambiente, configuracoes, sessao, helpers,
+ *              tratamento de erros e conexao com o banco de dados.
  * @usage       Deve ser carregado pelo front controller e pelos pontos centrais
- *              da aplicação antes de qualquer processamento.
- * @notes       Este arquivo prepara o sistema, mas não deve conter regra
- *              de negócio.
+ *              da aplicacao antes de qualquer processamento.
+ * @notes       Este arquivo prepara o sistema, mas nao deve conter regra
+ *              de negocio.
  * -----------------------------------------------------------------------------
  */
 
@@ -40,7 +40,7 @@ spl_autoload_register(function (string $class): void {
 
 /*
 |--------------------------------------------------------------------------
-| 1. Carregar variáveis do .env
+| 1. Carregar variaveis do .env
 |--------------------------------------------------------------------------
 */
 $envPath = __DIR__ . '/.env';
@@ -72,7 +72,7 @@ if (file_exists($envPath)) {
 
 /*
 |--------------------------------------------------------------------------
-| 2. Carregar configurações
+| 2. Carregar configuracoes
 |--------------------------------------------------------------------------
 */
 $GLOBALS['config'] = [
@@ -115,17 +115,24 @@ if (config('app.debug', false)) {
 
 /*
 |--------------------------------------------------------------------------
-| 6. Iniciar sessão
+| 6. Iniciar sessao
 |--------------------------------------------------------------------------
 */
 if (session_status() === PHP_SESSION_NONE) {
     session_name(config('app.session_name', 'estrategia_nerd_session'));
 
+    $forwardedProto = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
+    $httpsValue = strtolower((string) ($_SERVER['HTTPS'] ?? ''));
+    $serverPort = (string) ($_SERVER['SERVER_PORT'] ?? '');
+    $isSecureRequest = ($httpsValue !== '' && $httpsValue !== 'off')
+        || $forwardedProto === 'https'
+        || $serverPort === '443';
+
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
         'domain' => '',
-        'secure' => false,
+        'secure' => $isSecureRequest,
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
@@ -135,7 +142,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 /*
 |--------------------------------------------------------------------------
-| 7. Criar conexão PDO
+| 7. Criar conexao PDO
 |--------------------------------------------------------------------------
 */
 $db = $GLOBALS['config']['database'];
