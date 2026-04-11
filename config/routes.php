@@ -90,5 +90,7 @@ return [
     ['GET',  '/admin/excluir-comentario',  [\App\Controllers\Admin\ComentariosController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-comentario',  [\App\Controllers\Admin\ComentariosController::class, 'destroy'], 'auth'],
 
+    ['GET',  '/local/backup',        [\App\Controllers\Site\BackupToolsController::class, 'index'], null],
+    ['POST', '/local/backup',        [\App\Controllers\Site\BackupToolsController::class, 'handle'], null],
     ['GET',  '/dev',                 [\App\Controllers\Site\DevController::class, 'index'], null],
 ];
