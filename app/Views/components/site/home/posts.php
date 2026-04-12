@@ -9,9 +9,9 @@ $latestPosts = $latest_posts ?? [];
 <section id="blog" class="py-32 bg-slate-900/30 relative">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-16">
-          <span class="text-cyan-400 font-medium tracking-widest uppercase text-sm">Informacoes nerds</span>
-          <h2 class="font-orbitron text-4xl md:text-5xl font-bold mt-2 mb-4 text-white">Ultimas do <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">blog</span></h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Novidades, reviews, curiosidades e analises do universo tech e geek.</p>
+          <span class="text-cyan-400 font-medium tracking-widest uppercase text-sm">Informações nerds</span>
+          <h2 class="font-orbitron text-4xl md:text-5xl font-bold mt-2 mb-4 text-white">Últimas do <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">blog</span></h2>
+          <p class="text-gray-400 max-w-2xl mx-auto">Novidades, reviews, curiosidades e análises do universo tech e geek.</p>
       </div>
 
       <?php if ($latestPosts !== []): ?>
@@ -87,7 +87,7 @@ $latestPosts = $latest_posts ?? [];
               </a>
           </div>
       <?php else: ?>
-          <div class="site-empty-panel">Ainda nao ha posts publicados suficientes para compor a home publica.</div>
+          <div class="site-empty-panel">Ainda não há posts publicados suficientes para compor a home pública.</div>
       <?php endif; ?>
   </div>
 </section>

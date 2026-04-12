@@ -4,8 +4,8 @@ declare(strict_types=1);
 use App\Support\View;
 
 $requestedPath = trim((string) ($requested_path ?? ''));
-$siteName = 'Estrategia Nerd';
-$siteKicker = 'Portal geek estrategico';
+$siteName = 'Estratégia Nerd';
+$siteKicker = 'Portal geek estratégico';
 $brandSymbol = url('/assets/brand/logo-symbol.png');
 ?>
 
@@ -28,15 +28,15 @@ $brandSymbol = url('/assets/brand/logo-symbol.png');
     <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl mx-auto text-center">
         <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-cyan-300 text-sm font-semibold tracking-[0.18em] uppercase">
-          Pagina nao encontrada
+          Página não encontrada
         </span>
 
         <h1 class="mt-6 font-orbitron text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight">
-          Esse caminho nao existe no portal
+          Esse caminho não existe no portal
         </h1>
 
         <p class="post-lead max-w-3xl mx-auto mt-6">
-          O endereco solicitado nao foi encontrado. Voce pode voltar para a home, abrir o blog ou seguir para a Central Nerd.
+          O endereço solicitado não foi encontrado. Você pode voltar para a home, abrir o blog ou seguir para a Central Nerd.
         </p>
       </div>
 
@@ -64,13 +64,13 @@ $brandSymbol = url('/assets/brand/logo-symbol.png');
           <p class="text-xs uppercase tracking-[0.24em] text-slate-400">Dicas rapidas</p>
           <div class="mt-5 space-y-4 text-slate-300">
             <div class="rounded-2xl border border-white/8 bg-slate-950/30 p-4">
-              Verifique se o endereco foi digitado corretamente.
+              Verifique se o endereço foi digitado corretamente.
             </div>
             <div class="rounded-2xl border border-white/8 bg-slate-950/30 p-4">
-              Use o blog para abrir os posts publicos disponiveis agora.
+              Use o blog para abrir os posts públicos disponíveis agora.
             </div>
             <div class="rounded-2xl border border-white/8 bg-slate-950/30 p-4">
-              Se voce chegou por um link antigo, ele pode ter sido alterado ou removido.
+              Se você chegou por um link antigo, ele pode ter sido alterado ou removido.
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 <?php
-$siteName = (string) ($site_name ?? 'Estrategia Nerd');
+$siteName = (string) ($site_name ?? 'Estratégia Nerd');
 $siteDescription = (string) ($site_description ?? '');
 $siteKicker = (string) ($site_kicker ?? '');
 $footerText = (string) ($footer_text ?? $siteName);
@@ -42,7 +42,7 @@ $footerItems = site_footer_items();
       </div>
 
       <div>
-        <h3 class="site-footer-title">Links rapidos</h3>
+        <h3 class="site-footer-title">Links rápidos</h3>
         <ul class="site-footer-links">
           <?php foreach ($footerItems as $item): ?>
             <li>
@@ -57,7 +57,7 @@ $footerItems = site_footer_items();
       <div>
         <h3 class="site-footer-title">Institucional</h3>
         <ul class="site-footer-links">
-          <li><a href="<?= htmlspecialchars(url('/politica-de-privacidade'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Politica de privacidade</a></li>
+          <li><a href="<?= htmlspecialchars(url('/politica-de-privacidade'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Política de privacidade</a></li>
           <li><a href="<?= htmlspecialchars(url('/termos-de-uso'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Termos de uso</a></li>
           <li><a href="<?= htmlspecialchars($contactHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= $siteEmail !== '' ? 'Contato' : 'Explorar portal' ?></a></li>
         </ul>

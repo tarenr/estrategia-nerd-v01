@@ -10,9 +10,9 @@ $filters = $blog_filters ?? [];
 $pagination = $blog_pagination ?? ['page' => 1, 'pages' => 1, 'total' => 0];
 $siteMeta = $site_meta ?? [];
 
-$siteName = (string) ($siteMeta['name'] ?? 'Estrategia Nerd');
+$siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
 $siteDescription = (string) ($siteMeta['description'] ?? '');
-$siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estrategico');
+$siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estratégico');
 $siteEmail = (string) ($siteMeta['email'] ?? '');
 $footerText = (string) ($siteMeta['footer'] ?? $siteName);
 $brandSymbol = (string) ($siteMeta['brand_symbol'] ?? '');
@@ -103,19 +103,19 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <div class="mb-6 inline-block">
         <span class="px-4 py-2 rounded-full border border-cyan-500/30 text-cyan-400 text-sm font-medium tracking-widest uppercase bg-cyan-500/10">
-          Informacoes Nerds
+          Informações Nerds
         </span>
       </div>
 
       <h1 class="font-orbitron text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
         <span class="block text-white glitch" data-text="BLOG">BLOG</span>
         <span class="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 neon-text text-3xl md:text-4xl lg:text-5xl mt-2">
-          Estrategia Nerd
+          Estratégia Nerd
         </span>
       </h1>
 
       <p class="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
-        Novidades, reviews, curiosidades e analises do universo tech e geek. Conteudo de qualidade para quem vive um nivel a frente.
+        Novidades, reviews, curiosidades e análises do universo tech e geek. Conteúdo de qualidade para quem vive um nível à frente.
       </p>
 
       <form method="GET" action="<?= htmlspecialchars(url('/blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="max-w-2xl mx-auto relative">

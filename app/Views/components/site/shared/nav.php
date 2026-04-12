@@ -1,5 +1,5 @@
 <?php
-$siteName = (string) ($site_name ?? 'Estrategia Nerd');
+$siteName = (string) ($site_name ?? 'Estratégia Nerd');
 $siteKicker = (string) ($site_kicker ?? '');
 $brandSymbol = (string) ($brand_symbol ?? '');
 $brandWordPrimary = (string) ($brand_word_primary ?? 'ESTRATEGIA');

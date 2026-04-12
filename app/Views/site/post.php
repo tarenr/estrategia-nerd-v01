@@ -13,9 +13,9 @@ $next = is_array($post_next ?? null) ? $post_next : null;
 $commentState = is_array($comment_state ?? null) ? $comment_state : [];
 $siteMeta = is_array($site_meta ?? null) ? $site_meta : [];
 
-$siteName = (string) ($siteMeta['name'] ?? 'Estrategia Nerd');
+$siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
 $siteDescription = (string) ($siteMeta['description'] ?? '');
-$siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estrategico');
+$siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estratégico');
 $siteEmail = (string) ($siteMeta['email'] ?? '');
 $footerText = (string) ($siteMeta['footer'] ?? $siteName);
 $brandSymbol = (string) ($siteMeta['brand_symbol'] ?? '');
@@ -130,11 +130,11 @@ $renderHighlightedTitle = static function (string $value): string {
       <div class="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-slate-400">
         <span><?= htmlspecialchars((string) ($post['data'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
         <span>&bull;</span>
-        <span><?= number_format((int) ($post['views'] ?? 0), 0, ',', '.') ?> visualizacoes</span>
+        <span><?= number_format((int) ($post['views'] ?? 0), 0, ',', '.') ?> visualizações</span>
         <span>&bull;</span>
         <span><span data-like-count><?= number_format((int) ($post['curtidas'] ?? 0), 0, ',', '.') ?></span> curtidas</span>
         <span>&bull;</span>
-        <span><span data-comments-total><?= $commentsTotal ?></span> comentarios</span>
+        <span><span data-comments-total><?= $commentsTotal ?></span> comentários</span>
       </div>
 
       <div class="flex justify-center gap-3 mt-8">
@@ -160,7 +160,7 @@ $renderHighlightedTitle = static function (string $value): string {
         <aside class="lg:col-span-3 hidden lg:block">
           <?php if (($post['toc'] ?? []) !== []): ?>
             <div class="toc">
-              <h3>Indice</h3>
+              <h3>Índice</h3>
               <ul>
                 <?php foreach (($post['toc'] ?? []) as $tocItem): ?>
                   <li>
@@ -218,7 +218,7 @@ $renderHighlightedTitle = static function (string $value): string {
 
                 <?php if (is_array($next)): ?>
                   <a href="<?= htmlspecialchars((string) ($next['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="post-nav-item next">
-                    <span class="text-gray-400 text-sm mb-2 block">Proximo post &rarr;</span>
+                    <span class="text-gray-400 text-sm mb-2 block">Próximo post &rarr;</span>
                     <h4 class="font-orbitron font-bold text-white hover:text-cyan-400 transition-colors">
                       <?= htmlspecialchars($stripHighlightedTitle((string) ($next['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                     </h4>
@@ -237,7 +237,7 @@ $renderHighlightedTitle = static function (string $value): string {
   <section id="comentarios" class="py-16 bg-slate-900/30 border-t border-cyan-500/10">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="font-orbitron text-3xl font-bold text-white mb-8 flex items-center gap-3">
-        Comentarios
+        Comentários
         <span class="text-cyan-400 text-xl">(<span data-comments-total><?= $commentsTotal ?></span>)</span>
       </h2>
 
@@ -253,10 +253,10 @@ $renderHighlightedTitle = static function (string $value): string {
           <input type="text" name="nome" placeholder="Seu nome" value="<?= htmlspecialchars((string) ($commentOld['nome'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-form-input">
           <input type="email" name="email" placeholder="seu@email.com" value="<?= htmlspecialchars((string) ($commentOld['email'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-form-input">
         </div>
-        <textarea name="comentario" rows="5" placeholder="Escreva seu comentario..." class="site-form-textarea"><?= htmlspecialchars((string) ($commentOld['comentario'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></textarea>
+        <textarea name="comentario" rows="5" placeholder="Escreva seu comentário..." class="site-form-textarea"><?= htmlspecialchars((string) ($commentOld['comentario'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></textarea>
         <div class="mt-5 flex items-center justify-between gap-4 flex-wrap">
-          <p class="text-sm text-slate-400">Seu comentario sera enviado para aprovacao antes de aparecer no post.</p>
-          <button type="submit" class="site-nav-cta">Enviar comentario</button>
+          <p class="text-sm text-slate-400">Seu comentário será enviado para aprovação antes de aparecer no post.</p>
+          <button type="submit" class="site-nav-cta">Enviar comentário</button>
         </div>
       </form>
 
@@ -272,12 +272,12 @@ $renderHighlightedTitle = static function (string $value): string {
             ]); ?>
           <?php endforeach; ?>
         <?php else: ?>
-          <div class="site-empty-panel">Ainda nao ha comentarios aprovados neste post. Seja o primeiro a participar.</div>
+          <div class="site-empty-panel">Ainda não há comentários aprovados neste post. Seja o primeiro a participar.</div>
         <?php endif; ?>
       </div>
       <?php if ($commentsTotal > 3): ?>
         <div class="mt-8 flex justify-center">
-          <button type="button" class="site-blog-all-posts" data-show-more-comments>Mostrar mais comentarios</button>
+          <button type="button" class="site-blog-all-posts" data-show-more-comments>Mostrar mais comentários</button>
         </div>
       <?php endif; ?>
     </div>
@@ -316,7 +316,7 @@ $renderHighlightedTitle = static function (string $value): string {
                   <?= htmlspecialchars($stripHighlightedTitle((string) ($item['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                 </h3>
                 <p class="text-gray-400 text-sm">
-                  <?= htmlspecialchars((string) ($item['resumo'] ?? 'Conteudo relacionado do portal.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                  <?= htmlspecialchars((string) ($item['resumo'] ?? 'Conteúdo relacionado do portal.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                 </p>
               </div>
             </a>

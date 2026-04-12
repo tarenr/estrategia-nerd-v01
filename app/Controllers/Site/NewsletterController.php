@@ -16,13 +16,13 @@ final class NewsletterController
 
         if (!site_section_public_active('newsletter')) {
             http_response_code(404);
-            echo json_encode(['ok' => false, 'message' => 'Newsletter indisponivel no momento.'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['ok' => false, 'message' => 'Newsletter indisponível no momento.'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             http_response_code(419);
-            echo json_encode(['ok' => false, 'message' => 'Sessao expirada. Atualize a pagina e tente novamente.'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['ok' => false, 'message' => 'Sessão expirada. Atualize a página e tente novamente.'], JSON_UNESCAPED_UNICODE);
             return;
         }
 

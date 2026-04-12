@@ -4,14 +4,14 @@ declare(strict_types=1);
 use App\Support\View;
 
 $siteMeta = is_array($site_meta ?? null) ? $site_meta : [];
-$siteName = (string) ($siteMeta['name'] ?? 'Estrategia Nerd');
-$siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estrategico');
+$siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
+$siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estratégico');
 $brandSymbol = (string) ($siteMeta['brand_symbol'] ?? '');
 $brandSymbol = $brandSymbol !== '' ? $brandSymbol : url('/assets/brand/logo-symbol.png');
 $brandWordPrimary = 'ESTRATEGIA';
 $brandWordAccent = 'NERD';
-$headline = trim((string) ($headline ?? 'Post nao encontrado'));
-$message = trim((string) ($message ?? 'Esse conteudo nao esta disponivel no momento.'));
+$headline = trim((string) ($headline ?? 'Post não encontrado'));
+$message = trim((string) ($message ?? 'Esse conteúdo não está disponível no momento.'));
 $note = trim((string) ($note ?? ''));
 $reason = trim((string) ($reason ?? 'not_found'));
 $requestedSlug = trim((string) ($requested_slug ?? ''));
@@ -20,8 +20,8 @@ $recentPosts = is_array($recent_posts ?? null) ? $recent_posts : [];
 
 $reasonLabel = match ($reason) {
     'scheduled' => 'Post agendado',
-    'unavailable' => 'Post indisponivel',
-    default => 'Post nao encontrado',
+    'unavailable' => 'Post indisponível',
+    default => 'Post não encontrado',
 };
 ?>
 
@@ -71,14 +71,14 @@ $reasonLabel = match ($reason) {
             </div>
             <?php if (is_array($matchedPost)): ?>
               <span class="inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-300">
-                <?= htmlspecialchars(strtoupper((string) ($matchedPost['status'] ?? 'indisponivel')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                <?= htmlspecialchars(strtoupper((string) ($matchedPost['status'] ?? 'indisponível')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
               </span>
             <?php endif; ?>
           </div>
 
           <?php if (is_array($matchedPost) && trim((string) ($matchedPost['titulo'] ?? '')) !== ''): ?>
             <div class="mt-6 rounded-3xl border border-white/8 bg-slate-950/35 p-5">
-              <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Post relacionado a este endereco</p>
+              <p class="text-xs uppercase tracking-[0.22em] text-slate-400">Post relacionado a este endereço</p>
               <h2 class="mt-3 font-orbitron text-2xl text-white leading-tight">
                 <?= htmlspecialchars(public_title((string) ($matchedPost['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
               </h2>
@@ -101,16 +101,16 @@ $reasonLabel = match ($reason) {
         </div>
 
         <div class="site-empty-panel p-7 md:p-8 border border-cyan-500/15 rounded-[2rem]">
-          <p class="text-xs uppercase tracking-[0.24em] text-slate-400">O que voce pode fazer agora</p>
+          <p class="text-xs uppercase tracking-[0.24em] text-slate-400">O que você pode fazer agora</p>
           <div class="mt-5 space-y-4 text-slate-300">
             <div class="rounded-2xl border border-white/8 bg-slate-950/30 p-4">
-              Verifique se o endereco foi digitado corretamente.
+              Verifique se o endereço foi digitado corretamente.
             </div>
             <div class="rounded-2xl border border-white/8 bg-slate-950/30 p-4">
-              Use o blog para encontrar a versao publica mais recente do conteudo.
+              Use o blog para encontrar a versão pública mais recente do conteúdo.
             </div>
             <div class="rounded-2xl border border-white/8 bg-slate-950/30 p-4">
-              Se o post estiver agendado, ele abrira normalmente quando for publicado.
+              Se o post estiver agendado, ele abrirá normalmente quando for publicado.
             </div>
           </div>
         </div>
@@ -123,7 +123,7 @@ $reasonLabel = match ($reason) {
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-end justify-between gap-4 mb-8 flex-wrap">
           <div>
-            <p class="text-xs uppercase tracking-[0.24em] text-cyan-300">Explorar conteudo</p>
+            <p class="text-xs uppercase tracking-[0.24em] text-cyan-300">Explorar conteúdo</p>
             <h2 class="mt-2 font-orbitron text-2xl md:text-3xl text-white">Posts recentes</h2>
           </div>
           <a href="<?= htmlspecialchars(url('/blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="text-cyan-300 font-semibold hover:text-cyan-200 transition">Abrir blog</a>

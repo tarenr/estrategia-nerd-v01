@@ -58,7 +58,7 @@ if ($isHidden) {
           <?php elseif ($isAdmin && $adminAvatarIcon !== ''): ?>
             <i class="<?= htmlspecialchars($adminAvatarIcon, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> comment-admin-user-icon" aria-hidden="true"></i>
           <?php elseif ($isAdmin && $brandSymbol !== ''): ?>
-            <img src="<?= htmlspecialchars($brandSymbol, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="Equipe Estrategia Nerd" class="comment-admin-mark">
+            <img src="<?= htmlspecialchars($brandSymbol, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="Equipe Estratégia Nerd" class="comment-admin-mark">
           <?php else: ?>
             <?= htmlspecialchars($commentInitials, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
           <?php endif; ?>

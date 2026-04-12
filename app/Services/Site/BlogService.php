@@ -33,7 +33,7 @@ final class BlogService
         ], $page, 9);
 
         return [
-            'title' => 'Blog | ' . (string) portal_config('nome_site', 'Estrategia Nerd'),
+            'title' => 'Blog | ' . (string) portal_config('nome_site', 'Estratégia Nerd'),
             'site_chrome' => false,
             'blog_page' => true,
             'blog_featured' => $featuredRow ? $this->normalizePost($featuredRow) : null,
@@ -55,10 +55,10 @@ final class BlogService
     private function siteMeta(): array
     {
         return [
-            'name' => (string) portal_config('nome_site', 'Estrategia Nerd'),
-            'description' => (string) portal_config('descricao_site', 'Conteudo, tecnologia, cultura geek e oportunidades em um so lugar.'),
-            'kicker' => (string) portal_config('site_kicker', 'Portal geek estrategico'),
-            'footer' => (string) portal_config('footer_texto', 'Estrategia Nerd - Conteudo, links e ofertas geek'),
+            'name' => (string) portal_config('nome_site', 'Estratégia Nerd'),
+            'description' => (string) portal_config('descricao_site', 'Conteúdo, tecnologia, cultura geek e oportunidades em um só lugar.'),
+            'kicker' => (string) portal_config('site_kicker', 'Portal geek estratégico'),
+            'footer' => (string) portal_config('footer_texto', 'Estratégia Nerd - Conteúdo, links e ofertas geek'),
             'email' => (string) portal_config('email_contato', ''),
             'instagram' => (string) portal_config('instagram_url', ''),
             'tiktok' => (string) portal_config('tiktok_url', ''),

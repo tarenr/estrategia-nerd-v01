@@ -11,10 +11,10 @@ if (!site_section_public_active('newsletter')) {
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
     <div class="bg-slate-800/50 backdrop-blur-md p-8 md:p-12 rounded-3xl border border-cyan-500/20 shadow-2xl">
       <h2 class="font-orbitron text-3xl md:text-4xl font-bold mb-4 text-white">
-        Suba de <span class="text-cyan-400">Nivel</span>
+        Suba de <span class="text-cyan-400">Nível</span>
       </h2>
       <p class="text-gray-400 mb-8 text-lg max-w-3xl mx-auto">
-        Receba as melhores dicas, reviews exclusivas e ofertas imperdiveis diretamente no seu e-mail. Sem spam, so conteudo nerd de qualidade.
+        Receba as melhores dicas, reviews exclusivas e ofertas imperdíveis diretamente no seu e-mail. Sem spam, só conteúdo nerd de qualidade.
       </p>
 
       <form id="newsletter-form" class="flex flex-col gap-4 max-w-2xl mx-auto" action="<?= htmlspecialchars(url('/newsletter'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" method="POST">
@@ -36,7 +36,7 @@ if (!site_section_public_active('newsletter')) {
       </form>
 
       <p class="mt-6 text-sm text-gray-500">
-        Ao se inscrever, voce concorda com nossa politica de privacidade. Pode cancelar a qualquer momento.
+        Ao se inscrever, você concorda com nossa política de privacidade. Pode cancelar a qualquer momento.
       </p>
     </div>
   </div>

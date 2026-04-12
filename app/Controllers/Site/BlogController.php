@@ -15,7 +15,7 @@ final class BlogController
     {
         if (!site_section_public_active('blog')) {
             http_response_code(404);
-            echo 'Blog indisponivel no momento.';
+            echo 'Blog indisponível no momento.';
             return;
         }
 

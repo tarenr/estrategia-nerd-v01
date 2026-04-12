@@ -2,12 +2,12 @@
 declare(strict_types=1);
 
 $siteMeta = $site_meta ?? [];
-$pageTitle = (string) ($page_title ?? 'Pagina');
+$pageTitle = (string) ($page_title ?? 'Página');
 $pageIntro = (string) ($page_intro ?? '');
 $sections = is_array($page_sections ?? null) ? $page_sections : [];
-$siteName = (string) ($siteMeta['name'] ?? 'Estrategia Nerd');
+$siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
 $siteDescription = (string) ($siteMeta['description'] ?? '');
-$siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estrategico');
+$siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estratégico');
 $siteEmail = (string) ($siteMeta['email'] ?? '');
 $footerText = (string) ($siteMeta['footer'] ?? $siteName);
 $brandSymbol = (string) ($siteMeta['brand_symbol'] ?? '');

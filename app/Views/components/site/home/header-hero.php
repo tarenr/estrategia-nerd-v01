@@ -1,7 +1,7 @@
 <?php
 use App\Support\View;
 
-$siteName = (string) ($site_name ?? 'Estrategia Nerd');
+$siteName = (string) ($site_name ?? 'Estratégia Nerd');
 $siteDescription = (string) ($site_description ?? '');
 $siteKicker = (string) ($site_kicker ?? '');
 $brandSymbol = (string) ($brand_symbol ?? '');
@@ -17,7 +17,7 @@ $centralPublic = site_section_public_active('central_nerd');
 $primaryCtaHref = $blogHomeVisible
     ? '#blog'
     : ($blogPublic ? site_section_href('blog') : ($centralPublic ? site_section_href('central_nerd') : url('/')));
-$primaryCtaLabel = $blogPublic ? 'Explorar conteudo' : ($centralPublic ? 'Abrir central' : 'Explorar');
+$primaryCtaLabel = $blogPublic ? 'Explorar conteúdo' : ($centralPublic ? 'Abrir central' : 'Explorar');
 
 $secondaryCta = null;
 if ($newsletterHomeVisible) {

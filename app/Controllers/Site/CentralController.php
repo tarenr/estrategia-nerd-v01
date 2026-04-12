@@ -14,7 +14,7 @@ final class CentralController
     {
         if (!site_section_public_active('central_nerd')) {
             http_response_code(404);
-            echo 'Central Nerd indisponivel no momento.';
+            echo 'Central Nerd indisponível no momento.';
             return;
         }
 

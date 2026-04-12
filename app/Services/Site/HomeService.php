@@ -40,11 +40,11 @@ final class HomeService
             'categories' => $categories,
             'links' => $links,
             'site_meta' => [
-                'name' => (string) portal_config('nome_site', 'Estrategia Nerd'),
-                'description' => (string) portal_config('descricao_site', 'Conteudo, tecnologia, cultura geek e oportunidades em um so lugar.'),
-                'kicker' => (string) portal_config('site_kicker', 'Portal geek estrategico'),
-                'footer' => (string) portal_config('footer_texto', 'Estrategia Nerd - Conteudo, links e ofertas geek'),
-                'bio_title' => (string) portal_config('bio_titulo', portal_config('nome_site', 'Estrategia Nerd')),
+                'name' => (string) portal_config('nome_site', 'Estratégia Nerd'),
+                'description' => (string) portal_config('descricao_site', 'Conteúdo, tecnologia, cultura geek e oportunidades em um só lugar.'),
+                'kicker' => (string) portal_config('site_kicker', 'Portal geek estratégico'),
+                'footer' => (string) portal_config('footer_texto', 'Estratégia Nerd - Conteúdo, links e ofertas geek'),
+                'bio_title' => (string) portal_config('bio_titulo', portal_config('nome_site', 'Estratégia Nerd')),
                 'bio_description' => (string) portal_config('bio_descricao', 'Tecnologia, games, cultura geek e oportunidades selecionadas.'),
                 'email' => (string) portal_config('email_contato', ''),
                 'instagram' => (string) portal_config('instagram_url', ''),
@@ -68,7 +68,7 @@ final class HomeService
             return $seo;
         }
 
-        return 'Estrategia Nerd | Tecnologia, Games e Cultura Geek';
+        return 'Estratégia Nerd | Tecnologia, Games e Cultura Geek';
     }
 
     private function toPublicUrl(string $value): string

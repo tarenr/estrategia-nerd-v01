@@ -121,13 +121,13 @@ if (!$match) {
 
     if (str_starts_with($path, '/admin')) {
         header('Content-Type: text/plain; charset=utf-8');
-        echo 'Pagina nao encontrada.';
+        echo 'Página não encontrada.';
         exit;
     }
 
     View::render('site/error-404', [
-        'title' => 'Pagina nao encontrada | Estrategia Nerd',
-        'meta_description' => 'A pagina solicitada nao foi encontrada no portal Estrategia Nerd.',
+        'title' => 'Página não encontrada | Estratégia Nerd',
+        'meta_description' => 'A página solicitada não foi encontrada no portal Estratégia Nerd.',
         'requested_path' => $path,
     ]);
     exit;
@@ -146,7 +146,7 @@ if (is_array($handler) && count($handler) === 2) {
 
     if (!class_exists($controllerClass)) {
         http_response_code(500);
-        echo 'Controller nao encontrado.';
+        echo 'Controller não encontrado.';
         exit;
     }
 
@@ -165,7 +165,7 @@ if (is_array($handler) && count($handler) === 2) {
 
     if (!method_exists($controller, $controllerMethod)) {
         http_response_code(500);
-        echo 'Metodo do controller nao encontrado.';
+        echo 'Método do controller não encontrado.';
         exit;
     }
 

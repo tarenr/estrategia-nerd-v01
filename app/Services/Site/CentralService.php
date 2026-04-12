@@ -17,8 +17,8 @@ final class CentralService
         [$featuredLink, $groups] = $this->partitionLinks($items);
 
         return [
-            'title' => 'Central Nerd | ' . (string) portal_config('nome_site', 'Estrategia Nerd'),
-            'meta_description' => (string) portal_config('bio_descricao', portal_config('descricao_site', 'Links, ofertas e atalhos oficiais da Estrategia Nerd.')),
+            'title' => 'Central Nerd | ' . (string) portal_config('nome_site', 'Estratégia Nerd'),
+            'meta_description' => (string) portal_config('bio_descricao', portal_config('descricao_site', 'Links, ofertas e atalhos oficiais da Estratégia Nerd.')),
             'site_chrome' => false,
             'body_class' => 'central-nerd-body',
             'site_meta' => $this->buildSiteMeta(),
@@ -32,10 +32,10 @@ final class CentralService
     private function buildSiteMeta(): array
     {
         return [
-            'name' => (string) portal_config('nome_site', 'Estrategia Nerd'),
-            'description' => (string) portal_config('descricao_site', 'Conteudo, tecnologia, cultura geek e oportunidades em um so lugar.'),
-            'kicker' => (string) portal_config('site_kicker', 'Portal geek estrategico'),
-            'footer' => (string) portal_config('footer_texto', 'Estrategia Nerd - Conteudo, links e ofertas geek'),
+            'name' => (string) portal_config('nome_site', 'Estratégia Nerd'),
+            'description' => (string) portal_config('descricao_site', 'Conteúdo, tecnologia, cultura geek e oportunidades em um só lugar.'),
+            'kicker' => (string) portal_config('site_kicker', 'Portal geek estratégico'),
+            'footer' => (string) portal_config('footer_texto', 'Estratégia Nerd - Conteúdo, links e ofertas geek'),
             'bio_title' => (string) portal_config('bio_titulo', 'Central Nerd'),
             'bio_description' => (string) portal_config('bio_descricao', 'Ofertas, descontos e novidades para geeks e tech lovers!'),
             'email' => (string) portal_config('email_contato', ''),
@@ -107,7 +107,7 @@ final class CentralService
                     $productGroups[$groupKey] = [
                         'slug' => $groupKey,
                         'label' => $groupLabel,
-                        'subtitle' => 'Selecao especial de produtos da Central Nerd.',
+                        'subtitle' => 'Seleção especial de produtos da Central Nerd.',
                         'tone' => 'product',
                         'items' => [],
                     ];
@@ -133,7 +133,7 @@ final class CentralService
         if ($promoItems !== []) {
             $groups[] = [
                 'slug' => 'promocoes',
-                'label' => 'Promocoes',
+                'label' => 'Promoções',
                 'subtitle' => 'Ofertas quentes e oportunidades selecionadas.',
                 'tone' => 'promo',
                 'open' => true,
@@ -153,10 +153,10 @@ final class CentralService
         }
 
         $tailGroups = [
-            ['slug' => 'cupons', 'label' => 'Cupons de desconto', 'subtitle' => 'Copie o codigo e aproveite as campanhas ativas.', 'tone' => 'coupon', 'items' => $couponItems],
-            ['slug' => 'conteudo', 'label' => 'Conteudo', 'subtitle' => 'Acessos oficiais, leituras e recomendacoes.', 'tone' => 'content', 'items' => $contentItems],
-            ['slug' => 'rede-social', 'label' => 'Rede Social', 'subtitle' => 'Acompanhe a Estrategia Nerd fora do portal.', 'tone' => 'social', 'items' => $socialItems],
-            ['slug' => 'servicos', 'label' => 'Servicos', 'subtitle' => 'Solucoes, trabalhos e acessos especiais.', 'tone' => 'service', 'items' => $serviceItems],
+            ['slug' => 'cupons', 'label' => 'Cupons de desconto', 'subtitle' => 'Copie o código e aproveite as campanhas ativas.', 'tone' => 'coupon', 'items' => $couponItems],
+            ['slug' => 'conteudo', 'label' => 'Conteúdo', 'subtitle' => 'Acessos oficiais, leituras e recomendações.', 'tone' => 'content', 'items' => $contentItems],
+            ['slug' => 'rede-social', 'label' => 'Rede Social', 'subtitle' => 'Acompanhe a Estratégia Nerd fora do portal.', 'tone' => 'social', 'items' => $socialItems],
+            ['slug' => 'servicos', 'label' => 'Serviços', 'subtitle' => 'Soluções, trabalhos e acessos especiais.', 'tone' => 'service', 'items' => $serviceItems],
         ];
 
         foreach ($tailGroups as $group) {
@@ -175,8 +175,8 @@ final class CentralService
         return match ($tipo) {
             'cupom' => 'Abrir site',
             'rede_social' => 'Abrir perfil',
-            'servico' => 'Conhecer servico',
-            'conteudo' => 'Acessar conteudo',
+            'servico' => 'Conhecer serviço',
+            'conteudo' => 'Acessar conteúdo',
             default => 'Ver produto',
         };
     }

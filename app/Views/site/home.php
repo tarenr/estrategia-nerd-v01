@@ -4,11 +4,11 @@ use App\Support\View;
 $latestPosts = $latest_posts ?? [];
 $siteMeta = $site_meta ?? [];
 
-$siteName = (string) ($siteMeta['name'] ?? 'Estrategia Nerd');
-$siteDescription = (string) ($siteMeta['description'] ?? 'Conteudo, tecnologia, cultura geek e oportunidades em um so lugar.');
+$siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
+$siteDescription = (string) ($siteMeta['description'] ?? 'Conteúdo, tecnologia, cultura geek e oportunidades em um só lugar.');
 $bioTitle = (string) ($siteMeta['bio_title'] ?? $siteName);
 $footerText = (string) ($siteMeta['footer'] ?? $siteName);
-$siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estrategico');
+$siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estratégico');
 $siteEmail = (string) ($siteMeta['email'] ?? '');
 $brandSymbol = (string) ($siteMeta['brand_symbol'] ?? '');
 $aboutMark = (string) ($siteMeta['about_image'] ?? '');

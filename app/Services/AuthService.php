@@ -31,26 +31,26 @@ final class AuthService
         $senha = (string) $senha;
 
         if ($usuario === '' || $senha === '') {
-            return ['ok' => false, 'error' => 'Informe usuario e senha.'];
+            return ['ok' => false, 'error' => 'Informe usuário e senha.'];
         }
 
         $user = $this->usuarios->findByUsuario($usuario);
 
         if (!$user) {
-            return ['ok' => false, 'error' => 'Credenciais invalidas.'];
+            return ['ok' => false, 'error' => 'Credenciais inválidas.'];
         }
 
         if (($user['status'] ?? 'ativo') !== 'ativo') {
-            return ['ok' => false, 'error' => 'Este usuario esta inativo.'];
+            return ['ok' => false, 'error' => 'Este usuário está inativo.'];
         }
 
         $dbSenha = (string) ($user['senha'] ?? '');
         if ($dbSenha === '') {
-            return ['ok' => false, 'error' => 'Usuario sem senha cadastrada.'];
+            return ['ok' => false, 'error' => 'Usuário sem senha cadastrada.'];
         }
 
         if (!$this->checkSenha($senha, $dbSenha)) {
-            return ['ok' => false, 'error' => 'Credenciais invalidas.'];
+            return ['ok' => false, 'error' => 'Credenciais inválidas.'];
         }
 
         $agora = date('Y-m-d H:i:s');

@@ -6,7 +6,7 @@ use App\Support\View;
 $siteMeta = $site_meta ?? [];
 $featuredLink = is_array($central_featured_link ?? null) ? $central_featured_link : null;
 $groups = is_array($central_groups ?? null) ? $central_groups : [];
-$siteName = (string) ($siteMeta['name'] ?? 'Estrategia Nerd');
+$siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
 $bioTitle = (string) ($siteMeta['bio_title'] ?? 'Central Nerd');
 $bioDescription = (string) ($siteMeta['bio_description'] ?? 'Ofertas, descontos e novidades para geeks e tech lovers!');
 $brandLogo = (string) ($siteMeta['logo'] ?? '');
@@ -68,7 +68,7 @@ $featuredTrackedUrl = $featuredLink !== null && trim((string) ($featuredLink['sl
     <?php if ($featuredLink !== null): ?>
       <section class="central-featured" data-reveal>
         <div class="central-featured-header">
-          <span class="central-featured-kicker"><?= htmlspecialchars(($featuredLink['promocao'] ?? false) ? 'Promocoes' : 'Destaque da Central', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+          <span class="central-featured-kicker"><?= htmlspecialchars(($featuredLink['promocao'] ?? false) ? 'Promoções' : 'Destaque da Central', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
         </div>
 
         <article class="central-featured-card central-link-card-<?= htmlspecialchars($featuredTone, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
@@ -99,7 +99,7 @@ $featuredTrackedUrl = $featuredLink !== null && trim((string) ($featuredLink['sl
       <?php if ($groups === []): ?>
         <article class="central-empty-state" data-reveal>
           <h2>Central em montagem</h2>
-          <p>Os links oficiais ainda estao sendo organizados. Em breve esta area vai reunir ofertas, conteudos e atalhos da marca em um unico lugar.</p>
+          <p>Os links oficiais ainda estão sendo organizados. Em breve esta área vai reunir ofertas, conteúdos e atalhos da marca em um único lugar.</p>
         </article>
       <?php else: ?>
         <?php foreach ($groups as $group): ?>
