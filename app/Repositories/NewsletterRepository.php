@@ -46,6 +46,35 @@ final class NewsletterRepository
         return (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
     }
 
+
+    public function countByRange(string $start, string $end): int
+    {
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) AS total FROM newsletter WHERE DATE(data_cadastro) BETWEEN :start AND :end');
+        $stmt->bindValue(':start', $start, PDO::PARAM_STR);
+        $stmt->bindValue(':end', $end, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
+    }
+
+    public function seriesByRange(string $start, string $end): array
+    {
+        $sql = '
+            SELECT DATE(data_cadastro) AS data, COUNT(*) AS total
+            FROM newsletter
+            WHERE DATE(data_cadastro) BETWEEN :start AND :end
+            GROUP BY DATE(data_cadastro)
+            ORDER BY DATE(data_cadastro) ASC
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':start', $start, PDO::PARAM_STR);
+        $stmt->bindValue(':end', $end, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function countLastDays(int $days): int
     {
         $days = max(1, min(365, $days));

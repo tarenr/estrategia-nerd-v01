@@ -81,8 +81,19 @@ final class DashboardService
         $postsByStatus = (array) $this->posts->countByStatus();
 
         $totalViews = (int) $this->posts->sumViews();
-        $viewsToday = (int) $this->estatisticas->viewsToday();
-        $viewsWeek = (int) $this->estatisticas->viewsLastDays(7);
+        $firstPublishedDate = $this->posts->firstPublishedDate();
+        $todayYmd = (new DateTimeImmutable('today'))->format('Y-m-d');
+        $viewsToday = $this->sumViewsByRange($todayYmd, $todayYmd);
+        $viewsWeek = $this->sumViewsByRange((new DateTimeImmutable('today'))->modify('-6 days')->format('Y-m-d'), $todayYmd);
+        $trackedViewsRecent = $this->sumViewsByRange(
+            (new DateTimeImmutable('today'))->modify('-89 days')->format('Y-m-d'),
+            $todayYmd
+        );
+        if ($viewsWeek <= 0 && $trackedViewsRecent <= 0 && $totalViews > 0) {
+            $viewsWeek = $totalViews;
+        } elseif ($this->historyFitsLastDays($firstPublishedDate, 7) && $trackedViewsRecent < $totalViews) {
+            $viewsWeek = $totalViews;
+        }
 
         $likesTotal = (int) $this->posts->sumLikes();
         $totalComentarios = (int) $this->posts->sumComentariosCount();
@@ -109,18 +120,34 @@ final class DashboardService
         $postsHoje = (int) $this->posts->countToday();
 
         $series = $this->seriesByRange($start, $end);
-        $seriesWithMa7 = $this->addMovingAverage($series, 7, 'views', 'views_ma7');
 
-        $currentViews = $this->sumByRange('views', $start, $end);
-        $currentInscricoes = $this->sumByRange('inscricoes', $start, $end);
-        $currentPostsNovos = $this->sumByRange('posts_novos', $start, $end);
+        $currentViews = $this->sumViewsByRange($start, $end);
+        $currentInscricoes = (int) $this->newsletter->countByRange($start, $end);
+        $currentPostsNovos = (int) $this->posts->countPublishedByRange($start, $end);
 
         $prevEnd = (new DateTimeImmutable($start))->modify('-1 day')->format('Y-m-d');
         $prevStart = (new DateTimeImmutable($start))->modify('-' . $days . ' days')->format('Y-m-d');
 
-        $previousViews = $this->sumByRange('views', $prevStart, $prevEnd);
-        $previousInscricoes = $this->sumByRange('inscricoes', $prevStart, $prevEnd);
-        $previousPostsNovos = $this->sumByRange('posts_novos', $prevStart, $prevEnd);
+        $previousViews = $this->sumViewsByRange($prevStart, $prevEnd);
+        $previousInscricoes = (int) $this->newsletter->countByRange($prevStart, $prevEnd);
+        $previousPostsNovos = (int) $this->posts->countPublishedByRange($prevStart, $prevEnd);
+
+        $viewsTrackingFallback = $this->shouldApplyViewsFallback(
+            $totalViews,
+            $trackedViewsRecent,
+            $currentViews,
+            $previousViews,
+            $this->rangeUsesCurrentPublishedLifetimeFallback($start, $end, $firstPublishedDate)
+        );
+
+        if ($viewsTrackingFallback) {
+            $viewsWeek = $viewsWeek > 0 ? min($viewsWeek, $totalViews) : $totalViews;
+            $currentViews = $totalViews;
+            $previousViews = 0;
+            $series = $this->applyViewsFallback($series, $totalViews);
+        }
+
+        $seriesWithMa7 = $this->addMovingAverage($series, 7, 'views', 'views_ma7');
 
         $linksAtivos = (int) $this->links->countPublicActive();
         $linksRevisao = (int) $this->links->countReview();
@@ -247,14 +274,42 @@ final class DashboardService
      */
     private function seriesByRange(string $start, string $end): array
     {
-        $pdo = $this->pdo();
+        $viewsMap = $this->mapTotalsByDate($this->viewsSeriesByRange($start, $end), 'views');
+        $postsMap = $this->mapTotalsByDate($this->posts->publishedSeriesByRange($start, $end), 'posts_novos');
+        $subsMap = $this->mapTotalsByDate($this->newsletter->seriesByRange($start, $end), 'inscricoes');
 
+        $out = [];
+        try {
+            $startDate = new DateTimeImmutable($start);
+            $endDate = new DateTimeImmutable($end);
+        } catch (Throwable) {
+            return [];
+        }
+
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $cursor = $startDate;
+        while ($cursor <= $endDate) {
+            $key = $cursor->format('Y-m-d');
+            $out[] = [
+                'data' => $key,
+                'views' => (int) ($viewsMap[$key] ?? 0),
+                'posts_novos' => (int) ($postsMap[$key] ?? 0),
+                'inscricoes' => (int) ($subsMap[$key] ?? 0),
+            ];
+            $cursor = $cursor->modify('+1 day');
+        }
+
+        return $out;
+    }
+
+    private function viewsSeriesByRange(string $start, string $end): array
+    {
+        $pdo = $this->pdo();
         $sql = "
-            SELECT
-                DATE(data) AS data,
-                COALESCE(SUM(views), 0) AS views,
-                COALESCE(SUM(posts_novos), 0) AS posts_novos,
-                COALESCE(SUM(inscricoes), 0) AS inscricoes
+            SELECT DATE(data) AS data, COALESCE(SUM(views), 0) AS total
             FROM estatisticas
             WHERE DATE(data) BETWEEN :start AND :end
             GROUP BY DATE(data)
@@ -266,54 +321,14 @@ final class DashboardService
         $stmt->bindValue('end', $end);
         $stmt->execute();
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-        $map = [];
-        foreach ($rows as $row) {
-            $key = (string) ($row['data'] ?? '');
-            if ($key === '') {
-                continue;
-            }
-
-            $map[$key] = [
-                'data' => $key,
-                'views' => (int) ($row['views'] ?? 0),
-                'posts_novos' => (int) ($row['posts_novos'] ?? 0),
-                'inscricoes' => (int) ($row['inscricoes'] ?? 0),
-            ];
-        }
-
-        $out = [];
-        try {
-            $startDate = new DateTimeImmutable($start);
-            $endDate = new DateTimeImmutable($end);
-        } catch (Throwable) {
-            return array_values($map);
-        }
-
-        if ($startDate > $endDate) {
-            [$startDate, $endDate] = [$endDate, $startDate];
-        }
-
-        $cursor = $startDate;
-        while ($cursor <= $endDate) {
-            $key = $cursor->format('Y-m-d');
-            $out[] = $map[$key] ?? ['data' => $key, 'views' => 0, 'posts_novos' => 0, 'inscricoes' => 0];
-            $cursor = $cursor->modify('+1 day');
-        }
-
-        return $out;
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
-    private function sumByRange(string $column, string $start, string $end): int
+    private function sumViewsByRange(string $start, string $end): int
     {
-        if (!in_array($column, ['views', 'posts_novos', 'inscricoes'], true)) {
-            return 0;
-        }
-
         $pdo = $this->pdo();
         $sql = "
-            SELECT COALESCE(SUM($column), 0) AS total
+            SELECT COALESCE(SUM(views), 0) AS total
             FROM estatisticas
             WHERE DATE(data) BETWEEN :start AND :end
         ";
@@ -325,6 +340,89 @@ final class DashboardService
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         return (int) ($row['total'] ?? 0);
+    }
+
+    private function mapTotalsByDate(array $rows, string $valueKey): array
+    {
+        $map = [];
+        foreach ($rows as $row) {
+            $key = (string) ($row['data'] ?? '');
+            if ($key === '') {
+                continue;
+            }
+
+            $map[$key] = (int) ($row['total'] ?? $row[$valueKey] ?? 0);
+        }
+
+        return $map;
+    }
+
+    private function applyViewsFallback(array $series, int $totalViews): array
+    {
+        if ($series === [] || $totalViews <= 0) {
+            return $series;
+        }
+
+        foreach ($series as $index => $row) {
+            $series[$index]['views'] = 0;
+        }
+
+        $lastIndex = count($series) - 1;
+        $series[$lastIndex]['views'] = $totalViews;
+
+        return $series;
+    }
+
+    private function shouldApplyViewsFallback(
+        int $totalViews,
+        int $trackedViewsRecent,
+        int $currentViews,
+        int $previousViews,
+        bool $rangeCoversPublishedHistory
+    ): bool
+    {
+        if ($totalViews <= 0) {
+            return false;
+        }
+
+        if ($trackedViewsRecent <= 0) {
+            return true;
+        }
+
+        if ($rangeCoversPublishedHistory && $trackedViewsRecent < $totalViews) {
+            return true;
+        }
+
+        return $trackedViewsRecent > $totalViews
+            || $currentViews > $totalViews
+            || $previousViews > $totalViews;
+    }
+
+    private function rangeUsesCurrentPublishedLifetimeFallback(string $start, string $end, ?string $firstPublishedDate): bool
+    {
+        if ($firstPublishedDate === null || trim($firstPublishedDate) === '') {
+            return false;
+        }
+
+        $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+
+        return $start <= $firstPublishedDate && $end >= $today;
+    }
+
+    private function historyFitsLastDays(?string $firstPublishedDate, int $days): bool
+    {
+        if ($firstPublishedDate === null || trim($firstPublishedDate) === '') {
+            return false;
+        }
+
+        try {
+            $firstDate = new DateTimeImmutable($firstPublishedDate);
+            $limitDate = (new DateTimeImmutable('today'))->modify('-' . max(0, $days - 1) . ' days');
+        } catch (Throwable) {
+            return false;
+        }
+
+        return $firstDate >= $limitDate;
     }
 
     private function pdo(): PDO

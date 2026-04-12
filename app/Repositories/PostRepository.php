@@ -62,6 +62,44 @@ final class PostRepository
         return (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
     }
 
+
+    public function firstPublishedDate(): ?string
+    {
+        $stmt = $this->pdo->query("SELECT MIN(DATE(data_publicacao)) AS first_date FROM posts WHERE status = 'publicado'");
+        $value = $stmt->fetch(PDO::FETCH_ASSOC)['first_date'] ?? null;
+
+        return is_string($value) && trim($value) !== '' ? (string) $value : null;
+    }
+
+    public function countPublishedByRange(string $start, string $end): int
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) AS total FROM posts WHERE status = 'publicado' AND DATE(data_publicacao) BETWEEN :start AND :end");
+        $stmt->bindValue(':start', $start, PDO::PARAM_STR);
+        $stmt->bindValue(':end', $end, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
+    }
+
+    public function publishedSeriesByRange(string $start, string $end): array
+    {
+        $sql = "
+            SELECT DATE(data_publicacao) AS data, COUNT(*) AS total
+            FROM posts
+            WHERE status = 'publicado'
+              AND DATE(data_publicacao) BETWEEN :start AND :end
+            GROUP BY DATE(data_publicacao)
+            ORDER BY DATE(data_publicacao) ASC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':start', $start, PDO::PARAM_STR);
+        $stmt->bindValue(':end', $end, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function latestWithCategoria(int $limit = 5): array
     {
         $limit = max(1, min(50, $limit));

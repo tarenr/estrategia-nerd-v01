@@ -5,10 +5,10 @@
  * @project     Estrategia Nerd
  * @author      Taren Felipe Ribeiro
  * @version     1.0.0
- * @purpose     Repository de Estatísticas (SQL)
- * @description Centraliza queries SQL na tabela estatisticas para métricas e séries do dashboard.
- * @usage       Injetado em Services (ex.: DashboardService) para gráficos e agregações por período.
- * @notes       Somente SQL (sem regra de negócio). Baseado na tabela estatisticas(data, views, posts_novos, inscricoes).
+ * @purpose     Repository de EstatÃ­sticas (SQL)
+ * @description Centraliza queries SQL na tabela estatisticas para mÃ©tricas e sÃ©ries do dashboard.
+ * @usage       Injetado em Services (ex.: DashboardService) para grÃ¡ficos e agregaÃ§Ãµes por perÃ­odo.
+ * @notes       Somente SQL (sem regra de negÃ³cio). Baseado na tabela estatisticas(data, views, posts_novos, inscricoes).
  * -----------------------------------------------------------------------------
  */
 
@@ -38,7 +38,7 @@ final class EstatisticaRepository
     }
 
     /**
-     * Soma de views dos últimos N dias (inclui hoje).
+     * Soma de views dos Ãºltimos N dias (inclui hoje).
      */
     public function viewsLastDays(int $days): int
     {
@@ -59,7 +59,7 @@ final class EstatisticaRepository
     }
 
     /**
-     * Soma de posts_novos dos últimos N dias (inclui hoje).
+     * Soma de posts_novos dos Ãºltimos N dias (inclui hoje).
      */
     public function postsNovosLastDays(int $days): int
     {
@@ -80,7 +80,7 @@ final class EstatisticaRepository
     }
 
     /**
-     * Soma de inscricoes dos últimos N dias (inclui hoje).
+     * Soma de inscricoes dos Ãºltimos N dias (inclui hoje).
      */
     public function inscricoesLastDays(int $days): int
     {
@@ -101,7 +101,7 @@ final class EstatisticaRepository
     }
 
     /**
-     * Série diária (para gráfico): retorna rows ordenadas por data asc.
+     * SÃ©rie diÃ¡ria (para grÃ¡fico): retorna rows ordenadas por data asc.
      *
      * @return array<int, array{data:string, views:int, posts_novos:int, inscricoes:int}>
      */
@@ -127,7 +127,7 @@ final class EstatisticaRepository
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        // Cast defensivo (SQL only; sem cálculo de negócio)
+        // Cast defensivo (SQL only; sem cÃ¡lculo de negÃ³cio)
         return array_map(static function (array $r): array {
             return [
                 'data' => (string)($r['data'] ?? ''),
@@ -139,7 +139,7 @@ final class EstatisticaRepository
     }
 
     /**
-     * Busca por data específica.
+     * Busca por data especÃ­fica.
      *
      * @return array{data:string, views:int, posts_novos:int, inscricoes:int}|null
      */
@@ -170,5 +170,39 @@ final class EstatisticaRepository
             'posts_novos' => (int)($row['posts_novos'] ?? 0),
             'inscricoes' => (int)($row['inscricoes'] ?? 0),
         ];
+    }
+    public function incrementViewsOnDate(string $date, int $amount = 1): void
+    {
+        $date = $this->normalizeDate($date);
+        if ($date === null) {
+            return;
+        }
+
+        $amount = max(1, $amount);
+
+        $sql = '
+            INSERT INTO estatisticas (data, views, posts_novos, inscricoes)
+            VALUES (:data, :views, 0, 0)
+            ON DUPLICATE KEY UPDATE views = views + VALUES(views)
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue('data', $date);
+        $stmt->bindValue('views', $amount, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    private function normalizeDate(string $date): ?string
+    {
+        $date = trim($date);
+        if ($date === '') {
+            return null;
+        }
+
+        try {
+            return (new DateTimeImmutable($date))->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

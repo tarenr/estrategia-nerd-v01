@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services\Site;
 
 use App\Repositories\ComentarioRepository;
+use App\Repositories\EstatisticaRepository;
 use App\Repositories\PostRepository;
 
 final class PostService
@@ -11,6 +12,7 @@ final class PostService
     public function __construct(
         private PostRepository $posts,
         private ComentarioRepository $comentarios,
+        private EstatisticaRepository $estatisticas,
     ) {
     }
 
@@ -32,6 +34,7 @@ final class PostService
         $postId = (int) ($row['id'] ?? 0);
         if ($postId > 0) {
             $this->posts->incrementViews($postId);
+            $this->estatisticas->incrementViewsOnDate(date('Y-m-d'));
             $row['views'] = (int) ($row['views'] ?? 0) + 1;
         }
 

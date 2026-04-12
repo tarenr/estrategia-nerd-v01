@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use DateTimeImmutable;
 use PDO;
 
 final class LinkClickRepository
@@ -16,8 +17,8 @@ final class LinkClickRepository
     public function registerClick(int $linkId, string $origin, string $sessionHash, string $referer, string $userAgent): void
     {
         $stmt = $this->pdo->prepare('
-            INSERT INTO link_clicks (link_id, origem, referer, session_hash, user_agent)
-            VALUES (:link_id, :origem, :referer, :session_hash, :user_agent)
+            INSERT INTO link_clicks (link_id, origem, referer, session_hash, user_agent, clicked_at)
+            VALUES (:link_id, :origem, :referer, :session_hash, :user_agent, :clicked_at)
         ');
         $stmt->execute([
             'link_id' => $linkId,
@@ -25,6 +26,7 @@ final class LinkClickRepository
             'referer' => $this->nullable($referer, 2048),
             'session_hash' => $this->nullable($sessionHash, 64),
             'user_agent' => $this->nullable($userAgent, 255),
+            'clicked_at' => $this->nowLocal(),
         ]);
     }
 
@@ -53,7 +55,8 @@ final class LinkClickRepository
 
     public function countToday(): int
     {
-        $stmt = $this->pdo->query('SELECT COUNT(*) AS total FROM link_clicks WHERE DATE(clicked_at) = CURDATE()');
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) AS total FROM link_clicks WHERE DATE(clicked_at) = :today');
+        $stmt->execute(['today' => $this->todayLocal()]);
         return (int) ($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
     }
 
@@ -68,18 +71,25 @@ final class LinkClickRepository
             return [];
         }
 
-        $placeholders = implode(', ', array_fill(0, count($linkIds), '?'));
+        $params = ['today' => $this->todayLocal()];
+        $placeholders = [];
+        foreach ($linkIds as $index => $id) {
+            $key = 'id' . $index;
+            $placeholders[] = ':' . $key;
+            $params[$key] = $id;
+        }
+
         $stmt = $this->pdo->prepare(
             'SELECT link_id,
                     COUNT(*) AS total_clicks,
-                    SUM(CASE WHEN DATE(clicked_at) = CURDATE() THEN 1 ELSE 0 END) AS clicks_today,
+                    SUM(CASE WHEN DATE(clicked_at) = :today THEN 1 ELSE 0 END) AS clicks_today,
                     MAX(clicked_at) AS last_click_at
              FROM link_clicks
-             WHERE link_id IN (' . $placeholders . ')
+             WHERE link_id IN (' . implode(', ', $placeholders) . ')
              GROUP BY link_id'
         );
-        foreach ($linkIds as $index => $id) {
-            $stmt->bindValue($index + 1, $id, PDO::PARAM_INT);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value, $key === 'today' ? PDO::PARAM_STR : PDO::PARAM_INT);
         }
         $stmt->execute();
 
@@ -177,5 +187,15 @@ final class LinkClickRepository
         }
 
         return mb_substr($value, 0, $maxLen);
+    }
+
+    private function todayLocal(): string
+    {
+        return (new DateTimeImmutable('today'))->format('Y-m-d');
+    }
+
+    private function nowLocal(): string
+    {
+        return (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');
     }
 }

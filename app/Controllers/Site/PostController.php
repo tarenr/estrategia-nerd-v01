@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Site;
 
 use App\Repositories\ComentarioRepository;
+use App\Repositories\EstatisticaRepository;
 use App\Repositories\PostRepository;
 use App\Services\Site\PostService;
 use App\Support\Csrf;
@@ -158,6 +159,7 @@ final class PostController
         return new PostService(
             new PostRepository($pdo),
             new ComentarioRepository($pdo),
+            new EstatisticaRepository($pdo),
         );
     }
 }
