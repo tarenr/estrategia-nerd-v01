@@ -15,10 +15,30 @@ $isLogin = (bool) preg_match('#/login$#', $rawPath);
 $showSiteChrome = !$isLogin && (($site_chrome ?? true) === true);
 $homePage = (bool) ($home_page ?? false);
 
-$siteCssPath = dirname(__DIR__, 3) . '/public/assets/css/site.css';
-$siteHomeJsPath = dirname(__DIR__, 3) . '/public/assets/js/site-home.js';
-$siteCssVersion = is_file($siteCssPath) ? (string) filemtime($siteCssPath) : '1';
-$siteHomeJsVersion = is_file($siteHomeJsPath) ? (string) filemtime($siteHomeJsPath) : '1';
+$siteCssCandidates = [
+    dirname(__DIR__, 3) . '/public/assets/css/site.css',
+    dirname(__DIR__, 4) . '/assets/css/site.css',
+];
+$siteJsCandidates = [
+    dirname(__DIR__, 3) . '/public/assets/js/site-home.js',
+    dirname(__DIR__, 4) . '/assets/js/site-home.js',
+];
+$siteCssPath = '';
+foreach ($siteCssCandidates as $candidate) {
+    if (is_file($candidate)) {
+        $siteCssPath = $candidate;
+        break;
+    }
+}
+$siteHomeJsPath = '';
+foreach ($siteJsCandidates as $candidate) {
+    if (is_file($candidate)) {
+        $siteHomeJsPath = $candidate;
+        break;
+    }
+}
+$siteCssVersion = $siteCssPath !== '' ? (string) filemtime($siteCssPath) : '1';
+$siteHomeJsVersion = $siteHomeJsPath !== '' ? (string) filemtime($siteHomeJsPath) : '1';
 $brandLogo = (string) portal_config('logo_url', '');
 $brandSymbol = (string) portal_config('brand_symbol_url', '');
 $brandFavicon = (string) portal_config('favicon_url', '');

@@ -45,6 +45,29 @@ body {
   font-size: 1.25rem;
 }
 
+.site-editorial-display,
+.site-editorial-title,
+.site-editorial-card-title,
+.site-editorial-nav-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+.site-editorial-display {
+  line-height: 0.98;
+}
+
+.site-editorial-title {
+  line-height: 1.05;
+}
+
+.site-editorial-card-title,
+.site-editorial-nav-title {
+  line-height: 1.15;
+}
+
 .site-brand-kicker {
   margin-top: 0.2rem;
   font-size: 0.82rem;
@@ -1151,7 +1174,7 @@ body {
 .site-blog-card-title {
   margin-top: 1rem;
   color: #ffffff;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.4;
@@ -1318,7 +1341,7 @@ body {
 
 .toc h3 {
   margin: 0 0 1rem;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   color: #22d3ee;
   font-size: 1rem;
   letter-spacing: 0.08em;
@@ -1366,9 +1389,11 @@ body {
 }
 
 .article-content h2 {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: clamp(1.6rem, 2vw, 2rem);
   font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: 0.01em;
   color: #22d3ee;
   margin: 2.7rem 0 1.4rem;
   padding-bottom: 0.55rem;
@@ -1376,9 +1401,11 @@ body {
 }
 
 .article-content h3 {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: clamp(1.28rem, 1.8vw, 1.5rem);
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: 0.01em;
   color: #c084fc;
   margin: 2rem 0 1rem;
 }
