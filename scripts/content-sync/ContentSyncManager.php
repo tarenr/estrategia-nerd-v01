@@ -1367,20 +1367,21 @@ final class ContentSyncManager
             $basename = basename($zipPath, '.zip');
             $packageDir = $root . DIRECTORY_SEPARATOR . $basename;
             $manifestPath = $packageDir . DIRECTORY_SEPARATOR . 'manifest.json';
-            $manifest = [];
-
-            if (is_file($manifestPath)) {
-                $decoded = json_decode((string) file_get_contents($manifestPath), true);
-                if (is_array($decoded)) {
-                    $manifest = $decoded;
-                }
+            $manifest = $this->readJsonFile($manifestPath) ?? $this->readCodeManifestFromZip($zipPath) ?? [];
+            $filesCount = (int) ($manifest['files_count'] ?? 0);
+            if ($filesCount <= 0) {
+                $filesCount = $this->countCodeFilesInZip($zipPath);
+            }
+            $commit = trim((string) ($manifest['commit'] ?? ''));
+            if ($commit === '' && preg_match('/_([0-9a-f]{7,40})$/i', $basename, $matches) === 1) {
+                $commit = (string) ($matches[1] ?? '');
             }
 
             $items[] = [
                 'package_id' => (string) ($manifest['package_id'] ?? $basename),
-                'commit' => (string) ($manifest['commit'] ?? ''),
+                'commit' => $commit,
                 'created_at' => (string) ($manifest['created_at'] ?? date('c', (int) filemtime($zipPath))),
-                'files_count' => (int) ($manifest['files_count'] ?? 0),
+                'files_count' => $filesCount,
                 'notes' => (string) ($manifest['notes'] ?? ''),
                 'zip_path' => $zipPath,
                 'manifest_path' => is_file($manifestPath) ? $manifestPath : '',
@@ -1389,6 +1390,83 @@ final class ContentSyncManager
         }
 
         return $items;
+    }
+
+    private function readJsonFile(string $path): ?array
+    {
+        if (!is_file($path)) {
+            return null;
+        }
+
+        $raw = (string) file_get_contents($path);
+        if ($raw === '') {
+            return null;
+        }
+        $raw = str_replace("\xEF\xBB\xBF", '', $raw);
+        $raw = str_replace("\u{FEFF}", '', $raw);
+
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    private function readCodeManifestFromZip(string $zipPath): ?array
+    {
+        if (!is_file($zipPath) || !class_exists(ZipArchive::class)) {
+            return null;
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath) !== true) {
+            return null;
+        }
+
+        try {
+            $index = $zip->locateName('manifest.json', ZipArchive::FL_NOCASE);
+            if ($index === false) {
+                return null;
+            }
+
+            $content = $zip->getFromIndex($index);
+            if (!is_string($content) || trim($content) === '') {
+                return null;
+            }
+            $content = str_replace("\xEF\xBB\xBF", '', $content);
+            $content = str_replace("\u{FEFF}", '', $content);
+
+            $decoded = json_decode($content, true);
+            return is_array($decoded) ? $decoded : null;
+        } finally {
+            $zip->close();
+        }
+    }
+
+    private function countCodeFilesInZip(string $zipPath): int
+    {
+        if (!is_file($zipPath) || !class_exists(ZipArchive::class)) {
+            return 0;
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath) !== true) {
+            return 0;
+        }
+
+        try {
+            $count = 0;
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $name = str_replace('\\', '/', (string) $zip->getNameIndex($i));
+                if ($name === '' || str_ends_with($name, '/')) {
+                    continue;
+                }
+                if (!str_starts_with($name, 'files/')) {
+                    continue;
+                }
+                $count++;
+            }
+            return $count;
+        } finally {
+            $zip->close();
+        }
     }
 
     private function removeDirectory(string $directory): void
