@@ -129,7 +129,7 @@ if (!function_exists('portal_configs')) {
                     continue;
                 }
 
-                $cache[$key] = (string) ($row['valor'] ?? '');
+                $cache[$key] = public_text((string) ($row['valor'] ?? ''));
             }
         } catch (\Throwable) {
             return $cache;
@@ -292,7 +292,112 @@ if (!function_exists('site_contact_fallback_href')) {
 if (!function_exists('public_title')) {
     function public_title(string $title): string
     {
-        $clean = preg_replace('/\[\[(.*?)\]\]/u', '$1', $title);
-        return is_string($clean) ? $clean : $title;
+        $clean = preg_replace('/\[\[(.*?)\]\]/u', '$1', public_text($title));
+        return is_string($clean) ? $clean : public_text($title);
+    }
+}
+
+if (!function_exists('public_text')) {
+    function public_text(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        $text = str_replace("\u{FEFF}", '', $value);
+
+        if (!mb_check_encoding($text, 'UTF-8')) {
+            $converted = @mb_convert_encoding($text, 'UTF-8', 'Windows-1252');
+            if (is_string($converted) && $converted !== '' && mb_check_encoding($converted, 'UTF-8')) {
+                $text = $converted;
+            } else {
+                $converted = @mb_convert_encoding($text, 'UTF-8', 'ISO-8859-1');
+                if (is_string($converted) && $converted !== '' && mb_check_encoding($converted, 'UTF-8')) {
+                    $text = $converted;
+                }
+            }
+        }
+
+        $mojibakeMap = [
+            "Ã¡" => "á",
+            "Ãà" => "à",
+            "Ã¢" => "â",
+            "Ãã" => "ã",
+            "Ãé" => "é",
+            "Ãê" => "ê",
+            "Ãí" => "í",
+            "Ãó" => "ó",
+            "Ãô" => "ô",
+            "Ãõ" => "õ",
+            "Ãú" => "ú",
+            "Ãç" => "ç",
+            "ÃÁ" => "Á",
+            "ÃÉ" => "É",
+            "ÃÍ" => "Í",
+            "ÃÓ" => "Ó",
+            "ÃÔ" => "Ô",
+            "ÃÕ" => "Õ",
+            "ÃÚ" => "Ú",
+            "ÃÇ" => "Ç",
+            "Âº" => "º",
+            "Âª" => "ª",
+            "Â " => " ",
+            "â€“" => "-",
+            "â€”" => "-",
+            "â€˜" => "'",
+            "â€™" => "'",
+            "â€œ" => '"',
+            "â€" => '"',
+        ];
+
+        $wordMap = [
+            'Estrat?gia' => 'Estratégia',
+            'estrat?gia' => 'estratégia',
+            'estrat?gico' => 'estratégico',
+            'Estrat?gico' => 'Estratégico',
+            're?ne' => 'reúne',
+            'pr?ticas' => 'práticas',
+            'pr?tica' => 'prática',
+            'pr?ticos' => 'práticos',
+            'pr?ximo' => 'próximo',
+            'ru?do' => 'ruído',
+            'perif?ricos' => 'periféricos',
+            'conte?do' => 'conteúdo',
+            'conte?dos' => 'conteúdos',
+            'n?o' => 'não',
+            'voc?' => 'você',
+            'op??es' => 'opções',
+            'recomenda??o' => 'recomendação',
+            'fa?a' => 'faça',
+            'An?lises' => 'Análises',
+            'an?lises' => 'análises',
+            'seguran?a' => 'segurança',
+            'd?vidas' => 'dúvidas',
+            'sele??es' => 'seleções',
+            'utilidade ?til' => 'utilidade útil',
+            '?ndice' => 'Índice',
+            'visualiza??es' => 'visualizações',
+            'coment?rios' => 'comentários',
+            'Informa??es' => 'Informações',
+            'mat?ria' => 'matéria',
+            'Pol?tica' => 'Política',
+            'bot?es' => 'botões',
+            'at?' => 'até',
+            'p?gina' => 'página',
+            'configura??es' => 'configurações',
+            'p?blicas' => 'públicas',
+            'Exporta??o' => 'Exportação',
+            'Verifica??o' => 'Verificação',
+            'produ??o' => 'produção',
+            'solicita??o' => 'solicitação',
+            '?ltimo' => 'último',
+            '?teis' => 'úteis',
+        ];
+
+        $text = str_replace(array_keys($mojibakeMap), array_values($mojibakeMap), $text);
+        $text = str_replace(array_keys($wordMap), array_values($wordMap), $text);
+        $text = str_replace("\u{FFFD}", '', $text);
+
+        return $text;
     }
 }

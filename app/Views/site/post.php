@@ -12,6 +12,16 @@ $previous = is_array($post_previous ?? null) ? $post_previous : null;
 $next = is_array($post_next ?? null) ? $post_next : null;
 $commentState = is_array($comment_state ?? null) ? $comment_state : [];
 $siteMeta = is_array($site_meta ?? null) ? $site_meta : [];
+$postNextLinks = [];
+if (site_section_public_active('blog')) {
+    $postNextLinks[] = ['label' => 'Explorar o blog', 'url' => site_section_href('blog')];
+}
+if (site_section_public_active('central_nerd')) {
+    $postNextLinks[] = ['label' => 'Abrir a Central Nerd', 'url' => site_section_href('central_nerd')];
+}
+if (site_section_public_active('newsletter')) {
+    $postNextLinks[] = ['label' => 'Receber novidades', 'url' => site_section_href('newsletter')];
+}
 
 $siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
 $siteDescription = (string) ($siteMeta['description'] ?? '');
@@ -117,17 +127,17 @@ $renderHighlightedTitle = static function (string $value): string {
         </span>
       </div>
 
-      <h1 class="font-orbitron text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
+      <h1 class="post-hero-title font-orbitron text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight mb-6">
         <?= $renderHighlightedTitle($rawTitle) ?>
       </h1>
 
       <?php if (trim((string) ($post['resumo'] ?? '')) !== ''): ?>
-        <p class="post-lead max-w-3xl mx-auto">
+        <p class="post-lead post-subtitle max-w-3xl mx-auto">
           <?= htmlspecialchars((string) ($post['resumo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
         </p>
       <?php endif; ?>
 
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-slate-400">
+      <div class="post-meta-line mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-slate-400">
         <span><?= htmlspecialchars((string) ($post['data'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
         <span>&bull;</span>
         <span><?= number_format((int) ($post['views'] ?? 0), 0, ',', '.') ?> visualizações</span>
@@ -137,7 +147,7 @@ $renderHighlightedTitle = static function (string $value): string {
         <span><span data-comments-total><?= $commentsTotal ?></span> comentários</span>
       </div>
 
-      <div class="flex justify-center gap-3 mt-8">
+      <div class="post-share-row flex justify-center gap-3 mt-8">
         <button type="button" class="share-btn" data-share="twitter" title="Compartilhar no X/Twitter" aria-label="Compartilhar no X/Twitter">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.9 2H22l-6.8 7.8L23 22h-6.1l-4.8-6.5L6.5 22H3.3l7.2-8.2L1 2h6.3l4.3 6 5.3-6Z"/></svg>
         </button>
@@ -175,14 +185,16 @@ $renderHighlightedTitle = static function (string $value): string {
         </aside>
 
         <div class="lg:col-span-9 min-w-0">
-          <div class="article-content max-w-3xl mx-auto w-full min-w-0">
+          <div class="article-story-shell"><div class="article-content max-w-3xl mx-auto w-full min-w-0">
             <?php if ((string) ($post['imagem'] ?? '') !== ''): ?>
-              <div class="rounded-2xl overflow-hidden mb-8 article-featured-media">
+              <div class="rounded-2xl overflow-hidden mb-5 article-featured-media">
                 <img src="<?= htmlspecialchars((string) ($post['imagem'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($plainTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
               </div>
             <?php endif; ?>
 
             <?= (string) ($post['conteudo_html'] ?? '') ?>
+
+            </div>
 
             <?php if (($post['tags'] ?? []) !== []): ?>
               <div class="post-tag-list">
@@ -202,6 +214,19 @@ $renderHighlightedTitle = static function (string $value): string {
                 </button>
               </form>
             </div>
+
+            <?php if ($postNextLinks !== []): ?>
+              <div class="mt-8 rounded-2xl border border-cyan-500/20 bg-slate-900/45 p-5">
+                <p class="text-sm text-slate-300 mb-3">Próximo passo:</p>
+                <div class="flex flex-wrap gap-3">
+                  <?php foreach ($postNextLinks as $nextLink): ?>
+                    <a href="<?= htmlspecialchars((string) ($nextLink['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 hover:border-cyan-300/50 hover:bg-cyan-500/20 transition">
+                      <?= htmlspecialchars((string) ($nextLink['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                    </a>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+            <?php endif; ?>
 
             <?php if (is_array($previous) || is_array($next)): ?>
               <div class="post-nav">

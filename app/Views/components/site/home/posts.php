@@ -4,14 +4,27 @@ if (!site_section_visible_on_home('blog')) {
 }
 
 $latestPosts = $latest_posts ?? [];
+$postsSection = $posts_section ?? [];
+$contextLinks = (array) ($postsSection['context_links'] ?? []);
 ?>
 
 <section id="blog" class="py-32 bg-slate-900/30 relative">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-16">
-          <span class="text-cyan-400 font-medium tracking-widest uppercase text-sm">Informações nerds</span>
-          <h2 class="font-orbitron text-4xl md:text-5xl font-bold mt-2 mb-4 text-white">Últimas do <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">blog</span></h2>
-          <p class="text-gray-400 max-w-2xl mx-auto">Novidades, reviews, curiosidades e análises do universo tech e geek.</p>
+          <span class="text-cyan-400 font-medium tracking-widest uppercase text-sm"><?= htmlspecialchars((string) ($postsSection['eyebrow'] ?? 'Blog Estratégia Nerd'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+          <h2 class="font-orbitron text-4xl md:text-5xl font-bold mt-2 mb-4 text-white"><?= htmlspecialchars((string) ($postsSection['title'] ?? 'Guias, reviews e comparativos do blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h2>
+          <p class="text-gray-300 max-w-3xl mx-auto text-lg"><?= htmlspecialchars((string) ($postsSection['description'] ?? 'Os conteúdos recentes do portal.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+          <?php if ($contextLinks !== []): ?>
+            <p class="mt-6 text-sm md:text-base text-slate-300 max-w-3xl mx-auto">
+              Explore também:
+              <?php foreach ($contextLinks as $index => $link): ?>
+                <?php if ($index > 0): ?><?= $index === count($contextLinks) - 1 ? ' e ' : ', ' ?><?php endif; ?>
+                <a href="<?= htmlspecialchars((string) ($link['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="text-cyan-300 hover:text-cyan-200 underline underline-offset-4 decoration-cyan-500/40">
+                  <?= htmlspecialchars((string) ($link['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                </a>
+              <?php endforeach; ?>.
+            </p>
+          <?php endif; ?>
       </div>
 
       <?php if ($latestPosts !== []): ?>
@@ -48,7 +61,7 @@ $latestPosts = $latest_posts ?? [];
                           <div class="relative h-48 overflow-hidden">
                               <div class="absolute inset-0 bg-gradient-to-br <?= $cardTone['hero'] ?>"></div>
                               <?php if ((string) ($post['imagem'] ?? '') !== ''): ?>
-                                  <img src="<?= htmlspecialchars((string) $post['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
+                                  <img src="<?= htmlspecialchars((string) $post['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80" loading="lazy" decoding="async">
                                   <div class="absolute inset-0 bg-slate-950/20"></div>
                               <?php else: ?>
                                   <div class="absolute inset-0 flex items-center justify-center">
@@ -66,11 +79,11 @@ $latestPosts = $latest_posts ?? [];
                               <h3 class="font-orbitron text-xl font-bold text-white mb-3 transition-colors <?= $cardTone['title'] ?>">
                                   <?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                               </h3>
-                              <p class="text-gray-400 text-sm mb-4">
-                                  <?= htmlspecialchars((string) ($post['resumo'] ?? 'Materia publicada no portal.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                              <p class="text-gray-300 text-sm mb-4">
+                                  <?= htmlspecialchars((string) ($post['resumo'] ?? 'Matéria publicada no portal.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                               </p>
                               <span class="inline-flex items-center font-semibold transition-colors <?= $cardTone['link'] ?>">
-                                  Ler mais
+                                  Ler a matéria
                                   <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                                   </svg>
@@ -83,7 +96,7 @@ $latestPosts = $latest_posts ?? [];
 
           <div class="text-center mt-12">
               <a href="<?= htmlspecialchars(site_section_href('blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-block px-8 py-4 border-2 border-cyan-500/50 text-cyan-400 font-bold text-lg rounded-full hover:bg-cyan-500/10 transition-all hover:border-cyan-400">
-                  Ver todos os posts
+                  Ver todos os posts do blog
               </a>
           </div>
       <?php else: ?>

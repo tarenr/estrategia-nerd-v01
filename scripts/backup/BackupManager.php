@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+
 namespace Scripts\Backup;
 
 use RuntimeException;
@@ -11,6 +12,7 @@ final class BackupManager
 {
     public function __construct(private array $config)
     {
+        date_default_timezone_set($_ENV['APP_TIMEZONE'] ?? 'America/Sao_Paulo');
     }
 
     public function run(string $profileName = 'local'): array
@@ -18,7 +20,8 @@ final class BackupManager
         $profile = $this->profile($profileName);
         $backupRoot = $this->backupRoot();
         $lock = $this->acquireRunLock($backupRoot, $profileName, (string) ($profile['label'] ?? $profileName));
-        $backupId = date('Y-m-d_H-i-s');
+        $profileSlug = trim((string) ($profile['slug'] ?? $profileName));
+        $backupId = $profileSlug . '_' . date('Y-m-d_H-i-s');
         $backupDir = $backupRoot . DIRECTORY_SEPARATOR . $backupId;
 
         if (!is_dir($backupDir) && !mkdir($backupDir, 0777, true) && !is_dir($backupDir)) {
@@ -30,6 +33,7 @@ final class BackupManager
             'backup_id' => $backupId,
             'profile' => $profileName,
             'profile_label' => (string) ($profile['label'] ?? $profileName),
+            'profile_slug' => $profileSlug,
             'created_at' => date('c'),
             'status' => 'running',
             'cloud_uploaded' => false,
@@ -679,7 +683,6 @@ final class BackupManager
     {
         $root = $this->backupRoot();
         $directories = glob($root . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [];
-        rsort($directories, SORT_STRING);
 
         $items = [];
         foreach ($directories as $directory) {
@@ -704,6 +707,13 @@ final class BackupManager
 
             $items[] = $manifest;
         }
+
+        usort($items, static function (array $left, array $right): int {
+            $leftTime = strtotime((string) ($left['created_at'] ?? '')) ?: 0;
+            $rightTime = strtotime((string) ($right['created_at'] ?? '')) ?: 0;
+
+            return $rightTime <=> $leftTime;
+        });
 
         return $items;
     }
@@ -757,12 +767,14 @@ final class BackupManager
     private function applyRetention(): void
     {
         $keep = max(1, (int) ($this->config['retention'] ?? 14));
-        $directories = glob($this->backupRoot() . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [];
-        rsort($directories, SORT_STRING);
-        $directoriesToRemove = array_slice($directories, $keep);
+        $items = $this->allBackups();
+        $itemsToRemove = array_slice($items, $keep);
 
-        foreach ($directoriesToRemove as $directory) {
-            $this->removeDirectory($directory);
+        foreach ($itemsToRemove as $item) {
+            $directory = (string) ($item['_dir'] ?? '');
+            if ($directory !== '') {
+                $this->removeDirectory($directory);
+            }
         }
     }
 

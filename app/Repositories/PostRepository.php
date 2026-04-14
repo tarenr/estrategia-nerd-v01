@@ -287,6 +287,18 @@ final class PostRepository
         return is_array($row) ? $row : null;
     }
 
+    public function publishedForSitemap(): array
+    {
+        $sql = "SELECT slug, data_publicacao, COALESCE(data_atualizacao, data_publicacao) AS lastmod
+                FROM posts
+                WHERE status = 'publicado'
+                ORDER BY COALESCE(data_atualizacao, data_publicacao) DESC, id DESC";
+
+        $stmt = $this->pdo->query($sql);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function incrementViews(int $id): void
     {
         $stmt = $this->pdo->prepare('UPDATE posts SET views = COALESCE(views, 0) + 1 WHERE id = :id LIMIT 1');

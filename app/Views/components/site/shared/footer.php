@@ -19,7 +19,7 @@ $footerItems = site_footer_items();
       <div class="md:col-span-2">
         <div class="flex items-center gap-3 mb-4">
           <div class="site-footer-orb">
-            <img src="<?= htmlspecialchars($brandSymbol, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($siteName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-brand-mark">
+            <img src="<?= htmlspecialchars($brandSymbol, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="" role="presentation" class="site-brand-mark">
           </div>
           <span class="site-brand-title site-brand-title-footer">
             <span class="site-brand-title-main"><?= htmlspecialchars($brandWordPrimary, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><span class="site-brand-title-accent"><?= htmlspecialchars($brandWordAccent, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
@@ -42,7 +42,7 @@ $footerItems = site_footer_items();
       </div>
 
       <div>
-        <h3 class="site-footer-title">Links rápidos</h3>
+        <h3 class="site-footer-title">Explore o portal</h3>
         <ul class="site-footer-links">
           <?php foreach ($footerItems as $item): ?>
             <li>

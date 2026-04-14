@@ -11,6 +11,10 @@ declare(strict_types=1);
 
 return [
     ['GET',  '/',       [\App\Controllers\Site\HomeController::class, 'index'], null],
+    ['GET',  '/robots.txt', [\App\Controllers\Site\SeoController::class, 'robots'], null],
+    ['HEAD', '/robots.txt', [\App\Controllers\Site\SeoController::class, 'robots'], null],
+    ['GET',  '/sitemap.xml', [\App\Controllers\Site\SeoController::class, 'sitemap'], null],
+    ['HEAD', '/sitemap.xml', [\App\Controllers\Site\SeoController::class, 'sitemap'], null],
     ['GET',  '/blog',   [\App\Controllers\Site\BlogController::class, 'index'], null],
     ['GET',  '/central-nerd',   [\App\Controllers\Site\CentralController::class, 'index'], null],
     ['GET',  '/link/{slug}', [\App\Controllers\Site\LinkController::class, 'go'], null],
@@ -92,5 +96,7 @@ return [
 
     ['GET',  '/local/backup',        [\App\Controllers\Site\BackupToolsController::class, 'index'], null],
     ['POST', '/local/backup',        [\App\Controllers\Site\BackupToolsController::class, 'handle'], null],
+    ['GET',  '/local/conteudo',      [\App\Controllers\Site\ContentSyncToolsController::class, 'index'], null],
+    ['POST', '/local/conteudo',      [\App\Controllers\Site\ContentSyncToolsController::class, 'handle'], null],
     ['GET',  '/dev',                 [\App\Controllers\Site\DevController::class, 'index'], null],
 ];

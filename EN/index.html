@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estratégia Nerd | Tecnologia, Games & Cultura Geek</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <style>
+        :root {
+            --neon-blue: #00d4ff;
+            --neon-purple: #b829dd;
+            --dark-bg: #0a0e17;
+            --circuit-color: rgba(0, 212, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: var(--dark-bg);
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Circuit Background Animation */
+        .circuit-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+            background-image: 
+                linear-gradient(90deg, var(--circuit-color) 1px, transparent 1px),
+                linear-gradient(var(--circuit-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: circuitMove 20s linear infinite;
+        }
+
+        @keyframes circuitMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Glitch Effect */
+        .glitch {
+            position: relative;
+            animation: glitch-skew 1s infinite linear alternate-reverse;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glitch::before {
+            left: 2px;
+            text-shadow: -2px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+
+        .glitch::after {
+            left: -2px;
+            text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
+            animation: glitch-anim2 1s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(31px, 9999px, 94px, 0); }
+            20% { clip: rect(58px, 9999px, 125px, 0); }
+            40% { clip: rect(12px, 9999px, 56px, 0); }
+            60% { clip: rect(89px, 9999px, 142px, 0); }
+            80% { clip: rect(23px, 9999px, 67px, 0); }
+            100% { clip: rect(45px, 9999px, 98px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 119px, 0); }
+            20% { clip: rect(12px, 9999px, 45px, 0); }
+            40% { clip: rect(78px, 9999px, 134px, 0); }
+            60% { clip: rect(34px, 9999px, 78px, 0); }
+            80% { clip: rect(91px, 9999px, 156px, 0); }
+            100% { clip: rect(56px, 9999px, 89px, 0); }
+        }
+
+        /* Neon Glow */
+        .neon-text {
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5),
+                         0 0 20px rgba(0, 212, 255, 0.3),
+                         0 0 30px rgba(0, 212, 255, 0.2);
+        }
+
+        .neon-border {
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3),
+                        inset 0 0 10px rgba(0, 212, 255, 0.1);
+        }
+
+        /* Card Hover Effects */
+        .nerd-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .nerd-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--neon-blue);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.2);
+        }
+
+        /* Scanline Effect */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(0, 0, 0, 0.1) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.3;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0e17;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--neon-blue);
+            border-radius: 5px;
+        }
+
+        /* Pulse Animation */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(0, 212, 255, 0.8); }
+        }
+
+        .pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        /* Typing Effect */
+        .typing::after {
+            content: '|';
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Instagram Grid */
+        .insta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+        }
+
+        .insta-item {
+            aspect-ratio: 1;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            background: #1e293b;
+        }
+
+        .insta-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .insta-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .insta-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 212, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .insta-item:hover .insta-overlay {
+            opacity: 1;
+        }
+
+        /* Form states */
+        .form-loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .form-success {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .form-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3) !important;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 9999;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 350px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .toast-error {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Background Effects -->
+    <div class="circuit-bg"></div>
+    <div class="scanline"></div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-cyan-500/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center pulse-glow">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <span class="font-orbitron text-2xl font-bold text-white tracking-wider">
+                        ESTRATÉGIA<span class="text-cyan-400">NERD</span>
+                    </span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#home" class="text-gray-300 hover:text-cyan-400 transition-colors font-medium tracking-wide">HOME</a>
+                    <a href="#sobre" class="text-gray-300 hover:text-cyan-400 transition-colors font-medium tracking-wide">SOBRE</a>
+                    <a href="#blog" class="text-gray-300 hover:text-cyan-400 transition-colors font-medium tracking-wide">BLOG</a>
+                    <a href="#instagram" class="text-gray-300 hover:text-cyan-400 transition-colors font-medium tracking-wide">INSTAGRAM</a>
+                    <a href="#newsletter" class="px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold rounded-full transition-all transform hover:scale-105 neon-border">
+                        LEVEL UP
+                    </a>
+                </div>
+
+                <button class="md:hidden text-cyan-400" onclick="toggleMenu()">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/10 via-transparent to-slate-900/50"></div>
+        
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="mb-8 inline-block">
+                <span class="px-4 py-2 rounded-full border border-cyan-500/30 text-cyan-400 text-sm font-medium tracking-widest uppercase bg-cyan-500/10">
+                    Bem-vindo ao Next Level
+                </span>
+            </div>
+            
+            <h1 class="font-orbitron text-5xl md:text-7xl lg:text-8xl font-black mb-6 leading-tight">
+                <span class="block text-white glitch" data-text="ESTRATÉGIA">ESTRATÉGIA</span>
+                <span class="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 neon-text">
+                    NERD
+                </span>
+            </h1>
+            
+            <p class="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 font-light typing" id="hero-text">
+                Tecnologia, cultura geek e estratégia em um só lugar
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <a href="#blog" class="group relative px-8 py-4 bg-cyan-500 text-slate-900 font-bold text-lg rounded-full overflow-hidden transition-all hover:scale-105">
+                    <span class="relative z-10">Explorar Conteúdo</span>
+                    <div class="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </a>
+                <a href="#instagram" class="px-8 py-4 border-2 border-cyan-500/50 text-cyan-400 font-bold text-lg rounded-full hover:bg-cyan-500/10 transition-all hover:border-cyan-400">
+                    Ver Instagram
+                </a>
+            </div>
+
+            <!-- Floating Elements -->
+            <div class="absolute top-1/4 left-10 w-20 h-20 border border-cyan-500/20 rounded-full animate-pulse hidden lg:block"></div>
+            <div class="absolute bottom-1/4 right-10 w-32 h-32 border border-purple-500/20 rounded-full animate-pulse hidden lg:block" style="animation-delay: 1s;"></div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="py-20 border-y border-cyan-500/10 bg-slate-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="stat-item">
+                    <div class="text-4xl md:text-5xl font-orbitron font-bold text-cyan-400 mb-2 counter" data-target="10000">0</div>
+                    <div class="text-gray-400 uppercase tracking-wider text-sm">Seguidores</div>
+                </div>
+                <div class="stat-item">
+                    <div class="text-4xl md:text-5xl font-orbitron font-bold text-purple-400 mb-2 counter" data-target="500">0</div>
+                    <div class="text-gray-400 uppercase tracking-wider text-sm">Posts</div>
+                </div>
+                <div class="stat-item">
+                    <div class="text-4xl md:text-5xl font-orbitron font-bold text-blue-400 mb-2 counter" data-target="50">0</div>
+                    <div class="text-gray-400 uppercase tracking-wider text-sm">Reviews</div>
+                </div>
+                <div class="stat-item">
+                    <div class="text-4xl md:text-5xl font-orbitron font-bold text-green-400 mb-2 counter" data-target="1000">0</div>
+                    <div class="text-gray-400 uppercase tracking-wider text-sm">Comunidade</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sobre Section -->
+    <section id="sobre" class="py-32 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="relative">
+                    <div class="absolute -inset-4 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-2xl opacity-20 blur-xl"></div>
+                    <div class="relative bg-slate-800/50 backdrop-blur-sm p-8 rounded-2xl border border-cyan-500/20">
+                        <div class="aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
+                            <div class="text-center p-8">
+                                <svg class="w-32 h-32 mx-auto text-cyan-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                </svg>
+                                <p class="text-cyan-400 font-orbitron text-xl">LOGO ESTRATÉGIA NERD</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="font-orbitron text-4xl md:text-5xl font-bold mb-6 text-white">
+                        A Origem da <span class="text-cyan-400">Estratégia</span>
+                    </h2>
+                    <div class="space-y-6 text-lg text-gray-300 leading-relaxed">
+                        <p>
+                            A Estratégia Nerd nasceu da paixão por tecnologia, cultura geek e aquele prazer clássico de descobrir algo incrível antes de todo mundo. Não é só sobre vender produto — é sobre conectar pessoas que vibram com inovação, games, gadgets e boas histórias.
+                        </p>
+                        <p>
+                            Aqui a ideia é simples e raiz: unir conteúdo, curiosidade e oportunidade no mesmo lugar. A gente fala de tecnologia como ela sempre deveria ser falada — com entusiasmo, utilidade e propósito.
+                        </p>
+                        <p>
+                            Seja um acessório gamer, um gadget diferentão ou uma dica estratégica, tudo passa por um filtro: <span class="text-cyan-400 font-semibold">vale a pena mesmo?</span>
+                        </p>
+                    </div>
+
+                    <div class="mt-10 grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-800/30 rounded-lg border-l-4 border-cyan-500">
+                            <h4 class="font-orbitron font-bold text-cyan-400 mb-1">Estratégia em cada jogada</h4>
+                            <p class="text-sm text-gray-400">Análises profundas e decisões inteligentes</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/30 rounded-lg border-l-4 border-purple-500">
+                            <h4 class="font-orbitron font-bold text-purple-400 mb-1">Nerd com propósito</h4>
+                            <p class="text-sm text-gray-400">Paixão transformada em resultados</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/30 rounded-lg border-l-4 border-blue-500">
+                            <h4 class="font-orbitron font-bold text-blue-400 mb-1">LevelUp constante</h4>
+                            <p class="text-sm text-gray-400">Evolução contínua e aprendizado</p>
+                        </div>
+                        <div class="p-4 bg-slate-800/30 rounded-lg border-l-4 border-green-500">
+                            <h4 class="font-orbitron font-bold text-green-400 mb-1">Domine o jogo</h4>
+                            <p class="text-sm text-gray-400">Esteja sempre um passo à frente</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blog Section -->
+    <section id="blog" class="py-32 bg-slate-900/30 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="text-cyan-400 font-medium tracking-widest uppercase text-sm">Informações Nerds</span>
+                <h2 class="font-orbitron text-4xl md:text-5xl font-bold mt-2 mb-4 text-white">Últimas do <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">Blog</span></h2>
+                <p class="text-gray-400 max-w-2xl mx-auto">Novidades, reviews, curiosidades e análises do universo tech e geek</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Blog Cards... (mantidos iguais) -->
+                <article class="nerd-card bg-slate-800/50 rounded-2xl overflow-hidden group cursor-pointer">
+                    <div class="relative h-48 overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-cyan-600 to-blue-800"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <svg class="w-16 h-16 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div class="absolute top-4 left-4 px-3 py-1 bg-cyan-500 text-slate-900 text-xs font-bold rounded-full">GADGETS</div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-3">
+                            <span>15 Fev 2026</span>
+                            <span class="mx-2">•</span>
+                            <span>5 min leitura</span>
+                        </div>
+                        <h3 class="font-orbitron text-xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">
+                            5 Gadgets Essenciais para o Setup Gamer em 2026
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4">
+                            Descubra os periféricos que vão elevar sua experiência de jogo ao próximo nível sem quebrar o banco.
+                        </p>
+                        <a href="#" class="inline-flex items-center text-cyan-400 font-semibold hover:text-cyan-300 transition-colors">
+                            Ler mais 
+                            <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+
+                <!-- Mais cards do blog... -->
+                <article class="nerd-card bg-slate-800/50 rounded-2xl overflow-hidden group cursor-pointer">
+                    <div class="relative h-48 overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-800"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <svg class="w-16 h-16 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div class="absolute top-4 left-4 px-3 py-1 bg-purple-500 text-white text-xs font-bold rounded-full">HARDWARE</div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-3">
+                            <span>12 Fev 2026</span>
+                            <span class="mx-2">•</span>
+                            <span>8 min leitura</span>
+                        </div>
+                        <h3 class="font-orbitron text-xl font-bold text-white mb-3 group-hover:text-purple-400 transition-colors">
+                            RTX 5090 vs RX 8900 XT: A Batalha pelo Trono
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4">
+                            Análise comparativa das novas placas de vídeo de última geração.
+                        </p>
+                        <a href="#" class="inline-flex items-center text-purple-400 font-semibold hover:text-purple-300 transition-colors">
+                            Ler mais 
+                            <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+
+                <article class="nerd-card bg-slate-800/50 rounded-2xl overflow-hidden group cursor-pointer">
+                    <div class="relative h-48 overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-green-600 to-teal-800"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <svg class="w-16 h-16 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div class="absolute top-4 left-4 px-3 py-1 bg-green-500 text-slate-900 text-xs font-bold rounded-full">DICAS</div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-3">
+                            <span>10 Fev 2026</span>
+                            <span class="mx-2">•</span>
+                            <span>4 min leitura</span>
+                        </div>
+                        <h3 class="font-orbitron text-xl font-bold text-white mb-3 group-hover:text-green-400 transition-colors">
+                            Como Otimizar seu PC para Jogos em 2026
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4">
+                            Truques e configurações avançadas para extrair o máximo de performance.
+                        </p>
+                        <a href="#" class="inline-flex items-center text-green-400 font-semibold hover:text-green-300 transition-colors">
+                            Ler mais 
+                            <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+            </div>
+
+            <div class="mt-12 text-center">
+				<a href="blog.html" class="inline-block px-8 py-3 border-2 border-cyan-500/50 text-cyan-400 font-bold rounded-full hover:bg-cyan-500/10 transition-all hover:border-cyan-400">
+					Ver todos os posts
+				</a>
+			</div>
+        </div>
+    </section>
+
+    <!-- Instagram Feed Section -->
+    <section id="instagram" class="py-32 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-transparent"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <span class="text-purple-400 font-medium tracking-widest uppercase text-sm">Siga-nos</span>
+                <h2 class="font-orbitron text-4xl md:text-5xl font-bold mt-2 mb-4 text-white">
+                    Feed do <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">Instagram</span>
+                </h2>
+                <p class="text-gray-400 max-w-2xl mx-auto mb-8">@estrategianerd • Conteúdo exclusivo, stories diários e muito universo geek</p>
+                
+                <a href="https://instagram.com/estrategianerd" target="_blank" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-full hover:shadow-lg hover:shadow-purple-500/25 transition-all transform hover:scale-105">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                    Seguir no Instagram
+                </a>
+            </div>
+
+            <div id="instagram-feed-container" class="max-w-4xl mx-auto">
+                <div id="instagram-feed-simulated" class="insta-grid">
+                    <div class="insta-item bg-slate-800">
+                        <div class="w-full h-full bg-gradient-to-br from-cyan-600 to-blue-800 flex items-center justify-center">
+                            <svg class="w-12 h-12 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div class="insta-overlay">
+                            <div class="text-white text-center">
+                                <svg class="w-8 h-8 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="text-sm font-bold">1.2k</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insta-item bg-slate-800">
+                        <div class="w-full h-full bg-gradient-to-br from-purple-600 to-pink-800 flex items-center justify-center">
+                            <svg class="w-12 h-12 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div class="insta-overlay">
+                            <div class="text-white text-center">
+                                <svg class="w-8 h-8 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="text-sm font-bold">856</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insta-item bg-slate-800">
+                        <div class="w-full h-full bg-gradient-to-br from-green-600 to-teal-800 flex items-center justify-center">
+                            <svg class="w-12 h-12 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div class="insta-overlay">
+                            <div class="text-white text-center">
+                                <svg class="w-8 h-8 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="text-sm font-bold">2.1k</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insta-item bg-slate-800">
+                        <div class="w-full h-full bg-gradient-to-br from-orange-600 to-red-800 flex items-center justify-center">
+                            <svg class="w-12 h-12 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                        </div>
+                        <div class="insta-overlay">
+                            <div class="text-white text-center">
+                                <svg class="w-8 h-8 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="text-sm font-bold">945</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insta-item bg-slate-800">
+                        <div class="w-full h-full bg-gradient-to-br from-indigo-600 to-blue-800 flex items-center justify-center">
+                            <svg class="w-12 h-12 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                            </svg>
+                        </div>
+                        <div class="insta-overlay">
+                            <div class="text-white text-center">
+                                <svg class="w-8 h-8 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="text-sm font-bold">1.5k</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insta-item bg-slate-800">
+                        <div class="w-full h-full bg-gradient-to-br from-pink-600 to-rose-800 flex items-center justify-center">
+                            <svg class="w-12 h-12 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                        </div>
+                        <div class="insta-overlay">
+                            <div class="text-white text-center">
+                                <svg class="w-8 h-8 mx-auto mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="text-sm font-bold">3.2k</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section - AGORA FUNCIONAL COM PHP -->
+    <section id="newsletter" class="py-32 relative">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-900/30 to-purple-900/30"></div>
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <div class="bg-slate-800/50 backdrop-blur-md p-8 md:p-12 rounded-3xl border border-cyan-500/20 shadow-2xl">
+                <h2 class="font-orbitron text-3xl md:text-4xl font-bold mb-4 text-white">
+                    Suba de <span class="text-cyan-400">Nível</span>
+                </h2>
+                <p class="text-gray-400 mb-8 text-lg">
+                    Receba as melhores dicas, reviews exclusivas e ofertas imperdíveis diretamente no seu e-mail. Sem spam, só conteúdo nerd de qualidade.
+                </p>
+                
+                <!-- FORMULÁRIO QUE ENVIA PARA O PHP -->
+                <form id="newsletter-form" class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto" onsubmit="handleNewsletterSubmit(event)">
+                    <input 
+                        type="email" 
+                        id="email-input"
+                        name="email"
+                        placeholder="seu@email.com" 
+                        required
+                        class="flex-1 px-6 py-4 bg-slate-900/50 border border-cyan-500/30 rounded-full text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+                    >
+                    <button 
+                        type="submit" 
+                        id="submit-btn"
+                        class="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-full hover:shadow-lg hover:shadow-cyan-500/25 transition-all transform hover:scale-105 flex items-center justify-center gap-2 min-w-[140px]"
+                    >
+                        <span id="btn-text">Inscrever</span>
+                        <svg id="btn-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                        <svg id="btn-loading" class="w-5 h-5 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </form>
+                
+                <p class="mt-6 text-sm text-gray-500">
+                    Ao se inscrever, você concorda com nossa política de privacidade. Pode cancelar a qualquer momento.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-cyan-500/10 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                <div class="col-span-2">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                            </svg>
+                        </div>
+                        <span class="font-orbitron text-xl font-bold text-white">
+                            ESTRATÉGIA<span class="text-cyan-400">NERD</span>
+                        </span>
+                    </div>
+                    <p class="text-gray-400 mb-6 max-w-sm">
+                        Conectando pessoas que vibram com inovação, games, gadgets e boas histórias. Ser nerd nunca foi só gostar de tecnologia. É saber usar ela a seu favor.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-gray-400 hover:bg-cyan-500 hover:text-white transition-all">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-gray-400 hover:bg-pink-500 hover:text-white transition-all">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-orbitron font-bold text-white mb-4">Links Rápidos</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#home" class="hover:text-cyan-400 transition-colors">Home</a></li>
+                        <li><a href="#sobre" class="hover:text-cyan-400 transition-colors">Sobre</a></li>
+                        <li><a href="#blog" class="hover:text-cyan-400 transition-colors">Blog</a></li>
+                        <li><a href="#instagram" class="hover:text-cyan-400 transition-colors">Instagram</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-orbitron font-bold text-white mb-4">Categorias</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-cyan-400 transition-colors">Gadgets</a></li>
+                        <li><a href="#" class="hover:text-cyan-400 transition-colors">Hardware</a></li>
+                        <li><a href="#" class="hover:text-cyan-400 transition-colors">Games</a></li>
+                        <li><a href="#" class="hover:text-cyan-400 transition-colors">Cultura Geek</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-cyan-500/10 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-500 text-sm mb-4 md:mb-0">
+                    © 2026 Estratégia Nerd. Todos os direitos reservados.
+                </p>
+                <div class="flex space-x-6 text-sm text-gray-500">
+                    <a href="#" class="hover:text-cyan-400 transition-colors">Política de Privacidade</a>
+                    <a href="#" class="hover:text-cyan-400 transition-colors">Termos de Uso</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // GSAP Animations
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Hero Text Animation
+        gsap.from("#hero-text", {
+            duration: 2,
+            text: "",
+            ease: "none",
+            delay: 0.5
+        });
+
+        // Stats Counter Animation
+        const counters = document.querySelectorAll('.counter');
+        counters.forEach(counter => {
+            const target = +counter.getAttribute('data-target');
+            gsap.to(counter, {
+                innerHTML: target,
+                duration: 2,
+                snap: { innerHTML: 1 },
+                scrollTrigger: {
+                    trigger: counter,
+                    start: "top 80%",
+                    once: true
+                },
+                onUpdate: function() {
+                    counter.innerHTML = Math.ceil(this.targets()[0].innerHTML).toLocaleString();
+                }
+            });
+        });
+
+        // Blog Cards Animation
+        gsap.utils.toArray('.nerd-card').forEach((card, i) => {
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: "top 85%",
+                    toggleActions: "play none none reverse"
+                },
+                y: 50,
+                opacity: 0,
+                duration: 0.6,
+                delay: i * 0.1,
+                ease: "power3.out"
+            });
+        });
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Toast Notification Function
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast toast-${type}`;
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Newsletter Submit Handler - FUNCIONAL COM PHP
+        async function handleNewsletterSubmit(e) {
+            e.preventDefault();
+            
+            const form = document.getElementById('newsletter-form');
+            const btn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnIcon = document.getElementById('btn-icon');
+            const btnLoading = document.getElementById('btn-loading');
+            const emailInput = document.getElementById('email-input');
+            
+            // Validação básica
+            const email = emailInput.value.trim();
+            if (!email || !email.includes('@')) {
+                showToast('Por favor, insira um e-mail válido!', 'error');
+                emailInput.classList.add('form-error');
+                setTimeout(() => emailInput.classList.remove('form-error'), 2000);
+                return;
+            }
+            
+            // Estado de loading
+            btn.disabled = true;
+            btnText.textContent = 'Enviando...';
+            btnIcon.classList.add('hidden');
+            btnLoading.classList.remove('hidden');
+            form.classList.add('form-loading');
+            
+            try {
+                // Envia para o PHP
+                const formData = new FormData();
+                formData.append('email', email);
+                
+                const response = await fetch('newsletter.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Sucesso
+                    btn.classList.remove('from-cyan-500', 'to-blue-600');
+                    btn.classList.add('from-green-500', 'to-green-600');
+                    btnText.textContent = '✓ Inscrito!';
+                    emailInput.classList.add('form-success');
+                    showToast('Cadastro realizado! Verifique seu e-mail.', 'success');
+                    form.reset();
+                } else {
+                    throw new Error(result.message || 'Erro no cadastro');
+                }
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('Erro ao cadastrar. Tente novamente!', 'error');
+                btnText.textContent = 'Tentar novamente';
+            } finally {
+                btnLoading.classList.add('hidden');
+                btnIcon.classList.remove('hidden');
+                form.classList.remove('form-loading');
+                
+                // Reseta o botão após 3 segundos
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btnText.textContent = 'Inscrever';
+                    btn.classList.add('from-cyan-500', 'to-blue-600');
+                    btn.classList.remove('from-green-500', 'to-green-600');
+                    emailInput.classList.remove('form-success');
+                }, 3000);
+            }
+        }
+
+        // Mobile Menu Toggle
+        function toggleMenu() {
+            alert('Menu mobile - implementar drawer/sidebar conforme necessidade');
+        }
+
+        // Parallax Effect for Circuit Background
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const circuit = document.querySelector('.circuit-bg');
+            circuit.style.transform = `translate(${scrolled * 0.1}px, ${scrolled * 0.1}px)`;
+        });
+    </script>
+</body>
+</html>

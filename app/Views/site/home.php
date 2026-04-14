@@ -3,9 +3,13 @@ use App\Support\View;
 
 $latestPosts = $latest_posts ?? [];
 $siteMeta = $site_meta ?? [];
+$hero = $hero ?? [];
+$homeIntro = $home_intro ?? [];
+$topicLinks = $topic_links ?? [];
+$postsSection = $posts_section ?? [];
 
 $siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
-$siteDescription = (string) ($siteMeta['description'] ?? 'Conteúdo, tecnologia, cultura geek e oportunidades em um só lugar.');
+$siteDescription = (string) ($siteMeta['description'] ?? 'Tecnologia, games, gadgets e cultura geek com reviews, comparativos, dicas e oportunidades que valem o clique.');
 $bioTitle = (string) ($siteMeta['bio_title'] ?? $siteName);
 $footerText = (string) ($siteMeta['footer'] ?? $siteName);
 $siteKicker = (string) ($siteMeta['kicker'] ?? 'Portal geek estratégico');
@@ -69,15 +73,19 @@ $contactHref = site_contact_fallback_href($siteEmail);
       'brand_symbol' => $brandSymbol,
       'brand_word_primary' => $brandWordPrimary,
       'brand_word_accent' => $brandWordAccent,
+      'hero' => $hero,
   ]) ?>
 
   <?= View::component('site/home/about', [
       'about_mark' => $aboutMark,
       'bio_title' => $bioTitle,
+      'home_intro' => $homeIntro,
+      'topic_links' => $topicLinks,
   ]) ?>
 
   <?= View::component('site/home/posts', [
       'latest_posts' => $latestPosts,
+      'posts_section' => $postsSection,
   ]) ?>
 
   <?php if ($showNewsletterHome): ?>

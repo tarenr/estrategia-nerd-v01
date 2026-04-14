@@ -163,7 +163,7 @@ final class BackupToolsController
             $items[] = [
                 'backup_id' => (string) ($item['backup_id'] ?? ''),
                 'profile' => (string) ($item['profile'] ?? ''),
-                'profile_label' => (string) ($item['profile_label'] ?? ''),
+                'profile_label' => $this->profileLabel((string) ($item['profile'] ?? ''), (string) ($item['profile_label'] ?? '')),
                 'created_at' => (string) ($item['created_at'] ?? ''),
                 'cloud_uploaded' => (bool) ($item['cloud_uploaded'] ?? false),
                 'cloud_uploaded_at' => (string) ($item['cloud_uploaded_at'] ?? ''),
@@ -209,6 +209,15 @@ final class BackupToolsController
             'profile_label' => (string) ($running['profile_label'] ?? 'Backup em execução'),
             'started_at' => (string) ($running['started_at'] ?? ''),
         ];
+    }
+
+    private function profileLabel(string $profile, string $fallback = ''): string
+    {
+        return match (strtolower(trim($profile))) {
+            'production' => "Produ\u{00E7}\u{00E3}o",
+            'local' => "Local / Homologa\u{00E7}\u{00E3}o",
+            default => $fallback !== '' ? $fallback : 'Backup',
+        };
     }
 
     private function formatBytes(int $bytes): string

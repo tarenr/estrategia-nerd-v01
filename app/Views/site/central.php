@@ -30,6 +30,7 @@ $featuredTone = (string) ($featuredLink['tone'] ?? 'product');
 $featuredTrackedUrl = $featuredLink !== null && trim((string) ($featuredLink['slug'] ?? '')) !== ''
     ? url('/link/' . rawurlencode((string) $featuredLink['slug']) . '?origem=central-destaque')
     : trim((string) ($featuredLink['url'] ?? '#'));
+$quickLinks = is_array($central_quick_links ?? null) ? $central_quick_links : [];
 ?>
 
 <div class="site-home-page central-nerd-page">
@@ -57,6 +58,16 @@ $featuredTrackedUrl = $featuredLink !== null && trim((string) ($featuredLink['sl
                 <?php if (trim((string) ($social['url'] ?? '')) === '') { continue; } ?>
                 <a href="<?= htmlspecialchars((string) $social['url'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="central-social-link" aria-label="<?= htmlspecialchars((string) $social['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="<?= htmlspecialchars((string) $social['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                   <?= $social['icon'] ?>
+                </a>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+
+          <?php if ($quickLinks !== []): ?>
+            <div class="mt-4 flex flex-wrap justify-center gap-2">
+              <?php foreach ($quickLinks as $quickLink): ?>
+                <a href="<?= htmlspecialchars((string) ($quickLink['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center rounded-full border border-cyan-500/25 bg-slate-900/65 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200 hover:border-cyan-300/40 hover:text-cyan-100 transition">
+                  <?= htmlspecialchars((string) ($quickLink['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                 </a>
               <?php endforeach; ?>
             </div>
@@ -96,6 +107,10 @@ $featuredTrackedUrl = $featuredLink !== null && trim((string) ($featuredLink['sl
     <?php endif; ?>
 
     <section class="central-groups">
+      <header class="mx-auto mb-6 max-w-3xl text-center">
+        <h2 class="font-orbitron text-2xl font-bold text-white md:text-3xl">Atalhos da Central Nerd</h2>
+        <p class="mt-2 text-sm leading-7 text-slate-300 md:text-base">Escolha a seção e clique direto no que interessa: produtos, cupons, conteúdos e links oficiais do portal.</p>
+      </header>
       <?php if ($groups === []): ?>
         <article class="central-empty-state" data-reveal>
           <h2>Central em montagem</h2>

@@ -23,6 +23,7 @@ $q = trim((string) ($filters['q'] ?? ''));
 $activeCategory = trim((string) ($filters['categoria'] ?? ''));
 $currentPage = (int) ($pagination['page'] ?? 1);
 $totalPages = (int) ($pagination['pages'] ?? 1);
+$contextLinks = is_array($blog_context_links ?? null) ? $blog_context_links : [];
 
 $socialLinks = [
     'instagram' => [
@@ -103,7 +104,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <div class="mb-6 inline-block">
         <span class="px-4 py-2 rounded-full border border-cyan-500/30 text-cyan-400 text-sm font-medium tracking-widest uppercase bg-cyan-500/10">
-          Informações Nerds
+          Blog Estratégia Nerd
         </span>
       </div>
 
@@ -112,11 +113,26 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
         <span class="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 neon-text text-3xl md:text-4xl lg:text-5xl mt-2">
           Estratégia Nerd
         </span>
+        <span class="mt-4 block font-rajdhani text-xl md:text-2xl lg:text-3xl font-semibold text-slate-200">
+          reviews, comparativos, guias e listas de tecnologia, games e gadgets
+        </span>
       </h1>
 
       <p class="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
-        Novidades, reviews, curiosidades e análises do universo tech e geek. Conteúdo de qualidade para quem vive um nível à frente.
+        Leituras para descobrir melhor, comparar com contexto e decidir com mais segurança antes do próximo clique.
       </p>
+
+      <?php if ($contextLinks !== []): ?>
+        <p class="mb-8 text-sm md:text-base text-slate-300 max-w-3xl mx-auto">
+          Acesse também:
+          <?php foreach ($contextLinks as $index => $link): ?>
+            <?php if ($index > 0): ?><?= $index === count($contextLinks) - 1 ? ' e ' : ', ' ?><?php endif; ?>
+            <a href="<?= htmlspecialchars((string) ($link['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="text-cyan-300 hover:text-cyan-200 underline underline-offset-4 decoration-cyan-500/40">
+              <?= htmlspecialchars((string) ($link['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+            </a>
+          <?php endforeach; ?>.
+        </p>
+      <?php endif; ?>
 
       <form method="GET" action="<?= htmlspecialchars(url('/blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="max-w-2xl mx-auto relative">
         <?php if ($activeCategory !== '' && $activeCategory !== 'all'): ?>

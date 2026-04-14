@@ -44,10 +44,21 @@ final class PostService
         $related = $this->loadRelatedPosts($row);
         $previous = $this->normalizeAdjacent($this->posts->previousPublicPost((string) ($row['data_publicacao'] ?? ''), $postId), 'anterior');
         $next = $this->normalizeAdjacent($this->posts->nextPublicPost((string) ($row['data_publicacao'] ?? ''), $postId), 'proximo');
+        $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
+        $pageTitle = $post['seo_title'] !== '' ? $post['seo_title'] : ($post['titulo'] . ' | ' . $siteName);
+        $metaDescription = $post['seo_description'] !== ''
+            ? $post['seo_description']
+            : ($post['resumo'] !== '' ? $post['resumo'] : (string) portal_config('meta_description_padrao', portal_config('descricao_site', 'Estrategia Nerd')));
+        $canonicalUrl = (string) ($post['url'] ?? url('/post/' . (string) ($row['slug'] ?? '')));
+        $metaImage = (string) ($post['imagem'] ?? '');
 
         return [
-            'title' => $post['seo_title'] !== '' ? $post['seo_title'] : ($post['titulo'] . ' | ' . (string) portal_config('nome_site', 'Estrategia Nerd')),
-            'meta_description' => $post['seo_description'] !== '' ? $post['seo_description'] : ($post['resumo'] !== '' ? $post['resumo'] : (string) portal_config('meta_description_padrao', portal_config('descricao_site', 'Estrategia Nerd'))),
+            'title' => $pageTitle,
+            'meta_description' => $metaDescription,
+            'canonical_url' => $canonicalUrl,
+            'meta_image' => $metaImage,
+            'og_type' => 'article',
+            'structured_data' => $this->buildPostStructuredData($post, $pageTitle, $metaDescription, $siteName),
             'site_chrome' => false,
             'post_page' => true,
             'post' => $post,
@@ -112,6 +123,8 @@ final class PostService
         return [
             'title' => $headline . ' | ' . (string) portal_config('nome_site', 'Estrategia Nerd'),
             'meta_description' => $message,
+            'canonical_url' => url('/post/' . $slug),
+            'og_type' => 'website',
             'site_chrome' => false,
             'post_unavailable' => true,
             'reason' => $reason,
@@ -120,7 +133,7 @@ final class PostService
             'note' => $note,
             'requested_slug' => $slug,
             'matched_post' => is_array($matched) ? [
-                'titulo' => (string) ($matched['titulo'] ?? ''),
+                'titulo' => public_text((string) ($matched['titulo'] ?? '')),
                 'slug' => (string) ($matched['slug'] ?? ''),
                 'status' => (string) ($matched['status'] ?? ''),
                 'data' => isset($publishedLabel) ? $publishedLabel : '',
@@ -252,13 +265,13 @@ final class PostService
 
         return [
             'id' => (int) ($row['id'] ?? 0),
-            'titulo' => (string) ($row['titulo'] ?? ''),
+            'titulo' => public_text((string) ($row['titulo'] ?? '')),
             'slug' => (string) ($row['slug'] ?? ''),
-            'resumo' => trim((string) ($row['resumo'] ?? '')),
+            'resumo' => public_text(trim((string) ($row['resumo'] ?? ''))),
             'conteudo_html' => $content['html'],
             'toc' => $content['toc'],
             'categoria_id' => (int) ($row['categoria_id'] ?? 0),
-            'categoria_nome' => (string) ($row['categoria_nome'] ?? 'Sem categoria'),
+            'categoria_nome' => public_text((string) ($row['categoria_nome'] ?? 'Sem categoria')),
             'categoria_slug' => (string) ($row['categoria_slug'] ?? ''),
             'categoria_cor' => (string) ($row['categoria_cor'] ?? '#00d4ff'),
             'imagem' => $this->toPublicUrl($image),
@@ -266,8 +279,8 @@ final class PostService
             'views' => (int) ($row['views'] ?? 0),
             'curtidas' => (int) ($row['curtidas'] ?? 0),
             'comentarios_count' => (int) ($row['comentarios_count'] ?? 0),
-            'seo_title' => trim((string) ($row['seo_title'] ?? '')),
-            'seo_description' => trim((string) ($row['seo_description'] ?? '')),
+            'seo_title' => public_text(trim((string) ($row['seo_title'] ?? ''))),
+            'seo_description' => public_text(trim((string) ($row['seo_description'] ?? ''))),
             'tags' => $this->normalizeTags((string) ($row['tags'] ?? '')),
             'data' => $this->formatDate((string) ($row['data_publicacao'] ?? '')),
             'data_iso' => (string) ($row['data_publicacao'] ?? ''),
@@ -289,6 +302,7 @@ final class PostService
                 if ($text === '') {
                     return $matches[0];
                 }
+                $text = public_text($text);
 
                 $id = '';
                 if (preg_match('/\sid=("|\')([^"\']+)\\1/i', $attrs, $idMatch)) {
@@ -337,8 +351,8 @@ final class PostService
 
             $isAdmin = $adminUserId > 0 || $this->isAdminComment((string) ($item['email'] ?? ''), (string) ($item['nome'] ?? ''));
             $displayName = $isAdmin && $adminDisplayName !== ''
-                ? $adminDisplayName
-                : ($storedName !== '' ? $storedName : 'Leitor');
+                ? public_text($adminDisplayName)
+                : ($storedName !== '' ? public_text($storedName) : 'Leitor');
 
             $comment = [
                 'id' => (int) ($item['id'] ?? 0),
@@ -353,7 +367,7 @@ final class PostService
                 'admin_avatar_image' => $this->toPublicUrl((string) ($item['admin_avatar_imagem'] ?? '')),
                 'admin_avatar_focal_x' => max(0.0, min(100.0, (float) ($item['admin_avatar_focal_x'] ?? 50.0))),
                 'admin_avatar_focal_y' => max(0.0, min(100.0, (float) ($item['admin_avatar_focal_y'] ?? 50.0))),
-                'comentario' => nl2br(htmlspecialchars((string) ($item['comentario'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')),
+                'comentario' => nl2br(htmlspecialchars(public_text((string) ($item['comentario'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')),
                 'data' => $this->formatCommentDate((string) ($item['data'] ?? '')),
                 'children' => [],
             ];
@@ -397,9 +411,9 @@ final class PostService
         }
 
         return [
-            'titulo' => (string) ($row['titulo'] ?? ''),
-            'resumo' => trim((string) ($row['resumo'] ?? '')),
-            'categoria_nome' => (string) ($row['categoria_nome'] ?? 'Blog'),
+            'titulo' => public_text((string) ($row['titulo'] ?? '')),
+            'resumo' => public_text(trim((string) ($row['resumo'] ?? ''))),
+            'categoria_nome' => public_text((string) ($row['categoria_nome'] ?? 'Blog')),
             'imagem' => $this->toPublicUrl($image),
             'url' => url('/post/' . (string) ($row['slug'] ?? '')),
         ];
@@ -412,7 +426,7 @@ final class PostService
         }
 
         return [
-            'titulo' => (string) ($row['titulo'] ?? ''),
+            'titulo' => public_text((string) ($row['titulo'] ?? '')),
             'url' => url('/post/' . (string) ($row['slug'] ?? '')),
             'direction' => $direction,
         ];
@@ -438,7 +452,7 @@ final class PostService
 
     private function normalizeTags(string $value): array
     {
-        $parts = array_filter(array_map(static fn (string $tag): string => trim($tag), explode(',', $value)));
+        $parts = array_filter(array_map(static fn (string $tag): string => public_text(trim($tag)), explode(',', $value)));
         return array_values($parts);
     }
 
@@ -595,16 +609,27 @@ final class PostService
 
     private function slugify(string $value): string
     {
-        $value = strtolower(trim($value));
-        $map = [
-            'Ã¡' => 'a', 'Ã ' => 'a', 'Ã£' => 'a', 'Ã¢' => 'a', 'Ã¤' => 'a',
-            'Ã©' => 'e', 'Ã¨' => 'e', 'Ãª' => 'e', 'Ã«' => 'e',
-            'Ã­' => 'i', 'Ã¬' => 'i', 'Ã®' => 'i', 'Ã¯' => 'i',
-            'Ã³' => 'o', 'Ã²' => 'o', 'Ãµ' => 'o', 'Ã´' => 'o', 'Ã¶' => 'o',
-            'Ãº' => 'u', 'Ã¹' => 'u', 'Ã»' => 'u', 'Ã¼' => 'u',
-            'Ã§' => 'c',
-        ];
-        $value = strtr($value, $map);
+        $value = trim($value);
+        if ($value === '') {
+            return 'secao';
+        }
+
+        if (class_exists(\Transliterator::class)) {
+            $transliterator = \Transliterator::create('Any-Latin; Latin-ASCII; Lower()');
+            if ($transliterator instanceof \Transliterator) {
+                $normalized = $transliterator->transliterate($value);
+                if (is_string($normalized) && $normalized !== '') {
+                    $value = $normalized;
+                }
+            }
+        } elseif (function_exists('iconv')) {
+            $normalized = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+            if (is_string($normalized) && $normalized !== '') {
+                $value = $normalized;
+            }
+        }
+
+        $value = strtolower($value);
         $value = preg_replace('/[^a-z0-9]+/i', '-', $value) ?? $value;
         $value = trim($value, '-');
 
@@ -651,5 +676,58 @@ final class PostService
         }
 
         return $total;
+    }
+
+    private function buildPostStructuredData(array $post, string $title, string $metaDescription, string $siteName): array
+    {
+        $publisherLogo = (string) portal_config('logo_url', '');
+        $publisherLogo = $publisherLogo !== '' ? $this->toPublicUrl($publisherLogo) : '';
+
+        $data = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            'headline' => $title,
+            'description' => $metaDescription,
+            'mainEntityOfPage' => [
+                '@type' => 'WebPage',
+                '@id' => (string) ($post['url'] ?? ''),
+            ],
+            'datePublished' => $this->toIsoDate((string) ($post['data_iso'] ?? '')),
+            'dateModified' => $this->toIsoDate((string) ($post['data_iso'] ?? '')),
+            'articleSection' => (string) ($post['categoria_nome'] ?? ''),
+            'keywords' => implode(', ', array_map(static fn (mixed $tag): string => (string) $tag, (array) ($post['tags'] ?? []))),
+            'author' => [
+                '@type' => 'Organization',
+                'name' => $siteName,
+            ],
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => $siteName,
+            ],
+        ];
+
+        if ($publisherLogo !== '') {
+            $data['publisher']['logo'] = [
+                '@type' => 'ImageObject',
+                'url' => $publisherLogo,
+            ];
+        }
+
+        $image = trim((string) ($post['imagem'] ?? ''));
+        if ($image !== '') {
+            $data['image'] = [$image];
+        }
+
+        return [$data];
+    }
+
+    private function toIsoDate(string $value): string
+    {
+        $timestamp = strtotime($value);
+        if ($timestamp === false) {
+            return date(DATE_ATOM);
+        }
+
+        return date(DATE_ATOM, $timestamp);
     }
 }

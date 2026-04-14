@@ -15,17 +15,31 @@ final class CentralService
     {
         $items = $this->normalizeLinks($this->links->listForCentral(120));
         [$featuredLink, $groups] = $this->partitionLinks($items);
+        $siteMeta = $this->buildSiteMeta();
+        $siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
+        $title = 'Central Nerd | Links, Ofertas e Atalhos Oficiais de ' . $siteName;
+        $metaDescription = (string) portal_config(
+            'bio_descricao',
+            'Central Nerd com links oficiais, promoções, cupons e atalhos rápidos do Estratégia Nerd para clique direto.'
+        );
+        $canonicalUrl = url('/central-nerd');
+        $metaImage = (string) ($siteMeta['logo'] ?: $siteMeta['avatar'] ?: $siteMeta['brand_symbol']);
 
         return [
-            'title' => 'Central Nerd | ' . (string) portal_config('nome_site', 'Estratégia Nerd'),
-            'meta_description' => (string) portal_config('bio_descricao', portal_config('descricao_site', 'Links, ofertas e atalhos oficiais da Estratégia Nerd.')),
+            'title' => $title,
+            'meta_description' => $metaDescription,
+            'canonical_url' => $canonicalUrl,
+            'meta_image' => $metaImage,
+            'og_type' => 'website',
+            'structured_data' => $this->buildStructuredData($title, $metaDescription, $canonicalUrl, $siteName),
             'site_chrome' => false,
             'body_class' => 'central-nerd-body',
-            'site_meta' => $this->buildSiteMeta(),
+            'site_meta' => $siteMeta,
             'central_featured_link' => $featuredLink,
             'central_groups' => $groups,
             'central_theme' => 'cyan-blue',
             'central_total_links' => count($items),
+            'central_quick_links' => $this->buildQuickLinks(),
         ];
     }
 
@@ -59,16 +73,16 @@ final class CentralService
 
             return [
                 'id' => (int) ($item['id'] ?? 0),
-                'titulo' => trim((string) ($item['titulo'] ?? '')),
+                'titulo' => public_text(trim((string) ($item['titulo'] ?? ''))),
                 'slug' => (string) ($item['slug'] ?? ''),
                 'url' => trim((string) ($item['url'] ?? '#')),
                 'tipo' => $tipo,
                 'promocao' => $promocao,
-                'group' => trim((string) ($item['subgrupo_publico'] ?? '')),
-                'descricao' => trim((string) ($item['descricao'] ?? '')),
-                'cta' => trim((string) ($item['texto_botao'] ?? '')) ?: trim((string) ($item['cta_curto'] ?? '')) ?: $this->defaultCta($tipo),
-                'cta_short' => trim((string) ($item['cta_curto'] ?? '')),
-                'selo' => trim((string) ($item['selo'] ?? '')),
+                'group' => public_text(trim((string) ($item['subgrupo_publico'] ?? ''))),
+                'descricao' => public_text(trim((string) ($item['descricao'] ?? ''))),
+                'cta' => public_text(trim((string) ($item['texto_botao'] ?? '')) ?: trim((string) ($item['cta_curto'] ?? '')) ?: $this->defaultCta($tipo)),
+                'cta_short' => public_text(trim((string) ($item['cta_curto'] ?? ''))),
+                'selo' => public_text(trim((string) ($item['selo'] ?? ''))),
                 'imagem' => $this->toPublicUrl((string) ($item['imagem'] ?? '')),
                 'destaque' => (int) ($item['destaque'] ?? 0) === 1,
                 'posicao' => (int) ($item['posicao'] ?? 0),
@@ -224,5 +238,45 @@ final class CentralService
         $value = trim($value, '-');
 
         return $value !== '' ? $value : 'produtos';
+    }
+
+    private function buildStructuredData(string $title, string $metaDescription, string $canonicalUrl, string $siteName): array
+    {
+        return [[
+            '@context' => 'https://schema.org',
+            '@type' => 'WebPage',
+            'name' => $title,
+            'url' => $canonicalUrl,
+            'description' => $metaDescription,
+            'isPartOf' => [
+                '@type' => 'WebSite',
+                'name' => $siteName,
+                'url' => url('/'),
+            ],
+        ]];
+    }
+
+    private function buildQuickLinks(): array
+    {
+        $links = [[
+            'label' => 'Home',
+            'url' => url('/'),
+        ]];
+
+        if (site_section_public_active('blog')) {
+            $links[] = [
+                'label' => 'Blog',
+                'url' => site_section_href('blog'),
+            ];
+        }
+
+        if (site_section_public_active('newsletter')) {
+            $links[] = [
+                'label' => 'Newsletter',
+                'url' => site_section_href('newsletter'),
+            ];
+        }
+
+        return $links;
     }
 }
