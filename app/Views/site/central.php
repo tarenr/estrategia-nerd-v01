@@ -6,9 +6,9 @@ use App\Support\View;
 $siteMeta = $site_meta ?? [];
 $featuredLink = is_array($central_featured_link ?? null) ? $central_featured_link : null;
 $groups = is_array($central_groups ?? null) ? $central_groups : [];
-$siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
-$bioTitle = (string) ($siteMeta['bio_title'] ?? 'Central Nerd');
-$bioDescription = (string) ($siteMeta['bio_description'] ?? 'Ofertas, descontos e novidades para geeks e tech lovers!');
+$siteName = public_text((string) ($siteMeta['name'] ?? 'Estratégia Nerd'));
+$bioTitle = public_text((string) ($siteMeta['bio_title'] ?? 'Central Nerd'));
+$bioDescription = public_text((string) ($siteMeta['bio_description'] ?? 'Ofertas, descontos e novidades para geeks e tech lovers!'));
 $brandLogo = (string) ($siteMeta['logo'] ?? '');
 $brandSymbol = (string) ($siteMeta['brand_symbol'] ?? '');
 $avatar = (string) ($siteMeta['avatar'] ?? '');
@@ -141,7 +141,7 @@ $quickLinks = is_array($central_quick_links ?? null) ? $central_quick_links : []
     <section class="central-groups">
       <header class="mx-auto mb-6 max-w-3xl text-center">
         <h2 class="font-orbitron text-2xl font-bold text-white md:text-3xl">Arsenal Nerd</h2>
-        <p class="mt-2 text-sm leading-7 text-slate-300 md:text-base">Escolha uma seção e acesse direto o que importa:produtos, ofertas, cupons, conteúdos e links oficiais.</p>
+        <p class="mt-2 text-sm leading-7 text-slate-300 md:text-base">Escolha uma seção e acesse direto o que importa: ofertas, cupons, conteúdos e links oficiais.</p>
       </header>
       <?php if ($groups === []): ?>
         <article class="central-empty-state" data-reveal>

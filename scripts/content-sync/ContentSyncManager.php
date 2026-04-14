@@ -116,6 +116,19 @@ final class ContentSyncManager
         ];
     }
 
+    public function codeStatus(): array
+    {
+        $root = $this->codePackageRoot();
+        $items = $this->allCodePackages();
+
+        return [
+            'package_root' => $root,
+            'total_packages' => count($items),
+            'latest' => $items[0] ?? null,
+            'items' => $items,
+        ];
+    }
+
     public function verify(?string $packageId = null): array
     {
         $package = $this->packageById($packageId);
@@ -182,6 +195,52 @@ final class ContentSyncManager
             $this->writeManifest((string) $package['_dir'], $package);
 
             return ['package_id' => $package['package_id'] ?? null, 'target_profile' => $targetProfile, 'applied_at' => $apply['applied_at'], 'result' => $apply['result']];
+        } finally {
+            if ($tmpDir !== '' && str_contains($tmpDir, sys_get_temp_dir())) {
+                $this->removeDirectory($tmpDir);
+            }
+            $this->releaseRunLock($lock);
+        }
+    }
+
+    public function applyCode(?string $packageId, string $targetProfile = 'production', bool $force = false): array
+    {
+        if (!$force) {
+            throw new RuntimeException('Publicacao de codigo exige confirmacao explicita.');
+        }
+
+        $package = $this->codePackageById($packageId);
+        if ($package === null) {
+            throw new RuntimeException('Nenhum pacote de codigo encontrado para aplicar.');
+        }
+
+        $profile = $this->profile($targetProfile);
+        $profileLabel = (string) ($profile['label'] ?? $targetProfile);
+        $lock = $this->acquireRunLock($this->packageRoot(), 'apply_code', $targetProfile, $profileLabel);
+        $tmpDir = '';
+
+        try {
+            $zipPath = (string) ($package['zip_path'] ?? '');
+            if ($zipPath === '' || !is_file($zipPath)) {
+                throw new RuntimeException('Arquivo ZIP do pacote de codigo nao encontrado.');
+            }
+
+            $tmpDir = $this->extractArchive($zipPath);
+            $sourceDir = $tmpDir . DIRECTORY_SEPARATOR . 'files';
+            if (!is_dir($sourceDir)) {
+                throw new RuntimeException('Pacote de codigo invalido: pasta "files/" nao encontrada.');
+            }
+
+            $deployConfig = $this->codeDeployConfig($targetProfile);
+            $result = $this->deployCode($deployConfig, $sourceDir);
+
+            return [
+                'package_id' => (string) ($package['package_id'] ?? ''),
+                'target_profile' => $targetProfile,
+                'target_profile_label' => $profileLabel,
+                'applied_at' => date('c'),
+                'result' => $result,
+            ];
         } finally {
             if ($tmpDir !== '' && str_contains($tmpDir, sys_get_temp_dir())) {
                 $this->removeDirectory($tmpDir);
@@ -892,6 +951,18 @@ final class ContentSyncManager
         return $root;
     }
 
+    private function codePackageRoot(): string
+    {
+        $root = (string) ($this->config['code_package_root'] ?? '');
+        if ($root === '') {
+            throw new RuntimeException('CONTENT_SYNC_CODE_ROOT nao configurado.');
+        }
+        if (!is_dir($root) && !mkdir($root, 0777, true) && !is_dir($root)) {
+            throw new RuntimeException('Nao foi possivel criar a pasta raiz dos pacotes de codigo: ' . $root);
+        }
+        return $root;
+    }
+
     private function profile(string $profileName): array
     {
         $profiles = (array) ($this->config['profiles'] ?? []);
@@ -899,6 +970,49 @@ final class ContentSyncManager
             throw new RuntimeException('Perfil de conteudo nao encontrado: ' . $profileName);
         }
         return $profiles[$profileName];
+    }
+
+    private function codeDeployConfig(string $profileName): array
+    {
+        $profile = $this->profile($profileName);
+        $config = (array) ($profile['code_deploy'] ?? []);
+        if ($config === []) {
+            $uploads = (array) ($profile['uploads'] ?? []);
+            $config = [
+                'mode' => (string) ($uploads['mode'] ?? 'ftp'),
+                'host' => (string) ($uploads['host'] ?? ''),
+                'port' => (int) ($uploads['port'] ?? 21),
+                'username' => (string) ($uploads['username'] ?? ''),
+                'password' => (string) ($uploads['password'] ?? ''),
+                'root' => (string) preg_replace('~/uploads/?$~i', '', (string) ($uploads['root'] ?? '')),
+                'passive' => (bool) ($uploads['passive'] ?? true),
+            ];
+        }
+
+        $mode = strtolower(trim((string) ($config['mode'] ?? 'ftp')));
+        if ($mode === 'local') {
+            $root = trim((string) ($config['root'] ?? ''));
+            if ($root === '') {
+                throw new RuntimeException('Configuracao de deploy local incompleta: root.');
+            }
+            return ['mode' => 'local', 'root' => $root];
+        }
+
+        foreach (['host', 'port', 'username', 'password', 'root'] as $required) {
+            if (trim((string) ($config[$required] ?? '')) === '') {
+                throw new RuntimeException('Configuracao de deploy de codigo incompleta: faltando ' . $required);
+            }
+        }
+
+        return [
+            'mode' => 'ftp',
+            'host' => (string) $config['host'],
+            'port' => (int) $config['port'],
+            'username' => (string) $config['username'],
+            'password' => (string) $config['password'],
+            'root' => rtrim((string) $config['root'], '/'),
+            'passive' => (bool) ($config['passive'] ?? true),
+        ];
     }
 
     private function writeManifest(string $packageDir, array $manifest): void
@@ -1019,6 +1133,87 @@ final class ContentSyncManager
         return $result;
     }
 
+    private function deployCode(array $deployConfig, string $sourceDir): array
+    {
+        $mode = (string) ($deployConfig['mode'] ?? 'ftp');
+        if ($mode === 'local') {
+            return $this->deployCodeLocal((string) ($deployConfig['root'] ?? ''), $sourceDir);
+        }
+
+        if ($mode !== 'ftp') {
+            throw new RuntimeException('Modo de deploy de codigo nao suportado: ' . $mode);
+        }
+
+        return $this->deployCodeFtp($deployConfig, $sourceDir);
+    }
+
+    private function deployCodeLocal(string $targetRoot, string $sourceDir): array
+    {
+        $targetRoot = rtrim($targetRoot, '\\/');
+        if ($targetRoot === '' || !is_dir($targetRoot)) {
+            throw new RuntimeException('Raiz local de deploy de codigo nao encontrada: ' . $targetRoot);
+        }
+
+        $files = $this->listFiles($sourceDir);
+        $copied = 0;
+        foreach ($files as $file) {
+            $relative = substr(str_replace('\\', '/', $file), strlen(str_replace('\\', '/', $sourceDir)) + 1);
+            $relative = ltrim($relative, '/');
+            if ($relative === '' || str_contains($relative, '..')) {
+                continue;
+            }
+
+            $destination = $targetRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+            $destinationDir = dirname($destination);
+            if (!is_dir($destinationDir) && !mkdir($destinationDir, 0777, true) && !is_dir($destinationDir)) {
+                throw new RuntimeException('Nao foi possivel criar pasta de destino para deploy local: ' . $relative);
+            }
+            if (!copy($file, $destination)) {
+                throw new RuntimeException('Falha ao copiar arquivo do pacote de codigo: ' . $relative);
+            }
+            $copied++;
+        }
+
+        return ['mode' => 'local', 'files_applied' => $copied, 'target_root' => $targetRoot];
+    }
+
+    private function deployCodeFtp(array $deployConfig, string $sourceDir): array
+    {
+        $ftp = @ftp_connect((string) $deployConfig['host'], (int) $deployConfig['port'], 30);
+        if ($ftp === false) {
+            throw new RuntimeException('Nao foi possivel conectar ao FTP da producao para deploy de codigo.');
+        }
+
+        $uploaded = 0;
+        try {
+            if (!@ftp_login($ftp, (string) $deployConfig['username'], (string) $deployConfig['password'])) {
+                throw new RuntimeException('Falha de login no FTP da producao para deploy de codigo.');
+            }
+            ftp_pasv($ftp, (bool) ($deployConfig['passive'] ?? true));
+            $root = rtrim((string) $deployConfig['root'], '/');
+
+            $files = $this->listFiles($sourceDir);
+            foreach ($files as $file) {
+                $relative = substr(str_replace('\\', '/', $file), strlen(str_replace('\\', '/', $sourceDir)) + 1);
+                $relative = ltrim($relative, '/');
+                if ($relative === '' || str_contains($relative, '..')) {
+                    continue;
+                }
+
+                $remotePath = $root . '/' . $relative;
+                $this->ensureRemoteDirectory($ftp, dirname($remotePath));
+                if (!@ftp_put($ftp, $remotePath, $file, FTP_BINARY)) {
+                    throw new RuntimeException('Falha ao enviar arquivo do pacote de codigo: ' . $relative);
+                }
+                $uploaded++;
+            }
+        } finally {
+            ftp_close($ftp);
+        }
+
+        return ['mode' => 'ftp', 'files_applied' => $uploaded, 'target_root' => (string) ($deployConfig['root'] ?? '')];
+    }
+
     private function ensureRemoteDirectory($ftp, string $remoteDirectory): void
     {
         $parts = array_values(array_filter(explode('/', trim(str_replace('\\', '/', $remoteDirectory), '/')), static fn(string $part): bool => $part !== ''));
@@ -1123,6 +1318,20 @@ final class ContentSyncManager
         return null;
     }
 
+    private function codePackageById(?string $packageId): ?array
+    {
+        $items = $this->allCodePackages();
+        if ($packageId === null || trim($packageId) === '' || strtolower(trim($packageId)) === 'latest') {
+            return $items[0] ?? null;
+        }
+        foreach ($items as $item) {
+            if (($item['package_id'] ?? null) === $packageId) {
+                return $item;
+            }
+        }
+        return null;
+    }
+
     private function allPackages(): array
     {
         $root = $this->packageRoot();
@@ -1144,6 +1353,41 @@ final class ContentSyncManager
             $manifest['is_valid'] = (bool) ($verification['is_valid'] ?? false);
             $items[] = $manifest;
         }
+        return $items;
+    }
+
+    private function allCodePackages(): array
+    {
+        $root = $this->codePackageRoot();
+        $zipPaths = glob($root . DIRECTORY_SEPARATOR . 'code_*.zip') ?: [];
+        usort($zipPaths, static fn(string $a, string $b): int => filemtime($b) <=> filemtime($a));
+
+        $items = [];
+        foreach ($zipPaths as $zipPath) {
+            $basename = basename($zipPath, '.zip');
+            $packageDir = $root . DIRECTORY_SEPARATOR . $basename;
+            $manifestPath = $packageDir . DIRECTORY_SEPARATOR . 'manifest.json';
+            $manifest = [];
+
+            if (is_file($manifestPath)) {
+                $decoded = json_decode((string) file_get_contents($manifestPath), true);
+                if (is_array($decoded)) {
+                    $manifest = $decoded;
+                }
+            }
+
+            $items[] = [
+                'package_id' => (string) ($manifest['package_id'] ?? $basename),
+                'commit' => (string) ($manifest['commit'] ?? ''),
+                'created_at' => (string) ($manifest['created_at'] ?? date('c', (int) filemtime($zipPath))),
+                'files_count' => (int) ($manifest['files_count'] ?? 0),
+                'notes' => (string) ($manifest['notes'] ?? ''),
+                'zip_path' => $zipPath,
+                'manifest_path' => is_file($manifestPath) ? $manifestPath : '',
+                '_dir' => $packageDir,
+            ];
+        }
+
         return $items;
     }
 

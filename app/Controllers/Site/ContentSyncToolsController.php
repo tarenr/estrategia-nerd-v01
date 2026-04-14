@@ -25,9 +25,11 @@ final class ContentSyncToolsController
             'meta_description' => 'Painel local para exportar, validar e publicar conteudo na producao.',
             'site_chrome' => false,
             'content_status' => $this->presentStatus($status),
+            'code_status' => $manager->codeStatus(),
             'flash' => is_array($flash) ? $flash : null,
             'last_verification' => is_array($lastVerification) ? $lastVerification : null,
             'production_ready' => $this->productionProfileReady(),
+            'production_code_ready' => $this->productionCodeProfileReady(),
         ]);
     }
 
@@ -68,6 +70,18 @@ final class ContentSyncToolsController
                     $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'production')));
                     $result = $manager->apply($packageId, $targetProfile, true);
                     $this->flash('success', sprintf('Pacote %s aplicado em %s.', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? '')));
+                    break;
+
+                case 'apply_code':
+                    $phrase = trim((string) ($_POST['apply_phrase'] ?? ''));
+                    if (mb_strtoupper($phrase, 'UTF-8') !== 'PUBLICAR') {
+                        throw new \RuntimeException('Digite PUBLICAR para confirmar o envio do codigo.');
+                    }
+
+                    $packageId = $this->normalizeOptionalId($_POST['package_id'] ?? 'latest');
+                    $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'production')));
+                    $result = $manager->applyCode($packageId, $targetProfile, true);
+                    $this->flash('success', sprintf('Pacote de codigo %s aplicado em %s (%d arquivos).', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? ''), (int) ($result['result']['files_applied'] ?? 0)));
                     break;
 
                 default:
@@ -147,6 +161,26 @@ final class ContentSyncToolsController
         return true;
     }
 
+    private function productionCodeProfileReady(): bool
+    {
+        $config = require base_path('config/content-sync.php');
+        $profile = (array) ($config['profiles']['production'] ?? []);
+        $code = (array) ($profile['code_deploy'] ?? []);
+        $mode = strtolower(trim((string) ($code['mode'] ?? 'ftp')));
+
+        if ($mode === 'local') {
+            return trim((string) ($code['root'] ?? '')) !== '';
+        }
+
+        foreach (['host', 'username', 'password', 'root'] as $required) {
+            if (trim((string) ($code[$required] ?? '')) === '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private function presentStatus(array $status): array
     {
         $items = [];
@@ -194,4 +228,5 @@ final class ContentSyncToolsController
             'applied_at' => (string) ($last['applied_at'] ?? ''),
         ];
     }
+
 }

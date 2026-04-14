@@ -12,6 +12,10 @@ $running = is_array($status['running'] ?? null) ? $status['running'] : null;
 $flash = is_array($flash ?? null) ? $flash : null;
 $lastVerification = is_array($last_verification ?? null) ? $last_verification : null;
 $productionReady = (bool) ($production_ready ?? false);
+$productionCodeReady = (bool) ($production_code_ready ?? false);
+$codeStatus = (array) ($code_status ?? []);
+$codeItems = (array) ($codeStatus['items'] ?? []);
+$codeLatest = is_array($codeStatus['latest'] ?? null) ? $codeStatus['latest'] : null;
 
 $alertClasses = [
     'success' => 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100',
@@ -159,6 +163,78 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
           <div class="mt-4 text-slate-400">Nenhuma verificacao executada nesta sessao.</div>
         <?php endif; ?>
       </div>
+    </div>
+
+    <div class="rounded-3xl border border-blue-500/20 bg-slate-900/80 p-6">
+      <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 class="font-orbitron text-lg font-bold text-white">Pacotes de codigo (sem banco)</h2>
+          <p class="mt-1 text-sm text-slate-400">Use estes pacotes para deploy tecnico. Nao inclui posts, links ou qualquer dado do banco.</p>
+        </div>
+        <div class="text-xs text-slate-400">
+          <span class="text-slate-500">Raiz:</span>
+          <?= htmlspecialchars((string) ($codeStatus['package_root'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+          <span class="mx-2 text-slate-600">•</span>
+          <span class="text-slate-500">Pacotes:</span> <?= (int) ($codeStatus['total_packages'] ?? 0) ?>
+        </div>
+      </div>
+
+      <?php if ($codeLatest !== null): ?>
+        <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm">
+          <div class="text-white font-semibold"><?= htmlspecialchars((string) ($codeLatest['package_id'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div class="mt-1 text-slate-400">Commit: <span class="text-slate-200"><?= htmlspecialchars((string) ($codeLatest['commit'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span> • Arquivos: <span class="text-slate-200"><?= (int) ($codeLatest['files_count'] ?? 0) ?></span></div>
+          <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($codeLatest['created_at'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div class="mt-2 text-xs text-cyan-300 break-all"><?= htmlspecialchars((string) ($codeLatest['zip_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form mt-3" data-progress-title="Publicando pacote de código" data-progress-message="Estamos enviando os arquivos do pacote de código para a produção." data-progress-stage="Deploy de código">
+            <?= Csrf::field() ?>
+            <input type="hidden" name="action" value="apply_code">
+            <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($codeLatest['package_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+            <input type="hidden" name="target_profile" value="production">
+            <input type="hidden" name="apply_phrase" value="PUBLICAR">
+            <button type="submit" class="rounded-xl border px-3 py-2 text-xs font-semibold transition <?= $productionCodeReady ? 'border-blue-400/40 bg-blue-500/10 text-blue-200 hover:border-blue-300 hover:bg-blue-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $productionCodeReady ? '' : 'disabled' ?>>Publicar último pacote de código</button>
+          </form>
+        </div>
+      <?php else: ?>
+        <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-400">Nenhum pacote de codigo encontrado.</div>
+      <?php endif; ?>
+
+      <?php if ($codeItems !== []): ?>
+        <div class="mt-5 overflow-x-auto">
+          <table class="min-w-full border-separate border-spacing-y-3 text-sm text-slate-200">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-[0.2em] text-slate-500">
+                <th class="px-4 py-2">Pacote</th>
+                <th class="px-4 py-2">Commit</th>
+                <th class="px-4 py-2">Arquivos</th>
+                <th class="px-4 py-2">Criado em</th>
+                <th class="px-4 py-2">Zip</th>
+                <th class="px-4 py-2">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($codeItems as $codeItem): ?>
+                <tr class="rounded-2xl border border-slate-800 bg-slate-950/70">
+                  <td class="px-4 py-4 align-top font-semibold text-white"><?= htmlspecialchars((string) ($codeItem['package_id'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="px-4 py-4 align-top text-slate-300"><?= htmlspecialchars((string) ($codeItem['commit'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="px-4 py-4 align-top text-slate-300"><?= (int) ($codeItem['files_count'] ?? 0) ?></td>
+                  <td class="px-4 py-4 align-top text-xs text-slate-400"><?= htmlspecialchars((string) ($codeItem['created_at'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="px-4 py-4 align-top text-xs text-cyan-300 break-all"><?= htmlspecialchars((string) ($codeItem['zip_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="px-4 py-4 align-top">
+                    <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Publicando pacote de código" data-progress-message="Estamos enviando os arquivos do pacote de código para a produção." data-progress-stage="Deploy de código">
+                      <?= Csrf::field() ?>
+                      <input type="hidden" name="action" value="apply_code">
+                      <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($codeItem['package_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <input type="hidden" name="target_profile" value="production">
+                      <input type="hidden" name="apply_phrase" value="PUBLICAR">
+                      <button type="submit" class="rounded-xl border px-3 py-2 text-xs font-semibold transition <?= $productionCodeReady ? 'border-blue-400/40 bg-blue-500/10 text-blue-200 hover:border-blue-300 hover:bg-blue-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $productionCodeReady ? '' : 'disabled' ?>>Publicar código</button>
+                    </form>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[1.05fr_1fr]">

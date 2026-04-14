@@ -312,6 +312,27 @@
     }
   };
 
+  const copyTextToClipboard = async (value) => {
+    const text = String(value || "").trim();
+    if (!text) return false;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+
+    const input = document.createElement("textarea");
+    input.value = text;
+    input.setAttribute("readonly", "readonly");
+    input.style.position = "fixed";
+    input.style.opacity = "0";
+    document.body.appendChild(input);
+    input.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(input);
+    return ok;
+  };
+
   document.addEventListener("click", (event) => {
     const link = event.target.closest("a[data-admin-links-link]");
     if (!link) return;
@@ -357,6 +378,28 @@
 
     window.clearTimeout(searchTimer);
     submitFilters(form, control);
+  });
+
+  document.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-current-featured-copy]");
+    if (!button) return;
+
+    const original = button.textContent;
+    if (!original) return;
+
+    try {
+      const ok = await copyTextToClipboard(button.getAttribute("data-current-featured-copy") || "");
+      if (!ok) throw new Error("copy-failed");
+      button.textContent = "Código copiado";
+      window.setTimeout(() => {
+        button.textContent = original;
+      }, 1800);
+    } catch (error) {
+      button.textContent = "Falha ao copiar";
+      window.setTimeout(() => {
+        button.textContent = original;
+      }, 1800);
+    }
   });
 
   window.addEventListener("popstate", () => {

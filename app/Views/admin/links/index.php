@@ -58,6 +58,64 @@ $mode = (string) ($_GET['mode'] ?? '');
       <section class="admin-panel border border-rose-500/30"><div class="text-sm font-bold text-rose-300">Link excluido com sucesso.</div></section>
     <?php endif; ?>
 
+    <?php if ($currentFeatured !== null): ?>
+      <?php
+      $featuredType = (string) ($currentFeatured['tipo'] ?? '');
+      $featuredTypeLabel = match ($featuredType) {
+          'produto' => 'Produto',
+          'cupom' => 'Cupom',
+          'conteudo' => 'Conteúdo',
+          'rede_social' => 'Rede Social',
+          'servico' => 'Serviço',
+          default => 'Link',
+      };
+      $featuredTitle = trim((string) ($currentFeatured['titulo'] ?? 'Sem título'));
+      $featuredDescription = trim((string) ($currentFeatured['descricao'] ?? ''));
+      $featuredUrl = trim((string) ($currentFeatured['url'] ?? ''));
+      $featuredDiscount = trim((string) ($currentFeatured['desconto_percentual'] ?? ''));
+      $featuredDiscountContext = trim((string) ($currentFeatured['desconto_contexto'] ?? ''));
+      $featuredCouponCode = trim((string) ($currentFeatured['codigo_cupom'] ?? ''));
+      ?>
+      <section class="admin-panel border border-cyan-500/25 bg-slate-950/55">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="space-y-2">
+            <div class="inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-100">
+              <span class="font-bold">Destaque atual</span>
+              <span>#<?= (int) ($currentFeatured['id'] ?? 0) ?></span>
+              <span>• <?= htmlspecialchars($featuredTypeLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+            </div>
+            <div class="text-sm font-bold text-white"><?= htmlspecialchars($featuredTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <?php if ($featuredDescription !== ''): ?>
+              <div class="text-xs leading-5 text-slate-300"><?= htmlspecialchars($featuredDescription, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <?php endif; ?>
+            <?php if ($featuredType === 'cupom' && ($featuredDiscount !== '' || $featuredDiscountContext !== '')): ?>
+              <div class="flex flex-wrap items-center gap-2 text-xs">
+                <?php if ($featuredDiscount !== ''): ?>
+                  <span class="inline-flex items-center rounded-full border border-blue-500/25 bg-blue-500/10 px-2.5 py-1 text-blue-100"><?= htmlspecialchars($featuredDiscount, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                <?php endif; ?>
+                <?php if ($featuredDiscountContext !== ''): ?>
+                  <span class="inline-flex items-center rounded-full border border-slate-600/50 bg-slate-800/50 px-2.5 py-1 text-slate-300"><?= htmlspecialchars($featuredDiscountContext, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                <?php endif; ?>
+              </div>
+            <?php endif; ?>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <?php if ($featuredType === 'cupom' && $featuredCouponCode !== ''): ?>
+              <button type="button" class="admin-btn admin-btn-secondary !px-3 !py-2 text-xs" data-current-featured-copy="<?= htmlspecialchars($featuredCouponCode, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-current-featured-copy-text>
+                Copiar código: <?= htmlspecialchars($featuredCouponCode, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+              </button>
+            <?php endif; ?>
+            <?php if ($featuredType === 'cupom' && $featuredCouponCode === ''): ?>
+              <span class="inline-flex items-center rounded-full border border-slate-600/50 bg-slate-800/40 px-3 py-2 text-xs text-slate-300">Oferta sem código</span>
+            <?php endif; ?>
+            <?php if ($featuredUrl !== ''): ?>
+              <a href="<?= htmlspecialchars($featuredUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="admin-btn admin-btn-secondary !px-3 !py-2 text-xs">Ir para site</a>
+            <?php endif; ?>
+          </div>
+        </div>
+      </section>
+    <?php endif; ?>
+
     <?php View::component('admin/links/summary-cards', ['summary' => $summary]); ?>
 
     <?php View::component('admin/links/filters', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
