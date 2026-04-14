@@ -3315,6 +3315,20 @@ body {
   height: 0.85rem;
 }
 
+.central-coupon-no-code {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.58rem 0.78rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: rgba(15, 23, 42, 0.45);
+  color: rgba(203, 213, 225, 0.92);
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 @media (max-width: 640px) {
   .central-coupon-actions {
     align-items: stretch;
@@ -3323,6 +3337,11 @@ body {
   .central-coupon-copy-button,
   .central-coupon-site-button {
     width: 100%;
+  }
+
+  .central-coupon-no-code {
+    width: 100%;
+    justify-content: center;
   }
 
   .central-coupon-site-button {

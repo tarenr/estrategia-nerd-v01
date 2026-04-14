@@ -9,13 +9,35 @@ $submitLabel = (string) ($submitLabel ?? 'Salvar link');
 $form = $form ?? [];
 $errors = $errors ?? [];
 $mediaItems = $media_items ?? [];
+$currentFeatured = is_array($current_featured ?? null) ? $current_featured : null;
+$currentFeaturedId = (int) ($currentFeatured['id'] ?? 0);
+$currentFeaturedTitle = trim((string) ($currentFeatured['titulo'] ?? ''));
+$editingId = (int) ($form['id'] ?? 0);
+$currentFeaturedType = trim((string) ($currentFeatured['tipo'] ?? ''));
+$currentFeaturedTypeLabel = match ($currentFeaturedType) {
+    'produto' => 'Produto',
+    'cupom' => 'Cupom',
+    'conteudo' => 'Conteudo',
+    'rede_social' => 'Rede social',
+    'servico' => 'Servico',
+    default => 'Link',
+};
+$currentFeaturedUrl = trim((string) ($currentFeatured['url'] ?? ''));
+$currentFeaturedDescription = trim((string) ($currentFeatured['descricao'] ?? ''));
+$currentFeaturedDiscount = trim((string) ($currentFeatured['desconto_percentual'] ?? ''));
+$currentFeaturedDiscountContext = trim((string) ($currentFeatured['desconto_contexto'] ?? ''));
+$currentFeaturedCouponCode = trim((string) ($currentFeatured['codigo_cupom'] ?? ''));
+$currentFeaturedIsCoupon = $currentFeaturedType === 'cupom';
+$featuredSwitchMessage = ($currentFeaturedId > 0 && $currentFeaturedId !== $editingId)
+    ? 'Confirmar? Este item substituira o destaque atual: ' . ($currentFeaturedTitle !== '' ? $currentFeaturedTitle : 'item atual') . '.'
+    : '';
 
 $fieldError = static fn (string $key): string => (string) ($errors[$key] ?? '');
 $imageValue = trim((string) ($form['imagem'] ?? ''));
 $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ? $imageValue : url('/' . ltrim($imageValue, '/'))) : '';
 ?>
 
-<form method="POST" action="<?= htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" enctype="multipart/form-data" class="space-y-6" novalidate>
+<form method="POST" action="<?= htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" enctype="multipart/form-data" class="space-y-6" novalidate data-link-form data-featured-switch-message="<?= htmlspecialchars($featuredSwitchMessage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
   <?= Csrf::field() ?>
   <?php if ((int) ($form['id'] ?? 0) > 0): ?>
     <input type="hidden" name="id" value="<?= (int) ($form['id'] ?? 0) ?>">
@@ -99,23 +121,23 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
       </div>
 
       <div data-link-product-wrap class="<?= (string) ($form['tipo'] ?? 'produto') === 'produto' ? '' : 'hidden' ?>">
-        <label class="block text-sm font-bold text-slate-200 mb-2">Promocao</label>
+        <label class="block text-sm font-bold text-slate-200 mb-2">Promoções / Ofertas</label>
         <label class="inline-flex items-center gap-3 text-sm text-slate-200">
           <input type="hidden" name="promocao" value="0">
           <input type="checkbox" name="promocao" value="1" class="rounded border-slate-700 bg-slate-900" <?= (int) ($form['promocao'] ?? 0) === 1 ? 'checked' : '' ?>>
-          Marcar este produto como promocao para subir ao topo da Central Nerd
+          Marcar este item como promoção/oferta para subir ao topo da Central Nerd (respeitando a posição)
         </label>
       </div>
 
       <div data-link-coupon-wrap class="<?= (string) ($form['tipo'] ?? '') === 'cupom' ? '' : 'hidden' ?>">
-        <label for="codigo_cupom" class="block text-sm font-bold text-slate-200 mb-2">Codigo do cupom</label>
-        <input id="codigo_cupom" name="codigo_cupom" type="text" value="<?= htmlspecialchars((string) ($form['codigo_cupom'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: PROMO100">
+        <label for="codigo_cupom" class="block text-sm font-bold text-slate-200 mb-2">Codigo do cupom (opcional)</label>
+        <input id="codigo_cupom" name="codigo_cupom" type="text" value="<?= htmlspecialchars((string) ($form['codigo_cupom'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: PROMO100 ou deixe vazio para oferta por link">
         <?php if ($fieldError('codigo_cupom') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('codigo_cupom'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
       </div>
 
       <div data-link-coupon-wrap class="<?= (string) ($form['tipo'] ?? '') === 'cupom' ? '' : 'hidden' ?>">
-        <label for="desconto_percentual" class="block text-sm font-bold text-slate-200 mb-2">Percentual de desconto</label>
-        <input id="desconto_percentual" name="desconto_percentual" type="text" value="<?= htmlspecialchars((string) ($form['desconto_percentual'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: 15%">
+        <label for="desconto_percentual" class="block text-sm font-bold text-slate-200 mb-2">Valor do desconto</label>
+        <input id="desconto_percentual" name="desconto_percentual" type="text" value="<?= htmlspecialchars((string) ($form['desconto_percentual'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Ex.: 15% ou R$12">
         <?php if ($fieldError('desconto_percentual') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('desconto_percentual'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
       </div>
 
@@ -153,13 +175,57 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
     </div>
 
     <div class="mt-5">
-      <div class="text-sm font-bold text-slate-200 mb-2">Destaque principal</div>
+      <div class="text-sm font-bold text-slate-200 mb-2">Destaque principal (1 link)</div>
       <label class="inline-flex items-center gap-3 text-sm text-slate-200">
         <input type="hidden" name="destaque" value="0">
-        <input type="checkbox" name="destaque" value="1" class="rounded border-slate-700 bg-slate-900" <?= (int) ($form['destaque'] ?? 0) === 1 ? 'checked' : '' ?>>
+        <input id="destaque" type="checkbox" name="destaque" value="1" class="rounded border-slate-700 bg-slate-900" <?= (int) ($form['destaque'] ?? 0) === 1 ? 'checked' : '' ?>>
         Enviar este link para o destaque principal da Central Nerd
       </label>
-      <div class="mt-2 text-xs text-slate-500">Quando ativado, este item pode aparecer no topo da Central Nerd como destaque principal.</div>
+      <div class="mt-2 text-xs text-slate-500">Ao ativar em outro item, o destaque atual sera substituido automaticamente.</div>
+
+      <?php if ($currentFeatured !== null): ?>
+        <div class="mt-4 rounded-2xl border border-cyan-500/25 bg-slate-900/40 p-4">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="space-y-2">
+              <div class="inline-flex items-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-100">
+                <span class="font-bold">Destaque atual</span>
+                <span>#<?= $currentFeaturedId ?></span>
+                <span>• <?= htmlspecialchars($currentFeaturedTypeLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+              </div>
+              <div class="text-sm font-bold text-white"><?= htmlspecialchars($currentFeaturedTitle !== '' ? $currentFeaturedTitle : 'Sem titulo', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <?php if ($currentFeaturedDescription !== ''): ?>
+                <div class="text-xs text-slate-300 leading-5"><?= htmlspecialchars($currentFeaturedDescription, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <?php endif; ?>
+              <?php if ($currentFeaturedIsCoupon && ($currentFeaturedDiscount !== '' || $currentFeaturedDiscountContext !== '')): ?>
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                  <?php if ($currentFeaturedDiscount !== ''): ?>
+                    <span class="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-blue-100"><?= htmlspecialchars($currentFeaturedDiscount, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                  <?php endif; ?>
+                  <?php if ($currentFeaturedDiscountContext !== ''): ?>
+                    <span class="inline-flex items-center rounded-full border border-slate-600/50 bg-slate-800/50 px-2.5 py-1 text-slate-300"><?= htmlspecialchars($currentFeaturedDiscountContext, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                  <?php endif; ?>
+                </div>
+              <?php endif; ?>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <?php if ($currentFeaturedIsCoupon && $currentFeaturedCouponCode !== ''): ?>
+                <button type="button" class="admin-btn admin-btn-secondary !px-3 !py-2 text-xs" data-current-featured-copy="<?= htmlspecialchars($currentFeaturedCouponCode, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-current-featured-copy-text>
+                  Copiar codigo: <?= htmlspecialchars($currentFeaturedCouponCode, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                </button>
+              <?php endif; ?>
+              <?php if ($currentFeaturedIsCoupon && $currentFeaturedCouponCode === ''): ?>
+                <span class="inline-flex items-center rounded-full border border-slate-600/50 bg-slate-800/40 px-3 py-2 text-xs text-slate-300">Oferta sem codigo</span>
+              <?php endif; ?>
+              <?php if ($currentFeaturedUrl !== ''): ?>
+                <a href="<?= htmlspecialchars($currentFeaturedUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="admin-btn admin-btn-secondary !px-3 !py-2 text-xs">Ir para site</a>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
+      <?php else: ?>
+        <div class="mt-3 text-xs text-slate-400">Nenhum link esta marcado como destaque principal.</div>
+      <?php endif; ?>
     </div>
   </section>
 
@@ -244,18 +310,81 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  var formEl = document.querySelector('[data-link-form]');
   var titulo = document.getElementById('titulo');
   var slug = document.getElementById('slug');
   var gerar = document.getElementById('gerarLinkSlug');
   var tipoInput = document.querySelector('[data-link-type-select]');
   var productWraps = document.querySelectorAll('[data-link-product-wrap]');
   var couponWraps = document.querySelectorAll('[data-link-coupon-wrap]');
+  var destaqueInput = document.getElementById('destaque');
   var imageInput = document.getElementById('imagem');
   var fileInput = document.getElementById('imagem_upload');
   var preview = document.getElementById('imagem_link_preview');
   var previewEmpty = document.getElementById('imagem_link_preview_empty');
   var clearButton = document.getElementById('limparImagemLink');
   var publicBase = <?= json_encode(rtrim(url('/'), '/'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+  var featuredSwitchMessage = formEl ? (formEl.getAttribute('data-featured-switch-message') || '').trim() : '';
+  var featuredSwitchConfirmed = false;
+
+  var escapeHtml = function (value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  var openInlineConfirmModal = function (options) {
+    return new Promise(function (resolve) {
+      var host = document.createElement('div');
+      host.className = 'fixed inset-0 z-[10020] flex items-center justify-center px-4 py-8';
+      host.innerHTML =
+        '<div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>' +
+        '<div class="relative w-full max-w-lg rounded-3xl border border-cyan-500/20 bg-slate-950 shadow-2xl shadow-cyan-500/10">' +
+          '<div class="border-b border-slate-800/70 px-6 py-5">' +
+            '<div class="font-orbitron text-lg font-black text-white">' + escapeHtml(options.title || 'Confirmacao') + '</div>' +
+          '</div>' +
+          '<div class="px-6 py-5 text-sm leading-6 text-slate-300">' + escapeHtml(options.message || '') + '</div>' +
+          '<div class="flex items-center justify-end gap-3 border-t border-slate-800/70 px-6 py-5">' +
+            '<button type="button" data-inline-cancel class="admin-btn admin-btn-secondary">' + escapeHtml(options.cancelLabel || 'Cancelar') + '</button>' +
+            '<button type="button" data-inline-confirm class="admin-btn admin-btn-primary">' + escapeHtml(options.submitLabel || 'Confirmar') + '</button>' +
+          '</div>' +
+        '</div>';
+
+      var close = function (accepted) {
+        host.remove();
+        document.body.style.overflow = '';
+        resolve(accepted);
+      };
+
+      document.body.appendChild(host);
+      document.body.style.overflow = 'hidden';
+
+      var confirmButton = host.querySelector('[data-inline-confirm]');
+      var cancelButton = host.querySelector('[data-inline-cancel]');
+      var overlay = host.firstElementChild;
+
+      if (confirmButton) confirmButton.addEventListener('click', function () { close(true); });
+      if (cancelButton) cancelButton.addEventListener('click', function () { close(false); });
+      if (overlay) overlay.addEventListener('click', function () { close(false); });
+    });
+  };
+
+  var openConfirmModal = function (options) {
+    if (window.adminUi && typeof window.adminUi.confirm === 'function') {
+      return window.adminUi.confirm({
+        title: options.title || 'Confirmacao',
+        subtitle: 'Central Nerd',
+        message: '<p class="text-sm leading-6 text-slate-300">' + escapeHtml(options.message || '') + '</p>',
+        submitLabel: options.submitLabel || 'Confirmar',
+        cancelLabel: options.cancelLabel || 'Cancelar'
+      });
+    }
+
+    return openInlineConfirmModal(options);
+  };
 
   if (gerar && titulo && slug) {
     gerar.addEventListener('click', function () {
@@ -313,6 +442,91 @@ document.addEventListener('DOMContentLoaded', function () {
     tipoInput.addEventListener('change', syncTypeFields);
     syncTypeFields();
   }
+
+  if (formEl && destaqueInput) {
+    destaqueInput.addEventListener('change', async function () {
+      if (!destaqueInput.checked) {
+        featuredSwitchConfirmed = false;
+        return;
+      }
+
+      if (!featuredSwitchMessage || featuredSwitchConfirmed) return;
+
+      var ok = await openConfirmModal({
+        title: 'Trocar destaque principal',
+        message: featuredSwitchMessage,
+        submitLabel: 'Confirmar troca',
+        cancelLabel: 'Cancelar'
+      });
+      if (!ok) {
+        destaqueInput.checked = false;
+        featuredSwitchConfirmed = false;
+        return;
+      }
+
+      featuredSwitchConfirmed = true;
+    });
+
+    formEl.addEventListener('submit', function (event) {
+      if (!destaqueInput.checked) return;
+      if (!featuredSwitchMessage || featuredSwitchConfirmed) return;
+      event.preventDefault();
+      openConfirmModal({
+        title: 'Trocar destaque principal',
+        message: featuredSwitchMessage,
+        submitLabel: 'Confirmar troca',
+        cancelLabel: 'Cancelar'
+      }).then(function (ok) {
+        if (!ok) {
+          destaqueInput.checked = false;
+          featuredSwitchConfirmed = false;
+          return;
+        }
+
+        featuredSwitchConfirmed = true;
+        formEl.submit();
+      });
+    });
+  }
+
+  var copyTextToClipboard = async function (value) {
+    var text = String(value || '').trim();
+    if (!text) return false;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+
+    var input = document.createElement('textarea');
+    input.value = text;
+    input.setAttribute('readonly', 'readonly');
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    var ok = document.execCommand('copy');
+    document.body.removeChild(input);
+    return ok;
+  };
+
+  document.querySelectorAll('[data-current-featured-copy]').forEach(function (button) {
+    var original = button.textContent;
+    var timer = null;
+    button.addEventListener('click', async function () {
+      try {
+        var ok = await copyTextToClipboard(button.getAttribute('data-current-featured-copy') || '');
+        if (!ok) throw new Error('fail');
+        button.textContent = 'Codigo copiado';
+        window.clearTimeout(timer);
+        timer = window.setTimeout(function () { button.textContent = original; }, 1800);
+      } catch (e) {
+        button.textContent = 'Falha ao copiar';
+        window.clearTimeout(timer);
+        timer = window.setTimeout(function () { button.textContent = original; }, 1800);
+      }
+    });
+  });
 
   if (imageInput) {
     imageInput.addEventListener('input', function () { syncPreview(imageInput.value); });

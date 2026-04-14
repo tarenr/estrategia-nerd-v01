@@ -27,6 +27,11 @@ $socialLinks = [
 
 $hasSocialLinks = array_reduce($socialLinks, static fn (bool $carry, array $social): bool => $carry || trim((string) ($social['url'] ?? '')) !== '', false);
 $featuredTone = (string) ($featuredLink['tone'] ?? 'product');
+$featuredType = (string) ($featuredLink['tipo'] ?? '');
+$featuredIsCoupon = $featuredType === 'cupom';
+$featuredDiscount = trim((string) ($featuredLink['discount_text'] ?? ($featuredLink['discount'] ?? '')));
+$featuredDiscountContext = trim((string) ($featuredLink['discount_context'] ?? ''));
+$featuredCouponCode = trim((string) ($featuredLink['coupon_code'] ?? ''));
 $featuredTrackedUrl = $featuredLink !== null && trim((string) ($featuredLink['slug'] ?? '')) !== ''
     ? url('/link/' . rawurlencode((string) $featuredLink['slug']) . '?origem=central-destaque')
     : trim((string) ($featuredLink['url'] ?? '#'));
@@ -97,6 +102,33 @@ $quickLinks = is_array($central_quick_links ?? null) ? $central_quick_links : []
             <?php if (trim((string) ($featuredLink['descricao'] ?? '')) !== ''): ?>
               <p><?= htmlspecialchars((string) $featuredLink['descricao'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
             <?php endif; ?>
+
+            <?php if ($featuredIsCoupon && ($featuredDiscount !== '' || $featuredDiscountContext !== '')): ?>
+              <span class="central-link-extra central-link-extra-inline mt-2">
+                <?php if ($featuredDiscount !== ''): ?><span class="central-link-discount"><?= htmlspecialchars($featuredDiscount, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?>
+                <?php if ($featuredDiscountContext !== ''): ?><span class="central-link-context"><?= htmlspecialchars($featuredDiscountContext, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?>
+              </span>
+            <?php endif; ?>
+
+            <?php if ($featuredIsCoupon): ?>
+              <span class="central-coupon-actions mt-2">
+                <?php if ($featuredCouponCode !== ''): ?>
+                  <button
+                    type="button"
+                    class="central-coupon-copy-button"
+                    data-copy-coupon="<?= htmlspecialchars($featuredCouponCode, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-copy-coupon-trigger
+                    aria-label="Copiar cupom <?= htmlspecialchars($featuredCouponCode, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                  >
+                    <span class="central-coupon-copy-code"><?= htmlspecialchars($featuredCouponCode, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                    <span class="central-coupon-copy-meta" data-copy-coupon-feedback>Toque para copiar</span>
+                    <span class="central-coupon-copy-state" aria-hidden="true">Copiado</span>
+                  </button>
+                <?php else: ?>
+                  <span class="central-coupon-no-code">Oferta sem código (acesso por link).</span>
+                <?php endif; ?>
+              </span>
+            <?php endif; ?>
           </div>
 
           <a href="<?= htmlspecialchars((string) $featuredTrackedUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="central-featured-button">
@@ -108,8 +140,8 @@ $quickLinks = is_array($central_quick_links ?? null) ? $central_quick_links : []
 
     <section class="central-groups">
       <header class="mx-auto mb-6 max-w-3xl text-center">
-        <h2 class="font-orbitron text-2xl font-bold text-white md:text-3xl">Atalhos da Central Nerd</h2>
-        <p class="mt-2 text-sm leading-7 text-slate-300 md:text-base">Escolha a seção e clique direto no que interessa: produtos, cupons, conteúdos e links oficiais do portal.</p>
+        <h2 class="font-orbitron text-2xl font-bold text-white md:text-3xl">Arsenal Nerd</h2>
+        <p class="mt-2 text-sm leading-7 text-slate-300 md:text-base">Escolha uma seção e acesse direto o que importa:produtos, ofertas, cupons, conteúdos e links oficiais.</p>
       </header>
       <?php if ($groups === []): ?>
         <article class="central-empty-state" data-reveal>

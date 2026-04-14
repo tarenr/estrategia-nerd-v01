@@ -90,6 +90,30 @@ final class LinkRepository
         return is_array($item) ? $item : null;
     }
 
+    public function findFeaturedProduct(?int $ignoreId = null): ?array
+    {
+        $sql = '
+            SELECT id, titulo, slug, url, tipo, promocao, desconto_percentual, desconto_contexto, codigo_cupom, secao_publica, subgrupo_publico,
+                   descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque, expira_em
+            FROM links
+            WHERE destaque = 1
+        ';
+        $params = [];
+
+        if ($ignoreId !== null && $ignoreId > 0) {
+            $sql .= ' AND id <> :ignore_id';
+            $params['ignore_id'] = $ignoreId;
+        }
+
+        $sql .= ' ORDER BY promocao DESC, posicao ASC, id DESC LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        $item = $stmt->fetch(PDO::FETCH_ASSOC);
+        return is_array($item) ? $item : null;
+    }
+
     public function findPublicBySlug(string $slug): ?array
     {
         $stmt = $this->pdo->prepare('
@@ -259,6 +283,17 @@ final class LinkRepository
         return $stmt->rowCount() > 0;
     }
 
+    public function clearFeaturedProducts(?int $exceptId = null): void
+    {
+        if ($exceptId !== null && $exceptId > 0) {
+            $stmt = $this->pdo->prepare('UPDATE links SET destaque = 0 WHERE destaque = 1 AND id <> :id');
+            $stmt->execute(['id' => $exceptId]);
+            return;
+        }
+
+        $this->pdo->exec('UPDATE links SET destaque = 0 WHERE destaque = 1');
+    }
+
     public function reorderPositions(array $orderedIds): void
     {
         $position = 10;
@@ -315,7 +350,7 @@ final class LinkRepository
             FROM links
             WHERE status NOT IN ("oculto", "expirado")
               AND (expira_em IS NULL OR expira_em >= NOW())
-            ORDER BY promocao DESC, destaque DESC, posicao ASC, id DESC
+            ORDER BY promocao DESC, posicao ASC, destaque DESC, id DESC
             LIMIT :limit
         ');
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -333,7 +368,7 @@ final class LinkRepository
             FROM links
             WHERE status NOT IN ("oculto", "expirado")
               AND (expira_em IS NULL OR expira_em >= NOW())
-            ORDER BY promocao DESC, destaque DESC, posicao ASC, id DESC
+            ORDER BY promocao DESC, posicao ASC, destaque DESC, id DESC
             LIMIT :limit
         ');
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);

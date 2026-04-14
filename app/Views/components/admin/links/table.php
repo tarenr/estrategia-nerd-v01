@@ -8,6 +8,9 @@ $filters = $filters ?? ['busca' => '', 'tipo' => '', 'promocao' => '', 'status' 
 $sort = (string) ($sort ?? 'posicao');
 $dir = (string) ($dir ?? 'asc');
 $pagination = $pagination ?? ['total' => 0, 'page' => 1, 'per_page' => 10, 'pages' => 1];
+$currentFeatured = is_array($current_featured ?? null) ? $current_featured : null;
+$currentFeaturedId = (int) ($currentFeatured['id'] ?? 0);
+$currentFeaturedTitle = trim((string) ($currentFeatured['titulo'] ?? ''));
 $page = max(1, (int) ($pagination['page'] ?? 1));
 $pages = max(1, (int) ($pagination['pages'] ?? 1));
 $perPage = max(5, (int) ($pagination['per_page'] ?? 10));
@@ -245,6 +248,10 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
             $descricao = trim((string) ($item['descricao'] ?? ''));
             $grupo = trim((string) ($item['subgrupo_publico'] ?? ''));
             $desconto = trim((string) ($item['desconto_percentual'] ?? ''));
+            $needsFeaturedConfirm = !$destaque && $currentFeaturedId > 0 && $currentFeaturedId !== $id;
+            $featuredConfirmMessage = $needsFeaturedConfirm
+                ? 'Confirmar? Este item substituira o destaque atual: ' . ($currentFeaturedTitle !== '' ? $currentFeaturedTitle : 'item atual') . '.'
+                : '';
             ?>
             <tr class="posts-table-row<?= $destaque ? ' is-highlight' : '' ?>" data-link-row-id="<?= $id ?>" draggable="true">
               <td class="posts-table-td links-table-title-cell">
@@ -281,11 +288,11 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
                     </span>
                   <?php endif; ?>
                   <?php if ($promocao): ?>
-                    <span class="links-table-type-chip border-emerald-500/25 text-emerald-200 bg-emerald-500/10">Promocao</span>
+                    <span class="links-table-type-chip border-emerald-500/25 text-emerald-200 bg-emerald-500/10">Promoções/Ofertas</span>
                   <?php endif; ?>
                   <?php if ((string) ($item['tipo'] ?? '') === 'cupom' && $desconto !== ''): ?>
                     <span class="links-table-type-chip border-blue-500/25 text-blue-100 bg-blue-500/10">
-                      <?= htmlspecialchars($desconto, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> OFF
+                      <?= htmlspecialchars($desconto, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                     </span>
                   <?php endif; ?>
                   <form method="POST" action="<?= url('/admin/links/acao') ?>" data-admin-links-action class="links-table-type-form">
@@ -293,8 +300,8 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
                     <input type="hidden" name="id" value="<?= $id ?>">
                     <input type="hidden" name="return_to" value="<?= htmlspecialchars($currentUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                     <input type="hidden" name="action" value="toggle_destaque">
-                    <button type="submit" class="links-table-type-toggle <?= $destaque ? 'border-fuchsia-500/25 text-fuchsia-100 bg-fuchsia-500/10' : 'border-slate-600/50 text-slate-300 bg-slate-800/40' ?>">
-                      <?= $destaque ? 'Destaque' : 'Sem destaque' ?>
+                    <button type="submit" class="links-table-type-toggle <?= $destaque ? 'border-fuchsia-500/25 text-fuchsia-100 bg-fuchsia-500/10' : 'border-slate-600/50 text-slate-300 bg-slate-800/40' ?>" data-featured-toggle-button data-featured-next="<?= $destaque ? 'off' : 'on' ?>" data-featured-confirm-message="<?= htmlspecialchars($featuredConfirmMessage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <?= $destaque ? 'Destaque principal' : 'Sem destaque' ?>
                     </button>
                   </form>
                 </div>

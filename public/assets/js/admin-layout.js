@@ -280,6 +280,21 @@
 
   window.adminUi = window.adminUi || {};
   window.adminUi.prompt = openModal;
+  window.adminUi.confirm = function confirmModal(options) {
+    return openModal({
+      title: options && options.title ? options.title : 'Confirmacao',
+      subtitle: options && options.subtitle ? options.subtitle : '',
+      message: options && options.message ? options.message : '',
+      submitLabel: options && options.submitLabel ? options.submitLabel : 'Confirmar',
+      cancelLabel: options && options.cancelLabel ? options.cancelLabel : 'Cancelar',
+      hideCancel: false,
+      hideClose: false,
+      fields: [],
+      destructive: !!(options && options.destructive),
+    }).then(function (result) {
+      return result !== null;
+    });
+  };
   window.adminUi.alert = function alertModal(options) {
     return openModal({
       title: options && options.title ? options.title : 'Aviso',

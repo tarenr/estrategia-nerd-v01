@@ -38,11 +38,11 @@ $action = url('/admin/links');
     </div>
 
     <div class="admin-filter-field">
-      <label class="admin-filter-label" for="links-promocao">Promocao</label>
+      <label class="admin-filter-label" for="links-promocao">Promoções / Ofertas</label>
       <select id="links-promocao" name="promocao" class="nerd-input admin-filter-control">
         <option value="">Todos</option>
-        <option value="1" <?= (string) ($filters['promocao'] ?? '') === '1' ? 'selected' : '' ?>>Somente promocoes</option>
-        <option value="0" <?= (string) ($filters['promocao'] ?? '') === '0' ? 'selected' : '' ?>>Sem promocao</option>
+        <option value="1" <?= (string) ($filters['promocao'] ?? '') === '1' ? 'selected' : '' ?>>Somente promoções/ofertas</option>
+        <option value="0" <?= (string) ($filters['promocao'] ?? '') === '0' ? 'selected' : '' ?>>Sem promoção</option>
       </select>
     </div>
 

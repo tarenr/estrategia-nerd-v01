@@ -1085,6 +1085,56 @@
     return serializeFormState(form) !== formTracker.initialState;
   }
 
+  function confirmUnsavedLeave() {
+    var title = "Sair sem salvar";
+    var message = "Existem alteracoes nao salvas. Deseja sair mesmo assim?";
+
+    if (window.adminUi && typeof window.adminUi.confirm === "function") {
+      return window.adminUi.confirm({
+        title: title,
+        subtitle: "Editor de post",
+        message: '<p class="text-sm leading-6 text-slate-300">' + escapeHtml(message) + "</p>",
+        submitLabel: "Sair sem salvar",
+        cancelLabel: "Continuar editando",
+        destructive: true
+      });
+    }
+
+    return new Promise(function (resolve) {
+      var host = document.createElement("div");
+      host.className = "fixed inset-0 z-[10020] flex items-center justify-center px-4 py-8";
+      host.innerHTML =
+        '<div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>' +
+        '<div class="relative w-full max-w-lg rounded-3xl border border-cyan-500/20 bg-slate-950 shadow-2xl shadow-cyan-500/10">' +
+          '<div class="border-b border-slate-800/70 px-6 py-5">' +
+            '<div class="font-orbitron text-lg font-black text-white">' + escapeHtml(title) + "</div>" +
+          "</div>" +
+          '<div class="px-6 py-5 text-sm leading-6 text-slate-300">' + escapeHtml(message) + "</div>" +
+          '<div class="flex items-center justify-end gap-3 border-t border-slate-800/70 px-6 py-5">' +
+            '<button type="button" data-inline-cancel class="admin-btn admin-btn-secondary">Continuar editando</button>' +
+            '<button type="button" data-inline-confirm class="admin-btn admin-btn-primary !border-rose-500/40 !text-rose-200 hover:!bg-rose-500/10">Sair sem salvar</button>' +
+          "</div>" +
+        "</div>";
+
+      var close = function (accepted) {
+        host.remove();
+        document.body.style.overflow = "";
+        resolve(accepted);
+      };
+
+      document.body.appendChild(host);
+      document.body.style.overflow = "hidden";
+
+      var confirmButton = host.querySelector("[data-inline-confirm]");
+      var cancelButton = host.querySelector("[data-inline-cancel]");
+      var overlay = host.firstElementChild;
+
+      if (confirmButton) confirmButton.addEventListener("click", function () { close(true); });
+      if (cancelButton) cancelButton.addEventListener("click", function () { close(false); });
+      if (overlay) overlay.addEventListener("click", function () { close(false); });
+    });
+  }
+
   function initUnsavedChangesGuard() {
     var form = byId("postForm");
     if (!form) return;
@@ -1108,10 +1158,14 @@
         if (window.__postEditorAllowUnload) return;
         if (!hasUnsavedChanges(form) || formTracker.submitting) return;
 
-        var shouldLeave = window.confirm("Existem alteracoes nao salvas. Deseja sair mesmo assim?");
-        if (!shouldLeave) {
-          event.preventDefault();
-        }
+        event.preventDefault();
+        confirmUnsavedLeave().then(function (shouldLeave) {
+          if (!shouldLeave) return;
+          window.__postEditorAllowUnload = true;
+          var href = link.getAttribute("href");
+          if (!href) return;
+          window.location.href = href;
+        });
       });
     });
   }

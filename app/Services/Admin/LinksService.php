@@ -60,6 +60,7 @@ final class LinksService
         return [
             'title' => 'Links',
             'items' => $pagination['items'] ?? [],
+            'current_featured' => $this->links->findFeaturedProduct(),
             'filters' => $filters,
             'sort' => $sort,
             'dir' => $dir,
@@ -91,7 +92,8 @@ final class LinksService
 
     public function getCreateViewModel(array $old = [], array $errors = []): array
     {
-        return $this->buildFormViewModel('create', $this->normalizeForm($old), $errors);
+        $form = $this->normalizeForm($old);
+        return $this->buildFormViewModel('create', $form, $errors);
     }
 
     public function getEditViewModel(int $id, array $old = [], array $errors = []): ?array
@@ -137,7 +139,8 @@ final class LinksService
 
         $slugBase = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']);
         $slug = $this->links->nextAvailableSlug($slugBase);
-        $this->links->insertAdmin($this->payloadFromForm($form, $slug));
+        $id = $this->links->insertAdmin($this->payloadFromForm($form, $slug));
+        $this->enforceSingleFeaturedProduct($form, $id);
 
         return ['ok' => true, 'slug' => $slug];
     }
@@ -164,6 +167,7 @@ final class LinksService
         $slugBase = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']);
         $slug = $this->links->nextAvailableSlug($slugBase, $id);
         $this->links->updateAdmin($id, $this->payloadFromForm($form, $slug));
+        $this->enforceSingleFeaturedProduct($form, $id);
 
         return ['ok' => true, 'id' => $id, 'slug' => $slug];
     }
@@ -269,6 +273,7 @@ final class LinksService
             'form' => $form,
             'errors' => $errors,
             'link' => $link,
+            'current_featured' => $this->links->findFeaturedProduct(),
             'media_items' => $this->midia->recentImages(12),
         ];
     }
@@ -326,9 +331,13 @@ final class LinksService
 
     private function toggleDestaque(array $link): array
     {
+        $id = (int) ($link['id'] ?? 0);
         $current = (int) ($link['destaque'] ?? 0) === 1 ? 1 : 0;
         $next = $current === 1 ? 0 : 1;
-        $this->links->updateQuickFields((int) ($link['id'] ?? 0), ['destaque' => $next]);
+        if ($next === 1) {
+            $this->links->clearFeaturedProducts($id);
+        }
+        $this->links->updateQuickFields($id, ['destaque' => $next]);
 
         return ['ok' => true, 'mode' => 'destaque_' . ($next === 1 ? 'on' : 'off')];
     }
@@ -454,6 +463,8 @@ final class LinksService
             $codigoCupom = '';
         }
 
+        $destaque = (int) ($input['destaque'] ?? 0) === 1 ? 1 : 0;
+
         return [
             'id' => $id > 0 ? $id : (int) ($input['id'] ?? 0),
             'titulo' => trim((string) ($input['titulo'] ?? '')),
@@ -472,7 +483,7 @@ final class LinksService
             'imagem' => trim((string) ($input['imagem'] ?? '')),
             'posicao' => max(0, (int) ($input['posicao'] ?? 0)),
             'status' => $status,
-            'destaque' => (int) ($input['destaque'] ?? 0) === 1 ? 1 : 0,
+            'destaque' => $destaque,
             'expira_em' => $this->normalizeDateTime((string) ($input['expira_em'] ?? '')),
             'observacao_status' => trim((string) ($input['observacao_status'] ?? '')),
         ];
@@ -508,11 +519,11 @@ final class LinksService
         }
 
         if ($form['tipo'] === 'cupom' && $form['desconto_percentual'] === '') {
-            $errors['desconto_percentual'] = 'Informe o percentual do cupom.';
+            $errors['desconto_percentual'] = 'Informe o valor do desconto.';
         }
 
         if ($form['desconto_percentual'] !== '' && mb_strlen($form['desconto_percentual']) > 20) {
-            $errors['desconto_percentual'] = 'O percentual deve ter no maximo 20 caracteres.';
+            $errors['desconto_percentual'] = 'O desconto deve ter no maximo 20 caracteres.';
         }
 
         if ($form['tipo'] === 'cupom' && $form['desconto_contexto'] === '') {
@@ -521,10 +532,6 @@ final class LinksService
 
         if ($form['desconto_contexto'] !== '' && mb_strlen($form['desconto_contexto']) > 160) {
             $errors['desconto_contexto'] = 'A descricao do cupom deve ter no maximo 160 caracteres.';
-        }
-
-        if ($form['tipo'] === 'cupom' && $form['codigo_cupom'] === '') {
-            $errors['codigo_cupom'] = 'Informe o codigo do cupom.';
         }
 
         if ($form['codigo_cupom'] !== '' && mb_strlen($form['codigo_cupom']) > 80) {
@@ -556,6 +563,19 @@ final class LinksService
         }
 
         return $errors;
+    }
+
+    private function enforceSingleFeaturedProduct(array $form, int $id): void
+    {
+        if ((int) ($form['destaque'] ?? 0) !== 1) {
+            return;
+        }
+
+        if ($id <= 0) {
+            return;
+        }
+
+        $this->links->clearFeaturedProducts($id);
     }
 
     private function normalizeFilters(array $query): array

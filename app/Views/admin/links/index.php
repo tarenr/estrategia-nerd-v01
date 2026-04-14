@@ -7,6 +7,7 @@ $items = $items ?? [];
 $summary = $summary ?? ['total' => 0, 'ativos' => 0, 'promocoes' => 0, 'produtos' => 0, 'cupons' => 0, 'sociais' => 0];
 $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 10, 'pages' => 1];
 $filters = $filters ?? ['busca' => '', 'tipo' => '', 'promocao' => '', 'status' => '', 'destaque' => '', 'monitoramento' => ''];
+$currentFeatured = is_array($current_featured ?? null) ? $current_featured : null;
 $sort = (string) ($sort ?? 'posicao');
 $dir = (string) ($dir ?? 'asc');
 $created = isset($_GET['created']) && (string) $_GET['created'] === '1';
@@ -39,7 +40,7 @@ $mode = (string) ($_GET['mode'] ?? '');
           $modeLabels = [
               'status_ativo' => 'Link ativado com sucesso.',
               'status_oculto' => 'Link ocultado com sucesso.',
-              'destaque_on' => 'Link marcado como destaque.',
+              'destaque_on' => 'Link definido como destaque principal.',
               'destaque_off' => 'Destaque removido do link.',
               'order_up' => 'Link movido para cima.',
               'order_down' => 'Link movido para baixo.',
@@ -60,7 +61,7 @@ $mode = (string) ($_GET['mode'] ?? '');
     <?php View::component('admin/links/summary-cards', ['summary' => $summary]); ?>
 
     <?php View::component('admin/links/filters', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
-    <?php View::component('admin/links/table', ['items' => $items, 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
+    <?php View::component('admin/links/table', ['items' => $items, 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination, 'current_featured' => $currentFeatured]); ?>
     <?php View::component('admin/links/pagination', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
   </div>
 </div>

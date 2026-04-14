@@ -6,6 +6,7 @@ use App\Support\View;
 $form = $form ?? [];
 $errors = $errors ?? [];
 $mediaItems = $media_items ?? [];
+$currentFeatured = is_array($current_featured ?? null) ? $current_featured : null;
 ?>
 
 <div class="max-w-6xl mx-auto px-4 py-6">
@@ -27,5 +28,6 @@ $mediaItems = $media_items ?? [];
       'form' => $form,
       'errors' => $errors,
       'media_items' => $mediaItems,
+      'current_featured' => $currentFeatured,
   ]); ?>
 </div>

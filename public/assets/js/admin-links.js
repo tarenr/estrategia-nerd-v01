@@ -10,6 +10,72 @@
     root.style.pointerEvents = isLoading ? "none" : "";
   };
 
+  const escapeHtml = (value) =>
+    String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  const openInlineConfirmModal = ({ title, message, submitLabel, cancelLabel }) =>
+    new Promise((resolve) => {
+      const host = document.createElement("div");
+      host.className = "fixed inset-0 z-[10020] flex items-center justify-center px-4 py-8";
+      host.innerHTML =
+        '<div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>' +
+        '<div class="relative w-full max-w-lg rounded-3xl border border-cyan-500/20 bg-slate-950 shadow-2xl shadow-cyan-500/10">' +
+        '<div class="border-b border-slate-800/70 px-6 py-5">' +
+        '<div class="font-orbitron text-lg font-black text-white">' + escapeHtml(title || "Confirmacao") + "</div>" +
+        "</div>" +
+        '<div class="px-6 py-5 text-sm leading-6 text-slate-300">' + escapeHtml(message || "") + "</div>" +
+        '<div class="flex items-center justify-end gap-3 border-t border-slate-800/70 px-6 py-5">' +
+        '<button type="button" data-inline-cancel class="admin-btn admin-btn-secondary">' + escapeHtml(cancelLabel || "Cancelar") + "</button>" +
+        '<button type="button" data-inline-confirm class="admin-btn admin-btn-primary">' + escapeHtml(submitLabel || "Confirmar") + "</button>" +
+        "</div>" +
+        "</div>";
+
+      const close = (accepted) => {
+        host.remove();
+        document.body.style.overflow = "";
+        resolve(accepted);
+      };
+
+      document.body.appendChild(host);
+      document.body.style.overflow = "hidden";
+
+      const confirmButton = host.querySelector("[data-inline-confirm]");
+      const cancelButton = host.querySelector("[data-inline-cancel]");
+      const overlay = host.firstElementChild;
+
+      if (confirmButton) {
+        confirmButton.addEventListener("click", () => close(true));
+      }
+      if (cancelButton) {
+        cancelButton.addEventListener("click", () => close(false));
+      }
+      if (overlay) {
+        overlay.addEventListener("click", () => close(false));
+      }
+    });
+
+  const openConfirmModal = async ({ title, message, submitLabel, cancelLabel }) => {
+    if (window.adminUi && typeof window.adminUi.confirm === "function") {
+      return window.adminUi.confirm({
+        title: title || "Confirmacao",
+        subtitle: "Central Nerd",
+        message:
+          '<p class="text-sm leading-6 text-slate-300">' +
+          escapeHtml(message || "") +
+          "</p>",
+        submitLabel: submitLabel || "Confirmar",
+        cancelLabel: cancelLabel || "Cancelar",
+      });
+    }
+
+    return openInlineConfirmModal({ title, message, submitLabel, cancelLabel });
+  };
+
   const normalizeUrl = (url) => {
     const parsed = new URL(url, window.location.origin);
     parsed.searchParams.set("_partial", "1");
@@ -182,6 +248,25 @@
   const submitActionForm = async (form) => {
     const root = getRoot();
     if (!root) return;
+
+    const actionInput = form.querySelector("input[name='action']");
+    const action = actionInput ? String(actionInput.value || "").trim() : "";
+    if (action === "toggle_destaque") {
+      const trigger = form.querySelector("[data-featured-toggle-button]");
+      const nextState = trigger ? String(trigger.getAttribute("data-featured-next") || "").trim() : "";
+      const message = trigger ? String(trigger.getAttribute("data-featured-confirm-message") || "").trim() : "";
+      if (nextState === "on" && message !== "") {
+        const ok = await openConfirmModal({
+          title: "Trocar destaque principal",
+          message,
+          submitLabel: "Confirmar troca",
+          cancelLabel: "Cancelar",
+        });
+        if (!ok) {
+          return;
+        }
+      }
+    }
 
     const viewState = captureViewState(form);
     setLoading(root, true);

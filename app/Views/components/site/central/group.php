@@ -33,9 +33,10 @@ $groupOpen = (bool) ($group['open'] ?? false);
         $badge = trim((string) ($item['selo'] ?? ''));
         $isCoupon = (string) ($item['tipo'] ?? '') === 'cupom';
         $couponCode = trim((string) ($item['coupon_code'] ?? ''));
-        $discount = trim((string) ($item['discount'] ?? ''));
+        $discount = trim((string) ($item['discount_text'] ?? ($item['discount'] ?? '')));
         $discountContext = trim((string) ($item['discount_context'] ?? ''));
-        $copyValue = $couponCode !== '' ? $couponCode : ($title !== '' ? $title : 'CUPOM');
+        $hasCouponCode = $couponCode !== '';
+        $copyValue = $couponCode;
         $hasExternalUrl = $url !== '' && $url !== '#';
         $trackedUrl = trim((string) ($item['slug'] ?? '')) !== ''
             ? url('/link/' . rawurlencode((string) $item['slug']) . '?origem=central-' . rawurlencode($groupSlug))
@@ -57,23 +58,27 @@ $groupOpen = (bool) ($group['open'] ?? false);
                 <?php if ($description !== ''): ?><span class="central-bio-description"><?= htmlspecialchars($description, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?>
                 <?php if ($discount !== '' || $discountContext !== ''): ?>
                   <span class="central-link-extra central-link-extra-inline">
-                    <?php if ($discount !== ''): ?><span class="central-link-discount"><?= htmlspecialchars($discount, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> OFF</span><?php endif; ?>
+                    <?php if ($discount !== ''): ?><span class="central-link-discount"><?= htmlspecialchars($discount, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?>
                     <?php if ($discountContext !== ''): ?><span class="central-link-context"><?= htmlspecialchars($discountContext, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?>
                   </span>
                 <?php endif; ?>
 
                 <span class="central-coupon-actions">
-                  <button
-                    type="button"
-                    class="central-coupon-copy-button"
-                    data-copy-coupon="<?= htmlspecialchars($copyValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
-                    data-copy-coupon-trigger
-                    aria-label="Copiar cupom <?= htmlspecialchars($copyValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
-                  >
-                    <span class="central-coupon-copy-code"><?= htmlspecialchars($copyValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
-                    <span class="central-coupon-copy-meta" data-copy-coupon-feedback>Toque para copiar</span>
-                    <span class="central-coupon-copy-state" aria-hidden="true">Copiado</span>
-                  </button>
+                  <?php if ($hasCouponCode): ?>
+                    <button
+                      type="button"
+                      class="central-coupon-copy-button"
+                      data-copy-coupon="<?= htmlspecialchars($copyValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                      data-copy-coupon-trigger
+                      aria-label="Copiar cupom <?= htmlspecialchars($copyValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    >
+                      <span class="central-coupon-copy-code"><?= htmlspecialchars($copyValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                      <span class="central-coupon-copy-meta" data-copy-coupon-feedback>Toque para copiar</span>
+                      <span class="central-coupon-copy-state" aria-hidden="true">Copiado</span>
+                    </button>
+                  <?php else: ?>
+                    <span class="central-coupon-no-code">Oferta sem codigo (acesso por link).</span>
+                  <?php endif; ?>
 
                   <?php if ($hasExternalUrl): ?>
                     <a href="<?= htmlspecialchars($trackedUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="central-coupon-site-button" aria-label="Abrir site do cupom <?= htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
@@ -99,7 +104,7 @@ $groupOpen = (bool) ($group['open'] ?? false);
                 <?php if ($badge !== ''): ?><span class="central-bio-badge"><?= htmlspecialchars($badge, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?>
                 <span class="central-bio-title"><?= htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
                 <?php if ($description !== ''): ?><span class="central-bio-description"><?= htmlspecialchars($description, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?>
-                <?php if ($discount !== ''): ?><span class="central-link-discount"><?= htmlspecialchars($discount, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> OFF</span><?php endif; ?>
+                <?php if ($discount !== ''): ?><span class="central-link-discount"><?= htmlspecialchars($discount, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?>
               </span>
               <span class="central-bio-arrow" aria-hidden="true">
                 <svg viewBox="0 0 20 20" fill="none">

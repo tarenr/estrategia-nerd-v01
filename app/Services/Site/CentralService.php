@@ -70,6 +70,7 @@ final class CentralService
         return array_map(function (array $item): array {
             $tipo = (string) ($item['tipo'] ?? 'produto');
             $promocao = (int) ($item['promocao'] ?? 0) === 1;
+            $discountRaw = trim((string) ($item['desconto_percentual'] ?? ''));
 
             return [
                 'id' => (int) ($item['id'] ?? 0),
@@ -87,7 +88,8 @@ final class CentralService
                 'destaque' => (int) ($item['destaque'] ?? 0) === 1,
                 'posicao' => (int) ($item['posicao'] ?? 0),
                 'tone' => $this->toneFor($tipo, $promocao),
-                'discount' => trim((string) ($item['desconto_percentual'] ?? '')),
+                'discount' => $discountRaw,
+                'discount_text' => $this->normalizeDiscountText($discountRaw),
                 'discount_context' => trim((string) ($item['desconto_contexto'] ?? '')),
                 'coupon_code' => trim((string) ($item['codigo_cupom'] ?? '')),
             ];
@@ -105,7 +107,7 @@ final class CentralService
         $serviceItems = [];
 
         foreach ($items as $item) {
-            if ($featured === null && $item['tipo'] === 'produto' && $item['promocao']) {
+            if ($featured === null && $item['destaque']) {
                 $featured = $item;
             }
 
@@ -121,7 +123,7 @@ final class CentralService
                     $productGroups[$groupKey] = [
                         'slug' => $groupKey,
                         'label' => $groupLabel,
-                        'subtitle' => 'Seleção especial de produtos da Central Nerd.',
+                        'subtitle' => '',
                         'tone' => 'product',
                         'items' => [],
                     ];
@@ -140,6 +142,15 @@ final class CentralService
         }
 
         if ($featured === null) {
+            foreach ($items as $item) {
+                if ($item['tipo'] === 'produto' && $item['promocao']) {
+                    $featured = $item;
+                    break;
+                }
+            }
+        }
+
+        if ($featured === null) {
             $featured = $items[0] ?? null;
         }
 
@@ -147,10 +158,10 @@ final class CentralService
         if ($promoItems !== []) {
             $groups[] = [
                 'slug' => 'promocoes',
-                'label' => 'Promoções',
-                'subtitle' => 'Ofertas quentes e oportunidades selecionadas.',
+                'label' => 'PROMOÇÕES E OFERTAS',
+                'subtitle' => 'As melhores ofertas selecionadas pra você economizar sem perder tempo.',
                 'tone' => 'promo',
-                'open' => true,
+                'open' => false,
                 'items' => $promoItems,
             ];
         }
@@ -162,14 +173,14 @@ final class CentralService
         });
 
         foreach ($productGroups as $group) {
-            $group['open'] = $groups === [];
+            $group['open'] = false;
             $groups[] = $group;
         }
 
         $tailGroups = [
-            ['slug' => 'cupons', 'label' => 'Cupons de desconto', 'subtitle' => 'Copie o código e aproveite as campanhas ativas.', 'tone' => 'coupon', 'items' => $couponItems],
-            ['slug' => 'conteudo', 'label' => 'Conteúdo', 'subtitle' => 'Acessos oficiais, leituras e recomendações.', 'tone' => 'content', 'items' => $contentItems],
-            ['slug' => 'rede-social', 'label' => 'Rede Social', 'subtitle' => 'Acompanhe a Estratégia Nerd fora do portal.', 'tone' => 'social', 'items' => $socialItems],
+            ['slug' => 'cupons', 'label' => 'CUPONS DE DESCONTO', 'subtitle' => 'Pegue cupons ativos e pague mais barato nos seus produtos favoritos.', 'tone' => 'coupon', 'items' => $couponItems],
+            ['slug' => 'conteudo', 'label' => 'CONTEÚDO', 'subtitle' => 'Guias, dicas e conteúdos nerds pra você aprender e escolher melhor.', 'tone' => 'content', 'items' => $contentItems],
+            ['slug' => 'rede-social', 'label' => 'REDE SOCIAL', 'subtitle' => 'Fique por dentro de tudo que rola no Estratégia Nerd em tempo real.', 'tone' => 'social', 'items' => $socialItems],
             ['slug' => 'servicos', 'label' => 'Serviços', 'subtitle' => 'Soluções, trabalhos e acessos especiais.', 'tone' => 'service', 'items' => $serviceItems],
         ];
 
@@ -177,7 +188,7 @@ final class CentralService
             if ($group['items'] === []) {
                 continue;
             }
-            $group['open'] = $groups === [];
+            $group['open'] = false;
             $groups[] = $group;
         }
 
@@ -208,6 +219,24 @@ final class CentralService
             'servico' => 'service',
             default => 'product',
         };
+    }
+
+    private function normalizeDiscountText(string $discount): string
+    {
+        $discount = public_text(trim($discount));
+        if ($discount === '') {
+            return '';
+        }
+
+        if (preg_match('/[%$]|r\\$/i', $discount) === 1) {
+            return $discount;
+        }
+
+        if (preg_match('/^\\d+(?:[\\.,]\\d+)?$/', $discount) === 1) {
+            return $discount . '%';
+        }
+
+        return $discount;
     }
 
     private function toPublicUrl(string $value): string
