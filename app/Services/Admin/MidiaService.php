@@ -166,6 +166,8 @@ final class MidiaService
         $filters['estado'] = 'orfa';
         $items = $this->applyFilters($this->scanMediaItems($this->collectMediaUsage()), $filters);
         $removed = 0;
+        $failed = 0;
+        $attempted = 0;
 
         foreach ($items as $item) {
             if (($item['is_orphan'] ?? false) !== true || ($item['is_managed_upload'] ?? false) !== true) {
@@ -173,12 +175,21 @@ final class MidiaService
             }
 
             $resolved = $this->resolveManagedFile((string) ($item['relative_path'] ?? ''));
-            if ($resolved !== null && is_file($resolved['absolute_path']) && @unlink($resolved['absolute_path'])) {
+            $targetPath = $resolved['absolute_path'] ?? $this->resolveManagedAbsoluteFromItem($item);
+            if (!is_string($targetPath) || $targetPath === '') {
+                $failed++;
+                continue;
+            }
+
+            $attempted++;
+            if (is_file($targetPath) && @unlink($targetPath)) {
                 $removed++;
+            } else {
+                $failed++;
             }
         }
 
-        return ['ok' => true, 'removed' => $removed];
+        return ['ok' => true, 'removed' => $removed, 'failed' => $failed, 'attempted' => $attempted];
     }
 
     private function scanMediaItems(array $usage = []): array
@@ -460,13 +471,13 @@ final class MidiaService
         }
 
         $absolutePath = $this->publicRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
-        $uploadsRoot = realpath($this->uploadsRoot());
+        $uploadsRoot = realpath($this->managedUploadsRoot());
         if ($uploadsRoot === false) {
             return null;
         }
 
         $realFile = realpath($absolutePath);
-        if ($realFile === false || !str_starts_with($realFile, $uploadsRoot) || !is_file($realFile)) {
+        if ($realFile === false || !$this->pathStartsWith($realFile, $uploadsRoot) || !is_file($realFile)) {
             return null;
         }
 
@@ -487,6 +498,22 @@ final class MidiaService
             'dimensions_label' => ($width && $height) ? ($width . ' x ' . $height) : '-',
             'modified_label' => date('d/m/Y H:i', (int) $fileInfo->getMTime()),
         ];
+    }
+
+    private function resolveManagedAbsoluteFromItem(array $item): ?string
+    {
+        $absolutePath = trim((string) ($item['absolute_path'] ?? ''));
+        if ($absolutePath === '' || !is_file($absolutePath)) {
+            return null;
+        }
+
+        $uploadsRoot = realpath($this->managedUploadsRoot());
+        $realFile = realpath($absolutePath);
+        if ($uploadsRoot === false || $realFile === false || !$this->pathStartsWith($realFile, $uploadsRoot)) {
+            return null;
+        }
+
+        return $realFile;
     }
 
     private function normalizeManagedPath(string $path): ?string
@@ -1182,5 +1209,33 @@ final class MidiaService
     private function uploadsRoot(): string
     {
         return base_path('public/uploads');
+    }
+
+    private function managedUploadsRoot(): string
+    {
+        $publicRootUploads = $this->publicRoot() . DIRECTORY_SEPARATOR . 'uploads';
+        if (is_dir($publicRootUploads)) {
+            return $publicRootUploads;
+        }
+
+        return $this->uploadsRoot();
+    }
+
+    private function pathStartsWith(string $path, string $prefix): bool
+    {
+        $normalize = static function (string $value): string {
+            $value = str_replace('\\', '/', $value);
+            return rtrim($value, '/');
+        };
+
+        $left = $normalize($path);
+        $right = $normalize($prefix);
+
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $left = mb_strtolower($left, 'UTF-8');
+            $right = mb_strtolower($right, 'UTF-8');
+        }
+
+        return str_starts_with($left, $right);
     }
 }

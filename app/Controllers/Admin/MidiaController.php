@@ -43,7 +43,8 @@ final class MidiaController
 
         $result = $this->service()->cleanupVisibleOrphans($_GET + $_POST);
         $removed = max(0, (int) ($result['removed'] ?? 0));
-        header('Location: ' . url('/admin/midia?orphan_cleaned=1&orphan_removed=' . $removed));
+        $failed = max(0, (int) ($result['failed'] ?? 0));
+        header('Location: ' . url('/admin/midia?orphan_cleaned=1&orphan_removed=' . $removed . '&orphan_failed=' . $failed));
         exit;
     }
 
