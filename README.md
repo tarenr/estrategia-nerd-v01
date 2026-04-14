@@ -4,6 +4,13 @@
 Acesse:
 - https://localhost/estrategia-nerd/
 
+## Preflight rapido
+Antes de alterar ou publicar, rode:
+
+```bash
+php scripts/preflight-check.php
+```
+
 ## Pastas
 - public/ = único diretório público
 - app/ = código

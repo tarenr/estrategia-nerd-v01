@@ -1190,7 +1190,7 @@ final class ContentSyncManager
                 throw new RuntimeException('Falha de login no FTP da producao para deploy de codigo.');
             }
             ftp_pasv($ftp, (bool) ($deployConfig['passive'] ?? true));
-            $root = rtrim((string) $deployConfig['root'], '/');
+            $root = $this->resolveCodeDeployRoot($ftp, (string) ($deployConfig['root'] ?? ''));
 
             $files = $this->listFiles($sourceDir);
             foreach ($files as $file) {
@@ -1211,7 +1211,7 @@ final class ContentSyncManager
             ftp_close($ftp);
         }
 
-        return ['mode' => 'ftp', 'files_applied' => $uploaded, 'target_root' => (string) ($deployConfig['root'] ?? '')];
+        return ['mode' => 'ftp', 'files_applied' => $uploaded, 'target_root' => $root];
     }
 
     private function ensureRemoteDirectory($ftp, string $remoteDirectory): void
@@ -1221,6 +1221,47 @@ final class ContentSyncManager
         foreach ($parts as $part) {
             $current .= '/' . $part;
             @ftp_mkdir($ftp, $current);
+        }
+    }
+
+    private function resolveCodeDeployRoot($ftp, string $configuredRoot): string
+    {
+        $root = rtrim(trim(str_replace('\\', '/', $configuredRoot)), '/');
+        if ($root === '') {
+            throw new RuntimeException('Configuracao de deploy de codigo incompleta: root.');
+        }
+
+        if (str_ends_with(strtolower($root), '/_app_core')) {
+            return $root;
+        }
+
+        $indexContent = $this->readRemoteTextFile($ftp, $root . '/index.php');
+        if (is_string($indexContent) && str_contains($indexContent, '/_app_core/bootstrap.php')) {
+            return $root . '/_app_core';
+        }
+
+        if (@ftp_size($ftp, $root . '/_app_core/bootstrap.php') >= 0) {
+            return $root . '/_app_core';
+        }
+
+        return $root;
+    }
+
+    private function readRemoteTextFile($ftp, string $remotePath): ?string
+    {
+        $tmpPath = tempnam(sys_get_temp_dir(), 'en-content-sync-');
+        if (!is_string($tmpPath) || $tmpPath === '') {
+            return null;
+        }
+
+        try {
+            if (!@ftp_get($ftp, $tmpPath, $remotePath, FTP_BINARY)) {
+                return null;
+            }
+            $content = @file_get_contents($tmpPath);
+            return is_string($content) ? $content : null;
+        } finally {
+            @unlink($tmpPath);
         }
     }
 

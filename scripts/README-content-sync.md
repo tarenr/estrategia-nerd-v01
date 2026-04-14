@@ -23,12 +23,29 @@ Ela nao mexe em:
 ## Comandos
 
 ```bash
+php scripts/preflight-check.php
 php scripts/content-sync.php export local
 php scripts/content-sync.php status
 php scripts/content-sync.php verify latest
 php scripts/content-sync.php apply latest production --force
 php scripts/content-sync.php apply latest local --force
 ```
+
+## Preflight (obrigatorio antes de alterar/publicar)
+
+```bash
+php scripts/preflight-check.php
+```
+
+Essa rotina valida:
+
+- caminho canonico do projeto (evita editar/publicar a pasta errada)
+- lock pendente de rotina de conteudo
+- status local do git (mudancas em aberto)
+- encoding suspeito (acentos quebrados / mojibake)
+- marcadores de merge pendentes
+
+Se houver falha bloqueante, corrija antes de continuar.
 
 ## Fluxo recomendado
 
