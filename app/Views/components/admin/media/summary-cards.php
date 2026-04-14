@@ -41,14 +41,14 @@ $cards = [
     ],
     [
         'icon' => 'fa-link',
-        'label' => 'Ligadas aos posts',
-        'hint' => 'Uploads que ja aparecem em capas, thumbs ou conteudo.',
+        'label' => 'Ligadas ao portal',
+        'hint' => 'Uploads usados em posts, links, configuracoes ou perfis.',
         'value' => $fmtNumber((int) ($summary['post_media'] ?? 0)),
         'color' => '#00d4ff',
         'iconBg' => 'linear-gradient(135deg, rgba(34,211,238,.92), rgba(37,99,235,.92))',
         'support' => [
             ['label' => 'Uploads gerenciados', 'value' => $fmtNumber((int) ($summary['managed_uploads'] ?? 0))],
-            ['label' => 'Cobertura nos posts', 'value' => $fmtPercent((float) ($summary['coverage_posts'] ?? 0.0)), 'accent' => '#00d4ff'],
+            ['label' => 'Cobertura nos uploads', 'value' => $fmtPercent((float) ($summary['coverage_uploads'] ?? ($summary['coverage_posts'] ?? 0.0))), 'accent' => '#00d4ff'],
         ],
     ],
     [

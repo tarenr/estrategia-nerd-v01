@@ -19,7 +19,7 @@ $orphanRemoved = max(0, (int) ($_GET['orphan_removed'] ?? 0));
   <div class="admin-page-header">
     <div class="admin-page-heading">
       <h1 class="admin-page-title">Midia</h1>
-      <div class="admin-page-subtitle">Gerencie uploads do portal, copie URLs e mantenha a base visual pronta para integrar com posts.</div>
+      <div class="admin-page-subtitle">Gerencie uploads do portal, copie URLs e acompanhe onde cada arquivo esta sendo usado.</div>
     </div>
 
     <div class="admin-page-actions">

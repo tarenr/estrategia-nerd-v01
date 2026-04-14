@@ -73,7 +73,14 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
           $postSlug = trim((string) ($item['post_slug'] ?? ''));
           $postTitle = trim((string) ($item['post_title'] ?? ''));
           $postFilterUrl = trim((string) ($item['post_filter_url'] ?? ''));
-          $linkedPostsCount = max(0, (int) ($item['linked_posts_count'] ?? 0));
+          $linkedEntities = array_values(array_filter((array) ($item['linked_entities'] ?? []), static fn (mixed $entry): bool => is_array($entry)));
+          $linkedEntitiesCount = max(0, (int) ($item['linked_entities_count'] ?? count($linkedEntities)));
+          $linkedEntitiesLabel = trim((string) ($item['linked_entities_label'] ?? ''));
+          $primaryEntity = $linkedEntities[0] ?? null;
+          $primaryEntityTitle = trim((string) (($primaryEntity['title'] ?? '') !== '' ? ($primaryEntity['title'] ?? '') : ($primaryEntity['slug'] ?? '')));
+          $primaryEntityContext = trim((string) ($primaryEntity['context'] ?? ''));
+          $primaryEntityTypeLabel = trim((string) ($primaryEntity['type_label'] ?? ''));
+          $primaryEntityUrl = trim((string) ($primaryEntity['admin_url'] ?? ''));
           $usageState = (string) ($item['usage_state'] ?? 'available');
           $statusLabel = (string) ($item['status_label'] ?? 'Disponivel');
           $statusClass = match ($usageState) {
@@ -130,11 +137,28 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
                 <div class="media-library-linkage-value<?= $statusClass ?>"><?= htmlspecialchars($statusLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
               </div>
               <div class="media-library-linkage-block">
-                <div class="media-library-linkage-label">Post</div>
-                <?php if ($postFilterUrl !== ''): ?>
-                  <a class="media-library-linkage-link" href="<?= htmlspecialchars($postFilterUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($postTitle !== '' ? $postTitle : $postSlug, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
-                  <?php if ($linkedPostsCount > 1): ?>
-                    <div class="media-library-linkage-note">+<?= $linkedPostsCount - 1 ?> outro(s) post(s)</div>
+                <div class="media-library-linkage-label">Vinculos</div>
+                <?php if ($linkedEntitiesCount > 0): ?>
+                  <?php if ($primaryEntityUrl !== ''): ?>
+                    <a class="media-library-linkage-link" href="<?= htmlspecialchars($primaryEntityUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($primaryEntityTitle !== '' ? $primaryEntityTitle : 'Item vinculado', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+                  <?php elseif ($postFilterUrl !== ''): ?>
+                    <a class="media-library-linkage-link" href="<?= htmlspecialchars($postFilterUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($postTitle !== '' ? $postTitle : $postSlug, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+                  <?php else: ?>
+                    <div class="media-library-linkage-value"><?= htmlspecialchars($primaryEntityTitle !== '' ? $primaryEntityTitle : 'Item vinculado', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <?php endif; ?>
+
+                  <?php if ($primaryEntityTypeLabel !== '' || $primaryEntityContext !== ''): ?>
+                    <div class="media-library-linkage-note">
+                      <?= htmlspecialchars(trim($primaryEntityTypeLabel . ($primaryEntityContext !== '' ? ' - ' . $primaryEntityContext : '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                    </div>
+                  <?php endif; ?>
+
+                  <?php if ($linkedEntitiesCount > 1): ?>
+                    <div class="media-library-linkage-note">+<?= $linkedEntitiesCount - 1 ?> outro(s) vinculo(s)</div>
+                  <?php endif; ?>
+
+                  <?php if ($linkedEntitiesLabel !== ''): ?>
+                    <div class="media-library-linkage-note"><?= htmlspecialchars($linkedEntitiesLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                   <?php endif; ?>
                 <?php else: ?>
                   <div class="media-library-linkage-value is-muted">Sem vinculo</div>

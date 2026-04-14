@@ -28,7 +28,7 @@ final class MidiaService
         $perPage = $this->clampInt((int) ($query['per_page'] ?? 12), 8, 48);
         [$sort, $dir] = $this->normalizeSortDir((string) ($query['sort'] ?? 'data'), (string) ($query['dir'] ?? 'desc'));
 
-        $usage = $this->collectPostMediaUsage();
+        $usage = $this->collectMediaUsage();
         $allItems = $this->scanMediaItems($usage);
         $filteredItems = $this->applyFilters($allItems, $filters);
         $sortedItems = $this->sortItems($filteredItems, $sort, $dir);
@@ -47,7 +47,7 @@ final class MidiaService
 
     public function recentImages(int $limit = 12): array
     {
-        $items = array_values(array_filter($this->scanMediaItems($this->collectPostMediaUsage()), static fn (array $item): bool => ($item['is_image'] ?? false) === true));
+        $items = array_values(array_filter($this->scanMediaItems($this->collectMediaUsage()), static fn (array $item): bool => ($item['is_image'] ?? false) === true));
         $items = $this->sortItems($items, 'data', 'desc');
         return array_slice($items, 0, max(1, $limit));
     }
@@ -164,7 +164,7 @@ final class MidiaService
     {
         $filters = $this->normalizeFilters($query);
         $filters['estado'] = 'orfa';
-        $items = $this->applyFilters($this->scanMediaItems($this->collectPostMediaUsage()), $filters);
+        $items = $this->applyFilters($this->scanMediaItems($this->collectMediaUsage()), $filters);
         $removed = 0;
 
         foreach ($items as $item) {
@@ -212,6 +212,7 @@ final class MidiaService
 
                 $isManagedUpload = str_starts_with($relativePath, 'uploads/');
                 $usageState = $this->resolveUsageState($relativePath, $usage, $isManagedUpload, $relativeRoot);
+                $linkedEntities = $this->linkedEntitiesForPath($relativePath, $usage);
                 $linkedPosts = $this->linkedPostsForPath($relativePath, $usage);
                 $primaryPost = $linkedPosts[0] ?? null;
                 $primaryPostSlug = trim((string) ($primaryPost['slug'] ?? ''));
@@ -219,6 +220,19 @@ final class MidiaService
                 $fallbackSlug = $this->extractPostSlug($relativePath);
                 $postSlug = $primaryPostSlug !== '' ? $primaryPostSlug : $fallbackSlug;
                 $postFilterUrl = $postSlug !== '' ? url('/admin/posts?busca=' . rawurlencode($postSlug)) : '';
+                $linkedEntitiesByType = $this->groupReferencesByType($linkedEntities);
+                $linkedEntitiesLabel = $this->buildLinkedEntitiesLabel($linkedEntitiesByType);
+                $linkedEntitiesSearchText = mb_strtolower(implode(' ', array_map(
+                    static function (array $ref): string {
+                        return implode(' ', [
+                            (string) ($ref['type_label'] ?? ''),
+                            (string) ($ref['title'] ?? ''),
+                            (string) ($ref['slug'] ?? ''),
+                            (string) ($ref['context'] ?? ''),
+                        ]);
+                    },
+                    $linkedEntities
+                )));
 
                 $items[] = [
                     'name' => $fileInfo->getFilename(),
@@ -237,6 +251,11 @@ final class MidiaService
                     'is_orphan' => $usageState === 'orphan',
                     'linked_posts' => $linkedPosts,
                     'linked_posts_count' => count($linkedPosts),
+                    'linked_entities' => $linkedEntities,
+                    'linked_entities_count' => count($linkedEntities),
+                    'linked_entities_by_type' => $linkedEntitiesByType,
+                    'linked_entities_label' => $linkedEntitiesLabel,
+                    'linked_entities_search_text' => $linkedEntitiesSearchText,
                     'post_slug' => $postSlug,
                     'post_title' => $primaryPostTitle,
                     'post_filter_url' => $postFilterUrl,
@@ -264,7 +283,13 @@ final class MidiaService
 
         return array_values(array_filter($items, static function (array $item) use ($busca, $tipo, $estado): bool {
             if ($busca !== '') {
-                $haystack = mb_strtolower(implode(' ', [(string) ($item['name'] ?? ''), (string) ($item['directory'] ?? ''), (string) ($item['mime'] ?? ''), (string) ($item['post_slug'] ?? '')]));
+                $haystack = mb_strtolower(implode(' ', [
+                    (string) ($item['name'] ?? ''),
+                    (string) ($item['directory'] ?? ''),
+                    (string) ($item['mime'] ?? ''),
+                    (string) ($item['post_slug'] ?? ''),
+                    (string) ($item['linked_entities_search_text'] ?? ''),
+                ]));
                 if (!str_contains($haystack, $busca)) {
                     return false;
                 }
@@ -339,7 +364,7 @@ final class MidiaService
         $size = 0;
         $institutional = 0;
         $managedUploads = 0;
-        $postMedia = 0;
+        $inUseMedia = 0;
 
         foreach ($items as $item) {
             $directory = (string) ($item['directory'] ?? 'uploads');
@@ -359,14 +384,14 @@ final class MidiaService
             }
 
             if ((string) ($item['usage_state'] ?? '') === 'in_use') {
-                $postMedia++;
+                $inUseMedia++;
             }
         }
 
         $total = count($items);
         $others = max(0, $total - $images);
         $orphans = count(array_filter($items, static fn (array $item): bool => ($item['is_orphan'] ?? false) === true));
-        $coveragePosts = $managedUploads > 0 ? ($postMedia / $managedUploads) * 100 : 0.0;
+        $coveragePosts = $managedUploads > 0 ? ($inUseMedia / $managedUploads) * 100 : 0.0;
         $orphanRate = $managedUploads > 0 ? ($orphans / $managedUploads) * 100 : 0.0;
         $averageSize = $total > 0 ? (int) round($size / $total) : 0;
 
@@ -377,9 +402,11 @@ final class MidiaService
             'directories' => count($directories),
             'institutional' => $institutional,
             'managed_uploads' => $managedUploads,
-            'post_media' => $postMedia,
+            'post_media' => $inUseMedia,
+            'in_use_media' => $inUseMedia,
             'orphans' => $orphans,
             'coverage_posts' => $coveragePosts,
+            'coverage_uploads' => $coveragePosts,
             'orphan_rate' => $orphanRate,
             'size_bytes' => $size,
             'size_label' => $this->formatBytes($size),
@@ -497,48 +524,127 @@ final class MidiaService
         ];
     }
 
-    private function collectPostMediaUsage(): array
+    private function collectMediaUsage(): array
     {
         if (!$this->pdo instanceof \PDO) {
-            return ['protected' => [], 'content' => []];
+            return ['protected' => [], 'content' => [], 'references' => []];
         }
 
-        $protected = [];
-        $content = [];
+        $usage = ['protected' => [], 'content' => [], 'references' => []];
 
-        $stmt = $this->pdo->query('SELECT id, titulo, slug, imagem_capa, imagem_thumb, conteudo FROM posts');
-        if (!$stmt) {
-            return ['protected' => [], 'content' => []];
-        }
+        foreach ($this->safeFetchAll('SELECT id, titulo, slug, imagem_capa, imagem_thumb, conteudo FROM posts') as $row) {
+            $postId = (int) ($row['id'] ?? 0);
+            $postSlug = trim((string) ($row['slug'] ?? ''));
+            $postTitle = $this->cleanPostTitle((string) ($row['titulo'] ?? ''));
+            $postAdminUrl = $postId > 0 ? url('/admin/editar-post?id=' . $postId) : '';
 
-        $references = [];
-
-        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [] as $row) {
-            $postRef = [
-                'id' => (int) ($row['id'] ?? 0),
-                'slug' => trim((string) ($row['slug'] ?? '')),
-                'title' => $this->cleanPostTitle((string) ($row['titulo'] ?? '')),
-            ];
-
-            foreach (['imagem_capa', 'imagem_thumb'] as $field) {
-                $path = ltrim(trim((string) ($row[$field] ?? '')), '/');
-                if ($path !== '') {
-                    $protected[$path] = true;
-                    $this->registerMediaReference($references, $path, $postRef);
+            foreach (['imagem_capa' => 'Capa', 'imagem_thumb' => 'Thumb'] as $field => $contextLabel) {
+                foreach ($this->extractTrackedPaths((string) ($row[$field] ?? '')) as $path) {
+                    $usage['protected'][$path] = true;
+                    $this->registerMediaReference($usage['references'], $path, [
+                        'type' => 'post',
+                        'type_label' => 'Post',
+                        'id' => $postId,
+                        'slug' => $postSlug,
+                        'title' => $postTitle,
+                        'context' => $contextLabel,
+                        'admin_url' => $postAdminUrl,
+                        'dedupe_key' => 'post|' . $postId . '|' . $field,
+                    ]);
                 }
             }
 
-            preg_match_all('~uploads/[^"\')\s<>]+~i', (string) ($row['conteudo'] ?? ''), $matches);
-            foreach (($matches[0] ?? []) as $path) {
-                $clean = ltrim((string) $path, '/');
-                if ($clean !== '') {
-                    $content[$clean] = true;
-                    $this->registerMediaReference($references, $clean, $postRef);
-                }
+            foreach ($this->extractTrackedPaths((string) ($row['conteudo'] ?? '')) as $path) {
+                $usage['content'][$path] = true;
+                $this->registerMediaReference($usage['references'], $path, [
+                    'type' => 'post',
+                    'type_label' => 'Post',
+                    'id' => $postId,
+                    'slug' => $postSlug,
+                    'title' => $postTitle,
+                    'context' => 'Conteudo',
+                    'admin_url' => $postAdminUrl,
+                    'dedupe_key' => 'post|' . $postId . '|conteudo|' . $path,
+                ]);
             }
         }
 
-        return ['protected' => $protected, 'content' => $content, 'references' => $references];
+        foreach ($this->safeFetchAll('SELECT id, titulo, slug, imagem FROM links') as $row) {
+            $linkId = (int) ($row['id'] ?? 0);
+            $linkSlug = trim((string) ($row['slug'] ?? ''));
+            $linkTitle = trim((string) ($row['titulo'] ?? ''));
+            $linkAdminUrl = $linkId > 0 ? url('/admin/editar-link?id=' . $linkId) : '';
+
+            foreach ($this->extractTrackedPaths((string) ($row['imagem'] ?? '')) as $path) {
+                $usage['protected'][$path] = true;
+                $this->registerMediaReference($usage['references'], $path, [
+                    'type' => 'link',
+                    'type_label' => 'Link',
+                    'id' => $linkId,
+                    'slug' => $linkSlug,
+                    'title' => $linkTitle,
+                    'context' => 'Imagem',
+                    'admin_url' => $linkAdminUrl,
+                    'dedupe_key' => 'link|' . $linkId . '|imagem',
+                ]);
+            }
+        }
+
+        $configImageKeys = ['logo_url', 'brand_symbol_url', 'favicon_url', 'bio_avatar_url', 'sobre_imagem_url'];
+        foreach ($this->safeFetchAll('SELECT chave, valor FROM configuracoes') as $row) {
+            $key = trim((string) ($row['chave'] ?? ''));
+            if ($key === '') {
+                continue;
+            }
+
+            $isImageKey = in_array($key, $configImageKeys, true);
+            foreach ($this->extractTrackedPaths((string) ($row['valor'] ?? '')) as $path) {
+                $usage['protected'][$path] = true;
+                if (!$isImageKey) {
+                    $usage['content'][$path] = true;
+                }
+
+                $this->registerMediaReference($usage['references'], $path, [
+                    'type' => 'config',
+                    'type_label' => 'Configuracao',
+                    'id' => 0,
+                    'slug' => $key,
+                    'title' => $this->cleanConfigKeyLabel($key),
+                    'context' => $isImageKey ? 'Imagem' : 'Referencia',
+                    'admin_url' => url('/admin/configuracoes'),
+                    'dedupe_key' => 'config|' . $key . '|' . $path,
+                ]);
+            }
+        }
+
+        foreach ($this->safeFetchAll('SELECT id, nome, usuario, avatar_tipo, avatar_imagem FROM usuarios') as $row) {
+            if (trim((string) ($row['avatar_tipo'] ?? '')) !== 'foto') {
+                continue;
+            }
+
+            $userId = (int) ($row['id'] ?? 0);
+            $userName = trim((string) ($row['nome'] ?? ''));
+            $username = trim((string) ($row['usuario'] ?? ''));
+            $userAdminUrl = $userId > 0 ? url('/admin/editar-usuario?id=' . $userId) : '';
+
+            foreach ($this->extractTrackedPaths((string) ($row['avatar_imagem'] ?? '')) as $path) {
+                $usage['protected'][$path] = true;
+                $this->registerMediaReference($usage['references'], $path, [
+                    'type' => 'user',
+                    'type_label' => 'Usuario',
+                    'id' => $userId,
+                    'slug' => $username,
+                    'title' => $userName !== '' ? $userName : $username,
+                    'context' => 'Avatar',
+                    'admin_url' => $userAdminUrl,
+                    'dedupe_key' => 'user|' . $userId . '|avatar',
+                ]);
+            }
+        }
+
+        $this->collectTemplateAssetReferences($usage);
+
+        return $usage;
     }
 
     private function isMediaInUse(string $relativePath, array $usage): bool
@@ -553,13 +659,21 @@ final class MidiaService
             return true;
         }
 
+        $references = $usage['references'][$relativePath] ?? [];
+        if (is_array($references) && $references !== []) {
+            return true;
+        }
+
         return false;
     }
 
     private function isOrphanMediaItem(string $relativePath, array $usage): bool
     {
         $relativePath = ltrim($relativePath, '/');
-        if (!str_starts_with($relativePath, 'uploads/posts/')) {
+        $isManagedOrphanCandidate = str_starts_with($relativePath, 'uploads/posts/')
+            || str_starts_with($relativePath, 'uploads/links/');
+
+        if (!$isManagedOrphanCandidate) {
             return false;
         }
 
@@ -595,40 +709,293 @@ final class MidiaService
 
     private function linkedPostsForPath(string $relativePath, array $usage): array
     {
+        $items = [];
+        foreach ($this->linkedEntitiesForPath($relativePath, $usage) as $reference) {
+            if ((string) ($reference['type'] ?? '') !== 'post') {
+                continue;
+            }
+
+            $postId = (int) ($reference['id'] ?? 0);
+            if ($postId <= 0) {
+                continue;
+            }
+
+            $items[$postId] = [
+                'id' => $postId,
+                'slug' => trim((string) ($reference['slug'] ?? '')),
+                'title' => trim((string) ($reference['title'] ?? '')),
+            ];
+        }
+
+        return array_values($items);
+    }
+
+    private function linkedEntitiesForPath(string $relativePath, array $usage): array
+    {
         $relativePath = ltrim($relativePath, '/');
         $references = $usage['references'] ?? [];
         $items = $references[$relativePath] ?? [];
-
-        if (!is_array($items)) {
+        if (!is_array($items) || $items === []) {
             return [];
         }
 
-        return array_values(array_filter($items, static fn (mixed $item): bool => is_array($item)));
+        return array_values(array_map(static function (array $item): array {
+            unset($item['_key']);
+            return $item;
+        }, array_values(array_filter($items, static fn (mixed $item): bool => is_array($item)))));
     }
 
-    private function registerMediaReference(array &$references, string $path, array $postRef): void
+    private function registerMediaReference(array &$references, string $path, array $reference): void
     {
         $path = ltrim(trim($path), '/');
-        $postId = (int) ($postRef['id'] ?? 0);
-        if ($path === '' || $postId <= 0) {
+        $type = trim((string) ($reference['type'] ?? ''));
+        if ($path === '' || $type === '') {
             return;
         }
+
+        $normalized = [
+            'type' => $type,
+            'type_label' => trim((string) ($reference['type_label'] ?? $this->referenceTypeLabel($type))),
+            'id' => (int) ($reference['id'] ?? 0),
+            'slug' => trim((string) ($reference['slug'] ?? '')),
+            'title' => trim((string) ($reference['title'] ?? '')),
+            'context' => trim((string) ($reference['context'] ?? '')),
+            'admin_url' => trim((string) ($reference['admin_url'] ?? '')),
+        ];
+
+        if ($normalized['title'] === '' && $normalized['slug'] !== '') {
+            $normalized['title'] = $normalized['slug'];
+        }
+
+        $dedupeKey = trim((string) ($reference['dedupe_key'] ?? ''));
+        if ($dedupeKey === '') {
+            $dedupeKey = implode('|', [
+                $normalized['type'],
+                (string) $normalized['id'],
+                $normalized['slug'],
+                $normalized['title'],
+                $normalized['context'],
+            ]);
+        }
+        $normalized['_key'] = $dedupeKey;
 
         if (!isset($references[$path]) || !is_array($references[$path])) {
             $references[$path] = [];
         }
 
         foreach ($references[$path] as $existing) {
-            if ((int) ($existing['id'] ?? 0) === $postId) {
+            if ((string) ($existing['_key'] ?? '') === $dedupeKey) {
                 return;
             }
         }
 
-        $references[$path][] = [
-            'id' => $postId,
-            'slug' => trim((string) ($postRef['slug'] ?? '')),
-            'title' => trim((string) ($postRef['title'] ?? '')),
-        ];
+        $references[$path][] = $normalized;
+    }
+
+    private function groupReferencesByType(array $references): array
+    {
+        $grouped = [];
+        foreach ($references as $reference) {
+            $type = trim((string) ($reference['type'] ?? ''));
+            if ($type === '') {
+                continue;
+            }
+
+            if (!isset($grouped[$type])) {
+                $grouped[$type] = [
+                    'type' => $type,
+                    'label' => trim((string) ($reference['type_label'] ?? $this->referenceTypeLabel($type))),
+                    'count' => 0,
+                ];
+            }
+            $grouped[$type]['count']++;
+        }
+
+        $result = array_values($grouped);
+        usort($result, static function (array $left, array $right): int {
+            $countDiff = ((int) ($right['count'] ?? 0)) <=> ((int) ($left['count'] ?? 0));
+            if ($countDiff !== 0) {
+                return $countDiff;
+            }
+            return strcasecmp((string) ($left['label'] ?? ''), (string) ($right['label'] ?? ''));
+        });
+
+        return $result;
+    }
+
+    private function buildLinkedEntitiesLabel(array $grouped): string
+    {
+        if ($grouped === []) {
+            return '';
+        }
+
+        $parts = [];
+        foreach ($grouped as $item) {
+            $label = trim((string) ($item['label'] ?? ''));
+            $count = max(0, (int) ($item['count'] ?? 0));
+            if ($label === '' || $count <= 0) {
+                continue;
+            }
+            $parts[] = $label . ': ' . $count;
+        }
+
+        return implode(' | ', $parts);
+    }
+
+    private function referenceTypeLabel(string $type): string
+    {
+        return match ($type) {
+            'post' => 'Post',
+            'link' => 'Link',
+            'config' => 'Configuracao',
+            'user' => 'Usuario',
+            'template' => 'Template',
+            default => 'Outro',
+        };
+    }
+
+    private function safeFetchAll(string $sql): array
+    {
+        if (!$this->pdo instanceof \PDO) {
+            return [];
+        }
+
+        try {
+            $stmt = $this->pdo->query($sql);
+            if (!$stmt) {
+                return [];
+            }
+
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    private function extractTrackedPaths(string $value): array
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return [];
+        }
+
+        $candidates = [$value];
+        preg_match_all('~(?:uploads|assets/brand)/[^"\')\s<>]+~i', $value, $matches);
+        foreach (($matches[0] ?? []) as $match) {
+            $candidates[] = (string) $match;
+        }
+
+        $paths = [];
+        foreach ($candidates as $candidate) {
+            $normalized = $this->normalizeTrackedPath((string) $candidate);
+            if ($normalized === null) {
+                continue;
+            }
+            $paths[$normalized] = true;
+        }
+
+        return array_keys($paths);
+    }
+
+    private function normalizeTrackedPath(string $path): ?string
+    {
+        $relativePath = trim(urldecode($path));
+        if ($relativePath === '') {
+            return null;
+        }
+
+        if (preg_match('~^https?://~i', $relativePath) === 1) {
+            $parsedPath = parse_url($relativePath, PHP_URL_PATH);
+            $relativePath = is_string($parsedPath) ? $parsedPath : '';
+        }
+
+        $relativePath = str_replace('\\', '/', $relativePath);
+        $uploadsPos = strpos($relativePath, '/uploads/');
+        if ($uploadsPos !== false) {
+            $relativePath = substr($relativePath, $uploadsPos + 1);
+        }
+
+        $brandPos = strpos($relativePath, '/assets/brand/');
+        if ($brandPos !== false) {
+            $relativePath = substr($relativePath, $brandPos + 1);
+        }
+
+        $relativePath = ltrim($relativePath, '/');
+        if ($relativePath === '') {
+            return null;
+        }
+
+        if (!str_starts_with($relativePath, 'uploads/') && !str_starts_with($relativePath, 'assets/brand/')) {
+            return null;
+        }
+
+        return $relativePath;
+    }
+
+    private function collectTemplateAssetReferences(array &$usage): void
+    {
+        $viewsRoot = base_path('app/Views');
+        if (!is_dir($viewsRoot)) {
+            return;
+        }
+
+        $projectRoot = base_path();
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($viewsRoot, \FilesystemIterator::SKIP_DOTS));
+        foreach ($iterator as $fileInfo) {
+            if (!$fileInfo instanceof \SplFileInfo || !$fileInfo->isFile()) {
+                continue;
+            }
+
+            $extension = strtolower($fileInfo->getExtension());
+            if (!in_array($extension, ['php', 'html'], true)) {
+                continue;
+            }
+
+            $content = @file_get_contents($fileInfo->getPathname());
+            if (!is_string($content) || $content === '') {
+                continue;
+            }
+
+            preg_match_all("~(?:^|[\\s\"'\\(=])/?(assets/brand/[a-z0-9._/-]+)~i", $content, $matches);
+            $assetPaths = $matches[1] ?? [];
+            if (!is_array($assetPaths) || $assetPaths === []) {
+                continue;
+            }
+
+            $absoluteFile = $fileInfo->getPathname();
+            $relativeFile = str_replace('\\', '/', substr($absoluteFile, strlen($projectRoot) + 1));
+            foreach ($assetPaths as $assetPath) {
+                $normalized = $this->normalizeTrackedPath((string) $assetPath);
+                if ($normalized === null) {
+                    continue;
+                }
+
+                $usage['protected'][$normalized] = true;
+                $this->registerMediaReference($usage['references'], $normalized, [
+                    'type' => 'template',
+                    'type_label' => 'Template',
+                    'id' => 0,
+                    'slug' => $relativeFile,
+                    'title' => $relativeFile,
+                    'context' => 'Referencia',
+                    'admin_url' => '',
+                    'dedupe_key' => 'template|' . $relativeFile . '|' . $normalized,
+                ]);
+            }
+        }
+    }
+
+    private function cleanConfigKeyLabel(string $key): string
+    {
+        $key = trim($key);
+        if ($key === '') {
+            return 'Configuracao';
+        }
+
+        $label = str_replace('_', ' ', mb_strtolower($key));
+        $label = preg_replace('/\s+/', ' ', trim($label)) ?? $label;
+        return mb_convert_case($label, MB_CASE_TITLE, 'UTF-8');
     }
 
     private function cleanPostTitle(string $title): string
