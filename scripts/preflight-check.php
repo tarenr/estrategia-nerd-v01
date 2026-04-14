@@ -24,6 +24,7 @@ if ($canonicalRaw !== '') {
 }
 
 $warnings = [];
+$notes = [];
 $errors = [];
 
 echo "== Preflight Estrategia Nerd ==\n";
@@ -42,9 +43,17 @@ $lockCandidates = [
     $projectRoot . '/storage/code-sync/.content-sync-running.lock.json',
 ];
 foreach ($lockCandidates as $lockFile) {
-    if (is_file($lockFile)) {
-        $warnings[] = 'Existe lock de rotina pendente: ' . $lockFile;
+    if (!is_file($lockFile)) {
+        continue;
     }
+
+    $state = inspectLockFile($lockFile);
+    if ($state['status'] === 'active') {
+        $warnings[] = 'Existe lock de rotina ativo: ' . $lockFile;
+        continue;
+    }
+
+    $notes[] = 'Lock antigo detectado (nao ativo): ' . $lockFile . '.';
 }
 
 $gitBinary = 'git';
@@ -89,6 +98,13 @@ if ($warnings !== []) {
     echo "\nAvisos:\n";
     foreach ($warnings as $warning) {
         echo ' - ' . $warning . "\n";
+    }
+}
+
+if ($notes !== []) {
+    echo "\nNotas:\n";
+    foreach ($notes as $note) {
+        echo ' - ' . $note . "\n";
     }
 }
 
@@ -221,4 +237,48 @@ function iterateTextFiles(array $roots, array $extensions): iterable
             yield $file->getPathname();
         }
     }
+}
+
+/**
+ * @return array{status: string}
+ */
+function inspectLockFile(string $lockPath): array
+{
+    $raw = (string) @file_get_contents($lockPath);
+    $payload = json_decode($raw, true);
+    if (!is_array($payload)) {
+        return ['status' => 'stale'];
+    }
+
+    $pid = (int) ($payload['pid'] ?? 0);
+    if ($pid <= 0) {
+        return ['status' => 'stale'];
+    }
+
+    if (isWindowsPidRunning($pid)) {
+        return ['status' => 'active'];
+    }
+
+    return ['status' => 'stale'];
+}
+
+function isWindowsPidRunning(int $pid): bool
+{
+    if ($pid <= 0) {
+        return false;
+    }
+
+    $output = [];
+    $exitCode = 0;
+    @exec('tasklist /FI "PID eq ' . $pid . '" /NH 2>NUL', $output, $exitCode);
+    if ($exitCode !== 0 || $output === []) {
+        return false;
+    }
+
+    $joined = strtolower(trim(implode("\n", $output)));
+    if ($joined === '' || str_contains($joined, 'no tasks are running')) {
+        return false;
+    }
+
+    return str_contains($joined, (string) $pid);
 }
