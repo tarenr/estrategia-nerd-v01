@@ -403,10 +403,7 @@ final class LinksService
         }
 
         if ($oldPath !== '' && $oldPath !== $newPath) {
-            $resolved = $this->resolveUploadFileForDelete($oldPath);
-            if ($resolved !== null && is_file($resolved)) {
-                @unlink($resolved);
-            }
+            $this->midia->delete($oldPath);
         }
     }
 
@@ -667,45 +664,6 @@ final class LinksService
         }
 
         return filter_var($value, FILTER_VALIDATE_URL) !== false;
-    }
-
-    private function resolveUploadFileForDelete(string $path): ?string
-    {
-        $raw = trim($path);
-        if ($raw === '') {
-            return null;
-        }
-
-        $parsed = parse_url($raw);
-        if (is_array($parsed) && isset($parsed['path']) && is_string($parsed['path'])) {
-            $raw = $parsed['path'];
-        }
-
-        $raw = ltrim($raw, '/\\');
-        if ($raw === '' || !str_starts_with($raw, 'uploads/')) {
-            return null;
-        }
-
-        $publicRoot = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public';
-        $uploadsDir = $publicRoot . DIRECTORY_SEPARATOR . 'uploads';
-        $target = $publicRoot . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $raw);
-
-        $uploadsReal = realpath($uploadsDir);
-        if ($uploadsReal === false) {
-            return null;
-        }
-
-        $targetReal = realpath($target);
-        if ($targetReal !== false) {
-            return str_starts_with($targetReal, $uploadsReal) && is_file($targetReal) ? $targetReal : null;
-        }
-
-        $candidateDir = realpath(dirname($target));
-        if ($candidateDir === false || !str_starts_with($candidateDir, $uploadsReal)) {
-            return null;
-        }
-
-        return is_file($target) ? $target : null;
     }
 
     private function checkLink(array $link): array

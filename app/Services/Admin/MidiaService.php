@@ -427,13 +427,8 @@ final class MidiaService
 
     private function resolveManagedFile(string $path): ?array
     {
-        $relativePath = trim(urldecode($path));
-        if ($relativePath === '') {
-            return null;
-        }
-
-        $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
-        if (!str_starts_with($relativePath, 'uploads/')) {
+        $relativePath = $this->normalizeManagedPath($path);
+        if ($relativePath === null) {
             return null;
         }
 
@@ -465,6 +460,32 @@ final class MidiaService
             'dimensions_label' => ($width && $height) ? ($width . ' x ' . $height) : '-',
             'modified_label' => date('d/m/Y H:i', (int) $fileInfo->getMTime()),
         ];
+    }
+
+    private function normalizeManagedPath(string $path): ?string
+    {
+        $relativePath = trim(urldecode($path));
+        if ($relativePath === '') {
+            return null;
+        }
+
+        if (preg_match('~^https?://~i', $relativePath) === 1) {
+            $parsedPath = parse_url($relativePath, PHP_URL_PATH);
+            $relativePath = is_string($parsedPath) ? $parsedPath : '';
+        }
+
+        $relativePath = str_replace('\\', '/', $relativePath);
+        $uploadsPos = strpos($relativePath, '/uploads/');
+        if ($uploadsPos !== false) {
+            $relativePath = substr($relativePath, $uploadsPos + 1);
+        }
+
+        $relativePath = ltrim($relativePath, '/');
+        if ($relativePath === '' || !str_starts_with($relativePath, 'uploads/')) {
+            return null;
+        }
+
+        return $relativePath;
     }
 
     private function normalizeFilters(array $query): array
@@ -768,7 +789,27 @@ final class MidiaService
 
     private function publicRoot(): string
     {
-        return base_path('public');
+        $configured = trim((string) env('PUBLIC_ROOT', ''));
+        if ($configured !== '') {
+            $realConfigured = realpath($configured);
+            if (is_string($realConfigured) && is_dir($realConfigured)) {
+                return $realConfigured;
+            }
+        }
+
+        $projectRoot = base_path();
+        $fallbackPublic = base_path('public');
+
+        if (basename(str_replace('\\', '/', $projectRoot)) === '_app_core') {
+            $parentRoot = dirname($projectRoot);
+            $parentUploads = $parentRoot . DIRECTORY_SEPARATOR . 'uploads';
+            $parentAssets = $parentRoot . DIRECTORY_SEPARATOR . 'assets';
+            if (is_dir($parentUploads) || is_dir($parentAssets)) {
+                return $parentRoot;
+            }
+        }
+
+        return $fallbackPublic;
     }
 
     private function uploadsRoot(): string
