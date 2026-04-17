@@ -1,0 +1,282 @@
+PROJETO: ESTRATEGIA NERD
+TIPO: PORTAL EDITORIAL + CONVERSAO
+RESPONSAVEL: Taren
+
+OBJETIVO:
+Garantir estabilidade do sistema, evitar regressao, impedir deploy inseguro, eliminar retrabalho e transformar as regras em disciplina operacional real.
+
+============================================================
+1. PRINCIPIO FUNDAMENTAL
+============================================================
+
+A prioridade maxima e:
+
+1. Nao quebrar o que ja funciona
+2. Nao derrubar o portal
+3. Evitar regressao
+4. Seguir o fluxo operacional
+5. Reduzir retrabalho
+
+Entre rapidez e seguranca, a seguranca sempre vence.
+
+============================================================
+2. ARQUITETURA OBRIGATORIA
+============================================================
+
+Padrao MVC leve:
+
+Controller:
+- Entrada HTTP
+- Validacao basica
+- NUNCA acessa banco diretamente
+
+Service:
+- Regra de negocio
+- Orquestracao
+- Montagem de ViewModel
+
+Repository:
+- Acesso a dados
+- Queries SQL
+- NUNCA renderiza HTML
+
+View:
+- Renderizacao
+- NUNCA contem regra de negocio complexa
+
+REGRAS:
+- Nao misturar camadas
+- Nao quebrar padrao existente
+- Nao criar atalhos arquiteturais
+- ViewModel deve nascer em Service e nao carregar regra pesada
+
+============================================================
+3. REGRA CRITICA DE DEPLOY (BLOQUEIO ABSOLUTO)
+============================================================
+
+E TERMINANTEMENTE PROIBIDO:
+
+- Gerar pacote de producao a partir do ambiente local
+- Publicar diretamente do ambiente local
+- Misturar arquivos locais com stage
+- Assumir que local e stage sao equivalentes
+
+REGRA OBRIGATORIA:
+
+O unico ambiente autorizado para gerar pacote e:
+
+>>> estrategia-nerd-stage <<<
+
+SE NAO FOR STAGE, NAO GERA PACOTE.
+
+Se nao puder confirmar a origem como stage:
+- interromper operacao
+- nao gerar pacote
+- considerar operacao insegura
+
+============================================================
+4. FLUXO OPERACIONAL OFICIAL (OBRIGATORIO)
+============================================================
+
+SEMPRE seguir exatamente esta ordem:
+
+1. Alteracao no ambiente local
+2. Teste local
+3. Aplicar alteracao na estrategia-nerd-stage
+4. Teste na stage
+5. Registrar alteracao (commit/log)
+6. Backup obrigatorio
+7. Gerar pacote (APENAS da stage)
+8. Publicar em producao
+9. Teste em producao
+
+SE QUALQUER ETAPA FOR PULADA:
+O PROCESSO ESTA INCORRETO.
+
+============================================================
+5. CONFIRMACAO OBRIGATORIA ANTES DE PACOTE
+============================================================
+
+Antes de qualquer deploy, deve ser confirmado:
+
+- Origem = estrategia-nerd-stage
+- Ambiente local NAO esta sendo usado
+- Arquivos foram validados
+- Configuracao (.env) esta correta
+- Backup foi realizado
+- Paridade entre stage e pacote foi confirmada
+
+Se qualquer item nao for confirmado:
+>>> BLOQUEAR OPERACAO <<<
+
+============================================================
+6. BACKUP (OBRIGATORIO)
+============================================================
+
+Backup deve acontecer SEMPRE antes de:
+
+- Deploy
+- Restore
+- Mudanca estrutural
+
+Backup inclui:
+- Banco de dados (dump)
+- Uploads
+- Manifesto de integridade
+
+Backup nunca e opcional.
+
+============================================================
+7. TESTE DE REGRESSAO (OBRIGATORIO)
+============================================================
+
+Toda alteracao deve validar:
+
+- /
+- /blog
+- /post/{slug}
+- /admin
+- /central-nerd
+
+Tambem validar:
+- assets
+- uploads
+- textos e acentuacao
+- funcionalidades relacionadas
+- comportamentos previamente corrigidos
+- status HTTP correto nas rotas publicas criticas
+
+Se nao testar, a alteracao nao esta completa.
+
+============================================================
+8. SEGURANCA OBRIGATORIA
+============================================================
+
+- Rotas /local/* e /dev NAO podem ir para producao
+- .env NUNCA pode ser exposto
+- APP_DEBUG=false em producao
+- Uploads devem ser validados
+- CSRF deve ser mantido
+- Docroot deve apontar apenas para /public
+- Arquivos publicos criticos (index.php e .htaccess) exigem validacao separada antes de deploy
+
+============================================================
+9. REGRAS DE CODIGO
+============================================================
+
+- Classes: PascalCase
+- Metodos: camelCase
+- Controllers terminam com Controller
+- Services terminam com Service
+- Repositories terminam com Repository
+
+- Nomes devem ser descritivos
+- Arquivo deve refletir responsabilidade
+- Alteracao deve ser a menor necessaria para resolver o problema
+
+============================================================
+10. COMPORTAMENTO OBRIGATORIO DO CODEX
+============================================================
+
+Voce nao e um executor livre.
+Voce e um executor disciplinado.
+
+Voce deve:
+
+- Respeitar o fluxo
+- Evitar regressao
+- Minimizar impacto
+- Preservar arquitetura
+- Nao inventar atalhos
+- Nao agir sem validar impacto
+- Nao deixar hotfix apenas em producao
+- Reproduzir em stage/local toda correcao feita em producao
+
+============================================================
+11. SAIDA OPERACIONAL OBRIGATORIA
+============================================================
+
+Sempre registrar com clareza:
+
+1. Objetivo da alteracao
+2. Arquivos/camadas afetados
+3. Estrategia de implementacao
+4. Riscos de regressao
+5. Validacao minima necessaria
+6. Observacao operacional (stage, backup, deploy)
+
+Se houver bloqueio operacional:
+- informar explicitamente o bloqueio
+- informar o motivo
+- nao improvisar contorno inseguro
+
+============================================================
+12. CORRECAO DE ERRO
+============================================================
+
+Ao corrigir erro:
+
+- Identificar causa
+- Aplicar menor correcao possivel
+- Nao alterar partes nao relacionadas
+- Avaliar impacto colateral
+- Validar regressao
+
+Erro corrigido NAO significa sistema estavel.
+
+============================================================
+13. PARIDADE E POS-DEPLOY
+============================================================
+
+Toda publicacao deve garantir:
+
+- stage e pacote alinhados
+- producao e pacote alinhados
+- assets publicos no destino correto
+- arquivos publicos criticos no destino correto
+- teste pos-deploy executado
+
+Se houver hotfix direto em producao:
+- registrar o motivo
+- replicar a mesma alteracao em stage/local
+- nao encerrar a tarefa enquanto a paridade nao for restaurada
+
+============================================================
+14. AUTOMACAO OBRIGATORIA SEMPRE QUE POSSIVEL
+============================================================
+
+Regras criticas nao devem depender apenas de memoria humana.
+
+Sempre que possivel, automatizar:
+
+- preflight antes de deploy
+- verificacao de origem do pacote
+- validacao de arquivos publicos criticos
+- verificacao de status HTTP das rotas criticas
+- registro de pos-deploy
+- bloqueio de operacao insegura
+
+Automacao nao substitui analise.
+Mas ausencia de automacao em ponto critico aumenta risco operacional.
+
+============================================================
+15. REGRA FINAL
+============================================================
+
+Se existir qualquer risco de:
+
+- Derrubar o portal
+- Publicar arquivo errado
+- Usar origem incorreta
+- Ignorar fluxo
+- Perder paridade entre stage e producao
+
+>>> A OPERACAO DEVE SER BLOQUEADA <<<
+
+Prioridade absoluta:
+
+1. Nao derrubar producao
+2. Nao gerar pacote inseguro
+3. Seguir fluxo com estrategia-nerd-stage
+4. Manter sistema estavel
+5. Restaurar paridade entre os ambientes

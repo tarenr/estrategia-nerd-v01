@@ -635,6 +635,20 @@ final class PostService
 
                 $primaryLabelKept = true;
             }
+
+            $block->setAttribute('class', $this->appendCssClass((string) $block->getAttribute('class'), 'content-block-image-special'));
+            foreach ($block->getElementsByTagName('figure') as $figure) {
+                if (!$figure instanceof \DOMElement) {
+                    continue;
+                }
+
+                $classes = (string) $figure->getAttribute('class');
+                if ($this->elementHasClass($figure, 'content-media-common') || $this->elementHasClass($figure, 'content-media-special')) {
+                    continue;
+                }
+
+                $figure->setAttribute('class', $this->appendCssClass($classes, 'content-media-special'));
+            }
         }
 
         $root = $document->getElementById('post-content-structured-root');
@@ -679,14 +693,16 @@ final class PostService
                 continue;
             }
 
+            $isSpecial = $this->elementHasClass($figure, 'content-media-special');
+
             $figure->setAttribute('class', $this->appendCssClass((string) $figure->getAttribute('class'), 'article-figure'));
             $figure->setAttribute(
                 'style',
                 $this->mergeInlineStyle(
                     (string) $figure->getAttribute('style'),
                     [
-                        'width' => 'min(100%, 34rem)',
-                        'max-width' => '34rem',
+                        'width' => 'min(100%, 44rem)',
+                        'max-width' => '44rem',
                         'margin' => '2.35rem auto',
                     ]
                 )
@@ -697,19 +713,31 @@ final class PostService
                     continue;
                 }
 
+                $rules = [
+                    'display' => 'block',
+                    'width' => '100%',
+                    'max-width' => '100%',
+                    'margin' => '0 auto',
+                ];
+
+                if ($isSpecial) {
+                    $rules['height'] = '30rem';
+                    $rules['max-height'] = '30rem';
+                    $rules['object-fit'] = 'contain';
+                    $rules['box-sizing'] = 'border-box';
+                    $rules['padding'] = '1rem';
+                    $rules['background'] = 'rgba(2, 6, 23, 0.18)';
+                } else {
+                    $rules['height'] = 'auto';
+                    $rules['max-height'] = '36rem';
+                    $rules['object-fit'] = 'cover';
+                }
+
                 $image->setAttribute(
                     'style',
                     $this->mergeInlineStyle(
                         (string) $image->getAttribute('style'),
-                        [
-                            'display' => 'block',
-                            'width' => '100%',
-                            'max-width' => '100%',
-                            'height' => 'auto',
-                            'max-height' => '28rem',
-                            'object-fit' => 'cover',
-                            'margin' => '0 auto',
-                        ]
+                        $rules
                     )
                 );
             }
@@ -992,3 +1020,4 @@ final class PostService
         return date(DATE_ATOM, $timestamp);
     }
 }
+

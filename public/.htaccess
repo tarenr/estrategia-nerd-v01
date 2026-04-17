@@ -1,17 +1,15 @@
+DirectoryIndex index.php
 # -----------------------------------------------------------------------------
 # @file        public/.htaccess
 # @project     Estrategia Nerd
 # @purpose     Reescrita de URLs para front controller
-# @notes       Requer mod_rewrite + AllowOverride All
+# @notes       Funciona tanto no XAMPP local quanto na producao em raiz publica.
 # -----------------------------------------------------------------------------
 
 Options -Indexes
 RewriteEngine On
 
-# Base do projeto dentro do htdocs
-RewriteBase /estrategia-nerd/public/
-
-# Se o arquivo/pasta existir, não reescreve
+# Se o arquivo/pasta existir, nao reescreve
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]

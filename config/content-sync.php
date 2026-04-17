@@ -13,9 +13,14 @@ return [
     'package_root' => $_ENV['CONTENT_SYNC_ROOT'] ?? dirname(__DIR__) . '/storage/content-sync',
     'code_package_root' => $_ENV['CONTENT_SYNC_CODE_ROOT'] ?? dirname(__DIR__) . '/storage/code-sync',
     'seven_zip_binary' => $_ENV['CONTENT_SYNC_7ZIP_BINARY'] ?? 'C:\\Program Files\\7-Zip\\7z.exe',
+    'deployment_policy' => [
+        'current_source' => strtolower(trim((string) ($_ENV['CONTENT_SYNC_CURRENT_SOURCE'] ?? 'local'))),
+        'approved_source' => strtolower(trim((string) ($_ENV['CONTENT_SYNC_APPROVED_PACKAGE_SOURCE'] ?? 'stage'))),
+        'stage_label' => trim((string) ($_ENV['CONTENT_SYNC_STAGE_LABEL'] ?? 'estrategia-nerd-stage')),
+    ],
     'profiles' => [
         'local' => [
-            'label' => 'Local / Homologação',
+            'label' => 'Local / Homologacao',
             'slug' => 'local-homologacao',
             'database' => [
                 'host' => (string) ($databaseConfig['host'] ?? ''),
@@ -34,7 +39,7 @@ return [
             ],
         ],
         'production' => [
-            'label' => 'Produção',
+            'label' => 'Producao',
             'slug' => 'producao',
             'database' => [
                 'host' => (string) ($_ENV['CONTENT_SYNC_PRODUCTION_DB_HOST'] ?? ($_ENV['BACKUP_PRODUCTION_DB_HOST'] ?? '')),
@@ -64,25 +69,6 @@ return [
         ],
     ],
     'public_config_keys' => [
-        'bio_avatar_url',
-        'bio_descricao',
-        'bio_titulo',
-        'brand_symbol_url',
-        'descricao_site',
-        'email_contato',
-        'favicon_url',
-        'footer_texto',
-        'home_menu_sections',
-        'instagram_url',
-        'logo_url',
-        'meta_description_padrao',
-        'meta_title_padrao',
-        'nome_site',
-        'site_kicker',
-        'site_url',
-        'sobre_imagem_url',
-        'telegram_url',
-        'whatsapp_url',
-        'youtube_url',
+        'bio_avatar_url','bio_descricao','bio_titulo','brand_symbol_url','descricao_site','email_contato','favicon_url','footer_texto','home_menu_sections','instagram_url','logo_url','meta_description_padrao','meta_title_padrao','nome_site','site_kicker','site_url','sobre_imagem_url','telegram_url','whatsapp_url','youtube_url',
     ],
 ];

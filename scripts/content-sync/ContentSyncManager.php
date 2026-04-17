@@ -176,6 +176,38 @@ final class ContentSyncManager
         ];
     }
 
+    public function deploymentPolicyStatus(): array
+    {
+        $policy = (array) ($this->config['deployment_policy'] ?? []);
+        $currentSource = strtolower(trim((string) ($policy['current_source'] ?? 'local')));
+        $approvedSource = strtolower(trim((string) ($policy['approved_source'] ?? 'stage')));
+        $stageLabel = trim((string) ($policy['stage_label'] ?? 'estrategia-nerd-stage'));
+        $productionAllowed = $currentSource !== '' && $approvedSource !== '' && $currentSource === $approvedSource;
+
+        return [
+            'current_source' => $currentSource !== '' ? $currentSource : 'local',
+            'approved_source' => $approvedSource !== '' ? $approvedSource : 'stage',
+            'stage_label' => $stageLabel !== '' ? $stageLabel : 'estrategia-nerd-stage',
+            'production_allowed' => $productionAllowed,
+            'reason' => $productionAllowed ? 'Origem aprovada.' : 'Origem atual diferente da origem autorizada para producao.',
+            'message' => $productionAllowed
+                ? 'Origem atual autorizada para pacote de producao.'
+                : sprintf('Publicacao em producao bloqueada: a origem atual e \"%s\" e a regra permanente exige \"%s\" (%s).', $currentSource !== '' ? $currentSource : 'local', $approvedSource !== '' ? $approvedSource : 'stage', $stageLabel !== '' ? $stageLabel : 'estrategia-nerd-stage'),
+        ];
+    }
+
+    private function assertProductionPublishAllowed(string $targetProfile): void
+    {
+        if (strtolower(trim($targetProfile)) !== 'production') {
+            return;
+        }
+
+        $policy = $this->deploymentPolicyStatus();
+        if (!(bool) ($policy['production_allowed'] ?? false)) {
+            throw new RuntimeException((string) ($policy['message'] ?? 'Publicacao em producao bloqueada pela politica operacional.'));
+        }
+    }
+
     public function verify(?string $packageId = null): array
     {
         $package = $this->packageById($packageId);
@@ -207,6 +239,7 @@ final class ContentSyncManager
             throw new RuntimeException('O pacote selecionado nao passou na verificacao.');
         }
 
+        $this->assertProductionPublishAllowed($targetProfile);
         $profile = $this->profile($targetProfile);
         $lock = $this->acquireRunLock($this->packageRoot(), 'apply', $targetProfile, (string) ($profile['label'] ?? $targetProfile));
         $tmpDir = '';
@@ -261,6 +294,7 @@ final class ContentSyncManager
             throw new RuntimeException('Nenhum pacote de codigo encontrado para aplicar.');
         }
 
+        $this->assertProductionPublishAllowed($targetProfile);
         $profile = $this->profile($targetProfile);
         $profileLabel = (string) ($profile['label'] ?? $targetProfile);
         $lock = $this->acquireRunLock($this->packageRoot(), 'apply_code', $targetProfile, $profileLabel);
@@ -1304,7 +1338,7 @@ final class ContentSyncManager
                 continue;
             }
 
-            $destination = $targetRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+            $destination = $this->resolveCodeDeployPath($targetRoot, $relative);
             $destinationDir = dirname($destination);
             if (!is_dir($destinationDir) && !mkdir($destinationDir, 0777, true) && !is_dir($destinationDir)) {
                 throw new RuntimeException('Nao foi possivel criar pasta de destino para deploy local: ' . $relative);
@@ -1315,7 +1349,12 @@ final class ContentSyncManager
             $copied++;
         }
 
-        return ['mode' => 'local', 'files_applied' => $copied, 'target_root' => $targetRoot];
+        return [
+            'mode' => 'local',
+            'files_applied' => $copied,
+            'target_root' => $targetRoot,
+            'target_public_root' => $this->resolveCodeDeployPublicRoot($targetRoot),
+        ];
     }
 
     private function deployCodeFtp(array $deployConfig, string $sourceDir): array
@@ -1341,7 +1380,7 @@ final class ContentSyncManager
                     continue;
                 }
 
-                $remotePath = $root . '/' . $relative;
+                $remotePath = $this->resolveCodeDeployPath($root, $relative);
                 $this->ensureRemoteDirectory($ftp, dirname($remotePath));
                 if (!@ftp_put($ftp, $remotePath, $file, FTP_BINARY)) {
                     throw new RuntimeException('Falha ao enviar arquivo do pacote de codigo: ' . $relative);
@@ -1352,7 +1391,12 @@ final class ContentSyncManager
             ftp_close($ftp);
         }
 
-        return ['mode' => 'ftp', 'files_applied' => $uploaded, 'target_root' => $root];
+        return [
+            'mode' => 'ftp',
+            'files_applied' => $uploaded,
+            'target_root' => $root,
+            'target_public_root' => $this->resolveCodeDeployPublicRoot($root),
+        ];
     }
 
     private function ensureRemoteDirectory($ftp, string $remoteDirectory): void
@@ -1386,6 +1430,48 @@ final class ContentSyncManager
         }
 
         return $root;
+    }
+
+    private function resolveCodeDeployPublicRoot(string $codeRoot): string
+    {
+        $normalized = rtrim(str_replace('\\', '/', trim($codeRoot)), '/');
+        if ($normalized === '') {
+            throw new RuntimeException('Raiz de deploy de codigo invalida.');
+        }
+
+        if (str_ends_with(strtolower($normalized), '/_app_core')) {
+            return substr($normalized, 0, -strlen('/_app_core'));
+        }
+
+        return $normalized;
+    }
+
+    private function resolveCodeDeployPath(string $codeRoot, string $relative): string
+    {
+        $relative = ltrim(str_replace('\\', '/', trim($relative)), '/');
+        if ($relative === '' || str_contains($relative, '..')) {
+            throw new RuntimeException('Caminho relativo invalido no pacote de codigo: ' . $relative);
+        }
+
+        $normalizedRoot = rtrim(str_replace('\\', '/', trim($codeRoot)), '/');
+        if ($normalizedRoot === '') {
+            throw new RuntimeException('Raiz de deploy de codigo invalida.');
+        }
+
+        if (str_ends_with(strtolower($normalizedRoot), '/_app_core')) {
+            $publicRoot = $this->resolveCodeDeployPublicRoot($normalizedRoot);
+
+            if (str_starts_with($relative, 'public/')) {
+                $publicRelative = ltrim(substr($relative, strlen('public/')), '/');
+                return $publicRoot . '/' . $publicRelative;
+            }
+
+            if (str_starts_with($relative, 'EN/')) {
+                return $publicRoot . '/' . $relative;
+            }
+        }
+
+        return $normalizedRoot . '/' . $relative;
     }
 
     private function readRemoteTextFile($ftp, string $remotePath): ?string

@@ -20,6 +20,7 @@ final class ContentSyncToolsController
         $flash = Session::pull('content_sync_flash');
         $lastVerification = Session::pull('content_sync_verification');
         $lastPostCheck = Session::pull('content_sync_postcheck');
+        $deploymentPolicy = $manager->deploymentPolicyStatus();
 
         View::render('site/content-sync-tools', [
             'title' => 'Conteudo Local | Estrategia Nerd',
@@ -28,6 +29,7 @@ final class ContentSyncToolsController
             'content_status' => $this->presentStatus($status),
             'code_status' => $this->presentCodeStatus($manager->codeStatus()),
             'parity_status' => $manager->parityStatus(),
+            'deployment_policy' => $deploymentPolicy,
             'flash' => is_array($flash) ? $flash : null,
             'last_verification' => is_array($lastVerification) ? $lastVerification : null,
             'last_post_check' => is_array($lastPostCheck) ? $lastPostCheck : null,
@@ -264,5 +266,4 @@ final class ContentSyncToolsController
             'applied_at' => (string) ($last['applied_at'] ?? ''),
         ];
     }
-
 }

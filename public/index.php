@@ -14,19 +14,20 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../bootstrap.php';
+$appRoot = is_file(__DIR__ . '/../bootstrap.php')
+    ? dirname(__DIR__)
+    : (__DIR__ . '/_app_core');
+
+require_once $appRoot . '/bootstrap.php';
 
 use App\Support\Auth;
 use App\Support\LocalOnlyAccess;
 use App\Support\View;
 
 $pdo = $GLOBALS['pdo'] ?? null;
-
-/** Request */
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
-/** Normaliza path (XAMPP) */
 $path = rawurldecode($uri);
 $path = preg_replace('#^.*?/public/index\.php#', '', $path) ?? $path;
 $path = preg_replace('#^.*?/public#', '', $path) ?? $path;
@@ -34,13 +35,11 @@ $path = preg_replace('#^.*?/index\.php#', '', $path) ?? $path;
 $path = $path === '' ? '/' : $path;
 $path = rtrim($path, '/') ?: '/';
 
-/** Blindagem local: rotas internas nao podem abrir fora do ambiente local */
 if (preg_match('#^/(local|dev)(/|$)#', $path) === 1) {
     LocalOnlyAccess::enforce();
 }
 
-/** Load routes (anti-opcache) */
-$routesFile = realpath(__DIR__ . '/../config/routes.php') ?: (__DIR__ . '/../config/routes.php');
+$routesFile = realpath($appRoot . '/config/routes.php') ?: ($appRoot . '/config/routes.php');
 clearstatcache(true, $routesFile);
 
 if (function_exists('opcache_invalidate')) {
@@ -51,13 +50,16 @@ if (function_exists('opcache_compile_file')) {
 }
 
 $routes = include $routesFile;
+header((string) ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1') . ' 200 OK');
+header('Status: 200 OK');
+http_response_code(200);
+
 if (!is_array($routes)) {
     http_response_code(500);
     echo 'Routes invalidas.';
     exit;
 }
 
-/** Match */
 $match = null;
 $routeParams = [];
 foreach ($routes as $route) {
@@ -73,7 +75,6 @@ foreach ($routes as $route) {
             $match = [$handler, $middleware];
             break;
         }
-
         continue;
     }
 
@@ -117,7 +118,7 @@ if (!$match) {
         echo "PATH: {$path}\n";
         echo "METHOD: {$method}\n";
         echo "ROUTES FILE: {$routesFile}\n";
-        echo "ROUTES MD5:  " . md5_file($routesFile) . "\n";
+        echo 'ROUTES MD5:  ' . md5_file($routesFile) . "\n";
         echo "ROUTES:\n";
         foreach ($routes as $r) {
             echo "- {$r[0]} {$r[1]}\n";
@@ -127,13 +128,13 @@ if (!$match) {
 
     if (str_starts_with($path, '/admin')) {
         header('Content-Type: text/plain; charset=utf-8');
-        echo 'Página não encontrada.';
+        echo 'Pagina nao encontrada.';
         exit;
     }
 
     View::render('site/error-404', [
-        'title' => 'Página não encontrada | Estratégia Nerd',
-        'meta_description' => 'A página solicitada não foi encontrada no portal Estratégia Nerd.',
+        'title' => 'Pagina nao encontrada | Estrategia Nerd',
+        'meta_description' => 'A pagina solicitada nao foi encontrada no portal Estrategia Nerd.',
         'requested_path' => $path,
     ]);
     exit;
@@ -141,18 +142,16 @@ if (!$match) {
 
 [$handler, $middleware] = $match;
 
-/** Middleware */
 if ($middleware === 'auth') {
     Auth::require(url('/login'));
 }
 
-/** Dispatch */
 if (is_array($handler) && count($handler) === 2) {
     [$controllerClass, $controllerMethod] = $handler;
 
     if (!class_exists($controllerClass)) {
         http_response_code(500);
-        echo 'Controller não encontrado.';
+        echo 'Controller nao encontrado.';
         exit;
     }
 
@@ -171,7 +170,7 @@ if (is_array($handler) && count($handler) === 2) {
 
     if (!method_exists($controller, $controllerMethod)) {
         http_response_code(500);
-        echo 'Método do controller não encontrado.';
+        echo 'Metodo do controller nao encontrado.';
         exit;
     }
 

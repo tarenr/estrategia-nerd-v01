@@ -22,6 +22,15 @@ $parityStatus = (array) ($parity_status ?? []);
 $parityContent = is_array($parityStatus['content'] ?? null) ? $parityStatus['content'] : [];
 $parityCode = is_array($parityStatus['code'] ?? null) ? $parityStatus['code'] : [];
 $parityRecommendations = array_values(array_map('strval', (array) ($parityStatus['recommendations'] ?? [])));
+$deploymentPolicy = (array) ($deployment_policy ?? []);
+$productionGateOpen = (bool) ($deploymentPolicy['production_allowed'] ?? false);
+$productionGateMessage = (string) ($deploymentPolicy['message'] ?? '');
+$productionGateReason = (string) ($deploymentPolicy['reason'] ?? '');
+$productionReady = $productionReady && $productionGateOpen;
+$productionCodeReady = $productionCodeReady && $productionGateOpen;
+$productionReadyMessage = !$productionGateOpen
+    ? ($productionGateMessage !== '' ? $productionGateMessage : 'Publicacao bloqueada pela politica operacional.')
+    : ($productionReady ? 'Banco e FTP remotos estao disponiveis para publicar.' : 'Complete as variaveis CONTENT_SYNC_PRODUCTION_* ou use o fallback BACKUP_PRODUCTION_*.');
 
 $alertClasses = [
     'success' => 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100',
@@ -89,7 +98,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
   <div id="content-progress-overlay" class="content-progress-overlay" aria-hidden="true">
     <div class="content-progress-card">
       <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Processando</p>
-      <h2 id="content-progress-title" class="mt-3 font-orbitron text-2xl font-black text-white">Executando rotina de conteúdo</h2>
+      <h2 id="content-progress-title" class="mt-3 font-orbitron text-2xl font-black text-white">Executando rotina de conteudo</h2>
       <p id="content-progress-message" class="mt-3 text-sm leading-7 text-slate-300">Estamos preparando o pacote e validando os arquivos. Esse processo pode levar alguns segundos.</p>
       <div class="mt-6 content-progress-bar">
         <div id="content-progress-fill" class="content-progress-fill"></div>
@@ -98,7 +107,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
         <span id="content-progress-stage">Preparando</span>
         <span class="content-progress-dots"><span>.</span><span>.</span><span>.</span></span>
       </div>
-      <p class="mt-4 text-xs text-slate-500">Para evitar envio duplicado, os botões ficam bloqueados até a resposta da página.</p>
+      <p class="mt-4 text-xs text-slate-500">Para evitar envio duplicado, os botoes ficam bloqueados ate a resposta da pagina.</p>
     </div>
   </div>
   <div class="mx-auto max-w-7xl space-y-6">
@@ -112,14 +121,14 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
           <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-300">Exporte um pacote com posts, links, configuracoes publicas e uploads referenciados. Depois valide e publique na producao com um passo controlado.</p>
         </div>
         <div class="rounded-2xl border border-slate-700/70 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">
-          <div><span class="text-slate-500">Raiz:</span> <?= htmlspecialchars((string) ($status['package_root'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div><span class="text-slate-500">Raiz:</span> <?= htmlspecialchars((string) ($status['package_root'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
           <div class="mt-1"><span class="text-slate-500">Pacotes:</span> <?= (int) ($status['total_packages'] ?? 0) ?></div>
         </div>
       </div>
 
       <?php if ($flash !== null): ?>
         <div class="mt-4 rounded-2xl border px-4 py-3 text-sm <?= htmlspecialchars($flashClass, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-          <?= htmlspecialchars((string) ($flash['message'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+          <?= htmlspecialchars((string) ($flash['message'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
         </div>
       <?php endif; ?>
 
@@ -134,12 +143,23 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
       <?php endif; ?>
     </div>
 
+      <?php if ($deploymentPolicy !== []): ?>
+        <div class="mt-4 rounded-2xl border px-4 py-3 text-sm <?= $productionGateOpen ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100' : 'border-amber-500/30 bg-amber-500/10 text-amber-100' ?>">
+          <strong class="font-semibold">Politica operacional:</strong>
+          origem atual <span class="text-white"><?= htmlspecialchars((string) ($deploymentPolicy['current_source'] ?? 'local'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+          -> origem aprovada <span class="text-white"><?= htmlspecialchars((string) ($deploymentPolicy['approved_source'] ?? 'stage'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+          (<?= htmlspecialchars((string) ($deploymentPolicy['stage_label'] ?? 'estrategia-nerd-stage'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>).
+          <div class="mt-2 text-xs <?= $productionGateOpen ? 'text-emerald-200/90' : 'text-amber-100/90' ?>">
+            <?= htmlspecialchars($productionGateMessage !== '' ? $productionGateMessage : $productionGateReason, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+          </div>
+        </div>
+      <?php endif; ?>
     <div class="grid gap-4 xl:grid-cols-4">
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
         <p class="font-orbitron text-xs uppercase tracking-[0.25em] text-cyan-300/80">Ultimo pacote</p>
         <?php if (is_array($latest)): ?>
-          <div class="mt-4 font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($latest['package_id'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-          <div class="mt-1 text-slate-400"><?= htmlspecialchars((string) ($latest['source_profile_label'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div class="mt-4 font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($latest['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div class="mt-1 text-slate-400"><?= htmlspecialchars((string) ($latest['source_profile_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
           <div class="mt-4 grid gap-2 text-sm">
             <div class="flex items-center justify-between"><span class="text-slate-500">Valido</span><span class="<?= ($latest['is_valid'] ?? false) ? 'text-emerald-300' : 'text-rose-300' ?>"><?= ($latest['is_valid'] ?? false) ? 'OK' : 'Falhou' ?></span></div>
             <div class="flex items-center justify-between"><span class="text-slate-500">Posts</span><span><?= (int) ($latest['stats']['posts'] ?? 0) ?></span></div>
@@ -182,17 +202,17 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
         <p class="font-orbitron text-xs uppercase tracking-[0.25em] text-cyan-300/80">Producao</p>
         <div class="mt-4 font-rajdhani text-2xl font-bold <?= $productionReady ? 'text-emerald-300' : 'text-amber-300' ?>"><?= $productionReady ? 'Pronta' : 'Pendente' ?></div>
-        <div class="mt-1 text-slate-400"><?= $productionReady ? 'Banco e FTP remotos estao disponiveis para publicar.' : 'Complete as variaveis CONTENT_SYNC_PRODUCTION_* ou use o fallback BACKUP_PRODUCTION_*.' ?></div>
+        <div class="mt-1 text-slate-400"><?= htmlspecialchars($productionReadyMessage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
         <?php if (is_array($latestProductionApply)): ?>
-          <div class="mt-4 text-sm text-slate-300">Ultima publicacao: <span class="text-white"><?= htmlspecialchars((string) ($latestProductionApply['package_id'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
-          <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($latestProductionApply['applied_at'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div class="mt-4 text-sm text-slate-300">Ultima publicacao: <span class="text-white"><?= htmlspecialchars((string) ($latestProductionApply['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+          <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($latestProductionApply['applied_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
         <?php endif; ?>
       </div>
 
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
         <p class="font-orbitron text-xs uppercase tracking-[0.25em] text-cyan-300/80">Ultima verificacao</p>
         <?php if (is_array($lastVerification)): ?>
-          <div class="mt-4 font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($lastVerification['package_id'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div class="mt-4 font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($lastVerification['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
           <div class="mt-1 text-slate-400">Resultado mais recente da checagem do pacote.</div>
           <div class="mt-4 text-sm text-slate-300">Status: <span class="<?= ($lastVerification['is_valid'] ?? false) ? 'text-emerald-300' : 'text-rose-300' ?>"><?= ($lastVerification['is_valid'] ?? false) ? 'Valido' : 'Invalido' ?></span></div>
         <?php else: ?>
@@ -203,7 +223,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             <div class="font-semibold text-white">Pos-check mais recente</div>
             <div class="mt-1">Conteudo: <span class="<?= (($lastPostCheck['content']['in_sync'] ?? false) ? 'text-emerald-300' : 'text-amber-300') ?>"><?= (($lastPostCheck['content']['in_sync'] ?? false) ? 'OK' : 'Pendente') ?></span></div>
             <div>Codigo: <span class="<?= (($lastPostCheck['code']['in_sync'] ?? false) ? 'text-emerald-300' : 'text-amber-300') ?>"><?= (($lastPostCheck['code']['in_sync'] ?? false) ? 'OK' : 'Pendente') ?></span></div>
-            <div class="mt-1 text-slate-500"><?= htmlspecialchars((string) ($lastPostCheck['checked_at'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <div class="mt-1 text-slate-500"><?= htmlspecialchars((string) ($lastPostCheck['checked_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
           </div>
         <?php endif; ?>
       </div>
@@ -217,8 +237,8 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
         </div>
         <div class="text-xs text-slate-400">
           <span class="text-slate-500">Raiz:</span>
-          <?= htmlspecialchars((string) ($codeStatus['package_root'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
-          <span class="mx-2 text-slate-600">•</span>
+          <?= htmlspecialchars((string) ($codeStatus['package_root'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+          <span class="mx-2 text-slate-600">-</span>
           <span class="text-slate-500">Pacotes:</span> <?= (int) ($codeStatus['total_packages'] ?? 0) ?>
         </div>
       </div>
@@ -226,17 +246,17 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
       <?php if (is_array($codeLatestProductionApply)): ?>
         <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">
           <span class="text-slate-500">Ultimo pacote tecnico em producao:</span>
-          <span class="ml-2 font-semibold text-white"><?= htmlspecialchars((string) ($codeLatestProductionApply['package_id'] ?? 'â€”'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
-          <span class="ml-2 text-xs text-slate-500"><?= htmlspecialchars((string) ($codeLatestProductionApply['applied_at'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+          <span class="ml-2 font-semibold text-white"><?= htmlspecialchars((string) ($codeLatestProductionApply['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+          <span class="ml-2 text-xs text-slate-500"><?= htmlspecialchars((string) ($codeLatestProductionApply['applied_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
         </div>
       <?php endif; ?>
 
       <?php if ($codeLatest !== null): ?>
         <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm">
-          <div class="text-white font-semibold"><?= htmlspecialchars((string) ($codeLatest['package_id'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-          <div class="mt-1 text-slate-400">Commit: <span class="text-slate-200"><?= htmlspecialchars((string) ($codeLatest['commit'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span> • Arquivos: <span class="text-slate-200"><?= (int) ($codeLatest['files_count'] ?? 0) ?></span></div>
-          <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($codeLatest['created_at'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-          <div class="mt-2 text-xs text-cyan-300 break-all"><?= htmlspecialchars((string) ($codeLatest['zip_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div class="text-white font-semibold"><?= htmlspecialchars((string) ($codeLatest['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div class="mt-1 text-slate-400">Commit: <span class="text-slate-200"><?= htmlspecialchars((string) ($codeLatest['commit'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span> - Arquivos: <span class="text-slate-200"><?= (int) ($codeLatest['files_count'] ?? 0) ?></span></div>
+          <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($codeLatest['created_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <div class="mt-2 text-xs text-cyan-300 break-all"><?= htmlspecialchars((string) ($codeLatest['zip_path'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
           <?php if (($codeLatest['files_preview'] ?? []) !== []): ?>
             <div class="mt-4">
               <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Manifesto tecnico</p>
@@ -252,17 +272,17 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
           <?php endif; ?>
           <?php if (is_array($codeLatest['last_apply'] ?? null)): ?>
             <div class="mt-4 text-xs text-slate-300">
-              Ultima aplicacao: <span class="text-white"><?= htmlspecialchars((string) ($codeLatest['last_apply']['target_profile_label'] ?? 'â€”'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
-              <span class="ml-2 text-slate-500"><?= htmlspecialchars((string) ($codeLatest['last_apply']['applied_at'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+              Ultima aplicacao: <span class="text-white"><?= htmlspecialchars((string) ($codeLatest['last_apply']['target_profile_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+              <span class="ml-2 text-slate-500"><?= htmlspecialchars((string) ($codeLatest['last_apply']['applied_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
             </div>
           <?php endif; ?>
-          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form mt-3" data-progress-title="Publicando pacote de código" data-progress-message="Estamos enviando os arquivos do pacote de código para a produção." data-progress-stage="Deploy de código">
+          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form mt-3" data-progress-title="Publicando pacote de codigo" data-progress-message="Estamos enviando os arquivos do pacote de codigo para a producao." data-progress-stage="Deploy de codigo">
             <?= Csrf::field() ?>
             <input type="hidden" name="action" value="apply_code">
-            <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($codeLatest['package_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+            <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($codeLatest['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
             <input type="hidden" name="target_profile" value="production">
             <input type="hidden" name="apply_phrase" value="PUBLICAR">
-            <button type="submit" class="rounded-xl border px-3 py-2 text-xs font-semibold transition <?= $productionCodeReady ? 'border-blue-400/40 bg-blue-500/10 text-blue-200 hover:border-blue-300 hover:bg-blue-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $productionCodeReady ? '' : 'disabled' ?>>Publicar último pacote de código</button>
+            <button type="submit" class="rounded-xl border px-3 py-2 text-xs font-semibold transition <?= $productionCodeReady ? 'border-blue-400/40 bg-blue-500/10 text-blue-200 hover:border-blue-300 hover:bg-blue-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $productionCodeReady ? '' : 'disabled' ?>>Publicar ultimo pacote de codigo</button>
           </form>
         </div>
       <?php else: ?>
@@ -281,16 +301,16 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
                 <th class="px-4 py-2">Manifesto</th>
                 <th class="px-4 py-2">Ultima aplicacao</th>
                 <th class="px-4 py-2">Zip</th>
-                <th class="px-4 py-2">Ação</th>
+                <th class="px-4 py-2">Acao</th>
               </tr>
             </thead>
             <tbody>
               <?php foreach ($codeItems as $codeItem): ?>
                 <tr class="rounded-2xl border border-slate-800 bg-slate-950/70">
-                  <td class="px-4 py-4 align-top font-semibold text-white"><?= htmlspecialchars((string) ($codeItem['package_id'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
-                  <td class="px-4 py-4 align-top text-slate-300"><?= htmlspecialchars((string) ($codeItem['commit'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="px-4 py-4 align-top font-semibold text-white"><?= htmlspecialchars((string) ($codeItem['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="px-4 py-4 align-top text-slate-300"><?= htmlspecialchars((string) ($codeItem['commit'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                   <td class="px-4 py-4 align-top text-slate-300"><?= (int) ($codeItem['files_count'] ?? 0) ?></td>
-                  <td class="px-4 py-4 align-top text-xs text-slate-400"><?= htmlspecialchars((string) ($codeItem['created_at'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="px-4 py-4 align-top text-xs text-slate-400"><?= htmlspecialchars((string) ($codeItem['created_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                   <td class="px-4 py-4 align-top text-xs text-slate-300">
                     <?php if (($codeItem['files_preview'] ?? []) !== []): ?>
                       <?php foreach ((array) ($codeItem['files_preview'] ?? []) as $filePath): ?>
@@ -306,20 +326,20 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
                   <td class="px-4 py-4 align-top text-xs text-slate-300">
                     <?php if (is_array($codeItem['last_apply'] ?? null)): ?>
                       <div><?= htmlspecialchars((string) ($codeItem['last_apply']['target_profile_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                      <div class="mt-1 text-slate-500"><?= htmlspecialchars((string) ($codeItem['last_apply']['applied_at'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                      <div class="mt-1 text-slate-500"><?= htmlspecialchars((string) ($codeItem['last_apply']['applied_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                     <?php else: ?>
                       <span class="text-slate-500">Ainda nao aplicado</span>
                     <?php endif; ?>
                   </td>
-                  <td class="px-4 py-4 align-top text-xs text-cyan-300 break-all"><?= htmlspecialchars((string) ($codeItem['zip_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="px-4 py-4 align-top text-xs text-cyan-300 break-all"><?= htmlspecialchars((string) ($codeItem['zip_path'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                   <td class="px-4 py-4 align-top">
-                    <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Publicando pacote de código" data-progress-message="Estamos enviando os arquivos do pacote de código para a produção." data-progress-stage="Deploy de código">
+                    <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Publicando pacote de codigo" data-progress-message="Estamos enviando os arquivos do pacote de codigo para a producao." data-progress-stage="Deploy de codigo">
                       <?= Csrf::field() ?>
                       <input type="hidden" name="action" value="apply_code">
-                      <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($codeItem['package_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($codeItem['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                       <input type="hidden" name="target_profile" value="production">
                       <input type="hidden" name="apply_phrase" value="PUBLICAR">
-                      <button type="submit" class="rounded-xl border px-3 py-2 text-xs font-semibold transition <?= $productionCodeReady ? 'border-blue-400/40 bg-blue-500/10 text-blue-200 hover:border-blue-300 hover:bg-blue-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $productionCodeReady ? '' : 'disabled' ?>>Publicar código</button>
+                      <button type="submit" class="rounded-xl border px-3 py-2 text-xs font-semibold transition <?= $productionCodeReady ? 'border-blue-400/40 bg-blue-500/10 text-blue-200 hover:border-blue-300 hover:bg-blue-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $productionCodeReady ? '' : 'disabled' ?>>Publicar codigo</button>
                     </form>
                   </td>
                 </tr>
@@ -334,7 +354,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
         <h2 class="font-orbitron text-lg font-bold text-white">Acoes rapidas</h2>
         <div class="mt-5 grid gap-4 md:grid-cols-2">
-          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Gerando pacote de conteúdo" data-progress-message="Estamos exportando posts, links, configurações públicas e uploads referenciados do ambiente local." data-progress-stage="Exportação">
+          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Gerando pacote de conteudo" data-progress-message="Estamos exportando posts, links, configuracoes publicas e uploads referenciados do ambiente local." data-progress-stage="Exportacao">
             <?= Csrf::field() ?>
             <input type="hidden" name="action" value="export">
             <input type="hidden" name="profile" value="local">
@@ -343,7 +363,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Gerar pacote</button>
           </form>
 
-          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Verificando pacote" data-progress-message="Estamos conferindo JSONs, manifesto e o pacote de uploads do último conteúdo." data-progress-stage="Verificação">
+          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Verificando pacote" data-progress-message="Estamos conferindo JSONs, manifesto e o pacote de uploads do ultimo conteudo." data-progress-stage="Verificacao">
             <?= Csrf::field() ?>
             <input type="hidden" name="action" value="verify">
             <input type="hidden" name="package_id" value="latest">
@@ -352,7 +372,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300 hover:bg-emerald-500/20">Verificar</button>
           </form>
 
-          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Aplicando pacote no local" data-progress-message="Estamos importando o pacote selecionado no ambiente local para validar o fluxo completo." data-progress-stage="Aplicação local">
+          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Aplicando pacote no local" data-progress-message="Estamos importando o pacote selecionado no ambiente local para validar o fluxo completo." data-progress-stage="Aplicacao local">
             <?= Csrf::field() ?>
             <input type="hidden" name="action" value="apply">
             <input type="hidden" name="package_id" value="latest">
@@ -363,7 +383,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:border-sky-300 hover:bg-sky-500/20">Aplicar local</button>
           </form>
 
-          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Publicando conteúdo na produção" data-progress-message="Estamos enviando o pacote validado para o banco e os uploads da produção." data-progress-stage="Publicação">
+          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Publicando conteudo na producao" data-progress-message="Estamos enviando o pacote validado para o banco e os uploads da producao." data-progress-stage="Publicacao">
             <?= Csrf::field() ?>
             <input type="hidden" name="action" value="apply">
             <input type="hidden" name="package_id" value="latest">
@@ -380,7 +400,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
         <h2 class="font-orbitron text-lg font-bold text-white">Publicacao controlada</h2>
         <p class="mt-2 text-sm leading-7 text-slate-400">Escolha um pacote especifico e confirme com a frase <span class="font-semibold text-white">PUBLICAR</span> antes de aplicar.</p>
 
-        <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form mt-5 space-y-4" data-progress-title="Aplicando pacote selecionado" data-progress-message="Estamos aplicando o pacote escolhido no destino informado. Isso pode sobrescrever conteúdo no ambiente de destino." data-progress-stage="Publicação controlada">
+        <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form mt-5 space-y-4" data-progress-title="Aplicando pacote selecionado" data-progress-message="Estamos aplicando o pacote escolhido no destino informado. Isso pode sobrescrever conteudo no ambiente de destino." data-progress-stage="Publicacao controlada">
           <?= Csrf::field() ?>
           <input type="hidden" name="action" value="apply">
 
@@ -389,7 +409,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             <select name="package_id" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
               <option value="latest">Ultimo valido</option>
               <?php foreach ($items as $item): ?>
-                <option value="<?= htmlspecialchars((string) ($item['package_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars((string) ($item['package_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
+                <option value="<?= htmlspecialchars((string) ($item['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars((string) ($item['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
               <?php endforeach; ?>
             </select>
           </div>
@@ -430,12 +450,12 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             <?php foreach ($items as $item): ?>
               <tr class="rounded-2xl border border-slate-800 bg-slate-950/70">
                 <td class="px-4 py-4 align-top">
-                  <div class="font-semibold text-white"><?= htmlspecialchars((string) ($item['package_id'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($item['created_at'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="font-semibold text-white"><?= htmlspecialchars((string) ($item['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($item['created_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </td>
                 <td class="px-4 py-4 align-top">
-                  <div><?= htmlspecialchars((string) ($item['source_profile_label'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($item['source_profile'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div><?= htmlspecialchars((string) ($item['source_profile_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($item['source_profile'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </td>
                 <td class="px-4 py-4 align-top text-xs text-slate-300">
                   <div>Posts: <?= (int) ($item['stats']['posts'] ?? 0) ?></div>
@@ -448,24 +468,24 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
                 </td>
                 <td class="px-4 py-4 align-top text-xs text-slate-300">
                   <?php if (is_array($item['last_apply'] ?? null)): ?>
-                    <div><?= htmlspecialchars((string) ($item['last_apply']['target_profile_label'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                    <div class="mt-1 text-slate-500"><?= htmlspecialchars((string) ($item['last_apply']['applied_at'] ?? '—'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                    <div><?= htmlspecialchars((string) ($item['last_apply']['target_profile_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                    <div class="mt-1 text-slate-500"><?= htmlspecialchars((string) ($item['last_apply']['applied_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                   <?php else: ?>
                     <span class="text-slate-500">Ainda nao aplicado</span>
                   <?php endif; ?>
                 </td>
                 <td class="px-4 py-4 align-top">
                   <div class="flex flex-wrap gap-2">
-                    <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Verificando pacote" data-progress-message="Estamos conferindo a integridade do pacote selecionado." data-progress-stage="Verificação">
+                    <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Verificando pacote" data-progress-message="Estamos conferindo a integridade do pacote selecionado." data-progress-stage="Verificacao">
                       <?= Csrf::field() ?>
                       <input type="hidden" name="action" value="verify">
-                      <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($item['package_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($item['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                       <button type="submit" class="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20">Verificar</button>
                     </form>
-                    <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Publicando pacote" data-progress-message="Estamos aplicando o pacote selecionado em produção." data-progress-stage="Publicação">
+                    <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Publicando pacote" data-progress-message="Estamos aplicando o pacote selecionado em producao." data-progress-stage="Publicacao">
                       <?= Csrf::field() ?>
                       <input type="hidden" name="action" value="apply">
-                      <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($item['package_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($item['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                       <input type="hidden" name="target_profile" value="production">
                       <input type="hidden" name="apply_phrase" value="PUBLICAR">
                       <button type="submit" class="rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-2 text-xs font-semibold text-fuchsia-200 transition hover:bg-fuchsia-500/20" <?= $productionReady ? '' : 'disabled' ?>>Publicar</button>
@@ -491,7 +511,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
       let locked = false;
 
       const steps = [10, 18, 28, 38, 52, 66, 78, 86, 92];
-      const stageLabels = ['Preparando', 'Lendo conteúdo', 'Montando pacote', 'Conferindo uploads', 'Validando', 'Conectando destino', 'Finalizando'];
+      const stageLabels = ['Preparando', 'Lendo conteudo', 'Montando pacote', 'Conferindo uploads', 'Validando', 'Conectando destino', 'Finalizando'];
 
       const disableAll = (currentForm) => {
         forms.forEach((form) => {
@@ -518,8 +538,8 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
         locked = true;
         disableAll(currentForm);
 
-        title.textContent = currentForm.dataset.progressTitle || 'Executando rotina de conteúdo';
-        message.textContent = currentForm.dataset.progressMessage || 'Estamos processando sua solicitação.';
+        title.textContent = currentForm.dataset.progressTitle || 'Executando rotina de conteudo';
+        message.textContent = currentForm.dataset.progressMessage || 'Estamos processando sua solicitacao.';
         stage.textContent = currentForm.dataset.progressStage || 'Processando';
         fill.style.width = '10%';
         overlay.classList.add('is-visible');
@@ -553,3 +573,5 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
     })();
   </script>
 </section>
+
+
