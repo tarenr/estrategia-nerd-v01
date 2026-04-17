@@ -10,6 +10,7 @@ $submitLabel = (string) ($submitLabel ?? 'Salvar');
 $form = $form ?? [];
 $errors = $errors ?? [];
 $categorias = $categorias ?? [];
+$nextStepOptions = $next_step_options ?? [];
 $mediaItems = $media_items ?? [];
 
 $fieldError = static fn (string $key): string => (string) ($errors[$key] ?? '');
@@ -38,7 +39,7 @@ $conteudo = (string) ($form['conteudo'] ?? '');
   <?php View::component('admin/posts/form-editor', ['conteudo' => $conteudo, 'fieldError' => $fieldError]); ?>
 
   <div class="post-meta-grid">
-    <?php View::component('admin/posts/form-publication', ['form' => $form, 'fieldError' => $fieldError]); ?>
+    <?php View::component('admin/posts/form-publication', ['form' => $form, 'fieldError' => $fieldError, 'next_step_options' => $nextStepOptions]); ?>
     <?php View::component('admin/posts/form-category', ['form' => $form, 'categorias' => $categorias, 'fieldError' => $fieldError]); ?>
   </div>
 

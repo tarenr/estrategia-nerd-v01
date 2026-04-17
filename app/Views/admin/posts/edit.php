@@ -7,6 +7,7 @@ use App\Support\Csrf;
 $form = $form ?? [];
 $errors = $errors ?? [];
 $categorias = $categorias ?? [];
+$nextStepOptions = $next_step_options ?? [];
 $mediaItems = $media_items ?? [];
 $orphanImages = $orphan_images ?? [];
 $mode = (string) ($mode ?? 'edit');
@@ -74,6 +75,7 @@ $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJ
       'form' => $form,
       'errors' => $errors,
       'categorias' => $categorias,
+      'next_step_options' => $nextStepOptions,
       'media_items' => $mediaItems,
       'orphan_images' => $orphanImages,
   ]); ?>

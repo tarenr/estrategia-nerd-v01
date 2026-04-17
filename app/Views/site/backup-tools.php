@@ -93,6 +93,8 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
   </div>
 
   <div class="mx-auto max-w-7xl space-y-6">
+    <?php \App\Support\View::component('site/local-tools-nav', ['active' => 'backup']); ?>
+
     <div class="flex flex-col gap-3 rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_40px_rgba(6,182,212,0.08)]">
       <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>

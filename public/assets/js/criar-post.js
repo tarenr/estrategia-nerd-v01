@@ -679,6 +679,7 @@
 
     var tituloEl = byId("titulo");
     var titulo = (tituloEl && tituloEl.value) ? tituloEl.value : "Sem titulo";
+    titulo = renderHighlightedTitle(titulo);
     var visual = byId("editor-visual");
     var conteudo = visual ? visual.innerHTML : "";
 
@@ -694,21 +695,55 @@
     var previewContent = byId("previewContent");
     if (previewContent) {
       previewContent.innerHTML =
-        '<style>.post-preview-title-accent{background:linear-gradient(90deg,#38bdf8 0%,#60a5fa 34%,#8b5cf6 68%,#22d3ee 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}</style>' +
-        '<div class="mb-4">' +
-        '<span class="px-3 py-1 bg-cyan-500 text-slate-900 text-xs font-bold rounded-full uppercase">' +
-        categoriaNome +
-        "</span></div>" +
-        '<h1 class="font-orbitron text-4xl font-bold text-white mb-6">' +
-        titulo +
-        "</h1>" +
-        '<div class="prose prose-invert max-w-none text-gray-300 leading-relaxed">' +
-        (conteudo || "<p><em>Sem conteudo.</em></p>") +
-        "</div>";
+        '<style>' +
+          '#previewContent .preview-article{color:#cbd5e1;line-height:1.85;}' +
+          '#previewContent .preview-title{font-family:Orbitron,sans-serif;font-size:2.2rem;line-height:1.12;font-weight:900;color:#fff;margin:0 0 1.35rem;}' +
+          '#previewContent .post-preview-title-accent{background:linear-gradient(90deg,#38bdf8 0%,#60a5fa 34%,#8b5cf6 68%,#22d3ee 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}' +
+          '#previewContent .preview-chip{display:inline-flex;align-items:center;padding:.35rem .75rem;background:#00d4ff;color:#020617;font-size:.72rem;font-weight:900;border-radius:999px;text-transform:uppercase;letter-spacing:.08em;}' +
+          '#previewContent h2{font-family:Orbitron,sans-serif;font-size:2rem;font-weight:700;color:#22d3ee;margin:2.3rem 0 1.2rem;padding-bottom:.55rem;border-bottom:2px solid rgba(34,211,238,.3);}' +
+          '#previewContent h3{font-family:Orbitron,sans-serif;font-size:1.4rem;font-weight:700;color:#c084fc;margin:1.8rem 0 .9rem;}' +
+          '#previewContent p{margin:0 0 1.25rem;}' +
+          '#previewContent ul,#previewContent ol{margin:0 0 1.35rem;}' +
+          '#previewContent ul{list-style:none;padding-left:.35rem;}' +
+          '#previewContent ul li{position:relative;padding-left:1.35rem;}' +
+          '#previewContent ul li::before{content:"✦";position:absolute;left:0;top:.03rem;color:#22d3ee;font-size:.85em;}' +
+          '#previewContent ol{padding-left:1.45rem;}' +
+          '#previewContent li{margin-bottom:.6rem;}' +
+          '#previewContent blockquote{margin:1.7rem 0;padding:1.2rem 1.35rem;border-left:4px solid #22d3ee;border-radius:0 .9rem .9rem 0;background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(15,23,42,.55));color:#cbd5e1;}' +
+          '#previewContent img{display:block;width:auto;max-width:100%;max-height:56vh;height:auto;border-radius:12px;margin:0 auto;border:1px solid rgba(34,211,238,.2);}' +
+          '#previewContent figure{margin:1.8rem auto;max-width:min(100%,760px);display:flex;flex-direction:column;align-items:center;text-align:center;}' +
+          '#previewContent figcaption{margin-top:.75rem;color:#94a3b8;font-size:.9rem;font-style:italic;}' +
+          '#previewContent iframe,#previewContent video{display:block;width:100%;min-height:320px;border:0;border-radius:16px;margin:1.8rem 0;}' +
+          '#previewContent .content-grid-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1.4rem 0;}' +
+          '#previewContent .content-block{border-radius:1rem;border:1px solid rgba(34,211,238,.22);background:linear-gradient(145deg,rgba(15,23,42,.88),rgba(2,6,23,.84));padding:1rem 1.1rem;box-shadow:0 12px 28px rgba(2,6,23,.24);}' +
+          '#previewContent .content-block > *:last-child{margin-bottom:0 !important;}' +
+          '#previewContent .content-block-label{margin:0 0 .75rem;color:#67e8f9;font-family:Orbitron,sans-serif;font-size:.95rem;font-weight:800;letter-spacing:.02em;text-transform:uppercase;}' +
+          '#previewContent .content-block-note{border-color:rgba(34,211,238,.28);background:linear-gradient(145deg,rgba(6,78,92,.32),rgba(2,6,23,.84));}' +
+          '#previewContent .content-block-highlight{border-color:rgba(56,189,248,.3);background:linear-gradient(145deg,rgba(12,74,110,.35),rgba(2,6,23,.84));}' +
+          '#previewContent .content-block-success{border-color:rgba(16,185,129,.3);background:linear-gradient(145deg,rgba(6,78,59,.28),rgba(2,6,23,.84));}' +
+          '#previewContent .content-block-warning{border-color:rgba(245,158,11,.3);background:linear-gradient(145deg,rgba(120,53,15,.3),rgba(2,6,23,.84));}' +
+          '#previewContent .content-block-image{padding:0;overflow:hidden;}' +
+          '#previewContent .content-block-image .content-block-label{padding:1rem 1rem 0;margin-bottom:.35rem;}' +
+          '#previewContent .content-block-image figure{margin:0;max-width:100%;}' +
+          '#previewContent .content-block-video .aspect-video{position:relative;padding-top:56.25%;border-radius:.75rem;overflow:hidden;background:#0f172a;}' +
+          '#previewContent .content-block-video iframe{position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:0;min-height:0;}' +
+          '#previewContent .content-block-table{padding:0;overflow:hidden;}' +
+          '#previewContent .content-block-table .content-block-label{padding:1rem 1rem 0;}' +
+          '#previewContent .content-block-faq h3{margin-top:0;}' +
+          '#previewContent table{width:100%;border-collapse:collapse;margin:1.5rem 0;background:rgba(15,23,42,.82);}' +
+          '#previewContent th,#previewContent td{border:1px solid rgba(51,65,85,.8);padding:12px 14px;text-align:left;vertical-align:top;}' +
+          '#previewContent th{background:rgba(30,41,59,.55);}' +
+          '@media (max-width: 760px){#previewContent .content-grid-two{grid-template-columns:1fr;}}' +
+        '</style>' +
+        '<div class="preview-article">' +
+          '<div class="mb-4"><span class="preview-chip">' + categoriaNome + '</span></div>' +
+          '<h1 class="preview-title">' + titulo + '</h1>' +
+          '<div>' + (conteudo || "<p><em>Sem conteudo.</em></p>") + '</div>' +
+        '</div>';
     }
 
     var modal = byId("previewModal");
-    if (modal) modal.classList.add("active"); // IMPORTANT: usa 'active' como no editar-post
+    if (modal) modal.classList.add("active");
 
     document.body.style.overflow = "hidden";
   };

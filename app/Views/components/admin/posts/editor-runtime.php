@@ -239,9 +239,29 @@ declare(strict_types=1);
       '.article-body h2{font-family:Orbitron,sans-serif;font-size:2rem;font-weight:700;color:#00d4ff;margin:2.5rem 0 1.5rem;padding-bottom:.5rem;border-bottom:2px solid rgba(0,212,255,.3);}' +
       '.article-body h3{font-family:Orbitron,sans-serif;font-size:1.5rem;font-weight:600;color:#b829dd;margin:2rem 0 1rem;}' +
       '.article-body p{margin-bottom:1.5rem;font-size:1.05rem;color:#cbd5e1;}' +
-      '.article-body ul,.article-body ol{margin:0 0 1.5rem;padding-left:2rem;}' +
+      '.article-body ul,.article-body ol{margin:0 0 1.5rem;}' +
+      '.article-body ul{list-style:none;padding-left:.35rem;}' +
+      '.article-body ul li{position:relative;padding-left:1.35rem;}' +
+      '.article-body ul li::before{content:"✦";position:absolute;left:0;top:.03rem;color:#22d3ee;font-size:.85em;}' +
+      '.article-body ol{padding-left:1.45rem;}' +
       '.article-body li{margin-bottom:.75rem;font-size:1.05rem;color:#cbd5e1;}' +
       '.article-body blockquote{border-left:4px solid #00d4ff;padding:1.5rem;margin:2rem 0;background:rgba(0,212,255,.05);border-radius:0 12px 12px 0;color:#94a3b8;}' +
+      '.article-body .content-grid-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1.4rem 0;}' +
+      '.article-body .content-block{border-radius:16px;border:1px solid rgba(34,211,238,.22);background:linear-gradient(145deg,rgba(15,23,42,.88),rgba(2,6,23,.84));padding:1rem 1.1rem;box-shadow:0 12px 28px rgba(2,6,23,.24);}' +
+      '.article-body .content-block > *:last-child{margin-bottom:0 !important;}' +
+      '.article-body .content-block-label{font-family:Orbitron,sans-serif;font-size:.95rem;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:#67e8f9;margin:0 0 .75rem;}' +
+      '.article-body .content-block-note{border-color:rgba(34,211,238,.28);background:linear-gradient(145deg,rgba(6,78,92,.32),rgba(2,6,23,.84));}' +
+      '.article-body .content-block-highlight{border-color:rgba(56,189,248,.3);background:linear-gradient(145deg,rgba(12,74,110,.35),rgba(2,6,23,.84));}' +
+      '.article-body .content-block-success{border-color:rgba(16,185,129,.3);background:linear-gradient(145deg,rgba(6,78,59,.28),rgba(2,6,23,.84));}' +
+      '.article-body .content-block-warning{border-color:rgba(245,158,11,.3);background:linear-gradient(145deg,rgba(120,53,15,.3),rgba(2,6,23,.84));}' +
+      '.article-body .content-block-image{padding:0;overflow:hidden;}' +
+      '.article-body .content-block-image .content-block-label{padding:1rem 1rem 0;margin-bottom:.35rem;}' +
+      '.article-body .content-block-image figure{margin:0;max-width:100%;}' +
+      '.article-body .content-block-video .aspect-video{position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#0f172a;}' +
+      '.article-body .content-block-video iframe{position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:0;min-height:0;}' +
+      '.article-body .content-block-table{padding:0;overflow:hidden;}' +
+      '.article-body .content-block-table .content-block-label{padding:1rem 1rem 0;}' +
+      '.article-body .content-block-faq h3{margin-top:0;}' +
       '.article-body img{display:block;width:auto;max-width:100%;max-height:56vh;height:auto;border-radius:12px;margin:0 auto;border:1px solid rgba(0,212,255,.2);} .article-body figure{margin:2rem auto;max-width:min(100%,760px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;} .article-body figure.content-media-wide{max-width:100%;width:100%;display:block;}' +
       '.article-body figure{margin:2rem 0;}' +
       '.article-body figcaption{text-align:center;color:#64748b;font-size:.9rem;margin-top:-1rem;margin-bottom:0;font-style:italic;}' +
@@ -249,6 +269,7 @@ declare(strict_types=1);
       '.article-body table{width:100%;border-collapse:collapse;margin:1.5rem 0;background:rgba(15,23,42,.82);}' +
       '.article-body th,.article-body td{border:1px solid rgba(51,65,85,.8);padding:12px 14px;text-align:left;vertical-align:top;}' +
       '.article-body th{background:rgba(30,41,59,.55);}' +
+      '@media (max-width: 760px){.article-body .content-grid-two{grid-template-columns:1fr;}}' +
       '</style>' +
       '<div class="wrap">' +
       '<div class="article-header">' +

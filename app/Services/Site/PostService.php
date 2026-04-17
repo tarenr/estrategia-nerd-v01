@@ -44,6 +44,10 @@ final class PostService
         $related = $this->loadRelatedPosts($row);
         $previous = $this->normalizeAdjacent($this->posts->previousPublicPost((string) ($row['data_publicacao'] ?? ''), $postId), 'anterior');
         $next = $this->normalizeAdjacent($this->posts->nextPublicPost((string) ($row['data_publicacao'] ?? ''), $postId), 'proximo');
+        $nextStep = $this->normalizeAdjacent($this->posts->findPublishedById((int) ($row['proximo_post_id'] ?? 0)), 'proximo_passo');
+        if (is_array($nextStep) && ((string) ($nextStep['url'] ?? '')) === url('/post/' . (string) ($row['slug'] ?? ''))) {
+            $nextStep = null;
+        }
         $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
         $pageTitle = $post['seo_title'] !== '' ? $post['seo_title'] : ($post['titulo'] . ' | ' . $siteName);
         $metaDescription = $post['seo_description'] !== ''
@@ -67,6 +71,7 @@ final class PostService
             'post_related' => $related,
             'post_previous' => $previous,
             'post_next' => $next,
+            'post_next_step' => $nextStep,
             'comment_state' => [
                 'status' => (string) ($state['status'] ?? ''),
                 'message' => (string) ($state['message'] ?? ''),
@@ -327,6 +332,8 @@ final class PostService
         $html = preg_replace('/<\/table>/i', '</table></div>', $html) ?? $html;
         $html = preg_replace('/<figure\b/i', '<figure class="article-figure"', $html) ?? $html;
 
+        $html = $this->normalizeStructuredBlocks($html);
+        $html = $this->normalizeEditorialFigures($html);
         $html = $this->normalizeAssetPaths($html);
         $html = $this->removeMissingLocalImages($html);
 
@@ -572,10 +579,171 @@ final class PostService
         return $output !== '' ? $output : $html;
     }
 
+    private function normalizeStructuredBlocks(string $html): string
+    {
+        if (trim($html) === '' || !class_exists(\DOMDocument::class)) {
+            return $html;
+        }
+
+        $document = new \DOMDocument('1.0', 'UTF-8');
+        libxml_use_internal_errors(true);
+        $loaded = $document->loadHTML(
+            '<?xml encoding="utf-8" ?><div id="post-content-structured-root">' . $html . '</div>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+        );
+        libxml_clear_errors();
+
+        if ($loaded !== true) {
+            return $html;
+        }
+
+        $xpath = new \DOMXPath($document);
+        $blocks = $xpath->query("//div[contains(concat(' ', normalize-space(@class), ' '), ' content-block-image ')]");
+        if ($blocks === false) {
+            return $html;
+        }
+
+        foreach ($blocks as $block) {
+            if (!$block instanceof \DOMElement) {
+                continue;
+            }
+
+            $primaryLabelKept = false;
+            $children = [];
+            foreach ($block->childNodes as $child) {
+                $children[] = $child;
+            }
+
+            foreach ($children as $child) {
+                if (!$child instanceof \DOMElement || !$this->elementHasClass($child, 'content-block-label')) {
+                    continue;
+                }
+
+                if ($this->nodeContainsMedia($child)) {
+                    while ($child->firstChild !== null) {
+                        $block->insertBefore($child->firstChild, $child);
+                    }
+                    $block->removeChild($child);
+                    continue;
+                }
+
+                $labelText = trim((string) $child->textContent);
+                if ($labelText === '' || $primaryLabelKept) {
+                    $block->removeChild($child);
+                    continue;
+                }
+
+                $primaryLabelKept = true;
+            }
+        }
+
+        $root = $document->getElementById('post-content-structured-root');
+        if (!$root instanceof \DOMElement) {
+            return $html;
+        }
+
+        $output = '';
+        foreach ($root->childNodes as $child) {
+            $output .= $document->saveHTML($child);
+        }
+
+        return $output !== '' ? $output : $html;
+    }
+
+    private function normalizeEditorialFigures(string $html): string
+    {
+        if (trim($html) === '' || !class_exists(\DOMDocument::class)) {
+            return $html;
+        }
+
+        $document = new \DOMDocument('1.0', 'UTF-8');
+        libxml_use_internal_errors(true);
+        $loaded = $document->loadHTML(
+            '<?xml encoding="utf-8" ?><div id="post-content-figure-root">' . $html . '</div>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+        );
+        libxml_clear_errors();
+
+        if ($loaded !== true) {
+            return $html;
+        }
+
+        $xpath = new \DOMXPath($document);
+        $figures = $xpath->query('//figure');
+        if ($figures === false) {
+            return $html;
+        }
+
+        foreach ($figures as $figure) {
+            if (!$figure instanceof \DOMElement) {
+                continue;
+            }
+
+            $figure->setAttribute('class', $this->appendCssClass((string) $figure->getAttribute('class'), 'article-figure'));
+            $figure->setAttribute(
+                'style',
+                $this->mergeInlineStyle(
+                    (string) $figure->getAttribute('style'),
+                    [
+                        'width' => 'min(100%, 34rem)',
+                        'max-width' => '34rem',
+                        'margin' => '2.35rem auto',
+                    ]
+                )
+            );
+
+            foreach ($figure->getElementsByTagName('img') as $image) {
+                if (!$image instanceof \DOMElement) {
+                    continue;
+                }
+
+                $image->setAttribute(
+                    'style',
+                    $this->mergeInlineStyle(
+                        (string) $image->getAttribute('style'),
+                        [
+                            'display' => 'block',
+                            'width' => '100%',
+                            'max-width' => '100%',
+                            'height' => 'auto',
+                            'max-height' => '28rem',
+                            'object-fit' => 'cover',
+                            'margin' => '0 auto',
+                        ]
+                    )
+                );
+            }
+        }
+
+        $root = $document->getElementById('post-content-figure-root');
+        if (!$root instanceof \DOMElement) {
+            return $html;
+        }
+
+        $output = '';
+        foreach ($root->childNodes as $child) {
+            $output .= $document->saveHTML($child);
+        }
+
+        return $output !== '' ? $output : $html;
+    }
+
     private function localImageExists(string $src): bool
     {
         if (preg_match('~^data:~i', $src)) {
             return true;
+        }
+
+        $host = (string) parse_url($src, PHP_URL_HOST);
+        if ($host !== '') {
+            $knownHosts = array_filter([
+                (string) parse_url(app_url(), PHP_URL_HOST),
+                (string) ($_SERVER['HTTP_HOST'] ?? ''),
+            ]);
+            $knownHosts = array_map('strtolower', $knownHosts);
+            if ($knownHosts !== [] && !in_array(strtolower($host), $knownHosts, true)) {
+                return true;
+            }
         }
 
         $path = parse_url($src, PHP_URL_PATH);
@@ -593,8 +761,101 @@ final class PostService
             return true;
         }
 
-        $fullPath = base_path('public/' . $path);
-        return is_file($fullPath);
+        $candidates = $this->assetPathCandidates($path);
+        $checkedResolvableBase = false;
+
+        foreach ($candidates as $fullPath) {
+            if (is_file($fullPath)) {
+                return true;
+            }
+
+            $baseDir = dirname($fullPath);
+            if (is_dir($baseDir)) {
+                $checkedResolvableBase = true;
+            }
+        }
+
+        return !$checkedResolvableBase;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function assetPathCandidates(string $path): array
+    {
+        $normalized = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, ltrim($path, '/\\'));
+        $candidates = [
+            base_path('public/' . $normalized),
+            base_path($normalized),
+            base_path('deploy/public_html/' . $normalized),
+        ];
+
+        $documentRoot = trim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''));
+        if ($documentRoot !== '') {
+            $candidates[] = rtrim($documentRoot, '/\\') . DIRECTORY_SEPARATOR . $normalized;
+            $candidates[] = dirname(rtrim($documentRoot, '/\\')) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . $normalized;
+        }
+
+        return array_values(array_unique($candidates));
+    }
+
+    private function elementHasClass(\DOMElement $element, string $className): bool
+    {
+        $classes = preg_split('/\s+/', trim((string) $element->getAttribute('class'))) ?: [];
+        return in_array($className, $classes, true);
+    }
+
+    private function nodeContainsMedia(\DOMElement $element): bool
+    {
+        foreach (['figure', 'img', 'picture', 'iframe', 'video'] as $tagName) {
+            if ($element->getElementsByTagName($tagName)->length > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function appendCssClass(string $existing, string $className): string
+    {
+        $classes = preg_split('/\s+/', trim($existing)) ?: [];
+        if (!in_array($className, $classes, true)) {
+            $classes[] = $className;
+        }
+
+        return trim(implode(' ', array_filter($classes)));
+    }
+
+    /**
+     * @param array<string, string> $rules
+     */
+    private function mergeInlineStyle(string $existing, array $rules): string
+    {
+        $styles = [];
+        foreach (explode(';', $existing) as $segment) {
+            $segment = trim($segment);
+            if ($segment === '' || !str_contains($segment, ':')) {
+                continue;
+            }
+
+            [$property, $value] = explode(':', $segment, 2);
+            $property = strtolower(trim($property));
+            $value = trim($value);
+            if ($property !== '' && $value !== '') {
+                $styles[$property] = $value;
+            }
+        }
+
+        foreach ($rules as $property => $value) {
+            $styles[strtolower(trim($property))] = trim($value);
+        }
+
+        $segments = [];
+        foreach ($styles as $property => $value) {
+            $segments[] = $property . ': ' . $value;
+        }
+
+        return implode('; ', $segments);
     }
 
     private function toPublicUrl(string $value): string

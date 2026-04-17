@@ -10,17 +10,29 @@ $commentsTotal = (int) ($post_comments_total ?? count($comments));
 $related = is_array($post_related ?? null) ? $post_related : [];
 $previous = is_array($post_previous ?? null) ? $post_previous : null;
 $next = is_array($post_next ?? null) ? $post_next : null;
+$nextStepPost = is_array($post_next_step ?? null) ? $post_next_step : null;
 $commentState = is_array($comment_state ?? null) ? $comment_state : [];
 $siteMeta = is_array($site_meta ?? null) ? $site_meta : [];
 $postNextLinks = [];
-if (site_section_public_active('blog')) {
-    $postNextLinks[] = ['label' => 'Explorar o blog', 'url' => site_section_href('blog')];
-}
-if (site_section_public_active('central_nerd')) {
-    $postNextLinks[] = ['label' => 'Abrir a Central Nerd', 'url' => site_section_href('central_nerd')];
-}
-if (site_section_public_active('newsletter')) {
-    $postNextLinks[] = ['label' => 'Receber novidades', 'url' => site_section_href('newsletter')];
+if ($nextStepPost === null) {
+    if (site_section_public_active('blog')) {
+        $postNextLinks[] = ['label' => 'Explorar o blog', 'url' => site_section_href('blog')];
+    }
+    if (site_section_public_active('central_nerd')) {
+        $postNextLinks[] = ['label' => 'Abrir a Central Nerd', 'url' => site_section_href('central_nerd')];
+    }
+    if (site_section_public_active('newsletter')) {
+        $postNextLinks[] = ['label' => 'Receber novidades', 'url' => site_section_href('newsletter')];
+    }
+} else {
+    $nextStepTitle = preg_replace('/\[\[(.*?)\]\]/u', '$1', (string) ($nextStepPost['titulo'] ?? ''));
+    if (!is_string($nextStepTitle) || trim($nextStepTitle) === '') {
+        $nextStepTitle = 'Ler recomendacao';
+    }
+    $postNextLinks[] = [
+        'label' => 'Continuar leitura: ' . $nextStepTitle,
+        'url' => (string) ($nextStepPost['url'] ?? '#'),
+    ];
 }
 
 $siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');

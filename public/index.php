@@ -17,6 +17,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../bootstrap.php';
 
 use App\Support\Auth;
+use App\Support\LocalOnlyAccess;
 use App\Support\View;
 
 $pdo = $GLOBALS['pdo'] ?? null;
@@ -32,6 +33,11 @@ $path = preg_replace('#^.*?/public#', '', $path) ?? $path;
 $path = preg_replace('#^.*?/index\.php#', '', $path) ?? $path;
 $path = $path === '' ? '/' : $path;
 $path = rtrim($path, '/') ?: '/';
+
+/** Blindagem local: rotas internas nao podem abrir fora do ambiente local */
+if (preg_match('#^/(local|dev)(/|$)#', $path) === 1) {
+    LocalOnlyAccess::enforce();
+}
 
 /** Load routes (anti-opcache) */
 $routesFile = realpath(__DIR__ . '/../config/routes.php') ?: (__DIR__ . '/../config/routes.php');

@@ -103,6 +103,7 @@ final class PostsService
             'tags' => (string) $form['tags'],
             'status' => (string) $form['status'],
             'destaque' => (int) $form['destaque'],
+            'proximo_post_id' => (int) ($form['proximo_post_id'] ?? 0),
         ]);
 
         return ['ok' => true, 'id' => $postId, 'slug' => $slug];
@@ -160,6 +161,7 @@ final class PostsService
             'tags' => (string) $form['tags'],
             'status' => (string) $form['status'],
             'destaque' => (int) $form['destaque'],
+            'proximo_post_id' => (int) ($form['proximo_post_id'] ?? 0),
         ]);
 
         if ($oldSlug !== '' && $oldSlug !== $slug) {
@@ -222,6 +224,7 @@ final class PostsService
             'tags' => (string) ($post['tags'] ?? ''),
             'status' => 'rascunho',
             'destaque' => 0,
+            'proximo_post_id' => 0,
         ]);
 
         return ['ok' => true, 'id' => $newId, 'slug' => $slug];
@@ -584,6 +587,8 @@ final class PostsService
     private function buildFormViewModel(string $mode, array $form, array $errors = [], ?array $categorias = null, array $extra = []): array
     {
         $isEdit = $mode === 'edit';
+        $supportsNextStep = $this->posts->supportsNextStep();
+        $nextStepOptions = $this->posts->listPublishedForNextStepSelect((int) ($form['id'] ?? 0));
 
         return array_merge([
             'title' => $isEdit ? 'Editar Post' : 'Criar Post',
@@ -591,6 +596,8 @@ final class PostsService
             'form' => $form,
             'errors' => $errors,
             'categorias' => $categorias ?? $this->categorias->listForSelect(),
+            'supports_next_step' => $supportsNextStep,
+            'next_step_options' => $nextStepOptions,
             'media_items' => $this->midia->recentImages(12),
             'orphan_images' => [],
         ], $extra);
@@ -613,6 +620,7 @@ final class PostsService
             'tags' => trim((string) ($post['tags'] ?? '')),
             'status' => trim((string) ($post['status'] ?? 'rascunho')),
             'destaque' => (int) ($post['destaque'] ?? 0) === 1 ? 1 : 0,
+            'proximo_post_id' => max(0, (int) ($post['proximo_post_id'] ?? 0)),
             'data_publicacao' => $this->formatDateTimeForInput((string) ($post['data_publicacao'] ?? '')),
             'tempo_leitura' => max(1, (int) ($post['tempo_leitura'] ?? 5)),
         ];
@@ -696,6 +704,7 @@ final class PostsService
             'tags' => trim((string) ($input['tags'] ?? '')),
             'status' => trim((string) ($input['status'] ?? 'rascunho')),
             'destaque' => isset($input['destaque']) ? 1 : 0,
+            'proximo_post_id' => max(0, (int) ($input['proximo_post_id'] ?? 0)),
             'data_publicacao' => trim((string) ($input['data_publicacao'] ?? $agora->format('Y-m-d\TH:i'))),
             'tempo_leitura' => max(1, (int) ($input['tempo_leitura'] ?? 5)),
         ];
@@ -740,6 +749,20 @@ final class PostsService
 
         if (mb_strlen((string) $form['seo_description']) > 300) {
             $errors['seo_description'] = 'A SEO description deve ter no maximo 300 caracteres.';
+        }
+
+        $nextStepId = max(0, (int) ($form['proximo_post_id'] ?? 0));
+        if ($nextStepId > 0) {
+            if (!$this->posts->supportsNextStep()) {
+                $errors['proximo_post_id'] = 'Recurso de proximo passo indisponivel neste banco. Execute a migracao da coluna proximo_post_id.';
+                return $errors;
+            }
+            $currentId = max(0, (int) ($ignoreId ?? ($form['id'] ?? 0)));
+            if ($currentId > 0 && $nextStepId === $currentId) {
+                $errors['proximo_post_id'] = 'Selecione um post diferente para o proximo passo.';
+            } elseif ($this->posts->findPublishedById($nextStepId) === null) {
+                $errors['proximo_post_id'] = 'O proximo passo precisa apontar para um post publicado valido.';
+            }
         }
 
         return $errors;

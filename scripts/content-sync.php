@@ -29,6 +29,7 @@ try {
 
         case 'status':
             $status = $manager->status();
+            $parity = $manager->parityStatus();
             echo 'Raiz: ' . ($status['package_root'] ?? '-') . PHP_EOL;
             echo 'Total de pacotes: ' . (int) ($status['total_packages'] ?? 0) . PHP_EOL;
             if (!empty($status['latest'])) {
@@ -43,6 +44,38 @@ try {
                 echo PHP_EOL . 'Ultima publicacao em producao:' . PHP_EOL;
                 echo '- ID: ' . ($latestApply['package_id'] ?? '-') . PHP_EOL;
                 echo '- Aplicado em: ' . ($latestApply['applied_at'] ?? '-') . PHP_EOL;
+            }
+            echo PHP_EOL . 'Paridade geral: ' . (($parity['overall_in_sync'] ?? false) ? 'sincronizada' : 'pendente') . PHP_EOL;
+            if (!empty($parity['content'])) {
+                echo '- Conteudo: ' . (($parity['content']['in_sync'] ?? false) ? 'ok' : 'divergente') . PHP_EOL;
+            }
+            if (!empty($parity['code'])) {
+                echo '- Codigo: ' . (($parity['code']['in_sync'] ?? false) ? 'ok' : 'divergente') . PHP_EOL;
+            }
+            break;
+
+        case 'parity':
+            $parity = $manager->parityStatus();
+            echo 'Paridade local x producao' . PHP_EOL;
+            echo '- Verificado em: ' . ($parity['checked_at'] ?? '-') . PHP_EOL;
+            echo '- Geral: ' . (($parity['overall_in_sync'] ?? false) ? 'sincronizada' : 'pendente') . PHP_EOL;
+            if (!empty($parity['content'])) {
+                echo PHP_EOL . 'Conteudo:' . PHP_EOL;
+                echo '- Ultimo pacote local: ' . (($parity['content']['latest_local_package_id'] ?? null) ?: '-') . PHP_EOL;
+                echo '- Ultimo pacote em producao: ' . (($parity['content']['latest_production_package_id'] ?? null) ?: '-') . PHP_EOL;
+                echo '- Status: ' . (($parity['content']['in_sync'] ?? false) ? 'ok' : 'divergente') . PHP_EOL;
+            }
+            if (!empty($parity['code'])) {
+                echo PHP_EOL . 'Codigo:' . PHP_EOL;
+                echo '- Ultimo pacote local: ' . (($parity['code']['latest_local_package_id'] ?? null) ?: '-') . PHP_EOL;
+                echo '- Ultimo pacote em producao: ' . (($parity['code']['latest_production_package_id'] ?? null) ?: '-') . PHP_EOL;
+                echo '- Status: ' . (($parity['code']['in_sync'] ?? false) ? 'ok' : 'divergente') . PHP_EOL;
+            }
+            if (!empty($parity['recommendations'])) {
+                echo PHP_EOL . 'Recomendacoes:' . PHP_EOL;
+                foreach ((array) $parity['recommendations'] as $recommendation) {
+                    echo '- ' . $recommendation . PHP_EOL;
+                }
             }
             break;
 
@@ -68,6 +101,7 @@ try {
             echo 'Uso:' . PHP_EOL;
             echo '  php scripts/content-sync.php export [local|production]' . PHP_EOL;
             echo '  php scripts/content-sync.php status' . PHP_EOL;
+            echo '  php scripts/content-sync.php parity' . PHP_EOL;
             echo '  php scripts/content-sync.php verify [package_id|latest]' . PHP_EOL;
             echo '  php scripts/content-sync.php apply [package_id|latest] [local|production] --force' . PHP_EOL;
             exit(0);

@@ -6,6 +6,7 @@ use App\Support\View;
 $form = $form ?? [];
 $errors = $errors ?? [];
 $categorias = $categorias ?? [];
+$nextStepOptions = $next_step_options ?? [];
 $mediaItems = $media_items ?? [];
 $criarPostJsPath = dirname(__DIR__, 3) . '/public/assets/js/criar-post.js';
 $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJsPath) : '1';
@@ -30,6 +31,7 @@ $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJ
       'form' => $form,
       'errors' => $errors,
       'categorias' => $categorias,
+      'next_step_options' => $nextStepOptions,
       'media_items' => $mediaItems,
   ]); ?>
 </div>

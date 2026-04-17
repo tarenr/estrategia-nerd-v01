@@ -10,7 +10,7 @@ EnvLoader::load(dirname(__DIR__) . '/.env');
 $projectRoot = realpath(dirname(__DIR__)) ?: dirname(__DIR__);
 $normalizedProjectRoot = normalizePath($projectRoot);
 
-$defaultCanonical = 'D:\\Taren\\htdocs\\estrategia-nerd';
+$defaultCanonical = 'C:\\xampp\\htdocs\\estrategia-nerd';
 $canonicalRaw = trim((string) ($_ENV['PROJECT_CANONICAL_ROOTS'] ?? $defaultCanonical));
 $canonicalRoots = [];
 if ($canonicalRaw !== '') {

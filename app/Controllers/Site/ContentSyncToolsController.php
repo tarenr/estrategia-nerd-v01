@@ -19,15 +19,18 @@ final class ContentSyncToolsController
         $status = $manager->status();
         $flash = Session::pull('content_sync_flash');
         $lastVerification = Session::pull('content_sync_verification');
+        $lastPostCheck = Session::pull('content_sync_postcheck');
 
         View::render('site/content-sync-tools', [
             'title' => 'Conteudo Local | Estrategia Nerd',
             'meta_description' => 'Painel local para exportar, validar e publicar conteudo na producao.',
             'site_chrome' => false,
             'content_status' => $this->presentStatus($status),
-            'code_status' => $manager->codeStatus(),
+            'code_status' => $this->presentCodeStatus($manager->codeStatus()),
+            'parity_status' => $manager->parityStatus(),
             'flash' => is_array($flash) ? $flash : null,
             'last_verification' => is_array($lastVerification) ? $lastVerification : null,
+            'last_post_check' => is_array($lastPostCheck) ? $lastPostCheck : null,
             'production_ready' => $this->productionProfileReady(),
             'production_code_ready' => $this->productionCodeProfileReady(),
         ]);
@@ -69,6 +72,7 @@ final class ContentSyncToolsController
                     $packageId = $this->normalizeOptionalId($_POST['package_id'] ?? 'latest');
                     $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'production')));
                     $result = $manager->apply($packageId, $targetProfile, true);
+                    Session::put('content_sync_postcheck', $manager->parityStatus());
                     $this->flash('success', sprintf('Pacote %s aplicado em %s.', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? '')));
                     break;
 
@@ -81,6 +85,7 @@ final class ContentSyncToolsController
                     $packageId = $this->normalizeOptionalId($_POST['package_id'] ?? 'latest');
                     $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'production')));
                     $result = $manager->applyCode($packageId, $targetProfile, true);
+                    Session::put('content_sync_postcheck', $manager->parityStatus());
                     $this->flash('success', sprintf('Pacote de codigo %s aplicado em %s (%d arquivos).', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? ''), (int) ($result['result']['files_applied'] ?? 0)));
                     break;
 
@@ -197,6 +202,9 @@ final class ContentSyncToolsController
                     'configuracoes' => (int) ($item['stats']['configuracoes'] ?? 0),
                     'uploads' => (int) ($item['uploads']['included_files'] ?? 0),
                 ],
+                'data_files' => array_values(array_map('strval', array_keys((array) ($item['data_files'] ?? [])))),
+                'uploads_paths_preview' => array_slice(array_values(array_map('strval', (array) ($item['uploads']['paths'] ?? []))), 0, 5),
+                'uploads_paths_extra' => max(0, count((array) ($item['uploads']['paths'] ?? [])) - 5),
                 'last_apply' => $this->presentLastApply((array) ($item['applied_targets'] ?? [])),
             ];
         }
@@ -207,6 +215,34 @@ final class ContentSyncToolsController
             'latest' => $items[0] ?? null,
             'latest_production_apply' => $status['latest_production_apply'] ?? null,
             'running' => $status['running'] ?? null,
+            'items' => $items,
+        ];
+    }
+
+    private function presentCodeStatus(array $status): array
+    {
+        $items = [];
+        foreach ((array) ($status['items'] ?? []) as $item) {
+            $files = array_values(array_map('strval', (array) ($item['files'] ?? [])));
+            $items[] = [
+                'package_id' => (string) ($item['package_id'] ?? ''),
+                'commit' => (string) ($item['commit'] ?? ''),
+                'created_at' => (string) ($item['created_at'] ?? ''),
+                'files_count' => (int) ($item['files_count'] ?? count($files)),
+                'notes' => (string) ($item['notes'] ?? ''),
+                'zip_path' => (string) ($item['zip_path'] ?? ''),
+                'manifest_path' => (string) ($item['manifest_path'] ?? ''),
+                'files_preview' => array_slice($files, 0, 8),
+                'files_extra' => max(0, count($files) - 8),
+                'last_apply' => $this->presentLastApply((array) ($item['applied_targets'] ?? [])),
+            ];
+        }
+
+        return [
+            'package_root' => (string) ($status['package_root'] ?? ''),
+            'total_packages' => (int) ($status['total_packages'] ?? 0),
+            'latest' => $items[0] ?? null,
+            'latest_production_apply' => is_array($status['latest_production_apply'] ?? null) ? $status['latest_production_apply'] : null,
             'items' => $items,
         ];
     }

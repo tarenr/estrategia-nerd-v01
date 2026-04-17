@@ -11,6 +11,8 @@ use ZipArchive;
 
 final class ContentSyncManager
 {
+    private array $columnSupportCache = [];
+
     public function __construct(private array $config)
     {
         date_default_timezone_set($_ENV['APP_TIMEZONE'] ?? 'America/Sao_Paulo');
@@ -95,16 +97,7 @@ final class ContentSyncManager
     {
         $root = $this->packageRoot();
         $items = $this->allPackages();
-        $latestProductionApply = null;
-
-        foreach ($items as $item) {
-            foreach ((array) ($item['applied_targets'] ?? []) as $apply) {
-                if (($apply['target_profile'] ?? '') === 'production') {
-                    $latestProductionApply = ['package_id' => (string) ($item['package_id'] ?? ''), 'applied_at' => (string) ($apply['applied_at'] ?? '')];
-                    break 2;
-                }
-            }
-        }
+        $latestProductionApply = $this->latestAppliedTarget($items, 'production');
 
         return [
             'package_root' => $root,
@@ -120,12 +113,66 @@ final class ContentSyncManager
     {
         $root = $this->codePackageRoot();
         $items = $this->allCodePackages();
+        $latestProductionApply = $this->latestAppliedTarget($items, 'production');
 
         return [
             'package_root' => $root,
             'total_packages' => count($items),
             'latest' => $items[0] ?? null,
+            'latest_production_apply' => $latestProductionApply,
             'items' => $items,
+        ];
+    }
+
+    public function parityStatus(): array
+    {
+        $contentStatus = $this->status();
+        $codeStatus = $this->codeStatus();
+
+        $latestContent = is_array($contentStatus['latest'] ?? null) ? $contentStatus['latest'] : null;
+        $latestContentProd = is_array($contentStatus['latest_production_apply'] ?? null) ? $contentStatus['latest_production_apply'] : null;
+        $latestCode = is_array($codeStatus['latest'] ?? null) ? $codeStatus['latest'] : null;
+        $latestCodeProd = is_array($codeStatus['latest_production_apply'] ?? null) ? $codeStatus['latest_production_apply'] : null;
+
+        $contentSync = $latestContent !== null
+            && $latestContentProd !== null
+            && (string) ($latestContent['package_id'] ?? '') !== ''
+            && (string) ($latestContent['package_id'] ?? '') === (string) ($latestContentProd['package_id'] ?? '');
+
+        $codeSync = $latestCode !== null
+            && $latestCodeProd !== null
+            && (string) ($latestCode['package_id'] ?? '') !== ''
+            && (string) ($latestCode['package_id'] ?? '') === (string) ($latestCodeProd['package_id'] ?? '');
+
+        $recommendations = [];
+        if ($latestContent !== null && !$contentSync) {
+            $recommendations[] = 'Conteudo local mais novo do que a producao. Validar e publicar o pacote mais recente.';
+        }
+        if ($latestCode !== null && !$codeSync) {
+            $recommendations[] = 'Codigo local mais novo do que a producao. Gerar/aplicar o pacote tecnico mais recente.';
+        }
+        if ($recommendations === []) {
+            $recommendations[] = 'Local e producao estao alinhados nos ultimos pacotes registrados.';
+        }
+
+        return [
+            'checked_at' => date('c'),
+            'overall_in_sync' => $contentSync && $codeSync,
+            'content' => [
+                'in_sync' => $contentSync,
+                'latest_local_package_id' => (string) ($latestContent['package_id'] ?? ''),
+                'latest_local_created_at' => (string) ($latestContent['created_at'] ?? ''),
+                'latest_production_package_id' => (string) ($latestContentProd['package_id'] ?? ''),
+                'latest_production_applied_at' => (string) ($latestContentProd['applied_at'] ?? ''),
+            ],
+            'code' => [
+                'in_sync' => $codeSync,
+                'latest_local_package_id' => (string) ($latestCode['package_id'] ?? ''),
+                'latest_local_created_at' => (string) ($latestCode['created_at'] ?? ''),
+                'latest_production_package_id' => (string) ($latestCodeProd['package_id'] ?? ''),
+                'latest_production_applied_at' => (string) ($latestCodeProd['applied_at'] ?? ''),
+            ],
+            'recommendations' => $recommendations,
         ];
     }
 
@@ -233,12 +280,23 @@ final class ContentSyncManager
 
             $deployConfig = $this->codeDeployConfig($targetProfile);
             $result = $this->deployCode($deployConfig, $sourceDir);
+            $apply = [
+                'target_profile' => $targetProfile,
+                'target_profile_label' => $profileLabel,
+                'applied_at' => date('c'),
+                'result' => $result,
+            ];
+            $package['applied_targets'] = array_values(array_merge((array) ($package['applied_targets'] ?? []), [$apply]));
+            $manifestDir = (string) ($package['_dir'] ?? '');
+            if ($manifestDir !== '') {
+                $this->writeManifest($manifestDir, $package);
+            }
 
             return [
                 'package_id' => (string) ($package['package_id'] ?? ''),
                 'target_profile' => $targetProfile,
                 'target_profile_label' => $profileLabel,
-                'applied_at' => date('c'),
+                'applied_at' => (string) $apply['applied_at'],
                 'result' => $result,
             ];
         } finally {
@@ -250,8 +308,10 @@ final class ContentSyncManager
     }
     private function exportPayload(PDO $pdo): array
     {
+        $supportsNextStep = $this->tableHasColumn($pdo, 'posts', 'proximo_post_id');
         $categories = $this->fetchAll($pdo, 'SELECT id, nome, slug, descricao, ativo, ordem, cor FROM categoria_post ORDER BY ordem ASC, nome ASC, id ASC');
-        $posts = $this->fetchAll($pdo, 'SELECT id, titulo, slug, resumo, conteudo, categoria, categoria_id, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, data_atualizacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque FROM posts ORDER BY data_publicacao ASC, id ASC');
+        $nextStepSelect = $supportsNextStep ? 'proximo_post_id' : 'NULL AS proximo_post_id';
+        $posts = $this->fetchAll($pdo, "SELECT id, titulo, slug, resumo, conteudo, categoria, categoria_id, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, data_atualizacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque, {$nextStepSelect} FROM posts ORDER BY data_publicacao ASC, id ASC");
         $history = $this->fetchAll($pdo, 'SELECT post_id, slug, created_at FROM post_slug_history ORDER BY id ASC');
         $links = $this->fetchAll($pdo, 'SELECT id, titulo, slug, url, tipo, promocao, desconto_percentual, desconto_contexto, codigo_cupom, secao_publica, subgrupo_publico, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque, expira_em FROM links ORDER BY posicao ASC, id ASC');
         $configs = $this->fetchConfiguracoes($pdo);
@@ -264,9 +324,20 @@ final class ContentSyncManager
             }
         }
 
+        $postSlugById = [];
+        foreach ($posts as $item) {
+            $itemId = (int) ($item['id'] ?? 0);
+            $itemSlug = trim((string) ($item['slug'] ?? ''));
+            if ($itemId > 0 && $itemSlug !== '') {
+                $postSlugById[$itemId] = $itemSlug;
+            }
+        }
+
         foreach ($posts as &$post) {
             $categoryPostId = (int) ($post['categoria_post_id'] ?? 0);
+            $nextPostId = (int) ($post['proximo_post_id'] ?? 0);
             $post['categoria_post_slug'] = $categoryPostId > 0 ? (string) ($categorySlugById[$categoryPostId] ?? '') : '';
+            $post['proximo_post_slug'] = $nextPostId > 0 ? (string) ($postSlugById[$nextPostId] ?? '') : '';
         }
         unset($post);
 
@@ -489,6 +560,7 @@ final class ContentSyncManager
     }
     private function applyPosts(PDO $pdo, array $posts, array $historyRows, array $categoryPayload): array
     {
+        $supportsNextStep = $this->tableHasColumn($pdo, 'posts', 'proximo_post_id');
         $categoryMap = (array) ($categoryPayload['map'] ?? []);
         $historyByPost = [];
         foreach ($historyRows as $row) {
@@ -499,7 +571,9 @@ final class ContentSyncManager
             }
         }
 
-        $stats = ['created' => 0, 'updated' => 0, 'history_added' => 0];
+        $stats = ['created' => 0, 'updated' => 0, 'history_added' => 0, 'next_step_links' => 0];
+        $targetIdBySlug = [];
+        $nextStepSlugByTargetId = [];
 
         foreach ($posts as $post) {
             $sourcePostId = (int) ($post['id'] ?? 0);
@@ -514,6 +588,7 @@ final class ContentSyncManager
             $categorySlug = trim((string) ($post['categoria_post_slug'] ?? ''));
             $categoryId = $categorySlug !== '' ? (int) ($categoryMap[$categorySlug] ?? 0) : 0;
             $authorId = $this->resolveAuthorId($pdo, (int) ($post['autor_id'] ?? 1));
+            $nextStepSlug = trim((string) ($post['proximo_post_slug'] ?? ''));
 
             $data = [
                 'titulo' => (string) ($post['titulo'] ?? ''),
@@ -534,9 +609,16 @@ final class ContentSyncManager
                 'status' => (string) ($post['status'] ?? 'rascunho'),
                 'destaque' => (int) ($post['destaque'] ?? 0),
             ];
+            if ($supportsNextStep) {
+                $data['proximo_post_id'] = null;
+            }
 
             if ($existing !== null) {
-                $stmt = $pdo->prepare('UPDATE posts SET titulo = :titulo, slug = :slug, resumo = :resumo, conteudo = :conteudo, categoria = :categoria, categoria_post_id = :categoria_post_id, imagem_capa = :imagem_capa, imagem_thumb = :imagem_thumb, autor_id = :autor_id, data_publicacao = :data_publicacao, tempo_leitura = :tempo_leitura, seo_title = :seo_title, seo_description = :seo_description, seo_keywords = :seo_keywords, tags = :tags, status = :status, destaque = :destaque WHERE id = :id');
+                $assignments = 'titulo = :titulo, slug = :slug, resumo = :resumo, conteudo = :conteudo, categoria = :categoria, categoria_post_id = :categoria_post_id, imagem_capa = :imagem_capa, imagem_thumb = :imagem_thumb, autor_id = :autor_id, data_publicacao = :data_publicacao, tempo_leitura = :tempo_leitura, seo_title = :seo_title, seo_description = :seo_description, seo_keywords = :seo_keywords, tags = :tags, status = :status, destaque = :destaque';
+                if ($supportsNextStep) {
+                    $assignments .= ', proximo_post_id = :proximo_post_id';
+                }
+                $stmt = $pdo->prepare("UPDATE posts SET {$assignments} WHERE id = :id");
                 $stmt->execute($data + ['id' => (int) $existing['id']]);
                 $targetPostId = (int) $existing['id'];
                 $stats['updated']++;
@@ -544,11 +626,20 @@ final class ContentSyncManager
                     $stats['history_added']++;
                 }
             } else {
-                $stmt = $pdo->prepare('INSERT INTO posts (titulo, slug, resumo, conteudo, categoria, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque, views, curtidas, comentarios_count, likes_count) VALUES (:titulo, :slug, :resumo, :conteudo, :categoria, :categoria_post_id, :imagem_capa, :imagem_thumb, :autor_id, :data_publicacao, :tempo_leitura, :seo_title, :seo_description, :seo_keywords, :tags, :status, :destaque, 0, 0, 0, 0)');
+                $columns = 'titulo, slug, resumo, conteudo, categoria, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque';
+                $values = ':titulo, :slug, :resumo, :conteudo, :categoria, :categoria_post_id, :imagem_capa, :imagem_thumb, :autor_id, :data_publicacao, :tempo_leitura, :seo_title, :seo_description, :seo_keywords, :tags, :status, :destaque';
+                if ($supportsNextStep) {
+                    $columns .= ', proximo_post_id';
+                    $values .= ', :proximo_post_id';
+                }
+                $stmt = $pdo->prepare("INSERT INTO posts ({$columns}, views, curtidas, comentarios_count, likes_count) VALUES ({$values}, 0, 0, 0, 0)");
                 $stmt->execute($data);
                 $targetPostId = (int) $pdo->lastInsertId();
                 $stats['created']++;
             }
+
+            $targetIdBySlug[$currentSlug] = $targetPostId;
+            $nextStepSlugByTargetId[$targetPostId] = $nextStepSlug;
 
             foreach ($knownSlugs as $historySlug) {
                 if ($historySlug !== $currentSlug && $this->storePostSlug($pdo, $targetPostId, $historySlug)) {
@@ -557,7 +648,57 @@ final class ContentSyncManager
             }
         }
 
+        if ($supportsNextStep && $nextStepSlugByTargetId !== []) {
+            $updateNextStep = $pdo->prepare('UPDATE posts SET proximo_post_id = :proximo_post_id WHERE id = :id');
+            foreach ($nextStepSlugByTargetId as $targetPostId => $nextStepSlug) {
+                $targetPostId = (int) $targetPostId;
+                if ($targetPostId <= 0) {
+                    continue;
+                }
+
+                $nextTargetId = null;
+                $normalizedNextSlug = trim((string) $nextStepSlug);
+                if ($normalizedNextSlug !== '') {
+                    $nextTargetId = (int) ($targetIdBySlug[$normalizedNextSlug] ?? 0);
+                    if ($nextTargetId <= 0) {
+                        $nextExisting = $this->fetchOne($pdo, 'SELECT id FROM posts WHERE slug = :slug LIMIT 1', ['slug' => $normalizedNextSlug]);
+                        $nextTargetId = (int) ($nextExisting['id'] ?? 0);
+                    }
+                }
+
+                if ($nextTargetId > 0 && $nextTargetId !== $targetPostId) {
+                    $updateNextStep->bindValue(':proximo_post_id', $nextTargetId, PDO::PARAM_INT);
+                    $stats['next_step_links']++;
+                } else {
+                    $updateNextStep->bindValue(':proximo_post_id', null, PDO::PARAM_NULL);
+                }
+                $updateNextStep->bindValue(':id', $targetPostId, PDO::PARAM_INT);
+                $updateNextStep->execute();
+            }
+        }
+
         return $stats;
+    }
+
+    private function tableHasColumn(PDO $pdo, string $table, string $column): bool
+    {
+        $cacheKey = $table . '.' . $column;
+        if (array_key_exists($cacheKey, $this->columnSupportCache)) {
+            return (bool) $this->columnSupportCache[$cacheKey];
+        }
+
+        $stmt = $pdo->prepare("SELECT 1
+                               FROM information_schema.COLUMNS
+                               WHERE TABLE_SCHEMA = DATABASE()
+                                 AND TABLE_NAME = :table
+                                 AND COLUMN_NAME = :column
+                               LIMIT 1");
+        $stmt->bindValue(':table', $table, PDO::PARAM_STR);
+        $stmt->bindValue(':column', $column, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $this->columnSupportCache[$cacheKey] = $stmt->fetchColumn() !== false;
+        return (bool) $this->columnSupportCache[$cacheKey];
     }
 
     private function findTargetPost(PDO $pdo, string $currentSlug, array $knownSlugs): ?array
@@ -1424,6 +1565,8 @@ final class ContentSyncManager
                 'created_at' => (string) ($manifest['created_at'] ?? date('c', (int) filemtime($zipPath))),
                 'files_count' => $filesCount,
                 'notes' => (string) ($manifest['notes'] ?? ''),
+                'files' => $this->listCodePackageFiles($packageDir, $zipPath),
+                'applied_targets' => array_values((array) ($manifest['applied_targets'] ?? [])),
                 'zip_path' => $zipPath,
                 'manifest_path' => is_file($manifestPath) ? $manifestPath : '',
                 '_dir' => $packageDir,
@@ -1448,6 +1591,75 @@ final class ContentSyncManager
 
         $decoded = json_decode($raw, true);
         return is_array($decoded) ? $decoded : null;
+    }
+
+    private function latestAppliedTarget(array $items, string $targetProfile): ?array
+    {
+        foreach ($items as $item) {
+            foreach (array_reverse((array) ($item['applied_targets'] ?? [])) as $apply) {
+                if (($apply['target_profile'] ?? '') !== $targetProfile) {
+                    continue;
+                }
+
+                return [
+                    'package_id' => (string) ($item['package_id'] ?? ''),
+                    'applied_at' => (string) ($apply['applied_at'] ?? ''),
+                    'target_profile' => (string) ($apply['target_profile'] ?? ''),
+                    'target_profile_label' => (string) ($apply['target_profile_label'] ?? $targetProfile),
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function listCodePackageFiles(string $packageDir, string $zipPath): array
+    {
+        $sourceDir = $packageDir . DIRECTORY_SEPARATOR . 'files';
+        if (is_dir($sourceDir)) {
+            $files = $this->listFiles($sourceDir);
+            $prefix = rtrim(str_replace('\\', '/', $sourceDir), '/') . '/';
+
+            return array_map(
+                static fn(string $file): string => ltrim(substr(str_replace('\\', '/', $file), strlen($prefix)), '/'),
+                $files
+            );
+        }
+
+        if (!is_file($zipPath) || !class_exists(ZipArchive::class)) {
+            return [];
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipPath) !== true) {
+            return [];
+        }
+
+        try {
+            $files = [];
+            for ($index = 0; $index < $zip->numFiles; $index++) {
+                $name = str_replace('\\', '/', (string) $zip->getNameIndex($index));
+                if ($name === '' || str_ends_with($name, '/')) {
+                    continue;
+                }
+                if (!str_starts_with($name, 'files/')) {
+                    continue;
+                }
+
+                $relative = substr($name, strlen('files/'));
+                if ($relative !== '') {
+                    $files[] = $relative;
+                }
+            }
+
+            sort($files);
+            return $files;
+        } finally {
+            $zip->close();
+        }
     }
 
     private function readCodeManifestFromZip(string $zipPath): ?array

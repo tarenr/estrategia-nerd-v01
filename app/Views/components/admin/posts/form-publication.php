@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 $fieldError = $fieldError ?? static fn (string $key): string => '';
 $form = $form ?? [];
+$nextStepOptions = is_array($next_step_options ?? null) ? $next_step_options : [];
+$supportsNextStep = (bool) ($supports_next_step ?? true);
 $currentStatus = (string) ($form['status'] ?? 'rascunho');
 $currentTempo = (int) ($form['tempo_leitura'] ?? 5);
+$currentNextStep = max(0, (int) ($form['proximo_post_id'] ?? 0));
 $isDestaque = (int) ($form['destaque'] ?? 0) === 1;
 $statusMeta = [
     'rascunho' => ['label' => 'Rascunho', 'hint' => 'Ainda nao aparece no publico.'],
@@ -43,6 +46,43 @@ $tempoHint = $currentTempo <= 4
       </div>
       <input id="tempo_leitura" name="tempo_leitura" type="number" min="1" max="120" value="<?= $currentTempo ?>" class="nerd-input w-full px-4 py-3 rounded-xl">
     </div>
+  </div>
+
+  <div class="post-publication-field">
+    <div class="post-side-field-head">
+      <label for="proximo_post_id" class="block text-sm font-bold text-slate-200">Proximo passo (post recomendado)</label>
+      <span class="post-side-field-meta">
+        <?= $supportsNextStep
+          ? 'Opcional: substitui os botoes padrao por um CTA direto para outro post publicado.'
+          : 'Indisponivel neste banco: execute a migracao da coluna proximo_post_id para habilitar.' ?>
+      </span>
+    </div>
+    <select id="proximo_post_id" name="proximo_post_id" class="nerd-input w-full px-4 py-3 rounded-xl" <?= $supportsNextStep ? '' : 'disabled' ?>>
+      <option value="0">Sem post recomendado</option>
+      <?php foreach ($nextStepOptions as $option): ?>
+        <?php
+          $optionId = (int) ($option['id'] ?? 0);
+          $optionTitle = trim((string) ($option['titulo'] ?? ''));
+          $optionDate = trim((string) ($option['data_publicacao'] ?? ''));
+          $optionSlug = trim((string) ($option['slug'] ?? ''));
+          $optionDateLabel = '';
+          $optionTimestamp = $optionDate !== '' ? strtotime($optionDate) : false;
+          if ($optionTimestamp !== false) {
+              $optionDateLabel = ' (' . date('d/m/Y', $optionTimestamp) . ')';
+          }
+          if ($optionId <= 0 || $optionTitle === '') {
+              continue;
+          }
+        ?>
+        <option value="<?= $optionId ?>" <?= $currentNextStep === $optionId ? 'selected' : '' ?>>
+          <?= htmlspecialchars($optionTitle . $optionDateLabel . ($optionSlug !== '' ? ' - ' . $optionSlug : ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+        </option>
+      <?php endforeach; ?>
+    </select>
+    <?php if (!$supportsNextStep): ?>
+      <input type="hidden" name="proximo_post_id" value="0">
+    <?php endif; ?>
+    <?php if ($fieldError('proximo_post_id') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('proximo_post_id'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
   </div>
 
   <label class="post-destaque-toggle<?= $isDestaque ? ' is-active' : '' ?>">

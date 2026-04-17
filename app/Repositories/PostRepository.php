@@ -15,6 +15,8 @@ use PDO;
 
 final class PostRepository
 {
+    private ?bool $supportsNextStepColumn = null;
+
     public function __construct(private PDO $pdo)
     {
     }
@@ -222,10 +224,11 @@ final class PostRepository
 
     public function findPublicBySlug(string $slug): ?array
     {
+        $nextStepSelect = $this->supportsNextStepColumn() ? 'p.proximo_post_id' : 'NULL AS proximo_post_id';
         $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.conteudo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
                        COALESCE(p.views, 0) AS views, COALESCE(p.curtidas, 0) AS curtidas, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
                        COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
-                       p.seo_title, p.seo_description, p.tags, p.autor_id,
+                       p.seo_title, p.seo_description, p.tags, p.autor_id, {$nextStepSelect},
                        c.id AS categoria_id, c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
                 FROM posts p
                 LEFT JOIN categoria_post c ON c.id = p.categoria_post_id
@@ -419,6 +422,49 @@ final class PostRepository
         return is_array($row) ? $row : null;
     }
 
+    public function findPublishedById(int $id): ?array
+    {
+        if ($id <= 0) {
+            return null;
+        }
+
+        $stmt = $this->pdo->prepare("SELECT id, titulo, slug
+                                     FROM posts
+                                     WHERE id = :id
+                                       AND status = 'publicado'
+                                     LIMIT 1");
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    public function listPublishedForNextStepSelect(int $excludeId = 0, int $limit = 250): array
+    {
+        $limit = max(1, min(500, $limit));
+        $where = ["status = 'publicado'"];
+
+        if ($excludeId > 0) {
+            $where[] = 'id <> :exclude_id';
+        }
+
+        $sql = "SELECT id, titulo, slug, data_publicacao
+                FROM posts
+                WHERE " . implode(' AND ', $where) . '
+                ORDER BY data_publicacao DESC, id DESC
+                LIMIT :limit';
+
+        $stmt = $this->pdo->prepare($sql);
+        if ($excludeId > 0) {
+            $stmt->bindValue(':exclude_id', $excludeId, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function summaryFiltered(array $filters): array
     {
         [$whereSql, $params] = $this->buildAdminWhere($filters);
@@ -498,7 +544,8 @@ final class PostRepository
 
     public function findAdminById(int $id): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT id, titulo, slug, resumo, conteudo, categoria, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque FROM posts WHERE id = :id LIMIT 1');
+        $nextStepSelect = $this->supportsNextStepColumn() ? 'proximo_post_id' : 'NULL AS proximo_post_id';
+        $stmt = $this->pdo->prepare("SELECT id, titulo, slug, resumo, conteudo, categoria, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque, {$nextStepSelect} FROM posts WHERE id = :id LIMIT 1");
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -508,6 +555,12 @@ final class PostRepository
 
     public function deleteById(int $id): void
     {
+        if ($this->supportsNextStepColumn()) {
+            $clearRefs = $this->pdo->prepare('UPDATE posts SET proximo_post_id = NULL WHERE proximo_post_id = :id');
+            $clearRefs->bindValue(':id', $id, PDO::PARAM_INT);
+            $clearRefs->execute();
+        }
+
         $stmt = $this->pdo->prepare('DELETE FROM posts WHERE id = :id');
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -538,7 +591,14 @@ final class PostRepository
 
     public function insertAdmin(array $data): int
     {
-        $sql = "INSERT INTO posts (titulo, slug, resumo, conteudo, categoria, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque, views, curtidas, comentarios_count, likes_count) VALUES (:titulo, :slug, :resumo, :conteudo, :categoria, :categoria_post_id, :imagem_capa, :imagem_thumb, :autor_id, :data_publicacao, :tempo_leitura, :seo_title, :seo_description, :seo_keywords, :tags, :status, :destaque, 0, 0, 0, 0)";
+        $supportsNextStep = $this->supportsNextStepColumn();
+        $columns = 'titulo, slug, resumo, conteudo, categoria, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque';
+        $values = ':titulo, :slug, :resumo, :conteudo, :categoria, :categoria_post_id, :imagem_capa, :imagem_thumb, :autor_id, :data_publicacao, :tempo_leitura, :seo_title, :seo_description, :seo_keywords, :tags, :status, :destaque';
+        if ($supportsNextStep) {
+            $columns .= ', proximo_post_id';
+            $values .= ', :proximo_post_id';
+        }
+        $sql = "INSERT INTO posts ({$columns}, views, curtidas, comentarios_count, likes_count) VALUES ({$values}, 0, 0, 0, 0)";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':titulo', (string) ($data['titulo'] ?? ''), PDO::PARAM_STR);
         $stmt->bindValue(':slug', (string) ($data['slug'] ?? ''), PDO::PARAM_STR);
@@ -557,13 +617,26 @@ final class PostRepository
         $stmt->bindValue(':tags', (string) ($data['tags'] ?? ''), PDO::PARAM_STR);
         $stmt->bindValue(':status', (string) ($data['status'] ?? 'rascunho'), PDO::PARAM_STR);
         $stmt->bindValue(':destaque', (int) ($data['destaque'] ?? 0), PDO::PARAM_INT);
+        if ($supportsNextStep) {
+            $nextStepId = (int) ($data['proximo_post_id'] ?? 0);
+            if ($nextStepId > 0) {
+                $stmt->bindValue(':proximo_post_id', $nextStepId, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue(':proximo_post_id', null, PDO::PARAM_NULL);
+            }
+        }
         $stmt->execute();
         return (int) $this->pdo->lastInsertId();
     }
 
     public function updateAdmin(int $id, array $data): void
     {
-        $sql = 'UPDATE posts SET titulo = :titulo, slug = :slug, resumo = :resumo, conteudo = :conteudo, categoria = :categoria, categoria_post_id = :categoria_post_id, imagem_capa = :imagem_capa, imagem_thumb = :imagem_thumb, autor_id = :autor_id, data_publicacao = :data_publicacao, tempo_leitura = :tempo_leitura, seo_title = :seo_title, seo_description = :seo_description, seo_keywords = :seo_keywords, tags = :tags, status = :status, destaque = :destaque WHERE id = :id';
+        $supportsNextStep = $this->supportsNextStepColumn();
+        $assignments = 'titulo = :titulo, slug = :slug, resumo = :resumo, conteudo = :conteudo, categoria = :categoria, categoria_post_id = :categoria_post_id, imagem_capa = :imagem_capa, imagem_thumb = :imagem_thumb, autor_id = :autor_id, data_publicacao = :data_publicacao, tempo_leitura = :tempo_leitura, seo_title = :seo_title, seo_description = :seo_description, seo_keywords = :seo_keywords, tags = :tags, status = :status, destaque = :destaque';
+        if ($supportsNextStep) {
+            $assignments .= ', proximo_post_id = :proximo_post_id';
+        }
+        $sql = "UPDATE posts SET {$assignments} WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->bindValue(':titulo', (string) ($data['titulo'] ?? ''), PDO::PARAM_STR);
@@ -583,6 +656,14 @@ final class PostRepository
         $stmt->bindValue(':tags', (string) ($data['tags'] ?? ''), PDO::PARAM_STR);
         $stmt->bindValue(':status', (string) ($data['status'] ?? 'rascunho'), PDO::PARAM_STR);
         $stmt->bindValue(':destaque', (int) ($data['destaque'] ?? 0), PDO::PARAM_INT);
+        if ($supportsNextStep) {
+            $nextStepId = (int) ($data['proximo_post_id'] ?? 0);
+            if ($nextStepId > 0) {
+                $stmt->bindValue(':proximo_post_id', $nextStepId, PDO::PARAM_INT);
+            } else {
+                $stmt->bindValue(':proximo_post_id', null, PDO::PARAM_NULL);
+            }
+        }
         $stmt->execute();
     }
 
@@ -655,5 +736,28 @@ final class PostRepository
         }
 
         return ['WHERE ' . implode(' AND ', $where), $params];
+    }
+
+    private function supportsNextStepColumn(): bool
+    {
+        if ($this->supportsNextStepColumn !== null) {
+            return $this->supportsNextStepColumn;
+        }
+
+        $stmt = $this->pdo->prepare("SELECT 1
+                                     FROM information_schema.COLUMNS
+                                     WHERE TABLE_SCHEMA = DATABASE()
+                                       AND TABLE_NAME = 'posts'
+                                       AND COLUMN_NAME = 'proximo_post_id'
+                                     LIMIT 1");
+        $stmt->execute();
+        $this->supportsNextStepColumn = $stmt->fetchColumn() !== false;
+
+        return $this->supportsNextStepColumn;
+    }
+
+    public function supportsNextStep(): bool
+    {
+        return $this->supportsNextStepColumn();
     }
 }
