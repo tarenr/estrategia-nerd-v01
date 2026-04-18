@@ -10,6 +10,8 @@ $nextStepOptions = $next_step_options ?? [];
 $mediaItems = $media_items ?? [];
 $criarPostJsPath = dirname(__DIR__, 3) . '/public/assets/js/criar-post.js';
 $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJsPath) : '1';
+$adminHtmlEditorJsPath = dirname(__DIR__, 3) . '/public/assets/js/admin-post-html-editor.js';
+$adminHtmlEditorJsVersion = is_file($adminHtmlEditorJsPath) ? (string) filemtime($adminHtmlEditorJsPath) : '1';
 ?>
 
 <div class="max-w-7xl mx-auto px-4 py-6">
@@ -37,5 +39,6 @@ $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJ
 </div>
 
 <script src="<?= url('/assets/js/criar-post.js?v=' . $criarPostJsVersion) ?>" defer></script>
+<script src="<?= url('/assets/js/admin-post-html-editor.js?v=' . $adminHtmlEditorJsVersion) ?>" defer></script>
 <?php View::component('admin/posts/editor-runtime'); ?>
 <?php View::component('admin/posts/editor-system-ui'); ?>

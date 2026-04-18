@@ -61,7 +61,7 @@ final class PostsService
             : $this->mapPostToForm($post);
 
         return $this->buildFormViewModel('edit', $form, $errors, null, [
-            'orphan_images' => $this->findOrphanBodyImages($form),
+            'orphan_files' => $this->findOrphanBodyFiles($form),
         ]);
     }
 
@@ -173,11 +173,7 @@ final class PostsService
 
     public function uploadInlineImage(array $input, array $files): array
     {
-        $slugBase = $this->slugify(trim((string) ($input['slug'] ?? '')));
-        if ($slugBase === '') {
-            $slugBase = $this->slugify(trim((string) ($input['titulo'] ?? '')));
-        }
-
+        $slugBase = $this->resolveInlinePostSlug($input);
         if ($slugBase === '') {
             return ['ok' => false, 'error' => 'Informe um titulo ou slug antes de enviar a imagem do conteudo.'];
         }
@@ -193,6 +189,36 @@ final class PostsService
         }
 
         return ['ok' => true, 'path' => $path, 'url' => url('/' . ltrim($path, '/'))];
+    }
+
+    public function copyInlineImageFromLibrary(array $input): array
+    {
+        $slugBase = $this->resolveInlinePostSlug($input);
+        if ($slugBase === '') {
+            return ['ok' => false, 'error' => 'Informe um titulo ou slug antes de selecionar a imagem da biblioteca.'];
+        }
+
+        $sourcePath = trim((string) ($input['path'] ?? ''));
+        if ($sourcePath === '') {
+            return ['ok' => false, 'error' => 'Selecione uma imagem da biblioteca para continuar.'];
+        }
+
+        $result = $this->midia->cloneManagedImageToPost($sourcePath, $slugBase);
+        if (($result['ok'] ?? false) !== true) {
+            return ['ok' => false, 'error' => (string) ($result['error'] ?? 'Falha ao duplicar a imagem da biblioteca.')];
+        }
+
+        $path = trim((string) ($result['path'] ?? ''));
+        if ($path === '') {
+            return ['ok' => false, 'error' => 'Nao foi possivel preparar a copia da imagem selecionada.'];
+        }
+
+        return [
+            'ok' => true,
+            'path' => $path,
+            'url' => url('/' . ltrim($path, '/')),
+            'item' => is_array($result['item'] ?? null) ? $result['item'] : null,
+        ];
     }
 
     public function duplicatePost(int $id, ?int $authorId): array
@@ -230,7 +256,7 @@ final class PostsService
         return ['ok' => true, 'id' => $newId, 'slug' => $slug];
     }
 
-    public function cleanupOrphanBodyImages(int $id): array
+    public function cleanupOrphanBodyFiles(int $id): array
     {
         $post = $this->posts->findAdminById($id);
         if ($post === null) {
@@ -238,7 +264,7 @@ final class PostsService
         }
 
         $form = $this->mapPostToForm($post);
-        $orphans = $this->findOrphanBodyImages($form);
+        $orphans = $this->findOrphanBodyFiles($form);
         $removed = 0;
 
         foreach ($orphans as $item) {
@@ -249,6 +275,11 @@ final class PostsService
         }
 
         return ['ok' => true, 'removed' => $removed];
+    }
+
+    public function cleanupOrphanBodyImages(int $id): array
+    {
+        return $this->cleanupOrphanBodyFiles($id);
     }
 
     public function getDeleteViewModel(int $id): ?array
@@ -325,6 +356,16 @@ final class PostsService
                 }
             }
         }
+    }
+
+    private function resolveInlinePostSlug(array $input): string
+    {
+        $slugBase = $this->slugify(trim((string) ($input['slug'] ?? '')));
+        if ($slugBase !== '') {
+            return $slugBase;
+        }
+
+        return $this->slugify(trim((string) ($input['titulo'] ?? '')));
     }
 
     private function decorateIndexSummary(array $summary): array
@@ -598,8 +639,11 @@ final class PostsService
             'categorias' => $categorias ?? $this->categorias->listForSelect(),
             'supports_next_step' => $supportsNextStep,
             'next_step_options' => $nextStepOptions,
-            'media_items' => $this->midia->recentImages(12),
-            'orphan_images' => [],
+            'media_items' => $this->midia->recentMedia(24),
+            'image_media_items' => $this->midia->recentMedia(48, 'image'),
+            'audio_media_items' => $this->midia->recentMedia(12, 'audio'),
+            'video_media_items' => $this->midia->recentMedia(12, 'video'),
+            'orphan_files' => [],
         ], $extra);
     }
 
@@ -626,7 +670,7 @@ final class PostsService
         ];
     }
 
-    private function findOrphanBodyImages(array $form): array
+    private function findOrphanBodyFiles(array $form): array
     {
         $slug = $this->slugify((string) ($form['slug'] ?? ''));
         if ($slug === '') {

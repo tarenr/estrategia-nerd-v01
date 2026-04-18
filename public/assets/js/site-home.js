@@ -576,4 +576,132 @@
 
     applyCommentVisibilityLimit();
   }
+
+  const resolveSiteBasePath = () => {
+    const script = document.currentScript || document.querySelector('script[src*="/assets/js/site-home.js"]');
+    if (script && script.src) {
+      try {
+        const url = new URL(script.src, window.location.href);
+        const marker = '/assets/js/site-home.js';
+        const markerIndex = url.pathname.indexOf(marker);
+        if (markerIndex !== -1) {
+          return url.pathname.slice(0, markerIndex);
+        }
+      } catch (error) {}
+    }
+
+    return '';
+  };
+
+  const normalizePublicMediaUrl = (value) => {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (raw.startsWith('//')) return `${window.location.protocol}${raw}`;
+    if (raw.charAt(0) !== '/') return raw;
+
+    const basePath = resolveSiteBasePath();
+    if (!basePath || raw === basePath || raw.startsWith(`${basePath}/`)) {
+      return raw;
+    }
+
+    return `${basePath}${raw}`;
+  };
+
+  const initEditorialAudioBlocks = () => {
+    const blocks = Array.from(document.querySelectorAll('.en-audio-block'));
+    if (blocks.length === 0) return;
+
+    const state = window.__enAudioBlockState = window.__enAudioBlockState || { active: null };
+
+    const stopActive = () => {
+      if (!state.active) return;
+      const { narracao, ambiente, button, block } = state.active;
+      try { if (narracao) { narracao.pause(); narracao.currentTime = 0; } } catch (error) {}
+      try { if (ambiente) { ambiente.pause(); ambiente.currentTime = 0; } } catch (error) {}
+      if (button) {
+        const initial = button.getAttribute('data-en-audio-initial') || button.textContent || 'Ouvir narracao';
+        button.textContent = initial;
+        button.removeAttribute('aria-pressed');
+      }
+      if (block) {
+        block.classList.remove('is-playing');
+      }
+      state.active = null;
+    };
+
+    blocks.forEach((block) => {
+      const button = block.querySelector('[data-en-audio-toggle]');
+      if (!button) return;
+      if (button.dataset.bound === '1') return;
+      button.dataset.bound = '1';
+
+      const narracaoSrc = normalizePublicMediaUrl(block.getAttribute('data-audio-narracao') || '');
+      const ambienteSrc = normalizePublicMediaUrl(block.getAttribute('data-audio-ambiente') || '');
+      const initialText = button.textContent || 'Ouvir narracao';
+      button.setAttribute('data-en-audio-initial', initialText);
+
+      const narracao = narracaoSrc ? new Audio(narracaoSrc) : null;
+      const ambiente = ambienteSrc ? new Audio(ambienteSrc) : null;
+      if (ambiente) ambiente.loop = true;
+
+      const resetUi = () => {
+        button.textContent = initialText;
+        button.removeAttribute('aria-pressed');
+        block.classList.remove('is-playing');
+      };
+
+      if (narracao) {
+        narracao.addEventListener('ended', () => {
+          try { if (ambiente) { ambiente.pause(); ambiente.currentTime = 0; } } catch (error) {}
+          try { narracao.currentTime = 0; } catch (error) {}
+          if (state.active && state.active.block === block) {
+            state.active = null;
+          }
+          resetUi();
+        });
+      }
+
+      button.addEventListener('click', async () => {
+        const isCurrent = state.active && state.active.block === block;
+        const isPlaying = isCurrent && ((narracao && !narracao.paused) || (ambiente && !ambiente.paused));
+
+        if (isPlaying) {
+          stopActive();
+          return;
+        }
+
+        if (state.active && !isCurrent) {
+          stopActive();
+        }
+
+        try {
+          if (narracao) narracao.volume = 1;
+          if (ambiente) ambiente.volume = narracao ? 0.12 : 0.35;
+
+          if (narracao) {
+            await narracao.play();
+            if (ambiente) {
+              ambiente.play().catch(() => {
+                try { ambiente.pause(); ambiente.currentTime = 0; } catch (error) {}
+              });
+            }
+          } else if (ambiente) {
+            await ambiente.play();
+          }
+
+          button.textContent = 'Pausar';
+          button.setAttribute('aria-pressed', 'true');
+          block.classList.add('is-playing');
+          state.active = { block, button, narracao, ambiente };
+        } catch (error) {
+          stopActive();
+        }
+      });
+    });
+  };
+
+
+  initEditorialAudioBlocks();
+
 })();

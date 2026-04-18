@@ -161,6 +161,73 @@ declare(strict_types=1);
       .replace(/'/g, '&#039;');
   }
 
+  function indentMarkup(value, prefix) {
+    return String(value || '')
+      .split('\n')
+      .map(function (line) {
+        return line ? String(prefix || '') + line : line;
+      })
+      .join('\n');
+  }
+
+  function buildImageFigureHtml(url, alt, legenda) {
+    var imageUrl = String(url || '').replace(/"/g, '&quot;');
+    var imageAlt = escapeHtml(alt || '');
+    var caption = String(legenda || '').trim();
+    var lines = [
+      '<figure class="article-figure content-block-image">',
+      '  <img src="' + imageUrl + '" alt="' + imageAlt + '">'
+    ];
+    if (caption) {
+      lines.push('  <figcaption>' + escapeHtml(caption) + '</figcaption>');
+    }
+    lines.push('</figure>');
+    return '\n' + lines.join('\n') + '\n';
+  }
+
+  function buildVideoFigureHtml(value, legenda) {
+    var raw = String(value || '').trim();
+    var caption = String(legenda || '').trim();
+    if (!raw) return '';
+
+    var lines = [
+      '<figure class="content-block content-block-video">',
+      '  <div class="content-block-label">Video</div>'
+    ];
+
+    if (/^<iframe[\s\S]*<\/iframe>$/i.test(raw)) {
+      lines.push('  <div class="aspect-video">');
+      lines.push(indentMarkup(raw, '    '));
+      lines.push('  </div>');
+      if (caption) {
+        lines.push('  <figcaption>' + escapeHtml(caption) + '</figcaption>');
+      }
+      lines.push('</figure>');
+      return '\n' + lines.join('\n') + '\n';
+    }
+
+    var match = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/i);
+    if (match) {
+      lines.push('  <div class="aspect-video">');
+      lines.push('    <iframe src="https://www.youtube.com/embed/' + match[1] + '" title="Video incorporado" loading="lazy" allowfullscreen></iframe>');
+      lines.push('  </div>');
+      if (caption) {
+        lines.push('  <figcaption>' + escapeHtml(caption) + '</figcaption>');
+      }
+      lines.push('</figure>');
+      return '\n' + lines.join('\n') + '\n';
+    }
+
+    lines.push('  <video controls preload="metadata">');
+    lines.push('    <source src="' + raw.replace(/"/g, '&quot;') + '">');
+    lines.push('  </video>');
+    if (caption) {
+      lines.push('  <figcaption>' + escapeHtml(caption) + '</figcaption>');
+    }
+    lines.push('</figure>');
+    return '\n' + lines.join('\n') + '\n';
+  }
+
   function renderHighlightedTitle(title) {
     var raw = String(title || '').trim();
     if (!raw) return 'Sem titulo';
@@ -340,7 +407,7 @@ declare(strict_types=1);
 
         var alt = window.prompt('Texto alternativo da imagem (opcional):') || '';
         var legenda = window.prompt('Legenda da imagem (opcional):') || '';
-        var html = '<figure><img src="' + String(payload.url || '').replace(/"/g, '&quot;') + '" alt="' + String(alt).replace(/"/g, '&quot;') + '">' + (legenda ? '<figcaption>' + legenda + '</figcaption>' : '') + '</figure>';
+        var html = buildImageFigureHtml(payload.url || '', alt, legenda);
         insertHtmlAtCursor(html);
       })
       .catch(function () {
@@ -402,7 +469,7 @@ declare(strict_types=1);
       if (!url) return;
       var alt = window.prompt('Texto alternativo (opcional):') || '';
       var legenda = window.prompt('Legenda (opcional):') || '';
-      var html = '<figure><img src="' + String(url).replace(/"/g, '&quot;') + '" alt="' + String(alt).replace(/"/g, '&quot;') + '">' + (legenda ? '<figcaption>' + legenda + '</figcaption>' : '') + '</figure>';
+      var html = buildImageFigureHtml(url, alt, legenda);
       insertHtmlAtCursor(html);
     };
 
@@ -410,21 +477,9 @@ declare(strict_types=1);
       saveSelection();
       var raw = window.prompt('Cole a URL do video, o link do YouTube ou o iframe completo:');
       if (!raw) return;
+      var legenda = window.prompt('Legenda do video (opcional):') || '';
 
-      var value = String(raw).trim();
-      var html = '';
-
-      if (/^<iframe[\s\S]*<\/iframe>$/i.test(value)) {
-        html = value;
-      } else {
-        var match = value.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/i);
-        if (match) {
-          html = '<div class="content-block content-block-video"><div class="content-block-label">Video</div><div class="aspect-video"><iframe src="https://www.youtube.com/embed/' + match[1] + '" title="Video incorporado" loading="lazy" allowfullscreen></iframe></div></div>';
-        } else {
-          html = '<video controls preload="metadata" style="width:100%;border-radius:16px;overflow:hidden;"><source src="' + value.replace(/"/g, '&quot;') + '"></video>';
-        }
-      }
-
+      var html = buildVideoFigureHtml(raw, legenda);
       insertHtmlAtCursor(html);
     };
 

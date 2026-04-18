@@ -20,6 +20,8 @@ $orphanCleaned = isset($_GET['orphan_cleaned']) && (string) $_GET['orphan_cleane
 $orphanRemoved = max(0, (int) ($_GET['orphan_removed'] ?? 0));
 $criarPostJsPath = dirname(__DIR__, 3) . '/public/assets/js/criar-post.js';
 $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJsPath) : '1';
+$adminHtmlEditorJsPath = dirname(__DIR__, 3) . '/public/assets/js/admin-post-html-editor.js';
+$adminHtmlEditorJsVersion = is_file($adminHtmlEditorJsPath) ? (string) filemtime($adminHtmlEditorJsPath) : '1';
 ?>
 
 <div class="max-w-7xl mx-auto px-4 py-6">
@@ -82,5 +84,6 @@ $criarPostJsVersion = is_file($criarPostJsPath) ? (string) filemtime($criarPostJ
 </div>
 
 <script src="<?= url('/assets/js/criar-post.js?v=' . $criarPostJsVersion) ?>" defer></script>
+<script src="<?= url('/assets/js/admin-post-html-editor.js?v=' . $adminHtmlEditorJsVersion) ?>" defer></script>
 <?php View::component('admin/posts/editor-runtime'); ?>
 <?php View::component('admin/posts/editor-system-ui'); ?>

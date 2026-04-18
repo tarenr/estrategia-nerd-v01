@@ -31,6 +31,11 @@ final class PostsController
         View::render('admin/posts/create', $this->service()->getCreateViewModel());
     }
 
+    public function htmlEditorTest(): void
+    {
+        View::render('admin/posts/html-editor-test');
+    }
+
     public function store(): void
     {
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
@@ -107,7 +112,30 @@ final class PostsController
         echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
-    public function cleanupOrphanImages(): void
+    public function copyInlineImageFromLibrary(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo json_encode(['ok' => false, 'error' => 'Token CSRF invalido.'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return;
+        }
+
+        $result = $this->service()->copyInlineImageFromLibrary($_POST);
+        if (($result['ok'] ?? false) !== true) {
+            http_response_code(422);
+        }
+
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    public function cleanupOrphanFiles(): void
+    {
+        $this->cleanupOrphanFilesLegacy();
+    }
+
+    public function cleanupOrphanFilesLegacy(): void
     {
         $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
@@ -116,7 +144,7 @@ final class PostsController
             return;
         }
 
-        $result = $this->service()->cleanupOrphanBodyImages($id);
+        $result = $this->service()->cleanupOrphanBodyFiles($id);
         if (($result['not_found'] ?? false) === true) {
             http_response_code(404);
             echo 'Post nao encontrado.';

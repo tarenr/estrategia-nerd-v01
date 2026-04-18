@@ -33,13 +33,16 @@ return [
     ['GET',  '/admin/api/dashboard', [\App\Controllers\Admin\DashboardController::class, 'data'], 'auth'],
 
     ['GET',  '/admin/posts',         [\App\Controllers\Admin\PostsController::class, 'index'], 'auth'],
+    ['GET',  '/admin/posts/html-editor-test', [\App\Controllers\Admin\PostsController::class, 'htmlEditorTest'], 'auth'],
     ['GET',  '/admin/criar-post',    [\App\Controllers\Admin\PostsController::class, 'create'], 'auth'],
     ['POST', '/admin/criar-post',    [\App\Controllers\Admin\PostsController::class, 'store'], 'auth'],
     ['GET',  '/admin/editar-post',   [\App\Controllers\Admin\PostsController::class, 'edit'], 'auth'],
     ['POST', '/admin/editar-post',   [\App\Controllers\Admin\PostsController::class, 'update'], 'auth'],
     ['POST', '/admin/duplicar-post', [\App\Controllers\Admin\PostsController::class, 'duplicate'], 'auth'],
     ['POST', '/admin/upload-post-imagem', [\App\Controllers\Admin\PostsController::class, 'uploadInlineImage'], 'auth'],
+    ['POST', '/admin/copiar-post-imagem-biblioteca', [\App\Controllers\Admin\PostsController::class, 'copyInlineImageFromLibrary'], 'auth'],
     ['POST', '/admin/limpar-post-imagens-orfas', [\App\Controllers\Admin\PostsController::class, 'cleanupOrphanImages'], 'auth'],
+    ['POST', '/admin/limpar-post-arquivos-orfos', [\App\Controllers\Admin\PostsController::class, 'cleanupOrphanFiles'], 'auth'],
     ['GET',  '/admin/excluir-post',  [\App\Controllers\Admin\PostsController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-post',  [\App\Controllers\Admin\PostsController::class, 'destroy'], 'auth'],
 

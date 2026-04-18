@@ -25,11 +25,29 @@ final class MidiaController
         $result = $this->service()->upload($_FILES['arquivo'] ?? null, $_GET + $_POST);
         if (($result['ok'] ?? false) !== true) {
             http_response_code(422);
+            if ($this->wantsJson()) {
+                header('Content-Type: application/json; charset=UTF-8');
+                echo json_encode(['ok' => false, 'error' => (string) (($result['viewModel']['errors']['arquivo'] ?? null) ?: 'Falha no upload do arquivo.')], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                return;
+            }
             View::render('admin/media/index', $result['viewModel'] ?? []);
             return;
         }
 
-        header('Location: ' . url('/admin/midia?uploaded=1'));
+        if ($this->wantsJson()) {
+            header('Content-Type: application/json; charset=UTF-8');
+            echo json_encode([
+                'ok' => true,
+                'path' => (string) ($result['path'] ?? ''),
+                'item' => is_array($result['item'] ?? null) ? $result['item'] : null,
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return;
+        }
+
+        $redirectQuery = is_array($result['redirect_query'] ?? null) ? $result['redirect_query'] : ['uploaded' => 1];
+        $redirectQuery = array_filter($redirectQuery, static fn (mixed $value): bool => !($value === '' || $value === null || $value === 0));
+        $queryString = http_build_query($redirectQuery);
+        header('Location: ' . url('/admin/midia' . ($queryString !== '' ? '?' . $queryString : '')));
         exit;
     }
 
@@ -79,6 +97,14 @@ final class MidiaController
 
         header('Location: ' . url('/admin/midia?deleted=1'));
         exit;
+    }
+
+
+    private function wantsJson(): bool
+    {
+        $requestedWith = strtolower(trim((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')));
+        $accept = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
+        return $requestedWith === 'xmlhttprequest' || str_contains($accept, 'application/json');
     }
 
     private function service(): MidiaService

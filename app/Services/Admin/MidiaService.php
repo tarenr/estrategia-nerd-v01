@@ -8,7 +8,11 @@ use finfo;
 final class MidiaService
 {
     private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'];
-    private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+    private const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'm4a', 'aac'];
+    private const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'ogv'];
+    private const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+    private const AUDIO_MIME_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a', 'audio/aac'];
+    private const VIDEO_MIME_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg'];
     private const LIBRARY_DIRECTORIES = [
         ['relative' => 'uploads', 'label' => 'Upload'],
         ['relative' => 'assets/brand', 'label' => 'Institucional'],
@@ -41,62 +45,28 @@ final class MidiaService
             'summary' => $this->buildSummary($allItems),
             'pagination' => $this->paginate($sortedItems, $page, $perPage),
             'errors' => $errors,
-            'upload' => ['accept' => '.jpg,.jpeg,.png,.webp,.gif,.svg', 'max_size_label' => '8 MB'],
+            'upload' => $this->buildUploadConfig($query),
         ];
     }
 
     public function recentImages(int $limit = 12): array
     {
-        $items = array_values(array_filter($this->scanMediaItems($this->collectMediaUsage()), static fn (array $item): bool => ($item['is_image'] ?? false) === true));
+        return $this->recentMedia($limit, 'image');
+    }
+
+    public function recentMedia(int $limit = 24, ?string $type = null): array
+    {
+        $items = $this->scanMediaItems($this->collectMediaUsage());
+        if ($type !== null && $type !== '') {
+            $items = array_values(array_filter($items, static fn (array $item): bool => (($item['media_type'] ?? 'other') === $type)));
+        }
         $items = $this->sortItems($items, 'data', 'desc');
         return array_slice($items, 0, max(1, $limit));
     }
 
     public function storeUploadedImage(mixed $file, string $folder = 'posts', ?string $preferredBase = null, bool $overwrite = false): array
     {
-        $this->ensureDirectories();
-
-        if (!is_array($file) || !isset($file['error'])) {
-            return ['ok' => true, 'skipped' => true, 'path' => null];
-        }
-
-        $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
-        if ($error === UPLOAD_ERR_NO_FILE) {
-            return ['ok' => true, 'skipped' => true, 'path' => null];
-        }
-
-        $validation = $this->validateUpload($file);
-        if ($validation !== []) {
-            return ['ok' => false, 'error' => (string) ($validation['arquivo'] ?? 'Falha no upload da imagem.')];
-        }
-
-        $originalName = (string) ($file['name'] ?? 'imagem');
-        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-        $baseName = $preferredBase ?? pathinfo($originalName, PATHINFO_FILENAME);
-        $safeBase = $this->slugify($baseName !== '' ? $baseName : 'imagem');
-        if ($safeBase === '') {
-            $safeBase = 'imagem';
-        }
-
-        $relativeDir = 'uploads/' . trim($folder, '/');
-        $absoluteDir = $this->publicRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeDir);
-        if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0775, true) && !is_dir($absoluteDir)) {
-            return ['ok' => false, 'error' => 'Nao foi possivel criar a pasta de destino do upload.'];
-        }
-
-        if ($overwrite) {
-            $this->deleteFilesByBase($absoluteDir, $safeBase);
-            $filename = $safeBase . '.' . $extension;
-        } else {
-            $filename = $this->nextAvailableFilename($absoluteDir, $safeBase, $extension);
-        }
-
-        $target = $absoluteDir . DIRECTORY_SEPARATOR . $filename;
-        if (!move_uploaded_file((string) $file['tmp_name'], $target)) {
-            return ['ok' => false, 'error' => 'Nao foi possivel mover o arquivo enviado.'];
-        }
-
-        return ['ok' => true, 'skipped' => false, 'path' => $relativeDir . '/' . $filename];
+        return $this->storeUploadedMedia($file, $folder, $preferredBase, $overwrite, 'image');
     }
 
     public function storePostRoleImage(mixed $file, string $slug, string $role): array
@@ -107,36 +77,88 @@ final class MidiaService
             return ['ok' => false, 'error' => 'Nao foi possivel preparar o nome da imagem do post.'];
         }
 
-        return $this->storeUploadedImage($file, 'posts/' . $slug, $slug . '-' . $role, true);
+        return $this->storeUploadedMedia($file, 'posts/' . $slug . '/images', $slug . '-' . $role, true, 'image');
     }
 
     public function storePostBodyImage(mixed $file, string $slug): array
     {
-        $slug = $this->slugify($slug);
-        if ($slug === '') {
-            return ['ok' => false, 'error' => 'Nao foi possivel preparar o nome da imagem do conteudo.'];
+        $target = $this->preparePostBodyImageTarget($slug);
+        if (($target['ok'] ?? false) !== true) {
+            return ['ok' => false, 'error' => (string) ($target['error'] ?? 'Nao foi possivel preparar a imagem do conteudo.')];
         }
 
-        $relativeDir = 'uploads/posts/' . $slug;
-        $absoluteDir = $this->publicRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeDir);
-        if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0775, true) && !is_dir($absoluteDir)) {
-            return ['ok' => false, 'error' => 'Nao foi possivel criar a pasta do post.'];
+        return $this->storeUploadedMedia(
+            $file,
+            (string) ($target['storage_dir'] ?? 'posts'),
+            (string) ($target['base'] ?? ''),
+            false,
+            'image'
+        );
+    }
+
+    public function cloneManagedImageToPost(string $path, string $slug): array
+    {
+        $target = $this->preparePostBodyImageTarget($slug);
+        if (($target['ok'] ?? false) !== true) {
+            return ['ok' => false, 'error' => (string) ($target['error'] ?? 'Nao foi possivel preparar a imagem do conteudo.')];
         }
 
-        $sequence = $this->nextPostBodySequence($absoluteDir, $slug);
-        $base = sprintf('%s-%02d', $slug, $sequence);
+        $source = $this->resolveManagedFile($path);
+        if ($source === null) {
+            return ['ok' => false, 'error' => 'Imagem da biblioteca nao encontrada.'];
+        }
 
-        return $this->storeUploadedImage($file, 'posts/' . $slug, $base, false);
+        if ((string) ($source['media_type'] ?? '') !== 'image') {
+            return ['ok' => false, 'error' => 'A midia selecionada nao e uma imagem valida.'];
+        }
+
+        $extension = strtolower((string) pathinfo((string) ($source['name'] ?? ''), PATHINFO_EXTENSION));
+        if ($extension === '') {
+            $extension = strtolower((string) pathinfo((string) ($source['relative_path'] ?? ''), PATHINFO_EXTENSION));
+        }
+
+        if ($extension === '' || !in_array($extension, self::IMAGE_EXTENSIONS, true)) {
+            return ['ok' => false, 'error' => 'Nao foi possivel identificar a extensao da imagem selecionada.'];
+        }
+
+        $relativePath = (string) ($target['relative_dir'] ?? '') . '/' . (string) ($target['base'] ?? '') . '.' . $extension;
+        $absolutePath = (string) ($target['absolute_dir'] ?? '') . DIRECTORY_SEPARATOR . (string) ($target['base'] ?? '') . '.' . $extension;
+
+        if ($absolutePath === '' || !@copy((string) ($source['absolute_path'] ?? ''), $absolutePath)) {
+            return ['ok' => false, 'error' => 'Falha ao duplicar a imagem da biblioteca para o post.'];
+        }
+
+        $item = $this->resolveManagedFile($relativePath);
+        if ($item === null) {
+            return ['ok' => false, 'error' => 'A copia da imagem foi criada, mas nao pode ser localizada.'];
+        }
+
+        return ['ok' => true, 'path' => $relativePath, 'item' => $item];
     }
 
     public function upload(mixed $file, array $query = []): array
     {
-        $result = $this->storeUploadedImage($file, 'media/' . date('Y/m'));
+        $upload = $this->buildUploadConfig($query);
+        $forcedType = (string) ($upload['media_type'] ?? '');
+        $validation = $this->validateUpload($file, $forcedType !== '' ? $forcedType : null);
+        if (($validation['ok'] ?? false) !== true) {
+            return ['ok' => false, 'viewModel' => $this->getIndexViewModel($query, ['arquivo' => (string) ($validation['arquivo'] ?? 'Falha no upload do arquivo.')])];
+        }
+
+        $type = (string) ($validation['type'] ?? 'other');
+        $folder = $this->buildUploadFolder($type, $upload);
+        $preferredBase = $this->buildUploadBaseName($type, $file, $upload);
+        $result = $this->storeUploadedMedia($file, $folder, $preferredBase, false, $type);
         if (($result['ok'] ?? false) !== true) {
             return ['ok' => false, 'viewModel' => $this->getIndexViewModel($query, ['arquivo' => (string) ($result['error'] ?? 'Falha no upload do arquivo.')])];
         }
 
-        return ['ok' => true, 'path' => $result['path'] ?? null];
+        return [
+            'ok' => true,
+            'path' => $result['path'] ?? null,
+            'item' => isset($result['path']) ? $this->resolveManagedFile((string) $result['path']) : null,
+            'redirect_query' => $this->buildUploadRedirectQuery($query, $upload),
+        ];
     }
 
     public function getDeleteViewModel(string $path): ?array
@@ -214,11 +236,14 @@ final class MidiaService
                 $absolutePath = $fileInfo->getPathname();
                 $relativePath = str_replace('\\', '/', substr($absolutePath, strlen($this->publicRoot()) + 1));
                 $extension = strtolower($fileInfo->getExtension());
-                $isImage = in_array($extension, self::IMAGE_EXTENSIONS, true);
                 $size = (int) $fileInfo->getSize();
                 $modifiedAt = (int) $fileInfo->getMTime();
                 $directory = trim(str_replace('\\', '/', substr($fileInfo->getPath(), strlen($this->publicRoot()) + 1)), '/');
                 $mime = $this->detectMimeType($absolutePath);
+                $mediaType = $this->detectMediaType($extension, $mime);
+                $isImage = $mediaType === 'image';
+                $isAudio = $mediaType === 'audio';
+                $isVideo = $mediaType === 'video';
                 [$width, $height] = $isImage ? $this->detectDimensions($absolutePath) : [null, null];
 
                 $isManagedUpload = str_starts_with($relativePath, 'uploads/');
@@ -275,7 +300,11 @@ final class MidiaService
                     'modified_at' => $modifiedAt,
                     'modified_label' => date('d/m/Y H:i', $modifiedAt),
                     'mime' => $mime,
+                    'media_type' => $mediaType,
+                    'media_type_label' => $this->mediaTypeLabel($mediaType),
                     'is_image' => $isImage,
+                    'is_audio' => $isAudio,
+                    'is_video' => $isVideo,
                     'width' => $width,
                     'height' => $height,
                     'dimensions_label' => ($width && $height) ? ($width . ' x ' . $height) : '-',
@@ -298,6 +327,7 @@ final class MidiaService
                     (string) ($item['name'] ?? ''),
                     (string) ($item['directory'] ?? ''),
                     (string) ($item['mime'] ?? ''),
+                    (string) ($item['media_type_label'] ?? ''),
                     (string) ($item['post_slug'] ?? ''),
                     (string) ($item['linked_entities_search_text'] ?? ''),
                 ]));
@@ -306,11 +336,20 @@ final class MidiaService
                 }
             }
 
-            if ($tipo === 'imagem' && (($item['is_image'] ?? false) !== true)) {
+            $mediaType = (string) ($item['media_type'] ?? 'other');
+            if ($tipo === 'imagem' && $mediaType !== 'image') {
                 return false;
             }
 
-            if ($tipo === 'outros' && (($item['is_image'] ?? false) === true)) {
+            if ($tipo === 'audio' && $mediaType !== 'audio') {
+                return false;
+            }
+
+            if ($tipo === 'video' && $mediaType !== 'video') {
+                return false;
+            }
+
+            if ($tipo === 'outros' && $mediaType !== 'other') {
                 return false;
             }
 
@@ -372,6 +411,8 @@ final class MidiaService
     {
         $directories = [];
         $images = 0;
+        $audio = 0;
+        $video = 0;
         $size = 0;
         $institutional = 0;
         $managedUploads = 0;
@@ -382,8 +423,13 @@ final class MidiaService
             $directories[$directory] = true;
             $size += (int) ($item['size'] ?? 0);
 
-            if (($item['is_image'] ?? false) === true) {
+            $mediaType = (string) ($item['media_type'] ?? 'other');
+            if ($mediaType === 'image') {
                 $images++;
+            } elseif ($mediaType === 'audio') {
+                $audio++;
+            } elseif ($mediaType === 'video') {
+                $video++;
             }
 
             if ((string) ($item['library'] ?? '') === 'Institucional') {
@@ -400,7 +446,7 @@ final class MidiaService
         }
 
         $total = count($items);
-        $others = max(0, $total - $images);
+        $others = max(0, $total - $images - $audio - $video);
         $orphans = count(array_filter($items, static fn (array $item): bool => ($item['is_orphan'] ?? false) === true));
         $coveragePosts = $managedUploads > 0 ? ($inUseMedia / $managedUploads) * 100 : 0.0;
         $orphanRate = $managedUploads > 0 ? ($orphans / $managedUploads) * 100 : 0.0;
@@ -409,6 +455,8 @@ final class MidiaService
         return [
             'total' => $total,
             'images' => $images,
+            'audio' => $audio,
+            'video' => $video,
             'others' => $others,
             'directories' => count($directories),
             'institutional' => $institutional,
@@ -426,43 +474,325 @@ final class MidiaService
         ];
     }
 
-    private function validateUpload(mixed $file): array
+    private function storeUploadedMedia(mixed $file, string $folder = 'media', ?string $preferredBase = null, bool $overwrite = false, ?string $forcedType = null): array
+    {
+        $this->ensureDirectories();
+
+        if (!is_array($file) || !isset($file['error'])) {
+            return ['ok' => true, 'skipped' => true, 'path' => null];
+        }
+
+        $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($error === UPLOAD_ERR_NO_FILE) {
+            return ['ok' => true, 'skipped' => true, 'path' => null];
+        }
+
+        $validation = $this->validateUpload($file, $forcedType);
+        if (($validation['ok'] ?? false) !== true) {
+            return ['ok' => false, 'error' => (string) ($validation['arquivo'] ?? 'Falha no upload do arquivo.')];
+        }
+
+        $type = (string) ($validation['type'] ?? $forcedType ?? 'other');
+        $extension = strtolower((string) ($validation['extension'] ?? pathinfo((string) ($file['name'] ?? 'arquivo'), PATHINFO_EXTENSION)));
+        $originalName = (string) ($file['name'] ?? 'arquivo');
+        $baseName = $preferredBase ?? pathinfo($originalName, PATHINFO_FILENAME);
+        $safeBase = $this->slugify($baseName !== '' ? $baseName : 'arquivo');
+        if ($safeBase === '') {
+            $safeBase = match ($type) {
+                'image' => 'imagem',
+                'audio' => 'audio',
+                'video' => 'video',
+                default => 'arquivo',
+            };
+        }
+
+        $relativeDir = 'uploads/' . trim($this->sanitizeUploadFolder($folder), '/');
+        $absoluteDir = $this->publicRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeDir);
+        if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0775, true) && !is_dir($absoluteDir)) {
+            return ['ok' => false, 'error' => 'Nao foi possivel criar a pasta de destino do upload.'];
+        }
+
+        if ($overwrite) {
+            $this->deleteFilesByBase($absoluteDir, $safeBase);
+            $filename = $safeBase . '.' . $extension;
+        } else {
+            $filename = $this->nextAvailableFilename($absoluteDir, $safeBase, $extension);
+        }
+
+        $target = $absoluteDir . DIRECTORY_SEPARATOR . $filename;
+        if (!move_uploaded_file((string) $file['tmp_name'], $target)) {
+            return ['ok' => false, 'error' => 'Nao foi possivel mover o arquivo enviado.'];
+        }
+
+        return [
+            'ok' => true,
+            'skipped' => false,
+            'path' => $relativeDir . '/' . $filename,
+            'type' => $type,
+            'mime' => (string) ($validation['mime'] ?? ''),
+        ];
+    }
+
+    private function buildUploadConfig(array $input = []): array
+    {
+        $mediaType = $this->normalizeRequestedMediaType((string) ($input['media_type'] ?? ''));
+        $scope = $this->normalizeUploadScope((string) ($input['context'] ?? 'library'));
+        $postSlug = $scope === 'post' ? $this->slugify((string) ($input['post_slug'] ?? '')) : '';
+        $postTitle = trim((string) ($input['post_title'] ?? ''));
+
+        if ($postSlug === '' && $scope === 'post' && $postTitle !== '') {
+            $postSlug = $this->slugify($postTitle);
+        }
+
+        if ($postSlug === '') {
+            $scope = 'library';
+        }
+
+        $destinationCode = 'public/uploads/media/{tipo}/ANO/MES';
+        $destinationLabel = 'Biblioteca central por tipo';
+        if ($scope === 'post' && $postSlug !== '') {
+            $destinationCode = 'public/uploads/posts/' . $postSlug . '/';
+            $destinationCode .= $mediaType !== '' ? $this->mediaStorageDirectory($mediaType) : '{images|audio|video}';
+            $destinationLabel = 'Post ' . $postSlug;
+        }
+
+        return [
+            'accept' => $this->uploadAcceptList($mediaType),
+            'max_size_label' => $this->uploadMaxSizeLabel($mediaType),
+            'scope' => $scope,
+            'scope_label' => $scope === 'post' ? 'Post especifico' : 'Biblioteca central',
+            'media_type' => $mediaType,
+            'media_type_label' => $mediaType !== '' ? $this->mediaTypeLabel($mediaType) : 'Midia',
+            'post_slug' => $postSlug,
+            'post_title' => $postTitle,
+            'destination_code' => $destinationCode,
+            'destination_label' => $destinationLabel,
+        ];
+    }
+
+    private function normalizeRequestedMediaType(string $type): string
+    {
+        $type = strtolower(trim($type));
+        return in_array($type, ['image', 'audio', 'video'], true) ? $type : '';
+    }
+
+    private function normalizeUploadScope(string $scope): string
+    {
+        return strtolower(trim($scope)) === 'post' ? 'post' : 'library';
+    }
+
+    private function buildUploadFolder(string $type, array $upload): string
+    {
+        $scope = (string) ($upload['scope'] ?? 'library');
+        $postSlug = trim((string) ($upload['post_slug'] ?? ''));
+        if ($scope === 'post' && $postSlug !== '') {
+            return 'posts/' . $postSlug . '/' . $this->mediaStorageDirectory($type);
+        }
+
+        return 'media/' . $this->mediaStorageDirectory($type) . '/' . date('Y/m');
+    }
+
+    private function buildUploadBaseName(string $type, mixed $file, array $upload): ?string
+    {
+        $scope = (string) ($upload['scope'] ?? 'library');
+        $postSlug = trim((string) ($upload['post_slug'] ?? ''));
+        if ($scope !== 'post' || $postSlug === '' || !is_array($file)) {
+            return null;
+        }
+
+        $originalName = (string) ($file['name'] ?? 'arquivo');
+        $originalBase = $this->slugify((string) pathinfo($originalName, PATHINFO_FILENAME));
+        if ($originalBase === '' || $originalBase === $postSlug) {
+            $originalBase = match ($type) {
+                'image' => 'imagem',
+                'audio' => 'audio',
+                'video' => 'video',
+                default => 'arquivo',
+            };
+        }
+
+        if (str_starts_with($originalBase, $postSlug . '-')) {
+            return $originalBase;
+        }
+
+        return $postSlug . '-' . $originalBase;
+    }
+
+    private function buildUploadRedirectQuery(array $input, array $upload): array
+    {
+        $query = [
+            'uploaded' => 1,
+            'busca' => trim((string) ($input['busca'] ?? '')),
+            'tipo' => trim((string) ($input['tipo'] ?? '')),
+            'estado' => trim((string) ($input['estado'] ?? '')),
+            'sort' => trim((string) ($input['sort'] ?? '')),
+            'dir' => trim((string) ($input['dir'] ?? '')),
+            'per_page' => (int) ($input['per_page'] ?? 0),
+            'media_type' => trim((string) ($upload['media_type'] ?? '')),
+            'context' => trim((string) ($upload['scope'] ?? 'library')),
+            'post_slug' => trim((string) ($upload['post_slug'] ?? '')),
+            'post_title' => trim((string) ($upload['post_title'] ?? '')),
+        ];
+
+        return array_filter($query, static fn (mixed $value): bool => !($value === '' || $value === null || $value === 0));
+    }
+
+    private function uploadAcceptList(string $type = ''): string
+    {
+        return match ($type) {
+            'image' => '.jpg,.jpeg,.png,.webp,.gif,.svg',
+            'audio' => '.mp3,.wav,.ogg,.m4a,.aac',
+            'video' => '.mp4,.webm,.mov,.ogv',
+            default => '.jpg,.jpeg,.png,.webp,.gif,.svg,.mp3,.wav,.ogg,.m4a,.aac,.mp4,.webm,.mov,.ogv',
+        };
+    }
+
+    private function uploadMaxSizeLabel(string $type = ''): string
+    {
+        return match ($type) {
+            'image' => '8 MB para imagens',
+            'audio' => '25 MB para audios',
+            'video' => '80 MB para videos',
+            default => '8 MB para imagens, 25 MB para audios e 80 MB para videos',
+        };
+    }
+
+    private function detectMediaType(string $extension, string $mime): string
+    {
+        $extension = strtolower(trim($extension));
+        $mime = strtolower(trim($mime));
+
+        if (in_array($extension, self::IMAGE_EXTENSIONS, true) || str_starts_with($mime, 'image/')) {
+            return 'image';
+        }
+
+        if (in_array($extension, self::AUDIO_EXTENSIONS, true) || str_starts_with($mime, 'audio/')) {
+            return 'audio';
+        }
+
+        if (in_array($extension, self::VIDEO_EXTENSIONS, true) || str_starts_with($mime, 'video/')) {
+            return 'video';
+        }
+
+        return 'other';
+    }
+
+    private function mediaTypeLabel(string $type): string
+    {
+        return match ($type) {
+            'image' => 'Imagem',
+            'audio' => 'Audio',
+            'video' => 'Video',
+            default => 'Outro arquivo',
+        };
+    }
+
+    private function mediaStorageDirectory(string $type): string
+    {
+        return match ($type) {
+            'image' => 'images',
+            'audio' => 'audio',
+            'video' => 'video',
+            default => 'files',
+        };
+    }
+
+    private function maxUploadSizeForType(string $type): int
+    {
+        return match ($type) {
+            'image' => 8 * 1024 * 1024,
+            'audio' => 25 * 1024 * 1024,
+            'video' => 80 * 1024 * 1024,
+            default => 8 * 1024 * 1024,
+        };
+    }
+
+    private function allowedExtensionsForType(string $type): array
+    {
+        return match ($type) {
+            'image' => self::IMAGE_EXTENSIONS,
+            'audio' => self::AUDIO_EXTENSIONS,
+            'video' => self::VIDEO_EXTENSIONS,
+            default => [],
+        };
+    }
+
+    private function allowedMimeTypesForType(string $type): array
+    {
+        return match ($type) {
+            'image' => self::IMAGE_MIME_TYPES,
+            'audio' => self::AUDIO_MIME_TYPES,
+            'video' => self::VIDEO_MIME_TYPES,
+            default => [],
+        };
+    }
+
+    private function sanitizeUploadFolder(string $folder): string
+    {
+        $folder = trim(str_replace('\\', '/', $folder), '/');
+        if ($folder === '') {
+            return 'media';
+        }
+
+        $segments = array_values(array_filter(explode('/', $folder), static function (string $segment): bool {
+            return $segment !== '' && $segment !== '.' && $segment !== '..';
+        }));
+
+        return implode('/', $segments);
+    }
+
+    private function validateUpload(mixed $file, ?string $forcedType = null): array
     {
         if (!is_array($file) || !isset($file['error'])) {
             return ['arquivo' => 'Selecione um arquivo para enviar.'];
         }
 
         $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
-        if ($error === UPLOAD_ERR_NO_FILE) {
-            return ['arquivo' => 'Selecione uma imagem para enviar.'];
+        if ($error == UPLOAD_ERR_NO_FILE) {
+            return ['arquivo' => 'Selecione uma midia para enviar.'];
         }
         if ($error !== UPLOAD_ERR_OK) {
             return ['arquivo' => 'Falha no upload do arquivo.'];
         }
 
         $size = (int) ($file['size'] ?? 0);
-        if ($size <= 0 || $size > 8 * 1024 * 1024) {
-            return ['arquivo' => 'Envie uma imagem de ate 8 MB.'];
-        }
-
         $tmpName = (string) ($file['tmp_name'] ?? '');
         if ($tmpName === '' || !is_uploaded_file($tmpName)) {
             return ['arquivo' => 'Arquivo enviado invalido.'];
         }
 
+        $originalName = (string) ($file['name'] ?? 'arquivo');
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
         $mime = $this->detectMimeType($tmpName);
-        if (!in_array($mime, self::ALLOWED_MIME_TYPES, true)) {
-            return ['arquivo' => 'Formato nao permitido. Envie JPG, PNG, WEBP, GIF ou SVG.'];
+        $type = $this->detectMediaType($extension, $mime);
+
+        if ($forcedType !== null && $forcedType !== '' && $type !== $forcedType) {
+            return ['arquivo' => 'O arquivo enviado nao corresponde ao tipo esperado.'];
         }
 
-        $extension = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
-        if (!in_array($extension, self::IMAGE_EXTENSIONS, true)) {
+        if ($type === 'other') {
+            return ['arquivo' => 'Formato nao permitido. Envie imagem, audio ou video compativeis.'];
+        }
+
+        if ($size <= 0 || $size > $this->maxUploadSizeForType($type)) {
+            return ['arquivo' => 'Envie um arquivo dentro do limite para ' . mb_strtolower($this->mediaTypeLabel($type)) . '.'];
+        }
+
+        if (!in_array($mime, $this->allowedMimeTypesForType($type), true)) {
+            return ['arquivo' => 'MIME nao permitido para este tipo de midia.'];
+        }
+
+        if (!in_array($extension, $this->allowedExtensionsForType($type), true)) {
             return ['arquivo' => 'Extensao nao permitida para upload.'];
         }
 
-        return [];
+        return [
+            'ok' => true,
+            'type' => $type,
+            'mime' => $mime,
+            'extension' => $extension,
+        ];
     }
-
     private function resolveManagedFile(string $path): ?array
     {
         $relativePath = $this->normalizeManagedPath($path);
@@ -483,7 +813,11 @@ final class MidiaService
 
         $fileInfo = new \SplFileInfo($realFile);
         $extension = strtolower($fileInfo->getExtension());
-        $isImage = in_array($extension, self::IMAGE_EXTENSIONS, true);
+        $mime = $this->detectMimeType($realFile);
+        $mediaType = $this->detectMediaType($extension, $mime);
+        $isImage = $mediaType === 'image';
+        $isAudio = $mediaType === 'audio';
+        $isVideo = $mediaType === 'video';
         [$width, $height] = $isImage ? $this->detectDimensions($realFile) : [null, null];
 
         return [
@@ -493,8 +827,12 @@ final class MidiaService
             'public_url' => url('/' . $relativePath),
             'size' => (int) $fileInfo->getSize(),
             'size_label' => $this->formatBytes((int) $fileInfo->getSize()),
-            'mime' => $this->detectMimeType($realFile),
+            'mime' => $mime,
+            'media_type' => $mediaType,
+            'media_type_label' => $this->mediaTypeLabel($mediaType),
             'is_image' => $isImage,
+            'is_audio' => $isAudio,
+            'is_video' => $isVideo,
             'dimensions_label' => ($width && $height) ? ($width . ' x ' . $height) : '-',
             'modified_label' => date('d/m/Y H:i', (int) $fileInfo->getMTime()),
         ];
@@ -1087,6 +1425,31 @@ final class MidiaService
         return $max + 1;
     }
 
+    private function preparePostBodyImageTarget(string $slug): array
+    {
+        $slug = $this->slugify($slug);
+        if ($slug === '') {
+            return ['ok' => false, 'error' => 'Nao foi possivel preparar o nome da imagem do conteudo.'];
+        }
+
+        $storageDir = 'posts/' . $slug . '/images';
+        $relativeDir = 'uploads/' . $storageDir;
+        $absoluteDir = $this->publicRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeDir);
+        if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0775, true) && !is_dir($absoluteDir)) {
+            return ['ok' => false, 'error' => 'Nao foi possivel criar a pasta do post.'];
+        }
+
+        $sequence = $this->nextPostBodySequence($absoluteDir, $slug);
+
+        return [
+            'ok' => true,
+            'storage_dir' => $storageDir,
+            'relative_dir' => $relativeDir,
+            'absolute_dir' => $absoluteDir,
+            'base' => sprintf('%s-%02d', $slug, $sequence),
+        ];
+    }
+
     private function deleteFilesByBase(string $directory, string $base): void
     {
         foreach (glob($directory . DIRECTORY_SEPARATOR . $base . '.*') ?: [] as $path) {
@@ -1165,19 +1528,17 @@ final class MidiaService
             mkdir($uploads, 0775, true);
         }
 
-        $media = $uploads . DIRECTORY_SEPARATOR . 'media';
-        if (!is_dir($media)) {
-            mkdir($media, 0775, true);
-        }
-
-        $posts = $uploads . DIRECTORY_SEPARATOR . 'posts';
-        if (!is_dir($posts)) {
-            mkdir($posts, 0775, true);
-        }
-
-        $settings = $uploads . DIRECTORY_SEPARATOR . 'configuracoes';
-        if (!is_dir($settings)) {
-            mkdir($settings, 0775, true);
+        foreach ([
+            $uploads . DIRECTORY_SEPARATOR . 'media',
+            $uploads . DIRECTORY_SEPARATOR . 'media' . DIRECTORY_SEPARATOR . 'images',
+            $uploads . DIRECTORY_SEPARATOR . 'media' . DIRECTORY_SEPARATOR . 'audio',
+            $uploads . DIRECTORY_SEPARATOR . 'media' . DIRECTORY_SEPARATOR . 'video',
+            $uploads . DIRECTORY_SEPARATOR . 'posts',
+            $uploads . DIRECTORY_SEPARATOR . 'configuracoes',
+        ] as $directory) {
+            if (!is_dir($directory)) {
+                mkdir($directory, 0775, true);
+            }
         }
     }
 

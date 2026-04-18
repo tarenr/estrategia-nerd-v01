@@ -4,8 +4,12 @@ declare(strict_types=1);
 $fieldError = $fieldError ?? static fn (string $key): string => '';
 $form = $form ?? [];
 $mediaItems = $media_items ?? [];
-$orphanImages = $orphan_images ?? [];
-$quickMediaItems = array_slice($mediaItems, 0, 4);
+$imageMediaItems = $image_media_items ?? [];
+$orphanFiles = $orphan_files ?? ($orphan_images ?? []);
+$quickMediaSource = is_array($imageMediaItems) && $imageMediaItems !== []
+    ? array_values($imageMediaItems)
+    : array_values(array_filter(is_array($mediaItems ?? null) ? $mediaItems : [], static fn (array $item): bool => (($item['media_type'] ?? '') === 'image') || (($item['is_image'] ?? false) === true)));
+$quickMediaItems = array_slice($quickMediaSource, 0, 4);
 
 $coverValue = trim((string) ($form['imagem_capa'] ?? ''));
 $thumbValue = trim((string) ($form['imagem_thumb'] ?? ''));
@@ -17,7 +21,7 @@ $thumbPreview = $thumbValue !== '' ? (preg_match('~^https?://~i', $thumbValue) ?
   <section class="admin-panel post-media-panel space-y-5">
     <div>
       <h2 class="font-orbitron text-lg font-black text-white">Midia</h2>
-      <div class="text-xs text-slate-400 mt-1">Defina capa, thumb e atalho rapido para imagens da biblioteca sem sair do formulario.</div>
+      <div class="text-xs text-slate-400 mt-1">Defina capa, thumb e use a biblioteca central sem sair do formulario.</div>
     </div>
 
     <div class="post-media-duo-grid">
@@ -108,13 +112,13 @@ $thumbPreview = $thumbValue !== '' ? (preg_match('~^https?://~i', $thumbValue) ?
       <div class="post-media-quick-head">
         <div>
           <h3 class="text-sm font-black text-white">Selecao rapida da biblioteca</h3>
-          <div class="text-xs text-slate-400 mt-1">Mostra so os ultimos 4 itens para aplicar em um clique.</div>
+          <div class="text-xs text-slate-400 mt-1">Mostra apenas as ultimas imagens para aplicar em um clique.</div>
         </div>
-        <a href="<?= htmlspecialchars(url('/admin/midia'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary post-media-open-btn">Abrir midia</a>
+        <a href="<?= htmlspecialchars(url('/admin/midia?tipo=imagem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary post-media-open-btn">Abrir midia</a>
       </div>
 
       <?php if ($quickMediaItems === []): ?>
-        <div class="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-5 text-sm text-slate-400">Nenhuma imagem recente encontrada na biblioteca.</div>
+        <div class="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-5 text-sm text-slate-400">Nenhuma imagem recente encontrada na biblioteca central.</div>
       <?php else: ?>
         <div class="post-media-quick-grid">
           <?php foreach ($quickMediaItems as $item): ?>
@@ -173,32 +177,32 @@ $thumbPreview = $thumbValue !== '' ? (preg_match('~^https?://~i', $thumbValue) ?
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h3 class="text-sm font-black text-white">Limpeza manual do conteudo</h3>
-          <div class="text-xs text-slate-400 mt-1">Revise imagens do corpo que estao na pasta do post, mas nao aparecem mais no HTML salvo.</div>
+          <div class="text-xs text-slate-400 mt-1">Revise arquivos do post que estao na pasta da publicacao, mas nao aparecem mais no HTML salvo.</div>
         </div>
-        <?php if ($orphanImages !== [] && (int) ($form['id'] ?? 0) > 0): ?>
+        <?php if ($orphanFiles !== [] && (int) ($form['id'] ?? 0) > 0): ?>
           <button
             type="submit"
-            name="cleanup_orphan_images"
+            name="cleanup_orphan_files"
             value="1"
-            formaction="<?= htmlspecialchars(url('/admin/limpar-post-imagens-orfas?id=' . (int) ($form['id'] ?? 0)), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            formaction="<?= htmlspecialchars(url('/admin/limpar-post-arquivos-orfos?id=' . (int) ($form['id'] ?? 0)), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
             formmethod="post"
             formnovalidate
             class="admin-btn admin-btn-secondary !px-3 !py-2 text-xs"
-          >Remover imagens orfas</button>
+          >Remover arquivos orfos</button>
         <?php endif; ?>
       </div>
 
-      <?php if ($orphanImages === []): ?>
+      <?php if ($orphanFiles === []): ?>
         <div class="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-6 text-sm text-slate-400">
-          Nenhuma imagem orfa encontrada neste post.
+          Nenhum arquivo orfo encontrado neste post.
         </div>
       <?php else: ?>
         <div class="rounded-xl border border-amber-500/15 bg-slate-950/30 px-4 py-3 text-xs text-amber-100">
-          Encontramos <?= count($orphanImages) ?> arquivo(s) na pasta do post que nao estao mais referenciados no conteudo atual. A limpeza abaixo remove apenas esses arquivos.
+          Encontramos <?= count($orphanFiles) ?> arquivo(s) na pasta do post que nao estao mais referenciados no conteudo atual. A limpeza abaixo remove apenas esses arquivos.
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <?php foreach ($orphanImages as $item): ?>
+          <?php foreach ($orphanFiles as $item): ?>
             <div class="rounded-2xl border border-amber-500/15 bg-slate-900/50 overflow-hidden">
               <div class="aspect-video bg-slate-950/70 overflow-hidden flex items-center justify-center">
                 <?php if (($item['is_image'] ?? false) === true): ?>

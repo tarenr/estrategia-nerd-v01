@@ -12,6 +12,9 @@ $errors = $errors ?? [];
 $categorias = $categorias ?? [];
 $nextStepOptions = $next_step_options ?? [];
 $mediaItems = $media_items ?? [];
+$imageMediaItems = $image_media_items ?? [];
+$audioMediaItems = $audio_media_items ?? [];
+$videoMediaItems = $video_media_items ?? [];
 
 $fieldError = static fn (string $key): string => (string) ($errors[$key] ?? '');
 $hasErrors = $errors !== [];
@@ -36,14 +39,14 @@ $conteudo = (string) ($form['conteudo'] ?? '');
   <?php endif; ?>
 
   <?php View::component('admin/posts/form-main-fields', ['form' => $form, 'fieldError' => $fieldError]); ?>
-  <?php View::component('admin/posts/form-editor', ['conteudo' => $conteudo, 'fieldError' => $fieldError]); ?>
+  <?php View::component('admin/posts/form-editor', ['conteudo' => $conteudo, 'fieldError' => $fieldError, 'media_items' => $mediaItems, 'image_media_items' => $imageMediaItems, 'audio_media_items' => $audioMediaItems, 'video_media_items' => $videoMediaItems]); ?>
 
   <div class="post-meta-grid">
     <?php View::component('admin/posts/form-publication', ['form' => $form, 'fieldError' => $fieldError, 'next_step_options' => $nextStepOptions]); ?>
     <?php View::component('admin/posts/form-category', ['form' => $form, 'categorias' => $categorias, 'fieldError' => $fieldError]); ?>
   </div>
 
-  <?php View::component('admin/posts/form-media-seo', ['form' => $form, 'fieldError' => $fieldError, 'media_items' => $mediaItems, 'orphan_images' => $orphan_images ?? []]); ?>
+  <?php View::component('admin/posts/form-media-seo', ['form' => $form, 'fieldError' => $fieldError, 'media_items' => $mediaItems, 'image_media_items' => $imageMediaItems, 'audio_media_items' => $audioMediaItems, 'video_media_items' => $videoMediaItems, 'orphan_files' => $orphan_files ?? ($orphan_images ?? [])]); ?>
   <?php View::component('admin/posts/form-actions', ['mode' => $mode, 'submitLabel' => $submitLabel]); ?>
 </form>
 

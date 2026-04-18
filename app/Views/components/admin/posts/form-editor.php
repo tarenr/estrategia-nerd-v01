@@ -3,24 +3,23 @@ declare(strict_types=1);
 
 $fieldError = $fieldError ?? static fn (string $key): string => '';
 $conteudo = (string) ($conteudo ?? '');
+$mediaItems = $media_items ?? [];
+$imageMediaItems = $image_media_items ?? [];
+$audioMediaItems = $audio_media_items ?? [];
+$videoMediaItems = $video_media_items ?? [];
+$editorMediaLibrary = [
+  'all' => array_values(is_array($mediaItems) ? $mediaItems : []),
+  'image' => array_values(is_array($imageMediaItems) ? $imageMediaItems : []),
+  'audio' => array_values(is_array($audioMediaItems) ? $audioMediaItems : []),
+  'video' => array_values(is_array($videoMediaItems) ? $videoMediaItems : []),
+];
 ?>
 
 <section class="admin-panel post-editor-panel">
   <div class="post-editor-head">
     <div class="post-editor-head-copy">
       <h2 class="font-orbitron text-lg font-black text-white">Conteudo do post</h2>
-      <div id="editor-ajuda" class="post-editor-help">Use a barra acima para formatar.</div>
-    </div>
-
-    <div class="post-editor-head-tools">
       <span id="wordCount" class="post-editor-word-count">0 palavras</span>
-
-      <div class="post-editor-quick-actions">
-        <button type="button" id="editor-upload-trigger" class="admin-btn admin-btn-secondary post-editor-action-btn" onclick="return window.enviarImagemDoEditor ? (window.enviarImagemDoEditor(), false) : false;">Enviar imagem</button>
-        <button type="button" id="editor-url-trigger" class="admin-btn admin-btn-secondary post-editor-action-btn" onclick="return window.inserirImagem ? (window.inserirImagem(), false) : false;">URL da imagem</button>
-        <button type="button" id="editor-video-trigger" class="admin-btn admin-btn-secondary post-editor-action-btn" onclick="return window.inserirVideo ? (window.inserirVideo(), false) : false;">Inserir video</button>
-        <button type="button" class="admin-btn admin-btn-secondary post-editor-action-btn" onclick="abrirPreview()">Preview</button>
-      </div>
     </div>
   </div>
 
@@ -55,10 +54,23 @@ $conteudo = (string) ($conteudo ?? '');
           <button type="button" class="editor-btn" title="Titulo H2" onclick="formatar('formatBlock', '<h2>')">H2</button>
           <button type="button" class="editor-btn" title="Titulo H3" onclick="formatar('formatBlock', '<h3>')">H3</button>
           <button type="button" class="editor-btn" title="Citacao" onclick="aplicarCitacao()"><i class="fa-solid fa-quote-left"></i></button>
-          <button type="button" class="editor-btn" title="Inserir link" onclick="inserirLink()"><i class="fa-solid fa-link"></i></button>
-          <button type="button" id="editor-toolbar-upload" class="editor-btn" title="Enviar imagem" onclick="return window.enviarImagemDoEditor ? (window.enviarImagemDoEditor(), false) : false;"><i class="fa-solid fa-image"></i></button>
-          <button type="button" id="editor-toolbar-video" class="editor-btn" title="Inserir video" onclick="return window.inserirVideo ? (window.inserirVideo(), false) : false;"><i class="fa-solid fa-video"></i></button>
           <button type="button" class="editor-btn" title="Limpar formatacao" onclick="limparFormatacao()"><i class="fa-solid fa-eraser"></i></button>
+        </div>
+
+        <div class="editor-toolbar-separator" aria-hidden="true"></div>
+
+        <div class="editor-toolbar-group">
+          <button type="button" class="editor-btn" title="Inserir link" onclick="inserirLink()"><i class="fa-solid fa-link"></i></button>
+          <button type="button" id="editor-toolbar-image-block" class="editor-btn" title="Inserir imagem" onclick="return window.inserirBlocoImagem ? (window.inserirBlocoImagem(), false) : false;"><i class="fa-solid fa-image"></i></button>
+          <button type="button" id="editor-toolbar-video-block" class="editor-btn" title="Inserir video" onclick="return window.inserirBlocoVideo ? (window.inserirBlocoVideo(), false) : false;"><i class="fa-solid fa-video"></i></button>
+          <button type="button" id="editor-toolbar-audio-block" class="editor-btn" title="Bloco de audio" onclick="return window.inserirBlocoAudio ? (window.inserirBlocoAudio(), false) : false;"><i class="fa-solid fa-volume-high"></i></button>
+        </div>
+
+        <div class="editor-toolbar-separator" aria-hidden="true"></div>
+
+        <div class="editor-toolbar-group">
+          <button type="button" class="editor-btn" title="Preview" onclick="abrirPreview()"><i class="fa-solid fa-eye"></i></button>
+          <button type="submit" form="postForm" class="editor-btn" title="Salvar post"><i class="fa-solid fa-floppy-disk"></i></button>
         </div>
       </div>
     </div>
@@ -67,7 +79,28 @@ $conteudo = (string) ($conteudo ?? '');
   </div>
 
   <div id="panel-html" class="editor-panel hidden">
-    <textarea id="editor-html" class="nerd-input w-full min-h-[420px] px-4 py-3 rounded-xl font-mono text-sm" oninput="syncFromHtml()"><?= htmlspecialchars($conteudo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></textarea>
+    <div
+      class="admin-html-editor-shell post-html-editor-shell"
+      data-html-editor-root
+      data-html-editor-form="#postForm"
+      data-html-editor-hidden="#conteudoHidden"
+      data-html-editor-sync-from-html="1"
+    >
+      <div class="admin-html-editor-toolbar">
+        <div class="admin-html-editor-toolbar-actions">
+          <label class="admin-html-editor-toggle">
+            <input type="checkbox" data-html-editor-wrap>
+            <span>Quebra de linha visual</span>
+          </label>
+          <button type="button" class="admin-btn admin-btn-secondary admin-html-editor-format-btn" data-html-editor-format>Formatar HTML</button>
+        </div>
+        <span class="admin-html-editor-status" data-html-editor-status>HTML sincronizado com o conteudo do post</span>
+      </div>
+
+      <div data-html-editor-mount class="admin-html-editor-mount"></div>
+
+      <textarea id="editor-html" data-html-editor-textarea class="admin-html-editor-textarea nerd-input w-full min-h-[420px] px-4 py-3 rounded-xl font-mono text-sm" oninput="syncFromHtml()"><?= htmlspecialchars($conteudo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></textarea>
+    </div>
   </div>
 
   <div id="panel-gerador" class="editor-panel hidden post-gerador-panel space-y-4">
@@ -113,6 +146,7 @@ $conteudo = (string) ($conteudo ?? '');
     </div>
   </div>
 
+  <script id="postEditorMediaLibraryData" type="application/json"><?= json_encode($editorMediaLibrary, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
   <input id="editorImageUpload" type="file" accept="image/*" class="hidden">
   <input id="conteudoHidden" name="conteudo" type="hidden" value="<?= htmlspecialchars($conteudo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
   <?php if ($fieldError('conteudo') !== ''): ?><div class="mt-3 text-xs text-rose-300"><?= htmlspecialchars($fieldError('conteudo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
