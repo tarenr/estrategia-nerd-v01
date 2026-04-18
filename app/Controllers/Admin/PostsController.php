@@ -31,11 +31,6 @@ final class PostsController
         View::render('admin/posts/create', $this->service()->getCreateViewModel());
     }
 
-    public function htmlEditorTest(): void
-    {
-        View::render('admin/posts/html-editor-test');
-    }
-
     public function store(): void
     {
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {

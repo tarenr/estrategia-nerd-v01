@@ -7158,77 +7158,7 @@ select.nerd-input {
   padding-top: 0.25rem;
 }
 
-.html-editor-test-panel {
-  padding: 1.5rem;
-}
-
-.html-editor-test-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.html-editor-test-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  color: #cbd5e1;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.html-editor-test-toggle input {
-  accent-color: #06b6d4;
-}
-
-.html-editor-test-status {
-  color: #94a3b8;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.html-editor-test-mount {
-  min-height: 480px;
-}
-
-.html-editor-test-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.html-editor-test-output-shell {
-  border: 1px solid rgba(34, 211, 238, 0.12);
-  border-radius: 18px;
-  background: rgba(2, 6, 23, 0.82);
-  padding: 1rem 1.15rem;
-}
-
-.html-editor-test-output-title {
-  color: #e2e8f0;
-  font-size: 0.9rem;
-  font-weight: 800;
-  margin-bottom: 0.75rem;
-}
-
-.html-editor-test-output {
-  margin: 0;
-  max-height: 260px;
-  overflow: auto;
-  color: #cbd5e1;
-  font-size: 0.85rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 @media (max-width: 768px) {
-  .html-editor-test-toolbar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .admin-html-editor-toolbar {
     flex-direction: column;
     align-items: flex-start;
