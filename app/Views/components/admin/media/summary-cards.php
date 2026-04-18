@@ -36,7 +36,8 @@ $cards = [
         'iconBg' => 'linear-gradient(135deg, rgba(96,165,250,.92), rgba(59,130,246,.92))',
         'support' => [
             ['label' => 'Imagens', 'value' => $fmtNumber((int) ($summary['images'] ?? 0))],
-            ['label' => 'Outros', 'value' => $fmtNumber((int) ($summary['others'] ?? 0))],
+            ['label' => 'Audios', 'value' => $fmtNumber((int) ($summary['audio'] ?? 0))],
+            ['label' => 'Videos', 'value' => $fmtNumber((int) ($summary['video'] ?? 0))],
         ],
     ],
     [
@@ -73,6 +74,7 @@ $cards = [
         'support' => [
             ['label' => 'Media por arquivo', 'value' => (string) ($summary['average_size_label'] ?? '0 B')],
             ['label' => 'Institucional', 'value' => $fmtNumber((int) ($summary['institutional'] ?? 0)), 'accent' => '#34d399'],
+            ['label' => 'Outros', 'value' => $fmtNumber((int) ($summary['others'] ?? 0))],
         ],
     ],
 ];

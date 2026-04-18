@@ -3,12 +3,13 @@ declare(strict_types=1);
 
 use App\Support\View;
 
-$summary = $summary ?? ['total' => 0, 'images' => 0, 'others' => 0, 'directories' => 0, 'orphans' => 0, 'size_label' => '0 B'];
+$summary = $summary ?? ['total' => 0, 'images' => 0, 'audio' => 0, 'video' => 0, 'others' => 0, 'directories' => 0, 'orphans' => 0, 'size_label' => '0 B'];
 $filters = $filters ?? ['busca' => '', 'tipo' => '', 'estado' => ''];
 $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 12, 'pages' => 1];
 $sort = (string) ($sort ?? 'data');
 $dir = (string) ($dir ?? 'desc');
 $errors = $errors ?? [];
+$upload = $upload ?? ['accept' => '', 'max_size_label' => '8 MB'];
 $uploaded = isset($_GET['uploaded']) && (string) $_GET['uploaded'] === '1';
 $deleted = isset($_GET['deleted']) && (string) $_GET['deleted'] === '1';
 $orphanCleaned = isset($_GET['orphan_cleaned']) && (string) $_GET['orphan_cleaned'] === '1';
@@ -38,11 +39,11 @@ $orphanFailed = max(0, (int) ($_GET['orphan_failed'] ?? 0));
     <?php endif; ?>
 
     <?php if ($orphanCleaned): ?>
-      <section class="admin-panel border border-amber-500/30"><div class="text-sm font-bold text-amber-200">Limpeza global concluida.</div><div class="text-xs text-slate-400 mt-1"><?php if ($orphanRemoved > 0): ?><?= $orphanRemoved ?> arquivo(s) orfao(s) removido(s) da biblioteca.<?php else: ?>Nenhuma imagem orfa visivel foi removida.<?php endif; ?><?php if ($orphanFailed > 0): ?> <?= $orphanFailed ?> arquivo(s) nao puderam ser removidos por validacao de caminho ou permissao.<?php endif; ?></div></section>
+      <section class="admin-panel border border-amber-500/30"><div class="text-sm font-bold text-amber-200">Limpeza global concluida.</div><div class="text-xs text-slate-400 mt-1"><?php if ($orphanRemoved > 0): ?><?= $orphanRemoved ?> arquivo(s) orfao(s) removido(s) da biblioteca.<?php else: ?>Nenhuma midia orfa visivel foi removida.<?php endif; ?><?php if ($orphanFailed > 0): ?> <?= $orphanFailed ?> arquivo(s) nao puderam ser removidos por validacao de caminho ou permissao.<?php endif; ?></div></section>
     <?php endif; ?>
 
     <?php View::component('admin/media/summary-cards', ['summary' => $summary]); ?>
-    <?php View::component('admin/media/upload-panel', ['errors' => $errors]); ?>
+    <?php View::component('admin/media/upload-panel', ['errors' => $errors, 'upload' => $upload, 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/media/filters', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/media/table', ['items' => $pagination['items'] ?? [], 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/media/pagination', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>

@@ -7,16 +7,20 @@ use App\Support\Csrf;
 $status = (array) ($content_status ?? []);
 $items = (array) ($status['items'] ?? []);
 $latest = $status['latest'] ?? null;
+$latestStageApply = $status['latest_stage_apply'] ?? null;
 $latestProductionApply = $status['latest_production_apply'] ?? null;
 $running = is_array($status['running'] ?? null) ? $status['running'] : null;
 $flash = is_array($flash ?? null) ? $flash : null;
 $lastVerification = is_array($last_verification ?? null) ? $last_verification : null;
 $lastPostCheck = is_array($last_post_check ?? null) ? $last_post_check : null;
+$stageReady = (bool) ($stage_ready ?? false);
+$stageCodeReady = (bool) ($stage_code_ready ?? false);
 $productionReady = (bool) ($production_ready ?? false);
 $productionCodeReady = (bool) ($production_code_ready ?? false);
 $codeStatus = (array) ($code_status ?? []);
 $codeItems = (array) ($codeStatus['items'] ?? []);
 $codeLatest = is_array($codeStatus['latest'] ?? null) ? $codeStatus['latest'] : null;
+$codeLatestStageApply = is_array($codeStatus['latest_stage_apply'] ?? null) ? $codeStatus['latest_stage_apply'] : null;
 $codeLatestProductionApply = is_array($codeStatus['latest_production_apply'] ?? null) ? $codeStatus['latest_production_apply'] : null;
 $parityStatus = (array) ($parity_status ?? []);
 $parityContent = is_array($parityStatus['content'] ?? null) ? $parityStatus['content'] : [];
@@ -28,6 +32,12 @@ $productionGateMessage = (string) ($deploymentPolicy['message'] ?? '');
 $productionGateReason = (string) ($deploymentPolicy['reason'] ?? '');
 $productionReady = $productionReady && $productionGateOpen;
 $productionCodeReady = $productionCodeReady && $productionGateOpen;
+$stageReadyMessage = $stageReady
+    ? 'Banco e uploads da stage estao disponiveis para validacao.'
+    : 'Complete as variaveis CONTENT_SYNC_STAGE_* para usar a homologacao remota.';
+$stageCodeReadyMessage = $stageCodeReady
+    ? 'Deploy tecnico para stage disponivel.'
+    : 'Complete as variaveis CONTENT_SYNC_STAGE_CODE_* para enviar codigo para a stage.';
 $productionReadyMessage = !$productionGateOpen
     ? ($productionGateMessage !== '' ? $productionGateMessage : 'Publicacao bloqueada pela politica operacional.')
     : ($productionReady ? 'Banco e FTP remotos estao disponiveis para publicar.' : 'Complete as variaveis CONTENT_SYNC_PRODUCTION_* ou use o fallback BACKUP_PRODUCTION_*.');
@@ -154,7 +164,17 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
           </div>
         </div>
       <?php endif; ?>
-    <div class="grid gap-4 xl:grid-cols-4">
+    <div class="grid gap-4 xl:grid-cols-5">
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
+        <p class="font-orbitron text-xs uppercase tracking-[0.25em] text-cyan-300/80">Stage</p>
+        <div class="mt-4 font-rajdhani text-2xl font-bold <?= $stageReady ? 'text-emerald-300' : 'text-amber-300' ?>"><?= $stageReady ? 'Pronta' : 'Pendente' ?></div>
+        <div class="mt-1 text-slate-400"><?= htmlspecialchars($stageReadyMessage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+        <?php if (is_array($latestStageApply)): ?>
+          <div class="mt-4 text-sm text-slate-300">Ultima publicacao: <span class="text-white"><?= htmlspecialchars((string) ($latestStageApply['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+          <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($latestStageApply['applied_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+        <?php endif; ?>
+      </div>
+
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
         <p class="font-orbitron text-xs uppercase tracking-[0.25em] text-cyan-300/80">Ultimo pacote</p>
         <?php if (is_array($latest)): ?>
@@ -243,6 +263,14 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
         </div>
       </div>
 
+      <?php if (is_array($codeLatestStageApply)): ?>
+        <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">
+          <span class="text-slate-500">Ultimo pacote tecnico em stage:</span>
+          <span class="ml-2 font-semibold text-white"><?= htmlspecialchars((string) ($codeLatestStageApply['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+          <span class="ml-2 text-xs text-slate-500"><?= htmlspecialchars((string) ($codeLatestStageApply['applied_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+        </div>
+      <?php endif; ?>
+
       <?php if (is_array($codeLatestProductionApply)): ?>
         <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">
           <span class="text-slate-500">Ultimo pacote tecnico em producao:</span>
@@ -276,6 +304,14 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
               <span class="ml-2 text-slate-500"><?= htmlspecialchars((string) ($codeLatest['last_apply']['applied_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
             </div>
           <?php endif; ?>
+          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form mt-3" data-progress-title="Publicando pacote de codigo na stage" data-progress-message="Estamos enviando os arquivos do pacote de codigo para a stage." data-progress-stage="Deploy tecnico stage">
+            <?= Csrf::field() ?>
+            <input type="hidden" name="action" value="apply_code">
+            <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($codeLatest['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+            <input type="hidden" name="target_profile" value="stage">
+            <input type="hidden" name="apply_phrase" value="PUBLICAR">
+            <button type="submit" class="rounded-xl border px-3 py-2 text-xs font-semibold transition <?= $stageCodeReady ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200 hover:border-emerald-300 hover:bg-emerald-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $stageCodeReady ? '' : 'disabled' ?>>Publicar stage</button>
+          </form>
           <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form mt-3" data-progress-title="Publicando pacote de codigo" data-progress-message="Estamos enviando os arquivos do pacote de codigo para a producao." data-progress-stage="Deploy de codigo">
             <?= Csrf::field() ?>
             <input type="hidden" name="action" value="apply_code">
@@ -333,6 +369,14 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
                   </td>
                   <td class="px-4 py-4 align-top text-xs text-cyan-300 break-all"><?= htmlspecialchars((string) ($codeItem['zip_path'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                   <td class="px-4 py-4 align-top">
+                    <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Publicando pacote de codigo na stage" data-progress-message="Estamos enviando os arquivos do pacote de codigo para a stage." data-progress-stage="Deploy tecnico stage">
+                      <?= Csrf::field() ?>
+                      <input type="hidden" name="action" value="apply_code">
+                      <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($codeItem['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <input type="hidden" name="target_profile" value="stage">
+                      <input type="hidden" name="apply_phrase" value="PUBLICAR">
+                      <button type="submit" class="rounded-xl border px-3 py-2 text-xs font-semibold transition <?= $stageCodeReady ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200 hover:border-emerald-300 hover:bg-emerald-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $stageCodeReady ? '' : 'disabled' ?>>Publicar stage</button>
+                    </form>
                     <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Publicando pacote de codigo" data-progress-message="Estamos enviando os arquivos do pacote de codigo para a producao." data-progress-stage="Deploy de codigo">
                       <?= Csrf::field() ?>
                       <input type="hidden" name="action" value="apply_code">
@@ -383,6 +427,17 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:border-sky-300 hover:bg-sky-500/20">Aplicar local</button>
           </form>
 
+          <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Publicando conteudo na stage" data-progress-message="Estamos enviando o pacote validado para o banco e os uploads da stage." data-progress-stage="Publicacao stage">
+            <?= Csrf::field() ?>
+            <input type="hidden" name="action" value="apply">
+            <input type="hidden" name="package_id" value="latest">
+            <input type="hidden" name="target_profile" value="stage">
+            <input type="hidden" name="apply_phrase" value="PUBLICAR">
+            <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Publicar stage</p>
+            <p class="mt-2 text-sm text-slate-400">Envia o ultimo pacote valido para banco e uploads da stage antes do pacote de producao.</p>
+            <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold transition <?= $stageReady ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200 hover:border-emerald-300 hover:bg-emerald-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $stageReady ? '' : 'disabled' ?>>Publicar stage</button>
+          </form>
+
           <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Publicando conteudo na producao" data-progress-message="Estamos enviando o pacote validado para o banco e os uploads da producao." data-progress-stage="Publicacao">
             <?= Csrf::field() ?>
             <input type="hidden" name="action" value="apply">
@@ -417,6 +472,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
           <div>
             <label class="mb-2 block text-sm font-semibold text-slate-200">Destino</label>
             <select name="target_profile" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
+              <option value="stage">Stage</option>
               <option value="production">Producao</option>
               <option value="local">Local</option>
             </select>
@@ -481,6 +537,14 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
                       <input type="hidden" name="action" value="verify">
                       <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($item['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                       <button type="submit" class="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20">Verificar</button>
+                    </form>
+                    <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Publicando pacote na stage" data-progress-message="Estamos aplicando o pacote selecionado em stage." data-progress-stage="Publicacao stage">
+                      <?= Csrf::field() ?>
+                      <input type="hidden" name="action" value="apply">
+                      <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($item['package_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <input type="hidden" name="target_profile" value="stage">
+                      <input type="hidden" name="apply_phrase" value="PUBLICAR">
+                      <button type="submit" class="rounded-xl border px-3 py-2 text-xs font-semibold transition <?= $stageReady ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $stageReady ? '' : 'disabled' ?>>Publicar stage</button>
                     </form>
                     <form method="POST" action="<?= url('/local/conteudo') ?>" class="content-action-form" data-progress-title="Publicando pacote" data-progress-message="Estamos aplicando o pacote selecionado em producao." data-progress-stage="Publicacao">
                       <?= Csrf::field() ?>

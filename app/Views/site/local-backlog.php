@@ -5,9 +5,9 @@ declare(strict_types=1);
 $projectVersion = trim((string) ($project_version ?? 'local'));
 $generatedAt = trim((string) ($generated_at ?? date('Y-m-d H:i:s')));
 $phaseCount = 5;
-$taskCount = 38;
+$taskCount = 58;
 $currentSuggestedPhase = 'Fase 1';
-$currentFocus = 'Auditoria critica de seguranca, rotas sensiveis e fluxo operacional';
+$currentFocus = 'Auditoria critica de seguranca, rotas sensiveis e trilha editorial de midia tipada';
 $executionRule = 'Concluir itens criticos da Fase 1 e estabilizar Fase 2 antes de expansao forte em Fase 3/4.';
 $publicationRule = 'Backlog e operado no local e so gera mudanca em producao apos validacao. Documentacao permanece somente local.';
 ?>
@@ -121,6 +121,30 @@ $publicationRule = 'Backlog e operado no local e so gera mudanca em producao apo
     .doc-table th:nth-child(9), .doc-table td:nth-child(9) { width: 8%; }
     .doc-table th:nth-child(10), .doc-table td:nth-child(10) { width: 16%; }
 
+    .module-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      border: 1px solid rgba(34, 211, 238, 0.28);
+      background: rgba(8, 47, 73, 0.38);
+      padding: 0.2rem 0.7rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(165, 243, 252, 0.95);
+      white-space: nowrap;
+    }
+
+    .doc-track-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .doc-track-grid + .doc-track-grid {
+      margin-top: 1rem;
+    }
+
     @media (max-width: 1280px) {
       .doc-table {
         font-size: 0.77rem;
@@ -209,6 +233,7 @@ $publicationRule = 'Backlog e operado no local e so gera mudanca em producao apo
         <nav class="mt-4 space-y-2 text-sm">
           <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#resumo-executivo">Resumo executivo</a>
           <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#ordem-execucao">Ordem sugerida</a>
+          <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#trilha-editorial-midias">Trilha. Midia, audio e editor</a>
           <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#fase-1">Fase 1. Auditoria doc x sistema</a>
           <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#fase-2">Fase 2. Padronizacao estrutural</a>
           <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#fase-3">Fase 3. Evolucao do admin</a>
@@ -223,6 +248,202 @@ $publicationRule = 'Backlog e operado no local e so gera mudanca em producao apo
       </aside>
 
       <div class="space-y-6">
+        <section id="trilha-editorial-midias" class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
+          <h2 class="font-orbitron text-xl font-bold text-cyan-200">Trilha complementar - Midia tipada, bloco de audio e editor</h2>
+          <div class="doc-card doc-rule mt-4">
+            <p class="doc-label">Objetivo</p>
+            <p class="mt-2 text-sm text-slate-200">Transformar a diretriz oficial de midia por tipo, bloco de audio, toolbar revisada e modo HTML com CodeMirror em backlog executavel, sem quebrar compatibilidade entre editor visual, preview, stage e producao.</p>
+          </div>
+          <div class="doc-card doc-alert mt-4">
+            <p class="doc-label">Regra estrutural</p>
+            <p class="mt-2 text-sm text-amber-100">Posts podem salvar HTML estruturado, mas nao devem salvar CSS ou JS arbitrarios. Comportamento e estilo de blocos especiais ficam centralizados no frontend oficial do portal.</p>
+          </div>
+          <div class="mt-4 grid gap-3 md:grid-cols-4">
+            <div class="doc-card"><p class="doc-label">Escopo</p><p class="mt-2 text-sm text-slate-200">Admin, backend, banco, editor, midia, frontend publico e checklist de stage/producao.</p></div>
+            <div class="doc-card"><p class="doc-label">Critico</p><p class="mt-2 text-sm text-slate-200">Sincronizacao visual x HTML x preview x salvo.</p></div>
+            <div class="doc-card"><p class="doc-label">Risco-chave</p><p class="mt-2 text-sm text-slate-200">Regressao em posts legados e portal quebrando por assets inline.</p></div>
+            <div class="doc-card"><p class="doc-label">Saida esperada</p><p class="mt-2 text-sm text-slate-200">Fluxo oficial de audio e midia tipada validado em stage antes de qualquer pacote de producao.</p></div>
+          </div>
+
+          <div class="doc-track-grid mt-6">
+            <div class="doc-card">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="module-pill">Banco</span>
+                <h3 class="font-orbitron text-base font-bold text-white">Camada de dados e metadata de midia</h3>
+              </div>
+              <div class="mt-4 overflow-x-auto">
+                <table class="doc-table">
+                  <thead>
+                    <tr>
+                      <th>Modulo</th>
+                      <th>Tarefa</th>
+                      <th>Objetivo</th>
+                      <th>Arquivos/pastas</th>
+                      <th>Regra de negocio</th>
+                      <th>Criterio de aceite</th>
+                      <th>Risco</th>
+                      <th>Dependencias</th>
+                      <th>Resultado esperado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="doc-row"><td>Banco</td><td>MID-BD-01</td><td>Modelar midia como entidade tipada (`imagem`, `audio`, `video`) com metadata minima.</td><td>Banco, migrations, repositories de midia.</td><td>MIME real, tamanho, caminho, tipo, post vinculado e data de envio devem ser persistidos.</td><td>Schema revisado, migration validada e leitura/escrita funcionando para os tres tipos.</td><td>Migracao incompleta quebrar listagem atual da midia.</td><td>Auditoria F1-T06, fluxo atual da midia.</td><td>Base pronta para tratar midia sem depender de excecoes de imagem.</td></tr>
+                    <tr class="doc-row"><td>Banco</td><td>MID-BD-02</td><td>Definir estrutura fisica oficial por post e por tipo.</td><td>`public/uploads/posts/{slug}/images|audio|video` e servicos de upload.</td><td>Slug sanitizado e estavel; backend padroniza nomes e impede colisao.</td><td>Uploads novos sao gravados nas subpastas corretas com nome padronizado.</td><td>Conteudo antigo continuar apontando para caminhos legados.</td><td>MID-BD-01.</td><td>Armazenamento previsivel e pronto para limpeza/diagnostico.</td></tr>
+                    <tr class="doc-row"><td>Banco</td><td>MID-BD-03</td><td>Definir fallback de compatibilidade para midias e blocos legados.</td><td>Services de midia/post, regras de renderizacao.</td><td>Novo padrao vale para blocos novos; legado permanece funcional ate migracao futura.</td><td>Posts antigos continuam abrindo sem quebra e novos posts usam a estrutura oficial.</td><td>Regressao em posts que ja salvam HTML manual.</td><td>MID-BD-01, MID-BD-02.</td><td>Compatibilidade transitoria preservada sem travar a evolucao.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-card">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="module-pill">Midia</span>
+                <h3 class="font-orbitron text-base font-bold text-white">Central de Midia e fluxo de upload</h3>
+              </div>
+              <div class="mt-4 overflow-x-auto">
+                <table class="doc-table">
+                  <thead>
+                    <tr>
+                      <th>Modulo</th>
+                      <th>Tarefa</th>
+                      <th>Objetivo</th>
+                      <th>Arquivos/pastas</th>
+                      <th>Regra de negocio</th>
+                      <th>Criterio de aceite</th>
+                      <th>Risco</th>
+                      <th>Dependencias</th>
+                      <th>Resultado esperado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="doc-row"><td>Midia</td><td>MID-UP-01</td><td>Expandir Central de Midia para aceitar imagem, audio e video.</td><td>Controllers/admin, services, views da midia, storage.</td><td>Upload pode vir da pagina de midia ou da modal, mas todo arquivo entra na biblioteca oficial.</td><td>Upload dos tres tipos funcionando com identificacao visual de tipo.</td><td>UI ficar confusa e tratar tudo como imagem.</td><td>MID-BD-01.</td><td>Biblioteca unificada de ativos do portal.</td></tr>
+                    <tr class="doc-row"><td>Midia</td><td>MID-UP-02</td><td>Criar filtros por tipo e preview especifico na biblioteca.</td><td>Views/admin de midia, JS admin de midia.</td><td>Modal deve conseguir filtrar por tipo e listar so arquivos elegiveis para a acao atual.</td><td>Filtro por `imagem`, `audio` e `video` funcional e preview coerente por tipo.</td><td>Selecao errada de ativo em modal editorial.</td><td>MID-UP-01.</td><td>Escolha de midia mais rapida e menos sujeita a erro.</td></tr>
+                    <tr class="doc-row"><td>Midia</td><td>MID-UP-03</td><td>Registrar vinculo de uso entre midia e post com rastreabilidade.</td><td>Banco/repositorio de midia, servicos editoriais.</td><td>Midia enviada/selecionada precisa manter ligacao com o post e continuar rastreavel para limpeza de orfas.</td><td>Midias novas mostram post vinculado e uso fica consistente na rotina de auditoria.</td><td>Arquivo aparentemente orfao ser removido por falta de vinculo.</td><td>MID-BD-01, F4-T03.</td><td>Menos perda de arquivo e limpeza futura mais segura.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-card">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="module-pill">Editor</span>
+                <h3 class="font-orbitron text-base font-bold text-white">Toolbar, modal de audio e operacao editorial</h3>
+              </div>
+              <div class="mt-4 overflow-x-auto">
+                <table class="doc-table">
+                  <thead>
+                    <tr>
+                      <th>Modulo</th>
+                      <th>Tarefa</th>
+                      <th>Objetivo</th>
+                      <th>Arquivos/pastas</th>
+                      <th>Regra de negocio</th>
+                      <th>Criterio de aceite</th>
+                      <th>Risco</th>
+                      <th>Dependencias</th>
+                      <th>Resultado esperado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="doc-row"><td>Editor</td><td>EDT-01</td><td>Adicionar botao de salvar na barra do editor.</td><td>Views/components do editor, JS do editor.</td><td>Salvar deve refletir o estado real da instancia ativa do editor.</td><td>Acao de salvar funcionando tanto em criacao quanto em edicao sem divergencia de conteudo.</td><td>Salvar estado antigo do HTML/visual.</td><td>Fluxo atual do editor.</td><td>Menor atrito operacional em posts longos.</td></tr>
+                    <tr class="doc-row"><td>Editor</td><td>EDT-02</td><td>Reorganizar toolbar: limpar formatacao apos citacao e novo separador.</td><td>Toolbar do editor e estilos do admin.</td><td>Nova ordem precisa ser identica em criar e editar.</td><td>Toolbar padronizada e validada visualmente nas duas telas.</td><td>Quebra de consistencia entre formularios.</td><td>EDT-01.</td><td>Barra mais previsivel e profissional.</td></tr>
+                    <tr class="doc-row"><td>Editor</td><td>EDT-03</td><td>Criar modal oficial do bloco de audio com upload/selecao de biblioteca.</td><td>Views/components do editor, JS admin, modal de midia.</td><td>Titulo, subtitulo, texto do botao, narracao e ambiente; pelo menos um audio obrigatorio.</td><td>Modal insere bloco sem HTML manual e permite escolher/subir audio pela propria janela.</td><td>Fluxo de insercao ficar mais fragil que o bloco de imagem.</td><td>MID-UP-01, MID-UP-02.</td><td>Bloco de audio vira recurso oficial do editorial.</td></tr>
+                    <tr class="doc-row"><td>Editor</td><td>EDT-04</td><td>Integrar selecao de midia por tipo nas modais do editor.</td><td>JS do editor, modal/biblioteca, endpoints de midia.</td><td>Imagem busca imagem, audio busca audio, video busca video; upload via modal reaproveita a mesma biblioteca.</td><td>Seletores de midia filtram corretamente e retornam ativos validos para cada bloco.</td><td>Escolha de midia errada ou upload indo para fluxo paralelo.</td><td>MID-UP-02, EDT-03.</td><td>Experiencia consistente entre blocos e biblioteca.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-card">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="module-pill">Frontend</span>
+                <h3 class="font-orbitron text-base font-bold text-white">Renderizacao publica do bloco de audio</h3>
+              </div>
+              <div class="mt-4 overflow-x-auto">
+                <table class="doc-table">
+                  <thead>
+                    <tr>
+                      <th>Modulo</th>
+                      <th>Tarefa</th>
+                      <th>Objetivo</th>
+                      <th>Arquivos/pastas</th>
+                      <th>Regra de negocio</th>
+                      <th>Criterio de aceite</th>
+                      <th>Risco</th>
+                      <th>Dependencias</th>
+                      <th>Resultado esperado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="doc-row"><td>Frontend</td><td>FRT-AUD-01</td><td>Definir HTML estruturado oficial do bloco de audio.</td><td>Editor, PostService, render do post.</td><td>Post salva so marcacao estruturada e dados necessarios; nada de `<style>` ou `<script>` inline.</td><td>Markup padrao fechado e reutilizavel entre posts.</td><td>Estrutura ambigua dificultar compatibilidade futura.</td><td>EDT-03.</td><td>Bloco editorial limpo e pronto para JS/CSS centralizados.</td></tr>
+                    <tr class="doc-row"><td>Frontend</td><td>FRT-AUD-02</td><td>Criar CSS oficial do bloco seguindo o padrao visual do portal.</td><td>`public/assets/css/site.css` e renders relacionados.</td><td>Visual coerente com o portal e sem depender de estilo salvo no conteudo.</td><td>Bloco fica bonito e consistente em post, preview e stage.</td><td>Repetir erro de estilo diferente entre preview e site.</td><td>FRT-AUD-01.</td><td>Estilo centralizado e seguro.</td></tr>
+                    <tr class="doc-row"><td>Frontend</td><td>FRT-AUD-03</td><td>Criar JS oficial do bloco no mesmo ecossistema dos scripts publicos atuais.</td><td>`public/assets/js/site-home.js` ou arquivo dedicado de post.</td><td>Suportar narracao, ambiente ou ambos; resetar botao ao fim; evitar multiplas instancias tocando ao mesmo tempo, se aprovado editorialmente.</td><td>Bloco funciona sem JS inline e com comportamento previsivel no post publico.</td><td>Conflito entre multiplos blocos na mesma pagina.</td><td>FRT-AUD-01.</td><td>Interacao oficial do audio funcionando no portal.</td></tr>
+                    <tr class="doc-row"><td>Frontend</td><td>FRT-AUD-04</td><td>Definir estrategia de compatibilidade para blocos artesanais ja existentes.</td><td>PostService, normalizacao de conteudo, render do post.</td><td>Legado continua abrindo; novos blocos devem usar o padrao oficial. Migracao futura fica opcional e controlada.</td><td>Post antigo com audio manual nao quebra apos a introducao do novo recurso.</td><td>Regressao em posts que ja usam HTML customizado.</td><td>MID-BD-03, FRT-AUD-01.</td><td>Transicao segura entre formato antigo e oficial.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-card">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="module-pill">CodeMirror</span>
+                <h3 class="font-orbitron text-base font-bold text-white">Modo HTML profissional</h3>
+              </div>
+              <div class="mt-4 overflow-x-auto">
+                <table class="doc-table">
+                  <thead>
+                    <tr>
+                      <th>Modulo</th>
+                      <th>Tarefa</th>
+                      <th>Objetivo</th>
+                      <th>Arquivos/pastas</th>
+                      <th>Regra de negocio</th>
+                      <th>Criterio de aceite</th>
+                      <th>Risco</th>
+                      <th>Dependencias</th>
+                      <th>Resultado esperado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="doc-row"><td>CodeMirror</td><td>CM-01</td><td>Integrar CodeMirror somente no modo HTML.</td><td>Assets do admin, editor JS, views de criar/editar.</td><td>Modo visual continua sendo principal; modo HTML ganha syntax highlighting com `htmlmixed` e `lineNumbers`.</td><td>Modo HTML abre com destaque de sintaxe e numeros de linha sem quebrar o editor visual.</td><td>Transformar o modo HTML em editor principal por acidente.</td><td>EDT-01.</td><td>Edicao de HTML mais profissional e legivel.</td></tr>
+                    <tr class="doc-row"><td>CodeMirror</td><td>CM-02</td><td>Garantir sincronizacao bidirecional visual ↔ HTML ↔ conteudo salvo.</td><td>JS do editor, fluxo de preview, salvar e alternancia de modo.</td><td>Nao pode haver divergencia entre o conteudo exibido, o salvo e o renderizado em preview.</td><td>Teste de ida e volta passa sem perda de markup nem diferenca entre modos.</td><td>Salvar uma versao e exibir outra.</td><td>CM-01, EDT-01.</td><td>Confianca no editor restaurada mesmo com modo HTML avancado.</td></tr>
+                    <tr class="doc-row"><td>CodeMirror</td><td>CM-03</td><td>Validar reabertura e edicao posterior de posts com blocos especiais.</td><td>Editor, preview, render de post.</td><td>Post com bloco de audio, imagem e HTML estruturado deve reabrir exatamente como foi salvo.</td><td>Abertura, edicao e resave de posts especiais sem alterar markup por acidente.</td><td>Editor limpar classes/data-attributes necessarios.</td><td>CM-02, EDT-03.</td><td>Persistencia estavel para conteudo complexo.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="doc-card">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="module-pill">Checklist</span>
+                <h3 class="font-orbitron text-base font-bold text-white">Validacao de preview, stage e producao</h3>
+              </div>
+              <div class="mt-4 overflow-x-auto">
+                <table class="doc-table">
+                  <thead>
+                    <tr>
+                      <th>Modulo</th>
+                      <th>Tarefa</th>
+                      <th>Objetivo</th>
+                      <th>Arquivos/pastas</th>
+                      <th>Regra de negocio</th>
+                      <th>Criterio de aceite</th>
+                      <th>Risco</th>
+                      <th>Dependencias</th>
+                      <th>Resultado esperado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="doc-row"><td>Checklist</td><td>CHK-01</td><td>Criar checklist fixo de validacao para bloco de audio e midia tipada.</td><td>Documentacao local, backlog, rotina operacional.</td><td>Validar editor visual, modo HTML, preview, stage e producao antes de empacotar qualquer envio.</td><td>Checklist publicado e usado em ao menos uma rodada completa de homologacao.</td><td>Voltar o problema de local mostrar uma coisa e remoto outra.</td><td>FRT-AUD-03, CM-02.</td><td>Processo de homologacao repetivel e auditavel.</td></tr>
+                    <tr class="doc-row"><td>Checklist</td><td>CHK-02</td><td>Definir pacote controlado de deploy para a trilha de audio/editor.</td><td>Content sync, empacotamento, manifesto de deploy.</td><td>Pacote deve separar claramente assets publicos, codigo de app e migracoes/ajustes de banco.</td><td>Pacote de stage aplicado com manifesto completo e pos-check sem regressao.</td><td>Enviar mudanca incompleta para remoto e quebrar layout/JS.</td><td>CHK-01, MID-BD-01.</td><td>Publicacao previsivel e menos sujeita a retrabalho.</td></tr>
+                    <tr class="doc-row"><td>Checklist</td><td>CHK-03</td><td>Executar validacao final em posts legados e novos antes de liberar producao.</td><td>Stage, producao, posts alvo de teste.</td><td>Conferir post legado, post com bloco de audio novo, upload de audio e alternancia visual/HTML.</td><td>Suite manual de validacao concluida em stage e repetida apos publicacao.</td><td>Feature nova funcionar apenas no caso feliz.</td><td>CHK-01, CHK-02, FRT-AUD-04.</td><td>Liberacao para producao com risco reduzido e rastreavel.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="fase-1" class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
           <h2 class="font-orbitron text-xl font-bold text-cyan-200">Fase 1 - Auditoria do sistema contra a documentacao</h2>
           <div class="doc-card doc-rule mt-4">

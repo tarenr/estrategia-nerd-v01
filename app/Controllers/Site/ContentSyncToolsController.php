@@ -24,7 +24,7 @@ final class ContentSyncToolsController
 
         View::render('site/content-sync-tools', [
             'title' => 'Conteudo Local | Estrategia Nerd',
-            'meta_description' => 'Painel local para exportar, validar e publicar conteudo na producao.',
+            'meta_description' => 'Painel local para exportar, validar e publicar conteudo em stage e producao.',
             'site_chrome' => false,
             'content_status' => $this->presentStatus($status),
             'code_status' => $this->presentCodeStatus($manager->codeStatus()),
@@ -33,8 +33,10 @@ final class ContentSyncToolsController
             'flash' => is_array($flash) ? $flash : null,
             'last_verification' => is_array($lastVerification) ? $lastVerification : null,
             'last_post_check' => is_array($lastPostCheck) ? $lastPostCheck : null,
-            'production_ready' => $this->productionProfileReady(),
-            'production_code_ready' => $this->productionCodeProfileReady(),
+            'stage_ready' => $this->profileReady('stage'),
+            'stage_code_ready' => $this->codeProfileReady('stage'),
+            'production_ready' => $this->profileReady('production'),
+            'production_code_ready' => $this->codeProfileReady('production'),
         ]);
     }
 
@@ -146,10 +148,10 @@ final class ContentSyncToolsController
         return $value;
     }
 
-    private function productionProfileReady(): bool
+    private function profileReady(string $profileName): bool
     {
         $config = require base_path('config/content-sync.php');
-        $profile = (array) ($config['profiles']['production'] ?? []);
+        $profile = (array) ($config['profiles'][$profileName] ?? []);
         $database = (array) ($profile['database'] ?? []);
         $uploads = (array) ($profile['uploads'] ?? []);
 
@@ -157,6 +159,11 @@ final class ContentSyncToolsController
             if (trim((string) ($database[$required] ?? '')) === '') {
                 return false;
             }
+        }
+
+        $mode = strtolower(trim((string) ($uploads['mode'] ?? 'ftp')));
+        if ($mode === 'local') {
+            return trim((string) ($uploads['path'] ?? '')) !== '';
         }
 
         foreach (['host', 'username', 'password', 'root'] as $required) {
@@ -168,10 +175,10 @@ final class ContentSyncToolsController
         return true;
     }
 
-    private function productionCodeProfileReady(): bool
+    private function codeProfileReady(string $profileName): bool
     {
         $config = require base_path('config/content-sync.php');
-        $profile = (array) ($config['profiles']['production'] ?? []);
+        $profile = (array) ($config['profiles'][$profileName] ?? []);
         $code = (array) ($profile['code_deploy'] ?? []);
         $mode = strtolower(trim((string) ($code['mode'] ?? 'ftp')));
 
@@ -215,7 +222,8 @@ final class ContentSyncToolsController
             'package_root' => (string) ($status['package_root'] ?? ''),
             'total_packages' => (int) ($status['total_packages'] ?? 0),
             'latest' => $items[0] ?? null,
-            'latest_production_apply' => $status['latest_production_apply'] ?? null,
+            'latest_stage_apply' => is_array($status['latest_stage_apply'] ?? null) ? $status['latest_stage_apply'] : null,
+            'latest_production_apply' => is_array($status['latest_production_apply'] ?? null) ? $status['latest_production_apply'] : null,
             'running' => $status['running'] ?? null,
             'items' => $items,
         ];
@@ -244,6 +252,7 @@ final class ContentSyncToolsController
             'package_root' => (string) ($status['package_root'] ?? ''),
             'total_packages' => (int) ($status['total_packages'] ?? 0),
             'latest' => $items[0] ?? null,
+            'latest_stage_apply' => is_array($status['latest_stage_apply'] ?? null) ? $status['latest_stage_apply'] : null,
             'latest_production_apply' => is_array($status['latest_production_apply'] ?? null) ? $status['latest_production_apply'] : null,
             'items' => $items,
         ];

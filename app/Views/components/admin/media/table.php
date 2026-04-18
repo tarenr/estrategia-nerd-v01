@@ -59,7 +59,7 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
     <div class="text-center py-12 border-2 border-dashed border-gray-700 rounded-xl">
       <div class="text-4xl text-cyan-300 mb-4"><i class="fa-solid fa-photo-film"></i></div>
       <h4 class="text-xl font-bold text-white mb-2">Nenhum arquivo encontrado</h4>
-      <div class="text-slate-400 text-sm">Envie a primeira imagem ou ajuste os filtros para explorar a biblioteca.</div>
+      <div class="text-slate-400 text-sm">Envie o primeiro arquivo ou ajuste os filtros para explorar a biblioteca.</div>
     </div>
   <?php else: ?>
     <div class="media-library-grid">
@@ -94,6 +94,18 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
           <div class="media-library-preview">
             <?php if (($item['is_image'] ?? false) === true): ?>
               <img src="<?= htmlspecialchars($previewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['name'] ?? 'midia'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="media-library-image">
+            <?php elseif (($item['is_audio'] ?? false) === true): ?>
+              <div class="media-library-file-fallback media-library-file-fallback-audio">
+                <audio controls preload="none" class="w-full max-w-full">
+                  <source src="<?= htmlspecialchars($previewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" type="<?= htmlspecialchars((string) ($item['mime'] ?? 'audio/mpeg'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                </audio>
+              </div>
+            <?php elseif (($item['is_video'] ?? false) === true): ?>
+              <div class="media-library-file-fallback media-library-file-fallback-video">
+                <video controls preload="metadata" class="w-full max-h-44 rounded-lg">
+                  <source src="<?= htmlspecialchars($previewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" type="<?= htmlspecialchars((string) ($item['mime'] ?? 'video/mp4'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                </video>
+              </div>
             <?php else: ?>
               <div class="media-library-file-fallback">
                 <span class="media-library-file-ext"><?= htmlspecialchars((string) strtoupper((string) ($item['extension'] ?? 'ARQ')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
@@ -115,7 +127,7 @@ $perPage = (int) ($pagination['per_page'] ?? 12);
             <div class="media-library-meta-grid">
               <div class="media-library-meta-item">
                 <div class="media-library-meta-label">Tipo</div>
-                <div class="media-library-meta-value"><?= htmlspecialchars((string) ($item['mime'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                <div class="media-library-meta-value"><?= htmlspecialchars((string) ($item['media_type_label'] ?? 'Outro arquivo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> - <?= htmlspecialchars((string) ($item['mime'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
               </div>
               <div class="media-library-meta-item">
                 <div class="media-library-meta-label">Tamanho</div>

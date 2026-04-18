@@ -32,6 +32,8 @@ $action = url('/admin/midia');
       <select id="media-tipo" name="tipo" class="nerd-input admin-filter-control">
         <option value="" <?= $tipo === '' ? 'selected' : '' ?>>Todos</option>
         <option value="imagem" <?= $tipo === 'imagem' ? 'selected' : '' ?>>Somente imagens</option>
+        <option value="audio" <?= $tipo === 'audio' ? 'selected' : '' ?>>Somente audios</option>
+        <option value="video" <?= $tipo === 'video' ? 'selected' : '' ?>>Somente videos</option>
         <option value="outros" <?= $tipo === 'outros' ? 'selected' : '' ?>>Outros arquivos</option>
       </select>
     </div>

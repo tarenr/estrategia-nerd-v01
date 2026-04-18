@@ -3,10 +3,17 @@
 declare(strict_types=1);
 
 $databaseConfig = require __DIR__ . '/database.php';
+
 $productionUploadsRoot = (string) ($_ENV['CONTENT_SYNC_PRODUCTION_FTP_ROOT'] ?? ($_ENV['BACKUP_PRODUCTION_FTP_ROOT'] ?? 'domains/estrategianerd.com.br/public_html/uploads'));
 $productionCodeRootDefault = (string) preg_replace('~/uploads/?$~i', '', $productionUploadsRoot);
 if ($productionCodeRootDefault === '' || $productionCodeRootDefault === $productionUploadsRoot) {
     $productionCodeRootDefault = 'domains/estrategianerd.com.br/public_html';
+}
+
+$stageUploadsRoot = (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_ROOT'] ?? '');
+$stageCodeRootDefault = (string) preg_replace('~/uploads/?$~i', '', $stageUploadsRoot);
+if ($stageCodeRootDefault === '' || $stageCodeRootDefault === $stageUploadsRoot) {
+    $stageCodeRootDefault = '';
 }
 
 return [
@@ -36,6 +43,35 @@ return [
             'code_deploy' => [
                 'mode' => 'local',
                 'root' => dirname(__DIR__),
+            ],
+        ],
+        'stage' => [
+            'label' => (string) ($_ENV['CONTENT_SYNC_STAGE_PROFILE_LABEL'] ?? 'Stage / Homologacao remota'),
+            'slug' => 'stage-homologacao',
+            'database' => [
+                'host' => (string) ($_ENV['CONTENT_SYNC_STAGE_DB_HOST'] ?? ''),
+                'port' => (string) ($_ENV['CONTENT_SYNC_STAGE_DB_PORT'] ?? '3306'),
+                'database' => (string) ($_ENV['CONTENT_SYNC_STAGE_DB_DATABASE'] ?? ''),
+                'username' => (string) ($_ENV['CONTENT_SYNC_STAGE_DB_USERNAME'] ?? ''),
+                'password' => (string) ($_ENV['CONTENT_SYNC_STAGE_DB_PASSWORD'] ?? ''),
+            ],
+            'uploads' => [
+                'mode' => (string) ($_ENV['CONTENT_SYNC_STAGE_UPLOAD_MODE'] ?? 'ftp'),
+                'host' => (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_HOST'] ?? ''),
+                'port' => (int) ($_ENV['CONTENT_SYNC_STAGE_FTP_PORT'] ?? 21),
+                'username' => (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_USERNAME'] ?? ''),
+                'password' => (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_PASSWORD'] ?? ''),
+                'root' => (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_ROOT'] ?? ''),
+                'passive' => !in_array(strtolower((string) ($_ENV['CONTENT_SYNC_STAGE_FTP_PASSIVE'] ?? 'true')), ['0', 'false', 'off', 'no'], true),
+            ],
+            'code_deploy' => [
+                'mode' => (string) ($_ENV['CONTENT_SYNC_STAGE_CODE_MODE'] ?? 'ftp'),
+                'host' => (string) ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_HOST'] ?? ($_ENV['CONTENT_SYNC_STAGE_FTP_HOST'] ?? '')),
+                'port' => (int) ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_PORT'] ?? ($_ENV['CONTENT_SYNC_STAGE_FTP_PORT'] ?? 21)),
+                'username' => (string) ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_USERNAME'] ?? ($_ENV['CONTENT_SYNC_STAGE_FTP_USERNAME'] ?? '')),
+                'password' => (string) ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_PASSWORD'] ?? ($_ENV['CONTENT_SYNC_STAGE_FTP_PASSWORD'] ?? '')),
+                'root' => (string) ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_ROOT'] ?? $stageCodeRootDefault),
+                'passive' => !in_array(strtolower((string) ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_PASSIVE'] ?? ($_ENV['CONTENT_SYNC_STAGE_FTP_PASSIVE'] ?? 'true'))), ['0', 'false', 'off', 'no'], true),
             ],
         ],
         'production' => [

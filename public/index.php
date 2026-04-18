@@ -14,9 +14,14 @@
 
 declare(strict_types=1);
 
-$appRoot = is_file(__DIR__ . '/../bootstrap.php')
-    ? dirname(__DIR__)
-    : (__DIR__ . '/_app_core');
+$localEmbeddedRoot = __DIR__ . '/_app_core';
+$parentRoot = dirname(__DIR__);
+
+$appRoot = is_file($localEmbeddedRoot . '/bootstrap.php')
+    ? $localEmbeddedRoot
+    : (is_file($parentRoot . '/bootstrap.php')
+        ? $parentRoot
+        : $localEmbeddedRoot);
 
 require_once $appRoot . '/bootstrap.php';
 
@@ -32,6 +37,18 @@ $path = rawurldecode($uri);
 $path = preg_replace('#^.*?/public/index\.php#', '', $path) ?? $path;
 $path = preg_replace('#^.*?/public#', '', $path) ?? $path;
 $path = preg_replace('#^.*?/index\.php#', '', $path) ?? $path;
+
+$appBasePath = parse_url((string) ($_ENV['APP_URL'] ?? ''), PHP_URL_PATH);
+if (is_string($appBasePath) && $appBasePath !== '' && $appBasePath !== '/') {
+    $normalizedBasePath = rtrim($appBasePath, '/');
+
+    if ($path === $normalizedBasePath) {
+        $path = '/';
+    } elseif (str_starts_with($path, $normalizedBasePath . '/')) {
+        $path = substr($path, strlen($normalizedBasePath));
+    }
+}
+
 $path = $path === '' ? '/' : $path;
 $path = rtrim($path, '/') ?: '/';
 

@@ -97,12 +97,14 @@ final class ContentSyncManager
     {
         $root = $this->packageRoot();
         $items = $this->allPackages();
+        $latestStageApply = $this->latestAppliedTarget($items, 'stage');
         $latestProductionApply = $this->latestAppliedTarget($items, 'production');
 
         return [
             'package_root' => $root,
             'total_packages' => count($items),
             'latest' => $items[0] ?? null,
+            'latest_stage_apply' => $latestStageApply,
             'latest_production_apply' => $latestProductionApply,
             'running' => $this->readRunLock($root),
             'items' => $items,
@@ -113,12 +115,14 @@ final class ContentSyncManager
     {
         $root = $this->codePackageRoot();
         $items = $this->allCodePackages();
+        $latestStageApply = $this->latestAppliedTarget($items, 'stage');
         $latestProductionApply = $this->latestAppliedTarget($items, 'production');
 
         return [
             'package_root' => $root,
             'total_packages' => count($items),
             'latest' => $items[0] ?? null,
+            'latest_stage_apply' => $latestStageApply,
             'latest_production_apply' => $latestProductionApply,
             'items' => $items,
         ];
