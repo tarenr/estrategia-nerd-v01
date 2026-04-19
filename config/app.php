@@ -17,7 +17,7 @@ return [
     'name' => $_ENV['APP_NAME'] ?? 'Estrategia Nerd',
     'env' => $_ENV['APP_ENV'] ?? 'development',
     'debug' => filter_var($_ENV['APP_DEBUG'] ?? true, FILTER_VALIDATE_BOOL),
-    'url' => rtrim($_ENV['APP_URL'] ?? 'http://localhost/estrategia-nerd/public', '/'),
+    'url' => rtrim((string) ($_ENV['APP_URL'] ?? ''), '/'),
     'timezone' => $_ENV['APP_TIMEZONE'] ?? 'America/Sao_Paulo',
     'session_name' => $_ENV['SESSION_NAME'] ?? 'estrategia_nerd_session',
 ];

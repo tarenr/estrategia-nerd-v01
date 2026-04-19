@@ -5,23 +5,36 @@ declare(strict_types=1);
 
 namespace Scripts\Backup;
 
+require_once __DIR__ . '/../operations/OperationLogger.php';
+
+use Scripts\Operations\OperationLogger;
 use RuntimeException;
 use ZipArchive;
 
 final class BackupManager
 {
+    private const DATA_DIRECTORIES = [
+        'local' => '01-local',
+        'stage' => '02-stage',
+        'production' => '03-prod',
+    ];
+
+    private OperationLogger $logger;
+
     public function __construct(private array $config)
     {
         date_default_timezone_set($_ENV['APP_TIMEZONE'] ?? 'America/Sao_Paulo');
+        $this->logger = new OperationLogger($this->operationRoot());
     }
 
     public function run(string $profileName = 'local'): array
     {
         $profile = $this->profile($profileName);
-        $backupRoot = $this->backupRoot();
-        $lock = $this->acquireRunLock($backupRoot, $profileName, (string) ($profile['label'] ?? $profileName));
+        $operationRoot = $this->backupRoot();
+        $backupRoot = $this->profileBackupRoot($profileName);
+        $lock = $this->acquireRunLock($operationRoot, $profileName, (string) ($profile['label'] ?? $profileName));
         $profileSlug = trim((string) ($profile['slug'] ?? $profileName));
-        $backupId = $profileSlug . '_' . date('Y-m-d_H-i-s');
+        $backupId = $this->buildBackupId('BD', $profileName);
         $backupDir = $backupRoot . DIRECTORY_SEPARATOR . $backupId;
 
         if (!is_dir($backupDir) && !mkdir($backupDir, 0777, true) && !is_dir($backupDir)) {
@@ -58,13 +71,15 @@ final class BackupManager
             $manifest['status'] = 'ready';
             $manifest['verified_at'] = date('c');
             $this->writeManifest($backupDir, $manifest);
-            $this->applyRetention();
+            $this->applyRetention($profileName);
+            $this->logOperation('backup_dados', $profileName, $profileName, (string) $backupId, 'OK', 'Backup de dados concluido.');
 
             return $manifest;
         } catch (\Throwable $exception) {
             $manifest['status'] = 'failed';
             $manifest['error'] = $exception->getMessage();
             $this->writeManifest($backupDir, $manifest);
+            $this->logOperation('backup_dados', $profileName, $profileName, (string) $backupId, 'FAIL', $exception->getMessage());
             throw $exception;
         } finally {
             if ($temporaryDirectory !== '' && str_contains($temporaryDirectory, sys_get_temp_dir())) {
@@ -109,6 +124,7 @@ final class BackupManager
         $backup['cloud_uploaded'] = true;
         $backup['cloud_uploaded_at'] = date('c');
         $this->writeManifest((string) $backup['_dir'], $backup);
+        $this->logOperation('backup_registro_nuvem', (string) ($backup['profile'] ?? 'local'), 'nuvem', (string) ($backup['backup_id'] ?? ''), 'OK', 'Backup marcado como enviado para a nuvem.');
 
         return $backup;
     }
@@ -123,6 +139,7 @@ final class BackupManager
         $backup['database_verification'] = $this->verifyEntry((array) ($backup['database'] ?? []), (string) $backup['_dir']);
         $backup['uploads_verification'] = $this->verifyEntry((array) ($backup['uploads'] ?? []), (string) $backup['_dir']);
         $backup['is_valid'] = ($backup['database_verification']['valid'] ?? false) && ($backup['uploads_verification']['valid'] ?? false);
+        $this->logOperation('backup_verificacao', (string) ($backup['profile'] ?? 'local'), (string) ($backup['profile'] ?? 'local'), (string) ($backup['backup_id'] ?? ''), ($backup['is_valid'] ?? false) ? 'OK' : 'FAIL', 'Verificacao de backup executada.');
 
         return $backup;
     }
@@ -163,13 +180,45 @@ final class BackupManager
             $restored[] = 'uploads';
         }
 
-        return [
+        $result = [
             'backup_id' => $backup['backup_id'] ?? null,
             'target_profile' => $targetProfile,
             'scope' => $scope,
             'restored' => $restored,
             'restored_at' => date('c'),
         ];
+
+        $this->logOperation('restore_dados', (string) ($backup['profile'] ?? 'local'), $targetProfile, (string) ($backup['backup_id'] ?? ''), 'OK', 'Restore de dados executado.', [
+            'scope' => $scope,
+        ]);
+
+        return $result;
+    }
+
+    private function operationRoot(): string
+    {
+        $root = trim((string) ($this->config['backup_root'] ?? ''));
+        if ($root !== '') {
+            return $root;
+        }
+
+        return dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'operations';
+    }
+
+    private function logOperation(
+        string $type,
+        string $origin,
+        string $destination,
+        string $id,
+        string $status,
+        string $message,
+        array $context = []
+    ): void {
+        try {
+            $this->logger->write($type, $origin, $destination, $id, $status, $message, $context);
+        } catch (\Throwable) {
+            // Log operacional nunca deve derrubar a rotina principal.
+        }
     }
 
     private function lockPath(string $backupRoot): string
@@ -278,6 +327,42 @@ final class BackupManager
         return $root;
     }
 
+    private function profileBackupRoot(string $profileName): string
+    {
+        $baseRoot = $this->backupRoot();
+        $directory = self::DATA_DIRECTORIES[$profileName] ?? null;
+        if ($directory === null) {
+            throw new RuntimeException('Perfil de backup nao suportado na estrutura numerada: ' . $profileName);
+        }
+
+        $root = $baseRoot . DIRECTORY_SEPARATOR . $directory . DIRECTORY_SEPARATOR . 'dados';
+        if (!is_dir($root) && !mkdir($root, 0777, true) && !is_dir($root)) {
+            throw new RuntimeException('Nao foi possivel criar a pasta de dados do backup: ' . $root);
+        }
+
+        return $root;
+    }
+
+    private function buildBackupId(string $type, string $profileName): string
+    {
+        return sprintf(
+            '%s-%s-%s',
+            strtoupper(trim($type)),
+            $this->profileToken($profileName),
+            date('Ymd-His')
+        );
+    }
+
+    private function profileToken(string $profileName): string
+    {
+        return match (strtolower(trim($profileName))) {
+            'local' => 'LOCAL',
+            'stage' => 'STAGE',
+            'production' => 'PROD',
+            default => strtoupper(preg_replace('/[^A-Z0-9]+/i', '-', trim($profileName)) ?: 'GEN'),
+        };
+    }
+
     private function backupDatabase(array $databaseConfig, string $destinationPath): void
     {
         foreach (['host', 'port', 'database', 'username'] as $required) {
@@ -352,15 +437,20 @@ final class BackupManager
 
         $defaultsContent = implode(PHP_EOL, [
             '[client]',
-            'host=' . (string) $databaseConfig['host'],
-            'port=' . (string) $databaseConfig['port'],
-            'user=' . (string) $databaseConfig['username'],
-            'password=' . (string) ($databaseConfig['password'] ?? ''),
+            'host="' . $this->escapeMysqlOptionValue((string) $databaseConfig['host']) . '"',
+            'port="' . $this->escapeMysqlOptionValue((string) $databaseConfig['port']) . '"',
+            'user="' . $this->escapeMysqlOptionValue((string) $databaseConfig['username']) . '"',
+            'password="' . $this->escapeMysqlOptionValue((string) ($databaseConfig['password'] ?? '')) . '"',
             '',
         ]);
 
         file_put_contents($defaultsFile, $defaultsContent);
         return $defaultsFile;
+    }
+
+    private function escapeMysqlOptionValue(string $value): string
+    {
+        return str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
     }
 
     private function materializeUploads(array $uploadsConfig): string
@@ -681,8 +771,12 @@ final class BackupManager
 
     private function allBackups(): array
     {
-        $root = $this->backupRoot();
-        $directories = glob($root . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [];
+        $directories = [];
+        foreach ($this->backupSearchRoots() as $root) {
+            foreach ((glob($root . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: []) as $directory) {
+                $directories[] = $directory;
+            }
+        }
 
         $items = [];
         foreach ($directories as $directory) {
@@ -764,10 +858,10 @@ final class BackupManager
         return ['valid' => true, 'message' => 'OK'];
     }
 
-    private function applyRetention(): void
+    private function applyRetention(string $profileName): void
     {
         $keep = max(1, (int) ($this->config['retention'] ?? 14));
-        $items = $this->allBackups();
+        $items = $this->backupsBySearchRoot($this->profileBackupRoot($profileName));
         $itemsToRemove = array_slice($items, $keep);
 
         foreach ($itemsToRemove as $item) {
@@ -776,6 +870,67 @@ final class BackupManager
                 $this->removeDirectory($directory);
             }
         }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function backupSearchRoots(): array
+    {
+        $roots = [];
+        $baseRoot = $this->backupRoot();
+
+        foreach (self::DATA_DIRECTORIES as $directory) {
+            $candidate = $baseRoot . DIRECTORY_SEPARATOR . $directory . DIRECTORY_SEPARATOR . 'dados';
+            if (is_dir($candidate)) {
+                $roots[] = $candidate;
+            }
+        }
+
+        $roots[] = $baseRoot;
+
+        return array_values(array_unique($roots));
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function backupsBySearchRoot(string $root): array
+    {
+        $directories = glob($root . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [];
+        $items = [];
+
+        foreach ($directories as $directory) {
+            $manifestPath = $directory . DIRECTORY_SEPARATOR . 'manifest.json';
+            if (!is_file($manifestPath)) {
+                continue;
+            }
+
+            $manifest = json_decode((string) file_get_contents($manifestPath), true);
+            if (!is_array($manifest)) {
+                continue;
+            }
+
+            $manifest['_dir'] = $directory;
+            $manifest['verification'] = [
+                'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
+                'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
+            ];
+            $manifest['is_valid'] =
+                (bool) ($manifest['verification']['database']['valid'] ?? false)
+                && (bool) ($manifest['verification']['uploads']['valid'] ?? false);
+
+            $items[] = $manifest;
+        }
+
+        usort($items, static function (array $left, array $right): int {
+            $leftTime = strtotime((string) ($left['created_at'] ?? '')) ?: 0;
+            $rightTime = strtotime((string) ($right['created_at'] ?? '')) ?: 0;
+
+            return $rightTime <=> $leftTime;
+        });
+
+        return $items;
     }
 
     private function removeDirectory(string $directory): void

@@ -5,17 +5,28 @@ declare(strict_types=1);
 
 namespace Scripts\ContentSync;
 
+require_once __DIR__ . '/../operations/OperationLogger.php';
+
+use Scripts\Operations\OperationLogger;
 use PDO;
 use RuntimeException;
 use ZipArchive;
 
 final class ContentSyncManager
 {
+    private const CONTENT_DIRECTORIES = [
+        'local' => '01-local',
+        'stage' => '02-stage',
+        'production' => '03-prod',
+    ];
+
     private array $columnSupportCache = [];
+    private OperationLogger $logger;
 
     public function __construct(private array $config)
     {
         date_default_timezone_set($_ENV['APP_TIMEZONE'] ?? 'America/Sao_Paulo');
+        $this->logger = new OperationLogger($this->operationRoot());
     }
 
     public function export(string $profileName = 'local'): array
@@ -23,8 +34,8 @@ final class ContentSyncManager
         $profile = $this->profile($profileName);
         $root = $this->packageRoot();
         $lock = $this->acquireRunLock($root, 'export', $profileName, (string) ($profile['label'] ?? $profileName));
-        $packageId = (string) ($profile['slug'] ?? $profileName) . '_' . date('Y-m-d_H-i-s');
-        $packageDir = $root . DIRECTORY_SEPARATOR . $packageId;
+        $packageId = $this->buildPackageId('PC', $profileName);
+        $packageDir = $this->profilePackageRoot($profileName) . DIRECTORY_SEPARATOR . $packageId;
         $dataDir = $packageDir . DIRECTORY_SEPARATOR . 'data';
 
         if (!is_dir($dataDir) && !mkdir($dataDir, 0777, true) && !is_dir($dataDir)) {
@@ -78,12 +89,17 @@ final class ContentSyncManager
             $manifest['is_valid'] = (bool) ($verification['is_valid'] ?? false);
             $manifest['status'] = 'ready';
             $this->writeManifest($packageDir, $manifest);
+            $this->logOperation('pacote_conteudo', $profileName, $profileName, (string) $packageId, 'OK', 'Pacote de conteudo gerado.', [
+                'posts' => (int) ($manifest['stats']['posts'] ?? 0),
+                'uploads' => (int) ($manifest['uploads']['included_files'] ?? 0),
+            ]);
 
             return $manifest;
         } catch (\Throwable $exception) {
             $manifest['status'] = 'failed';
             $manifest['error'] = $exception->getMessage();
             $this->writeManifest($packageDir, $manifest);
+            $this->logOperation('pacote_conteudo', $profileName, $profileName, (string) $packageId, 'FAIL', $exception->getMessage());
             throw $exception;
         } finally {
             if ($tmpDir !== '' && str_contains($tmpDir, sys_get_temp_dir())) {
@@ -126,6 +142,70 @@ final class ContentSyncManager
             'latest_production_apply' => $latestProductionApply,
             'items' => $items,
         ];
+    }
+
+    public function exportCode(?string $notes = null): array
+    {
+        $root = $this->codePackageRoot();
+        $lock = $this->acquireRunLock($root, 'export_code', 'local', 'Local / Codigo');
+        $packageId = $this->buildCodePackageId();
+        $packageDir = $root . DIRECTORY_SEPARATOR . $packageId;
+        $filesDir = $packageDir . DIRECTORY_SEPARATOR . 'files';
+
+        if (!is_dir($filesDir) && !mkdir($filesDir, 0777, true) && !is_dir($filesDir)) {
+            $this->releaseRunLock($lock);
+            throw new RuntimeException('Nao foi possivel criar a pasta do pacote tecnico: ' . $packageDir);
+        }
+
+        $manifest = [
+            'package_id' => $packageId,
+            'commit' => $this->currentHeadCommit(),
+            'created_at' => date('c'),
+            'files_count' => 0,
+            'notes' => trim((string) $notes),
+            'files' => [],
+            'ignored_files' => [],
+            'applied_targets' => [],
+            'zip_path' => '',
+            'manifest_path' => $packageDir . DIRECTORY_SEPARATOR . 'manifest.json',
+        ];
+
+        try {
+            $selection = $this->collectCodePackageFiles();
+            $files = (array) ($selection['files'] ?? []);
+            $ignored = (array) ($selection['ignored'] ?? []);
+
+            if ($files === []) {
+                throw new RuntimeException('Nenhum arquivo tecnico elegivel foi encontrado nas alteracoes atuais.');
+            }
+
+            $this->copyCodePackageFiles($files, $filesDir);
+            $zipPath = $root . DIRECTORY_SEPARATOR . $packageId . '.zip';
+            $this->compressDirectory($packageDir, $zipPath);
+
+            $manifest['files'] = array_values($files);
+            $manifest['ignored_files'] = array_values($ignored);
+            $manifest['files_count'] = count($files);
+            $manifest['zip_path'] = $zipPath;
+
+            $this->writeJson($packageDir . DIRECTORY_SEPARATOR . 'manifest.json', $manifest);
+            $this->logOperation('pacote_tecnico', 'local', 'local', $packageId, 'OK', 'Pacote tecnico gerado com sucesso.', [
+                'files' => count($files),
+            ]);
+
+            return $manifest;
+        } catch (\Throwable $exception) {
+            $this->removeDirectory($packageDir);
+            $zipPath = $root . DIRECTORY_SEPARATOR . $packageId . '.zip';
+            if (is_file($zipPath)) {
+                @unlink($zipPath);
+            }
+
+            $this->logOperation('pacote_tecnico', 'local', 'local', $packageId, 'FAIL', $exception->getMessage());
+            throw $exception;
+        } finally {
+            $this->releaseRunLock($lock);
+        }
     }
 
     public function parityStatus(): array
@@ -200,6 +280,36 @@ final class ContentSyncManager
         ];
     }
 
+    public function profileReady(string $profileName): bool
+    {
+        $profile = (array) ($this->config['profiles'][$profileName] ?? []);
+        if ($profile === []) {
+            return false;
+        }
+
+        $database = (array) ($profile['database'] ?? []);
+        $uploads = (array) ($profile['uploads'] ?? []);
+
+        foreach (['host', 'database', 'username'] as $required) {
+            if (trim((string) ($database[$required] ?? '')) === '') {
+                return false;
+            }
+        }
+
+        $mode = strtolower(trim((string) ($uploads['mode'] ?? 'ftp')));
+        if ($mode === 'local') {
+            return trim((string) ($uploads['path'] ?? '')) !== '';
+        }
+
+        foreach (['host', 'username', 'password', 'root'] as $required) {
+            if (trim((string) ($uploads[$required] ?? '')) === '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private function assertProductionPublishAllowed(string $targetProfile): void
     {
         if (strtolower(trim($targetProfile)) !== 'production') {
@@ -223,6 +333,7 @@ final class ContentSyncManager
         $package['verification'] = $verification;
         $package['is_valid'] = (bool) ($verification['is_valid'] ?? false);
         $this->writeManifest((string) $package['_dir'], $package);
+        $this->logOperation('verificacao_conteudo', (string) ($package['source_profile'] ?? 'stage'), (string) ($package['source_profile'] ?? 'stage'), (string) ($package['package_id'] ?? ''), ($package['is_valid'] ?? false) ? 'OK' : 'FAIL', 'Verificacao de pacote de conteudo executada.');
 
         return $package;
     }
@@ -236,6 +347,17 @@ final class ContentSyncManager
         $package = $this->packageById($packageId);
         if ($package === null) {
             throw new RuntimeException('Nenhum pacote encontrado para aplicar.');
+        }
+
+        $sourceProfile = strtolower(trim((string) ($package['source_profile'] ?? '')));
+        $allowedTargets = $this->allowedApplyTargets($sourceProfile);
+        if (!in_array(strtolower(trim($targetProfile)), $allowedTargets, true)) {
+            throw new RuntimeException(sprintf(
+                'Pacote %s com origem %s nao pode ser aplicado em %s.',
+                (string) ($package['package_id'] ?? ''),
+                $sourceProfile !== '' ? $sourceProfile : 'desconhecida',
+                $targetProfile
+            ));
         }
 
         $verification = $this->verifyPackageDirectory((string) $package['_dir'], $package);
@@ -277,8 +399,13 @@ final class ContentSyncManager
             $package['verification'] = $verification;
             $package['is_valid'] = true;
             $this->writeManifest((string) $package['_dir'], $package);
+            $type = strtolower(trim($targetProfile)) === 'production' ? 'promocao_conteudo' : 'aplicacao_conteudo';
+            $this->logOperation($type, (string) ($package['source_profile'] ?? 'stage'), $targetProfile, (string) ($package['package_id'] ?? ''), 'OK', 'Pacote de conteudo aplicado com sucesso.');
 
             return ['package_id' => $package['package_id'] ?? null, 'target_profile' => $targetProfile, 'applied_at' => $apply['applied_at'], 'result' => $apply['result']];
+        } catch (\Throwable $exception) {
+            $this->logOperation('aplicacao_conteudo', (string) ($package['source_profile'] ?? 'stage'), $targetProfile, (string) ($package['package_id'] ?? ($packageId ?? '')), 'FAIL', $exception->getMessage());
+            throw $exception;
         } finally {
             if ($tmpDir !== '' && str_contains($tmpDir, sys_get_temp_dir())) {
                 $this->removeDirectory($tmpDir);
@@ -329,6 +456,10 @@ final class ContentSyncManager
             if ($manifestDir !== '') {
                 $this->writeManifest($manifestDir, $package);
             }
+            $type = strtolower(trim($targetProfile)) === 'production' ? 'deploy_tecnico' : 'deploy_tecnico_stage';
+            $this->logOperation($type, 'local', $targetProfile, (string) ($package['package_id'] ?? ''), 'OK', 'Pacote tecnico aplicado com sucesso.', [
+                'files' => (int) ($result['files_applied'] ?? 0),
+            ]);
 
             return [
                 'package_id' => (string) ($package['package_id'] ?? ''),
@@ -337,6 +468,9 @@ final class ContentSyncManager
                 'applied_at' => (string) $apply['applied_at'],
                 'result' => $result,
             ];
+        } catch (\Throwable $exception) {
+            $this->logOperation('deploy_tecnico', 'local', $targetProfile, (string) ($package['package_id'] ?? ($packageId ?? '')), 'FAIL', $exception->getMessage());
+            throw $exception;
         } finally {
             if ($tmpDir !== '' && str_contains($tmpDir, sys_get_temp_dir())) {
                 $this->removeDirectory($tmpDir);
@@ -344,6 +478,36 @@ final class ContentSyncManager
             $this->releaseRunLock($lock);
         }
     }
+
+    private function operationRoot(): string
+    {
+        $root = trim((string) ($_ENV['BACKUP_ROOT'] ?? ''));
+        if ($root !== '') {
+            return $root;
+        }
+
+        return dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'operations';
+    }
+
+    /**
+     * @param array<string, scalar|null> $context
+     */
+    private function logOperation(
+        string $type,
+        string $origin,
+        string $destination,
+        string $id,
+        string $status,
+        string $message,
+        array $context = []
+    ): void {
+        try {
+            $this->logger->write($type, $origin, $destination, $id, $status, $message, $context);
+        } catch (\Throwable) {
+            // Log operacional nunca deve derrubar a rotina principal.
+        }
+    }
+
     private function exportPayload(PDO $pdo): array
     {
         $supportsNextStep = $this->tableHasColumn($pdo, 'posts', 'proximo_post_id');
@@ -1130,6 +1294,37 @@ final class ContentSyncManager
         return $root;
     }
 
+    private function profilePackageRoot(string $profileName): string
+    {
+        $baseRoot = $this->packageRoot();
+        $directory = self::CONTENT_DIRECTORIES[$profileName] ?? null;
+        if ($directory === null) {
+            throw new RuntimeException('Perfil de conteudo nao suportado na estrutura numerada: ' . $profileName);
+        }
+
+        $root = $baseRoot . DIRECTORY_SEPARATOR . $directory . DIRECTORY_SEPARATOR . 'conteudo';
+        if (!is_dir($root) && !mkdir($root, 0777, true) && !is_dir($root)) {
+            throw new RuntimeException('Nao foi possivel criar a pasta de conteudo do perfil: ' . $root);
+        }
+
+        return $root;
+    }
+
+    private function buildPackageId(string $type, string $profileName): string
+    {
+        return sprintf('%s-%s-%s', strtoupper(trim($type)), $this->profileToken($profileName), date('Ymd-His'));
+    }
+
+    private function profileToken(string $profileName): string
+    {
+        return match (strtolower(trim($profileName))) {
+            'local' => 'LOCAL',
+            'stage' => 'STAGE',
+            'production' => 'PROD',
+            default => strtoupper(preg_replace('/[^A-Z0-9]+/i', '-', trim($profileName)) ?: 'GEN'),
+        };
+    }
+
     private function codePackageRoot(): string
     {
         $root = (string) ($this->config['code_package_root'] ?? '');
@@ -1140,6 +1335,31 @@ final class ContentSyncManager
             throw new RuntimeException('Nao foi possivel criar a pasta raiz dos pacotes de codigo: ' . $root);
         }
         return $root;
+    }
+
+    private function buildCodePackageId(): string
+    {
+        $commit = $this->currentHeadCommit();
+        $suffix = $commit !== '' ? '_' . $commit : '';
+
+        return 'code_' . date('Y-m-d_H-i-s') . $suffix;
+    }
+
+    private function currentHeadCommit(): string
+    {
+        $output = [];
+        $exitCode = 0;
+        $command = sprintf(
+            'git -C %s rev-parse --short HEAD 2>&1',
+            escapeshellarg($this->projectRoot())
+        );
+
+        exec($command, $output, $exitCode);
+        if ($exitCode !== 0) {
+            return '';
+        }
+
+        return trim((string) ($output[0] ?? ''));
     }
 
     private function profile(string $profileName): array
@@ -1606,8 +1826,13 @@ final class ContentSyncManager
 
     private function allPackages(): array
     {
-        $root = $this->packageRoot();
-        $dirs = array_filter(glob($root . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [], 'is_dir');
+        $dirs = [];
+        foreach ($this->packageSearchRoots() as $root) {
+            foreach (array_filter(glob($root . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [], 'is_dir') as $dir) {
+                $dirs[] = $dir;
+            }
+        }
+        $dirs = array_values(array_unique($dirs));
         rsort($dirs);
         $items = [];
         foreach ($dirs as $dir) {
@@ -1623,15 +1848,57 @@ final class ContentSyncManager
             $verification = $this->verifyPackageDirectory($dir, $manifest);
             $manifest['verification'] = $verification;
             $manifest['is_valid'] = (bool) ($verification['is_valid'] ?? false);
+            $manifest['allowed_targets'] = $this->allowedApplyTargets((string) ($manifest['source_profile'] ?? ''));
             $items[] = $manifest;
         }
         return $items;
     }
 
+    /**
+     * @return array<int, string>
+     */
+    private function packageSearchRoots(): array
+    {
+        $roots = [];
+        $baseRoot = $this->packageRoot();
+
+        foreach (self::CONTENT_DIRECTORIES as $directory) {
+            $candidate = $baseRoot . DIRECTORY_SEPARATOR . $directory . DIRECTORY_SEPARATOR . 'conteudo';
+            if (is_dir($candidate)) {
+                $roots[] = $candidate;
+            }
+        }
+
+        $legacyRoot = trim((string) ($this->config['legacy_package_root'] ?? ''));
+        if ($legacyRoot !== '' && is_dir($legacyRoot)) {
+            $roots[] = $legacyRoot;
+        }
+
+        return array_values(array_unique($roots));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function allowedApplyTargets(string $sourceProfile): array
+    {
+        return match (strtolower(trim($sourceProfile))) {
+            'stage' => ['local', 'production'],
+            'production' => ['local', 'stage'],
+            default => [],
+        };
+    }
+
     private function allCodePackages(): array
     {
-        $root = $this->codePackageRoot();
-        $zipPaths = glob($root . DIRECTORY_SEPARATOR . 'code_*.zip') ?: [];
+        $zipPaths = [];
+        foreach ($this->codePackageSearchRoots() as $root) {
+            foreach (glob($root . DIRECTORY_SEPARATOR . 'code_*.zip') ?: [] as $zipPath) {
+                $zipPaths[] = $zipPath;
+            }
+        }
+
+        $zipPaths = array_values(array_unique($zipPaths));
         usort($zipPaths, static fn(string $a, string $b): int => filemtime($b) <=> filemtime($a));
 
         $items = [];
@@ -1664,6 +1931,155 @@ final class ContentSyncManager
         }
 
         return $items;
+    }
+
+    /**
+     * @return array{files: array<int, string>, ignored: array<int, string>}
+     */
+    private function collectCodePackageFiles(): array
+    {
+        $output = [];
+        $exitCode = 0;
+        $command = sprintf(
+            'git -C %s status --short --untracked-files=all 2>&1',
+            escapeshellarg($this->projectRoot())
+        );
+
+        exec($command, $output, $exitCode);
+        if ($exitCode !== 0) {
+            throw new RuntimeException('Nao foi possivel ler o estado atual do git para montar o pacote tecnico.');
+        }
+
+        $files = [];
+        $ignored = [];
+
+        foreach ($output as $line) {
+            $line = rtrim((string) $line);
+            if ($line === '') {
+                continue;
+            }
+
+            $status = substr($line, 0, 2);
+            $rawPath = trim(substr($line, 3));
+            if ($rawPath === '') {
+                continue;
+            }
+
+            if (str_contains($rawPath, ' -> ')) {
+                $parts = explode(' -> ', $rawPath);
+                $rawPath = (string) end($parts);
+            }
+
+            $relativePath = str_replace('/', DIRECTORY_SEPARATOR, $rawPath);
+            $relativePath = ltrim($relativePath, '\\/');
+            if ($relativePath === '') {
+                continue;
+            }
+
+            if (str_contains($status, 'D')) {
+                $ignored[] = $relativePath . ' [delete]';
+                continue;
+            }
+
+            if (!$this->isCodePackagePathAllowed($relativePath)) {
+                $ignored[] = $relativePath;
+                continue;
+            }
+
+            $absolutePath = $this->projectRoot() . DIRECTORY_SEPARATOR . $relativePath;
+            if (!is_file($absolutePath)) {
+                $ignored[] = $relativePath . ' [missing]';
+                continue;
+            }
+
+            $files[] = str_replace('\\', '/', $relativePath);
+        }
+
+        $files = array_values(array_unique($files));
+        sort($files);
+        $ignored = array_values(array_unique($ignored));
+        sort($ignored);
+
+        return [
+            'files' => $files,
+            'ignored' => $ignored,
+        ];
+    }
+
+    private function isCodePackagePathAllowed(string $relativePath): bool
+    {
+        $normalized = ltrim(str_replace('\\', '/', $relativePath), '/');
+        if ($normalized === '' || str_contains($normalized, '..')) {
+            return false;
+        }
+
+        if ($normalized === '.env' || $normalized === '.env.example') {
+            return false;
+        }
+
+        if (str_starts_with($normalized, 'storage/') || str_starts_with($normalized, 'public/uploads/')) {
+            return false;
+        }
+
+        $allowedRoots = [
+            'app/',
+            'config/',
+            'public/',
+            'scripts/',
+        ];
+
+        foreach ($allowedRoots as $root) {
+            if (str_starts_with($normalized, $root)) {
+                return true;
+            }
+        }
+
+        return in_array($normalized, ['bootstrap.php', 'public/.htaccess'], true);
+    }
+
+    /**
+     * @param array<int, string> $files
+     */
+    private function copyCodePackageFiles(array $files, string $destinationRoot): void
+    {
+        foreach ($files as $relativePath) {
+            $sourcePath = $this->projectRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+            $destinationPath = $destinationRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+            $destinationDir = dirname($destinationPath);
+
+            if (!is_dir($destinationDir) && !mkdir($destinationDir, 0777, true) && !is_dir($destinationDir)) {
+                throw new RuntimeException('Nao foi possivel criar a pasta do pacote tecnico: ' . $destinationDir);
+            }
+
+            if (!copy($sourcePath, $destinationPath)) {
+                throw new RuntimeException('Falha ao copiar arquivo para o pacote tecnico: ' . $relativePath);
+            }
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function codePackageSearchRoots(): array
+    {
+        $roots = [];
+
+        $currentRoot = trim((string) ($this->config['code_package_root'] ?? ''));
+        if ($currentRoot !== '') {
+            $roots[] = $currentRoot;
+        }
+
+        $legacyRoot = trim((string) ($this->config['legacy_code_package_root'] ?? ''));
+        if ($legacyRoot !== '') {
+            $roots[] = $legacyRoot;
+        }
+
+        return array_values(array_unique(array_filter($roots, static fn(string $root): bool => $root !== '')));
+    }
+
+    private function projectRoot(): string
+    {
+        return dirname(__DIR__, 2);
     }
 
     private function readJsonFile(string $path): ?array

@@ -27,6 +27,16 @@ try {
             echo 'Uploads referenciados: ' . (int) ($manifest['uploads']['included_files'] ?? 0) . PHP_EOL;
             break;
 
+        case 'export-code':
+            $notes = trim((string) ($argv[2] ?? ''));
+            $manifest = $manager->exportCode($notes !== '' ? $notes : null);
+            echo 'Pacote tecnico gerado com sucesso.' . PHP_EOL;
+            echo 'ID: ' . ($manifest['package_id'] ?? '-') . PHP_EOL;
+            echo 'Commit base: ' . (($manifest['commit'] ?? '') ?: '-') . PHP_EOL;
+            echo 'Arquivos: ' . (int) ($manifest['files_count'] ?? 0) . PHP_EOL;
+            echo 'ZIP: ' . ($manifest['zip_path'] ?? '-') . PHP_EOL;
+            break;
+
         case 'status':
             $status = $manager->status();
             $parity = $manager->parityStatus();
@@ -100,6 +110,7 @@ try {
         default:
             echo 'Uso:' . PHP_EOL;
             echo '  php scripts/content-sync.php export [local|production]' . PHP_EOL;
+            echo '  php scripts/content-sync.php export-code [notas-opcionais]' . PHP_EOL;
             echo '  php scripts/content-sync.php status' . PHP_EOL;
             echo '  php scripts/content-sync.php parity' . PHP_EOL;
             echo '  php scripts/content-sync.php verify [package_id|latest]' . PHP_EOL;

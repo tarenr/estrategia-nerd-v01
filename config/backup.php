@@ -11,7 +11,7 @@ return [
     'mysql_binary' => $_ENV['BACKUP_MYSQL_BINARY'] ?? 'C:\\xampp\\mysql\\bin\\mysql.exe',
     'profiles' => [
         'local' => [
-            'label' => 'Local / Homologação',
+            'label' => 'Local / Homologacao',
             'slug' => 'local-homologacao',
             'database' => [
                 'host' => (string) ($databaseConfig['host'] ?? ''),
@@ -25,8 +25,28 @@ return [
                 'path' => dirname(__DIR__) . '/public/uploads',
             ],
         ],
+        'stage' => [
+            'label' => (string) ($_ENV['CONTENT_SYNC_STAGE_PROFILE_LABEL'] ?? 'Stage / Homologacao remota'),
+            'slug' => 'stage-homologacao',
+            'database' => [
+                'host' => (string) ($_ENV['CONTENT_SYNC_STAGE_DB_HOST'] ?? ''),
+                'port' => (string) ($_ENV['CONTENT_SYNC_STAGE_DB_PORT'] ?? '3306'),
+                'database' => (string) ($_ENV['CONTENT_SYNC_STAGE_DB_DATABASE'] ?? ''),
+                'username' => (string) ($_ENV['CONTENT_SYNC_STAGE_DB_USERNAME'] ?? ''),
+                'password' => (string) ($_ENV['CONTENT_SYNC_STAGE_DB_PASSWORD'] ?? ''),
+            ],
+            'uploads' => [
+                'mode' => (string) ($_ENV['CONTENT_SYNC_STAGE_UPLOAD_MODE'] ?? 'ftp'),
+                'host' => (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_HOST'] ?? ''),
+                'port' => (int) ($_ENV['CONTENT_SYNC_STAGE_FTP_PORT'] ?? 21),
+                'username' => (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_USERNAME'] ?? ''),
+                'password' => (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_PASSWORD'] ?? ''),
+                'root' => (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_ROOT'] ?? ''),
+                'passive' => !in_array(strtolower((string) ($_ENV['CONTENT_SYNC_STAGE_FTP_PASSIVE'] ?? 'true')), ['0', 'false', 'off', 'no'], true),
+            ],
+        ],
         'production' => [
-            'label' => 'Produção',
+            'label' => 'Producao',
             'slug' => 'producao',
             'database' => [
                 'host' => (string) ($_ENV['BACKUP_PRODUCTION_DB_HOST'] ?? ''),
@@ -41,7 +61,7 @@ return [
                 'port' => (int) ($_ENV['BACKUP_PRODUCTION_FTP_PORT'] ?? 21),
                 'username' => (string) ($_ENV['BACKUP_PRODUCTION_FTP_USERNAME'] ?? ''),
                 'password' => (string) ($_ENV['BACKUP_PRODUCTION_FTP_PASSWORD'] ?? ''),
-                'root' => (string) ($_ENV['BACKUP_PRODUCTION_FTP_ROOT'] ?? 'domains/estrategianerd.com.br/public_html/uploads'),
+                'root' => (string) ($_ENV['BACKUP_PRODUCTION_FTP_ROOT'] ?? ''),
                 'passive' => !in_array(strtolower((string) ($_ENV['BACKUP_PRODUCTION_FTP_PASSIVE'] ?? 'true')), ['0', 'false', 'off', 'no'], true),
             ],
         ],

@@ -5,6 +5,12 @@ declare(strict_types=1);
 $active = strtolower(trim((string) ($active ?? '')));
 $items = [
     [
+        'id' => 'operations',
+        'label' => 'Central',
+        'description' => 'Status operacional consolidado',
+        'href' => url('/local/operacoes'),
+    ],
+    [
         'id' => 'backup',
         'label' => 'Backup',
         'description' => 'Backup, verificacao e restore',
@@ -30,12 +36,12 @@ $items = [
     ],
 ];
 
-$gridColumnsClass = count($items) >= 4 ? 'md:grid-cols-4' : 'md:grid-cols-3';
+$gridColumnsClass = count($items) >= 5 ? 'md:grid-cols-5' : (count($items) >= 4 ? 'md:grid-cols-4' : 'md:grid-cols-3');
 ?>
 <nav class="rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-4 shadow-[0_0_30px_rgba(6,182,212,0.06)]" aria-label="Menu local de operacao">
   <div class="flex flex-wrap items-center gap-3">
     <p class="font-orbitron text-xs uppercase tracking-[0.32em] text-cyan-300/70">Operacao Local</p>
-    <span class="text-xs text-slate-500">Backup + Conteudo + Documentacao + Backlog</span>
+    <span class="text-xs text-slate-500">Central + Backup + Conteudo + Documentacao + Backlog</span>
   </div>
   <div class="mt-4 grid gap-3 <?= htmlspecialchars($gridColumnsClass, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
     <?php foreach ($items as $item): ?>

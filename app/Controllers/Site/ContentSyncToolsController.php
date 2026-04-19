@@ -7,6 +7,7 @@ namespace App\Controllers\Site;
 use App\Support\Csrf;
 use App\Support\Session;
 use App\Support\View;
+use Scripts\Deploy\DeployManager;
 use Scripts\ContentSync\ContentSyncManager;
 
 final class ContentSyncToolsController
@@ -16,18 +17,19 @@ final class ContentSyncToolsController
         $this->ensureLocalOnly();
 
         $manager = $this->manager();
+        $deployManager = $this->deployManager();
         $status = $manager->status();
         $flash = Session::pull('content_sync_flash');
         $lastVerification = Session::pull('content_sync_verification');
         $lastPostCheck = Session::pull('content_sync_postcheck');
-        $deploymentPolicy = $manager->deploymentPolicyStatus();
+        $deploymentPolicy = $deployManager->deploymentPolicyStatus();
 
         View::render('site/content-sync-tools', [
             'title' => 'Conteudo Local | Estrategia Nerd',
             'meta_description' => 'Painel local para exportar, validar e publicar conteudo em stage e producao.',
             'site_chrome' => false,
             'content_status' => $this->presentStatus($status),
-            'code_status' => $this->presentCodeStatus($manager->codeStatus()),
+            'code_status' => $this->presentCodeStatus($deployManager->codeStatus()),
             'parity_status' => $manager->parityStatus(),
             'deployment_policy' => $deploymentPolicy,
             'flash' => is_array($flash) ? $flash : null,
@@ -51,6 +53,7 @@ final class ContentSyncToolsController
 
         $action = strtolower(trim((string) ($_POST['action'] ?? '')));
         $manager = $this->manager();
+        $deployManager = $this->deployManager();
 
         try {
             switch ($action) {
@@ -88,7 +91,7 @@ final class ContentSyncToolsController
 
                     $packageId = $this->normalizeOptionalId($_POST['package_id'] ?? 'latest');
                     $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'production')));
-                    $result = $manager->applyCode($packageId, $targetProfile, true);
+                    $result = $deployManager->applyCode($packageId, $targetProfile, true);
                     Session::put('content_sync_postcheck', $manager->parityStatus());
                     $this->flash('success', sprintf('Pacote de codigo %s aplicado em %s (%d arquivos).', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? ''), (int) ($result['result']['files_applied'] ?? 0)));
                     break;
@@ -122,6 +125,13 @@ final class ContentSyncToolsController
         require_once base_path('scripts/content-sync/ContentSyncManager.php');
 
         return new ContentSyncManager(require base_path('config/content-sync.php'));
+    }
+
+    private function deployManager(): DeployManager
+    {
+        require_once base_path('scripts/deploy/DeployManager.php');
+
+        return new DeployManager(require base_path('config/deploy.php'));
     }
 
     private function redirect(): void
