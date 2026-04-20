@@ -18,6 +18,14 @@ final class DeployManager
         'stage' => '02-stage',
         'production' => '03-prod',
     ];
+    private const PROTECTED_TECHNICAL_PATHS = [
+        '.env',
+        '_app_core/.env',
+        'index.php',
+        '.htaccess',
+        'public/index.php',
+        'public/.htaccess',
+    ];
 
     private OperationLogger $logger;
     private ContentSyncManager $contentSync;
@@ -99,6 +107,7 @@ final class DeployManager
             'files_count' => 0,
             'files_zip' => null,
             'checksums_file' => null,
+            'protected_paths' => self::PROTECTED_TECHNICAL_PATHS,
             'error' => null,
         ];
 
@@ -155,6 +164,8 @@ final class DeployManager
 
     public function rollbackTecnico(string $targetProfile, ?string $backupId = null, bool $force = false): array
     {
+        $this->extendExecutionWindow();
+
         if (!$force) {
             throw new RuntimeException('Rollback tecnico exige confirmacao explicita.');
         }
@@ -319,18 +330,26 @@ final class DeployManager
     private function materializeTechnicalSource(array $deployConfig): string
     {
         $mode = strtolower((string) ($deployConfig['mode'] ?? 'ftp'));
+        $tmpRoot = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'en-tech-' . bin2hex(random_bytes(6));
+        if (!mkdir($tmpRoot, 0777, true) && !is_dir($tmpRoot)) {
+            throw new RuntimeException('Nao foi possivel criar a pasta temporaria do backup tecnico.');
+        }
+
         if ($mode === 'local') {
             $sourceRoot = (string) ($deployConfig['root'] ?? '');
             if ($sourceRoot === '' || !is_dir($sourceRoot)) {
                 throw new RuntimeException('Raiz local tecnica nao encontrada: ' . $sourceRoot);
             }
 
-            return $sourceRoot;
+            $this->copyFilteredTree($sourceRoot, $tmpRoot);
+            $this->ensureDirectoryHasContent($tmpRoot);
+
+            return $tmpRoot;
         }
 
-        $tmpRoot = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'en-tech-' . bin2hex(random_bytes(6));
-        if (!mkdir($tmpRoot, 0777, true) && !is_dir($tmpRoot)) {
-            throw new RuntimeException('Nao foi possivel criar a pasta temporaria do backup tecnico.');
+        $rawTmpRoot = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'en-tech-raw-' . bin2hex(random_bytes(6));
+        if (!mkdir($rawTmpRoot, 0777, true) && !is_dir($rawTmpRoot)) {
+            throw new RuntimeException('Nao foi possivel criar a pasta temporaria bruta do backup tecnico.');
         }
 
         $connection = @ftp_connect((string) $deployConfig['host'], (int) $deployConfig['port'], 30);
@@ -344,10 +363,14 @@ final class DeployManager
             }
 
             ftp_pasv($connection, (bool) ($deployConfig['passive'] ?? true));
-            $this->downloadFtpTree($connection, rtrim((string) $deployConfig['root'], '/'), $tmpRoot);
+            $this->downloadFtpTree($connection, rtrim((string) $deployConfig['root'], '/'), $rawTmpRoot);
+            $this->copyFilteredTree($rawTmpRoot, $tmpRoot);
             $this->ensureDirectoryHasContent($tmpRoot);
         } finally {
             ftp_close($connection);
+            if (is_dir($rawTmpRoot) && str_contains($rawTmpRoot, sys_get_temp_dir())) {
+                $this->removeDirectory($rawTmpRoot);
+            }
         }
 
         return $tmpRoot;
@@ -396,9 +419,17 @@ final class DeployManager
         );
 
         $files = [];
+        $root = rtrim(str_replace('\\', '/', $directory), '/');
         foreach ($iterator as $item) {
             if ($item->isFile()) {
-                $files[] = $item->getPathname();
+                $path = $item->getPathname();
+                $normalized = str_replace('\\', '/', $path);
+                $relative = ltrim(substr($normalized, strlen($root)), '/');
+                if ($relative === '' || !$this->shouldIncludeTechnicalRelativePath($relative)) {
+                    continue;
+                }
+
+                $files[] = $path;
             }
         }
 
@@ -544,10 +575,15 @@ final class DeployManager
 
         $files = $this->listFiles($sourceDir);
         $copied = 0;
+        $skippedProtected = 0;
         foreach ($files as $file) {
             $relative = substr(str_replace('\\', '/', $file), strlen(str_replace('\\', '/', $sourceDir)) + 1);
             $relative = ltrim($relative, '/');
             if ($relative === '' || str_contains($relative, '..')) {
+                continue;
+            }
+            if (!$this->shouldIncludeTechnicalRelativePath($relative)) {
+                $skippedProtected++;
                 continue;
             }
 
@@ -566,6 +602,7 @@ final class DeployManager
         return [
             'mode' => 'local',
             'files_applied' => $copied,
+            'skipped_protected' => $skippedProtected,
             'target_root' => $targetRoot,
             'target_public_root' => $this->resolveCodeDeployPublicRoot($targetRoot),
         ];
@@ -573,7 +610,9 @@ final class DeployManager
 
     private function deployCodeFtp(array $deployConfig, string $sourceDir): array
     {
-        $ftp = @ftp_connect((string) $deployConfig['host'], (int) $deployConfig['port'], 30);
+        $this->extendExecutionWindow();
+
+        $ftp = @ftp_connect((string) $deployConfig['host'], (int) $deployConfig['port'], 60);
         if ($ftp === false) {
             throw new RuntimeException('Nao foi possivel conectar ao FTP para rollback tecnico.');
         }
@@ -587,10 +626,17 @@ final class DeployManager
             $root = $this->resolveCodeDeployRoot($ftp, (string) ($deployConfig['root'] ?? ''));
 
             $files = $this->listFiles($sourceDir);
+            $skippedProtected = 0;
             foreach ($files as $file) {
+                $this->extendExecutionWindow();
+
                 $relative = substr(str_replace('\\', '/', $file), strlen(str_replace('\\', '/', $sourceDir)) + 1);
                 $relative = ltrim($relative, '/');
                 if ($relative === '' || str_contains($relative, '..')) {
+                    continue;
+                }
+                if (!$this->shouldIncludeTechnicalRelativePath($relative)) {
+                    $skippedProtected++;
                     continue;
                 }
 
@@ -608,9 +654,58 @@ final class DeployManager
         return [
             'mode' => 'ftp',
             'files_applied' => $uploaded,
+            'skipped_protected' => $skippedProtected ?? 0,
             'target_root' => $root,
             'target_public_root' => $this->resolveCodeDeployPublicRoot($root),
         ];
+    }
+
+    private function copyFilteredTree(string $sourceRoot, string $destinationRoot): void
+    {
+        $normalizedSourceRoot = rtrim(str_replace('\\', '/', $sourceRoot), '/');
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($sourceRoot, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $item) {
+            if (!$item->isFile()) {
+                continue;
+            }
+
+            $sourcePath = $item->getPathname();
+            $normalizedSourcePath = str_replace('\\', '/', $sourcePath);
+            $relative = ltrim(substr($normalizedSourcePath, strlen($normalizedSourceRoot)), '/');
+            if ($relative === '' || !$this->shouldIncludeTechnicalRelativePath($relative)) {
+                continue;
+            }
+
+            $destinationPath = $destinationRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+            $destinationDir = dirname($destinationPath);
+            if (!is_dir($destinationDir) && !mkdir($destinationDir, 0777, true) && !is_dir($destinationDir)) {
+                throw new RuntimeException('Nao foi possivel criar a pasta temporaria do backup tecnico: ' . $destinationDir);
+            }
+
+            if (!copy($sourcePath, $destinationPath)) {
+                throw new RuntimeException('Falha ao materializar arquivo tecnico: ' . $relative);
+            }
+        }
+    }
+
+    private function shouldIncludeTechnicalRelativePath(string $relativePath): bool
+    {
+        $normalized = strtolower(ltrim(str_replace('\\', '/', trim($relativePath)), '/'));
+        if ($normalized === '' || str_contains($normalized, '..')) {
+            return false;
+        }
+
+        return !in_array($normalized, self::PROTECTED_TECHNICAL_PATHS, true);
+    }
+
+    private function extendExecutionWindow(int $seconds = 900): void
+    {
+        if (function_exists('set_time_limit')) {
+            @set_time_limit($seconds);
+        }
     }
 
     private function ensureRemoteDirectory($ftp, string $remoteDirectory): void
