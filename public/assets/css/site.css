@@ -1537,15 +1537,14 @@ body {
   margin: 2.1rem 0 1rem;
 }
 
-.article-content > h3:first-of-type {
-  margin-top: 0;
-  margin-bottom: 1.6rem;
-  padding: 1rem 1.15rem 1rem 1.3rem;
-  border-left: 3px solid rgba(34, 211, 238, 0.46);
-  border-radius: 0 1rem 1rem 0;
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(184, 41, 221, 0.08));
-  color: #e2e8f0;
-  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.08);
+.article-content h3.h3-plain {
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: normal;
+  color: inherit;
+  margin: 1.5rem 0 0.75rem;
 }
 
 .article-content p,
@@ -4036,4 +4035,13 @@ body {
 .en-audio-block.is-playing{
   border-color: rgba(34,211,238,.36);
   box-shadow: 0 0 26px rgba(34,211,238,.12), 0 0 22px rgba(0,0,0,.34);
+}
+.en-audio-block.has-audio-error{
+  border-color: rgba(251,113,133,.35);
+}
+.en-audio-block.has-audio-error .en-audio-button{
+  cursor: not-allowed;
+  border-color: rgba(251,113,133,.32);
+  background: linear-gradient(180deg, rgba(64,18,31,.92), rgba(22,10,18,.92));
+  color: rgba(254,205,211,.92);
 }

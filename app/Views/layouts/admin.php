@@ -26,6 +26,7 @@ $adminDashboardJsPath = dirname(__DIR__, 2) . '/public/assets/js/admin-dashboard
 $adminCssVersion = is_file($adminCssPath) ? (string) filemtime($adminCssPath) : '1';
 $adminLayoutJsVersion = is_file($adminLayoutJsPath) ? (string) filemtime($adminLayoutJsPath) : '1';
 $adminDashboardJsVersion = is_file($adminDashboardJsPath) ? (string) filemtime($adminDashboardJsPath) : '1';
+$adminBuildVersion = max((int) $adminCssVersion, (int) $adminLayoutJsVersion, (int) $adminDashboardJsVersion);
 
 $rawPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $rawPath = rtrim($rawPath, '/') ?: '/';
@@ -77,6 +78,9 @@ $adminFavicon = $adminFavicon !== ''
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title><?= htmlspecialchars((string) $title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></title>
   <link rel="icon" type="image/x-icon" href="<?= htmlspecialchars($adminFavicon, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
 
@@ -102,7 +106,7 @@ $adminFavicon = $adminFavicon !== ''
   <link rel="stylesheet" href="<?= url('/assets/css/admin.css?v=' . $adminCssVersion) ?>">
 </head>
 
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+<body class="bg-slate-950 text-slate-100 min-h-screen" data-admin-build="<?= htmlspecialchars((string) $adminBuildVersion, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
   <div class="min-h-screen flex w-full min-w-0">
       <div id="adminSidebarWrap" class="relative shrink-0">
         <aside id="adminSidebar" data-collapsed="0" class="w-[260px] border-r border-slate-800/70 bg-slate-950/60 backdrop-blur transition-[width] duration-200 ease-out overflow-visible">
@@ -163,7 +167,13 @@ $adminFavicon = $adminFavicon !== ''
         </div>
 
         <footer class="mt-6">
-          <div class="w-full px-2 py-2 text-xs text-slate-500">&copy; <?= date('Y') ?> Estrategia Nerd - Admin</div>
+          <div class="w-full px-2 py-2 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-3">
+            <span>&copy; <?= date('Y') ?> Estrategia Nerd - Admin</span>
+            <span class="inline-flex flex-wrap items-center gap-3">
+              <span>build <?= htmlspecialchars((string) $adminBuildVersion, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+              <button type="button" class="rounded-lg border border-slate-700 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300 hover:border-cyan-400 hover:text-cyan-200" data-admin-hard-refresh>Atualizar sem cache</button>
+            </span>
+          </div>
         </footer>
       </main>
 

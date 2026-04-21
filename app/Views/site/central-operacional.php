@@ -8,14 +8,17 @@ $flash = is_array($flash ?? null) ? $flash : null;
 $operationsStatus = (array) ($operations_status ?? []);
 $policy = (array) ($operationsStatus['policy'] ?? []);
 $backup = (array) ($operationsStatus['backup'] ?? []);
+$backupItems = is_array($backup['items'] ?? null) ? $backup['items'] : [];
 $content = (array) ($operationsStatus['content'] ?? []);
 $contentPackages = is_array($content['items'] ?? null) ? $content['items'] : [];
 $code = (array) ($operationsStatus['code'] ?? []);
+$codePackages = is_array($code['items'] ?? null) ? $code['items'] : [];
 $technicalBackup = (array) ($operationsStatus['technical_backup'] ?? []);
 $technicalProfiles = (array) ($technicalBackup['profiles'] ?? []);
 $technicalLocalList = is_array($technicalProfiles['local'] ?? null) ? $technicalProfiles['local'] : [];
 $technicalStageList = is_array($technicalProfiles['stage'] ?? null) ? $technicalProfiles['stage'] : [];
 $technicalProductionList = is_array($technicalProfiles['production'] ?? null) ? $technicalProfiles['production'] : [];
+$technicalRollbackItems = array_merge($technicalLocalList, $technicalStageList, $technicalProductionList);
 $logs = (array) ($operationsStatus['logs'] ?? []);
 $logCategories = is_array($logs['categories'] ?? null) ? $logs['categories'] : [];
 $parity = (array) ($operationsStatus['parity'] ?? []);
@@ -27,6 +30,22 @@ $alertClasses = [
     'error' => 'border-rose-500/40 bg-rose-500/10 text-rose-100',
 ];
 $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses['success']) : '';
+$formatBytes = static function (int $bytes): string {
+    if ($bytes <= 0) {
+        return '-';
+    }
+
+    $units = ['B', 'KB', 'MB', 'GB'];
+    $index = 0;
+    $value = (float) $bytes;
+
+    while ($value >= 1024 && $index < count($units) - 1) {
+        $value /= 1024;
+        $index++;
+    }
+
+    return number_format($value, $index === 0 ? 0 : 2, ',', '.') . ' ' . $units[$index];
+};
 ?>
 <section class="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
   <style>
@@ -82,6 +101,17 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
     @keyframes operationsBlink {
       0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
       40% { opacity: 1; transform: translateY(-1px); }
+    }
+
+    .operations-tab-panel[hidden] {
+      display: none;
+    }
+
+    .operations-tab-button.is-active {
+      border-color: rgba(34, 211, 238, 0.65);
+      background: rgba(8, 145, 178, 0.18);
+      color: #e0faff;
+      box-shadow: 0 0 28px rgba(6, 182, 212, 0.1);
     }
   </style>
 
@@ -182,6 +212,16 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
       </div>
     </div>
 
+    <div class="sticky top-4 z-20 rounded-3xl border border-slate-800 bg-slate-950/90 p-3 shadow-[0_18px_50px_rgba(2,6,23,0.35)] backdrop-blur">
+      <div class="grid gap-3 md:grid-cols-4">
+        <button type="button" class="operations-tab-button is-active rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-left font-orbitron text-xs uppercase tracking-[0.2em] text-slate-300 transition hover:border-cyan-400/50 hover:text-white" data-ops-tab="backups">Backups</button>
+        <button type="button" class="operations-tab-button rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-left font-orbitron text-xs uppercase tracking-[0.2em] text-slate-300 transition hover:border-cyan-400/50 hover:text-white" data-ops-tab="pacotes">Pacotes e deploy</button>
+        <button type="button" class="operations-tab-button rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-left font-orbitron text-xs uppercase tracking-[0.2em] text-slate-300 transition hover:border-cyan-400/50 hover:text-white" data-ops-tab="critico">Restore e rollback</button>
+        <button type="button" class="operations-tab-button rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-left font-orbitron text-xs uppercase tracking-[0.2em] text-slate-300 transition hover:border-cyan-400/50 hover:text-white" data-ops-tab="historico">Historico e raizes</button>
+      </div>
+    </div>
+
+    <div class="operations-tab-panel space-y-6" data-ops-panel="backups">
     <div class="grid gap-6 xl:grid-cols-2">
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
         <h2 class="font-orbitron text-lg font-bold text-white">Backup de dados</h2>
@@ -215,12 +255,30 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold transition <?= ($backup['production_ready'] ?? false) ? 'border-fuchsia-400/40 bg-fuchsia-500/10 text-fuchsia-200 hover:border-fuchsia-300 hover:bg-fuchsia-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= ($backup['production_ready'] ?? false) ? '' : 'disabled' ?>>Gerar backup producao</button>
           </form>
 
-          <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="operations-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Verificando backup de dados" data-progress-message="Estamos conferindo manifesto, dump e zip do ultimo backup de dados." data-progress-stage="Verificacao">
+          <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="operations-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Verificando backup de dados" data-progress-message="Estamos conferindo manifesto, dump e zip do backup selecionado." data-progress-stage="Verificacao">
             <?= Csrf::field() ?>
             <input type="hidden" name="action" value="verify_backup_dados">
             <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Verificacao</p>
-            <p class="mt-2 text-sm text-slate-400">Confere manifesto, dump e zip do último backup de dados.</p>
-            <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300 hover:bg-emerald-500/20">Verificar ultimo</button>
+            <p class="mt-2 text-sm text-slate-400">Escolha exatamente qual backup de dados deve ser conferido.</p>
+            <select name="backup_id" class="mt-4 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-xs text-white outline-none focus:border-emerald-400">
+              <option value="">Selecione um backup</option>
+              <?php foreach ($backupItems as $item): ?>
+                <?php
+                  if (!is_array($item)) {
+                      continue;
+                  }
+
+                  $backupId = (string) ($item['backup_id'] ?? '');
+                  $profileLabel = (string) ($item['profile_label'] ?? ($item['profile'] ?? ''));
+                  $createdAt = (string) ($item['created_at'] ?? '');
+                ?>
+                <?php if ($backupId === '') { continue; } ?>
+                <option value="<?= htmlspecialchars($backupId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                  <?= htmlspecialchars($backupId . ' | ' . $profileLabel . ' | ' . $createdAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+            <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold transition <?= $backupItems !== [] ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200 hover:border-emerald-300 hover:bg-emerald-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $backupItems !== [] ? '' : 'disabled' ?>>Verificar backup</button>
           </form>
         </div>
 
@@ -286,7 +344,11 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
           </form>
         </div>
       </div>
+    </div>
+    </div>
 
+    <div class="operations-tab-panel space-y-6" data-ops-panel="pacotes" hidden>
+    <div class="grid gap-6 xl:grid-cols-2">
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
         <?php
           $latestStageContent = is_array($content['latest_stage_apply'] ?? null) ? $content['latest_stage_apply'] : null;
@@ -349,12 +411,30 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold transition <?= ($content['production_ready'] ?? false) ? 'border-fuchsia-400/40 bg-fuchsia-500/10 text-fuchsia-200 hover:border-fuchsia-300 hover:bg-fuchsia-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= ($content['production_ready'] ?? false) ? '' : 'disabled' ?>>Gerar pacote producao</button>
           </form>
 
-          <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="operations-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Verificando ultimo pacote de conteudo" data-progress-message="Estamos conferindo JSONs, manifesto e zip do ultimo pacote editorial disponivel." data-progress-stage="Verificacao">
+          <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="operations-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Verificando pacote de conteudo" data-progress-message="Estamos conferindo JSONs, manifesto e zip do pacote editorial selecionado." data-progress-stage="Verificacao">
             <?= Csrf::field() ?>
             <input type="hidden" name="action" value="verify_content">
-            <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Verificar ultimo pacote</p>
-            <p class="mt-2 text-sm text-slate-400">Confere manifesto e arquivos do ultimo pacote de conteudo antes de aplicar no destino.</p>
-            <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Verificar pacote</button>
+            <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Verificar pacote</p>
+            <p class="mt-2 text-sm text-slate-400">Escolha exatamente qual pacote de conteudo deve ser conferido.</p>
+            <select name="package_id" class="mt-4 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-xs text-white outline-none focus:border-cyan-400">
+              <option value="">Selecione um pacote</option>
+              <?php foreach ($contentPackages as $package): ?>
+                <?php
+                  if (!is_array($package)) {
+                      continue;
+                  }
+
+                  $packageId = (string) ($package['package_id'] ?? '');
+                  $sourceLabel = (string) ($package['source_profile_label'] ?? ($package['source_profile'] ?? ''));
+                  $createdAt = (string) ($package['created_at'] ?? '');
+                ?>
+                <?php if ($packageId === '') { continue; } ?>
+                <option value="<?= htmlspecialchars($packageId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                  <?= htmlspecialchars($packageId . ' | ' . $sourceLabel . ' | ' . $createdAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+            <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold transition <?= $contentPackages !== [] ? 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:border-cyan-300 hover:bg-cyan-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $contentPackages !== [] ? '' : 'disabled' ?>>Verificar pacote</button>
           </form>
         </div>
 
@@ -364,7 +444,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
           <div class="grid gap-4 xl:grid-cols-[1.4fr_0.9fr_1fr_auto]">
             <div>
               <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Pacote</label>
-              <select name="package_id" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
+              <select id="content-apply-package-id" name="package_id" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
                 <option value="">Selecione um pacote</option>
                 <?php foreach ($contentPackages as $package): ?>
                   <?php
@@ -383,7 +463,7 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             </div>
             <div>
               <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Destino</label>
-              <select name="target_profile" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
+              <select id="content-target-profile" name="target_profile" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
                 <option value="local">Local</option>
                 <option value="stage" <?= ($content['stage_ready'] ?? false) ? '' : 'disabled' ?>>Stage</option>
                 <option value="production" <?= (($content['production_ready'] ?? false) && $productionGateOpen) ? '' : 'disabled' ?>>Producao</option>
@@ -391,13 +471,13 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             </div>
             <div>
               <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Confirmacao</label>
-              <input type="text" name="apply_phrase" placeholder="Digite PUBLICAR" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-amber-400">
+              <input id="content-apply-phrase" type="text" name="apply_phrase" placeholder="Digite PUBLICAR" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-amber-400">
             </div>
             <div class="flex items-end">
               <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-200 transition hover:border-amber-300 hover:bg-amber-500/20">Aplicar pacote</button>
             </div>
           </div>
-          <p class="mt-3 text-xs text-slate-500">A validacao final do par origem/destino acontece no backend. Pacotes com origem <span class="text-white">local</span> ficam fora desta trilha da central.</p>
+          <p class="mt-3 text-xs text-slate-500">A validacao final do par origem/destino acontece no backend. Antes de aplicar, a central cria automaticamente um backup de dados do destino. Pacotes com origem <span class="text-white">local</span> ficam fora desta trilha da central.</p>
         </form>
 
         <div class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
@@ -454,31 +534,89 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
           <p class="mt-3 text-xs text-slate-500">O pacote tecnico leva apenas arquivos elegiveis das alteracoes atuais do git. Arquivos excluidos ou fora do escopo tecnico ficam de fora.</p>
         </form>
 
-        <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="operations-action-form mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Publicando pacote tecnico" data-progress-message="Estamos aplicando o ultimo pacote tecnico no ambiente selecionado." data-progress-stage="Deploy tecnico">
+        <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="operations-action-form mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Publicando pacote tecnico" data-progress-message="Estamos aplicando o pacote tecnico selecionado no ambiente escolhido." data-progress-stage="Deploy tecnico">
           <?= Csrf::field() ?>
           <input type="hidden" name="action" value="apply_code">
-          <div class="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+          <div class="grid gap-4 md:grid-cols-[1.4fr_0.8fr_1fr_auto]">
+            <div>
+              <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Pacote</label>
+              <select id="code-package-id" name="package_id" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
+                <option value="">Selecione um pacote tecnico</option>
+                <?php foreach ($codePackages as $package): ?>
+                  <?php
+                    if (!is_array($package)) {
+                        continue;
+                    }
+
+                    $packageId = (string) ($package['package_id'] ?? '');
+                    $createdAt = (string) ($package['created_at'] ?? '');
+                    $filesCount = (int) ($package['files_count'] ?? 0);
+                    $notes = (string) ($package['notes'] ?? '');
+                    $commit = (string) ($package['commit'] ?? '');
+                    $zipPath = (string) ($package['zip_path'] ?? '');
+                    $zipSize = $zipPath !== '' && is_file($zipPath) ? $formatBytes((int) filesize($zipPath)) : '-';
+                  ?>
+                  <?php if ($packageId === '') { continue; } ?>
+                  <option
+                    value="<?= htmlspecialchars($packageId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-created-at="<?= htmlspecialchars($createdAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-files-count="<?= $filesCount ?>"
+                    data-notes="<?= htmlspecialchars($notes, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-commit="<?= htmlspecialchars($commit, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-zip-size="<?= htmlspecialchars($zipSize, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                  >
+                    <?= htmlspecialchars($packageId . ' | ' . $filesCount . ' arquivos | ' . $createdAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
             <div>
               <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Destino</label>
-              <select name="target_profile" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
+              <select id="code-target-profile" name="target_profile" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
                 <option value="stage" <?= ($code['stage_ready'] ?? false) ? '' : 'disabled' ?>>Stage</option>
                 <option value="production" <?= (($code['production_ready'] ?? false) && $productionGateOpen) ? '' : 'disabled' ?>>Producao</option>
               </select>
             </div>
             <div>
               <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Confirmacao</label>
-              <input type="text" name="apply_phrase" placeholder="Digite PUBLICAR" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-amber-400">
+              <input id="code-apply-phrase" type="text" name="apply_phrase" placeholder="Digite PUBLICAR" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-amber-400">
             </div>
             <div class="flex items-end">
-              <button type="submit" class="inline-flex items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold transition <?= ($code['stage_ready'] ?? false) ? 'border-blue-400/40 bg-blue-500/10 text-blue-200 hover:border-blue-300 hover:bg-blue-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= ($code['stage_ready'] ?? false) ? '' : 'disabled' ?>>Publicar ultimo pacote tecnico</button>
+              <button id="code-submit-button" type="submit" class="inline-flex cursor-not-allowed items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-500 transition" disabled>Publicar pacote tecnico</button>
             </div>
           </div>
-          <p class="mt-3 text-xs text-slate-500">A central usa o ultimo pacote tecnico disponivel. Producao continua bloqueada sem origem aprovada.</p>
+          <div id="code-preview-empty" class="mt-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-400">
+            Selecione um pacote tecnico para ver destino, data, quantidade de arquivos e observacoes.
+          </div>
+          <div id="code-preview-content" class="mt-4 hidden rounded-2xl border border-blue-400/25 bg-blue-500/5 p-4 text-sm text-slate-300">
+            <div class="grid gap-3 md:grid-cols-4">
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Pacote</div>
+                <div id="code-preview-id" class="mt-1 break-all text-white">-</div>
+              </div>
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Destino</div>
+                <div id="code-preview-target" class="mt-1 text-white">-</div>
+              </div>
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Arquivos</div>
+                <div id="code-preview-files" class="mt-1 text-white">-</div>
+              </div>
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Criado em</div>
+                <div id="code-preview-created" class="mt-1 text-white">-</div>
+              </div>
+            </div>
+            <div id="code-preview-details" class="mt-3 text-xs text-slate-400">Notas: -</div>
+          </div>
+          <p class="mt-3 text-xs text-slate-500">O deploy tecnico exige package_id explicito e cria backup tecnico preventivo do destino antes de aplicar. Producao continua bloqueada sem origem aprovada.</p>
         </form>
 
       </div>
     </div>
+    </div>
 
+    <div class="operations-tab-panel space-y-6" data-ops-panel="historico" hidden>
     <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
       <h2 class="font-orbitron text-lg font-bold text-white">Listagem de backups tecnicos</h2>
       <p class="mt-2 text-sm leading-7 text-slate-400">Primeira listagem operacional dos snapshots tecnicos gerados pela central, separada por ambiente para facilitar consulta e rollback.</p>
@@ -584,18 +722,35 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
       </div>
     </div>
 
+    <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
+      <h2 class="font-orbitron text-lg font-bold text-white">Raizes operacionais</h2>
+      <div class="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
+        <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+          <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Backup</div>
+          <div class="mt-2 break-all text-white"><?= htmlspecialchars((string) ($backup['root'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+          <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Conteudo</div>
+          <div class="mt-2 break-all text-white"><?= htmlspecialchars((string) ($content['root'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <div class="operations-tab-panel space-y-6" data-ops-panel="critico" hidden>
     <div class="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
       <div class="rounded-3xl border border-rose-500/30 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(244,63,94,0.08)]">
         <h2 class="font-orbitron text-lg font-bold text-white">Restore de dados</h2>
-        <p class="mt-2 text-sm leading-7 text-slate-400">Area critica para restaurar banco, uploads ou ambos a partir do ultimo backup pronto. Use somente quando houver necessidade real de rollback operacional.</p>
+        <p class="mt-2 text-sm leading-7 text-slate-400">Area critica para restaurar banco, uploads ou ambos. Agora o restore exige selecao explicita do backup, destino visivel e confirmacao manual antes de executar.</p>
 
         <div class="mt-5 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
           <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Ultimo backup disponivel</div>
-            <?php if (is_array($backup['latest'] ?? null)): ?>
-              <div class="mt-2 text-white"><?= htmlspecialchars((string) ($backup['latest']['backup_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-              <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($backup['latest']['created_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-              <div class="mt-2 text-xs text-slate-400">Perfil de origem: <?= htmlspecialchars((string) ($backup['latest']['profile_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Backups disponiveis</div>
+            <?php if ($backupItems !== []): ?>
+              <div class="mt-2 text-white"><?= count($backupItems) ?> backup(s) listados</div>
+              <?php if (is_array($backup['latest'] ?? null)): ?>
+                <div class="mt-1 text-xs text-slate-500">Mais recente: <?= htmlspecialchars((string) ($backup['latest']['backup_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <?php endif; ?>
             <?php else: ?>
               <div class="mt-2 text-amber-300">Nenhum backup disponivel para restore.</div>
             <?php endif; ?>
@@ -609,13 +764,50 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
           </div>
         </div>
 
-        <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="operations-action-form mt-5 rounded-2xl border border-rose-500/20 bg-slate-950/70 p-4" data-progress-title="Executando restore de dados" data-progress-message="Estamos restaurando banco, uploads ou ambos a partir do ultimo backup valido." data-progress-stage="Restore">
+        <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="operations-action-form mt-5 rounded-2xl border border-rose-500/20 bg-slate-950/70 p-4" data-progress-title="Executando restore de dados" data-progress-message="Estamos restaurando banco, uploads ou ambos a partir do backup selecionado." data-progress-stage="Restore">
           <?= Csrf::field() ?>
           <input type="hidden" name="action" value="restore_data">
-          <div class="grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
+          <div class="grid gap-4 md:grid-cols-[1.4fr_0.8fr_0.8fr_1fr_auto]">
+            <div>
+              <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Backup</label>
+              <select id="restore-backup-id" name="backup_id" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-rose-400">
+                <option value="">Selecione um backup</option>
+                <?php foreach ($backupItems as $item): ?>
+                  <?php
+                    if (!is_array($item)) {
+                        continue;
+                    }
+
+                    $backupId = (string) ($item['backup_id'] ?? '');
+                    $profile = (string) ($item['profile'] ?? '');
+                    $profileLabel = (string) ($item['profile_label'] ?? $profile);
+                    $createdAt = (string) ($item['created_at'] ?? '');
+                    $databaseEntry = (array) ($item['database'] ?? []);
+                    $uploadsEntry = (array) ($item['uploads'] ?? []);
+                    $databaseSizeBytes = (int) ($databaseEntry['size_bytes'] ?? 0);
+                    $uploadsSizeBytes = (int) ($uploadsEntry['size_bytes'] ?? 0);
+                    $totalSize = $formatBytes($databaseSizeBytes + $uploadsSizeBytes);
+                    $databaseSize = $formatBytes($databaseSizeBytes);
+                    $uploadsSize = $formatBytes($uploadsSizeBytes);
+                  ?>
+                  <?php if ($backupId === '') { continue; } ?>
+                  <option
+                    value="<?= htmlspecialchars($backupId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-profile="<?= htmlspecialchars($profile, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-profile-label="<?= htmlspecialchars($profileLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-created-at="<?= htmlspecialchars($createdAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-total-size="<?= htmlspecialchars($totalSize, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-database-size="<?= htmlspecialchars($databaseSize, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-uploads-size="<?= htmlspecialchars($uploadsSize, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                  >
+                    <?= htmlspecialchars($backupId . ' | ' . $profileLabel . ' | ' . $createdAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
             <div>
               <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Destino</label>
-              <select name="target_profile" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-rose-400">
+              <select id="restore-target-profile" name="target_profile" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-rose-400">
                 <option value="local" <?= ($backup['local_ready'] ?? false) ? '' : 'disabled' ?>>Local</option>
                 <option value="stage" <?= ($backup['stage_ready'] ?? false) ? '' : 'disabled' ?>>Stage</option>
                 <option value="production" <?= ($backup['production_ready'] ?? false) ? '' : 'disabled' ?>>Producao</option>
@@ -631,49 +823,95 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             </div>
             <div>
               <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Confirmacao</label>
-              <input type="text" name="restore_phrase" placeholder="Digite CONFIRMAR" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-rose-400">
+              <input id="restore-phrase" type="text" name="restore_phrase" placeholder="Digite CONFIRMAR" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-rose-400">
             </div>
             <div class="flex items-end">
-              <button type="submit" class="inline-flex items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold transition <?= is_array($backup['latest'] ?? null) ? 'border-rose-400/40 bg-rose-500/10 text-rose-200 hover:border-rose-300 hover:bg-rose-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= is_array($backup['latest'] ?? null) ? '' : 'disabled' ?>>Executar restore</button>
+              <button id="restore-submit-button" type="submit" class="inline-flex cursor-not-allowed items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-500 transition" disabled>Executar restore</button>
             </div>
           </div>
-          <p class="mt-3 text-xs text-slate-500">O restore sempre usa o ultimo backup validado disponivel na estrutura atual. Use essa rotina com muito cuidado.</p>
+          <div id="restore-preview-empty" class="mt-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-400">
+            Selecione um backup para ver origem, destino, data e escopo antes de executar.
+          </div>
+          <div id="restore-preview-content" class="mt-4 hidden rounded-2xl border border-rose-400/25 bg-rose-500/5 p-4 text-sm text-slate-300">
+            <div class="grid gap-3 md:grid-cols-4">
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Backup</div>
+                <div id="restore-preview-id" class="mt-1 break-all text-white">-</div>
+              </div>
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Origem</div>
+                <div id="restore-preview-source" class="mt-1 text-white">-</div>
+              </div>
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Destino</div>
+                <div id="restore-preview-target" class="mt-1 text-white">-</div>
+              </div>
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Criado em</div>
+                <div id="restore-preview-created" class="mt-1 text-white">-</div>
+              </div>
+            </div>
+            <div id="restore-preview-sizes" class="mt-3 text-xs text-slate-400">Tamanho: -</div>
+          </div>
+          <p class="mt-3 text-xs text-slate-500">O restore exige backup_id explicito. O destino precisa corresponder ao ambiente de origem do backup selecionado.</p>
         </form>
       </div>
 
       <div class="rounded-3xl border border-amber-500/20 bg-slate-900/80 p-6">
         <h2 class="font-orbitron text-lg font-bold text-white">Rollback tecnico</h2>
-        <p class="mt-2 text-sm leading-7 text-slate-400">Reaplica o ultimo snapshot tecnico de stage ou producao no proprio ambiente alvo. Use isso apenas quando um deploy recente tiver quebrado o ambiente e o snapshot ja existir.</p>
+        <p class="mt-2 text-sm leading-7 text-slate-400">Reaplica um snapshot tecnico escolhido explicitamente no proprio ambiente de origem. Nada de ultimo automatico: o operador precisa selecionar o snapshot exato.</p>
 
         <div class="mt-5 grid gap-3 text-sm text-slate-300">
           <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Ultimo snapshot stage</div>
-            <?php if (is_array($technicalBackup['stage_latest'] ?? null)): ?>
-              <div class="mt-2 text-white"><?= htmlspecialchars((string) ($technicalBackup['stage_latest']['backup_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-              <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($technicalBackup['stage_latest']['created_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Snapshots disponiveis</div>
+            <?php if ($technicalRollbackItems !== []): ?>
+              <div class="mt-2 text-white"><?= count($technicalRollbackItems) ?> snapshot(s) listados</div>
+              <div class="mt-1 text-xs text-slate-500">Local: <?= count($technicalLocalList) ?> | Stage: <?= count($technicalStageList) ?> | Producao: <?= count($technicalProductionList) ?></div>
             <?php else: ?>
-              <div class="mt-2 text-amber-300">Nenhum snapshot tecnico stage disponivel.</div>
-            <?php endif; ?>
-          </div>
-
-          <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-            <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Ultimo snapshot producao</div>
-            <?php if (is_array($technicalBackup['production_latest'] ?? null)): ?>
-              <div class="mt-2 text-white"><?= htmlspecialchars((string) ($technicalBackup['production_latest']['backup_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-              <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($technicalBackup['production_latest']['created_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-            <?php else: ?>
-              <div class="mt-2 text-amber-300">Nenhum snapshot tecnico producao disponivel.</div>
+              <div class="mt-2 text-amber-300">Nenhum snapshot tecnico disponivel.</div>
             <?php endif; ?>
           </div>
         </div>
 
-        <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="operations-action-form mt-5 rounded-2xl border border-amber-500/20 bg-slate-950/70 p-4" data-progress-title="Executando rollback tecnico" data-progress-message="Estamos reaplicando o ultimo snapshot tecnico do ambiente selecionado." data-progress-stage="Rollback tecnico">
+        <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="operations-action-form mt-5 rounded-2xl border border-amber-500/20 bg-slate-950/70 p-4" data-progress-title="Executando rollback tecnico" data-progress-message="Estamos reaplicando o snapshot tecnico selecionado no ambiente correspondente." data-progress-stage="Rollback tecnico">
           <?= Csrf::field() ?>
           <input type="hidden" name="action" value="rollback_technical">
-          <div class="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+          <div class="grid gap-4 md:grid-cols-[1.4fr_0.8fr_1fr_auto]">
+            <div>
+              <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Snapshot</label>
+              <select id="rollback-backup-id" name="backup_id" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-amber-400">
+                <option value="">Selecione um snapshot</option>
+                <?php foreach ($technicalRollbackItems as $item): ?>
+                  <?php
+                    if (!is_array($item)) {
+                        continue;
+                    }
+
+                    $snapshotId = (string) ($item['backup_id'] ?? '');
+                    $profile = (string) ($item['profile'] ?? '');
+                    $profileLabel = (string) ($item['profile_label'] ?? $profile);
+                    $createdAt = (string) ($item['created_at'] ?? '');
+                    $filesCount = (int) ($item['files_count'] ?? 0);
+                    $zipEntry = (array) ($item['files_zip'] ?? []);
+                    $zipSize = $formatBytes((int) ($zipEntry['size_bytes'] ?? 0));
+                  ?>
+                  <?php if ($snapshotId === '') { continue; } ?>
+                  <option
+                    value="<?= htmlspecialchars($snapshotId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-profile="<?= htmlspecialchars($profile, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-profile-label="<?= htmlspecialchars($profileLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-created-at="<?= htmlspecialchars($createdAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-files-count="<?= $filesCount ?>"
+                    data-zip-size="<?= htmlspecialchars($zipSize, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                  >
+                    <?= htmlspecialchars($snapshotId . ' | ' . $profileLabel . ' | ' . $filesCount . ' arquivos | ' . $createdAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
             <div>
               <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Destino</label>
-              <select name="target_profile" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-amber-400">
+              <select id="rollback-target-profile" name="target_profile" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-amber-400">
                 <option value="local" <?= is_array($technicalBackup['local_latest'] ?? null) ? '' : 'disabled' ?>>Local</option>
                 <option value="stage" <?= is_array($technicalBackup['stage_latest'] ?? null) ? '' : 'disabled' ?>>Stage</option>
                 <option value="production" <?= is_array($technicalBackup['production_latest'] ?? null) ? '' : 'disabled' ?>>Producao</option>
@@ -681,33 +919,64 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
             </div>
             <div>
               <label class="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Confirmacao</label>
-              <input type="text" name="rollback_phrase" placeholder="Digite CONFIRMAR" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-amber-400">
+              <input id="rollback-phrase" type="text" name="rollback_phrase" placeholder="Digite CONFIRMAR" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-amber-400">
             </div>
             <div class="flex items-end">
-              <button type="submit" class="inline-flex items-center justify-center rounded-2xl border px-4 py-3 text-sm font-semibold transition <?= (is_array($technicalBackup['local_latest'] ?? null) || is_array($technicalBackup['stage_latest'] ?? null) || is_array($technicalBackup['production_latest'] ?? null)) ? 'border-amber-400/40 bg-amber-500/10 text-amber-200 hover:border-amber-300 hover:bg-amber-500/20' : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= (is_array($technicalBackup['local_latest'] ?? null) || is_array($technicalBackup['stage_latest'] ?? null) || is_array($technicalBackup['production_latest'] ?? null)) ? '' : 'disabled' ?>>Executar rollback</button>
+              <button id="rollback-submit-button" type="submit" class="inline-flex cursor-not-allowed items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-500 transition" disabled>Executar rollback</button>
             </div>
           </div>
-          <p class="mt-3 text-xs text-slate-500">O rollback tecnico usa sempre o ultimo snapshot do ambiente selecionado. Gere um novo backup tecnico antes de qualquer deploy sensivel.</p>
+          <div id="rollback-preview-empty" class="mt-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-400">
+            Selecione um snapshot tecnico para ver origem, destino, data e quantidade de arquivos.
+          </div>
+          <div id="rollback-preview-content" class="mt-4 hidden rounded-2xl border border-amber-400/25 bg-amber-500/5 p-4 text-sm text-slate-300">
+            <div class="grid gap-3 md:grid-cols-4">
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Snapshot</div>
+                <div id="rollback-preview-id" class="mt-1 break-all text-white">-</div>
+              </div>
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Origem</div>
+                <div id="rollback-preview-source" class="mt-1 text-white">-</div>
+              </div>
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Destino</div>
+                <div id="rollback-preview-target" class="mt-1 text-white">-</div>
+              </div>
+              <div>
+                <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Criado em</div>
+                <div id="rollback-preview-created" class="mt-1 text-white">-</div>
+              </div>
+            </div>
+            <div id="rollback-preview-details" class="mt-3 text-xs text-slate-400">Arquivos: -</div>
+          </div>
+          <p class="mt-3 text-xs text-slate-500">O rollback tecnico exige backup_id explicito. O destino precisa corresponder ao ambiente de origem do snapshot selecionado.</p>
         </form>
       </div>
     </div>
 
-    <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-      <h2 class="font-orbitron text-lg font-bold text-white">Raizes operacionais</h2>
-      <div class="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
-        <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-          <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Backup</div>
-          <div class="mt-2 break-all text-white"><?= htmlspecialchars((string) ($backup['root'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-        </div>
-        <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-          <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Backup tecnico</div>
-          <div class="mt-2 break-all text-white"><?= htmlspecialchars((string) ($technicalBackup['root'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-        </div>
-      </div>
     </div>
   </div>
 
   <script>
+    (() => {
+      const buttons = Array.from(document.querySelectorAll('[data-ops-tab]'));
+      const panels = Array.from(document.querySelectorAll('[data-ops-panel]'));
+
+      const activate = (target) => {
+        buttons.forEach((button) => {
+          button.classList.toggle('is-active', button.dataset.opsTab === target);
+        });
+
+        panels.forEach((panel) => {
+          panel.hidden = panel.dataset.opsPanel !== target;
+        });
+      };
+
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => activate(button.dataset.opsTab || 'backups'));
+      });
+    })();
+
     (() => {
       const overlay = document.getElementById('operations-progress-overlay');
       const title = document.getElementById('operations-progress-title');
@@ -779,6 +1048,276 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
           window.clearInterval(progressTimer);
         }
       });
+    })();
+
+    (() => {
+      const backupSelect = document.getElementById('restore-backup-id');
+      const targetSelect = document.getElementById('restore-target-profile');
+      const submitButton = document.getElementById('restore-submit-button');
+      const emptyPreview = document.getElementById('restore-preview-empty');
+      const contentPreview = document.getElementById('restore-preview-content');
+      const previewId = document.getElementById('restore-preview-id');
+      const previewSource = document.getElementById('restore-preview-source');
+      const previewTarget = document.getElementById('restore-preview-target');
+      const previewCreated = document.getElementById('restore-preview-created');
+      const previewSizes = document.getElementById('restore-preview-sizes');
+
+      if (!backupSelect || !targetSelect || !submitButton) {
+        return;
+      }
+
+      const targetLabels = {
+        local: 'Local',
+        stage: 'Stage',
+        production: 'Producao',
+      };
+
+      const setText = (element, value) => {
+        if (element) {
+          element.textContent = value || '-';
+        }
+      };
+
+      const setSubmitEnabled = (enabled) => {
+        submitButton.disabled = !enabled;
+        submitButton.classList.toggle('cursor-not-allowed', !enabled);
+        submitButton.classList.toggle('border-slate-700', !enabled);
+        submitButton.classList.toggle('bg-slate-900', !enabled);
+        submitButton.classList.toggle('text-slate-500', !enabled);
+        submitButton.classList.toggle('border-rose-400/40', enabled);
+        submitButton.classList.toggle('bg-rose-500/10', enabled);
+        submitButton.classList.toggle('text-rose-200', enabled);
+        submitButton.classList.toggle('hover:border-rose-300', enabled);
+        submitButton.classList.toggle('hover:bg-rose-500/20', enabled);
+      };
+
+      const updateRestorePreview = () => {
+        const option = backupSelect.selectedOptions[0] || null;
+        const backupId = backupSelect.value;
+
+        if (!option || backupId === '') {
+          emptyPreview?.classList.remove('hidden');
+          contentPreview?.classList.add('hidden');
+          setSubmitEnabled(false);
+          return;
+        }
+
+        const sourceProfile = option.dataset.profile || '';
+        if (sourceProfile !== '' && targetSelect.querySelector(`option[value="${sourceProfile}"]:not(:disabled)`)) {
+          targetSelect.value = sourceProfile;
+        }
+
+        const targetProfile = targetSelect.value;
+        const sameProfile = sourceProfile !== '' && sourceProfile === targetProfile;
+        const totalSize = option.dataset.totalSize || '-';
+        const databaseSize = option.dataset.databaseSize || '-';
+        const uploadsSize = option.dataset.uploadsSize || '-';
+
+        setText(previewId, backupId);
+        setText(previewSource, option.dataset.profileLabel || targetLabels[sourceProfile] || sourceProfile || '-');
+        setText(previewTarget, targetLabels[targetProfile] || targetProfile || '-');
+        setText(previewCreated, option.dataset.createdAt || '-');
+        setText(previewSizes, `Tamanho: ${totalSize} | Banco: ${databaseSize} | Uploads: ${uploadsSize}`);
+
+        emptyPreview?.classList.add('hidden');
+        contentPreview?.classList.remove('hidden');
+        setSubmitEnabled(sameProfile);
+
+        if (!sameProfile) {
+          setText(previewSizes, `Destino bloqueado: o backup pertence a ${option.dataset.profileLabel || sourceProfile}. Selecione o destino correspondente.`);
+        }
+      };
+
+      backupSelect.addEventListener('change', updateRestorePreview);
+      targetSelect.addEventListener('change', updateRestorePreview);
+      updateRestorePreview();
+    })();
+
+    (() => {
+      const snapshotSelect = document.getElementById('rollback-backup-id');
+      const targetSelect = document.getElementById('rollback-target-profile');
+      const submitButton = document.getElementById('rollback-submit-button');
+      const emptyPreview = document.getElementById('rollback-preview-empty');
+      const contentPreview = document.getElementById('rollback-preview-content');
+      const previewId = document.getElementById('rollback-preview-id');
+      const previewSource = document.getElementById('rollback-preview-source');
+      const previewTarget = document.getElementById('rollback-preview-target');
+      const previewCreated = document.getElementById('rollback-preview-created');
+      const previewDetails = document.getElementById('rollback-preview-details');
+
+      if (!snapshotSelect || !targetSelect || !submitButton) {
+        return;
+      }
+
+      const targetLabels = {
+        local: 'Local',
+        stage: 'Stage',
+        production: 'Producao',
+      };
+
+      const setText = (element, value) => {
+        if (element) {
+          element.textContent = value || '-';
+        }
+      };
+
+      const setSubmitEnabled = (enabled) => {
+        submitButton.disabled = !enabled;
+        submitButton.classList.toggle('cursor-not-allowed', !enabled);
+        submitButton.classList.toggle('border-slate-700', !enabled);
+        submitButton.classList.toggle('bg-slate-900', !enabled);
+        submitButton.classList.toggle('text-slate-500', !enabled);
+        submitButton.classList.toggle('border-amber-400/40', enabled);
+        submitButton.classList.toggle('bg-amber-500/10', enabled);
+        submitButton.classList.toggle('text-amber-200', enabled);
+        submitButton.classList.toggle('hover:border-amber-300', enabled);
+        submitButton.classList.toggle('hover:bg-amber-500/20', enabled);
+      };
+
+      const updateRollbackPreview = () => {
+        const option = snapshotSelect.selectedOptions[0] || null;
+        const snapshotId = snapshotSelect.value;
+
+        if (!option || snapshotId === '') {
+          emptyPreview?.classList.remove('hidden');
+          contentPreview?.classList.add('hidden');
+          setSubmitEnabled(false);
+          return;
+        }
+
+        const sourceProfile = option.dataset.profile || '';
+        if (sourceProfile !== '' && targetSelect.querySelector(`option[value="${sourceProfile}"]:not(:disabled)`)) {
+          targetSelect.value = sourceProfile;
+        }
+
+        const targetProfile = targetSelect.value;
+        const sameProfile = sourceProfile !== '' && sourceProfile === targetProfile;
+        const filesCount = option.dataset.filesCount || '-';
+        const zipSize = option.dataset.zipSize || '-';
+
+        setText(previewId, snapshotId);
+        setText(previewSource, option.dataset.profileLabel || targetLabels[sourceProfile] || sourceProfile || '-');
+        setText(previewTarget, targetLabels[targetProfile] || targetProfile || '-');
+        setText(previewCreated, option.dataset.createdAt || '-');
+        setText(previewDetails, `Arquivos: ${filesCount} | Zip: ${zipSize}`);
+
+        emptyPreview?.classList.add('hidden');
+        contentPreview?.classList.remove('hidden');
+        setSubmitEnabled(sameProfile);
+
+        if (!sameProfile) {
+          setText(previewDetails, `Destino bloqueado: o snapshot pertence a ${option.dataset.profileLabel || sourceProfile}. Selecione o destino correspondente.`);
+        }
+      };
+
+      snapshotSelect.addEventListener('change', updateRollbackPreview);
+      targetSelect.addEventListener('change', updateRollbackPreview);
+      updateRollbackPreview();
+    })();
+
+    (() => {
+      const packageSelect = document.getElementById('code-package-id');
+      const targetSelect = document.getElementById('code-target-profile');
+      const submitButton = document.getElementById('code-submit-button');
+      const emptyPreview = document.getElementById('code-preview-empty');
+      const contentPreview = document.getElementById('code-preview-content');
+      const previewId = document.getElementById('code-preview-id');
+      const previewTarget = document.getElementById('code-preview-target');
+      const previewFiles = document.getElementById('code-preview-files');
+      const previewCreated = document.getElementById('code-preview-created');
+      const previewDetails = document.getElementById('code-preview-details');
+
+      if (!packageSelect || !targetSelect || !submitButton) {
+        return;
+      }
+
+      const targetLabels = {
+        stage: 'Stage',
+        production: 'Producao',
+      };
+
+      const setText = (element, value) => {
+        if (element) {
+          element.textContent = value || '-';
+        }
+      };
+
+      const setSubmitEnabled = (enabled) => {
+        submitButton.disabled = !enabled;
+        submitButton.classList.toggle('cursor-not-allowed', !enabled);
+        submitButton.classList.toggle('border-slate-700', !enabled);
+        submitButton.classList.toggle('bg-slate-900', !enabled);
+        submitButton.classList.toggle('text-slate-500', !enabled);
+        submitButton.classList.toggle('border-blue-400/40', enabled);
+        submitButton.classList.toggle('bg-blue-500/10', enabled);
+        submitButton.classList.toggle('text-blue-200', enabled);
+        submitButton.classList.toggle('hover:border-blue-300', enabled);
+        submitButton.classList.toggle('hover:bg-blue-500/20', enabled);
+      };
+
+      const updateCodePreview = () => {
+        const option = packageSelect.selectedOptions[0] || null;
+        const packageId = packageSelect.value;
+
+        if (!option || packageId === '') {
+          emptyPreview?.classList.remove('hidden');
+          contentPreview?.classList.add('hidden');
+          setSubmitEnabled(false);
+          return;
+        }
+
+        const targetProfile = targetSelect.value;
+        const targetEnabled = targetProfile !== '' && !targetSelect.selectedOptions[0]?.disabled;
+        const notes = option.dataset.notes || '-';
+        const commit = option.dataset.commit || '-';
+        const zipSize = option.dataset.zipSize || '-';
+
+        setText(previewId, packageId);
+        setText(previewTarget, targetLabels[targetProfile] || targetProfile || '-');
+        setText(previewFiles, option.dataset.filesCount || '-');
+        setText(previewCreated, option.dataset.createdAt || '-');
+        setText(previewDetails, `Notas: ${notes} | Commit: ${commit} | Zip: ${zipSize}`);
+
+        emptyPreview?.classList.add('hidden');
+        contentPreview?.classList.remove('hidden');
+        setSubmitEnabled(targetEnabled);
+
+        if (!targetEnabled) {
+          setText(previewDetails, 'Destino bloqueado pela configuracao atual ou politica operacional.');
+        }
+      };
+
+      packageSelect.addEventListener('change', updateCodePreview);
+      targetSelect.addEventListener('change', updateCodePreview);
+      updateCodePreview();
+    })();
+
+    (() => {
+      const bindProductionPhrase = (targetId, artifactId, phraseId, defaultPhrase, artifactLabel) => {
+        const target = document.getElementById(targetId);
+        const artifact = document.getElementById(artifactId);
+        const phrase = document.getElementById(phraseId);
+
+        if (!target || !artifact || !phrase) {
+          return;
+        }
+
+        const update = () => {
+          const selectedId = artifact.value || artifactLabel;
+          phrase.placeholder = target.value === 'production'
+            ? `Digite ${selectedId}`
+            : `Digite ${defaultPhrase}`;
+        };
+
+        target.addEventListener('change', update);
+        artifact.addEventListener('change', update);
+        update();
+      };
+
+      bindProductionPhrase('content-target-profile', 'content-apply-package-id', 'content-apply-phrase', 'PUBLICAR', 'o ID do pacote');
+      bindProductionPhrase('code-target-profile', 'code-package-id', 'code-apply-phrase', 'PUBLICAR', 'o ID do pacote');
+      bindProductionPhrase('restore-target-profile', 'restore-backup-id', 'restore-phrase', 'CONFIRMAR', 'o ID do backup');
+      bindProductionPhrase('rollback-target-profile', 'rollback-backup-id', 'rollback-phrase', 'CONFIRMAR', 'o ID do snapshot');
     })();
   </script>
 </section>

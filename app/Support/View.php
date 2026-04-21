@@ -23,6 +23,10 @@ final class View
      */
     public static function render(string $view, array $data = []): void
     {
+        if (str_starts_with($view, 'admin/')) {
+            self::sendNoStoreHeaders();
+        }
+
         $viewFile = base_path('app/Views/' . $view . '.php');
 
         if (!is_file($viewFile)) {
@@ -64,6 +68,19 @@ final class View
     private static function resolveLayout(string $view): string
     {
         return str_starts_with($view, 'admin/') ? 'layouts/admin.php' : 'layouts/site.php';
+    }
+
+    private static function sendNoStoreHeaders(): void
+    {
+        if (headers_sent()) {
+            return;
+        }
+
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Cache-Control: post-check=0, pre-check=0', false);
+        header('Pragma: no-cache');
+        header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
+        header('X-Admin-No-Cache: 1');
     }
 
     /**

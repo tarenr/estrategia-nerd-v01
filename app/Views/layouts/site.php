@@ -46,8 +46,16 @@ foreach ($siteJsCandidates as $candidate) {
         break;
     }
 }
-$siteCssVersion = $siteCssPath !== '' ? (string) filemtime($siteCssPath) : '1';
-$siteHomeJsVersion = $siteHomeJsPath !== '' ? (string) filemtime($siteHomeJsPath) : '1';
+$assetVersion = static function (string $path): string {
+    if ($path === '' || !is_file($path)) {
+        return '1';
+    }
+
+    return (string) filemtime($path) . '-' . (string) filesize($path);
+};
+
+$siteCssVersion = $assetVersion($siteCssPath);
+$siteHomeJsVersion = $assetVersion($siteHomeJsPath);
 $brandLogo = (string) portal_config('logo_url', '');
 $brandSymbol = (string) portal_config('brand_symbol_url', '');
 $brandFavicon = (string) portal_config('favicon_url', '');

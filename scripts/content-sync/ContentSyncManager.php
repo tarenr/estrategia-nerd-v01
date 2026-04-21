@@ -322,8 +322,13 @@ final class ContentSyncManager
         }
     }
 
-    public function verify(?string $packageId = null): array
+    public function verify(string $packageId): array
     {
+        $packageId = trim($packageId);
+        if ($packageId === '' || strtolower($packageId) === 'latest') {
+            throw new RuntimeException('package_id e obrigatorio para verificar pacote de conteudo.');
+        }
+
         $package = $this->packageById($packageId);
         if ($package === null) {
             throw new RuntimeException('Nenhum pacote encontrado para verificar.');
@@ -338,10 +343,15 @@ final class ContentSyncManager
         return $package;
     }
 
-    public function apply(?string $packageId, string $targetProfile = 'production', bool $force = false): array
+    public function apply(string $packageId, string $targetProfile = 'production', bool $force = false): array
     {
         if (!$force) {
             throw new RuntimeException('Publicacao exige confirmacao explicita.');
+        }
+
+        $packageId = trim($packageId);
+        if ($packageId === '' || strtolower($packageId) === 'latest') {
+            throw new RuntimeException('package_id e obrigatorio para aplicar conteudo.');
         }
 
         $package = $this->packageById($packageId);
@@ -414,10 +424,15 @@ final class ContentSyncManager
         }
     }
 
-    public function applyCode(?string $packageId, string $targetProfile = 'production', bool $force = false): array
+    public function applyCode(string $packageId, string $targetProfile = 'production', bool $force = false): array
     {
         if (!$force) {
             throw new RuntimeException('Publicacao de codigo exige confirmacao explicita.');
+        }
+
+        $packageId = trim($packageId);
+        if ($packageId === '' || strtolower($packageId) === 'latest') {
+            throw new RuntimeException('package_id e obrigatorio para deploy tecnico.');
         }
 
         $package = $this->codePackageById($packageId);

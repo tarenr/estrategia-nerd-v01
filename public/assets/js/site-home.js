@@ -596,7 +596,17 @@
   const normalizePublicMediaUrl = (value) => {
     const raw = String(value || '').trim();
     if (!raw) return '';
-    if (/^https?:\/\//i.test(raw)) return raw;
+    if (/^https?:\/\//i.test(raw)) {
+      try {
+        const url = new URL(raw);
+        const localHosts = ['localhost', '127.0.0.1'];
+        if (localHosts.includes(url.hostname.toLowerCase()) && !localHosts.includes(window.location.hostname.toLowerCase())) {
+          return normalizePublicMediaUrl(`${url.pathname}${url.search || ''}`);
+        }
+      } catch (error) {}
+
+      return raw;
+    }
     if (raw.startsWith('//')) return `${window.location.protocol}${raw}`;
     if (raw.charAt(0) !== '/') return raw;
 
@@ -640,6 +650,14 @@
       const ambienteSrc = normalizePublicMediaUrl(block.getAttribute('data-audio-ambiente') || '');
       const initialText = button.textContent || 'Ouvir narracao';
       button.setAttribute('data-en-audio-initial', initialText);
+
+      if (!narracaoSrc && !ambienteSrc) {
+        button.textContent = 'Audio indisponivel';
+        button.setAttribute('disabled', 'disabled');
+        button.setAttribute('aria-disabled', 'true');
+        block.classList.add('has-audio-error');
+        return;
+      }
 
       const narracao = narracaoSrc ? new Audio(narracaoSrc) : null;
       const ambiente = ambienteSrc ? new Audio(ambienteSrc) : null;
@@ -696,6 +714,8 @@
           state.active = { block, button, narracao, ambiente };
         } catch (error) {
           stopActive();
+          button.textContent = 'Audio indisponivel';
+          block.classList.add('has-audio-error');
         }
       });
     });

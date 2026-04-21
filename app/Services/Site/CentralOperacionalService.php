@@ -60,6 +60,8 @@ final class CentralOperacionalService
                     'latest' => is_array($backupStatus['latest'] ?? null) ? $backupStatus['latest'] : null,
                     'latest_uploaded' => is_array($backupStatus['latest_uploaded'] ?? null) ? $backupStatus['latest_uploaded'] : null,
                     'running' => is_array($backupStatus['running'] ?? null) ? $backupStatus['running'] : null,
+                    'items' => array_values((array) ($backupStatus['items'] ?? [])),
+                    'items_by_profile' => $this->groupBackupsByProfile(array_values((array) ($backupStatus['items'] ?? []))),
                     'local_ready' => $this->backupService->profileReady('local'),
                     'stage_ready' => $this->backupService->profileReady('stage'),
                     'production_ready' => $this->backupService->profileReady('production'),
@@ -80,6 +82,7 @@ final class CentralOperacionalService
                     'latest' => is_array($codeStatus['latest'] ?? null) ? $codeStatus['latest'] : null,
                     'latest_stage_apply' => is_array($codeStatus['latest_stage_apply'] ?? null) ? $codeStatus['latest_stage_apply'] : null,
                     'latest_production_apply' => is_array($codeStatus['latest_production_apply'] ?? null) ? $codeStatus['latest_production_apply'] : null,
+                    'items' => array_values((array) ($codeStatus['items'] ?? [])),
                     'stage_ready' => $this->deployManager->profileReady('stage'),
                     'production_ready' => $this->deployManager->profileReady('production'),
                 ],
@@ -134,9 +137,9 @@ final class CentralOperacionalService
         return $this->backupService->run($profileName);
     }
 
-    public function verifyLatestDataBackup(): array
+    public function verifyDataBackup(string $backupId): array
     {
-        return $this->backupService->verify(null);
+        return $this->backupService->verify($backupId);
     }
 
     public function exportContent(string $profileName): array
@@ -144,9 +147,9 @@ final class CentralOperacionalService
         return $this->contentManager->export($profileName);
     }
 
-    public function verifyLatestContent(): array
+    public function verifyContentPackage(string $packageId): array
     {
-        return $this->contentManager->verify(null);
+        return $this->contentManager->verify($packageId);
     }
 
     public function exportCodePackage(?string $notes = null): array
@@ -156,22 +159,54 @@ final class CentralOperacionalService
 
     public function applyContentPackage(string $packageId, string $targetProfile): array
     {
-        return $this->contentManager->apply($packageId, $targetProfile, true);
+        $preApplyBackup = $this->backupService->run($targetProfile);
+        $preApplyBackupId = (string) ($preApplyBackup['backup_id'] ?? '');
+
+        $this->operationLogger->write(
+            'backup_pre_conteudo',
+            $targetProfile,
+            $targetProfile,
+            $preApplyBackupId,
+            'OK',
+            'Backup preventivo criado antes de aplicar pacote de conteudo.',
+            ['package_id' => $packageId]
+        );
+
+        $result = $this->contentManager->apply($packageId, $targetProfile, true);
+        $result['pre_apply_backup_id'] = $preApplyBackupId;
+
+        return $result;
     }
 
-    public function applyLatestCode(string $targetProfile): array
+    public function applyCodePackage(string $packageId, string $targetProfile): array
     {
-        return $this->deployManager->applyCode(null, $targetProfile, true);
+        $preApplyBackup = $this->deployManager->backupTecnico($targetProfile);
+        $preApplyBackupId = (string) ($preApplyBackup['backup_id'] ?? '');
+
+        $this->operationLogger->write(
+            'backup_pre_deploy_tecnico',
+            $targetProfile,
+            $targetProfile,
+            $preApplyBackupId,
+            'OK',
+            'Backup tecnico preventivo criado antes de aplicar pacote tecnico.',
+            ['package_id' => $packageId]
+        );
+
+        $result = $this->deployManager->applyCode($packageId, $targetProfile, true);
+        $result['pre_apply_backup_id'] = $preApplyBackupId;
+
+        return $result;
     }
 
-    public function restoreLatestData(string $targetProfile, string $scope): array
+    public function restoreData(string $backupId, string $targetProfile, string $scope): array
     {
-        return $this->backupService->restore(null, $targetProfile, $scope);
+        return $this->backupService->restore($backupId, $targetProfile, $scope);
     }
 
-    public function rollbackLatestTechnical(string $targetProfile): array
+    public function rollbackTechnical(string $backupId, string $targetProfile): array
     {
-        return $this->deployManager->rollbackTecnico($targetProfile, null, true);
+        return $this->deployManager->rollbackTecnico($targetProfile, $backupId, true);
     }
 
     private function latestTechnicalBackup(array $items): ?array
@@ -248,5 +283,33 @@ final class CentralOperacionalService
         }
 
         return $presented;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $items
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    private function groupBackupsByProfile(array $items): array
+    {
+        $groups = [
+            'local' => [],
+            'stage' => [],
+            'production' => [],
+        ];
+
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $profile = strtolower(trim((string) ($item['profile'] ?? '')));
+            if (!array_key_exists($profile, $groups)) {
+                continue;
+            }
+
+            $groups[$profile][] = $item;
+        }
+
+        return $groups;
     }
 }

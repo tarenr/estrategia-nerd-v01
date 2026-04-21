@@ -149,7 +149,102 @@ declare(strict_types=1);
       }
     });
 
+    wrapper.querySelectorAll('.en-audio-block').forEach(function (block) {
+      ['data-audio-narracao', 'data-audio-ambiente'].forEach(function (attr) {
+        if (block.hasAttribute(attr)) {
+          block.setAttribute(attr, normalizeMediaUrl(block.getAttribute(attr)));
+        }
+      });
+    });
+
     return wrapper.innerHTML;
+  }
+
+  function initPreviewAudioBlocks(root) {
+    var scope = root || document;
+    var blocks = Array.prototype.slice.call(scope.querySelectorAll('.en-audio-block'));
+    var active = null;
+
+    function stopActive() {
+      if (!active) return;
+      try { if (active.narracao) { active.narracao.pause(); active.narracao.currentTime = 0; } } catch (error) {}
+      try { if (active.ambiente) { active.ambiente.pause(); active.ambiente.currentTime = 0; } } catch (error) {}
+      if (active.button) {
+        active.button.textContent = active.initialText || 'Ouvir narracao';
+        active.button.removeAttribute('aria-pressed');
+      }
+      if (active.block) active.block.classList.remove('is-playing');
+      active = null;
+    }
+
+    blocks.forEach(function (block) {
+      var button = block.querySelector('[data-en-audio-toggle]');
+      if (!button || button.dataset.previewAudioBound === '1') return;
+      button.dataset.previewAudioBound = '1';
+
+      var narracaoSrc = normalizeMediaUrl(block.getAttribute('data-audio-narracao') || '');
+      var ambienteSrc = normalizeMediaUrl(block.getAttribute('data-audio-ambiente') || '');
+      var initialText = button.textContent || 'Ouvir narracao';
+      if (!narracaoSrc && !ambienteSrc) {
+        button.textContent = 'Audio indisponivel';
+        button.disabled = true;
+        return;
+      }
+
+      var narracao = narracaoSrc ? new Audio(narracaoSrc) : null;
+      var ambiente = ambienteSrc ? new Audio(ambienteSrc) : null;
+      if (ambiente) ambiente.loop = true;
+
+      if (narracao) {
+        narracao.addEventListener('ended', function () {
+          try { if (ambiente) { ambiente.pause(); ambiente.currentTime = 0; } } catch (error) {}
+          button.textContent = initialText;
+          button.removeAttribute('aria-pressed');
+          block.classList.remove('is-playing');
+          active = null;
+        });
+      }
+
+      button.addEventListener('click', function () {
+        var isCurrent = active && active.block === block;
+        var isPlaying = isCurrent && ((narracao && !narracao.paused) || (ambiente && !ambiente.paused));
+        if (isPlaying) {
+          stopActive();
+          return;
+        }
+        if (active && !isCurrent) stopActive();
+
+        Promise.resolve()
+          .then(function () {
+            if (narracao) narracao.volume = 1;
+            if (ambiente) ambiente.volume = narracao ? 0.12 : 0.35;
+            if (narracao) {
+              return narracao.play().then(function () {
+                if (ambiente) ambiente.play().catch(function () {});
+              });
+            }
+            return ambiente ? ambiente.play() : null;
+          })
+          .then(function () {
+            button.textContent = 'Pausar';
+            button.setAttribute('aria-pressed', 'true');
+            block.classList.add('is-playing');
+            active = { block: block, button: button, narracao: narracao, ambiente: ambiente, initialText: initialText };
+          })
+          .catch(function () {
+            stopActive();
+            button.textContent = 'Audio indisponivel';
+          });
+      });
+    });
+  }
+
+  function initPreviewMedia(root) {
+    var scope = root || document;
+    initPreviewAudioBlocks(scope);
+    scope.querySelectorAll('video').forEach(function (video) {
+      try { video.load(); } catch (error) {}
+    });
   }
 
   function escapeHtml(value) {
@@ -329,6 +424,12 @@ declare(strict_types=1);
       '.article-body .content-block-table{padding:0;overflow:hidden;}' +
       '.article-body .content-block-table .content-block-label{padding:1rem 1rem 0;}' +
       '.article-body .content-block-faq h3{margin-top:0;}' +
+      '.article-body .en-audio-block{background:linear-gradient(180deg,rgba(18,16,24,.96),rgba(8,10,18,.96));border:1px solid rgba(103,232,249,.22);border-radius:16px;padding:18px 18px 16px;margin:18px 0 22px;box-shadow:0 0 22px rgba(0,0,0,.32);}' +
+      '.article-body .en-audio-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;color:rgba(248,250,252,.95);}' +
+      '.article-body .en-audio-title{font-family:Orbitron,sans-serif;font-weight:900;letter-spacing:.06em;text-transform:uppercase;font-size:.95rem;color:rgba(165,243,252,.95);}' +
+      '.article-body .en-audio-subtitle{margin:0 0 14px;color:rgba(226,232,240,.92);font-style:italic;line-height:1.6;}' +
+      '.article-body .en-audio-button{display:inline-flex;align-items:center;gap:10px;border-radius:10px;border:1px solid rgba(251,191,36,.28);background:linear-gradient(180deg,rgba(59,36,28,.92),rgba(22,13,12,.92));color:rgba(255,237,213,.95);padding:10px 16px;cursor:pointer;font-weight:800;font-size:.95rem;}' +
+      '.article-body .en-audio-block.is-playing{border-color:rgba(34,211,238,.36);box-shadow:0 0 26px rgba(34,211,238,.12),0 0 22px rgba(0,0,0,.34);}' +
       '.article-body img{display:block;width:auto;max-width:100%;max-height:56vh;height:auto;border-radius:12px;margin:0 auto;border:1px solid rgba(0,212,255,.2);} .article-body figure{margin:2rem auto;max-width:min(100%,760px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;} .article-body figure.content-media-wide{max-width:100%;width:100%;display:block;}' +
       '.article-body figure{margin:2rem 0;}' +
       '.article-body figcaption{text-align:center;color:#64748b;font-size:.9rem;margin-top:-1rem;margin-bottom:0;font-style:italic;}' +
@@ -355,6 +456,9 @@ declare(strict_types=1);
     previewWindow.document.open();
     previewWindow.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Preview do Post</title><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"></head><body>' + buildPreviewHtml() + '</body></html>');
     previewWindow.document.close();
+    previewWindow.setTimeout(function () {
+      initPreviewMedia(previewWindow.document);
+    }, 50);
   }
 
   function parseJsonResponse(response) {

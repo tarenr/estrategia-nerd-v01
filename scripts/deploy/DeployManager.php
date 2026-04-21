@@ -47,7 +47,7 @@ final class DeployManager
         return $this->contentSync->codeStatus();
     }
 
-    public function applyCode(?string $packageId, string $targetProfile = 'production', bool $force = false): array
+    public function applyCode(string $packageId, string $targetProfile = 'production', bool $force = false): array
     {
         return $this->contentSync->applyCode($packageId, $targetProfile, $force);
     }
@@ -162,7 +162,7 @@ final class DeployManager
         ];
     }
 
-    public function rollbackTecnico(string $targetProfile, ?string $backupId = null, bool $force = false): array
+    public function rollbackTecnico(string $targetProfile, string $backupId, bool $force = false): array
     {
         $this->extendExecutionWindow();
 
@@ -171,6 +171,11 @@ final class DeployManager
         }
 
         $targetProfile = strtolower(trim($targetProfile));
+        $backupId = trim($backupId);
+        if ($backupId === '' || strtolower($backupId) === 'latest') {
+            throw new RuntimeException('backup_id e obrigatorio para rollback tecnico.');
+        }
+
         $backup = $this->technicalBackupById($targetProfile, $backupId);
         if ($backup === null) {
             throw new RuntimeException('Nenhum backup tecnico encontrado para rollback.');

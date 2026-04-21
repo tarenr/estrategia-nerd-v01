@@ -102,6 +102,21 @@
 })();
 
 (function () {
+  const refreshButton = document.querySelector('[data-admin-hard-refresh]');
+  if (!refreshButton) return;
+
+  refreshButton.addEventListener('click', () => {
+    try {
+      sessionStorage.clear();
+    } catch (error) {}
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('nocache', String(Date.now()));
+    window.location.replace(url.toString());
+  });
+})();
+
+(function () {
   const rootId = 'adminSystemModalRoot';
   const toastId = 'adminSystemToastRoot';
 

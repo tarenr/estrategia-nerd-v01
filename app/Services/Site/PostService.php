@@ -333,6 +333,7 @@ final class PostService
         $html = preg_replace('/<figure\b/i', '<figure class="article-figure"', $html) ?? $html;
 
         $html = $this->normalizeStructuredBlocks($html);
+        $html = $this->normalizeEditorialAudioBlocks($html);
         $html = $this->normalizeEditorialFigures($html);
         $html = $this->normalizeAssetPaths($html);
         $html = $this->removeMissingLocalImages($html);
@@ -664,6 +665,190 @@ final class PostService
         return $output !== '' ? $output : $html;
     }
 
+    private function normalizeEditorialAudioBlocks(string $html): string
+    {
+        if (trim($html) === '' || !class_exists(\DOMDocument::class)) {
+            return $html;
+        }
+
+        $document = new \DOMDocument('1.0', 'UTF-8');
+        libxml_use_internal_errors(true);
+        $loaded = $document->loadHTML(
+            '<?xml encoding="utf-8" ?><div id="post-content-audio-root">' . $html . '</div>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+        );
+        libxml_clear_errors();
+
+        if ($loaded !== true) {
+            return $html;
+        }
+
+        $xpath = new \DOMXPath($document);
+
+        $legacyBlocks = $xpath->query("//div[contains(concat(' ', normalize-space(@class), ' '), ' horadrim-audio ')]");
+        if ($legacyBlocks !== false) {
+            foreach (iterator_to_array($legacyBlocks) as $legacyBlock) {
+                if (!$legacyBlock instanceof \DOMElement || !$legacyBlock->parentNode instanceof \DOMNode) {
+                    continue;
+                }
+
+                $audioBlock = $xpath->query(".//div[contains(concat(' ', normalize-space(@class), ' '), ' en-audio-block ')]", $legacyBlock);
+                $firstAudioBlock = $audioBlock !== false ? $audioBlock->item(0) : null;
+
+                if ($firstAudioBlock instanceof \DOMElement) {
+                    $legacyBlock->parentNode->replaceChild($firstAudioBlock->cloneNode(true), $legacyBlock);
+                    continue;
+                }
+
+                if (trim((string) $legacyBlock->textContent) === '') {
+                    $legacyBlock->parentNode->removeChild($legacyBlock);
+                }
+            }
+        }
+
+        $audioBlocks = $xpath->query("//div[contains(concat(' ', normalize-space(@class), ' '), ' en-audio-block ')]");
+        if ($audioBlocks !== false) {
+            foreach ($audioBlocks as $audioBlock) {
+                if (!$audioBlock instanceof \DOMElement) {
+                    continue;
+                }
+
+                $audioBlock->removeAttribute('style');
+                $audioBlock->setAttribute('class', $this->appendCssClass((string) $audioBlock->getAttribute('class'), 'en-audio-block'));
+                $audioBlock->setAttribute(
+                    'style',
+                    $this->mergeInlineStyle(
+                        (string) $audioBlock->getAttribute('style'),
+                        [
+                            'background' => 'linear-gradient(180deg, rgba(18,16,24,.96), rgba(8,10,18,.96))',
+                            'border' => '1px solid rgba(103,232,249,.22)',
+                            'border-radius' => '16px',
+                            'padding' => '18px 18px 16px',
+                            'margin' => '18px 0 22px',
+                            'box-shadow' => '0 0 22px rgba(0,0,0,.32)',
+                        ]
+                    )
+                );
+
+                foreach (['data-audio-narracao', 'data-audio-ambiente'] as $attribute) {
+                    $audioBlock->setAttribute($attribute, $this->normalizeAudioDataPath((string) $audioBlock->getAttribute($attribute)));
+                }
+
+                $headers = $xpath->query(".//*[contains(concat(' ', normalize-space(@class), ' '), ' en-audio-header ')]", $audioBlock);
+                if ($headers !== false) {
+                    foreach ($headers as $header) {
+                        if (!$header instanceof \DOMElement) {
+                            continue;
+                        }
+
+                        $header->setAttribute(
+                            'style',
+                            $this->mergeInlineStyle(
+                                (string) $header->getAttribute('style'),
+                                [
+                                    'display' => 'flex',
+                                    'align-items' => 'center',
+                                    'gap' => '10px',
+                                    'margin-bottom' => '8px',
+                                    'color' => 'rgba(248,250,252,.95)',
+                                ]
+                            )
+                        );
+                    }
+                }
+
+                $titles = $xpath->query(".//*[contains(concat(' ', normalize-space(@class), ' '), ' en-audio-title ')]", $audioBlock);
+                if ($titles !== false) {
+                    foreach ($titles as $title) {
+                        if (!$title instanceof \DOMElement) {
+                            continue;
+                        }
+
+                        $title->setAttribute(
+                            'style',
+                            $this->mergeInlineStyle(
+                                (string) $title->getAttribute('style'),
+                                [
+                                    'font-family' => 'Orbitron, system-ui, sans-serif',
+                                    'font-weight' => '900',
+                                    'letter-spacing' => '.06em',
+                                    'text-transform' => 'uppercase',
+                                    'font-size' => '.95rem',
+                                    'color' => 'rgba(165,243,252,.95)',
+                                ]
+                            )
+                        );
+                    }
+                }
+
+                $subtitles = $xpath->query(".//*[contains(concat(' ', normalize-space(@class), ' '), ' en-audio-subtitle ')]", $audioBlock);
+                if ($subtitles !== false) {
+                    foreach ($subtitles as $subtitle) {
+                        if (!$subtitle instanceof \DOMElement) {
+                            continue;
+                        }
+
+                        $subtitle->setAttribute(
+                            'style',
+                            $this->mergeInlineStyle(
+                                (string) $subtitle->getAttribute('style'),
+                                [
+                                    'margin' => '0 0 14px',
+                                    'color' => 'rgba(226,232,240,.92)',
+                                    'font-style' => 'italic',
+                                    'line-height' => '1.6',
+                                ]
+                            )
+                        );
+                    }
+                }
+
+                $buttons = $xpath->query(".//*[@data-en-audio-toggle]", $audioBlock);
+                if ($buttons !== false) {
+                    foreach ($buttons as $button) {
+                        if (!$button instanceof \DOMElement) {
+                            continue;
+                        }
+
+                        $button->setAttribute('type', 'button');
+                        $button->setAttribute('class', $this->appendCssClass((string) $button->getAttribute('class'), 'en-audio-button'));
+                        $button->setAttribute(
+                            'style',
+                            $this->mergeInlineStyle(
+                                (string) $button->getAttribute('style'),
+                                [
+                                    'display' => 'inline-flex',
+                                    'align-items' => 'center',
+                                    'gap' => '10px',
+                                    'border-radius' => '10px',
+                                    'border' => '1px solid rgba(251,191,36,.28)',
+                                    'background' => 'linear-gradient(180deg, rgba(59,36,28,.92), rgba(22,13,12,.92))',
+                                    'color' => 'rgba(255,237,213,.95)',
+                                    'padding' => '10px 16px',
+                                    'cursor' => 'pointer',
+                                    'font-weight' => '800',
+                                    'font-size' => '.95rem',
+                                ]
+                            )
+                        );
+                    }
+                }
+            }
+        }
+
+        $root = $document->getElementById('post-content-audio-root');
+        if (!$root instanceof \DOMElement) {
+            return $html;
+        }
+
+        $output = '';
+        foreach ($root->childNodes as $child) {
+            $output .= $document->saveHTML($child);
+        }
+
+        return $output !== '' ? $output : $html;
+    }
+
     private function normalizeEditorialFigures(string $html): string
     {
         if (trim($html) === '' || !class_exists(\DOMDocument::class)) {
@@ -852,6 +1037,33 @@ final class PostService
         }
 
         return trim(implode(' ', array_filter($classes)));
+    }
+
+    private function normalizeAudioDataPath(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        if (preg_match('~^https?://~i', $value)) {
+            $host = strtolower((string) parse_url($value, PHP_URL_HOST));
+            if (in_array($host, ['localhost', '127.0.0.1'], true)) {
+                $path = (string) parse_url($value, PHP_URL_PATH);
+                $query = (string) parse_url($value, PHP_URL_QUERY);
+                if ($path !== '') {
+                    return $path . ($query !== '' ? '?' . $query : '');
+                }
+            }
+
+            return $value;
+        }
+
+        if (str_starts_with($value, '//') || preg_match('~^(data:|blob:)~i', $value)) {
+            return $value;
+        }
+
+        return '/' . ltrim($value, '/');
     }
 
     /**

@@ -51,8 +51,13 @@ final class CentralOperacionalController
                     break;
 
                 case 'verify_backup_dados':
-                    $verification = $this->service()->verifyLatestDataBackup();
-                    $this->flash('success', sprintf('Verificacao concluida para o backup %s.', (string) ($verification['backup_id'] ?? 'latest')));
+                    $backupId = trim((string) ($_POST['backup_id'] ?? ''));
+                    if ($backupId === '' || strtolower($backupId) === 'latest') {
+                        throw new \RuntimeException('Selecione o backup exato para verificar.');
+                    }
+
+                    $verification = $this->service()->verifyDataBackup($backupId);
+                    $this->flash('success', sprintf('Verificacao concluida para o backup %s.', (string) ($verification['backup_id'] ?? $backupId)));
                     break;
 
                 case 'export_content':
@@ -66,18 +71,18 @@ final class CentralOperacionalController
                     break;
 
                 case 'verify_content':
-                    $verification = $this->service()->verifyLatestContent();
-                    $this->flash('success', sprintf('Verificacao concluida para o pacote %s.', (string) ($verification['package_id'] ?? 'latest')));
+                    $packageId = trim((string) ($_POST['package_id'] ?? ''));
+                    if ($packageId === '' || strtolower($packageId) === 'latest') {
+                        throw new \RuntimeException('Selecione o pacote de conteudo exato para verificar.');
+                    }
+
+                    $verification = $this->service()->verifyContentPackage($packageId);
+                    $this->flash('success', sprintf('Verificacao concluida para o pacote %s.', (string) ($verification['package_id'] ?? $packageId)));
                     break;
 
                 case 'apply_content':
-                    $phrase = trim((string) ($_POST['apply_phrase'] ?? ''));
-                    if (mb_strtoupper($phrase, 'UTF-8') !== 'PUBLICAR') {
-                        throw new \RuntimeException('Digite PUBLICAR para confirmar o envio do conteudo.');
-                    }
-
                     $packageId = trim((string) ($_POST['package_id'] ?? ''));
-                    if ($packageId === '') {
+                    if ($packageId === '' || strtolower($packageId) === 'latest') {
                         throw new \RuntimeException('Selecione um pacote de conteudo para aplicar.');
                     }
 
@@ -86,8 +91,16 @@ final class CentralOperacionalController
                         throw new \RuntimeException('Destino invalido para publicacao de conteudo.');
                     }
 
+                    $phrase = trim((string) ($_POST['apply_phrase'] ?? ''));
+                    $this->assertOperationPhrase($phrase, $targetProfile, $packageId, 'PUBLICAR', 'conteudo');
+
                     $result = $this->service()->applyContentPackage($packageId, $targetProfile);
-                    $this->flash('success', sprintf('Pacote %s aplicado em %s.', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? '')));
+                    $this->flash('success', sprintf(
+                        'Pacote %s aplicado em %s. Backup preventivo: %s.',
+                        (string) ($result['package_id'] ?? ''),
+                        (string) ($result['target_profile'] ?? ''),
+                        (string) ($result['pre_apply_backup_id'] ?? '-')
+                    ));
                     break;
 
                 case 'backup_tecnico':
@@ -107,9 +120,9 @@ final class CentralOperacionalController
                     break;
 
                 case 'apply_code':
-                    $phrase = trim((string) ($_POST['apply_phrase'] ?? ''));
-                    if (mb_strtoupper($phrase, 'UTF-8') !== 'PUBLICAR') {
-                        throw new \RuntimeException('Digite PUBLICAR para confirmar o envio do codigo.');
+                    $packageId = trim((string) ($_POST['package_id'] ?? ''));
+                    if ($packageId === '' || strtolower($packageId) === 'latest') {
+                        throw new \RuntimeException('Selecione o pacote tecnico exato para publicar.');
                     }
 
                     $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'stage')));
@@ -117,14 +130,23 @@ final class CentralOperacionalController
                         throw new \RuntimeException('Destino invalido para deploy tecnico.');
                     }
 
-                    $result = $this->service()->applyLatestCode($targetProfile);
-                    $this->flash('success', sprintf('Pacote tecnico %s aplicado em %s (%d arquivos).', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? ''), (int) ($result['result']['files_applied'] ?? 0)));
+                    $phrase = trim((string) ($_POST['apply_phrase'] ?? ''));
+                    $this->assertOperationPhrase($phrase, $targetProfile, $packageId, 'PUBLICAR', 'codigo');
+
+                    $result = $this->service()->applyCodePackage($packageId, $targetProfile);
+                    $this->flash('success', sprintf(
+                        'Pacote tecnico %s aplicado em %s (%d arquivos). Backup tecnico preventivo: %s.',
+                        (string) ($result['package_id'] ?? ''),
+                        (string) ($result['target_profile'] ?? ''),
+                        (int) ($result['result']['files_applied'] ?? 0),
+                        (string) ($result['pre_apply_backup_id'] ?? '-')
+                    ));
                     break;
 
                 case 'restore_data':
-                    $phrase = trim((string) ($_POST['restore_phrase'] ?? ''));
-                    if (mb_strtoupper($phrase, 'UTF-8') !== 'CONFIRMAR') {
-                        throw new \RuntimeException('Digite CONFIRMAR para executar o restore de dados.');
+                    $backupId = trim((string) ($_POST['backup_id'] ?? ''));
+                    if ($backupId === '' || strtolower($backupId) === 'latest') {
+                        throw new \RuntimeException('Selecione o backup exato para executar o restore.');
                     }
 
                     $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'local')));
@@ -137,18 +159,22 @@ final class CentralOperacionalController
                         throw new \RuntimeException('Escopo invalido para restore de dados.');
                     }
 
-                    $result = $this->service()->restoreLatestData($targetProfile, $scope);
+                    $phrase = trim((string) ($_POST['restore_phrase'] ?? ''));
+                    $this->assertOperationPhrase($phrase, $targetProfile, $backupId, 'CONFIRMAR', 'restore');
+
+                    $result = $this->service()->restoreData($backupId, $targetProfile, $scope);
                     $this->flash('success', sprintf(
-                        'Restore do ultimo backup executado em %s (%s).',
+                        'Restore do backup %s executado em %s (%s).',
+                        (string) ($result['backup_id'] ?? ''),
                         (string) ($result['target_profile'] ?? ''),
                         strtoupper((string) ($result['scope'] ?? 'all'))
                     ));
                     break;
 
                 case 'rollback_technical':
-                    $phrase = trim((string) ($_POST['rollback_phrase'] ?? ''));
-                    if (mb_strtoupper($phrase, 'UTF-8') !== 'CONFIRMAR') {
-                        throw new \RuntimeException('Digite CONFIRMAR para executar o rollback tecnico.');
+                    $backupId = trim((string) ($_POST['backup_id'] ?? ''));
+                    if ($backupId === '' || strtolower($backupId) === 'latest') {
+                        throw new \RuntimeException('Selecione o snapshot tecnico exato para executar o rollback.');
                     }
 
                     $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'stage')));
@@ -156,7 +182,10 @@ final class CentralOperacionalController
                         throw new \RuntimeException('Destino invalido para rollback tecnico.');
                     }
 
-                    $result = $this->service()->rollbackLatestTechnical($targetProfile);
+                    $phrase = trim((string) ($_POST['rollback_phrase'] ?? ''));
+                    $this->assertOperationPhrase($phrase, $targetProfile, $backupId, 'CONFIRMAR', 'rollback');
+
+                    $result = $this->service()->rollbackTechnical($backupId, $targetProfile);
                     $this->flash('success', sprintf(
                         'Rollback tecnico %s executado em %s (%d arquivos).',
                         (string) ($result['backup_id'] ?? ''),
@@ -187,6 +216,25 @@ final class CentralOperacionalController
         http_response_code(404);
         echo 'Pagina nao encontrada.';
         exit;
+    }
+
+    private function assertOperationPhrase(string $phrase, string $targetProfile, string $expectedId, string $defaultPhrase, string $operationLabel): void
+    {
+        if ($targetProfile === 'production') {
+            if ($phrase !== $expectedId) {
+                throw new \RuntimeException(sprintf(
+                    'Para executar %s em producao, digite exatamente o ID: %s',
+                    $operationLabel,
+                    $expectedId
+                ));
+            }
+
+            return;
+        }
+
+        if (mb_strtoupper($phrase, 'UTF-8') !== $defaultPhrase) {
+            throw new \RuntimeException(sprintf('Digite %s para confirmar a operacao.', $defaultPhrase));
+        }
     }
 
     private function service(): CentralOperacionalService

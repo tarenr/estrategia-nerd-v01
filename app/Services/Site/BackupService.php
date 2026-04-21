@@ -32,7 +32,7 @@ final class BackupService
         return $this->manager->run($profile);
     }
 
-    public function verify(?string $backupId): array
+    public function verify(string $backupId): array
     {
         return $this->manager->verify($backupId);
     }
@@ -42,7 +42,7 @@ final class BackupService
         return $this->manager->markUploaded($backupId);
     }
 
-    public function restore(?string $backupId, string $targetProfile, string $scope): array
+    public function restore(string $backupId, string $targetProfile, string $scope): array
     {
         return $this->manager->restore($backupId, $targetProfile, $scope, true);
     }

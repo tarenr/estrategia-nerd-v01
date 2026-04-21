@@ -129,8 +129,13 @@ final class BackupManager
         return $backup;
     }
 
-    public function verify(?string $backupId = null): array
+    public function verify(string $backupId): array
     {
+        $backupId = trim($backupId);
+        if ($backupId === '' || strtolower($backupId) === 'latest') {
+            throw new RuntimeException('backup_id e obrigatorio para verificar backup de dados.');
+        }
+
         $backup = $this->backupById($backupId);
         if ($backup === null) {
             throw new RuntimeException('Nenhum backup encontrado para verificar.');
@@ -144,15 +149,30 @@ final class BackupManager
         return $backup;
     }
 
-    public function restore(?string $backupId, string $targetProfile = 'local', string $scope = 'all', bool $force = false): array
+    public function restore(string $backupId, string $targetProfile = 'local', string $scope = 'all', bool $force = false): array
     {
         if (!$force) {
             throw new RuntimeException('Restore exige confirmacao explicita. Use o comando com --force.');
         }
 
+        $backupId = trim($backupId);
+        if ($backupId === '' || strtolower($backupId) === 'latest') {
+            throw new RuntimeException('backup_id e obrigatorio para restore de dados.');
+        }
+
         $backup = $this->backupById($backupId);
         if ($backup === null) {
             throw new RuntimeException('Nenhum backup encontrado para restaurar.');
+        }
+
+        $sourceProfile = strtolower(trim((string) ($backup['profile'] ?? '')));
+        $targetProfile = strtolower(trim($targetProfile));
+        if ($sourceProfile === '' || $sourceProfile !== $targetProfile) {
+            throw new RuntimeException(sprintf(
+                'Backup nao pertence ao ambiente selecionado. Origem: %s, Destino: %s.',
+                $sourceProfile !== '' ? $sourceProfile : 'desconhecida',
+                $targetProfile
+            ));
         }
 
         $profile = $this->profile($targetProfile);
@@ -162,37 +182,46 @@ final class BackupManager
         }
 
         $restored = [];
-        if ($scope === 'all' || $scope === 'database') {
-            $databaseFile = (string) (($backup['database']['name'] ?? '') ?: 'database.sql');
-            $this->restoreDatabase((array) ($profile['database'] ?? []), (string) $backup['_dir'] . DIRECTORY_SEPARATOR . $databaseFile);
-            $restored[] = 'database';
-        }
-
-        if ($scope === 'all' || $scope === 'uploads') {
-            $uploadsFile = (string) (($backup['uploads']['name'] ?? '') ?: 'uploads.zip');
-            $zipPath = (string) $backup['_dir'] . DIRECTORY_SEPARATOR . $uploadsFile;
-            $tmpDirectory = $this->extractArchive($zipPath);
-            try {
-                $this->restoreUploads((array) ($profile['uploads'] ?? []), $tmpDirectory);
-            } finally {
-                $this->removeDirectory($tmpDirectory);
+        try {
+            if ($scope === 'all' || $scope === 'database') {
+                $databaseFile = (string) (($backup['database']['name'] ?? '') ?: 'database.sql');
+                $this->restoreDatabase((array) ($profile['database'] ?? []), (string) $backup['_dir'] . DIRECTORY_SEPARATOR . $databaseFile);
+                $restored[] = 'database';
             }
-            $restored[] = 'uploads';
+
+            if ($scope === 'all' || $scope === 'uploads') {
+                $uploadsFile = (string) (($backup['uploads']['name'] ?? '') ?: 'uploads.zip');
+                $zipPath = (string) $backup['_dir'] . DIRECTORY_SEPARATOR . $uploadsFile;
+                $tmpDirectory = $this->extractArchive($zipPath);
+                try {
+                    $this->restoreUploads((array) ($profile['uploads'] ?? []), $tmpDirectory);
+                } finally {
+                    $this->removeDirectory($tmpDirectory);
+                }
+                $restored[] = 'uploads';
+            }
+
+            $result = [
+                'backup_id' => $backup['backup_id'] ?? null,
+                'source_profile' => $sourceProfile,
+                'target_profile' => $targetProfile,
+                'scope' => $scope,
+                'restored' => $restored,
+                'restored_at' => date('c'),
+            ];
+
+            $this->logOperation('restore_dados', (string) ($backup['profile'] ?? 'local'), $targetProfile, (string) ($backup['backup_id'] ?? ''), 'OK', 'Restore de dados executado.', [
+                'scope' => $scope,
+            ]);
+
+            return $result;
+        } catch (\Throwable $exception) {
+            $this->logOperation('restore_dados', (string) ($backup['profile'] ?? 'local'), $targetProfile, (string) ($backup['backup_id'] ?? ''), 'FAIL', $exception->getMessage(), [
+                'scope' => $scope,
+                'restored' => $restored,
+            ]);
+            throw $exception;
         }
-
-        $result = [
-            'backup_id' => $backup['backup_id'] ?? null,
-            'target_profile' => $targetProfile,
-            'scope' => $scope,
-            'restored' => $restored,
-            'restored_at' => date('c'),
-        ];
-
-        $this->logOperation('restore_dados', (string) ($backup['profile'] ?? 'local'), $targetProfile, (string) ($backup['backup_id'] ?? ''), 'OK', 'Restore de dados executado.', [
-            'scope' => $scope,
-        ]);
-
-        return $result;
     }
 
     private function operationRoot(): string
