@@ -189,6 +189,23 @@ final class CategoriaPostRepository
         ];
     }
 
+    public function publishedForSitemap(): array
+    {
+        $sql = "SELECT c.slug,
+                       MAX(COALESCE(p.data_atualizacao, p.data_publicacao)) AS lastmod,
+                       COUNT(p.id) AS total_posts
+                FROM categoria_post c
+                INNER JOIN posts p ON p.categoria_post_id = c.id AND p.status = 'publicado'
+                WHERE COALESCE(c.ativo, 1) = 1
+                  AND c.slug <> ''
+                GROUP BY c.id, c.slug, c.ordem, c.nome
+                HAVING COUNT(p.id) > 0
+                ORDER BY c.ordem ASC, c.nome ASC, c.id DESC";
+        $stmt = $this->pdo->query($sql);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function findById(int $id): ?array
     {
         $sql = "SELECT c.id, c.nome, c.slug, COALESCE(c.cor, '') AS cor, COALESCE(c.ativo, 1) AS ativo, COALESCE(c.ordem, 0) AS ordem, COUNT(p.id) AS total_posts, COALESCE(SUM(p.views), 0) AS total_views FROM categoria_post c LEFT JOIN posts p ON p.categoria_post_id = c.id WHERE c.id = :id GROUP BY c.id, c.nome, c.slug, c.cor, c.ativo, c.ordem LIMIT 1";
