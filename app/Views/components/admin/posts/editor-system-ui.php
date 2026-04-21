@@ -401,7 +401,7 @@ declare(strict_types=1);
       '</div>';
   }
 
-  function openAudioBlockBuilder(preferredAction) {
+  function openAudioBlockBuilder(preferredAction, initialData, mode) {
     var ui = ensureUi();
     var modal = ui.modal;
     var title = byId('postEditorSystemModalTitle');
@@ -412,21 +412,22 @@ declare(strict_types=1);
     var cancel = byId('postEditorSystemCancel');
     var closeTop = byId('postEditorSystemCloseTop');
     var overlay = modal.querySelector('[data-ui-overlay]');
+    var initial = initialData || {};
     var state = {
-      title: '',
-      subtitle: '',
-      buttonText: 'Ouvir narracao',
-      narracao: { path: '', label: '', source: '' },
-      ambiente: { path: '', label: '', source: '' }
+      title: String(initial.title || ''),
+      subtitle: String(initial.subtitle || ''),
+      buttonText: String(initial.buttonText || 'Ouvir narracao'),
+      narracao: { path: String(initial.narracao || ''), label: mediaDisplayName(initial.narracao || ''), source: initial.narracao ? 'url' : '' },
+      ambiente: { path: String(initial.ambiente || ''), label: mediaDisplayName(initial.ambiente || ''), source: initial.ambiente ? 'url' : '' }
     };
     var isNestedDialogOpen = false;
 
     function showBuilder() {
-      title.textContent = 'Bloco de audio';
+      title.textContent = mode === 'edit' ? 'Editar bloco de audio' : 'Bloco de audio';
       subtitle.textContent = preferredAction === 'upload' ? 'Configure o bloco e envie narracao e ambiente sem sair do fluxo.' : (preferredAction === 'library' ? 'Configure o bloco e escolha os audios na biblioteca do post.' : (preferredAction === 'url' ? 'Configure o bloco e informe as URLs de narracao e ambiente.' : 'Configure o bloco e escolha narracao e ambiente sem sair do fluxo.')); 
       subtitle.style.display = 'block';
       message.innerHTML = '<div style="padding:12px 14px;border-radius:14px;border:1px solid rgba(103,232,249,.16);background:rgba(248,250,252,.04);font-size:12px;color:#cbd5e1;">Cada canal aceita <strong style="color:#f8fafc;">Enviar</strong>, <strong style="color:#f8fafc;">Biblioteca</strong> ou <strong style="color:#f8fafc;">URL</strong>. Voce pode usar apenas um deles ou os dois juntos.</div>';
-      submit.textContent = 'Inserir bloco';
+      submit.textContent = mode === 'edit' ? 'Salvar alteracoes' : 'Inserir bloco';
       submit.style.display = 'inline-flex';
       submit.disabled = false;
       cancel.textContent = 'Cancelar';
@@ -612,7 +613,7 @@ declare(strict_types=1);
     });
   }
 
-  function openImageBlockBuilder(preferredAction) {
+  function openImageBlockBuilder(preferredAction, initialData, mode) {
     var ui = ensureUi();
     var modal = ui.modal;
     var title = byId('postEditorSystemModalTitle');
@@ -623,16 +624,21 @@ declare(strict_types=1);
     var cancel = byId('postEditorSystemCancel');
     var closeTop = byId('postEditorSystemCloseTop');
     var overlay = modal.querySelector('[data-ui-overlay]');
+    var initial = initialData || {};
     var state = {
-      alt: '',
-      legenda: '',
-      media: { path: '', label: '', source: '' }
+      alt: String(initial.alt || ''),
+      legenda: String(initial.legenda || ''),
+      media: {
+        path: String(initial.path || ''),
+        label: mediaDisplayName(initial.path || ''),
+        source: initial.path ? 'url' : ''
+      }
     };
     var isNestedDialogOpen = false;
     var isSubmitting = false;
 
     function showBuilder() {
-      title.textContent = 'Bloco de imagem';
+      title.textContent = mode === 'edit' ? 'Editar bloco de imagem' : 'Bloco de imagem';
       subtitle.textContent = preferredAction === 'upload'
         ? 'Configure a imagem e envie o arquivo sem sair do fluxo.'
         : (preferredAction === 'library'
@@ -642,7 +648,7 @@ declare(strict_types=1);
             : 'Configure a imagem e escolha entre upload, biblioteca ou URL sem sair do fluxo.'));
       subtitle.style.display = 'block';
       message.innerHTML = '<div style="padding:12px 14px;border-radius:14px;border:1px solid rgba(103,232,249,.16);background:rgba(248,250,252,.04);font-size:12px;color:#cbd5e1;">A imagem aceita <strong style="color:#f8fafc;">Enviar</strong>, <strong style="color:#f8fafc;">Biblioteca</strong> ou <strong style="color:#f8fafc;">URL</strong>. Todos os caminhos geram o mesmo bloco final no conteudo.</div>';
-      submit.textContent = isSubmitting ? 'Inserindo...' : 'Inserir bloco';
+      submit.textContent = isSubmitting ? (mode === 'edit' ? 'Salvando...' : 'Inserindo...') : (mode === 'edit' ? 'Salvar alteracoes' : 'Inserir bloco');
       submit.style.display = 'inline-flex';
       submit.disabled = isSubmitting;
       cancel.textContent = 'Cancelar';
@@ -855,7 +861,7 @@ declare(strict_types=1);
     });
   }
 
-  function openVideoBlockBuilder(preferredAction) {
+  function openVideoBlockBuilder(preferredAction, initialData, mode) {
     var ui = ensureUi();
     var modal = ui.modal;
     var title = byId('postEditorSystemModalTitle');
@@ -866,14 +872,19 @@ declare(strict_types=1);
     var cancel = byId('postEditorSystemCancel');
     var closeTop = byId('postEditorSystemCloseTop');
     var overlay = modal.querySelector('[data-ui-overlay]');
+    var initial = initialData || {};
     var state = {
-      legenda: '',
-      media: { path: '', label: '', source: '' }
+      legenda: String(initial.legenda || ''),
+      media: {
+        path: String(initial.path || ''),
+        label: mediaDisplayName(initial.path || ''),
+        source: initial.path ? 'url' : ''
+      }
     };
     var isNestedDialogOpen = false;
 
     function showBuilder() {
-      title.textContent = 'Bloco de video';
+      title.textContent = mode === 'edit' ? 'Editar bloco de video' : 'Bloco de video';
       subtitle.textContent = preferredAction === 'upload'
         ? 'Configure o video e envie o arquivo sem sair do fluxo.'
         : (preferredAction === 'library'
@@ -883,7 +894,7 @@ declare(strict_types=1);
             : 'Configure o video e escolha entre upload, biblioteca ou URL sem sair do fluxo.'));
       subtitle.style.display = 'block';
       message.innerHTML = '<div style="padding:12px 14px;border-radius:14px;border:1px solid rgba(103,232,249,.16);background:rgba(248,250,252,.04);font-size:12px;color:#cbd5e1;">O video aceita <strong style="color:#f8fafc;">Enviar</strong>, <strong style="color:#f8fafc;">Biblioteca</strong> ou <strong style="color:#f8fafc;">URL</strong>. Todos os caminhos geram o mesmo bloco final no conteudo.</div>';
-      submit.textContent = 'Inserir bloco';
+      submit.textContent = mode === 'edit' ? 'Salvar alteracoes' : 'Inserir bloco';
       submit.style.display = 'inline-flex';
       submit.disabled = false;
       cancel.textContent = 'Cancelar';
@@ -1538,27 +1549,42 @@ declare(strict_types=1);
       .join('\n');
   }
 
-  function buildFigure(url, alt, legenda) {
+  function blockAttr(name, value) {
+    return ' ' + name + '="' + escapeHtml(value || '') + '"';
+  }
+
+  function buildFigureMarkup(url, alt, legenda) {
     var imageUrl = String(url || '').replace(/"/g, '&quot;');
     var imageAlt = escapeHtml(alt || '');
     var caption = String(legenda || '').trim();
     var lines = [
-      '<figure class="article-figure content-block-image">',
+      '<figure class="article-figure content-block-image" data-en-block="media" data-media-type="image"' +
+        blockAttr('data-src', url) +
+        blockAttr('data-alt', alt) +
+        blockAttr('data-caption', caption) +
+        '>',
       '  <img src="' + imageUrl + '" alt="' + imageAlt + '">'
     ];
     if (caption) {
       lines.push('  <figcaption>' + escapeHtml(caption) + '</figcaption>');
     }
     lines.push('</figure>');
-    return appendCaretParagraph(lines.join('\n'));
+    return lines.join('\n');
   }
 
-  function buildVideoHtml(value, legenda) {
+  function buildFigure(url, alt, legenda) {
+    return appendCaretParagraph(buildFigureMarkup(url, alt, legenda));
+  }
+
+  function buildVideoMarkup(value, legenda) {
     var raw = String(value || '').trim();
     var caption = String(legenda || '').trim();
     if (!raw) return '';
     var lines = [
-      '<figure class="content-block content-block-video">',
+      '<figure class="content-block content-block-video" data-en-block="media" data-media-type="video"' +
+        blockAttr('data-src', raw) +
+        blockAttr('data-caption', caption) +
+        '>',
       '  <div class="content-block-label">Video</div>'
     ];
     if (/^<iframe[\s\S]*<\/iframe>$/i.test(raw)) {
@@ -1569,7 +1595,7 @@ declare(strict_types=1);
         lines.push('  <figcaption>' + escapeHtml(caption) + '</figcaption>');
       }
       lines.push('</figure>');
-      return appendCaretParagraph(lines.join('\n'));
+      return lines.join('\n');
     }
     var match = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{6,})/i);
     if (match) {
@@ -1580,7 +1606,7 @@ declare(strict_types=1);
         lines.push('  <figcaption>' + escapeHtml(caption) + '</figcaption>');
       }
       lines.push('</figure>');
-      return appendCaretParagraph(lines.join('\n'));
+      return lines.join('\n');
     }
     lines.push('  <video controls preload="metadata">');
     lines.push('    <source src="' + raw.replace(/"/g, '&quot;') + '">');
@@ -1589,7 +1615,11 @@ declare(strict_types=1);
       lines.push('  <figcaption>' + escapeHtml(caption) + '</figcaption>');
     }
     lines.push('</figure>');
-    return appendCaretParagraph(lines.join('\n'));
+    return lines.join('\n');
+  }
+
+  function buildVideoHtml(value, legenda) {
+    return appendCaretParagraph(buildVideoMarkup(value, legenda));
   }
 
   function formatQuote() {
@@ -1745,16 +1775,19 @@ declare(strict_types=1);
     return '/' + raw.replace(/^\.?\//, '');
   }
 
-  function buildAudioBlockHtml(data) {
+  function buildAudioBlockMarkup(data) {
     var title = String((data && data.title) || '').trim();
     var subtitle = String((data && data.subtitle) || '').trim();
     var buttonText = String((data && data.buttonText) || 'Ouvir narracao').trim();
     var narracao = normalizeMediaPath((data && data.narracao) || '');
     var ambiente = normalizeMediaPath((data && data.ambiente) || '');
 
-    var attrs = [];
-    if (narracao) attrs.push('data-audio-narracao="' + narracao.replace(/"/g, '&quot;') + '"');
-    if (ambiente) attrs.push('data-audio-ambiente="' + ambiente.replace(/"/g, '&quot;') + '"');
+    var attrs = ['data-en-block="media"', 'data-media-type="audio"'];
+    attrs.push('data-title="' + escapeHtml(title || '') + '"');
+    attrs.push('data-subtitle="' + escapeHtml(subtitle || '') + '"');
+    attrs.push('data-button-text="' + escapeHtml(buttonText || '') + '"');
+    if (narracao) attrs.push('data-audio-narracao="' + escapeHtml(narracao) + '"');
+    if (ambiente) attrs.push('data-audio-ambiente="' + escapeHtml(ambiente) + '"');
 
     var lines = [
       '<div class="en-audio-block" ' + attrs.join(' ') + '>',
@@ -1769,7 +1802,153 @@ declare(strict_types=1);
     lines.push('  <button type="button" class="en-audio-button" data-en-audio-toggle="1">' + escapeHtml(buttonText) + '</button>');
     lines.push('</div>');
 
-    return appendCaretParagraph(lines.join('\n'));
+    return lines.join('\n');
+  }
+
+  function buildAudioBlockHtml(data) {
+    return appendCaretParagraph(buildAudioBlockMarkup(data));
+  }
+
+  function mediaBlockFromTarget(target) {
+    if (!target || !target.closest) return null;
+    var wrapped = target.closest('[data-en-block="media"], .content-block-image, .content-block-video, figure.article-figure, .en-audio-block, figure');
+    if (wrapped) return wrapped;
+    return target.closest('img, video, iframe');
+  }
+
+  function mediaBlockType(block) {
+    if (!block) return '';
+    var explicit = String(block.getAttribute('data-media-type') || '').trim();
+    if (explicit) return explicit;
+    var tagName = String(block.tagName || '').toLowerCase();
+    if (tagName === 'img') return 'image';
+    if (tagName === 'video' || tagName === 'iframe') return 'video';
+    if (block.classList.contains('en-audio-block')) return 'audio';
+    if (block.classList.contains('content-block-video')) return 'video';
+    if (block.classList.contains('content-block-image') || block.querySelector('img')) return 'image';
+    if (block.querySelector('video') || block.querySelector('iframe')) return 'video';
+    return '';
+  }
+
+  function mediaBlockData(block) {
+    var type = mediaBlockType(block);
+    var captionEl = block ? block.querySelector('figcaption') : null;
+    if (type === 'image') {
+      var img = String(block.tagName || '').toLowerCase() === 'img' ? block : block.querySelector('img');
+      return {
+        path: block.getAttribute('data-src') || (img ? img.getAttribute('src') : '') || '',
+        alt: block.getAttribute('data-alt') || (img ? img.getAttribute('alt') : '') || '',
+        legenda: block.getAttribute('data-caption') || (captionEl ? captionEl.textContent.trim() : '')
+      };
+    }
+    if (type === 'video') {
+      var tagName = String(block.tagName || '').toLowerCase();
+      var iframe = tagName === 'iframe' ? block : block.querySelector('iframe');
+      var source = block.querySelector ? block.querySelector('source') : null;
+      var video = tagName === 'video' ? block : block.querySelector('video');
+      return {
+        path: block.getAttribute('data-src') || (iframe ? iframe.outerHTML : '') || (source ? source.getAttribute('src') : '') || (video ? video.getAttribute('src') : '') || '',
+        legenda: block.getAttribute('data-caption') || (captionEl ? captionEl.textContent.trim() : '')
+      };
+    }
+    if (type === 'audio') {
+      var titleEl = block.querySelector('.en-audio-title');
+      var subtitleEl = block.querySelector('.en-audio-subtitle');
+      var button = block.querySelector('[data-en-audio-toggle]');
+      return {
+        title: block.getAttribute('data-title') || (titleEl ? titleEl.textContent.trim() : ''),
+        subtitle: block.getAttribute('data-subtitle') || (subtitleEl ? subtitleEl.textContent.trim() : ''),
+        buttonText: block.getAttribute('data-button-text') || (button ? button.textContent.trim() : 'Ouvir narracao'),
+        narracao: block.getAttribute('data-audio-narracao') || '',
+        ambiente: block.getAttribute('data-audio-ambiente') || ''
+      };
+    }
+    return {};
+  }
+
+  function replaceMediaBlock(block, html) {
+    if (!block || !html) return;
+    block.outerHTML = html;
+    syncHiddenFields();
+    hideMediaBlockToolbar();
+    toast('Bloco atualizado.');
+  }
+
+  function editMediaBlock(block) {
+    var type = mediaBlockType(block);
+    var data = mediaBlockData(block);
+    if (type === 'image') {
+      openImageBlockBuilder('', data, 'edit').then(function (payload) {
+        if (!payload || !payload.path) return;
+        replaceMediaBlock(block, buildFigureMarkup(payload.path, payload.alt || '', payload.legenda || ''));
+      });
+      return;
+    }
+    if (type === 'video') {
+      openVideoBlockBuilder('', data, 'edit').then(function (payload) {
+        if (!payload || !payload.path) return;
+        replaceMediaBlock(block, buildVideoMarkup(payload.path, payload.legenda || ''));
+      });
+      return;
+    }
+    if (type === 'audio') {
+      openAudioBlockBuilder('', data, 'edit').then(function (payload) {
+        if (!payload) return;
+        replaceMediaBlock(block, buildAudioBlockMarkup(payload));
+      });
+    }
+  }
+
+  function hideMediaBlockToolbar() {
+    var toolbar = byId('postEditorMediaBlockToolbar');
+    if (toolbar) toolbar.remove();
+  }
+
+  function showMediaBlockToolbar(block) {
+    if (!block || !editor() || !editor().contains(block)) return;
+    hideMediaBlockToolbar();
+    var rect = block.getBoundingClientRect();
+    var toolbar = document.createElement('div');
+    toolbar.id = 'postEditorMediaBlockToolbar';
+    toolbar.style.cssText = 'position:absolute;z-index:10040;display:flex;flex-wrap:wrap;gap:6px;padding:8px;border-radius:14px;border:1px solid rgba(34,211,238,.28);background:rgba(2,6,23,.96);box-shadow:0 18px 45px rgba(0,0,0,.35);';
+    toolbar.innerHTML = '' +
+      '<button type="button" data-action="edit" class="admin-btn admin-btn-primary" style="padding:7px 10px;font-size:12px;">Editar</button>' +
+      '<button type="button" data-action="duplicate" class="admin-btn admin-btn-secondary" style="padding:7px 10px;font-size:12px;">Duplicar</button>' +
+      '<button type="button" data-action="up" class="admin-btn admin-btn-secondary" style="padding:7px 10px;font-size:12px;">Mover acima</button>' +
+      '<button type="button" data-action="down" class="admin-btn admin-btn-secondary" style="padding:7px 10px;font-size:12px;">Mover abaixo</button>' +
+      '<button type="button" data-action="remove" class="admin-btn admin-btn-secondary" style="padding:7px 10px;font-size:12px;color:#fecaca;border-color:rgba(248,113,113,.35);">Remover</button>';
+    toolbar.style.left = Math.max(12, rect.left + window.scrollX) + 'px';
+    toolbar.style.top = Math.max(12, rect.top + window.scrollY - 48) + 'px';
+    toolbar.addEventListener('click', function (event) {
+      var button = event.target && event.target.closest ? event.target.closest('[data-action]') : null;
+      if (!button) return;
+      event.preventDefault();
+      event.stopPropagation();
+      var action = button.getAttribute('data-action');
+      if (action === 'edit') {
+        editMediaBlock(block);
+      } else if (action === 'duplicate') {
+        block.insertAdjacentHTML('afterend', '\n' + block.outerHTML + '\n');
+        syncHiddenFields();
+        toast('Bloco duplicado.');
+      } else if (action === 'up' && block.previousElementSibling) {
+        block.parentNode.insertBefore(block, block.previousElementSibling);
+        syncHiddenFields();
+        showMediaBlockToolbar(block);
+      } else if (action === 'down' && block.nextElementSibling) {
+        block.parentNode.insertBefore(block.nextElementSibling, block);
+        syncHiddenFields();
+        showMediaBlockToolbar(block);
+      } else if (action === 'remove') {
+        if (window.confirm('Remover este bloco de midia?')) {
+          block.remove();
+          syncHiddenFields();
+          hideMediaBlockToolbar();
+          toast('Bloco removido.');
+        }
+      }
+    });
+    document.body.appendChild(toolbar);
   }
 
   function insertImageBlock(preferredAction) {
@@ -2059,6 +2238,24 @@ declare(strict_types=1);
     root.addEventListener('mouseup', function () { saveRange(currentRange()); syncHiddenFields(); });
     root.addEventListener('focus', function () { saveRange(currentRange()); syncHiddenFields(); });
     root.addEventListener('input', function () { saveRange(currentRange()); syncHiddenFields(); });
+    root.addEventListener('click', function (event) {
+      var block = mediaBlockFromTarget(event.target);
+      if (!block || !root.contains(block)) return;
+      event.preventDefault();
+      showMediaBlockToolbar(block);
+    });
+    root.addEventListener('dblclick', function (event) {
+      var block = mediaBlockFromTarget(event.target);
+      if (!block || !root.contains(block)) return;
+      event.preventDefault();
+      editMediaBlock(block);
+    });
+    document.addEventListener('click', function (event) {
+      var toolbar = byId('postEditorMediaBlockToolbar');
+      if (toolbar && toolbar.contains(event.target)) return;
+      if (mediaBlockFromTarget(event.target)) return;
+      hideMediaBlockToolbar();
+    });
 
     window.enviarImagemDoEditor = function () { insertImageBlock('upload'); };
     window.inserirImagem = function () { insertImageBlock('url'); };
