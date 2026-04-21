@@ -515,6 +515,8 @@ final class MidiaService
         if ($overwrite) {
             $this->deleteFilesByBase($absoluteDir, $safeBase);
             $filename = $safeBase . '.' . $extension;
+        } elseif ($preferredBase !== null && $this->isPostMediaShortBase($safeBase)) {
+            $filename = $this->nextSequencedFilename($absoluteDir, $safeBase, $extension);
         } else {
             $filename = $this->nextAvailableFilename($absoluteDir, $safeBase, $extension);
         }
@@ -539,6 +541,7 @@ final class MidiaService
         $scope = $this->normalizeUploadScope((string) ($input['context'] ?? 'library'));
         $postSlug = $scope === 'post' ? $this->slugify((string) ($input['post_slug'] ?? '')) : '';
         $postTitle = trim((string) ($input['post_title'] ?? ''));
+        $audioRole = $this->normalizeAudioRole((string) ($input['audio_role'] ?? ''));
 
         if ($postSlug === '' && $scope === 'post' && $postTitle !== '') {
             $postSlug = $this->slugify($postTitle);
@@ -565,6 +568,7 @@ final class MidiaService
             'media_type_label' => $mediaType !== '' ? $this->mediaTypeLabel($mediaType) : 'Midia',
             'post_slug' => $postSlug,
             'post_title' => $postTitle,
+            'audio_role' => $audioRole,
             'destination_code' => $destinationCode,
             'destination_label' => $destinationLabel,
         ];
@@ -579,6 +583,12 @@ final class MidiaService
     private function normalizeUploadScope(string $scope): string
     {
         return strtolower(trim($scope)) === 'post' ? 'post' : 'library';
+    }
+
+    private function normalizeAudioRole(string $role): string
+    {
+        $role = $this->slugify($role);
+        return in_array($role, ['narracao', 'ambiente'], true) ? $role : '';
     }
 
     private function buildUploadFolder(string $type, array $upload): string
@@ -600,22 +610,19 @@ final class MidiaService
             return null;
         }
 
-        $originalName = (string) ($file['name'] ?? 'arquivo');
-        $originalBase = $this->slugify((string) pathinfo($originalName, PATHINFO_FILENAME));
-        if ($originalBase === '' || $originalBase === $postSlug) {
-            $originalBase = match ($type) {
-                'image' => 'imagem',
-                'audio' => 'audio',
-                'video' => 'video',
-                default => 'arquivo',
+        if ($type === 'audio') {
+            return match ((string) ($upload['audio_role'] ?? '')) {
+                'narracao' => 'nar',
+                'ambiente' => 'amb',
+                default => 'aud',
             };
         }
 
-        if (str_starts_with($originalBase, $postSlug . '-')) {
-            return $originalBase;
-        }
-
-        return $postSlug . '-' . $originalBase;
+        return match ($type) {
+            'image' => 'img',
+            'video' => 'vid',
+            default => 'file',
+        };
     }
 
     private function buildUploadRedirectQuery(array $input, array $upload): array
@@ -1401,28 +1408,20 @@ final class MidiaService
         return $candidate;
     }
 
-    private function nextPostBodySequence(string $directory, string $slug): int
+    private function isPostMediaShortBase(string $base): bool
     {
-        $prefix = $slug . '-';
-        $max = 0;
+        return in_array($base, ['img', 'vid', 'aud', 'nar', 'amb'], true);
+    }
 
-        foreach (glob($directory . DIRECTORY_SEPARATOR . $slug . '-*') ?: [] as $path) {
-            $basename = pathinfo($path, PATHINFO_FILENAME);
-            if (!str_starts_with($basename, $prefix)) {
-                continue;
-            }
+    private function nextSequencedFilename(string $directory, string $base, string $extension): string
+    {
+        $counter = 1;
+        do {
+            $candidate = sprintf('%s-%03d.%s', $base, $counter, $extension);
+            $counter++;
+        } while (is_file($directory . DIRECTORY_SEPARATOR . $candidate));
 
-            $suffix = substr($basename, strlen($prefix));
-            if ($suffix === 'capa' || $suffix === 'thumb') {
-                continue;
-            }
-
-            if (preg_match('/^(\d{2,})$/', $suffix, $matches)) {
-                $max = max($max, (int) $matches[1]);
-            }
-        }
-
-        return $max + 1;
+        return $candidate;
     }
 
     private function preparePostBodyImageTarget(string $slug): array
@@ -1439,14 +1438,12 @@ final class MidiaService
             return ['ok' => false, 'error' => 'Nao foi possivel criar a pasta do post.'];
         }
 
-        $sequence = $this->nextPostBodySequence($absoluteDir, $slug);
-
         return [
             'ok' => true,
             'storage_dir' => $storageDir,
             'relative_dir' => $relativeDir,
             'absolute_dir' => $absoluteDir,
-            'base' => sprintf('%s-%02d', $slug, $sequence),
+            'base' => 'img',
         ];
     }
 

@@ -504,7 +504,7 @@ declare(strict_types=1);
 
           if (action === 'upload') {
             isNestedDialogOpen = true;
-            uploadMediaToLibrary('audio', { context: 'post' }).then(function (item) {
+            uploadMediaToLibrary('audio', { context: 'post', audioRole: kind }).then(function (item) {
               if (!item) {
                 showBuilder();
                 return;
@@ -526,7 +526,8 @@ declare(strict_types=1);
             pickMediaItemFromLibrary('audio', {
               title: kind === 'narracao' ? 'Selecionar audio de narracao' : 'Selecionar audio de ambiente',
               subtitle: 'Escolha um audio da biblioteca ou envie um novo pela modal.',
-              context: 'post'
+              context: 'post',
+              audioRole: kind
             }).then(function (item) {
               if (!item) {
                 showBuilder();
@@ -1188,6 +1189,7 @@ declare(strict_types=1);
         data.append('_csrf_token', csrf ? csrf.value : '');
         data.append('context', options && options.context ? options.context : 'library');
         data.append('media_type', type);
+        if (options && options.audioRole) data.append('audio_role', options.audioRole);
         if (identity && identity.slug) data.append('post_slug', identity.slug);
         if (identity && identity.title) data.append('post_title', identity.title);
         data.append('arquivo', file);
@@ -1459,7 +1461,8 @@ declare(strict_types=1);
         submit.disabled = true;
         submit.textContent = 'Enviando...';
         uploadMediaToLibrary(type, {
-          context: options && options.context ? options.context : 'library'
+          context: options && options.context ? options.context : 'library',
+          audioRole: options && options.audioRole ? options.audioRole : ''
         }).then(function (item) {
           if (!item) {
             submit.disabled = false;
