@@ -92,6 +92,9 @@ $stripHighlightedTitle = static function (string $value): string {
     return preg_replace('/\[\[(.*?)\]\]/u', '$1', $value) ?? $value;
 };
 $plainTitle = $stripHighlightedTitle($rawTitle);
+$categorySlug = trim((string) ($post['categoria_slug'] ?? ''));
+$categoryName = (string) ($post['categoria_nome'] ?? 'Blog');
+$categoryUrl = $categorySlug !== '' ? url('/blog/' . rawurlencode($categorySlug)) : '';
 $renderHighlightedTitle = static function (string $value): string {
     $parts = preg_split('/(\[\[.*?\]\])/u', $value, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
     if (!is_array($parts) || $parts === []) {
@@ -132,7 +135,11 @@ $renderHighlightedTitle = static function (string $value): string {
 
     <header class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <div class="mb-5 inline-flex items-center gap-3 flex-wrap justify-center">
-        <span class="post-category-pill"><?= htmlspecialchars((string) ($post['categoria_nome'] ?? 'Blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+        <?php if ($categoryUrl !== ''): ?>
+          <a class="post-category-pill" href="<?= htmlspecialchars($categoryUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($categoryName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+        <?php else: ?>
+          <span class="post-category-pill"><?= htmlspecialchars($categoryName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+        <?php endif; ?>
         <span class="reading-badge">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 100-18 9 9 0 000 18z"/></svg>
           <?= (int) ($post['tempo_leitura'] ?? 5) ?> min leitura

@@ -18,10 +18,14 @@ final class BlogService
     {
         $search = trim((string) ($filters['busca'] ?? ''));
         $category = trim((string) ($filters['categoria'] ?? ''));
+        $isCategoryRoute = (bool) ($filters['category_route'] ?? false);
         $page = max(1, (int) ($filters['page'] ?? 1));
         $siteName = (string) portal_config('nome_site', 'Estratégia Nerd');
         $categories = $this->categorias->listForBlog();
-        $selectedCategoryName = $this->resolveCategoryName($category, $categories);
+        $resolvedCategory = is_array($filters['resolved_category'] ?? null) ? $filters['resolved_category'] : null;
+        $selectedCategoryName = $resolvedCategory !== null
+            ? public_text((string) ($resolvedCategory['nome'] ?? ''))
+            : $this->resolveCategoryName($category, $categories);
 
         $featuredRow = $this->posts->featuredPublicOne([
             'busca' => $search,
@@ -35,9 +39,9 @@ final class BlogService
             'exclude_id' => $featuredId,
         ], $page, 9);
 
-        $title = $this->buildTitle($siteName, $selectedCategoryName, $search);
-        $metaDescription = $this->buildMetaDescription($selectedCategoryName, $search);
-        $canonicalUrl = $this->buildCanonicalUrl($search, $category, $page);
+        $title = $this->buildTitle($siteName, $selectedCategoryName, $search, $isCategoryRoute);
+        $metaDescription = $this->buildMetaDescription($selectedCategoryName, $search, $isCategoryRoute);
+        $canonicalUrl = $this->buildCanonicalUrl($search, $category, $page, $isCategoryRoute);
         $siteMeta = $this->siteMeta();
         $metaImage = (string) ($siteMeta['brand_symbol'] ?? '');
 
@@ -56,7 +60,14 @@ final class BlogService
             'blog_filters' => [
                 'q' => $search,
                 'categoria' => $category,
+                'category_route' => $isCategoryRoute,
             ],
+            'blog_category_context' => $resolvedCategory !== null ? [
+                'nome' => $selectedCategoryName,
+                'slug' => (string) ($resolvedCategory['slug'] ?? $category),
+                'total_posts' => (int) ($resolvedCategory['total_posts'] ?? 0),
+                'description' => 'Conteúdos da categoria ' . $selectedCategoryName . ' no blog Estratégia Nerd.',
+            ] : null,
             'blog_pagination' => [
                 'page' => (int) ($pagination['page'] ?? 1),
                 'pages' => (int) ($pagination['pages'] ?? 1),
@@ -65,6 +76,11 @@ final class BlogService
             'site_meta' => $siteMeta,
             'blog_context_links' => $this->buildContextLinks(),
         ];
+    }
+
+    public function findCategoryForRoute(string $slug): ?array
+    {
+        return $this->categorias->findPublicBySlug($slug);
     }
 
     private function siteMeta(): array
@@ -115,11 +131,14 @@ final class BlogService
     private function normalizeCategories(array $items): array
     {
         return array_map(static function (array $item): array {
+            $slug = (string) ($item['slug'] ?? '');
+
             return [
                 'nome' => public_text((string) ($item['nome'] ?? '')),
-                'slug' => (string) ($item['slug'] ?? ''),
+                'slug' => $slug,
                 'cor' => (string) ($item['cor'] ?? '#00d4ff'),
                 'total_posts' => (int) ($item['total_posts'] ?? 0),
+                'url' => $slug !== '' ? url('/blog/' . rawurlencode($slug)) : url('/blog'),
             ];
         }, $items);
     }
@@ -144,47 +163,56 @@ final class BlogService
         return preg_match('~^https?://~i', $value) ? $value : url('/' . ltrim($value, '/'));
     }
 
-    private function buildTitle(string $siteName, string $categoryName, string $search): string
+    private function buildTitle(string $siteName, string $categoryName, string $search, bool $isCategoryRoute): string
     {
         if ($search !== '') {
             return 'Busca: ' . $search . ' | Blog ' . $siteName;
         }
 
         if ($categoryName !== '') {
+            if ($isCategoryRoute) {
+                return $categoryName . ' | Blog ' . $siteName;
+            }
+
             return 'Blog ' . $siteName . ' | ' . $categoryName;
         }
 
         return 'Blog ' . $siteName . ' | Reviews, Comparativos e Guias de Tecnologia, Games e Gadgets';
     }
 
-    private function buildMetaDescription(string $categoryName, string $search): string
+    private function buildMetaDescription(string $categoryName, string $search, bool $isCategoryRoute): string
     {
         if ($search !== '') {
             return 'Resultados da busca no blog do Estratégia Nerd com reviews, comparativos, listas e guias sobre tecnologia, games e gadgets.';
         }
 
         if ($categoryName !== '') {
+            if ($isCategoryRoute) {
+                return 'Conteúdos da categoria ' . $categoryName . ' no blog Estratégia Nerd.';
+            }
+
             return 'Posts da categoria ' . $categoryName . ' no blog do Estratégia Nerd com conteúdo prático para comparar melhor e decidir com mais contexto.';
         }
 
         return 'Blog do Estratégia Nerd com reviews, comparativos, guias, listas e dicas de tecnologia, games, gadgets e cultura geek para decidir melhor.';
     }
 
-    private function buildCanonicalUrl(string $search, string $category, int $page): string
+    private function buildCanonicalUrl(string $search, string $category, int $page, bool $isCategoryRoute): string
     {
         $params = [];
         if ($search !== '') {
             $params['q'] = $search;
-        }
-        if ($category !== '' && $category !== 'all') {
-            $params['categoria'] = $category;
         }
         if ($page > 1) {
             $params['page'] = $page;
         }
 
         $query = http_build_query($params);
-        return url('/blog' . ($query !== '' ? '?' . $query : ''));
+        $base = $isCategoryRoute && $category !== '' && $category !== 'all'
+            ? '/blog/' . rawurlencode($category)
+            : '/blog';
+
+        return url($base . ($query !== '' ? '?' . $query : ''));
     }
 
     private function resolveCategoryName(string $slug, array $categories): string

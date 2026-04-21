@@ -9,6 +9,7 @@ $categories = $blog_categories ?? [];
 $filters = $blog_filters ?? [];
 $pagination = $blog_pagination ?? ['page' => 1, 'pages' => 1, 'total' => 0];
 $siteMeta = $site_meta ?? [];
+$categoryContext = is_array($blog_category_context ?? null) ? $blog_category_context : null;
 
 $siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
 $siteDescription = (string) ($siteMeta['description'] ?? '');
@@ -21,9 +22,25 @@ $brandWordPrimary = 'ESTRATEGIA';
 $brandWordAccent = 'NERD';
 $q = trim((string) ($filters['q'] ?? ''));
 $activeCategory = trim((string) ($filters['categoria'] ?? ''));
+$isCategoryRoute = (bool) ($filters['category_route'] ?? false);
 $currentPage = (int) ($pagination['page'] ?? 1);
 $totalPages = (int) ($pagination['pages'] ?? 1);
 $contextLinks = is_array($blog_context_links ?? null) ? $blog_context_links : [];
+$heroMainTitle = $categoryContext !== null
+    ? (string) ($categoryContext['nome'] ?? 'Blog')
+    : 'BLOG';
+$heroSubtitle = $categoryContext !== null
+    ? 'Categoria do Blog Estratégia Nerd'
+    : 'Estratégia Nerd';
+$heroLead = $categoryContext !== null
+    ? (string) ($categoryContext['description'] ?? '')
+    : 'Leituras para descobrir melhor, comparar com contexto e decidir com mais segurança antes do próximo clique.';
+if ($heroLead === '') {
+    $heroLead = 'Conteúdos selecionados do blog Estratégia Nerd.';
+}
+$searchAction = $activeCategory !== '' && $activeCategory !== 'all'
+    ? url('/blog/' . rawurlencode($activeCategory))
+    : url('/blog');
 
 $socialLinks = [
     'instagram' => [
@@ -64,15 +81,18 @@ $hasSocialLinks = array_reduce(
 );
 $contactHref = $siteEmail !== '' ? 'mailto:' . $siteEmail : url('/') . '#newsletter';
 
-$buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): string {
+$buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $isCategoryRoute): string {
     $params = [];
     if ($q !== '') {
         $params['q'] = $q;
     }
-    if ($activeCategory !== '' && $activeCategory !== 'all') {
-        $params['categoria'] = $activeCategory;
-    }
+    $targetCategory = $isCategoryRoute ? $activeCategory : '';
     foreach ($extra as $key => $value) {
+        if ($key === 'categoria') {
+            $targetCategory = is_string($value) ? $value : '';
+            continue;
+        }
+
         if ($value === null || $value === '' || $value === 'all') {
             unset($params[$key]);
             continue;
@@ -80,7 +100,11 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
         $params[$key] = $value;
     }
     $query = http_build_query($params);
-    return url('/blog' . ($query !== '' ? '?' . $query : ''));
+    $base = $targetCategory !== '' && $targetCategory !== 'all'
+        ? '/blog/' . rawurlencode($targetCategory)
+        : '/blog';
+
+    return url($base . ($query !== '' ? '?' . $query : ''));
 };
 ?>
 
@@ -109,9 +133,9 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
       </div>
 
       <h1 class="font-orbitron text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-        <span class="block text-white glitch" data-text="BLOG">BLOG</span>
+        <span class="block text-white glitch" data-text="<?= htmlspecialchars($heroMainTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($heroMainTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
         <span class="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 neon-text text-3xl md:text-4xl lg:text-5xl mt-2">
-          Estratégia Nerd
+          <?= htmlspecialchars($heroSubtitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
         </span>
         <span class="mt-4 block font-rajdhani text-xl md:text-2xl lg:text-3xl font-semibold text-slate-200">
           reviews, comparativos, guias e listas de tecnologia, games e gadgets
@@ -119,7 +143,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
       </h1>
 
       <p class="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
-        Leituras para descobrir melhor, comparar com contexto e decidir com mais segurança antes do próximo clique.
+        <?= htmlspecialchars($heroLead, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
       </p>
 
       <?php if ($contextLinks !== []): ?>
@@ -134,10 +158,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory): s
         </p>
       <?php endif; ?>
 
-      <form method="GET" action="<?= htmlspecialchars(url('/blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="max-w-2xl mx-auto relative">
-        <?php if ($activeCategory !== '' && $activeCategory !== 'all'): ?>
-          <input type="hidden" name="categoria" value="<?= htmlspecialchars($activeCategory, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-        <?php endif; ?>
+      <form method="GET" action="<?= htmlspecialchars($searchAction, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="max-w-2xl mx-auto relative">
         <input
           type="text"
           id="search-input"

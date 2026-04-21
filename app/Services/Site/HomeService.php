@@ -309,12 +309,14 @@ final class HomeService
     private function normalizeCategories(array $items): array
     {
         return array_map(static function (array $item): array {
+            $slug = (string) ($item['slug'] ?? '');
+
             return [
                 'nome' => public_text((string) ($item['nome'] ?? '')),
-                'slug' => (string) ($item['slug'] ?? ''),
+                'slug' => $slug,
                 'cor' => (string) ($item['cor'] ?? '#00d4ff'),
                 'total_posts' => (int) ($item['total_posts'] ?? 0),
-                'url' => url('/blog?categoria=' . urlencode((string) ($item['slug'] ?? ''))),
+                'url' => $slug !== '' ? url('/blog/' . rawurlencode($slug)) : url('/blog'),
             ];
         }, $items);
     }

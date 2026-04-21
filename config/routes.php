@@ -16,6 +16,7 @@ return [
     ['GET',  '/sitemap.xml', [\App\Controllers\Site\SeoController::class, 'sitemap'], null],
     ['HEAD', '/sitemap.xml', [\App\Controllers\Site\SeoController::class, 'sitemap'], null],
     ['GET',  '/blog',   [\App\Controllers\Site\BlogController::class, 'index'], null],
+    ['GET',  '/blog/{slug}',   [\App\Controllers\Site\BlogController::class, 'category'], null],
     ['GET',  '/central-nerd',   [\App\Controllers\Site\CentralController::class, 'index'], null],
     ['GET',  '/link/{slug}', [\App\Controllers\Site\LinkController::class, 'go'], null],
     ['GET',  '/post/{slug}', [\App\Controllers\Site\PostController::class, 'show'], null],

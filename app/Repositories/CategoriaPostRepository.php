@@ -157,6 +157,38 @@ final class CategoriaPostRepository
         }, $rows);
     }
 
+    public function findPublicBySlug(string $slug): ?array
+    {
+        $slug = trim($slug);
+        if ($slug === '') {
+            return null;
+        }
+
+        $sql = "SELECT c.id, c.nome, c.slug, COALESCE(c.cor, '') AS cor,
+                       COUNT(p.id) AS total_posts
+                FROM categoria_post c
+                LEFT JOIN posts p ON p.categoria_post_id = c.id AND p.status = 'publicado'
+                WHERE COALESCE(c.ativo, 1) = 1
+                  AND c.slug = :slug
+                GROUP BY c.id, c.nome, c.slug, c.cor
+                LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'id' => (int) ($row['id'] ?? 0),
+            'nome' => (string) ($row['nome'] ?? ''),
+            'slug' => (string) ($row['slug'] ?? ''),
+            'cor' => (string) ($row['cor'] ?? ''),
+            'total_posts' => (int) ($row['total_posts'] ?? 0),
+        ];
+    }
+
     public function findById(int $id): ?array
     {
         $sql = "SELECT c.id, c.nome, c.slug, COALESCE(c.cor, '') AS cor, COALESCE(c.ativo, 1) AS ativo, COALESCE(c.ordem, 0) AS ordem, COUNT(p.id) AS total_posts, COALESCE(SUM(p.views), 0) AS total_views FROM categoria_post c LEFT JOIN posts p ON p.categoria_post_id = c.id WHERE c.id = :id GROUP BY c.id, c.nome, c.slug, c.cor, c.ativo, c.ordem LIMIT 1";

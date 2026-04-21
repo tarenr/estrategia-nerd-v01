@@ -57,7 +57,7 @@ final class SeoController
                 }
 
                 $urls[] = [
-                    'loc' => url('/blog?categoria=' . urlencode($slug)),
+                    'loc' => url('/blog/' . rawurlencode($slug)),
                     'lastmod' => $latestPostUpdate,
                     'changefreq' => 'weekly',
                     'priority' => '0.7',
