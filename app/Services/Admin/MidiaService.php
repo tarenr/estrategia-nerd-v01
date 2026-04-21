@@ -73,11 +73,16 @@ final class MidiaService
     {
         $slug = $this->slugify($slug);
         $role = $this->slugify($role);
-        if ($slug === '' || $role === '') {
+        if ($slug === '' || $role === '' || !in_array($role, ['capa', 'thumb'], true)) {
             return ['ok' => false, 'error' => 'Nao foi possivel preparar o nome da imagem do post.'];
         }
 
-        return $this->storeUploadedMedia($file, 'posts/' . $slug . '/images', $slug . '-' . $role, true, 'image');
+        $result = $this->storeUploadedMedia($file, 'posts/' . $slug . '/images', $role, true, 'image');
+        if (($result['ok'] ?? false) === true) {
+            $this->cleanupLegacyPostRoleImage($slug, $role);
+        }
+
+        return $result;
     }
 
     public function storePostBodyImage(mixed $file, string $slug): array
@@ -1454,6 +1459,25 @@ final class MidiaService
                 @unlink($path);
             }
         }
+    }
+
+    private function cleanupLegacyPostRoleImage(string $slug, string $role): void
+    {
+        $directory = $this->publicRoot()
+            . DIRECTORY_SEPARATOR
+            . 'uploads'
+            . DIRECTORY_SEPARATOR
+            . 'posts'
+            . DIRECTORY_SEPARATOR
+            . $slug
+            . DIRECTORY_SEPARATOR
+            . 'images';
+
+        if (!is_dir($directory)) {
+            return;
+        }
+
+        $this->deleteFilesByBase($directory, $slug . '-' . $role);
     }
 
     private function detectMimeType(string $path): string
