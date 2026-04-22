@@ -34,6 +34,28 @@ final class LocalDocsController
         ]);
     }
 
+    public function blogStructures(): void
+    {
+        $this->ensureLocalOnly();
+
+        $file = base_path('docs/blog-estruturas-de-conteudo.html');
+        if (!is_file($file)) {
+            http_response_code(404);
+            echo 'Arquivo de documentacao nao encontrado.';
+            exit;
+        }
+
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=UTF-8');
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+            header('Pragma: no-cache');
+            header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
+        }
+
+        readfile($file);
+        exit;
+    }
+
     private function ensureLocalOnly(): void
     {
         $env = (string) config('app.env', 'production');

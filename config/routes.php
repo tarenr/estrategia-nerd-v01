@@ -105,6 +105,8 @@ return [
     ['POST', '/local/conteudo',      [\App\Controllers\Site\ContentSyncToolsController::class, 'handle'], null],
     ['GET',  '/local/documentacao',  [\App\Controllers\Site\LocalDocsController::class, 'index'], null],
     ['GET',  '/local/docs',          [\App\Controllers\Site\LocalDocsController::class, 'index'], null],
+    ['GET',  '/local/blog-estruturas', [\App\Controllers\Site\LocalDocsController::class, 'blogStructures'], null],
+    ['GET',  '/local/estruturas-conteudo', [\App\Controllers\Site\LocalDocsController::class, 'blogStructures'], null],
     ['GET',  '/local/backlog',       [\App\Controllers\Site\LocalDocsController::class, 'backlog'], null],
     ['GET',  '/dev',                 [\App\Controllers\Site\DevController::class, 'index'], null],
 ];
