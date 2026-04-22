@@ -9,12 +9,139 @@ $orphanFiles = $orphan_files ?? ($orphan_images ?? []);
 $quickMediaSource = is_array($imageMediaItems) && $imageMediaItems !== []
     ? array_values($imageMediaItems)
     : array_values(array_filter(is_array($mediaItems ?? null) ? $mediaItems : [], static fn (array $item): bool => (($item['media_type'] ?? '') === 'image') || (($item['is_image'] ?? false) === true)));
-$quickMediaItems = array_slice($quickMediaSource, 0, 4);
 
 $coverValue = trim((string) ($form['imagem_capa'] ?? ''));
 $thumbValue = trim((string) ($form['imagem_thumb'] ?? ''));
 $coverPreview = $coverValue !== '' ? (preg_match('~^https?://~i', $coverValue) ? $coverValue : url('/' . ltrim($coverValue, '/'))) : '';
 $thumbPreview = $thumbValue !== '' ? (preg_match('~^https?://~i', $thumbValue) ? $thumbValue : url('/' . ltrim($thumbValue, '/'))) : '';
+$contentValue = (string) ($form['conteudo'] ?? '');
+$postSlug = trim((string) ($form['slug'] ?? ''));
+
+$normalizeMediaPath = static function (string $value): string {
+    $value = trim($value);
+    if ($value === '') {
+        return '';
+    }
+
+    if (preg_match('~^https?://[^/]+/(.+)$~i', $value, $matches)) {
+        $value = (string) ($matches[1] ?? '');
+    }
+
+    return ltrim(str_replace('\\', '/', $value), '/');
+};
+
+$extractImagePaths = static function (string $html) use ($normalizeMediaPath): array {
+    if (trim($html) === '') {
+        return [];
+    }
+
+    preg_match_all('~(?:src|href)\s*=\s*["\']([^"\']+)["\']~i', $html, $matches);
+    $rawItems = is_array($matches[1] ?? null) ? $matches[1] : [];
+    $paths = [];
+
+    foreach ($rawItems as $rawItem) {
+        $path = $normalizeMediaPath((string) $rawItem);
+        if ($path === '' || !preg_match('~\.(?:jpg|jpeg|png|webp|gif|svg)$~i', $path)) {
+            continue;
+        }
+        $paths[$path] = true;
+    }
+
+    return array_keys($paths);
+};
+
+$coverPath = $normalizeMediaPath($coverValue);
+$thumbPath = $normalizeMediaPath($thumbValue);
+$contentImagePaths = $extractImagePaths($contentValue);
+
+$currentPostPaths = [];
+foreach ([$coverPath, $thumbPath] as $path) {
+    if ($path !== '' && preg_match('~\.(?:jpg|jpeg|png|webp|gif|svg)$~i', $path)) {
+        $currentPostPaths[$path] = true;
+    }
+}
+foreach ($contentImagePaths as $path) {
+    $currentPostPaths[$path] = true;
+}
+
+$quickMediaByPath = [];
+foreach ($quickMediaSource as $item) {
+    if (!is_array($item)) {
+        continue;
+    }
+
+    $itemPath = $normalizeMediaPath((string) ($item['relative_path'] ?? ''));
+    if ($itemPath === '') {
+        $publicUrl = trim((string) ($item['public_url'] ?? ''));
+        $itemPath = $normalizeMediaPath($publicUrl);
+    }
+    if ($itemPath === '') {
+        continue;
+    }
+
+    $item['relative_path'] = $itemPath;
+    $quickMediaByPath[$itemPath] = $item;
+}
+
+foreach (array_keys($currentPostPaths) as $path) {
+    if (isset($quickMediaByPath[$path])) {
+        continue;
+    }
+
+    $quickMediaByPath[$path] = [
+        'name' => basename($path),
+        'relative_path' => $path,
+        'public_url' => url('/' . ltrim($path, '/')),
+        'media_type' => 'image',
+        'is_image' => true,
+    ];
+}
+
+$isCurrentPostImage = static function (string $path) use ($currentPostPaths, $postSlug): bool {
+    if (isset($currentPostPaths[$path])) {
+        return true;
+    }
+
+    if ($postSlug !== '') {
+        return str_contains($path, 'uploads/posts/' . $postSlug . '/');
+    }
+
+    return false;
+};
+
+$postMediaItems = [];
+$libraryMediaItems = [];
+foreach ($quickMediaByPath as $path => $item) {
+    $item['relative_path'] = $path;
+    $item['quick_origin'] = $isCurrentPostImage($path) ? 'post' : 'library';
+    $item['quick_usage'] = [];
+
+    if ($coverPath !== '' && $path === $coverPath) {
+        $item['quick_usage'][] = 'capa';
+    }
+    if ($thumbPath !== '' && $path === $thumbPath) {
+        $item['quick_usage'][] = 'thumb';
+    }
+    if (in_array($path, $contentImagePaths, true)) {
+        $item['quick_usage'][] = 'conteudo';
+    }
+
+    if ($item['quick_origin'] === 'post') {
+        $postMediaItems[$path] = $item;
+        continue;
+    }
+
+    $libraryMediaItems[$path] = $item;
+}
+
+$quickMediaItems = array_slice(array_values($postMediaItems + $libraryMediaItems), 0, 12);
+$postQuickMediaCount = 0;
+foreach ($quickMediaItems as $item) {
+    if (($item['quick_origin'] ?? 'library') === 'post') {
+        $postQuickMediaCount++;
+    }
+}
+$quickMediaTotal = count($quickMediaItems);
 ?>
 
 <div class="post-media-seo-grid">
@@ -112,7 +239,7 @@ $thumbPreview = $thumbValue !== '' ? (preg_match('~^https?://~i', $thumbValue) ?
       <div class="post-media-quick-head">
         <div>
           <h3 class="text-sm font-black text-white">Selecao rapida da biblioteca</h3>
-          <div class="text-xs text-slate-400 mt-1">Mostra apenas as ultimas imagens para aplicar em um clique.</div>
+          <div class="text-xs text-slate-400 mt-1">Mostra ate 12 imagens, priorizando as que ja pertencem a este post.</div>
         </div>
         <a href="<?= htmlspecialchars(url('/admin/midia?tipo=imagem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary post-media-open-btn">Abrir midia</a>
       </div>
@@ -120,12 +247,55 @@ $thumbPreview = $thumbValue !== '' ? (preg_match('~^https?://~i', $thumbValue) ?
       <?php if ($quickMediaItems === []): ?>
         <div class="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-5 text-sm text-slate-400">Nenhuma imagem recente encontrada na biblioteca central.</div>
       <?php else: ?>
+        <div class="post-media-quick-toolbar">
+          <label class="post-media-search-field" for="postMediaQuickSearch">
+            <span class="admin-filter-label">Buscar imagem</span>
+            <input
+              id="postMediaQuickSearch"
+              type="search"
+              class="nerd-input admin-filter-control post-media-search-input"
+              placeholder="Buscar por nome ou caminho"
+              autocomplete="off"
+            >
+          </label>
+          <label class="post-media-filter-field" for="postMediaQuickOrigin">
+            <span class="admin-filter-label">Origem</span>
+            <select id="postMediaQuickOrigin" class="nerd-input admin-filter-control post-media-filter-control">
+              <option value="all">Todas</option>
+              <option value="post">Deste post</option>
+              <option value="library">Biblioteca</option>
+            </select>
+          </label>
+          <label class="post-media-filter-field" for="postMediaQuickUsage">
+            <span class="admin-filter-label">Uso</span>
+            <select id="postMediaQuickUsage" class="nerd-input admin-filter-control post-media-filter-control">
+              <option value="all">Todas</option>
+              <option value="capa">Capa</option>
+              <option value="thumb">Thumb</option>
+              <option value="conteudo">Conteudo do post</option>
+            </select>
+          </label>
+          <div class="post-media-quick-summary">
+            <span class="post-media-quick-summary-pill"><?= $postQuickMediaCount ?> deste post</span>
+            <span class="post-media-quick-summary-pill"><?= $quickMediaTotal ?> exibidas</span>
+          </div>
+        </div>
+
         <div class="post-media-quick-grid">
           <?php foreach ($quickMediaItems as $item): ?>
             <?php $itemUrl = (string) ($item['public_url'] ?? ''); ?>
             <?php $itemPath = (string) ($item['relative_path'] ?? ''); ?>
             <?php $itemName = (string) ($item['name'] ?? $itemPath); ?>
-            <div class="post-media-quick-item">
+            <?php $itemOrigin = (string) ($item['quick_origin'] ?? 'library'); ?>
+            <?php $itemUsage = array_values(array_unique(array_filter(array_map('strval', $item['quick_usage'] ?? [])))); ?>
+            <?php $itemSearch = mb_strtolower(trim($itemName . ' ' . $itemPath), 'UTF-8'); ?>
+            <div
+              class="post-media-quick-item"
+              data-post-media-item
+              data-post-media-search="<?= htmlspecialchars($itemSearch, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+              data-post-media-origin="<?= htmlspecialchars($itemOrigin, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+              data-post-media-usage="<?= htmlspecialchars(implode(',', $itemUsage), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            >
               <button
                 type="button"
                 class="post-media-quick-thumb post-media-preview-trigger"
@@ -138,6 +308,14 @@ $thumbPreview = $thumbValue !== '' ? (preg_match('~^https?://~i', $thumbValue) ?
               </button>
 
               <div class="post-media-quick-copy">
+                <div class="post-media-quick-meta">
+                  <span class="post-media-origin-badge<?= $itemOrigin === 'post' ? ' is-post' : '' ?>"><?= $itemOrigin === 'post' ? 'Deste post' : 'Biblioteca' ?></span>
+                  <?php foreach ($itemUsage as $usage): ?>
+                    <span class="post-media-usage-badge">
+                      <?= $usage === 'capa' ? 'Capa' : ($usage === 'thumb' ? 'Thumb' : 'Conteudo') ?>
+                    </span>
+                  <?php endforeach; ?>
+                </div>
                 <button
                   type="button"
                   class="post-media-quick-name post-media-preview-link"
@@ -155,6 +333,10 @@ $thumbPreview = $thumbValue !== '' ? (preg_match('~^https?://~i', $thumbValue) ?
               </div>
             </div>
           <?php endforeach; ?>
+        </div>
+
+        <div id="postMediaQuickEmpty" class="post-media-quick-empty hidden">
+          Nenhuma imagem encontrada para essa busca.
         </div>
       <?php endif; ?>
     </div>

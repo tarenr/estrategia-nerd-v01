@@ -1,6 +1,6 @@
 /**
  * File: /assets/js/criar-post.js
- * Purpose: Editor (abas/toolbar/sync), preview e Gerador Nerd para /admin/pages/criar-post.php
+ * Purpose: Editor (abas/toolbar/sync) e preview para /admin/pages/criar-post.php
  *
  * Notes:
  * - Este arquivo expoe funcoes globais (switchTab, formatar, etc.) porque o HTML usa onclick="...".
@@ -60,7 +60,6 @@
     var ajudas = {
       visual: "Use a barra acima para formatar.",
       html: "Edite diretamente o codigo HTML.",
-      gerador: "Preencha os campos e gere conteudo automaticamente.",
     };
 
     var ajudaEl = byId("editor-ajuda");
@@ -78,10 +77,6 @@
       window.atualizarTextarea();
     }
 
-    // Inicializa gerador quando entrar
-    if (tabName === "gerador") {
-      initGerador();
-    }
   };
 
   // -------------------------
@@ -499,6 +494,49 @@
     image.src = "";
   };
 
+  function initQuickMediaSearch() {
+    var input = byId("postMediaQuickSearch");
+    var originSelect = byId("postMediaQuickOrigin");
+    var usageSelect = byId("postMediaQuickUsage");
+    if (!input) return;
+
+    var items = Array.prototype.slice.call(document.querySelectorAll("[data-post-media-item]"));
+    var emptyState = byId("postMediaQuickEmpty");
+    if (!items.length) return;
+
+    var normalize = function (value) {
+      return String(value || "").toLocaleLowerCase("pt-BR").trim();
+    };
+
+    var applyFilter = function () {
+      var term = normalize(input.value);
+      var origin = normalize(originSelect ? originSelect.value : "all");
+      var usage = normalize(usageSelect ? usageSelect.value : "all");
+      var visibleCount = 0;
+
+      items.forEach(function (item) {
+        var haystack = normalize(item.getAttribute("data-post-media-search") || "");
+        var itemOrigin = normalize(item.getAttribute("data-post-media-origin") || "library");
+        var itemUsage = normalize(item.getAttribute("data-post-media-usage") || "");
+        var matchesTerm = !term || haystack.indexOf(term) !== -1;
+        var matchesOrigin = origin === "all" || itemOrigin === origin;
+        var matchesUsage = usage === "all" || itemUsage.split(",").indexOf(usage) !== -1;
+        var visible = matchesTerm && matchesOrigin && matchesUsage;
+        item.classList.toggle("hidden", !visible);
+        if (visible) visibleCount += 1;
+      });
+
+      if (emptyState) {
+        emptyState.classList.toggle("hidden", visibleCount > 0);
+      }
+    };
+
+    input.addEventListener("input", applyFilter);
+    if (originSelect) originSelect.addEventListener("change", applyFilter);
+    if (usageSelect) usageSelect.addEventListener("change", applyFilter);
+    applyFilter();
+  }
+
   function initMediaHelpers() {
     ["imagem_capa", "imagem_thumb"].forEach(function (targetId) {
       var input = byId(targetId);
@@ -525,6 +563,8 @@
         window.abrirPreviewMidiaPost(src, title, path);
       });
     });
+
+    initQuickMediaSearch();
   }
 
   function getCsrfToken() {
@@ -884,332 +924,6 @@
     }
   };
 
-  // -------------------------
-  // Gerador Nerd (compativel com o HTML do criar-post)
-  // -------------------------
-  var geradorIniciado = false;
-  var geradorHtmlAtual = "";
-
-  var TEMPLATES = {
-    comparativo: {
-      fields: [
-        { id: "produto_a", label: "Produto A", placeholder: "Ex.: RTX 5070" },
-        { id: "produto_b", label: "Produto B", placeholder: "Ex.: RX 9070" },
-        { id: "contexto", label: "Contexto / objetivo", placeholder: "Ex.: 1440p, custo/beneficio..." },
-        { id: "linhas", label: "Linhas da tabela", placeholder: "" },
-        { id: "saida", label: "Formato", placeholder: "" },
-      ],
-      build: function (v) {
-        var a = v.produto_a || "Produto A";
-        var b = v.produto_b || "Produto B";
-        var ctx = v.contexto || "";
-        var formato = (v.saida || "ambos").toLowerCase();
-        var rows = Array.isArray(v.linhas) ? v.linhas : [];
-        rows = rows
-          .map(function (row) {
-            return {
-              label: (row && row.label ? row.label : "").trim(),
-              left: (row && row.left ? row.left : "").trim(),
-              right: (row && row.right ? row.right : "").trim(),
-            };
-          })
-          .filter(function (row) {
-            return row.label !== "" || row.left !== "" || row.right !== "";
-          });
-
-        if (rows.length === 0) {
-          rows = [
-            { label: "Performance", left: "...", right: "..." },
-            { label: "Consumo", left: "...", right: "..." },
-            { label: "Preco", left: "...", right: "..." },
-            { label: "Perfil ideal", left: "...", right: "..." },
-          ];
-        }
-
-        var tableRows = rows.map(function (row) {
-          return '' +
-            '<tr>' +
-            '<th style="border:1px solid rgba(51,65,85,0.8);padding:12px 14px;text-align:left;vertical-align:top;background:rgba(30,41,59,0.55);">' + row.label + '</th>' +
-            '<td style="border:1px solid rgba(51,65,85,0.8);padding:12px 14px;vertical-align:top;">' + row.left + '</td>' +
-            '<td style="border:1px solid rgba(51,65,85,0.8);padding:12px 14px;vertical-align:top;">' + row.right + '</td>' +
-            '</tr>';
-        }).join("");
-
-        var topicRows = rows.map(function (row) {
-          return "<li><b>" + row.label + ":</b> " + a + " - " + row.left + " | " + b + " - " + row.right + "</li>";
-        }).join("");
-
-        var compareTable =
-          '<div class="content-block content-block-table">' +
-          '<div class="content-block-label">Tabela comparativa</div>' +
-          '<table class="nerd-comparison-table" style="width:100%;border-collapse:collapse;border:1px solid rgba(0,212,255,0.28);margin:1rem 0;background:rgba(15,23,42,0.82);">' +
-          '<thead>' +
-          '<tr>' +
-          '<th style="border:1px solid rgba(0,212,255,0.22);padding:12px 14px;background:rgba(0,212,255,0.12);text-align:left;">Criterio</th>' +
-          '<th style="border:1px solid rgba(0,212,255,0.22);padding:12px 14px;background:rgba(0,212,255,0.12);text-align:left;">' + a + '</th>' +
-          '<th style="border:1px solid rgba(0,212,255,0.22);padding:12px 14px;background:rgba(0,212,255,0.12);text-align:left;">' + b + '</th>' +
-          '</tr>' +
-          '</thead>' +
-          '<tbody>' + tableRows + '</tbody>' +
-          '</table>' +
-          '</div>';
-
-        var quickSummary =
-          '<div class="content-block content-block-note">' +
-          '<div class="content-block-label">Resumo rapido</div>' +
-          '<p>' + ctx + '</p>' +
-          '</div>';
-
-        var prosCons =
-          '<div class="content-grid-two">' +
-          '<div class="content-block content-block-success"><div class="content-block-label">Pontos fortes de ' + a + '</div><ul><li>...</li><li>...</li></ul></div>' +
-          '<div class="content-block content-block-warning"><div class="content-block-label">Pontos fortes de ' + b + '</div><ul><li>...</li><li>...</li></ul></div>' +
-          '</div>';
-
-        var faq =
-          '<div class="content-block content-block-faq">' +
-          '<div class="content-block-label">FAQ rapido</div>' +
-          '<h3>Qual entrega melhor custo-beneficio?</h3><p>...</p>' +
-          '<h3>Qual faz mais sentido para o seu perfil?</h3><p>...</p>' +
-          '</div>';
-
-        var parts = [
-          '<h2>' + a + ' vs ' + b + ': qual vale mais a pena?</h2>',
-          ctx ? '<p>' + ctx + '</p>' : '',
-          quickSummary,
-        ];
-
-        if (formato === 'tabela' || formato === 'ambos' || formato === '') {
-          parts.push(compareTable);
-        }
-
-        if (formato === 'topicos' || formato === 'ambos' || formato === '') {
-          parts.push('<h3>Comparativo em topicos</h3><ul>' + topicRows + '</ul>');
-        }
-
-        parts.push(prosCons);
-        parts.push('<div class="content-block content-block-highlight"><div class="content-block-label">Veredito</div><p>Explique aqui qual vence no seu criterio principal e em qual cenario o outro ainda faz mais sentido.</p></div>');
-        parts.push(faq);
-
-        return parts.join('');
-      },
-    },
-    review: {
-      fields: [
-        { id: "produto", label: "Produto", placeholder: "Ex.: Nintendo Switch 2" },
-        { id: "pontos", label: "Pontos (separados por virgula)", placeholder: "Design, bateria, tela..." },
-      ],
-      build: function (v) {
-        var p = v.produto || "Produto";
-        var pts = (v.pontos || "")
-          .split(",")
-          .map(function (s) { return s.trim(); })
-          .filter(Boolean)
-          .map(function (s) { return "<li>" + s + "</li>"; })
-          .join("");
-        return (
-          "<h2>Review: " + p + "</h2>" +
-          "<p>Visao geral do produto e para quem ele faz sentido.</p>" +
-          "<h3>Pontos principais</h3><ul>" + (pts || "<li>Liste os pontos principais.</li>") + "</ul>" +
-          "<h3>Pros e contras</h3><ul><li><b>Pros:</b> ...</li><li><b>Contras:</b> ...</li></ul>" +
-          "<h3>Conclusao</h3><p>Compartilhe o veredito final.</p>"
-        );
-      },
-    },
-    pros_contras: {
-      fields: [
-        { id: "produto", label: "Produto / tema", placeholder: "Ex.: RTX 5070" },
-        { id: "contexto", label: "Contexto", placeholder: "Ex.: Para 1440p e ray tracing" },
-        { id: "pros", label: "Pros (um por linha)", placeholder: "Bom desempenho\nDLSS forte\nConsumo equilibrado", type: "textarea", rows: 5 },
-        { id: "contras", label: "Contras (um por linha)", placeholder: "Preco alto\nPouca VRAM\nEstoque limitado", type: "textarea", rows: 5 },
-      ],
-      build: function (v) {
-        var produto = v.produto || "Produto";
-        var contexto = v.contexto || "";
-        var pros = (v.pros || "")
-          .split(/\r?\n/)
-          .map(function (s) { return s.trim(); })
-          .filter(Boolean)
-          .map(function (s) { return "<li>" + s + "</li>"; })
-          .join("");
-        var contras = (v.contras || "")
-          .split(/\r?\n/)
-          .map(function (s) { return s.trim(); })
-          .filter(Boolean)
-          .map(function (s) { return "<li>" + s + "</li>"; })
-          .join("");
-
-        return (
-          "<h2>" + produto + ": pros e contras</h2>" +
-          (contexto ? "<p>" + contexto + "</p>" : "") +
-          '<div class="content-grid-two">' +
-          '<div class="content-block content-block-success"><div class="content-block-label">Pros</div><ul>' + (pros || "<li>...</li>") + "</ul></div>" +
-          '<div class="content-block content-block-warning"><div class="content-block-label">Contras</div><ul>' + (contras || "<li>...</li>") + "</ul></div>" +
-          "</div>" +
-          '<div class="content-block content-block-highlight"><div class="content-block-label">Vale a pena?</div><p>Explique aqui em qual cenario esse produto ou tema compensa mais.</p></div>'
-        );
-      },
-    },
-    faq: {
-      fields: [
-        { id: "tema", label: "Tema do FAQ", placeholder: "Ex.: PS5 Pro" },
-        { id: "pergunta_1", label: "Pergunta 1", placeholder: "Ex.: Vale a pena comprar agora?" },
-        { id: "pergunta_2", label: "Pergunta 2", placeholder: "Ex.: Qual o publico ideal?" },
-        { id: "pergunta_3", label: "Pergunta 3", placeholder: "Ex.: O que muda em relacao ao modelo anterior?" },
-      ],
-      build: function (v) {
-        var tema = v.tema || "Tema";
-        var perguntas = [v.pergunta_1, v.pergunta_2, v.pergunta_3]
-          .map(function (s) { return (s || "").trim(); })
-          .filter(Boolean);
-
-        if (perguntas.length === 0) {
-          perguntas = [
-            "Vale a pena?",
-            "Para quem faz mais sentido?",
-            "O que considerar antes de comprar?",
-          ];
-        }
-
-        return (
-          "<h2>FAQ rapido: " + tema + "</h2>" +
-          '<div class="content-block content-block-faq">' +
-          '<div class="content-block-label">Perguntas frequentes</div>' +
-          perguntas.map(function (pergunta) {
-            return "<h3>" + pergunta + "</h3><p>...</p>";
-          }).join("") +
-          "</div>"
-        );
-      },
-    },
-    ficha_tecnica: {
-      fields: [
-        { id: "produto", label: "Produto / assunto", placeholder: "Ex.: Steam Deck OLED" },
-        { id: "fabricante", label: "Fabricante / marca", placeholder: "Ex.: Valve" },
-        { id: "faixa_preco", label: "Faixa de preco", placeholder: "Ex.: R$ 4.000 a R$ 5.000" },
-        { id: "itens", label: "Itens da ficha (um por linha, formato Campo: valor)", placeholder: "Tela: OLED 7,4\nArmazenamento: 512 GB\nBateria: 50 Wh", type: "textarea", rows: 6 },
-      ],
-      build: function (v) {
-        var produto = v.produto || "Produto";
-        var fabricante = v.fabricante || "...";
-        var faixaPreco = v.faixa_preco || "...";
-        var itens = (v.itens || "")
-          .split(/\r?\n/)
-          .map(function (s) { return s.trim(); })
-          .filter(Boolean)
-          .map(function (line) {
-            var parts = line.split(":");
-            var label = (parts.shift() || "").trim();
-            var value = parts.join(":").trim();
-            if (!label) return "";
-            return "<li><b>" + label + ":</b> " + (value || "...") + "</li>";
-          })
-          .filter(Boolean)
-          .join("");
-
-        return (
-          "<h2>Ficha tecnica: " + produto + "</h2>" +
-          '<div class="content-block content-block-note">' +
-          '<div class="content-block-label">Visao geral</div>' +
-          "<p><b>Marca:</b> " + fabricante + "<br><b>Faixa de preco:</b> " + faixaPreco + "</p>" +
-          "</div>" +
-          '<div class="content-block">' +
-          '<div class="content-block-label">Especificacoes principais</div>' +
-          "<ul>" + (itens || "<li><b>Especificacao:</b> ...</li>") + "</ul>" +
-          "</div>"
-        );
-      },
-    },
-    guia: {
-      fields: [
-        { id: "tema", label: "Tema do guia", placeholder: "Ex.: Como montar um PC gamer barato" },
-        { id: "nivel", label: "Nivel", placeholder: "Iniciante / Intermediario / Avancado" },
-      ],
-      build: function (v) {
-        return (
-          "<h2>" + (v.tema || "Guia") + "</h2>" +
-          "<p><b>Nivel:</b> " + (v.nivel || "") + "</p>" +
-          "<h3>O que voce vai aprender</h3><ul><li>Explique o resultado esperado para o leitor.</li></ul>" +
-          "<h3>Passo a passo</h3><ol><li>Abra com o primeiro passo.</li><li>Detalhe a execucao principal.</li><li>Feche com a validacao final.</li></ol>" +
-          "<h3>Dicas finais</h3><ul><li>Inclua ajustes, erros comuns e observacoes praticas.</li></ul>"
-        );
-      },
-    },
-    noticia: {
-      fields: [
-        { id: "assunto", label: "Assunto", placeholder: "Ex.: Lancamento do iPhone X" },
-        { id: "pontos", label: "Fatos-chave (separados por virgula)", placeholder: "Preco, data, novidades..." },
-      ],
-      build: function (v) {
-        var a = v.assunto || "Noticia";
-        var pts = (v.pontos || "")
-          .split(",")
-          .map(function (s) { return s.trim(); })
-          .filter(Boolean)
-          .map(function (s) { return "<li>" + s + "</li>"; })
-          .join("");
-        return (
-          "<h2>" + a + "</h2>" +
-          "<p>Contexto rapido do que aconteceu.</p>" +
-          "<h3>O que foi anunciado</h3><ul>" + (pts || "<li>Resuma os pontos principais.</li>") + "</ul>" +
-          "<h3>Por que isso importa</h3><p>Explique o impacto para o leitor.</p>" +
-          "<h3>O que esperar agora</h3><p>Feche com proximos passos, prazos ou repercussao.</p>"
-        );
-      },
-    },
-    lista: {
-      fields: [
-        { id: "titulo_lista", label: "Titulo da lista", placeholder: "Ex.: Top 7 teclados custo-beneficio" },
-        { id: "qtd", label: "Quantidade", placeholder: "Ex.: 7" },
-      ],
-      build: function (v) {
-        var t = v.titulo_lista || "Lista";
-        var qtd = parseInt(v.qtd || "5", 10);
-        if (!qtd || qtd < 1) qtd = 5;
-
-        var items = "";
-        for (var i = 1; i <= qtd; i += 1) {
-          items += "<li><b>#" + i + "</b> Descreva aqui o item e o diferencial dele.</li>";
-        }
-
-        return (
-          "<h2>" + t + "</h2>" +
-          "<p>Explique os criterios usados e para quem a lista faz sentido.</p>" +
-          "<ol>" + items + "</ol>" +
-          "<h3>Como escolher</h3><ul><li>Adicione uma dica final para ajudar na decisao.</li></ul>"
-        );
-      },
-    },
-  };
-
-  function hideGeradorPreview() {
-    var wrap = byId("gerador-preview");
-    if (wrap) wrap.classList.add("hidden");
-  }
-
-  function showGeradorPreview(html) {
-    var wrap = byId("gerador-preview");
-    var content = byId("gerador-preview-content");
-    if (!wrap || !content) return;
-
-    content.textContent = html;
-    wrap.classList.remove("hidden");
-  }
-
-  function disableAplicar() {
-    var btn = byId("btn-aplicar");
-    if (!btn) return;
-    btn.disabled = true;
-    btn.classList.add("opacity-50", "cursor-not-allowed");
-  }
-
-  function enableAplicar() {
-    var btn = byId("btn-aplicar");
-    if (!btn) return;
-    btn.disabled = false;
-    btn.classList.remove("opacity-50", "cursor-not-allowed");
-  }
-
   var formTracker = {
     initialState: "",
     submitting: false,
@@ -1330,182 +1044,6 @@
       });
     });
   }
-
-  function getDefaultComparativoRows() {
-    return [
-      { label: "Performance", left: "", right: "" },
-      { label: "Consumo", left: "", right: "" },
-      { label: "Preco", left: "", right: "" },
-      { label: "Perfil ideal", left: "", right: "" },
-    ];
-  }
-
-  function renderComparativoRows() {
-    var wrap = byId("gerador-linhas-wrap");
-    if (!wrap) return;
-
-    var items = wrap.querySelectorAll("[data-row-item]");
-    if (!items.length) {
-      getDefaultComparativoRows().forEach(function (row) {
-        appendComparativoRow(row);
-      });
-    }
-  }
-
-  function appendComparativoRow(data) {
-    var wrap = byId("gerador-linhas-wrap");
-    if (!wrap) return;
-
-    var row = data || { label: "", left: "", right: "" };
-    var item = document.createElement("div");
-    item.setAttribute("data-row-item", "1");
-    item.className = "grid grid-cols-1 md:grid-cols-[1.1fr_1fr_1fr_auto] gap-3 items-end rounded-xl border border-slate-700/80 bg-slate-900/60 p-3";
-    item.innerHTML = '' +
-      '<div><label class="block text-[11px] text-slate-400 mb-1">Criterio</label><input type="text" data-row-field="label" class="w-full px-3 py-2 bg-slate-800 border border-cyan-500/30 rounded-lg text-sm text-gray-300 focus:border-cyan-400 focus:outline-none" value="' + escapeHtml(row.label || "") + '" placeholder="Ex.: Performance"></div>' +
-      '<div><label class="block text-[11px] text-slate-400 mb-1">Produto A</label><input type="text" data-row-field="left" class="w-full px-3 py-2 bg-slate-800 border border-cyan-500/30 rounded-lg text-sm text-gray-300 focus:border-cyan-400 focus:outline-none" value="' + escapeHtml(row.left || "") + '" placeholder="Ex.: 220 FPS"></div>' +
-      '<div><label class="block text-[11px] text-slate-400 mb-1">Produto B</label><input type="text" data-row-field="right" class="w-full px-3 py-2 bg-slate-800 border border-cyan-500/30 rounded-lg text-sm text-gray-300 focus:border-cyan-400 focus:outline-none" value="' + escapeHtml(row.right || "") + '" placeholder="Ex.: 205 FPS"></div>' +
-      '<button type="button" class="px-3 py-2 rounded-lg border border-rose-500/30 text-rose-300 text-xs font-bold hover:bg-rose-500/10" data-row-remove>Remover</button>';
-
-    wrap.appendChild(item);
-
-    var removeButton = item.querySelector("[data-row-remove]");
-    if (removeButton) {
-      removeButton.addEventListener("click", function () {
-        item.remove();
-      });
-    }
-  }
-
-  function escapeHtml(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;");
-  }
-
-  function renderGeradorFields() {
-    var select = byId("gerador-template");
-    var campos = byId("gerador-campos");
-    if (!select || !campos) return;
-
-    var key = select.value || "comparativo";
-    var tpl = TEMPLATES[key] || TEMPLATES.comparativo;
-
-    var html = "";
-    tpl.fields.forEach(function (f) {
-      var fieldHtml = "";
-      if (key === "comparativo" && f.id === "linhas") {
-        fieldHtml = '' +
-          '<div class="space-y-3">' +
-          '<div id="gerador-linhas-wrap" class="space-y-3"></div>' +
-          '<button type="button" id="gerador-add-row" class="px-3 py-2 rounded-lg border border-cyan-500/30 text-cyan-200 text-xs font-bold hover:bg-cyan-500/10">Adicionar linha</button>' +
-          '</div>';
-      } else if (key === "comparativo" && f.id === "saida") {
-        fieldHtml = '' +
-          '<select id="gerador-' + f.id + '" class="w-full px-3 py-2 bg-slate-800 border border-cyan-500/30 rounded-lg text-sm text-gray-300 focus:border-cyan-400 focus:outline-none">' +
-          '<option value="ambos">Tabela + topicos</option>' +
-          '<option value="tabela">Somente tabela</option>' +
-          '<option value="topicos">Somente topicos</option>' +
-          '</select>';
-      } else if (f.type === "textarea") {
-        fieldHtml = '<textarea id="gerador-' + f.id + '" rows="' + (f.rows || 4) + '" class="w-full px-3 py-2 bg-slate-800 border border-cyan-500/30 rounded-lg text-sm text-gray-300 focus:border-cyan-400 focus:outline-none" placeholder="' + (f.placeholder || "") + '"></textarea>';
-      } else {
-        fieldHtml = '<input id="gerador-' + f.id + '" type="text" class="w-full px-3 py-2 bg-slate-800 border border-cyan-500/30 rounded-lg text-sm text-gray-300 focus:border-cyan-400 focus:outline-none" placeholder="' + (f.placeholder || "") + '">';
-      }
-
-      html +=
-        '<div>' +
-        '<label class="block text-gray-400 text-xs mb-1">' +
-        f.label +
-        "</label>" +
-        fieldHtml +
-        "</div>";
-    });
-
-    campos.innerHTML = html;
-
-    if (key === "comparativo") {
-      renderComparativoRows();
-      var addButton = byId("gerador-add-row");
-      if (addButton) {
-        addButton.addEventListener("click", function () {
-          appendComparativoRow();
-        });
-      }
-    }
-    geradorHtmlAtual = "";
-    disableAplicar();
-    hideGeradorPreview();
-  }
-
-  function getGeradorValues() {
-    var select = byId("gerador-template");
-    var key = (select && select.value) || "comparativo";
-    var tpl = TEMPLATES[key] || TEMPLATES.comparativo;
-
-    var values = {};
-    tpl.fields.forEach(function (f) {
-      if (key === "comparativo" && f.id === "linhas") {
-        values[f.id] = Array.prototype.slice.call(document.querySelectorAll("#gerador-linhas-wrap [data-row-item]"))
-          .map(function (item) {
-            var label = item.querySelector('[data-row-field="label"]');
-            var left = item.querySelector('[data-row-field="left"]');
-            var right = item.querySelector('[data-row-field="right"]');
-            return {
-              label: label ? (label.value || "") : "",
-              left: left ? (left.value || "") : "",
-              right: right ? (right.value || "") : "",
-            };
-          });
-        return;
-      }
-
-      var el = byId("gerador-" + f.id);
-      values[f.id] = el ? (el.value || "") : "";
-    });
-
-    return { key: key, values: values };
-  }
-
-  function initGerador() {
-    if (geradorIniciado) return;
-
-    var select = byId("gerador-template");
-    var campos = byId("gerador-campos");
-    if (!select || !campos) return;
-
-    select.addEventListener("change", renderGeradorFields);
-    renderGeradorFields();
-
-    geradorIniciado = true;
-  }
-
-  window.gerarConteudo = function gerarConteudo() {
-    if (!existsEditor()) return;
-
-    initGerador();
-    var data = getGeradorValues();
-    var tpl = TEMPLATES[data.key] || TEMPLATES.comparativo;
-
-    geradorHtmlAtual = tpl.build(data.values);
-    showGeradorPreview(geradorHtmlAtual);
-    enableAplicar();
-  };
-
-  window.aplicarGerador = function aplicarGerador() {
-    if (!existsEditor()) return;
-    if (!geradorHtmlAtual) return;
-
-    var visual = byId("editor-visual");
-    var htmlArea = byId("editor-html");
-
-    if (visual) visual.innerHTML = geradorHtmlAtual;
-    if (htmlArea) htmlArea.value = geradorHtmlAtual;
-
-    window.atualizarTextarea();
-    window.switchTab("visual");
-  };
 
   // -------------------------
   // Submit

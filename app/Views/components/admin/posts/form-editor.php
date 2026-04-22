@@ -26,7 +26,6 @@ $editorMediaLibrary = [
   <div class="editor-tabs-bar flex flex-wrap gap-2 mb-4 border-b border-slate-800/70 pb-3">
     <button type="button" id="tab-btn-visual" class="editor-tab-btn px-4 py-2 rounded-t-xl text-sm font-black bg-slate-800 text-gray-400" onclick="switchTab('visual')">Visual</button>
     <button type="button" id="tab-btn-html" class="editor-tab-btn px-4 py-2 rounded-t-xl text-sm font-black bg-slate-800 text-gray-400" onclick="switchTab('html')">HTML</button>
-    <button type="button" id="tab-btn-gerador" class="editor-tab-btn px-4 py-2 rounded-t-xl text-sm font-black bg-slate-800 text-gray-400" onclick="switchTab('gerador')">Gerador Nerd</button>
   </div>
 
   <div id="panel-visual" class="editor-panel">
@@ -100,49 +99,6 @@ $editorMediaLibrary = [
       <div data-html-editor-mount class="admin-html-editor-mount"></div>
 
       <textarea id="editor-html" data-html-editor-textarea class="admin-html-editor-textarea nerd-input w-full min-h-[420px] px-4 py-3 rounded-xl font-mono text-sm" oninput="syncFromHtml()"><?= htmlspecialchars($conteudo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></textarea>
-    </div>
-  </div>
-
-  <div id="panel-gerador" class="editor-panel hidden post-gerador-panel space-y-4">
-    <div class="post-gerador-grid">
-      <div class="post-gerador-type">
-        <label for="gerador-template" class="block text-sm font-bold text-slate-200 mb-2">Tipo de conteudo</label>
-        <select id="gerador-template" class="nerd-input w-full px-4 py-3 rounded-xl">
-          <option value="comparativo">Comparativo</option>
-          <option value="review">Review</option>
-          <option value="pros_contras">Pros e Contras</option>
-          <option value="faq">FAQ</option>
-          <option value="ficha_tecnica">Ficha Tecnica</option>
-          <option value="guia">Guia</option>
-          <option value="noticia">Noticia</option>
-          <option value="lista">Lista</option>
-        </select>
-      </div>
-
-      <div class="post-gerador-fields">
-        <label class="block text-sm font-bold text-slate-200 mb-2">Parametros</label>
-        <div id="gerador-campos" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-        <p class="post-gerador-fields-note">No comparativo, use <strong class="text-slate-200">Adicionar linha</strong> para montar cada criterio da tabela em campos separados.</p>
-      </div>
-    </div>
-
-    <div class="post-gerador-actions">
-      <button type="button" class="admin-btn admin-btn-primary post-gerador-btn" onclick="gerarConteudo()">Gerar estrutura</button>
-      <button type="button" id="btn-aplicar" class="admin-btn admin-btn-secondary post-gerador-btn" onclick="aplicarGerador()">Aplicar no editor</button>
-
-      <div class="post-gerador-mode">
-        <label for="gerador-apply-mode">Modo de insercao</label>
-        <select id="gerador-apply-mode" class="nerd-input px-3 py-2 rounded-xl text-sm max-w-[220px]">
-          <option value="cursor">Inserir no cursor</option>
-          <option value="append">Adicionar ao final</option>
-          <option value="replace">Substituir tudo</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="gerador-preview" class="hidden post-gerador-preview">
-      <div class="post-gerador-preview-title">Preview do gerador</div>
-      <pre id="gerador-preview-content" class="whitespace-pre-wrap text-sm text-slate-300"></pre>
     </div>
   </div>
 

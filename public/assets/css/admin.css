@@ -5655,6 +5655,56 @@ select.nerd-input {
     gap: 0.75rem;
 }
 
+.post-media-quick-toolbar {
+    display: grid;
+    grid-template-columns: minmax(260px, 1.3fr) minmax(180px, 0.7fr) minmax(180px, 0.7fr) auto;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.9rem;
+    margin-top: 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.post-media-search-field {
+    min-width: 0;
+    display: grid;
+    gap: 0.4rem;
+}
+
+.post-media-filter-field {
+    min-width: 0;
+    display: grid;
+    gap: 0.4rem;
+}
+
+.post-media-search-input {
+    width: 100%;
+}
+
+.post-media-filter-control {
+    width: 100%;
+}
+
+.post-media-quick-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.post-media-quick-summary-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(34, 211, 238, 0.18);
+    background: rgba(15, 23, 42, 0.72);
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #cbd5e1;
+}
+
 @media (min-width: 768px) {
     .post-media-quick-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5686,6 +5736,49 @@ select.nerd-input {
     gap: 0.28rem;
 }
 
+.post-media-quick-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.post-media-origin-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 0.55rem;
+    border-radius: 999px;
+    border: 1px solid rgba(100, 116, 139, 0.32);
+    background: rgba(15, 23, 42, 0.72);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
+.post-media-origin-badge.is-post {
+    border-color: rgba(34, 211, 238, 0.24);
+    background: rgba(8, 47, 73, 0.5);
+    color: #67e8f9;
+}
+
+.post-media-usage-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 0.55rem;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(30, 41, 59, 0.58);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #cbd5e1;
+}
+
 .post-media-quick-name {
     font-size: 0.8rem;
     font-weight: 800;
@@ -5708,6 +5801,16 @@ select.nerd-input {
 .post-media-quick-actions {
     display: grid;
     gap: 0.45rem;
+}
+
+.post-media-quick-empty {
+    margin-top: 0.9rem;
+    border-radius: 16px;
+    border: 1px dashed rgba(100, 116, 139, 0.45);
+    background: rgba(15, 23, 42, 0.42);
+    padding: 1rem;
+    font-size: 0.82rem;
+    color: #94a3b8;
 }
 
 .post-media-mini-btn {
@@ -5756,6 +5859,24 @@ select.nerd-input {
         grid-template-columns: 1fr;
     }
 
+    .post-media-quick-toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+    }
+
+    .post-media-search-field {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .post-media-filter-field {
+        width: 100%;
+    }
+
+    .post-media-quick-summary {
+        grid-column: 1 / -1;
+    }
+
     .post-media-quick-thumb {
         width: 100%;
     }
@@ -5767,6 +5888,12 @@ select.nerd-input {
     .post-media-mini-btn {
         min-width: 0;
         width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .post-media-quick-toolbar {
+        grid-template-columns: 1fr;
     }
 }
 
