@@ -8,6 +8,7 @@ use App\Support\Csrf;
 $title = (string) ($title ?? (string) portal_config('meta_title_padrao', 'Estrategia Nerd'));
 $metaDescription = (string) ($meta_description ?? (string) portal_config('meta_description_padrao', portal_config('descricao_site', 'Estrategia Nerd')));
 $canonicalUrl = trim((string) ($canonical_url ?? ''));
+$metaRobots = trim((string) ($meta_robots ?? ''));
 $structuredData = $structured_data ?? [];
 if (is_array($structuredData) && array_key_exists('@context', $structuredData)) {
     $structuredData = [$structuredData];
@@ -74,6 +75,9 @@ $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></title>
   <meta name="description" content="<?= htmlspecialchars($metaDescription, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+  <?php if ($metaRobots !== ''): ?>
+    <meta name="robots" content="<?= htmlspecialchars($metaRobots, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+  <?php endif; ?>
   <meta property="og:locale" content="pt_BR">
   <meta property="og:type" content="<?= htmlspecialchars($ogType, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
   <meta property="og:site_name" content="<?= htmlspecialchars($siteName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">

@@ -101,6 +101,8 @@ $lastItem = $total > 0 ? min($total, $page * $perPage) : 0;
               $slug = trim((string) ($item['slug'] ?? ''));
               $cor = trim((string) ($item['cor'] ?? '#00d4ff'));
               $ativo = (int) ($item['ativo'] ?? 1) === 1;
+              $indexar = (int) ($item['indexar'] ?? 1) === 1;
+              $exibirNoMenu = (int) ($item['exibir_no_menu'] ?? 1) === 1;
               $ordem = (int) ($item['ordem'] ?? 0);
               $postsCount = (int) ($item['total_posts'] ?? 0);
               $viewsCount = (int) ($item['total_views'] ?? 0);
@@ -116,9 +118,20 @@ $lastItem = $total > 0 ? min($total, $page * $perPage) : 0;
                   <span class="categories-table-color-dot" style="background: <?= htmlspecialchars($cor !== '' ? $cor : '#00d4ff', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"></span>
                   <span class="categories-table-color-chip"><?= htmlspecialchars($cor !== '' ? $cor : '#00d4ff', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
                 </div>
+                <div class="flex flex-wrap gap-2 mt-3">
+                  <span class="<?= $indexar ? 'status-badge status-publicado' : 'status-badge status-rascunho' ?>">
+                    <?= $indexar ? 'indexavel' : 'noindex' ?>
+                  </span>
+                  <span class="<?= $exibirNoMenu ? 'status-badge status-publicado' : 'status-badge status-rascunho' ?>">
+                    <?= $exibirNoMenu ? 'menu' : 'fora menu' ?>
+                  </span>
+                </div>
               </td>
               <td class="categories-table-td categories-table-td-center">
-                <span class="<?= $ativo ? 'status-badge status-publicado' : 'status-badge status-rascunho' ?>"><?= $ativo ? 'ativa' : 'inativa' ?></span>
+                <div class="flex flex-col items-center gap-2">
+                  <span class="<?= $ativo ? 'status-badge status-publicado' : 'status-badge status-rascunho' ?>"><?= $ativo ? 'ativa' : 'inativa' ?></span>
+                  <span class="text-[11px] text-slate-500"><?= $indexar ? 'SEO ligado' : 'SEO bloqueado' ?></span>
+                </div>
               </td>
               <td class="categories-table-td categories-table-td-center">
                 <span class="categories-table-metric<?= $ordem === 0 ? ' is-zero' : '' ?>"><?= number_format($ordem, 0, ',', '.') ?></span>

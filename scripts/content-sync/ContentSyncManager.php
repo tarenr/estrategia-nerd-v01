@@ -526,7 +526,19 @@ final class ContentSyncManager
     private function exportPayload(PDO $pdo): array
     {
         $supportsNextStep = $this->tableHasColumn($pdo, 'posts', 'proximo_post_id');
-        $categories = $this->fetchAll($pdo, 'SELECT id, nome, slug, descricao, ativo, ordem, cor FROM categoria_post ORDER BY ordem ASC, nome ASC, id ASC');
+        $supportsCategorySeoTitle = $this->tableHasColumn($pdo, 'categoria_post', 'seo_title');
+        $supportsCategorySeoDescription = $this->tableHasColumn($pdo, 'categoria_post', 'seo_description');
+        $supportsCategoryIndexar = $this->tableHasColumn($pdo, 'categoria_post', 'indexar');
+        $supportsCategoryMenu = $this->tableHasColumn($pdo, 'categoria_post', 'exibir_no_menu');
+        $categories = $this->fetchAll(
+            $pdo,
+            'SELECT id, nome, slug, descricao, ativo, ordem, cor, '
+            . ($supportsCategorySeoTitle ? 'seo_title' : 'NULL AS seo_title') . ', '
+            . ($supportsCategorySeoDescription ? 'seo_description' : 'NULL AS seo_description') . ', '
+            . ($supportsCategoryIndexar ? 'indexar' : '1 AS indexar') . ', '
+            . ($supportsCategoryMenu ? 'exibir_no_menu' : '1 AS exibir_no_menu')
+            . ' FROM categoria_post ORDER BY ordem ASC, nome ASC, id ASC'
+        );
         $nextStepSelect = $supportsNextStep ? 'proximo_post_id' : 'NULL AS proximo_post_id';
         $posts = $this->fetchAll($pdo, "SELECT id, titulo, slug, resumo, conteudo, categoria, categoria_id, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, data_atualizacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque, {$nextStepSelect} FROM posts ORDER BY data_publicacao ASC, id ASC");
         $history = $this->fetchAll($pdo, 'SELECT post_id, slug, created_at FROM post_slug_history ORDER BY id ASC');
@@ -751,6 +763,10 @@ final class ContentSyncManager
     {
         $stats = ['created' => 0, 'updated' => 0];
         $map = [];
+        $supportsCategorySeoTitle = $this->tableHasColumn($pdo, 'categoria_post', 'seo_title');
+        $supportsCategorySeoDescription = $this->tableHasColumn($pdo, 'categoria_post', 'seo_description');
+        $supportsCategoryIndexar = $this->tableHasColumn($pdo, 'categoria_post', 'indexar');
+        $supportsCategoryMenu = $this->tableHasColumn($pdo, 'categoria_post', 'exibir_no_menu');
 
         foreach ($categories as $category) {
             $slug = trim((string) ($category['slug'] ?? ''));
@@ -760,13 +776,84 @@ final class ContentSyncManager
 
             $existing = $this->fetchOne($pdo, 'SELECT id FROM categoria_post WHERE slug = :slug LIMIT 1', ['slug' => $slug]);
             if ($existing !== null) {
-                $stmt = $pdo->prepare('UPDATE categoria_post SET nome = :nome, descricao = :descricao, ativo = :ativo, ordem = :ordem, cor = :cor WHERE id = :id');
-                $stmt->execute(['id' => (int) $existing['id'], 'nome' => (string) ($category['nome'] ?? ''), 'descricao' => $this->nullableString($category['descricao'] ?? null), 'ativo' => (int) ($category['ativo'] ?? 1), 'ordem' => (int) ($category['ordem'] ?? 0), 'cor' => (string) ($category['cor'] ?? '#00d4ff')]);
+                $assignments = [
+                    'nome = :nome',
+                    'descricao = :descricao',
+                    'ativo = :ativo',
+                    'ordem = :ordem',
+                    'cor = :cor',
+                ];
+                if ($supportsCategorySeoTitle) {
+                    $assignments[] = 'seo_title = :seo_title';
+                }
+                if ($supportsCategorySeoDescription) {
+                    $assignments[] = 'seo_description = :seo_description';
+                }
+                if ($supportsCategoryIndexar) {
+                    $assignments[] = 'indexar = :indexar';
+                }
+                if ($supportsCategoryMenu) {
+                    $assignments[] = 'exibir_no_menu = :exibir_no_menu';
+                }
+
+                $stmt = $pdo->prepare('UPDATE categoria_post SET ' . implode(', ', $assignments) . ' WHERE id = :id');
+                $params = [
+                    'id' => (int) $existing['id'],
+                    'nome' => (string) ($category['nome'] ?? ''),
+                    'descricao' => $this->nullableString($category['descricao'] ?? null),
+                    'ativo' => (int) ($category['ativo'] ?? 1),
+                    'ordem' => (int) ($category['ordem'] ?? 0),
+                    'cor' => (string) ($category['cor'] ?? '#00d4ff'),
+                ];
+                if ($supportsCategorySeoTitle) {
+                    $params['seo_title'] = $this->nullableString($category['seo_title'] ?? null);
+                }
+                if ($supportsCategorySeoDescription) {
+                    $params['seo_description'] = $this->nullableString($category['seo_description'] ?? null);
+                }
+                if ($supportsCategoryIndexar) {
+                    $params['indexar'] = (int) ($category['indexar'] ?? 1);
+                }
+                if ($supportsCategoryMenu) {
+                    $params['exibir_no_menu'] = (int) ($category['exibir_no_menu'] ?? 1);
+                }
+                $stmt->execute($params);
                 $categoryId = (int) $existing['id'];
                 $stats['updated']++;
             } else {
-                $stmt = $pdo->prepare('INSERT INTO categoria_post (nome, slug, descricao, ativo, ordem, cor) VALUES (:nome, :slug, :descricao, :ativo, :ordem, :cor)');
-                $stmt->execute(['nome' => (string) ($category['nome'] ?? ''), 'slug' => $slug, 'descricao' => $this->nullableString($category['descricao'] ?? null), 'ativo' => (int) ($category['ativo'] ?? 1), 'ordem' => (int) ($category['ordem'] ?? 0), 'cor' => (string) ($category['cor'] ?? '#00d4ff')]);
+                $columns = ['nome', 'slug', 'descricao', 'ativo', 'ordem', 'cor'];
+                $values = [':nome', ':slug', ':descricao', ':ativo', ':ordem', ':cor'];
+                $params = [
+                    'nome' => (string) ($category['nome'] ?? ''),
+                    'slug' => $slug,
+                    'descricao' => $this->nullableString($category['descricao'] ?? null),
+                    'ativo' => (int) ($category['ativo'] ?? 1),
+                    'ordem' => (int) ($category['ordem'] ?? 0),
+                    'cor' => (string) ($category['cor'] ?? '#00d4ff'),
+                ];
+                if ($supportsCategorySeoTitle) {
+                    $columns[] = 'seo_title';
+                    $values[] = ':seo_title';
+                    $params['seo_title'] = $this->nullableString($category['seo_title'] ?? null);
+                }
+                if ($supportsCategorySeoDescription) {
+                    $columns[] = 'seo_description';
+                    $values[] = ':seo_description';
+                    $params['seo_description'] = $this->nullableString($category['seo_description'] ?? null);
+                }
+                if ($supportsCategoryIndexar) {
+                    $columns[] = 'indexar';
+                    $values[] = ':indexar';
+                    $params['indexar'] = (int) ($category['indexar'] ?? 1);
+                }
+                if ($supportsCategoryMenu) {
+                    $columns[] = 'exibir_no_menu';
+                    $values[] = ':exibir_no_menu';
+                    $params['exibir_no_menu'] = (int) ($category['exibir_no_menu'] ?? 1);
+                }
+
+                $stmt = $pdo->prepare('INSERT INTO categoria_post (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ')');
+                $stmt->execute($params);
                 $categoryId = (int) $pdo->lastInsertId();
                 $stats['created']++;
             }

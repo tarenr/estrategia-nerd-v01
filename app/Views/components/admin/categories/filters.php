@@ -34,6 +34,10 @@ $action = function_exists('url') ? url('/admin/categorias') : '/admin/categorias
         <option value="inativas" <?= $status === 'inativas' ? 'selected' : '' ?>>Somente inativas</option>
         <option value="com_posts" <?= $status === 'com_posts' ? 'selected' : '' ?>>Com posts vinculados</option>
         <option value="sem_posts" <?= $status === 'sem_posts' ? 'selected' : '' ?>>Sem posts vinculados</option>
+        <option value="indexaveis" <?= $status === 'indexaveis' ? 'selected' : '' ?>>Somente indexaveis</option>
+        <option value="noindex" <?= $status === 'noindex' ? 'selected' : '' ?>>Somente noindex</option>
+        <option value="menu" <?= $status === 'menu' ? 'selected' : '' ?>>Exibidas no menu</option>
+        <option value="fora_menu" <?= $status === 'fora_menu' ? 'selected' : '' ?>>Fora do menu</option>
       </select>
     </div>
   </div>

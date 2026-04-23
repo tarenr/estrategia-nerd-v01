@@ -67,9 +67,6 @@ if (function_exists('opcache_compile_file')) {
 }
 
 $routes = include $routesFile;
-header((string) ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1') . ' 200 OK');
-header('Status: 200 OK');
-http_response_code(200);
 
 if (!is_array($routes)) {
     http_response_code(500);

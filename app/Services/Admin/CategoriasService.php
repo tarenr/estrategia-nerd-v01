@@ -7,6 +7,21 @@ use App\Repositories\CategoriaPostRepository;
 
 final class CategoriasService
 {
+    private const RESERVED_SLUGS = [
+        'page',
+        'tag',
+        'autor',
+        'author',
+        'search',
+        'busca',
+        'feed',
+        'post',
+        'categoria',
+        'admin',
+        'rss',
+        'sitemap',
+    ];
+
     public function __construct(private CategoriaPostRepository $categorias)
     {
     }
@@ -72,8 +87,19 @@ final class CategoriasService
             return ['ok' => false, 'viewModel' => $this->buildFormViewModel('create', $form, $errors)];
         }
 
-        $slug = $this->categorias->nextAvailableSlug($this->slugify($form['slug'] !== '' ? $form['slug'] : $form['nome']));
-        $id = $this->categorias->insertAdmin(['nome' => $form['nome'], 'slug' => $slug, 'cor' => $form['cor'], 'ativo' => $form['ativo'], 'ordem' => $form['ordem']]);
+        $slug = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['nome']);
+        $id = $this->categorias->insertAdmin([
+            'nome' => $form['nome'],
+            'slug' => $slug,
+            'descricao_publica' => $form['descricao_publica'],
+            'seo_title' => $form['seo_title'],
+            'seo_description' => $form['seo_description'],
+            'cor' => $form['cor'],
+            'ativo' => $form['ativo'],
+            'indexar' => $form['indexar'],
+            'exibir_no_menu' => $form['exibir_no_menu'],
+            'ordem' => $form['ordem'],
+        ]);
 
         return ['ok' => true, 'id' => $id, 'slug' => $slug];
     }
@@ -92,8 +118,19 @@ final class CategoriasService
             return ['ok' => false, 'viewModel' => $this->buildFormViewModel('edit', $form, $errors, $categoria)];
         }
 
-        $slug = $this->categorias->nextAvailableSlug($this->slugify($form['slug'] !== '' ? $form['slug'] : $form['nome']), $id);
-        $this->categorias->updateAdmin($id, ['nome' => $form['nome'], 'slug' => $slug, 'cor' => $form['cor'], 'ativo' => $form['ativo'], 'ordem' => $form['ordem']]);
+        $slug = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['nome']);
+        $this->categorias->updateAdmin($id, [
+            'nome' => $form['nome'],
+            'slug' => $slug,
+            'descricao_publica' => $form['descricao_publica'],
+            'seo_title' => $form['seo_title'],
+            'seo_description' => $form['seo_description'],
+            'cor' => $form['cor'],
+            'ativo' => $form['ativo'],
+            'indexar' => $form['indexar'],
+            'exibir_no_menu' => $form['exibir_no_menu'],
+            'ordem' => $form['ordem'],
+        ]);
 
         return ['ok' => true, 'id' => $id, 'slug' => $slug];
     }
@@ -125,6 +162,10 @@ final class CategoriasService
         $total = count($items);
         $ativos = count(array_filter($items, static fn (array $item): bool => (int) ($item['ativo'] ?? 0) === 1));
         $inativos = max(0, $total - $ativos);
+        $indexaveis = count(array_filter($items, static fn (array $item): bool => (int) ($item['indexar'] ?? 1) === 1));
+        $noindex = max(0, $total - $indexaveis);
+        $menu = count(array_filter($items, static fn (array $item): bool => (int) ($item['exibir_no_menu'] ?? 1) === 1));
+        $foraMenu = max(0, $total - $menu);
         $comPosts = count(array_filter($items, static fn (array $item): bool => (int) ($item['total_posts'] ?? 0) > 0));
         $semPosts = max(0, $total - $comPosts);
         $totalPosts = 0;
@@ -139,6 +180,10 @@ final class CategoriasService
             'total' => $total,
             'ativas' => $ativos,
             'inativas' => $inativos,
+            'indexaveis' => $indexaveis,
+            'noindex' => $noindex,
+            'menu' => $menu,
+            'fora_menu' => $foraMenu,
             'com_posts' => $comPosts,
             'sem_posts' => $semPosts,
             'total_posts_vinculados' => $totalPosts,
@@ -152,7 +197,19 @@ final class CategoriasService
 
     private function mapCategoriaToForm(array $categoria): array
     {
-        return ['id' => (int) ($categoria['id'] ?? 0), 'nome' => trim((string) ($categoria['nome'] ?? '')), 'slug' => trim((string) ($categoria['slug'] ?? '')), 'cor' => trim((string) ($categoria['cor'] ?? '#00d4ff')), 'ativo' => (int) ($categoria['ativo'] ?? 1) === 1 ? 1 : 0, 'ordem' => (int) ($categoria['ordem'] ?? 0)];
+        return [
+            'id' => (int) ($categoria['id'] ?? 0),
+            'nome' => trim((string) ($categoria['nome'] ?? '')),
+            'slug' => trim((string) ($categoria['slug'] ?? '')),
+            'descricao_publica' => trim((string) ($categoria['descricao_publica'] ?? '')),
+            'seo_title' => trim((string) ($categoria['seo_title'] ?? '')),
+            'seo_description' => trim((string) ($categoria['seo_description'] ?? '')),
+            'cor' => trim((string) ($categoria['cor'] ?? '#00d4ff')),
+            'ativo' => (int) ($categoria['ativo'] ?? 1) === 1 ? 1 : 0,
+            'indexar' => (int) ($categoria['indexar'] ?? 1) === 1 ? 1 : 0,
+            'exibir_no_menu' => (int) ($categoria['exibir_no_menu'] ?? 1) === 1 ? 1 : 0,
+            'ordem' => (int) ($categoria['ordem'] ?? 0),
+        ];
     }
 
     private function normalizeForm(array $input, int $id = 0): array
@@ -160,7 +217,19 @@ final class CategoriasService
         $cor = trim((string) ($input['cor'] ?? '#00d4ff'));
         if ($cor === '') { $cor = '#00d4ff'; }
 
-        return ['id' => $id > 0 ? $id : (int) ($input['id'] ?? 0), 'nome' => trim((string) ($input['nome'] ?? '')), 'slug' => trim((string) ($input['slug'] ?? '')), 'cor' => $cor, 'ativo' => (int) ($input['ativo'] ?? 0) === 1 ? 1 : 0, 'ordem' => max(0, (int) ($input['ordem'] ?? 0))];
+        return [
+            'id' => $id > 0 ? $id : (int) ($input['id'] ?? 0),
+            'nome' => trim((string) ($input['nome'] ?? '')),
+            'slug' => trim((string) ($input['slug'] ?? '')),
+            'descricao_publica' => trim((string) ($input['descricao_publica'] ?? '')),
+            'seo_title' => trim((string) ($input['seo_title'] ?? '')),
+            'seo_description' => trim((string) ($input['seo_description'] ?? '')),
+            'cor' => $cor,
+            'ativo' => (int) ($input['ativo'] ?? 0) === 1 ? 1 : 0,
+            'indexar' => (int) ($input['indexar'] ?? 0) === 1 ? 1 : 0,
+            'exibir_no_menu' => (int) ($input['exibir_no_menu'] ?? 0) === 1 ? 1 : 0,
+            'ordem' => max(0, (int) ($input['ordem'] ?? 0)),
+        ];
     }
 
     private function validateForm(array $form, ?int $ignoreId = null): array
@@ -175,10 +244,22 @@ final class CategoriasService
         $slugBase = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['nome']);
         if ($slugBase === '') {
             $errors['slug'] = 'Nao foi possivel gerar um slug valido para a categoria.';
+        } elseif (in_array($slugBase, self::RESERVED_SLUGS, true)) {
+            $errors['slug'] = 'Esse slug e reservado pelo blog e nao pode ser usado como categoria.';
+        } elseif ($this->categorias->slugExists($slugBase, $ignoreId)) {
+            $errors['slug'] = 'Ja existe uma categoria usando esse slug.';
         }
 
         if (!preg_match('/^#[0-9a-fA-F]{6}$/', $form['cor'])) {
             $errors['cor'] = 'Informe uma cor hexadecimal valida no formato #RRGGBB.';
+        }
+
+        if ($form['seo_title'] !== '' && mb_strlen($form['seo_title']) > 60) {
+            $errors['seo_title'] = 'O SEO title deve ter no maximo 60 caracteres.';
+        }
+
+        if ($form['seo_description'] !== '' && mb_strlen($form['seo_description']) > 160) {
+            $errors['seo_description'] = 'A SEO description deve ter no maximo 160 caracteres.';
         }
 
         return $errors;
@@ -191,7 +272,7 @@ final class CategoriasService
 
     private function normalizeSortDir(string $sort, string $dir): array
     {
-        $allowedSort = ['nome', 'slug', 'cor', 'ativo', 'ordem', 'total_posts', 'total_views'];
+        $allowedSort = ['nome', 'slug', 'ativo', 'indexar', 'exibir_no_menu', 'ordem', 'total_posts', 'total_views'];
         if (!in_array($sort, $allowedSort, true)) {
             $sort = 'ordem';
         }

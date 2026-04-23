@@ -20,7 +20,7 @@ final class BlogService
         $category = trim((string) ($filters['categoria'] ?? ''));
         $isCategoryRoute = (bool) ($filters['category_route'] ?? false);
         $page = max(1, (int) ($filters['page'] ?? 1));
-        $siteName = (string) portal_config('nome_site', 'Estratégia Nerd');
+        $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
         $categories = $this->categorias->listForBlog();
         $resolvedCategory = is_array($filters['resolved_category'] ?? null) ? $filters['resolved_category'] : null;
         $selectedCategoryName = $resolvedCategory !== null
@@ -39,9 +39,10 @@ final class BlogService
             'exclude_id' => $featuredId,
         ], $page, 9);
 
-        $title = $this->buildTitle($siteName, $selectedCategoryName, $search, $isCategoryRoute);
-        $metaDescription = $this->buildMetaDescription($selectedCategoryName, $search, $isCategoryRoute);
+        $title = $this->buildTitle($siteName, $selectedCategoryName, $search, $isCategoryRoute, $resolvedCategory);
+        $metaDescription = $this->buildMetaDescription($selectedCategoryName, $search, $isCategoryRoute, $resolvedCategory);
         $canonicalUrl = $this->buildCanonicalUrl($search, $category, $page, $isCategoryRoute);
+        $robotsMeta = $this->buildRobotsMeta($resolvedCategory, $search);
         $siteMeta = $this->siteMeta();
         $metaImage = (string) ($siteMeta['brand_symbol'] ?? '');
 
@@ -49,6 +50,7 @@ final class BlogService
             'title' => $title,
             'meta_description' => $metaDescription,
             'canonical_url' => $canonicalUrl,
+            'meta_robots' => $robotsMeta,
             'meta_image' => $metaImage,
             'og_type' => 'website',
             'structured_data' => $this->buildStructuredData($title, $metaDescription, $canonicalUrl, $siteName),
@@ -66,7 +68,8 @@ final class BlogService
                 'nome' => $selectedCategoryName,
                 'slug' => (string) ($resolvedCategory['slug'] ?? $category),
                 'total_posts' => (int) ($resolvedCategory['total_posts'] ?? 0),
-                'description' => 'Conteúdos da categoria ' . $selectedCategoryName . ' no blog Estratégia Nerd.',
+                'description' => $this->buildCategoryLead($resolvedCategory, $selectedCategoryName),
+                'indexar' => (int) ($resolvedCategory['indexar'] ?? 1),
             ] : null,
             'blog_pagination' => [
                 'page' => (int) ($pagination['page'] ?? 1),
@@ -86,10 +89,10 @@ final class BlogService
     private function siteMeta(): array
     {
         return [
-            'name' => (string) portal_config('nome_site', 'Estratégia Nerd'),
-            'description' => (string) portal_config('descricao_site', 'Conteúdo, tecnologia, cultura geek e oportunidades em um só lugar.'),
-            'kicker' => (string) portal_config('site_kicker', 'Portal geek estratégico'),
-            'footer' => (string) portal_config('footer_texto', 'Estratégia Nerd - Conteúdo, links e ofertas geek'),
+            'name' => (string) portal_config('nome_site', 'Estrategia Nerd'),
+            'description' => (string) portal_config('descricao_site', 'Conteudo, tecnologia, cultura geek e oportunidades em um so lugar.'),
+            'kicker' => (string) portal_config('site_kicker', 'Portal geek estrategico'),
+            'footer' => (string) portal_config('footer_texto', 'Estrategia Nerd - Conteudo, links e ofertas geek'),
             'email' => (string) portal_config('email_contato', ''),
             'instagram' => (string) portal_config('instagram_url', ''),
             'tiktok' => (string) portal_config('tiktok_url', ''),
@@ -137,6 +140,9 @@ final class BlogService
                 'nome' => public_text((string) ($item['nome'] ?? '')),
                 'slug' => $slug,
                 'cor' => (string) ($item['cor'] ?? '#00d4ff'),
+                'descricao_publica' => public_text((string) ($item['descricao_publica'] ?? '')),
+                'indexar' => (int) ($item['indexar'] ?? 1),
+                'exibir_no_menu' => (int) ($item['exibir_no_menu'] ?? 1),
                 'total_posts' => (int) ($item['total_posts'] ?? 0),
                 'url' => $slug !== '' ? url('/blog/' . rawurlencode($slug)) : url('/blog'),
             ];
@@ -163,13 +169,18 @@ final class BlogService
         return preg_match('~^https?://~i', $value) ? $value : url('/' . ltrim($value, '/'));
     }
 
-    private function buildTitle(string $siteName, string $categoryName, string $search, bool $isCategoryRoute): string
+    private function buildTitle(string $siteName, string $categoryName, string $search, bool $isCategoryRoute, ?array $resolvedCategory): string
     {
         if ($search !== '') {
             return 'Busca: ' . $search . ' | Blog ' . $siteName;
         }
 
         if ($categoryName !== '') {
+            $seoTitle = trim((string) ($resolvedCategory['seo_title'] ?? ''));
+            if ($seoTitle !== '') {
+                return public_text($seoTitle);
+            }
+
             if ($isCategoryRoute) {
                 return $categoryName . ' | Blog ' . $siteName;
             }
@@ -180,21 +191,26 @@ final class BlogService
         return 'Blog ' . $siteName . ' | Reviews, Comparativos e Guias de Tecnologia, Games e Gadgets';
     }
 
-    private function buildMetaDescription(string $categoryName, string $search, bool $isCategoryRoute): string
+    private function buildMetaDescription(string $categoryName, string $search, bool $isCategoryRoute, ?array $resolvedCategory): string
     {
         if ($search !== '') {
-            return 'Resultados da busca no blog do Estratégia Nerd com reviews, comparativos, listas e guias sobre tecnologia, games e gadgets.';
+            return 'Resultados da busca no blog do Estrategia Nerd com reviews, comparativos, listas e guias sobre tecnologia, games e gadgets.';
         }
 
         if ($categoryName !== '') {
-            if ($isCategoryRoute) {
-                return 'Conteúdos da categoria ' . $categoryName . ' no blog Estratégia Nerd.';
+            $seoDescription = trim((string) ($resolvedCategory['seo_description'] ?? ''));
+            if ($seoDescription !== '') {
+                return public_text($seoDescription);
             }
 
-            return 'Posts da categoria ' . $categoryName . ' no blog do Estratégia Nerd com conteúdo prático para comparar melhor e decidir com mais contexto.';
+            if ($isCategoryRoute) {
+                return 'Conteudos da categoria ' . $categoryName . ' no blog Estrategia Nerd.';
+            }
+
+            return 'Posts da categoria ' . $categoryName . ' no blog do Estrategia Nerd com conteudo pratico para comparar melhor e decidir com mais contexto.';
         }
 
-        return 'Blog do Estratégia Nerd com reviews, comparativos, guias, listas e dicas de tecnologia, games, gadgets e cultura geek para decidir melhor.';
+        return 'Blog do Estrategia Nerd com reviews, comparativos, guias, listas e dicas de tecnologia, games, gadgets e cultura geek para decidir melhor.';
     }
 
     private function buildCanonicalUrl(string $search, string $category, int $page, bool $isCategoryRoute): string
@@ -215,6 +231,19 @@ final class BlogService
         return url($base . ($query !== '' ? '?' . $query : ''));
     }
 
+    private function buildRobotsMeta(?array $resolvedCategory, string $search): string
+    {
+        if ($search !== '') {
+            return 'noindex,follow';
+        }
+
+        if ($resolvedCategory !== null && (int) ($resolvedCategory['indexar'] ?? 1) !== 1) {
+            return 'noindex,follow';
+        }
+
+        return 'index,follow';
+    }
+
     private function resolveCategoryName(string $slug, array $categories): string
     {
         if ($slug === '' || $slug === 'all') {
@@ -228,6 +257,16 @@ final class BlogService
         }
 
         return '';
+    }
+
+    private function buildCategoryLead(array $category, string $fallbackName): string
+    {
+        $description = trim((string) ($category['descricao_publica'] ?? ''));
+        if ($description !== '') {
+            return public_text($description);
+        }
+
+        return 'Conteudos da categoria ' . $fallbackName . ' no blog Estrategia Nerd.';
     }
 
     private function buildStructuredData(string $title, string $metaDescription, string $canonicalUrl, string $siteName): array

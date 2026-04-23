@@ -34,7 +34,7 @@ $selectedColor = htmlspecialchars((string) ($form['cor'] ?? '#00d4ff'), ENT_QUOT
     <div class="flex items-center justify-between gap-4 flex-wrap mb-5">
       <div>
         <h2 class="font-orbitron text-lg font-black text-white">Dados da categoria</h2>
-        <div class="text-xs text-slate-400 mt-1">Defina nome, slug, cor, ordem e disponibilidade no admin.</div>
+        <div class="text-xs text-slate-400 mt-1">Defina identidade, SEO minimo e regras de exibicao sem inflar o painel.</div>
       </div>
       <div class="admin-chip">Modo: <?= $mode === 'edit' ? 'edicao' : 'criacao' ?></div>
     </div>
@@ -55,6 +55,25 @@ $selectedColor = htmlspecialchars((string) ($form['cor'] ?? '#00d4ff'), ENT_QUOT
         <?php if ($fieldError('slug') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('slug'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
       </div>
 
+      <div class="lg:col-span-2">
+        <label for="descricao_publica" class="block text-sm font-bold text-slate-200 mb-2">Descricao publica</label>
+        <textarea id="descricao_publica" name="descricao_publica" rows="4" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Texto introdutorio da categoria para o topo da pagina e contexto editorial."><?= htmlspecialchars((string) ($form['descricao_publica'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></textarea>
+      </div>
+
+      <div>
+        <label for="seo_title" class="block text-sm font-bold text-slate-200 mb-2">SEO title</label>
+        <input id="seo_title" name="seo_title" type="text" maxlength="60" value="<?= htmlspecialchars((string) ($form['seo_title'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Games | Blog Estrategia Nerd">
+        <div class="mt-2 text-xs text-slate-500"><span id="categoriaSeoTitleCount"><?= mb_strlen((string) ($form['seo_title'] ?? '')) ?></span>/60</div>
+        <?php if ($fieldError('seo_title') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('seo_title'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+      </div>
+
+      <div>
+        <label for="seo_description" class="block text-sm font-bold text-slate-200 mb-2">SEO description</label>
+        <textarea id="seo_description" name="seo_description" rows="3" maxlength="160" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="Conteudos da categoria Games no blog Estrategia Nerd."><?= htmlspecialchars((string) ($form['seo_description'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></textarea>
+        <div class="mt-2 text-xs text-slate-500"><span id="categoriaSeoDescriptionCount"><?= mb_strlen((string) ($form['seo_description'] ?? '')) ?></span>/160</div>
+        <?php if ($fieldError('seo_description') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('seo_description'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+      </div>
+
       <div>
         <label for="cor" class="block text-sm font-bold text-slate-200 mb-2">Cor</label>
         <div class="flex items-center gap-3">
@@ -66,17 +85,44 @@ $selectedColor = htmlspecialchars((string) ($form['cor'] ?? '#00d4ff'), ENT_QUOT
       </div>
 
       <div>
-        <label for="ordem" class="block text-sm font-bold text-slate-200 mb-2">Ordem</label>
+        <label for="ordem" class="block text-sm font-bold text-slate-200 mb-2">Ordem de exibicao</label>
         <input id="ordem" name="ordem" type="number" min="0" value="<?= (int) ($form['ordem'] ?? 0) ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="0">
       </div>
     </div>
 
-    <div class="mt-5">
+    <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
       <label class="inline-flex items-center gap-3 text-sm text-slate-200">
         <input type="hidden" name="ativo" value="0">
         <input type="checkbox" name="ativo" value="1" class="rounded border-slate-700 bg-slate-900" <?= (int) ($form['ativo'] ?? 1) === 1 ? 'checked' : '' ?>>
-        Categoria ativa no seletor de posts
+        Categoria ativa no sistema
       </label>
+
+      <label class="inline-flex items-center gap-3 text-sm text-slate-200">
+        <input type="hidden" name="indexar" value="0">
+        <input type="checkbox" name="indexar" value="1" class="rounded border-slate-700 bg-slate-900" <?= (int) ($form['indexar'] ?? 1) === 1 ? 'checked' : '' ?>>
+        Permitir indexacao no Google
+      </label>
+
+      <label class="inline-flex items-center gap-3 text-sm text-slate-200">
+        <input type="hidden" name="exibir_no_menu" value="0">
+        <input type="checkbox" name="exibir_no_menu" value="1" class="rounded border-slate-700 bg-slate-900" <?= (int) ($form['exibir_no_menu'] ?? 1) === 1 ? 'checked' : '' ?>>
+        Exibir no menu do blog
+      </label>
+    </div>
+
+    <div class="mt-6 rounded-2xl border border-cyan-500/20 bg-slate-950/40 p-4">
+      <div class="text-sm font-bold text-cyan-300 mb-2">Preview SEO</div>
+      <div class="space-y-1">
+        <div id="categoriaSeoPreviewTitle" class="text-base font-semibold text-blue-300">
+          <?= htmlspecialchars((string) (($form['seo_title'] ?? '') !== '' ? $form['seo_title'] : (($form['nome'] ?? '') !== '' ? ($form['nome'] . ' | Blog Estrategia Nerd') : 'Categoria | Blog Estrategia Nerd')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+        </div>
+        <div id="categoriaSeoPreviewUrl" class="text-sm text-emerald-300">
+          /blog/<?= htmlspecialchars((string) (($form['slug'] ?? '') !== '' ? $form['slug'] : 'categoria'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+        </div>
+        <div id="categoriaSeoPreviewDescription" class="text-sm text-slate-300">
+          <?= htmlspecialchars((string) (($form['seo_description'] ?? '') !== '' ? $form['seo_description'] : (($form['nome'] ?? '') !== '' ? ('Conteudos da categoria ' . $form['nome'] . ' no blog Estrategia Nerd.') : 'Conteudos da categoria no blog Estrategia Nerd.')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -97,6 +143,13 @@ document.addEventListener('DOMContentLoaded', function () {
   var cor = document.getElementById('cor');
   var picker = document.getElementById('cor_picker');
   var preview = document.getElementById('categoriaColorPreview');
+  var seoTitle = document.getElementById('seo_title');
+  var seoDescription = document.getElementById('seo_description');
+  var seoTitleCount = document.getElementById('categoriaSeoTitleCount');
+  var seoDescriptionCount = document.getElementById('categoriaSeoDescriptionCount');
+  var seoPreviewTitle = document.getElementById('categoriaSeoPreviewTitle');
+  var seoPreviewUrl = document.getElementById('categoriaSeoPreviewUrl');
+  var seoPreviewDescription = document.getElementById('categoriaSeoPreviewDescription');
 
   if (gerar && nome && slug) {
     gerar.addEventListener('click', function () {
@@ -130,5 +183,50 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  var syncSeoPreview = function () {
+    var nomeValue = (nome && nome.value ? nome.value.trim() : '') || 'Categoria';
+    var slugValue = (slug && slug.value ? slug.value.trim() : '') || 'categoria';
+    var seoTitleValue = seoTitle && seoTitle.value ? seoTitle.value.trim() : '';
+    var seoDescriptionValue = seoDescription && seoDescription.value ? seoDescription.value.trim() : '';
+
+    if (seoTitleCount && seoTitle) {
+      seoTitleCount.textContent = String(seoTitle.value.length || 0);
+    }
+
+    if (seoDescriptionCount && seoDescription) {
+      seoDescriptionCount.textContent = String(seoDescription.value.length || 0);
+    }
+
+    if (seoPreviewTitle) {
+      seoPreviewTitle.textContent = seoTitleValue || (nomeValue + ' | Blog Estrategia Nerd');
+    }
+
+    if (seoPreviewUrl) {
+      seoPreviewUrl.textContent = '/blog/' + slugValue;
+    }
+
+    if (seoPreviewDescription) {
+      seoPreviewDescription.textContent = seoDescriptionValue || ('Conteudos da categoria ' + nomeValue + ' no blog Estrategia Nerd.');
+    }
+  };
+
+  if (nome) {
+    nome.addEventListener('input', syncSeoPreview);
+  }
+
+  if (slug) {
+    slug.addEventListener('input', syncSeoPreview);
+  }
+
+  if (seoTitle) {
+    seoTitle.addEventListener('input', syncSeoPreview);
+  }
+
+  if (seoDescription) {
+    seoDescription.addEventListener('input', syncSeoPreview);
+  }
+
+  syncSeoPreview();
 });
 </script>
