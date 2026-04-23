@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\Repositories\ConfiguracaoRepository;
+use App\Services\Site\SitemapCacheService;
 use App\Support\SiteSections;
 
 final class HomeMenusService
 {
-    public function __construct(private ConfiguracaoRepository $configuracoes)
+    public function __construct(
+        private ConfiguracaoRepository $configuracoes,
+        private SitemapCacheService $sitemapCache,
+    )
     {
     }
 
@@ -48,6 +52,7 @@ final class HomeMenusService
         $this->configuracoes->saveMany([
             SiteSections::CONFIG_KEY => SiteSections::toStorage($sections),
         ]);
+        $this->sitemapCache->refreshQuietly();
 
         return ['ok' => true];
     }

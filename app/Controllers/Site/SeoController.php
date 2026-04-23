@@ -5,6 +5,7 @@ namespace App\Controllers\Site;
 
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\PostRepository;
+use App\Services\Site\SitemapCacheService;
 use App\Services\Site\SitemapService;
 use PDO;
 
@@ -32,7 +33,7 @@ final class SeoController
     {
         header('Content-Type: application/xml; charset=UTF-8');
 
-        echo $this->sitemapService()->renderXml();
+        echo $this->sitemapCache()->currentXml();
     }
 
     private function posts(): PostRepository
@@ -54,5 +55,10 @@ final class SeoController
     private function sitemapService(): SitemapService
     {
         return new SitemapService($this->posts(), $this->categories());
+    }
+
+    private function sitemapCache(): SitemapCacheService
+    {
+        return SitemapCacheService::fromGlobals();
     }
 }

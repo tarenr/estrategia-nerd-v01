@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\Repositories\ConfiguracaoRepository;
+use App\Services\Site\SitemapCacheService;
 
 final class ConfiguracoesService
 {
@@ -35,6 +36,7 @@ final class ConfiguracoesService
     public function __construct(
         private ConfiguracaoRepository $configuracoes,
         private MidiaService $midia,
+        private SitemapCacheService $sitemapCache,
     ) {
     }
 
@@ -90,6 +92,7 @@ final class ConfiguracoesService
         }
 
         $this->configuracoes->saveMany($data);
+        $this->sitemapCache->refreshQuietly();
 
         return ['ok' => true];
     }

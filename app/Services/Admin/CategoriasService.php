@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\Repositories\CategoriaPostRepository;
+use App\Services\Site\SitemapCacheService;
 
 final class CategoriasService
 {
@@ -22,7 +23,10 @@ final class CategoriasService
         'sitemap',
     ];
 
-    public function __construct(private CategoriaPostRepository $categorias)
+    public function __construct(
+        private CategoriaPostRepository $categorias,
+        private SitemapCacheService $sitemapCache,
+    )
     {
     }
 
@@ -101,6 +105,8 @@ final class CategoriasService
             'ordem' => $form['ordem'],
         ]);
 
+        $this->sitemapCache->refreshQuietly();
+
         return ['ok' => true, 'id' => $id, 'slug' => $slug];
     }
 
@@ -132,6 +138,8 @@ final class CategoriasService
             'ordem' => $form['ordem'],
         ]);
 
+        $this->sitemapCache->refreshQuietly();
+
         return ['ok' => true, 'id' => $id, 'slug' => $slug];
     }
 
@@ -145,10 +153,12 @@ final class CategoriasService
         $totalPosts = (int) ($categoria['total_posts'] ?? 0);
         if ($totalPosts > 0) {
             $this->categorias->deactivateById($id);
+            $this->sitemapCache->refreshQuietly();
             return ['ok' => true, 'mode' => 'deactivated'];
         }
 
         $this->categorias->deleteById($id);
+        $this->sitemapCache->refreshQuietly();
         return ['ok' => true, 'mode' => 'deleted'];
     }
 

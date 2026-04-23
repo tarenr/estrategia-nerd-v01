@@ -15,6 +15,7 @@ use App\Repositories\CategoriaPostRepository;
 use App\Repositories\PostRepository;
 use App\Services\Admin\MidiaService;
 use App\Services\Admin\PostsService;
+use App\Services\Site\SitemapCacheService;
 use App\Support\Auth;
 use App\Support\Csrf;
 use App\Support\View;
@@ -214,6 +215,7 @@ final class PostsController
             new PostRepository($pdo),
             new CategoriaPostRepository($pdo),
             new MidiaService(),
+            SitemapCacheService::fromGlobals(),
         );
     }
 }

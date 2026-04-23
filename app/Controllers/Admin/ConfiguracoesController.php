@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 use App\Repositories\ConfiguracaoRepository;
 use App\Services\Admin\ConfiguracoesService;
 use App\Services\Admin\MidiaService;
+use App\Services\Site\SitemapCacheService;
 use App\Support\Csrf;
 use App\Support\View;
 
@@ -45,6 +46,7 @@ final class ConfiguracoesController
         return new ConfiguracoesService(
             new ConfiguracaoRepository($pdo),
             new MidiaService(),
+            SitemapCacheService::fromGlobals(),
         );
     }
 }

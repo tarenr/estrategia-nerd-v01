@@ -13,6 +13,7 @@ namespace App\Services\Admin;
 
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\PostRepository;
+use App\Services\Site\SitemapCacheService;
 use DateTimeImmutable;
 use Throwable;
 
@@ -22,6 +23,7 @@ final class PostsService
         private PostRepository $posts,
         private CategoriaPostRepository $categorias,
         private MidiaService $midia,
+        private SitemapCacheService $sitemapCache,
     ) {
     }
 
@@ -106,6 +108,8 @@ final class PostsService
             'proximo_post_id' => (int) ($form['proximo_post_id'] ?? 0),
         ]);
 
+        $this->sitemapCache->refreshQuietly();
+
         return ['ok' => true, 'id' => $postId, 'slug' => $slug];
     }
 
@@ -167,6 +171,8 @@ final class PostsService
         if ($oldSlug !== '' && $oldSlug !== $slug) {
             $this->posts->storeSlugHistory($id, $oldSlug);
         }
+
+        $this->sitemapCache->refreshQuietly();
 
         return ['ok' => true, 'id' => $id, 'slug' => $slug];
     }
@@ -253,6 +259,8 @@ final class PostsService
             'proximo_post_id' => 0,
         ]);
 
+        $this->sitemapCache->refreshQuietly();
+
         return ['ok' => true, 'id' => $newId, 'slug' => $slug];
     }
 
@@ -312,6 +320,7 @@ final class PostsService
         }
 
         $this->posts->deleteById($id);
+        $this->sitemapCache->refreshQuietly();
 
         return ['ok' => true, 'id' => $id];
     }

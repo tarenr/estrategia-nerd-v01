@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Repositories\ConfiguracaoRepository;
 use App\Services\Admin\HomeMenusService;
+use App\Services\Site\SitemapCacheService;
 use App\Support\Csrf;
 use App\Support\View;
 
@@ -42,6 +43,9 @@ final class HomeMenusController
         /** @var \PDO $pdo */
         $pdo = $GLOBALS['pdo'];
 
-        return new HomeMenusService(new ConfiguracaoRepository($pdo));
+        return new HomeMenusService(
+            new ConfiguracaoRepository($pdo),
+            SitemapCacheService::fromGlobals(),
+        );
     }
 }

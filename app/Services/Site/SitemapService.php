@@ -36,6 +36,37 @@ final class SitemapService
         return implode("\n", $xml) . "\n";
     }
 
+    public function fingerprint(): string
+    {
+        $payload = [
+            'base_url' => rtrim(url('/'), '/'),
+            'blog_active' => site_section_public_active('blog'),
+            'central_nerd_active' => site_section_public_active('central_nerd'),
+            'categories' => array_map(function (array $category): array {
+                return [
+                    'slug' => trim((string) ($category['slug'] ?? '')),
+                    'lastmod' => $this->toAtom((string) ($category['lastmod'] ?? '')),
+                ];
+            }, $this->categories->publishedForSitemap()),
+            'posts' => array_map(function (array $post): array {
+                return [
+                    'slug' => trim((string) ($post['slug'] ?? '')),
+                    'lastmod' => $this->toAtom((string) ($post['lastmod'] ?? $post['data_publicacao'] ?? '')),
+                ];
+            }, $this->posts->publishedForSitemap()),
+            'files' => [
+                'sitemap_service' => @filemtime(__FILE__) ?: 0,
+                'seo_controller' => @filemtime(base_path('app/Controllers/Site/SeoController.php')) ?: 0,
+                'post_repository' => @filemtime(base_path('app/Repositories/PostRepository.php')) ?: 0,
+                'categoria_repository' => @filemtime(base_path('app/Repositories/CategoriaPostRepository.php')) ?: 0,
+                'helpers' => @filemtime(base_path('app/Support/Helpers.php')) ?: 0,
+                'routes' => @filemtime(base_path('config/routes.php')) ?: 0,
+            ],
+        ];
+
+        return hash('sha256', (string) json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+    }
+
     /**
      * @return array<int, array{loc: string, lastmod: string, changefreq: string, priority: string}>
      */

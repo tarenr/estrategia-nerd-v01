@@ -5,6 +5,7 @@ namespace App\Controllers\Admin;
 
 use App\Repositories\CategoriaPostRepository;
 use App\Services\Admin\CategoriasService;
+use App\Services\Site\SitemapCacheService;
 use App\Support\Csrf;
 use App\Support\View;
 
@@ -117,6 +118,9 @@ final class CategoriasController
         /** @var \PDO $pdo */
         $pdo = $GLOBALS['pdo'];
 
-        return new CategoriasService(new CategoriaPostRepository($pdo));
+        return new CategoriasService(
+            new CategoriaPostRepository($pdo),
+            SitemapCacheService::fromGlobals(),
+        );
     }
 }
