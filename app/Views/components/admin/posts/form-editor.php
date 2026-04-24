@@ -69,7 +69,7 @@ $editorMediaLibrary = [
 
         <div class="editor-toolbar-group">
           <button type="button" class="editor-btn" title="Preview" onclick="abrirPreview()"><i class="fa-solid fa-eye"></i></button>
-          <button type="submit" form="postForm" class="editor-btn" title="Salvar post"><i class="fa-solid fa-floppy-disk"></i></button>
+          <button type="submit" form="postForm" class="editor-btn" id="postToolbarSubmit" data-submit-role="toolbar" title="Salvar post"><i class="fa-solid fa-floppy-disk"></i></button>
         </div>
       </div>
     </div>

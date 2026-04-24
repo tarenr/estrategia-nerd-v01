@@ -47,6 +47,7 @@ $conteudo = (string) ($form['conteudo'] ?? '');
   </div>
 
   <?php View::component('admin/posts/form-media-seo', ['form' => $form, 'fieldError' => $fieldError, 'media_items' => $mediaItems, 'image_media_items' => $imageMediaItems, 'audio_media_items' => $audioMediaItems, 'video_media_items' => $videoMediaItems, 'orphan_files' => $orphan_files ?? ($orphan_images ?? [])]); ?>
+  <?php View::component('admin/posts/form-checklist', ['checklist' => $publication_checklist ?? []]); ?>
   <?php View::component('admin/posts/form-actions', ['mode' => $mode, 'submitLabel' => $submitLabel]); ?>
 </form>
 

@@ -639,13 +639,22 @@ final class PostsService
         $isEdit = $mode === 'edit';
         $supportsNextStep = $this->posts->supportsNextStep();
         $nextStepOptions = $this->posts->listPublishedForNextStepSelect((int) ($form['id'] ?? 0));
+        $availableCategorias = $categorias ?? $this->categorias->listForSelect();
+        $categoriasById = [];
+        foreach ($availableCategorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+
+            $categoriasById[(int) ($categoria['id'] ?? 0)] = $categoria;
+        }
 
         return array_merge([
             'title' => $isEdit ? 'Editar Post' : 'Criar Post',
             'mode' => $mode,
             'form' => $form,
             'errors' => $errors,
-            'categorias' => $categorias ?? $this->categorias->listForSelect(),
+            'categorias' => $availableCategorias,
             'supports_next_step' => $supportsNextStep,
             'next_step_options' => $nextStepOptions,
             'media_items' => $this->midia->recentMedia(24),
@@ -653,7 +662,197 @@ final class PostsService
             'audio_media_items' => $this->midia->recentMedia(12, 'audio'),
             'video_media_items' => $this->midia->recentMedia(12, 'video'),
             'orphan_files' => [],
+            'publication_checklist' => $this->buildPublicationChecklist($form, $errors, $categoriasById, $supportsNextStep),
         ], $extra);
+    }
+
+    private function buildPublicationChecklist(array $form, array $errors, array $categoriasById, bool $supportsNextStep): array
+    {
+        $items = [];
+        $stats = ['success' => 0, 'warning' => 0, 'error' => 0];
+        $status = trim((string) ($form['status'] ?? 'rascunho'));
+        $titulo = trim((string) ($form['titulo'] ?? ''));
+        $slug = $this->slugify((string) (($form['slug'] ?? '') !== '' ? $form['slug'] : $titulo));
+        $conteudoHtml = (string) ($form['conteudo'] ?? '');
+        $conteudoTexto = $this->plainTextFromHtml($conteudoHtml);
+        $categoriaId = (int) ($form['categoria_post_id'] ?? 0);
+        $dataPublicacao = $this->normalizeDateTimeForDatabase((string) ($form['data_publicacao'] ?? ''));
+        $nextStepId = max(0, (int) ($form['proximo_post_id'] ?? 0));
+        $missingMedia = $this->findMissingMediaReferences($form);
+        $missingAltImages = $this->findImagesMissingAlt($conteudoHtml);
+        $orphanFiles = $this->findOrphanBodyFiles($form);
+
+        $addItem = static function (string $key, string $statusKey, string $title, string $message, string $group = 'editorial') use (&$items, &$stats): void {
+            $items[] = [
+                'key' => $key,
+                'status' => $statusKey,
+                'title' => $title,
+                'message' => $message,
+                'group' => $group,
+            ];
+            if (isset($stats[$statusKey])) {
+                $stats[$statusKey]++;
+            }
+        };
+
+        if ($titulo === '') {
+            $addItem('titulo', 'error', 'Titulo', 'Informe o titulo do post.');
+        } elseif (mb_strlen($titulo) > 200) {
+            $addItem('titulo', 'error', 'Titulo', 'O titulo passou do limite de 200 caracteres.');
+        } else {
+            $addItem('titulo', 'success', 'Titulo', 'Titulo preenchido e pronto para publicacao.');
+        }
+
+        if ($slug === '') {
+            $addItem('slug', 'error', 'Slug', 'Nao foi possivel gerar um slug valido.');
+        } else {
+            $addItem('slug', 'success', 'Slug', 'Slug atual: ' . $slug);
+        }
+
+        if ($conteudoTexto === '') {
+            $addItem('conteudo', 'error', 'Conteudo', 'O post ainda nao tem conteudo editorial salvo.');
+        } else {
+            $addItem('conteudo', 'success', 'Conteudo', 'Conteudo preenchido com ' . mb_strlen($conteudoTexto) . ' caracteres visiveis.');
+        }
+
+        if (!isset($categoriasById[$categoriaId])) {
+            $addItem('categoria', 'error', 'Categoria', 'Selecione uma categoria valida para o post.');
+        } else {
+            $categoriaNome = trim((string) ($categoriasById[$categoriaId]['nome'] ?? 'Categoria'));
+            $addItem('categoria', 'success', 'Categoria', 'Categoria selecionada: ' . $categoriaNome . '.');
+        }
+
+        if (!in_array($status, ['publicado', 'rascunho', 'agendado'], true)) {
+            $addItem('status', 'error', 'Status', 'Selecione um status valido.');
+        } elseif ($status === 'publicado') {
+            $addItem('status', 'success', 'Status', 'Post marcado para publicacao imediata.');
+        } elseif ($status === 'agendado') {
+            $addItem('status', $dataPublicacao === null ? 'error' : 'warning', 'Status', $dataPublicacao === null
+                ? 'Post agendado sem data valida.'
+                : 'Post em modo agendado. Revise a data antes de publicar.');
+        } else {
+            $addItem('status', 'warning', 'Status', 'Post permanece em rascunho ate a publicacao.');
+        }
+
+        if ($dataPublicacao === null) {
+            $addItem('publicacao', 'error', 'Data de publicacao', 'Informe uma data de publicacao valida.');
+        } elseif ($status === 'agendado' && strtotime($dataPublicacao) <= time()) {
+            $addItem('publicacao', 'error', 'Data de publicacao', 'Posts agendados precisam de uma data futura.');
+        } elseif ($status === 'publicado' && strtotime($dataPublicacao) > time()) {
+            $addItem('publicacao', 'warning', 'Data de publicacao', 'A data esta no futuro mesmo com status publicado.');
+        } else {
+            $addItem('publicacao', 'success', 'Data de publicacao', 'Data configurada: ' . date('d/m/Y H:i', strtotime($dataPublicacao)));
+        }
+
+        $coverPath = trim((string) ($form['imagem_capa'] ?? ''));
+        if ($coverPath === '') {
+            $addItem('capa', 'warning', 'Imagem de capa', 'O post ainda esta sem capa.');
+        } elseif (!$this->assetReferenceExists($coverPath)) {
+            $addItem('capa', 'error', 'Imagem de capa', 'A capa configurada nao foi encontrada no ambiente local.');
+        } else {
+            $addItem('capa', 'success', 'Imagem de capa', 'Capa pronta para o front.');
+        }
+
+        $thumbPath = trim((string) ($form['imagem_thumb'] ?? ''));
+        if ($thumbPath === '') {
+            $addItem('thumb', 'warning', 'Thumbnail', 'O post ainda esta sem thumb.');
+        } elseif (!$this->assetReferenceExists($thumbPath)) {
+            $addItem('thumb', 'error', 'Thumbnail', 'A thumb configurada nao foi encontrada no ambiente local.');
+        } else {
+            $addItem('thumb', 'success', 'Thumbnail', 'Thumb pronta para cards e listagens.');
+        }
+
+        $seoTitle = trim((string) ($form['seo_title'] ?? ''));
+        $seoDescription = trim((string) ($form['seo_description'] ?? ''));
+        if ($seoTitle === '' && $seoDescription === '') {
+            $addItem('seo', 'warning', 'SEO', 'SEO title e description ainda estao vazios.');
+        } elseif (mb_strlen($seoTitle) > 200 || mb_strlen($seoDescription) > 300) {
+            $addItem('seo', 'error', 'SEO', 'Os campos de SEO passaram do limite permitido.');
+        } else {
+            $parts = [];
+            if ($seoTitle !== '') {
+                $parts[] = 'title ok';
+            }
+            if ($seoDescription !== '') {
+                $parts[] = 'description ok';
+            }
+            $addItem('seo', 'success', 'SEO', 'Campos prontos: ' . implode(' e ', $parts) . '.');
+        }
+
+        if (!$supportsNextStep) {
+            $addItem('next_step', 'warning', 'Proximo passo', 'O banco atual ainda nao suporta CTA dedicado de proximo passo.');
+        } elseif ($nextStepId <= 0) {
+            $addItem('next_step', 'warning', 'Proximo passo', 'Nenhum post recomendado foi selecionado.');
+        } elseif (isset($errors['proximo_post_id'])) {
+            $addItem('next_step', 'error', 'Proximo passo', (string) $errors['proximo_post_id']);
+        } else {
+            $nextStep = $this->posts->findPublishedById($nextStepId);
+            if ($nextStep === null) {
+                $addItem('next_step', 'error', 'Proximo passo', 'O post recomendado nao foi encontrado como publicado.');
+            } else {
+                $addItem('next_step', 'success', 'Proximo passo', 'CTA aponta para: ' . trim((string) ($nextStep['titulo'] ?? 'post publicado')) . '.');
+            }
+        }
+
+        if ($missingMedia !== []) {
+            $addItem(
+                'media',
+                'error',
+                'Midia referenciada',
+                count($missingMedia) . ' arquivo(s) citado(s) no HTML nao foram encontrados localmente.',
+                'tecnico'
+            );
+        } else {
+            $addItem('media', 'success', 'Midia referenciada', 'Todas as midias citadas no HTML foram encontradas.', 'tecnico');
+        }
+
+        if ($missingAltImages !== []) {
+            $addItem(
+                'alt',
+                'warning',
+                'Alt de imagens',
+                count($missingAltImages) . ' imagem(ns) do HTML estao sem alt preenchido.',
+                'tecnico'
+            );
+        } else {
+            $addItem('alt', 'success', 'Alt de imagens', 'Imagens do HTML com alt preenchido ou sem imagens inline pendentes.', 'tecnico');
+        }
+
+        if ($orphanFiles !== []) {
+            $addItem(
+                'orphans',
+                'warning',
+                'Arquivos soltos',
+                count($orphanFiles) . ' arquivo(s) da pasta do post nao aparecem mais no HTML salvo.',
+                'tecnico'
+            );
+        } else {
+            $addItem('orphans', 'success', 'Arquivos soltos', 'Nenhum arquivo solto detectado na pasta do post.', 'tecnico');
+        }
+
+        $overall = 'success';
+        $headline = 'Pronto para publicar.';
+        if ($stats['error'] > 0) {
+            $overall = 'error';
+            $headline = 'Publicacao bloqueada ate corrigir os erros criticos.';
+        } elseif ($stats['warning'] > 0) {
+            $overall = 'warning';
+            $headline = 'Post utilizavel, mas ainda com alertas editoriais.';
+        }
+
+        return [
+            'status' => $overall,
+            'headline' => $headline,
+            'stats' => $stats,
+            'items' => $items,
+            'missing_media' => $missingMedia,
+            'missing_alt_images' => $missingAltImages,
+            'runtime' => [
+                'slug' => $this->slugify((string) ($form['slug'] ?? '')),
+                'managed_files' => $this->listPostManagedFiles($form),
+                'known_existing_uploads' => $this->listExistingUploadReferences($form),
+            ],
+        ];
     }
 
     private function mapPostToForm(array $post): array
@@ -946,6 +1145,163 @@ final class PostsService
     {
         $text = trim(strip_tags($html));
         return preg_replace('/\s+/', ' ', $text) ?? $text;
+    }
+
+    private function findImagesMissingAlt(string $html): array
+    {
+        if (trim($html) === '') {
+            return [];
+        }
+
+        preg_match_all('/<img\b[^>]*>/i', $html, $matches);
+        $items = [];
+
+        foreach ((array) ($matches[0] ?? []) as $index => $tag) {
+            $src = '';
+            if (preg_match('/\bsrc\s*=\s*["\']([^"\']+)["\']/i', (string) $tag, $srcMatch)) {
+                $src = trim((string) ($srcMatch[1] ?? ''));
+            }
+
+            $hasAlt = preg_match('/\balt\s*=\s*["\']([^"\']*)["\']/i', (string) $tag, $altMatch) === 1;
+            $alt = $hasAlt ? trim((string) ($altMatch[1] ?? '')) : '';
+            if (!$hasAlt || $alt === '') {
+                $items[] = [
+                    'index' => $index + 1,
+                    'src' => $src,
+                ];
+            }
+        }
+
+        return $items;
+    }
+
+    private function listPostManagedFiles(array $form): array
+    {
+        $slug = $this->slugify((string) ($form['slug'] ?? ''));
+        if ($slug === '') {
+            return [];
+        }
+
+        $directory = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'posts' . DIRECTORY_SEPARATOR . $slug;
+        if (!is_dir($directory)) {
+            return [];
+        }
+
+        $items = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $file) {
+            if (!$file instanceof \SplFileInfo || !$file->isFile()) {
+                continue;
+            }
+
+            $items[] = 'uploads/posts/' . $slug . '/' . str_replace('\\', '/', substr($file->getPathname(), strlen($directory) + 1));
+        }
+
+        sort($items);
+
+        return $items;
+    }
+
+    private function listExistingUploadReferences(array $form): array
+    {
+        $paths = [];
+
+        foreach ([
+            (string) ($form['imagem_capa'] ?? ''),
+            (string) ($form['imagem_thumb'] ?? ''),
+        ] as $value) {
+            $normalized = $this->normalizeAssetReference($value);
+            if ($normalized !== '' && $this->assetReferenceExists($normalized)) {
+                $paths[$normalized] = true;
+            }
+        }
+
+        preg_match_all('~(?:src|href|poster)\s*=\s*["\']([^"\']+)["\']~i', (string) ($form['conteudo'] ?? ''), $matches);
+        foreach ((array) ($matches[1] ?? []) as $value) {
+            $normalized = $this->normalizeAssetReference((string) $value);
+            if ($normalized !== '' && $this->assetReferenceExists($normalized)) {
+                $paths[$normalized] = true;
+            }
+        }
+
+        preg_match_all('~data-audio-(?:narracao|ambiente)\s*=\s*["\']([^"\']+)["\']~i', (string) ($form['conteudo'] ?? ''), $audioMatches);
+        foreach ((array) ($audioMatches[1] ?? []) as $value) {
+            $normalized = $this->normalizeAssetReference((string) $value);
+            if ($normalized !== '' && $this->assetReferenceExists($normalized)) {
+                $paths[$normalized] = true;
+            }
+        }
+
+        return array_values(array_keys($paths));
+    }
+
+    private function findMissingMediaReferences(array $form): array
+    {
+        $paths = [];
+
+        foreach ([
+            (string) ($form['imagem_capa'] ?? ''),
+            (string) ($form['imagem_thumb'] ?? ''),
+        ] as $value) {
+            $normalized = $this->normalizeAssetReference($value);
+            if ($normalized !== '') {
+                $paths[$normalized] = true;
+            }
+        }
+
+        preg_match_all('~(?:src|href)\s*=\s*["\']([^"\']+)["\']~i', (string) ($form['conteudo'] ?? ''), $matches);
+        foreach ((array) ($matches[1] ?? []) as $value) {
+            $normalized = $this->normalizeAssetReference((string) $value);
+            if ($normalized !== '') {
+                $paths[$normalized] = true;
+            }
+        }
+
+        $missing = [];
+        foreach (array_keys($paths) as $path) {
+            if (!$this->assetReferenceExists($path)) {
+                $missing[] = $path;
+            }
+        }
+
+        return $missing;
+    }
+
+    private function assetReferenceExists(string $value): bool
+    {
+        $normalized = $this->normalizeAssetReference($value);
+        if ($normalized === '') {
+            return true;
+        }
+
+        $fullPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $normalized);
+        return is_file($fullPath);
+    }
+
+    private function normalizeAssetReference(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        if (preg_match('~^(data:|blob:|https?://)~i', $value)) {
+            $parsedPath = parse_url($value, PHP_URL_PATH);
+            if (!is_string($parsedPath) || $parsedPath === '') {
+                return '';
+            }
+            $value = $parsedPath;
+        }
+
+        $value = ltrim(str_replace('\\', '/', $value), '/');
+        if ($value === '' || !str_starts_with($value, 'uploads/')) {
+            return '';
+        }
+
+        return $value;
     }
 
     private function slugify(string $value): string

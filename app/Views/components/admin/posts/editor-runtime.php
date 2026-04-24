@@ -371,7 +371,9 @@ declare(strict_types=1);
       var input = byId(targetId);
       if (!input) return;
       input.value = url || '';
+      addKnownExistingUpload(url || '');
       syncMediaPreview(targetId);
+      renderChecklistRuntime();
     };
   }
   function currentCategoryLabel() {
@@ -379,6 +381,428 @@ declare(strict_types=1);
     if (!select || select.selectedIndex < 0) return 'Geral';
     var option = select.options[select.selectedIndex];
     return option && option.textContent ? option.textContent.trim() : 'Geral';
+  }
+
+  function checklistRoot() {
+    return byId('postPublicationChecklist');
+  }
+
+  function checklistRuntimeMeta() {
+    if (!window.__postChecklistRuntimeMeta) {
+      var node = byId('postChecklistRuntimeData');
+      var payload = {};
+      if (node && node.textContent) {
+        try {
+          payload = JSON.parse(node.textContent);
+        } catch (error) {
+          payload = {};
+        }
+      }
+      payload.slug = String(payload.slug || '').trim();
+      payload.managed_files = Array.isArray(payload.managed_files) ? payload.managed_files.slice() : [];
+      payload.known_existing_uploads = Array.isArray(payload.known_existing_uploads) ? payload.known_existing_uploads.slice() : [];
+      window.__postChecklistRuntimeMeta = payload;
+    }
+    return window.__postChecklistRuntimeMeta;
+  }
+
+  function currentPostStatus() {
+    var status = byId('status');
+    return status ? String(status.value || 'rascunho').trim() : 'rascunho';
+  }
+
+  function hasValue(id) {
+    var node = byId(id);
+    return !!(node && String(node.value || '').trim() !== '');
+  }
+
+  function currentEditorText() {
+    var root = editor();
+    return root ? String(root.innerText || '').replace(/\s+/g, ' ').trim() : '';
+  }
+
+  function currentSlugValue() {
+    var slug = byId('slug');
+    var titulo = byId('titulo');
+    var value = slug && String(slug.value || '').trim() !== '' ? slug.value : (titulo ? titulo.value : '');
+    value = String(value || '').toLowerCase().trim();
+    if (!value) return '';
+    value = value.normalize ? value.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : value;
+    value = value.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 190);
+    return value;
+  }
+
+  function normalizeChecklistAssetReference(value) {
+    var raw = String(value || '').trim();
+    if (!raw) return '';
+    if (/^(data:|blob:)/i.test(raw)) return '';
+    if (/^https?:\/\//i.test(raw)) {
+      try {
+        raw = new URL(raw, window.location.origin).pathname || '';
+      } catch (error) {
+        return '';
+      }
+    }
+    raw = raw.replace(/\\/g, '/').replace(/^\/+/, '');
+    return raw.indexOf('uploads/') === 0 ? raw : '';
+  }
+
+  function collectChecklistReferencesFromHtml(html) {
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = String(html || '');
+    var refs = {};
+
+    wrapper.querySelectorAll('[src],[href],[poster]').forEach(function (node) {
+      ['src', 'href', 'poster'].forEach(function (attr) {
+        if (!node.hasAttribute(attr)) return;
+        var normalized = normalizeChecklistAssetReference(node.getAttribute(attr));
+        if (normalized) refs[normalized] = true;
+      });
+    });
+
+    wrapper.querySelectorAll('[data-audio-narracao],[data-audio-ambiente]').forEach(function (node) {
+      ['data-audio-narracao', 'data-audio-ambiente'].forEach(function (attr) {
+        if (!node.hasAttribute(attr)) return;
+        var normalized = normalizeChecklistAssetReference(node.getAttribute(attr));
+        if (normalized) refs[normalized] = true;
+      });
+    });
+
+    return Object.keys(refs);
+  }
+
+  function collectChecklistMissingAltImages(html) {
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = String(html || '');
+    var items = [];
+    Array.prototype.slice.call(wrapper.querySelectorAll('img')).forEach(function (img, index) {
+      var alt = String(img.getAttribute('alt') || '').trim();
+      if (alt) return;
+      items.push({
+        index: index + 1,
+        src: normalizeChecklistAssetReference(img.getAttribute('src') || '')
+      });
+    });
+    return items;
+  }
+
+  function addKnownExistingUpload(path) {
+    var normalized = normalizeChecklistAssetReference(path);
+    if (!normalized) return;
+    var meta = checklistRuntimeMeta();
+    if (meta.known_existing_uploads.indexOf(normalized) === -1) {
+      meta.known_existing_uploads.push(normalized);
+    }
+  }
+
+  function addManagedUpload(path) {
+    var normalized = normalizeChecklistAssetReference(path);
+    if (!normalized) return;
+    var meta = checklistRuntimeMeta();
+    if (meta.managed_files.indexOf(normalized) === -1) {
+      meta.managed_files.push(normalized);
+    }
+    addKnownExistingUpload(normalized);
+  }
+
+  function collectTechnicalChecklistState(slug, html) {
+    var meta = checklistRuntimeMeta();
+    var referenced = {};
+    var protectedFiles = {};
+    var coverPath = normalizeChecklistAssetReference(byId('imagem_capa') ? byId('imagem_capa').value : '');
+    var thumbPath = normalizeChecklistAssetReference(byId('imagem_thumb') ? byId('imagem_thumb').value : '');
+    var currentSlug = String(slug || meta.slug || '').trim();
+    var managedFiles = Array.isArray(meta.managed_files) ? meta.managed_files.slice() : [];
+    var knownExisting = Array.isArray(meta.known_existing_uploads) ? meta.known_existing_uploads.slice() : [];
+
+    if (coverPath) {
+      protectedFiles[coverPath] = true;
+      addKnownExistingUpload(coverPath);
+    }
+    if (thumbPath) {
+      protectedFiles[thumbPath] = true;
+      addKnownExistingUpload(thumbPath);
+    }
+
+    collectChecklistReferencesFromHtml(html).forEach(function (path) {
+      referenced[path] = true;
+    });
+
+    var missingMedia = [];
+    Object.keys(referenced).forEach(function (path) {
+      var isKnown = knownExisting.indexOf(path) !== -1;
+      var isCurrentPostFile = currentSlug && path.indexOf('uploads/posts/' + currentSlug + '/') === 0;
+      var isManaged = managedFiles.indexOf(path) !== -1;
+      if (!isKnown && !(isCurrentPostFile && isManaged)) {
+        missingMedia.push(path);
+      }
+    });
+
+    var orphanFiles = [];
+    managedFiles.forEach(function (path) {
+      if (protectedFiles[path] || referenced[path]) return;
+      orphanFiles.push(path);
+    });
+
+    return {
+      missingMedia: missingMedia,
+      missingAltImages: collectChecklistMissingAltImages(html),
+      orphanFiles: orphanFiles
+    };
+  }
+
+  function checklistItem(status, title, message, group) {
+    return { status: status, title: title, message: message, group: group || 'editorial' };
+  }
+
+  function buildChecklistRuntimeState() {
+    var items = [];
+    var stats = { success: 0, warning: 0, error: 0 };
+    var status = byId('status');
+    var nextStep = byId('proximo_post_id');
+    var dataPublicacao = byId('data_publicacao');
+    var seoTitle = byId('seo_title');
+    var seoDescription = byId('seo_description');
+    var titulo = byId('titulo');
+    var categoria = byId('categoria_post_id');
+    var cover = byId('imagem_capa');
+    var thumb = byId('imagem_thumb');
+    var currentStatus = currentPostStatus();
+    var slug = currentSlugValue();
+    var contentText = currentEditorText();
+    var contentHtml = editor() ? String(editor().innerHTML || '') : '';
+    var technicalState = collectTechnicalChecklistState(slug, contentHtml);
+
+    function pushItem(item) {
+      items.push(item);
+      if (Object.prototype.hasOwnProperty.call(stats, item.status)) {
+        stats[item.status] += 1;
+      }
+    }
+
+    if (!titulo || String(titulo.value || '').trim() === '') {
+      pushItem(checklistItem('error', 'Titulo', 'Informe o titulo do post.'));
+    } else if (String(titulo.value || '').trim().length > 200) {
+      pushItem(checklistItem('error', 'Titulo', 'O titulo passou do limite de 200 caracteres.'));
+    } else {
+      pushItem(checklistItem('success', 'Titulo', 'Titulo preenchido e pronto para publicacao.'));
+    }
+
+    pushItem(slug ? checklistItem('success', 'Slug', 'Slug atual: ' + slug) : checklistItem('error', 'Slug', 'Nao foi possivel gerar um slug valido.'));
+
+    pushItem(contentText ? checklistItem('success', 'Conteudo', 'Conteudo preenchido com ' + contentText.length + ' caracteres visiveis.') : checklistItem('error', 'Conteudo', 'O post ainda nao tem conteudo editorial salvo.'));
+
+    if (!categoria || !categoria.value || categoria.value === '0') {
+      pushItem(checklistItem('error', 'Categoria', 'Selecione uma categoria valida para o post.'));
+    } else {
+      pushItem(checklistItem('success', 'Categoria', 'Categoria selecionada: ' + currentCategoryLabel() + '.'));
+    }
+
+    if (!status || ['publicado', 'rascunho', 'agendado'].indexOf(currentStatus) === -1) {
+      pushItem(checklistItem('error', 'Status', 'Selecione um status valido.'));
+    } else if (currentStatus === 'publicado') {
+      pushItem(checklistItem('success', 'Status', 'Post marcado para publicacao imediata.'));
+    } else if (currentStatus === 'agendado') {
+      pushItem(checklistItem('warning', 'Status', 'Post em modo agendado. Revise a data antes de publicar.'));
+    } else {
+      pushItem(checklistItem('warning', 'Status', 'Post permanece em rascunho ate a publicacao.'));
+    }
+
+    var dataValue = dataPublicacao ? String(dataPublicacao.value || '').trim() : '';
+    if (!dataValue) {
+      pushItem(checklistItem('error', 'Data de publicacao', 'Informe uma data de publicacao valida.'));
+    } else {
+      var scheduledAt = new Date(dataValue);
+      var hasValidDate = !isNaN(scheduledAt.getTime());
+      if (!hasValidDate) {
+        pushItem(checklistItem('error', 'Data de publicacao', 'Informe uma data de publicacao valida.'));
+      } else if (currentStatus === 'agendado' && scheduledAt.getTime() <= Date.now()) {
+        pushItem(checklistItem('error', 'Data de publicacao', 'Posts agendados precisam de uma data futura.'));
+      } else if (currentStatus === 'publicado' && scheduledAt.getTime() > Date.now()) {
+        pushItem(checklistItem('warning', 'Data de publicacao', 'A data esta no futuro mesmo com status publicado.'));
+      } else {
+        pushItem(checklistItem('success', 'Data de publicacao', 'Data configurada: ' + dataValue.replace('T', ' ') + '.'));
+      }
+    }
+
+    pushItem(hasValue('imagem_capa') ? checklistItem('success', 'Imagem de capa', 'Capa pronta para o front.') : checklistItem('warning', 'Imagem de capa', 'O post ainda esta sem capa.'));
+    pushItem(hasValue('imagem_thumb') ? checklistItem('success', 'Thumbnail', 'Thumb pronta para cards e listagens.') : checklistItem('warning', 'Thumbnail', 'O post ainda esta sem thumb.'));
+
+    var seoTitleValue = seoTitle ? String(seoTitle.value || '').trim() : '';
+    var seoDescriptionValue = seoDescription ? String(seoDescription.value || '').trim() : '';
+    if (!seoTitleValue && !seoDescriptionValue) {
+      pushItem(checklistItem('warning', 'SEO', 'SEO title e description ainda estao vazios.'));
+    } else if (seoTitleValue.length > 200 || seoDescriptionValue.length > 300) {
+      pushItem(checklistItem('error', 'SEO', 'Os campos de SEO passaram do limite permitido.'));
+    } else {
+      var seoParts = [];
+      if (seoTitleValue) seoParts.push('title ok');
+      if (seoDescriptionValue) seoParts.push('description ok');
+      pushItem(checklistItem('success', 'SEO', 'Campos prontos: ' + seoParts.join(' e ') + '.'));
+    }
+
+    if (!nextStep || nextStep.disabled) {
+      pushItem(checklistItem('warning', 'Proximo passo', 'O banco atual ainda nao suporta CTA dedicado de proximo passo.'));
+    } else if (!nextStep.value || nextStep.value === '0') {
+      pushItem(checklistItem('warning', 'Proximo passo', 'Nenhum post recomendado foi selecionado.'));
+    } else {
+      var nextOption = nextStep.options[nextStep.selectedIndex];
+      var nextLabel = nextOption && nextOption.textContent ? nextOption.textContent.trim() : 'post publicado';
+      pushItem(checklistItem('success', 'Proximo passo', 'CTA aponta para: ' + nextLabel + '.'));
+    }
+
+    if (technicalState.missingMedia.length > 0) {
+      pushItem(checklistItem('error', 'Midia referenciada', technicalState.missingMedia.length + ' arquivo(s) citado(s) no HTML nao foram encontrados no conjunto atual do post.', 'tecnico'));
+    } else {
+      pushItem(checklistItem('success', 'Midia referenciada', 'Todas as midias citadas no HTML foram reconhecidas.', 'tecnico'));
+    }
+
+    if (technicalState.missingAltImages.length > 0) {
+      pushItem(checklistItem('warning', 'Alt de imagens', technicalState.missingAltImages.length + ' imagem(ns) do HTML estao sem alt preenchido.', 'tecnico'));
+    } else {
+      pushItem(checklistItem('success', 'Alt de imagens', 'Imagens do HTML com alt preenchido ou sem imagens inline pendentes.', 'tecnico'));
+    }
+
+    if (technicalState.orphanFiles.length > 0) {
+      pushItem(checklistItem('warning', 'Arquivos soltos', technicalState.orphanFiles.length + ' arquivo(s) da pasta do post nao aparecem mais no HTML salvo.', 'tecnico'));
+    } else {
+      pushItem(checklistItem('success', 'Arquivos soltos', 'Nenhum arquivo solto detectado na pasta do post.', 'tecnico'));
+    }
+
+    var overall = 'success';
+    var headline = 'Pronto para publicar.';
+    if (stats.error > 0) {
+      overall = 'error';
+      headline = 'Publicacao bloqueada ate corrigir os erros criticos.';
+    } else if (stats.warning > 0) {
+      overall = 'warning';
+      headline = 'Post utilizavel, mas ainda com alertas editoriais.';
+    }
+
+    return {
+      status: overall,
+      headline: headline,
+      stats: stats,
+      items: items,
+      currentPostStatus: currentStatus,
+      technicalState: technicalState
+    };
+  }
+
+  function updateSubmitGuards(state) {
+    var submitButtons = document.querySelectorAll('[data-submit-role]');
+    var message = byId('postSubmitGuardMessage');
+    var shouldBlock = state.status === 'error' && ['publicado', 'agendado'].indexOf(state.currentPostStatus) !== -1;
+
+    submitButtons.forEach(function (button) {
+      button.disabled = shouldBlock;
+      button.classList.toggle('is-disabled-by-checklist', shouldBlock);
+      button.setAttribute('aria-disabled', shouldBlock ? 'true' : 'false');
+      if (shouldBlock) {
+        button.setAttribute('title', 'Corrija os erros criticos do checklist antes de publicar.');
+      } else if (button.dataset.submitRole === 'toolbar') {
+        button.setAttribute('title', 'Salvar post');
+      } else {
+        button.removeAttribute('title');
+      }
+    });
+
+    if (!message) return;
+    if (shouldBlock) {
+      message.textContent = state.currentPostStatus === 'agendado'
+        ? 'Agendamento bloqueado: corrija os erros criticos do checklist antes de continuar.'
+        : 'Publicacao bloqueada: corrija os erros criticos do checklist antes de continuar.';
+      message.classList.remove('hidden');
+      return;
+    }
+
+    if (state.status === 'error') {
+      message.textContent = 'Os erros criticos ainda existem, mas voce pode continuar salvando como rascunho.';
+      message.classList.remove('hidden');
+      return;
+    }
+
+    if (state.status === 'warning' && ['publicado', 'agendado'].indexOf(state.currentPostStatus) !== -1) {
+      message.textContent = 'Publicacao liberada com alertas. Revise os avisos antes de concluir.';
+      message.classList.remove('hidden');
+      return;
+    }
+
+    message.textContent = '';
+    message.classList.add('hidden');
+  }
+
+  function renderChecklistRuntime() {
+    var root = checklistRoot();
+    if (!root) return;
+
+    var state = buildChecklistRuntimeState();
+    root.classList.remove('is-success', 'is-warning', 'is-error');
+    root.classList.add(state.status === 'error' ? 'is-error' : (state.status === 'warning' ? 'is-warning' : 'is-success'));
+
+    var headline = byId('postChecklistHeadline');
+    var stateLabel = byId('postChecklistState');
+    var stateHint = byId('postChecklistHint');
+    var okCount = byId('postChecklistOkCount');
+    var warningCount = byId('postChecklistWarningCount');
+    var errorCount = byId('postChecklistErrorCount');
+    var list = byId('postChecklistList');
+
+    if (headline) headline.textContent = state.headline;
+    if (stateLabel) stateLabel.textContent = state.status === 'error' ? 'Bloqueado' : (state.status === 'warning' ? 'Atencao' : 'Pronto');
+    if (stateHint) stateHint.textContent = state.status === 'error'
+      ? 'Erros criticos exigem correcao antes de publicar ou agendar.'
+      : (state.status === 'warning'
+        ? 'O post esta utilizavel, mas ainda merece uma revisao final.'
+        : 'Tudo alinhado para seguir com a publicacao.');
+    if (okCount) okCount.textContent = String(state.stats.success);
+    if (warningCount) warningCount.textContent = String(state.stats.warning);
+    if (errorCount) errorCount.textContent = String(state.stats.error);
+    updateSubmitGuards(state);
+
+    if (!list) return;
+    list.innerHTML = state.items.map(function (item) {
+      var icon = item.status === 'error' ? '!' : (item.status === 'warning' ? '!' : 'OK');
+      var itemClass = item.status === 'error' ? 'is-error' : (item.status === 'warning' ? 'is-warning' : 'is-success');
+      var itemGroup = item.group === 'tecnico' ? 'Tecnico' : 'Editorial';
+      return '' +
+        '<article class="post-checklist-item ' + itemClass + '">' +
+          '<div class="post-checklist-item-icon" aria-hidden="true">' + icon + '</div>' +
+          '<div class="post-checklist-item-copy">' +
+            '<div class="post-checklist-item-meta"><span class="post-checklist-item-group">' + escapeHtml(itemGroup) + '</span></div>' +
+            '<div class="post-checklist-item-title">' + escapeHtml(item.title) + '</div>' +
+            '<div class="post-checklist-item-text">' + escapeHtml(item.message) + '</div>' +
+          '</div>' +
+        '</article>';
+    }).join('');
+  }
+
+  function bindChecklistRuntime() {
+    ['titulo', 'slug', 'categoria_post_id', 'status', 'data_publicacao', 'imagem_capa', 'imagem_thumb', 'seo_title', 'seo_description', 'proximo_post_id'].forEach(function (id) {
+      var field = byId(id);
+      if (!field || field.dataset.checklistBound === '1') return;
+      field.dataset.checklistBound = '1';
+      field.addEventListener('input', renderChecklistRuntime);
+      field.addEventListener('change', renderChecklistRuntime);
+    });
+    renderChecklistRuntime();
+  }
+
+  function bindChecklistSubmitGuard() {
+    var form = byId('postForm');
+    if (!form || form.dataset.checklistSubmitBound === '1') return;
+    form.dataset.checklistSubmitBound = '1';
+    form.addEventListener('submit', function (event) {
+      var state = buildChecklistRuntimeState();
+      var shouldBlock = state.status === 'error' && ['publicado', 'agendado'].indexOf(state.currentPostStatus) !== -1;
+      updateSubmitGuards(state);
+      if (!shouldBlock) return;
+      event.preventDefault();
+      var message = byId('postSubmitGuardMessage');
+      if (message) {
+        message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
   }
 
   function buildPreviewHtml() {
@@ -509,6 +933,7 @@ declare(strict_types=1);
           return;
         }
 
+        addManagedUpload(payload.path || '');
         var alt = window.prompt('Texto alternativo da imagem (opcional):') || '';
         var legenda = window.prompt('Legenda da imagem (opcional):') || '';
         var html = buildImageFigureHtml(payload.url || '', alt, legenda);
@@ -549,6 +974,7 @@ declare(strict_types=1);
       root.addEventListener(eventName, function () {
         saveSelection();
         syncEditorState();
+        renderChecklistRuntime();
       });
     });
 
@@ -600,6 +1026,8 @@ declare(strict_types=1);
 
     saveSelection();
     syncEditorState();
+    bindChecklistRuntime();
+    bindChecklistSubmitGuard();
   }
 
   if (document.readyState === 'loading') {
