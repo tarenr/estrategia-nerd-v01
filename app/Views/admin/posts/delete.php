@@ -38,7 +38,7 @@ if ($imagem !== '') {
   <div class="admin-page-header">
     <div class="admin-page-heading">
       <h1 class="admin-page-title text-rose-300">Confirmar Exclusao</h1>
-      <div class="admin-page-subtitle">Esta acao e irreversivel e remove o post do painel e do fluxo editorial.</div>
+      <div class="admin-page-subtitle">Esta acao remove o post do painel e envia a pasta de midia local para a lixeira tecnica.</div>
     </div>
 
     <div class="admin-page-actions">
@@ -61,7 +61,7 @@ if ($imagem !== '') {
               POST
             </div>
             <div class="mt-4 text-sm font-bold text-slate-200">Sem imagem de capa</div>
-            <div class="mt-2 text-xs leading-relaxed text-slate-400">A exclusao continua removendo o conteudo e os arquivos locais relacionados, quando existirem.</div>
+            <div class="mt-2 text-xs leading-relaxed text-slate-400">A exclusao continua removendo o conteudo e move a pasta local do post para a lixeira, quando existir.</div>
           </div>
         <?php endif; ?>
       </div>
@@ -85,10 +85,11 @@ if ($imagem !== '') {
         <?php endif; ?>
 
         <div class="rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4">
-          <div class="text-sm font-bold text-amber-200">O que sera removido permanentemente</div>
+          <div class="text-sm font-bold text-amber-200">O que acontece ao excluir este post</div>
           <ul class="mt-3 text-sm text-amber-100 space-y-2">
             <li>Post completo e seu conteudo.</li>
-            <li>Imagem de capa e thumbnail locais, quando existirem em `public/uploads`.</li>
+            <li>Pasta local `uploads/posts/{slug}` movida para `uploads/trash/posts/{id}_{timestamp}`, quando existir.</li>
+            <li>Manifesto com ID, slug, titulo, data e usuario da exclusao salvo dentro da lixeira.</li>
             <li>Referencias deste item na central de posts.</li>
           </ul>
         </div>
@@ -98,7 +99,7 @@ if ($imagem !== '') {
           <input type="hidden" name="id" value="<?= $postId ?>">
 
           <button type="submit" class="admin-btn admin-btn-primary" style="background:rgba(244,63,94,.18); border-color:rgba(244,63,94,.35); color:#fecdd3;">
-            Excluir permanentemente
+            Excluir e mover para lixeira
           </button>
           <a href="<?= url('/admin/posts') ?>" class="admin-btn admin-btn-secondary">Cancelar</a>
         </form>
@@ -113,19 +114,19 @@ if ($imagem !== '') {
       <div style="width:44px; height:44px; border-radius:14px; background:rgba(244,63,94,.16); color:#fda4af; display:flex; align-items:center; justify-content:center; font-weight:900;">DEL</div>
       <div>
         <div style="font-family:Orbitron,sans-serif; font-size:1.15rem; font-weight:900; color:#fff;">Confirmar exclusao</div>
-        <div style="font-size:.8rem; color:#94a3b8;">Essa acao remove o post permanentemente.</div>
+        <div style="font-size:.8rem; color:#94a3b8;">Essa acao remove o post e envia a pasta local para a lixeira tecnica.</div>
       </div>
     </div>
 
     <div style="border:1px solid rgba(51,65,85,1); background:rgba(15,23,42,.7); border-radius:16px; padding:14px 16px; color:#cbd5e1; font-size:.95rem; line-height:1.7;">
       Voce esta prestes a excluir <strong style="color:#fff;"><?= htmlspecialchars($titulo !== '' ? $titulo : 'este post', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong>.
-      Essa operacao nao pode ser desfeita.
+      O post sai da central imediatamente e a midia local vai para a lixeira do sistema.
     </div>
 
     <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px; flex-wrap:wrap;">
       <button type="button" id="cancelDeleteModal" class="admin-btn admin-btn-secondary">Cancelar</button>
       <button type="button" id="confirmDeleteModal" class="admin-btn admin-btn-primary" style="background:rgba(244,63,94,.18); border-color:rgba(244,63,94,.35); color:#fecdd3;">
-        Excluir permanentemente
+        Excluir e mover para lixeira
       </button>
     </div>
   </div>

@@ -49,7 +49,7 @@ $deleted = isset($_GET['deleted']) && (string)$_GET['deleted'] === '1';
     <?php if ($deleted): ?>
       <section class="admin-panel border border-rose-500/30">
         <div class="text-sm font-bold text-rose-300">Post excluido com sucesso.</div>
-        <div class="text-xs text-slate-400 mt-1">O conteudo removido nao aparece mais na central e sua capa local foi limpa quando aplicavel.</div>
+        <div class="text-xs text-slate-400 mt-1">O conteudo removido nao aparece mais na central e a pasta local de midia foi enviada para `uploads/trash/posts` quando aplicavel.</div>
       </section>
     <?php endif; ?>
 

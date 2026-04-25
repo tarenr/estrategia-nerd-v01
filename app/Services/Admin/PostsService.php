@@ -14,11 +14,14 @@ namespace App\Services\Admin;
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\PostRepository;
 use App\Services\Site\SitemapCacheService;
+use App\Support\SystemActivityLogger;
 use DateTimeImmutable;
 use Throwable;
 
 final class PostsService
 {
+    private const POST_TRASH_RETENTION_DAYS = 15;
+
     public function __construct(
         private PostRepository $posts,
         private CategoriaPostRepository $categorias,
@@ -227,6 +230,69 @@ final class PostsService
         ];
     }
 
+    public function copyLibraryMediaToPost(array $input): array
+    {
+        $slugBase = $this->resolveInlinePostSlug($input);
+        if ($slugBase === '') {
+            SystemActivityLogger::write('media', 'copy_library_media_post_failed', [
+                'reason' => 'missing_identity',
+                'media_type' => (string) ($input['media_type'] ?? ''),
+            ]);
+            return ['ok' => false, 'error' => 'Informe um titulo ou slug antes de selecionar a midia da biblioteca.'];
+        }
+
+        $sourcePath = trim((string) ($input['path'] ?? ''));
+        if ($sourcePath === '') {
+            SystemActivityLogger::write('media', 'copy_library_media_post_failed', [
+                'reason' => 'missing_path',
+                'slug' => $slugBase,
+                'media_type' => (string) ($input['media_type'] ?? ''),
+            ]);
+            return ['ok' => false, 'error' => 'Selecione uma midia da biblioteca para continuar.'];
+        }
+
+        $type = strtolower(trim((string) ($input['media_type'] ?? '')));
+        $options = [];
+        if ($type === 'audio') {
+            $options['audio_role'] = (string) ($input['audio_role'] ?? '');
+        }
+        if ($type === 'image') {
+            $postRole = strtolower(trim((string) ($input['post_role'] ?? '')));
+            if (in_array($postRole, ['capa', 'thumb'], true)) {
+                $options['post_role'] = $postRole;
+            }
+        }
+
+        $result = $this->midia->cloneManagedMediaToPost($sourcePath, $slugBase, $type, $options);
+        if (($result['ok'] ?? false) !== true) {
+            SystemActivityLogger::write('media', 'copy_library_media_post_failed', [
+                'slug' => $slugBase,
+                'source_path' => $sourcePath,
+                'media_type' => $type,
+                'error' => (string) ($result['error'] ?? ''),
+            ]);
+            return ['ok' => false, 'error' => (string) ($result['error'] ?? 'Falha ao duplicar a midia da biblioteca.')];
+        }
+
+        $path = trim((string) ($result['path'] ?? ''));
+        if ($path === '') {
+            SystemActivityLogger::write('media', 'copy_library_media_post_failed', [
+                'slug' => $slugBase,
+                'source_path' => $sourcePath,
+                'media_type' => $type,
+                'reason' => 'empty_target_path',
+            ]);
+            return ['ok' => false, 'error' => 'Nao foi possivel preparar a copia da midia selecionada.'];
+        }
+
+        return [
+            'ok' => true,
+            'path' => $path,
+            'url' => url('/' . ltrim($path, '/')),
+            'item' => is_array($result['item'] ?? null) ? $result['item'] : null,
+        ];
+    }
+
     public function duplicatePost(int $id, ?int $authorId): array
     {
         $post = $this->posts->findAdminById($id);
@@ -300,29 +366,42 @@ final class PostsService
         return ['title' => 'Excluir Post', 'post' => $post];
     }
 
-    public function deletePost(int $id): array
+    public function deletePost(int $id, ?array $actor = null): array
     {
         $post = $this->posts->findAdminById($id);
         if ($post === null) {
             return ['ok' => false, 'not_found' => true];
         }
 
-        $imageCandidates = array_values(array_filter([
-            (string) ($post['imagem_capa'] ?? ''),
-            (string) ($post['imagem_thumb'] ?? ''),
-        ], static fn (string $value): bool => trim($value) !== ''));
+        SystemActivityLogger::write('posts', 'post_delete_started', [
+            'post_id' => $id,
+            'slug' => (string) ($post['slug'] ?? ''),
+            'title' => (string) ($post['titulo'] ?? ''),
+            'actor' => $this->normalizeDeletionActor($actor),
+        ]);
 
-        foreach ($imageCandidates as $imagePath) {
-            $resolved = $this->resolveUploadFileForDelete($imagePath);
-            if ($resolved !== null && is_file($resolved)) {
-                @unlink($resolved);
-            }
-        }
+        $trash = $this->movePostMediaToTrash($post, $actor);
+
+        $cleanup = $this->cleanupExpiredPostTrash();
 
         $this->posts->deleteById($id);
         $this->sitemapCache->refreshQuietly();
 
-        return ['ok' => true, 'id' => $id];
+        SystemActivityLogger::write('posts', 'post_deleted', [
+            'post_id' => $id,
+            'slug' => (string) ($post['slug'] ?? ''),
+            'title' => (string) ($post['titulo'] ?? ''),
+            'trash' => $trash,
+            'trash_cleanup' => $cleanup,
+            'actor' => $this->normalizeDeletionActor($actor),
+        ]);
+
+        return [
+            'ok' => true,
+            'id' => $id,
+            'trash' => $trash,
+            'trash_cleanup' => $cleanup,
+        ];
     }
 
     private function applyMediaUploads(array &$form, array $files, array &$errors, string $slug, ?array $existingPost = null): void
@@ -375,6 +454,211 @@ final class PostsService
         }
 
         return $this->slugify(trim((string) ($input['titulo'] ?? '')));
+    }
+
+    private function movePostMediaToTrash(array $post, ?array $actor = null): array
+    {
+        $slug = $this->slugify((string) ($post['slug'] ?? ''));
+        if ($slug === '') {
+            SystemActivityLogger::write('posts', 'post_media_trash_skipped', [
+                'post_id' => (int) ($post['id'] ?? 0),
+                'reason' => 'missing_slug',
+            ]);
+            return ['moved' => false, 'reason' => 'missing_slug'];
+        }
+
+        $sourceDir = $this->postMediaDirectory($slug);
+        if (!is_dir($sourceDir)) {
+            SystemActivityLogger::write('posts', 'post_media_trash_skipped', [
+                'post_id' => (int) ($post['id'] ?? 0),
+                'slug' => $slug,
+                'reason' => 'missing_directory',
+            ]);
+            return ['moved' => false, 'reason' => 'missing_directory'];
+        }
+
+        $trashRoot = $this->postTrashRootDirectory();
+        if (!is_dir($trashRoot) && !@mkdir($trashRoot, 0777, true) && !is_dir($trashRoot)) {
+            SystemActivityLogger::write('posts', 'post_media_trash_failed', [
+                'post_id' => (int) ($post['id'] ?? 0),
+                'slug' => $slug,
+                'reason' => 'trash_unavailable',
+            ]);
+            return ['moved' => false, 'reason' => 'trash_unavailable'];
+        }
+
+        $timestamp = date('Ymd-His');
+        $postId = max(0, (int) ($post['id'] ?? 0));
+        $folderName = $postId > 0 ? $postId . '_' . $timestamp : 'post_' . $timestamp;
+        $destinationDir = $trashRoot . DIRECTORY_SEPARATOR . $folderName;
+        $suffix = 2;
+
+        while (file_exists($destinationDir)) {
+            $destinationDir = $trashRoot . DIRECTORY_SEPARATOR . $folderName . '_' . $suffix;
+            $suffix++;
+        }
+
+        if (!@rename($sourceDir, $destinationDir)) {
+            SystemActivityLogger::write('posts', 'post_media_trash_failed', [
+                'post_id' => $postId,
+                'slug' => $slug,
+                'reason' => 'move_failed',
+            ]);
+            return ['moved' => false, 'reason' => 'move_failed'];
+        }
+
+        $manifest = [
+            'post_id' => $postId,
+            'slug' => $slug,
+            'titulo' => trim((string) ($post['titulo'] ?? '')),
+            'deleted_at' => date('c'),
+            'deleted_by' => $this->normalizeDeletionActor($actor),
+            'original_media_path' => 'uploads/posts/' . $slug,
+            'trash_media_path' => 'uploads/trash/posts/' . basename($destinationDir),
+        ];
+
+        @file_put_contents(
+            $destinationDir . DIRECTORY_SEPARATOR . 'manifest.json',
+            (string) json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        );
+
+        SystemActivityLogger::write('posts', 'post_media_trashed', [
+            'post_id' => $postId,
+            'slug' => $slug,
+            'trash_path' => 'uploads/trash/posts/' . basename($destinationDir),
+            'actor' => $this->normalizeDeletionActor($actor),
+        ]);
+
+        return [
+            'moved' => true,
+            'path' => 'uploads/trash/posts/' . basename($destinationDir),
+        ];
+    }
+
+    private function normalizeDeletionActor(?array $actor): array
+    {
+        $actor = is_array($actor) ? $actor : [];
+
+        return [
+            'id' => isset($actor['id']) && is_numeric($actor['id']) ? (int) $actor['id'] : null,
+            'usuario' => trim((string) ($actor['usuario'] ?? '')),
+            'nome' => trim((string) ($actor['nome'] ?? '')),
+            'email' => trim((string) ($actor['email'] ?? '')),
+        ];
+    }
+
+    private function postMediaDirectory(string $slug): string
+    {
+        return dirname(__DIR__, 3)
+            . DIRECTORY_SEPARATOR . 'public'
+            . DIRECTORY_SEPARATOR . 'uploads'
+            . DIRECTORY_SEPARATOR . 'posts'
+            . DIRECTORY_SEPARATOR . $slug;
+    }
+
+    private function postTrashRootDirectory(): string
+    {
+        return dirname(__DIR__, 3)
+            . DIRECTORY_SEPARATOR . 'public'
+            . DIRECTORY_SEPARATOR . 'uploads'
+            . DIRECTORY_SEPARATOR . 'trash'
+            . DIRECTORY_SEPARATOR . 'posts';
+    }
+
+    private function cleanupExpiredPostTrash(int $retentionDays = self::POST_TRASH_RETENTION_DAYS): array
+    {
+        $trashRoot = $this->postTrashRootDirectory();
+        if (!is_dir($trashRoot)) {
+            return ['removed' => 0, 'failed' => 0];
+        }
+
+        $retentionDays = max(1, $retentionDays);
+        $threshold = time() - ($retentionDays * 86400);
+        $removed = 0;
+        $failed = 0;
+
+        foreach (new \FilesystemIterator($trashRoot, \FilesystemIterator::SKIP_DOTS) as $item) {
+            if (!$item instanceof \SplFileInfo || !$item->isDir()) {
+                continue;
+            }
+
+            $path = $item->getPathname();
+            if (!$this->isTrashPostDirectorySafe($path, $trashRoot)) {
+                continue;
+            }
+
+            $modifiedAt = (int) $item->getMTime();
+            if ($modifiedAt > $threshold) {
+                continue;
+            }
+
+            if ($this->deleteDirectoryRecursively($path, $trashRoot)) {
+                $removed++;
+            } else {
+                $failed++;
+            }
+        }
+
+        if ($removed > 0 || $failed > 0) {
+            SystemActivityLogger::write('posts', 'post_trash_cleanup_run', [
+                'retention_days' => $retentionDays,
+                'removed' => $removed,
+                'failed' => $failed,
+            ]);
+        }
+
+        return ['removed' => $removed, 'failed' => $failed];
+    }
+
+    private function isTrashPostDirectorySafe(string $path, string $trashRoot): bool
+    {
+        $trashRootReal = realpath($trashRoot);
+        $pathReal = realpath($path);
+        if ($trashRootReal === false || $pathReal === false) {
+            return false;
+        }
+
+        if (!str_starts_with($pathReal, $trashRootReal . DIRECTORY_SEPARATOR) && $pathReal !== $trashRootReal) {
+            return false;
+        }
+
+        return basename($pathReal) !== '' && basename($pathReal) !== '.' && basename($pathReal) !== '..';
+    }
+
+    private function deleteDirectoryRecursively(string $path, string $trashRoot): bool
+    {
+        if (!$this->isTrashPostDirectorySafe($path, $trashRoot)) {
+            return false;
+        }
+
+        try {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::CHILD_FIRST
+            );
+
+            foreach ($iterator as $item) {
+                if (!$item instanceof \SplFileInfo) {
+                    continue;
+                }
+
+                $target = $item->getPathname();
+                if ($item->isDir()) {
+                    if (!@rmdir($target) && is_dir($target)) {
+                        return false;
+                    }
+                    continue;
+                }
+
+                if (!@unlink($target) && is_file($target)) {
+                    return false;
+                }
+            }
+
+            return @rmdir($path) || !is_dir($path);
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     private function decorateIndexSummary(array $summary): array

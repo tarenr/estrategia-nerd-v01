@@ -20,6 +20,11 @@ declare(strict_types=1);
     return byId('editor-html');
   }
 
+  function isHtmlPanelActive() {
+    var panel = byId('panel-html');
+    return !!(panel && !panel.classList.contains('hidden'));
+  }
+
   function getSelectionStore() {
     if (!window.__postEditorSelection) {
       window.__postEditorSelection = { range: null };
@@ -65,7 +70,12 @@ declare(strict_types=1);
 
     hidden.value = root.innerHTML;
     var html = htmlArea();
-    if (html) html.value = root.innerHTML;
+    if (html) {
+      html.value = root.innerHTML;
+      if (isHtmlPanelActive() && window.AdminHtmlEditor && typeof window.AdminHtmlEditor.setValueByTextareaId === 'function') {
+        window.AdminHtmlEditor.setValueByTextareaId('editor-html', html.value);
+      }
+    }
 
     var wordCount = byId('wordCount');
     if (wordCount) {
@@ -165,12 +175,52 @@ declare(strict_types=1);
     var blocks = Array.prototype.slice.call(scope.querySelectorAll('.en-audio-block'));
     var active = null;
 
+    function ensureAudioButtonStructure(button) {
+      if (!button) return;
+      var iconWrap = button.querySelector('.en-audio-button-icon');
+      var textWrap = button.querySelector('.en-audio-button-text');
+      if (!iconWrap) {
+        iconWrap = document.createElement('span');
+        iconWrap.className = 'en-audio-button-icon';
+        iconWrap.setAttribute('aria-hidden', 'true');
+        iconWrap.textContent = '▶';
+        button.insertBefore(iconWrap, button.firstChild);
+      }
+      if (!textWrap) {
+        var text = String(button.textContent || '').trim();
+        Array.prototype.slice.call(button.childNodes).forEach(function (node) {
+          if (node !== iconWrap) {
+            button.removeChild(node);
+          }
+        });
+        textWrap = document.createElement('span');
+        textWrap.className = 'en-audio-button-text';
+        textWrap.textContent = text || 'Ouvir narracao';
+        button.appendChild(textWrap);
+      }
+    }
+
+    function setButtonState(button, iconGlyph, text) {
+      if (!button) return;
+      ensureAudioButtonStructure(button);
+      var icon = button.querySelector('.en-audio-button-icon');
+      var textNode = button.querySelector('.en-audio-button-text');
+      if (icon) {
+        icon.textContent = iconGlyph;
+      }
+      if (textNode) {
+        textNode.textContent = text;
+      } else {
+        button.textContent = text;
+      }
+    }
+
     function stopActive() {
       if (!active) return;
       try { if (active.narracao) { active.narracao.pause(); active.narracao.currentTime = 0; } } catch (error) {}
       try { if (active.ambiente) { active.ambiente.pause(); active.ambiente.currentTime = 0; } } catch (error) {}
       if (active.button) {
-        active.button.textContent = active.initialText || 'Ouvir narracao';
+        setButtonState(active.button, '▶', active.initialText || 'Ouvir narracao');
         active.button.removeAttribute('aria-pressed');
       }
       if (active.block) active.block.classList.remove('is-playing');
@@ -181,12 +231,14 @@ declare(strict_types=1);
       var button = block.querySelector('[data-en-audio-toggle]');
       if (!button || button.dataset.previewAudioBound === '1') return;
       button.dataset.previewAudioBound = '1';
+      ensureAudioButtonStructure(button);
 
       var narracaoSrc = normalizeMediaUrl(block.getAttribute('data-audio-narracao') || '');
       var ambienteSrc = normalizeMediaUrl(block.getAttribute('data-audio-ambiente') || '');
-      var initialText = button.textContent || 'Ouvir narracao';
+      var textNode = button.querySelector('.en-audio-button-text');
+      var initialText = (textNode ? textNode.textContent : button.textContent) || 'Ouvir narracao';
       if (!narracaoSrc && !ambienteSrc) {
-        button.textContent = 'Audio indisponivel';
+        setButtonState(button, '■', 'Audio indisponivel');
         button.disabled = true;
         return;
       }
@@ -198,7 +250,7 @@ declare(strict_types=1);
       if (narracao) {
         narracao.addEventListener('ended', function () {
           try { if (ambiente) { ambiente.pause(); ambiente.currentTime = 0; } } catch (error) {}
-          button.textContent = initialText;
+          setButtonState(button, '▶', initialText);
           button.removeAttribute('aria-pressed');
           block.classList.remove('is-playing');
           active = null;
@@ -226,14 +278,14 @@ declare(strict_types=1);
             return ambiente ? ambiente.play() : null;
           })
           .then(function () {
-            button.textContent = 'Pausar';
+            setButtonState(button, '❚❚', 'Pausar');
             button.setAttribute('aria-pressed', 'true');
             block.classList.add('is-playing');
             active = { block: block, button: button, narracao: narracao, ambiente: ambiente, initialText: initialText };
           })
           .catch(function () {
             stopActive();
-            button.textContent = 'Audio indisponivel';
+            setButtonState(button, '■', 'Audio indisponivel');
           });
       });
     });
@@ -370,10 +422,38 @@ declare(strict_types=1);
     window.selecionarMidia = function selecionarMidia(targetId, url) {
       var input = byId(targetId);
       if (!input) return;
-      input.value = url || '';
-      addKnownExistingUpload(url || '');
-      syncMediaPreview(targetId);
-      renderChecklistRuntime();
+      var rawUrl = String(url || '').trim();
+      var targetRole = targetId === 'imagem_capa' ? 'capa' : (targetId === 'imagem_thumb' ? 'thumb' : '');
+      var canCloneToPost = rawUrl !== '' && targetRole !== '' && typeof window.__postEditorEnsureIdentity === 'function' && typeof window.__postEditorDuplicateLibraryMediaToPost === 'function';
+      if (!canCloneToPost) {
+        input.value = rawUrl;
+        addKnownExistingUpload(rawUrl);
+        syncMediaPreview(targetId);
+        renderChecklistRuntime();
+        return;
+      }
+
+      window.__postEditorEnsureIdentity()
+        .then(function (identity) {
+          if (!identity) return null;
+          return window.__postEditorDuplicateLibraryMediaToPost(rawUrl, identity, { type: 'image', postRole: targetRole });
+        })
+        .then(function (payload) {
+          if (!payload) return;
+          if (payload.ok !== true) {
+            window.alert(payload.error || 'Falha ao preparar a imagem da biblioteca para o post.');
+            return;
+          }
+          var finalPath = String(payload.url || payload.path || '').trim();
+          input.value = finalPath;
+          addKnownExistingUpload(finalPath);
+          addManagedUpload(finalPath);
+          syncMediaPreview(targetId);
+          renderChecklistRuntime();
+        })
+        .catch(function () {
+          window.alert('Falha ao preparar a imagem da biblioteca para o post.');
+        });
     };
   }
   function currentCategoryLabel() {
@@ -505,6 +585,34 @@ declare(strict_types=1);
     addKnownExistingUpload(normalized);
   }
 
+  function registerKnownUploads(paths) {
+    if (Array.isArray(paths)) {
+      paths.forEach(addKnownExistingUpload);
+      return;
+    }
+    addKnownExistingUpload(paths);
+  }
+
+  function registerManagedUploads(paths) {
+    if (Array.isArray(paths)) {
+      paths.forEach(addManagedUpload);
+      return;
+    }
+    addManagedUpload(paths);
+  }
+
+  function hasPendingUpload(inputId) {
+    var input = byId(inputId);
+    return !!(input && input.files && input.files.length > 0);
+  }
+
+  function hasMediaSelection(fieldId) {
+    if (hasValue(fieldId)) return true;
+    if (fieldId === 'imagem_capa') return hasPendingUpload('imagem_capa_upload');
+    if (fieldId === 'imagem_thumb') return hasPendingUpload('imagem_thumb_upload');
+    return false;
+  }
+
   function collectTechnicalChecklistState(slug, html) {
     var meta = checklistRuntimeMeta();
     var referenced = {};
@@ -518,10 +626,16 @@ declare(strict_types=1);
     if (coverPath) {
       protectedFiles[coverPath] = true;
       addKnownExistingUpload(coverPath);
+      if (knownExisting.indexOf(coverPath) === -1) {
+        knownExisting.push(coverPath);
+      }
     }
     if (thumbPath) {
       protectedFiles[thumbPath] = true;
       addKnownExistingUpload(thumbPath);
+      if (knownExisting.indexOf(thumbPath) === -1) {
+        knownExisting.push(thumbPath);
+      }
     }
 
     collectChecklistReferencesFromHtml(html).forEach(function (path) {
@@ -625,8 +739,8 @@ declare(strict_types=1);
       }
     }
 
-    pushItem(hasValue('imagem_capa') ? checklistItem('success', 'Imagem de capa', 'Capa pronta para o front.') : checklistItem('warning', 'Imagem de capa', 'O post ainda esta sem capa.'));
-    pushItem(hasValue('imagem_thumb') ? checklistItem('success', 'Thumbnail', 'Thumb pronta para cards e listagens.') : checklistItem('warning', 'Thumbnail', 'O post ainda esta sem thumb.'));
+    pushItem(hasMediaSelection('imagem_capa') ? checklistItem('success', 'Imagem de capa', 'Capa pronta para o front.') : checklistItem('warning', 'Imagem de capa', 'O post ainda esta sem capa.'));
+    pushItem(hasMediaSelection('imagem_thumb') ? checklistItem('success', 'Thumbnail', 'Thumb pronta para cards e listagens.') : checklistItem('warning', 'Thumbnail', 'O post ainda esta sem thumb.'));
 
     var seoTitleValue = seoTitle ? String(seoTitle.value || '').trim() : '';
     var seoDescriptionValue = seoDescription ? String(seoDescription.value || '').trim() : '';
@@ -778,7 +892,7 @@ declare(strict_types=1);
   }
 
   function bindChecklistRuntime() {
-    ['titulo', 'slug', 'categoria_post_id', 'status', 'data_publicacao', 'imagem_capa', 'imagem_thumb', 'seo_title', 'seo_description', 'proximo_post_id'].forEach(function (id) {
+    ['titulo', 'slug', 'categoria_post_id', 'status', 'data_publicacao', 'imagem_capa', 'imagem_thumb', 'imagem_capa_upload', 'imagem_thumb_upload', 'seo_title', 'seo_description', 'proximo_post_id'].forEach(function (id) {
       var field = byId(id);
       if (!field || field.dataset.checklistBound === '1') return;
       field.dataset.checklistBound = '1';
@@ -850,9 +964,11 @@ declare(strict_types=1);
       '.article-body .content-block-faq h3{margin-top:0;}' +
       '.article-body .en-audio-block{background:linear-gradient(180deg,rgba(18,16,24,.96),rgba(8,10,18,.96));border:1px solid rgba(103,232,249,.22);border-radius:16px;padding:18px 18px 16px;margin:18px 0 22px;box-shadow:0 0 22px rgba(0,0,0,.32);}' +
       '.article-body .en-audio-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;color:rgba(248,250,252,.95);}' +
+      '.article-body .en-audio-icon{font-size:1.15rem;line-height:1;filter:drop-shadow(0 0 10px rgba(103,232,249,.25));}' +
       '.article-body .en-audio-title{font-family:Orbitron,sans-serif;font-weight:900;letter-spacing:.06em;text-transform:uppercase;font-size:.95rem;color:rgba(165,243,252,.95);}' +
       '.article-body .en-audio-subtitle{margin:0 0 14px;color:rgba(226,232,240,.92);font-style:italic;line-height:1.6;}' +
       '.article-body .en-audio-button{display:inline-flex;align-items:center;gap:10px;border-radius:10px;border:1px solid rgba(251,191,36,.28);background:linear-gradient(180deg,rgba(59,36,28,.92),rgba(22,13,12,.92));color:rgba(255,237,213,.95);padding:10px 16px;cursor:pointer;font-weight:800;font-size:.95rem;}' +
+      '.article-body .en-audio-button-icon{display:inline-flex;align-items:center;justify-content:center;width:1rem;}' +
       '.article-body .en-audio-block.is-playing{border-color:rgba(34,211,238,.36);box-shadow:0 0 26px rgba(34,211,238,.12),0 0 22px rgba(0,0,0,.34);}' +
       '.article-body img{display:block;width:auto;max-width:100%;max-height:56vh;height:auto;border-radius:12px;margin:0 auto;border:1px solid rgba(0,212,255,.2);} .article-body figure{margin:2rem auto;max-width:min(100%,760px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;} .article-body figure.content-media-wide{max-width:100%;width:100%;display:block;}' +
       '.article-body figure{margin:2rem 0;}' +
@@ -975,6 +1091,7 @@ declare(strict_types=1);
         saveSelection();
         syncEditorState();
         renderChecklistRuntime();
+        initPreviewMedia(root);
       });
     });
 
@@ -1026,6 +1143,11 @@ declare(strict_types=1);
 
     saveSelection();
     syncEditorState();
+    initPreviewMedia(root);
+    window.__postEditorInitMediaPreview = initPreviewMedia;
+    window.__postEditorRefreshChecklist = renderChecklistRuntime;
+    window.__postEditorRegisterKnownUploads = registerKnownUploads;
+    window.__postEditorRegisterManagedUploads = registerManagedUploads;
     bindChecklistRuntime();
     bindChecklistSubmitGuard();
   }

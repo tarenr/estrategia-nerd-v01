@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Support\SystemActivityLogger;
 use finfo;
 
 final class MidiaService
@@ -103,18 +104,61 @@ final class MidiaService
 
     public function cloneManagedImageToPost(string $path, string $slug): array
     {
-        $target = $this->preparePostBodyImageTarget($slug);
+        return $this->cloneManagedMediaToPost($path, $slug, 'image');
+    }
+
+    public function cloneManagedPostRoleImage(string $path, string $slug, string $role): array
+    {
+        return $this->cloneManagedMediaToPost($path, $slug, 'image', ['post_role' => $role]);
+    }
+
+    public function cloneManagedMediaToPost(string $path, string $slug, string $type, array $options = []): array
+    {
+        $normalizedType = $this->normalizeRequestedMediaType($type);
+        if ($normalizedType === '') {
+            SystemActivityLogger::write('media', 'clone_media_to_post_failed', [
+                'slug' => $slug,
+                'source_path' => $path,
+                'requested_type' => $type,
+                'reason' => 'invalid_type',
+            ]);
+            return ['ok' => false, 'error' => 'Tipo de midia invalido para copia.'];
+        }
+
+        $postRole = $normalizedType === 'image' ? $this->slugify((string) ($options['post_role'] ?? '')) : '';
+        $audioRole = $normalizedType === 'audio' ? $this->normalizeAudioRole((string) ($options['audio_role'] ?? '')) : '';
+        $target = $this->preparePostMediaTarget($slug, $normalizedType, $postRole, $audioRole);
         if (($target['ok'] ?? false) !== true) {
-            return ['ok' => false, 'error' => (string) ($target['error'] ?? 'Nao foi possivel preparar a imagem do conteudo.')];
+            SystemActivityLogger::write('media', 'clone_media_to_post_failed', [
+                'slug' => $slug,
+                'source_path' => $path,
+                'media_type' => $normalizedType,
+                'reason' => 'target_prepare_failed',
+                'error' => (string) ($target['error'] ?? ''),
+            ]);
+            return ['ok' => false, 'error' => (string) ($target['error'] ?? 'Nao foi possivel preparar a midia do post.')];
         }
 
         $source = $this->resolveManagedFile($path);
         if ($source === null) {
-            return ['ok' => false, 'error' => 'Imagem da biblioteca nao encontrada.'];
+            SystemActivityLogger::write('media', 'clone_media_to_post_failed', [
+                'slug' => $slug,
+                'source_path' => $path,
+                'media_type' => $normalizedType,
+                'reason' => 'source_not_found',
+            ]);
+            return ['ok' => false, 'error' => 'Midia da biblioteca nao encontrada.'];
         }
 
-        if ((string) ($source['media_type'] ?? '') !== 'image') {
-            return ['ok' => false, 'error' => 'A midia selecionada nao e uma imagem valida.'];
+        if ((string) ($source['media_type'] ?? '') !== $normalizedType) {
+            SystemActivityLogger::write('media', 'clone_media_to_post_failed', [
+                'slug' => $slug,
+                'source_path' => $path,
+                'media_type' => $normalizedType,
+                'source_media_type' => (string) ($source['media_type'] ?? ''),
+                'reason' => 'type_mismatch',
+            ]);
+            return ['ok' => false, 'error' => 'A midia selecionada nao corresponde ao tipo solicitado.'];
         }
 
         $extension = strtolower((string) pathinfo((string) ($source['name'] ?? ''), PATHINFO_EXTENSION));
@@ -122,21 +166,78 @@ final class MidiaService
             $extension = strtolower((string) pathinfo((string) ($source['relative_path'] ?? ''), PATHINFO_EXTENSION));
         }
 
-        if ($extension === '' || !in_array($extension, self::IMAGE_EXTENSIONS, true)) {
-            return ['ok' => false, 'error' => 'Nao foi possivel identificar a extensao da imagem selecionada.'];
+        $allowedExtensions = $this->allowedExtensionsForType($normalizedType);
+        if ($extension === '' || ($allowedExtensions !== [] && !in_array($extension, $allowedExtensions, true))) {
+            SystemActivityLogger::write('media', 'clone_media_to_post_failed', [
+                'slug' => $slug,
+                'source_path' => $path,
+                'media_type' => $normalizedType,
+                'reason' => 'invalid_extension',
+            ]);
+            return ['ok' => false, 'error' => 'Nao foi possivel identificar a extensao da midia selecionada.'];
         }
 
-        $relativePath = (string) ($target['relative_dir'] ?? '') . '/' . (string) ($target['base'] ?? '') . '.' . $extension;
-        $absolutePath = (string) ($target['absolute_dir'] ?? '') . DIRECTORY_SEPARATOR . (string) ($target['base'] ?? '') . '.' . $extension;
+        $base = (string) ($target['base'] ?? '');
+        $relativeDir = (string) ($target['relative_dir'] ?? '');
+        $absoluteDir = (string) ($target['absolute_dir'] ?? '');
+        $overwrite = ($target['overwrite'] ?? false) === true;
+        if ($base === '' || $relativeDir === '' || $absoluteDir === '') {
+            SystemActivityLogger::write('media', 'clone_media_to_post_failed', [
+                'slug' => $slug,
+                'source_path' => $path,
+                'media_type' => $normalizedType,
+                'reason' => 'invalid_target',
+            ]);
+            return ['ok' => false, 'error' => 'Destino da midia nao pode ser determinado.'];
+        }
 
-        if ($absolutePath === '' || !@copy((string) ($source['absolute_path'] ?? ''), $absolutePath)) {
-            return ['ok' => false, 'error' => 'Falha ao duplicar a imagem da biblioteca para o post.'];
+        if ($overwrite) {
+            $this->deleteFilesByBase($absoluteDir, $base);
+            $filename = $base . '.' . $extension;
+        } elseif ($this->isPostMediaShortBase($base)) {
+            $filename = $this->nextSequencedFilename($absoluteDir, $base, $extension);
+        } else {
+            $filename = $this->nextAvailableFilename($absoluteDir, $base, $extension);
+        }
+
+        $relativePath = $relativeDir . '/' . $filename;
+        $absolutePath = $absoluteDir . DIRECTORY_SEPARATOR . $filename;
+
+        if (!@copy((string) ($source['absolute_path'] ?? ''), $absolutePath)) {
+            SystemActivityLogger::write('media', 'clone_media_to_post_failed', [
+                'slug' => $slug,
+                'source_path' => $path,
+                'media_type' => $normalizedType,
+                'target_path' => $relativePath,
+                'reason' => 'copy_failed',
+            ]);
+            return ['ok' => false, 'error' => 'Falha ao duplicar a midia da biblioteca para o post.'];
+        }
+
+        if ($normalizedType === 'image' && $postRole !== '') {
+            $this->cleanupLegacyPostRoleImage($this->slugify($slug), $postRole);
         }
 
         $item = $this->resolveManagedFile($relativePath);
         if ($item === null) {
-            return ['ok' => false, 'error' => 'A copia da imagem foi criada, mas nao pode ser localizada.'];
+            SystemActivityLogger::write('media', 'clone_media_to_post_failed', [
+                'slug' => $slug,
+                'source_path' => $path,
+                'media_type' => $normalizedType,
+                'target_path' => $relativePath,
+                'reason' => 'target_resolve_failed',
+            ]);
+            return ['ok' => false, 'error' => 'A copia da midia foi criada, mas nao pode ser localizada.'];
         }
+
+        SystemActivityLogger::write('media', 'clone_media_to_post_succeeded', [
+            'slug' => $this->slugify($slug),
+            'source_path' => $path,
+            'media_type' => $normalizedType,
+            'target_path' => $relativePath,
+            'post_role' => $postRole,
+            'audio_role' => $audioRole,
+        ]);
 
         return ['ok' => true, 'path' => $relativePath, 'item' => $item];
     }
@@ -1431,24 +1532,49 @@ final class MidiaService
 
     private function preparePostBodyImageTarget(string $slug): array
     {
+        return $this->preparePostMediaTarget($slug, 'image');
+    }
+
+    private function preparePostMediaTarget(string $slug, string $type, string $postRole = '', string $audioRole = ''): array
+    {
         $slug = $this->slugify($slug);
-        if ($slug === '') {
-            return ['ok' => false, 'error' => 'Nao foi possivel preparar o nome da imagem do conteudo.'];
+        $type = $this->normalizeRequestedMediaType($type);
+        $postRole = $this->slugify($postRole);
+        $audioRole = $this->normalizeAudioRole($audioRole);
+
+        if ($slug === '' || $type === '') {
+            return ['ok' => false, 'error' => 'Nao foi possivel preparar o destino da midia do post.'];
         }
 
-        $storageDir = 'posts/' . $slug . '/images';
+        if ($type === 'image' && $postRole !== '' && !in_array($postRole, ['capa', 'thumb'], true)) {
+            $postRole = '';
+        }
+
+        $storageDir = 'posts/' . $slug . '/' . $this->mediaStorageDirectory($type);
         $relativeDir = 'uploads/' . $storageDir;
         $absoluteDir = $this->publicRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativeDir);
         if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0775, true) && !is_dir($absoluteDir)) {
             return ['ok' => false, 'error' => 'Nao foi possivel criar a pasta do post.'];
         }
 
+        $base = match ($type) {
+            'image' => $postRole !== '' ? $postRole : 'img',
+            'audio' => match ($audioRole) {
+                'narracao' => 'nar',
+                'ambiente' => 'amb',
+                default => 'aud',
+            },
+            'video' => 'vid',
+            default => 'file',
+        };
+
         return [
             'ok' => true,
             'storage_dir' => $storageDir,
             'relative_dir' => $relativeDir,
             'absolute_dir' => $absoluteDir,
-            'base' => 'img',
+            'base' => $base,
+            'overwrite' => $type === 'image' && $postRole !== '',
         ];
     }
 

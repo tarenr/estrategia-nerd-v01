@@ -3,6 +3,8 @@ declare(strict_types=1);
 ?>
 <script>
 (function () {
+  window.__postEditorEnhancedUi = true;
+
   function byId(id) {
     return document.getElementById(id);
   }
@@ -19,6 +21,11 @@ declare(strict_types=1);
     return byId('editor-html');
   }
 
+  function isHtmlPanelActive() {
+    var panel = byId('panel-html');
+    return !!(panel && !panel.classList.contains('hidden'));
+  }
+
   function postForm() {
     return byId('postForm');
   }
@@ -29,12 +36,38 @@ declare(strict_types=1);
     var html = htmlField();
     if (!root) return;
     if (hidden) hidden.value = root.innerHTML;
-    if (html) html.value = root.innerHTML;
+    if (html) {
+      html.value = root.innerHTML;
+      if (isHtmlPanelActive() && window.AdminHtmlEditor && typeof window.AdminHtmlEditor.setValueByTextareaId === 'function') {
+        window.AdminHtmlEditor.setValueByTextareaId('editor-html', html.value);
+      }
+    }
     var wordCount = byId('wordCount');
     if (wordCount) {
       var text = (root.innerText || '').trim();
       var words = text ? text.split(/\s+/).filter(Boolean).length : 0;
       wordCount.textContent = words + ' palavra' + (words !== 1 ? 's' : '');
+    }
+  }
+
+  function refreshExternalEditorState() {
+    if (typeof window.__postEditorRefreshChecklist === 'function') {
+      window.__postEditorRefreshChecklist();
+    }
+    if (typeof window.__postEditorInitMediaPreview === 'function') {
+      window.__postEditorInitMediaPreview(editor());
+    }
+  }
+
+  function registerKnownUploads(paths) {
+    if (typeof window.__postEditorRegisterKnownUploads === 'function') {
+      window.__postEditorRegisterKnownUploads(paths);
+    }
+  }
+
+  function registerManagedUploads(paths) {
+    if (typeof window.__postEditorRegisterManagedUploads === 'function') {
+      window.__postEditorRegisterManagedUploads(paths);
     }
   }
 
@@ -94,10 +127,9 @@ declare(strict_types=1);
     if (!marker) return;
 
     marker.removeAttribute('data-editor-caret');
-    marker.style.textAlign = 'left';
 
-    if (!String(marker.innerHTML || '').trim()) {
-      marker.innerHTML = '<br>';
+    if (!String(marker.textContent || '').trim()) {
+      marker.innerHTML = '&#8203;<br>';
     }
 
     var selection = window.getSelection ? window.getSelection() : null;
@@ -110,17 +142,69 @@ declare(strict_types=1);
     selection.addRange(range);
   }
 
+  function isBlockMarkup(html) {
+    return /<(div|figure|table|blockquote|h2|h3|ul|ol|p)\b/i.test(String(html || ''));
+  }
+
+  function insertFragmentAtRange(range, html) {
+    var root = editor();
+    if (!root) return;
+    var workingRange = range ? range.cloneRange() : currentRange();
+    if (!workingRange) {
+      workingRange = document.createRange();
+      workingRange.selectNodeContents(root);
+      workingRange.collapse(false);
+    }
+
+    restoreRange(workingRange);
+
+    var selection = window.getSelection ? window.getSelection() : null;
+    if (!selection) return;
+
+    var fragment = workingRange.createContextualFragment(String(html || ''));
+    var markerNode = null;
+    Array.prototype.slice.call(fragment.childNodes || []).forEach(function (node) {
+      if (node.nodeType === 1 && node.hasAttribute && node.hasAttribute('data-editor-caret')) {
+        markerNode = node;
+      }
+    });
+
+    workingRange.deleteContents();
+    var lastNode = fragment.lastChild;
+    workingRange.insertNode(fragment);
+
+    var caretRange = document.createRange();
+    if (markerNode && root.contains(markerNode)) {
+      caretRange.selectNodeContents(markerNode);
+      caretRange.collapse(true);
+    } else if (lastNode && root.contains(lastNode)) {
+      caretRange.setStartAfter(lastNode);
+      caretRange.collapse(true);
+    } else {
+      caretRange.selectNodeContents(root);
+      caretRange.collapse(false);
+    }
+
+    selection.removeAllRanges();
+    selection.addRange(caretRange);
+  }
+
   function insertAtRange(range, html) {
     var root = editor();
     if (!root) return;
-    restoreRange(range);
-    try {
-      document.execCommand('insertHTML', false, html);
-    } catch (error) {
-      root.innerHTML += html;
+    if (isBlockMarkup(html)) {
+      insertFragmentAtRange(range, html);
+    } else {
+      restoreRange(range);
+      try {
+        document.execCommand('insertHTML', false, html);
+      } catch (error) {
+        root.innerHTML += html;
+      }
     }
     moveCaretToMarker();
     syncHiddenFields();
+    refreshExternalEditorState();
     saveRange(currentRange());
   }
 
@@ -139,19 +223,19 @@ declare(strict_types=1);
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'postEditorSystemModal';
-      modal.style.cssText = 'position:fixed;inset:0;z-index:10050;display:none;align-items:center;justify-content:center;padding:24px;';
+      modal.className = 'post-editor-modal';
       modal.innerHTML = '' +
-        '<div data-ui-overlay style="position:absolute;inset:0;background:rgba(15,23,42,.62);backdrop-filter:blur(6px);"></div>' +
-        '<div style="position:relative;width:min(100%,720px);border-radius:24px;border:1px solid rgba(103,232,249,.24);background:linear-gradient(180deg, rgba(21,30,51,.98), rgba(12,18,33,.98));box-shadow:0 30px 90px rgba(0,0,0,.42);color:#e2e8f0;overflow:hidden;">' +
-        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 24px;border-bottom:1px solid rgba(71,85,105,.42);background:rgba(15,23,42,.44);">' +
-        '<div><div id="postEditorSystemModalTitle" style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:900;color:#f8fafc;">Editor</div><div id="postEditorSystemModalSubtitle" style="margin-top:6px;font-size:12px;color:#cbd5e1;"></div></div>' +
-        '<button type="button" id="postEditorSystemCloseTop" class="admin-btn admin-btn-secondary" style="padding:8px 12px;">Fechar</button>' +
+        '<div data-ui-overlay class="post-editor-modal__overlay"></div>' +
+        '<div class="post-editor-modal__dialog">' +
+        '<div class="post-editor-modal__header">' +
+        '<div><div id="postEditorSystemModalTitle" class="post-editor-modal__title">Editor</div><div id="postEditorSystemModalSubtitle" class="post-editor-modal__subtitle"></div></div>' +
+        '<button type="button" id="postEditorSystemCloseTop" class="admin-btn admin-btn-secondary post-editor-modal__close">Fechar</button>' +
         '</div>' +
-        '<div style="padding:24px;display:grid;gap:16px;background:rgba(15,23,42,.24);">' +
-        '<div id="postEditorSystemModalMessage" style="font-size:14px;line-height:1.7;color:#dbe4f0;"></div>' +
-        '<form id="postEditorSystemModalForm" style="display:grid;gap:14px;"></form>' +
+        '<div class="post-editor-modal__body">' +
+        '<div id="postEditorSystemModalMessage" class="post-editor-modal__message"></div>' +
+        '<form id="postEditorSystemModalForm" class="post-editor-modal__form"></form>' +
         '</div>' +
-        '<div style="display:flex;justify-content:flex-end;gap:12px;padding:20px 24px;border-top:1px solid rgba(71,85,105,.42);background:rgba(9,14,27,.38);">' +
+        '<div class="post-editor-modal__footer">' +
         '<button type="button" id="postEditorSystemCancel" class="admin-btn admin-btn-secondary">Cancelar</button>' +
         '<button type="button" id="postEditorSystemSubmit" class="admin-btn admin-btn-primary">Confirmar</button>' +
         '</div>' +
@@ -162,7 +246,7 @@ declare(strict_types=1);
     if (!toastRoot) {
       toastRoot = document.createElement('div');
       toastRoot.id = 'postEditorSystemToastRoot';
-      toastRoot.style.cssText = 'position:fixed;top:16px;right:16px;z-index:10051;display:flex;flex-direction:column;gap:12px;max-width:360px;';
+      toastRoot.className = 'post-editor-toast-root';
       document.body.appendChild(toastRoot);
     }
 
@@ -173,7 +257,7 @@ declare(strict_types=1);
     var ui = ensureUi();
     var item = document.createElement('div');
     var isError = type === 'error';
-    item.style.cssText = 'border-radius:18px;border:1px solid ' + (isError ? 'rgba(251,113,133,.35)' : 'rgba(34,211,238,.24)') + ';background:' + (isError ? 'rgba(127,29,29,.92)' : 'rgba(2,6,23,.94)') + ';color:#e2e8f0;padding:14px 16px;font-size:13px;line-height:1.5;box-shadow:0 20px 45px rgba(0,0,0,.35);';
+    item.className = 'post-editor-toast' + (isError ? ' is-error' : '');
     item.textContent = message;
     ui.toastRoot.appendChild(item);
     window.setTimeout(function () { item.remove(); }, 2600);
@@ -199,13 +283,12 @@ declare(strict_types=1);
 
     (options.fields || []).forEach(function (field) {
       var wrap = document.createElement('div');
-      wrap.style.display = 'grid';
-      wrap.style.gap = '8px';
+      wrap.className = 'post-editor-field';
 
       var label = document.createElement('label');
       label.textContent = field.label || field.name || 'Campo';
       label.htmlFor = 'post-editor-system-' + field.name;
-      label.style.cssText = 'font-size:13px;font-weight:700;color:#e2e8f0;';
+      label.className = 'post-editor-field__label';
       wrap.appendChild(label);
 
       var input = field.type === 'textarea' ? document.createElement('textarea') : document.createElement('input');
@@ -216,8 +299,7 @@ declare(strict_types=1);
       input.value = field.value || '';
       input.placeholder = field.placeholder || '';
       input.required = !!field.required;
-      input.className = 'nerd-input';
-      input.style.cssText = 'width:100%;border-radius:14px;padding:12px 14px;background:rgba(248,250,252,.06);background-color:rgba(248,250,252,.06);color:#f8fafc;border:1px solid rgba(103,232,249,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.03);';
+      input.className = 'nerd-input post-editor-input';
       wrap.appendChild(input);
       form.appendChild(wrap);
     });
@@ -351,9 +433,9 @@ declare(strict_types=1);
   function buildSingleMediaSourceSummary(kindLabel, entry, emptyMessage) {
     if (!entry || !entry.path) {
       return '' +
-        '<div style="display:grid;gap:6px;padding:14px;border-radius:16px;border:1px dashed rgba(148,163,184,.32);background:rgba(248,250,252,.03);">' +
-        '  <div style="font-size:13px;font-weight:800;color:#f8fafc;">' + escapeHtml(kindLabel) + '</div>' +
-        '  <div style="font-size:12px;color:#94a3b8;">' + escapeHtml(emptyMessage || 'Nenhuma midia selecionada ainda.') + '</div>' +
+        '<div class="post-editor-media-summary post-editor-media-summary--empty">' +
+        '  <div class="post-editor-media-summary__title">' + escapeHtml(kindLabel) + '</div>' +
+        '  <div class="post-editor-media-summary__meta">' + escapeHtml(emptyMessage || 'Nenhuma midia selecionada ainda.') + '</div>' +
         '</div>';
     }
 
@@ -364,13 +446,13 @@ declare(strict_types=1);
         : 'Biblioteca';
 
     return '' +
-      '<div style="display:grid;gap:6px;padding:14px;border-radius:16px;border:1px solid rgba(103,232,249,.16);background:rgba(248,250,252,.04);">' +
-      '  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
-      '    <div style="font-size:13px;font-weight:800;color:#f8fafc;">' + escapeHtml(kindLabel) + '</div>' +
-      '    <span style="font-size:11px;font-weight:700;color:#67e8f9;">' + escapeHtml(sourceLabel) + '</span>' +
+      '<div class="post-editor-media-summary">' +
+      '  <div class="post-editor-media-summary__head">' +
+      '    <div class="post-editor-media-summary__title">' + escapeHtml(kindLabel) + '</div>' +
+      '    <span class="post-editor-media-summary__badge">' + escapeHtml(sourceLabel) + '</span>' +
       '  </div>' +
-      '  <div style="font-size:12px;font-weight:700;color:#e2e8f0;word-break:break-word;">' + escapeHtml(entry.label || mediaDisplayName(entry.path) || 'Arquivo') + '</div>' +
-      '  <div style="font-size:11px;color:#94a3b8;word-break:break-all;">' + escapeHtml(entry.path) + '</div>' +
+      '  <div class="post-editor-media-summary__label">' + escapeHtml(entry.label || mediaDisplayName(entry.path) || 'Arquivo') + '</div>' +
+      '  <div class="post-editor-media-summary__path">' + escapeHtml(entry.path) + '</div>' +
       '</div>';
   }
 
@@ -378,9 +460,9 @@ declare(strict_types=1);
     var kindLabel = kind === 'narracao' ? 'Narracao' : 'Ambiente';
     if (!entry || !entry.path) {
       return '' +
-        '<div style="display:grid;gap:6px;padding:14px;border-radius:16px;border:1px dashed rgba(148,163,184,.32);background:rgba(248,250,252,.03);">' +
-        '  <div style="font-size:13px;font-weight:800;color:#f8fafc;">' + kindLabel + '</div>' +
-        '  <div style="font-size:12px;color:#94a3b8;">Nenhum audio selecionado ainda.</div>' +
+        '<div class="post-editor-media-summary post-editor-media-summary--empty">' +
+        '  <div class="post-editor-media-summary__title">' + kindLabel + '</div>' +
+        '  <div class="post-editor-media-summary__meta">Nenhum audio selecionado ainda.</div>' +
         '</div>';
     }
 
@@ -391,13 +473,13 @@ declare(strict_types=1);
         : 'Biblioteca';
 
     return '' +
-      '<div style="display:grid;gap:6px;padding:14px;border-radius:16px;border:1px solid rgba(103,232,249,.16);background:rgba(248,250,252,.04);">' +
-      '  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
-      '    <div style="font-size:13px;font-weight:800;color:#f8fafc;">' + kindLabel + '</div>' +
-      '    <span style="font-size:11px;font-weight:700;color:#67e8f9;">' + escapeHtml(sourceLabel) + '</span>' +
+      '<div class="post-editor-media-summary">' +
+      '  <div class="post-editor-media-summary__head">' +
+      '    <div class="post-editor-media-summary__title">' + kindLabel + '</div>' +
+      '    <span class="post-editor-media-summary__badge">' + escapeHtml(sourceLabel) + '</span>' +
       '  </div>' +
-      '  <div style="font-size:12px;font-weight:700;color:#e2e8f0;word-break:break-word;">' + escapeHtml(entry.label || mediaDisplayName(entry.path) || 'Arquivo') + '</div>' +
-      '  <div style="font-size:11px;color:#94a3b8;word-break:break-all;">' + escapeHtml(entry.path) + '</div>' +
+      '  <div class="post-editor-media-summary__label">' + escapeHtml(entry.label || mediaDisplayName(entry.path) || 'Arquivo') + '</div>' +
+      '  <div class="post-editor-media-summary__path">' + escapeHtml(entry.path) + '</div>' +
       '</div>';
   }
 
@@ -426,7 +508,7 @@ declare(strict_types=1);
       title.textContent = mode === 'edit' ? 'Editar bloco de audio' : 'Bloco de audio';
       subtitle.textContent = preferredAction === 'upload' ? 'Configure o bloco e envie narracao e ambiente sem sair do fluxo.' : (preferredAction === 'library' ? 'Configure o bloco e escolha os audios na biblioteca do post.' : (preferredAction === 'url' ? 'Configure o bloco e informe as URLs de narracao e ambiente.' : 'Configure o bloco e escolha narracao e ambiente sem sair do fluxo.')); 
       subtitle.style.display = 'block';
-      message.innerHTML = '<div style="padding:12px 14px;border-radius:14px;border:1px solid rgba(103,232,249,.16);background:rgba(248,250,252,.04);font-size:12px;color:#cbd5e1;">Cada canal aceita <strong style="color:#f8fafc;">Enviar</strong>, <strong style="color:#f8fafc;">Biblioteca</strong> ou <strong style="color:#f8fafc;">URL</strong>. Voce pode usar apenas um deles ou os dois juntos.</div>';
+      message.innerHTML = '<div class="post-editor-builder-note">Cada canal aceita <strong class="post-editor-builder-note__strong">Enviar</strong>, <strong class="post-editor-builder-note__strong">Biblioteca</strong> ou <strong class="post-editor-builder-note__strong">URL</strong>. Voce pode usar apenas um deles ou os dois juntos.</div>';
       submit.textContent = mode === 'edit' ? 'Salvar alteracoes' : 'Inserir bloco';
       submit.style.display = 'inline-flex';
       submit.disabled = false;
@@ -440,33 +522,33 @@ declare(strict_types=1);
     function render() {
       showBuilder();
       form.innerHTML = '' +
-        '<div style="display:grid;gap:12px;">' +
-        '  <div style="display:grid;gap:8px;">' +
-        '    <label for="audio-builder-title" style="font-size:13px;font-weight:700;color:#e2e8f0;">Titulo</label>' +
-        '    <input id="audio-builder-title" type="text" value="' + escapeHtml(state.title) + '" placeholder="Relato dos Horadrim" class="nerd-input" style="width:100%;border-radius:14px;padding:12px 14px;background:rgba(248,250,252,.06);color:#f8fafc;border:1px solid rgba(103,232,249,.24);">' +
+        '<div class="post-editor-stack-md">' +
+        '  <div class="post-editor-field">' +
+        '    <label for="audio-builder-title" class="post-editor-field__label">Titulo</label>' +
+        '    <input id="audio-builder-title" type="text" value="' + escapeHtml(state.title) + '" placeholder="Relato dos Horadrim" class="nerd-input post-editor-input">' +
         '  </div>' +
-        '  <div style="display:grid;gap:8px;">' +
-        '    <label for="audio-builder-subtitle" style="font-size:13px;font-weight:700;color:#e2e8f0;">Subtitulo</label>' +
-        '    <textarea id="audio-builder-subtitle" rows="3" placeholder="Ouca a introducao deste relato." class="nerd-input" style="width:100%;border-radius:14px;padding:12px 14px;background:rgba(248,250,252,.06);color:#f8fafc;border:1px solid rgba(103,232,249,.24);">' + escapeHtml(state.subtitle) + '</textarea>' +
+        '  <div class="post-editor-field">' +
+        '    <label for="audio-builder-subtitle" class="post-editor-field__label">Subtitulo</label>' +
+        '    <textarea id="audio-builder-subtitle" rows="3" placeholder="Ouca a introducao deste relato." class="nerd-input post-editor-input">' + escapeHtml(state.subtitle) + '</textarea>' +
         '  </div>' +
-        '  <div style="display:grid;gap:8px;">' +
-        '    <label for="audio-builder-button" style="font-size:13px;font-weight:700;color:#e2e8f0;">Texto do botao</label>' +
-        '    <input id="audio-builder-button" type="text" value="' + escapeHtml(state.buttonText) + '" placeholder="Ouvir narracao" class="nerd-input" style="width:100%;border-radius:14px;padding:12px 14px;background:rgba(248,250,252,.06);color:#f8fafc;border:1px solid rgba(103,232,249,.24);">' +
+        '  <div class="post-editor-field">' +
+        '    <label for="audio-builder-button" class="post-editor-field__label">Texto do botao</label>' +
+        '    <input id="audio-builder-button" type="text" value="' + escapeHtml(state.buttonText) + '" placeholder="Ouvir narracao" class="nerd-input post-editor-input">' +
         '  </div>' +
         '</div>' +
-        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">' +
-        '  <div style="display:grid;gap:12px;">' +
+        '<div class="post-editor-builder-grid">' +
+        '  <div class="post-editor-stack-md">' +
         buildAudioSourceSummary('narracao', state.narracao) +
-        '    <div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+        '    <div class="post-editor-actions-row">' +
         '      <button type="button" data-audio-source="narracao" data-audio-action="upload" class="admin-btn admin-btn-secondary">Enviar</button>' +
         '      <button type="button" data-audio-source="narracao" data-audio-action="library" class="admin-btn admin-btn-secondary">Biblioteca</button>' +
         '      <button type="button" data-audio-source="narracao" data-audio-action="url" class="admin-btn admin-btn-secondary">URL</button>' +
         '      <button type="button" data-audio-source="narracao" data-audio-action="clear" class="admin-btn admin-btn-secondary">Limpar</button>' +
         '    </div>' +
         '  </div>' +
-        '  <div style="display:grid;gap:12px;">' +
+        '  <div class="post-editor-stack-md">' +
         buildAudioSourceSummary('ambiente', state.ambiente) +
-        '    <div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+        '    <div class="post-editor-actions-row">' +
         '      <button type="button" data-audio-source="ambiente" data-audio-action="upload" class="admin-btn admin-btn-secondary">Enviar</button>' +
         '      <button type="button" data-audio-source="ambiente" data-audio-action="library" class="admin-btn admin-btn-secondary">Biblioteca</button>' +
         '      <button type="button" data-audio-source="ambiente" data-audio-action="url" class="admin-btn admin-btn-secondary">URL</button>' +
@@ -596,13 +678,63 @@ declare(strict_types=1);
           alertModal('Selecione ao menos um audio, seja narracao ou ambiente.').then(function () { render(); });
           return;
         }
-
-        cleanup({
-          title: state.title,
-          subtitle: state.subtitle,
-          buttonText: state.buttonText || 'Ouvir narracao',
+        var finalize = Promise.resolve({
           narracao: state.narracao.path || '',
           ambiente: state.ambiente.path || ''
+        });
+
+        if (state.narracao.source === 'library' || state.ambiente.source === 'library') {
+          isNestedDialogOpen = true;
+          submit.disabled = true;
+          submit.textContent = 'Preparando...';
+          finalize = ensurePostIdentity().then(function (identity) {
+            if (!identity) return null;
+            return Promise.all([
+              state.narracao.source === 'library' && state.narracao.path
+                ? duplicateLibraryMediaToPost(state.narracao.path, identity, { type: 'audio', audioRole: 'narracao' })
+                : Promise.resolve({ ok: true, path: state.narracao.path || '' }),
+              state.ambiente.source === 'library' && state.ambiente.path
+                ? duplicateLibraryMediaToPost(state.ambiente.path, identity, { type: 'audio', audioRole: 'ambiente' })
+                : Promise.resolve({ ok: true, path: state.ambiente.path || '' })
+            ]);
+          }).then(function (results) {
+            if (!results) return null;
+            var narracaoResult = results[0] || { ok: true, path: state.narracao.path || '' };
+            var ambienteResult = results[1] || { ok: true, path: state.ambiente.path || '' };
+            if (narracaoResult.ok !== true) {
+              throw new Error(narracaoResult.error || 'Falha ao preparar o audio de narracao.');
+            }
+            if (ambienteResult.ok !== true) {
+              throw new Error(ambienteResult.error || 'Falha ao preparar o audio de ambiente.');
+            }
+            if (narracaoResult.item) refreshMediaLibraryCache(narracaoResult.item);
+            if (ambienteResult.item) refreshMediaLibraryCache(ambienteResult.item);
+            return {
+              narracao: String(narracaoResult.url || narracaoResult.path || '').trim(),
+              ambiente: String(ambienteResult.url || ambienteResult.path || '').trim()
+            };
+          });
+        }
+
+        finalize.then(function (media) {
+          if (!media) {
+            render();
+            return;
+          }
+          cleanup({
+            title: state.title,
+            subtitle: state.subtitle,
+            buttonText: state.buttonText || 'Ouvir narracao',
+            narracao: media.narracao || '',
+            ambiente: media.ambiente || ''
+          });
+        }).catch(function (error) {
+          alertModal(error && error.message ? error.message : 'Falha ao preparar os audios da biblioteca.').then(function () {
+            render();
+          });
+        }).finally(function () {
+          isNestedDialogOpen = false;
+          submit.disabled = false;
         });
       }
 
@@ -648,7 +780,7 @@ declare(strict_types=1);
             ? 'Configure a imagem e informe uma URL ou caminho valido.'
             : 'Configure a imagem e escolha entre upload, biblioteca ou URL sem sair do fluxo.'));
       subtitle.style.display = 'block';
-      message.innerHTML = '<div style="padding:12px 14px;border-radius:14px;border:1px solid rgba(103,232,249,.16);background:rgba(248,250,252,.04);font-size:12px;color:#cbd5e1;">A imagem aceita <strong style="color:#f8fafc;">Enviar</strong>, <strong style="color:#f8fafc;">Biblioteca</strong> ou <strong style="color:#f8fafc;">URL</strong>. Todos os caminhos geram o mesmo bloco final no conteudo.</div>';
+      message.innerHTML = '<div class="post-editor-builder-note">A imagem aceita <strong class="post-editor-builder-note__strong">Enviar</strong>, <strong class="post-editor-builder-note__strong">Biblioteca</strong> ou <strong class="post-editor-builder-note__strong">URL</strong>. Todos os caminhos geram o mesmo bloco final no conteudo.</div>';
       submit.textContent = isSubmitting ? (mode === 'edit' ? 'Salvando...' : 'Inserindo...') : (mode === 'edit' ? 'Salvar alteracoes' : 'Inserir bloco');
       submit.style.display = 'inline-flex';
       submit.disabled = isSubmitting;
@@ -662,19 +794,19 @@ declare(strict_types=1);
     function render() {
       showBuilder();
       form.innerHTML = '' +
-        '<div style="display:grid;gap:12px;">' +
-        '  <div style="display:grid;gap:8px;">' +
-        '    <label for="image-builder-alt" style="font-size:13px;font-weight:700;color:#e2e8f0;">Texto alternativo</label>' +
-        '    <input id="image-builder-alt" type="text" value="' + escapeHtml(state.alt) + '" placeholder="Descricao curta da imagem" class="nerd-input" style="width:100%;border-radius:14px;padding:12px 14px;background:rgba(248,250,252,.06);color:#f8fafc;border:1px solid rgba(103,232,249,.24);">' +
+        '<div class="post-editor-stack-md">' +
+        '  <div class="post-editor-field">' +
+        '    <label for="image-builder-alt" class="post-editor-field__label">Texto alternativo</label>' +
+        '    <input id="image-builder-alt" type="text" value="' + escapeHtml(state.alt) + '" placeholder="Descricao curta da imagem" class="nerd-input post-editor-input">' +
         '  </div>' +
-        '  <div style="display:grid;gap:8px;">' +
-        '    <label for="image-builder-legenda" style="font-size:13px;font-weight:700;color:#e2e8f0;">Legenda</label>' +
-        '    <textarea id="image-builder-legenda" rows="3" placeholder="Legenda opcional" class="nerd-input" style="width:100%;border-radius:14px;padding:12px 14px;background:rgba(248,250,252,.06);color:#f8fafc;border:1px solid rgba(103,232,249,.24);">' + escapeHtml(state.legenda) + '</textarea>' +
+        '  <div class="post-editor-field">' +
+        '    <label for="image-builder-legenda" class="post-editor-field__label">Legenda</label>' +
+        '    <textarea id="image-builder-legenda" rows="3" placeholder="Legenda opcional" class="nerd-input post-editor-input">' + escapeHtml(state.legenda) + '</textarea>' +
         '  </div>' +
         '</div>' +
-        '<div style="display:grid;gap:12px;">' +
+        '<div class="post-editor-stack-md">' +
         buildSingleMediaSourceSummary('Imagem', state.media, 'Nenhuma imagem selecionada ainda.') +
-        '  <div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+        '  <div class="post-editor-actions-row">' +
         '    <button type="button" data-image-action="upload" class="admin-btn admin-btn-secondary">Enviar</button>' +
         '    <button type="button" data-image-action="library" class="admin-btn admin-btn-secondary">Biblioteca</button>' +
         '    <button type="button" data-image-action="url" class="admin-btn admin-btn-secondary">URL</button>' +
@@ -821,7 +953,7 @@ declare(strict_types=1);
           finalizePath = ensurePostIdentity()
             .then(function (identity) {
               if (!identity) return null;
-              return duplicateLibraryImageToPost(state.media.path, identity);
+              return duplicateLibraryMediaToPost(state.media.path, identity, { type: 'image' });
             })
             .then(function (payload) {
               if (!payload) return null;
@@ -894,7 +1026,7 @@ declare(strict_types=1);
             ? 'Configure o video e informe a origem por URL, YouTube ou iframe.'
             : 'Configure o video e escolha entre upload, biblioteca ou URL sem sair do fluxo.'));
       subtitle.style.display = 'block';
-      message.innerHTML = '<div style="padding:12px 14px;border-radius:14px;border:1px solid rgba(103,232,249,.16);background:rgba(248,250,252,.04);font-size:12px;color:#cbd5e1;">O video aceita <strong style="color:#f8fafc;">Enviar</strong>, <strong style="color:#f8fafc;">Biblioteca</strong> ou <strong style="color:#f8fafc;">URL</strong>. Todos os caminhos geram o mesmo bloco final no conteudo.</div>';
+      message.innerHTML = '<div class="post-editor-builder-note">O video aceita <strong class="post-editor-builder-note__strong">Enviar</strong>, <strong class="post-editor-builder-note__strong">Biblioteca</strong> ou <strong class="post-editor-builder-note__strong">URL</strong>. Todos os caminhos geram o mesmo bloco final no conteudo.</div>';
       submit.textContent = mode === 'edit' ? 'Salvar alteracoes' : 'Inserir bloco';
       submit.style.display = 'inline-flex';
       submit.disabled = false;
@@ -908,15 +1040,15 @@ declare(strict_types=1);
     function render() {
       showBuilder();
       form.innerHTML = '' +
-        '<div style="display:grid;gap:12px;">' +
-        '  <div style="display:grid;gap:8px;">' +
-        '    <label for="video-builder-legenda" style="font-size:13px;font-weight:700;color:#e2e8f0;">Legenda</label>' +
-        '    <textarea id="video-builder-legenda" rows="3" placeholder="Legenda opcional" class="nerd-input" style="width:100%;border-radius:14px;padding:12px 14px;background:rgba(248,250,252,.06);color:#f8fafc;border:1px solid rgba(103,232,249,.24);">' + escapeHtml(state.legenda) + '</textarea>' +
+        '<div class="post-editor-stack-md">' +
+        '  <div class="post-editor-field">' +
+        '    <label for="video-builder-legenda" class="post-editor-field__label">Legenda</label>' +
+        '    <textarea id="video-builder-legenda" rows="3" placeholder="Legenda opcional" class="nerd-input post-editor-input">' + escapeHtml(state.legenda) + '</textarea>' +
         '  </div>' +
         '</div>' +
-        '<div style="display:grid;gap:12px;">' +
+        '<div class="post-editor-stack-md">' +
         buildSingleMediaSourceSummary('Video', state.media, 'Nenhum video selecionado ainda.') +
-        '  <div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+        '  <div class="post-editor-actions-row">' +
         '    <button type="button" data-video-action="upload" class="admin-btn admin-btn-secondary">Enviar</button>' +
         '    <button type="button" data-video-action="library" class="admin-btn admin-btn-secondary">Biblioteca</button>' +
         '    <button type="button" data-video-action="url" class="admin-btn admin-btn-secondary">URL</button>' +
@@ -1036,10 +1168,42 @@ declare(strict_types=1);
           });
           return;
         }
+        var finalize = Promise.resolve(String(state.media.path || ''));
+        if (state.media.source === 'library') {
+          isNestedDialogOpen = true;
+          submit.disabled = true;
+          submit.textContent = 'Preparando...';
+          finalize = ensurePostIdentity()
+            .then(function (identity) {
+              if (!identity) return null;
+              return duplicateLibraryMediaToPost(state.media.path, identity, { type: 'video' });
+            })
+            .then(function (payload) {
+              if (!payload) return null;
+              if (payload.ok !== true) {
+                throw new Error(payload.error || 'Falha ao preparar o video da biblioteca.');
+              }
+              if (payload.item) refreshMediaLibraryCache(payload.item);
+              return String(payload.url || payload.path || '').trim();
+            });
+        }
 
-        cleanup({
-          path: state.media.path,
-          legenda: state.legenda
+        finalize.then(function (path) {
+          if (!path) {
+            render();
+            return;
+          }
+          cleanup({
+            path: path,
+            legenda: state.legenda
+          });
+        }).catch(function (error) {
+          alertModal(error && error.message ? error.message : 'Falha ao preparar o video da biblioteca.').then(function () {
+            render();
+          });
+        }).finally(function () {
+          isNestedDialogOpen = false;
+          submit.disabled = false;
         });
       }
 
@@ -1237,15 +1401,23 @@ declare(strict_types=1);
     });
   }
 
-  function duplicateLibraryImageToPost(path, identity) {
+  function duplicateLibraryMediaToPost(path, identity, options) {
     var csrf = document.querySelector('input[name="_csrf_token"]');
     var data = new FormData();
+    var settings = options || {};
     data.append('_csrf_token', csrf ? csrf.value : '');
     data.append('path', String(path || '').trim());
     data.append('slug', identity && identity.slug ? String(identity.slug || '').trim() : '');
     data.append('titulo', identity && identity.title ? String(identity.title || '').trim() : '');
+    data.append('media_type', String(settings.type || 'image').trim());
+    if (settings.audioRole) {
+      data.append('audio_role', String(settings.audioRole).trim());
+    }
+    if (settings.postRole) {
+      data.append('post_role', String(settings.postRole).trim());
+    }
 
-    return fetch('<?= htmlspecialchars(url('/admin/copiar-post-imagem-biblioteca'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>', {
+    return fetch('<?= htmlspecialchars(url('/admin/copiar-post-midia-biblioteca'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>', {
       method: 'POST',
       body: data,
       headers: {
@@ -1314,27 +1486,27 @@ declare(strict_types=1);
     var mediaType = String((item && item.media_type) || type || 'other').trim();
     var searchText = String([title, path, String((item && item.basename) || '').trim()].join(' ')).toLowerCase().trim();
 
-    var preview = '<div style="display:flex;align-items:center;justify-content:center;height:126px;border-radius:14px;background:rgba(15,23,42,.88);border:1px solid rgba(34,211,238,.12);overflow:hidden;">';
+    var preview = '<div class="post-editor-library-card__preview">';
     if (mediaType === 'image' && url) {
-      preview += '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(title) + '" style="display:block;width:100%;height:100%;object-fit:cover;">';
+      preview += '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(title) + '" class="post-editor-library-card__media post-editor-library-card__media--image">';
     } else if (mediaType === 'audio' && url) {
-      preview += '<audio controls preload="none" style="width:min(100%,260px);"><source src="' + escapeHtml(url) + '" type="' + escapeHtml(mime || 'audio/mpeg') + '"></audio>';
+      preview += '<audio controls preload="none" class="post-editor-library-card__media post-editor-library-card__media--audio"><source src="' + escapeHtml(url) + '" type="' + escapeHtml(mime || 'audio/mpeg') + '"></audio>';
     } else if (mediaType === 'video' && url) {
-      preview += '<video controls preload="metadata" style="width:100%;height:100%;object-fit:cover;"><source src="' + escapeHtml(url) + '" type="' + escapeHtml(mime || 'video/mp4') + '"></video>';
+      preview += '<video controls preload="metadata" class="post-editor-library-card__media post-editor-library-card__media--video"><source src="' + escapeHtml(url) + '" type="' + escapeHtml(mime || 'video/mp4') + '"></video>';
     } else {
-      preview += '<div style="font-family:Orbitron,sans-serif;font-size:1rem;font-weight:800;color:#67e8f9;letter-spacing:.08em;">' + escapeHtml((String((item && item.extension) || 'arq') || 'ARQ').toUpperCase()) + '</div>';
+      preview += '<div class="post-editor-library-card__fallback">' + escapeHtml((String((item && item.extension) || 'arq') || 'ARQ').toUpperCase()) + '</div>';
     }
     preview += '</div>';
 
     return '' +
-      '<div data-media-library-entry="1" data-media-library-search="' + escapeHtml(searchText) + '" style="display:grid;gap:12px;padding:14px;border-radius:18px;border:1px solid rgba(34,211,238,.16);background:rgba(2,6,23,.82);text-align:left;">' +
+      '<div data-media-library-entry="1" data-media-library-search="' + escapeHtml(searchText) + '" class="post-editor-library-card">' +
       preview +
-      '<div style="display:grid;gap:4px;min-width:0;">' +
-      '<div style="font-size:13px;font-weight:800;color:#f8fafc;line-height:1.4;word-break:break-word;">' + escapeHtml(title) + '</div>' +
-      '<div style="font-size:11px;color:#94a3b8;word-break:break-all;">' + escapeHtml(path) + '</div>' +
-      '<div style="font-size:11px;color:#67e8f9;">' + escapeHtml(size || '-') + (mime ? ' - ' + escapeHtml(mime) : '') + '</div>' +
+      '<div class="post-editor-library-card__content">' +
+      '<div class="post-editor-library-card__title">' + escapeHtml(title) + '</div>' +
+      '<div class="post-editor-library-card__path">' + escapeHtml(path) + '</div>' +
+      '<div class="post-editor-library-card__meta">' + escapeHtml(size || '-') + (mime ? ' - ' + escapeHtml(mime) : '') + '</div>' +
       '</div>' +
-      '<button type="button" data-media-library-pick="1" data-media-library-path="' + escapeHtml(path) + '" data-media-library-url="' + escapeHtml(url) + '" class="admin-btn admin-btn-primary" style="justify-content:center;">Usar esta midia</button>' +
+      '<button type="button" data-media-library-pick="1" data-media-library-path="' + escapeHtml(path) + '" data-media-library-url="' + escapeHtml(url) + '" class="admin-btn admin-btn-primary post-editor-library-card__button">Usar esta midia</button>' +
       '</div>';
   }
 
@@ -1358,7 +1530,7 @@ declare(strict_types=1);
     subtitle.textContent = (options && options.subtitle) || ('Selecione uma das ' + label + ' recentes ja cadastradas no portal.');
     subtitle.style.display = 'block';
     message.innerHTML = canUpload
-      ? '<div style="padding:12px 14px;border-radius:14px;border:1px solid rgba(103,232,249,.16);background:rgba(248,250,252,.04);font-size:12px;color:#cbd5e1;">Voce pode selecionar um arquivo existente ou enviar um novo pela propria modal.</div>'
+      ? '<div class="post-editor-builder-note">Voce pode selecionar um arquivo existente ou enviar um novo pela propria modal.</div>'
       : '';
     submit.style.display = canUpload ? 'inline-flex' : 'none';
     submit.textContent = 'Enviar ' + ({ image: 'imagem', audio: 'audio', video: 'video' })[String(type || '').toLowerCase()];
@@ -1368,34 +1540,33 @@ declare(strict_types=1);
     cancel.textContent = 'Fechar';
 
     if (!items.length) {
-      form.innerHTML = '<div style="border:1px dashed rgba(148,163,184,.35);border-radius:18px;padding:18px;color:#cbd5e1;font-size:13px;line-height:1.7;background:rgba(255,255,255,.02);">Nenhuma ' + label + ' recente encontrada. Use o botao abaixo para enviar um arquivo agora.</div>';
+      form.innerHTML = '<div class="post-editor-library-empty">Nenhuma ' + label + ' recente encontrada. Use o botao abaixo para enviar um arquivo agora.</div>';
     } else {
       var fieldsHtml = extraFields.map(function (field) {
         var fieldId = 'post-editor-media-library-field-' + String(field.name || '');
         var isTextarea = field.type === 'textarea';
-        var commonStyle = 'width:100%;border-radius:14px;padding:12px 14px;background:rgba(248,250,252,.06);background-color:rgba(248,250,252,.06);color:#f8fafc;border:1px solid rgba(103,232,249,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.03);';
         if (isTextarea) {
           return '' +
-            '<div style="display:grid;gap:8px;">' +
-            '  <label for="' + escapeHtml(fieldId) + '" style="font-size:12px;font-weight:800;color:#e2e8f0;">' + escapeHtml(field.label || field.name || 'Campo') + '</label>' +
-            '  <textarea id="' + escapeHtml(fieldId) + '" data-media-library-field="' + escapeHtml(field.name || '') + '" rows="' + String(field.rows || 3) + '" placeholder="' + escapeHtml(field.placeholder || '') + '" class="nerd-input" style="' + commonStyle + '">' + escapeHtml(field.value || '') + '</textarea>' +
+            '<div class="post-editor-field">' +
+            '  <label for="' + escapeHtml(fieldId) + '" class="post-editor-field__label">' + escapeHtml(field.label || field.name || 'Campo') + '</label>' +
+            '  <textarea id="' + escapeHtml(fieldId) + '" data-media-library-field="' + escapeHtml(field.name || '') + '" rows="' + String(field.rows || 3) + '" placeholder="' + escapeHtml(field.placeholder || '') + '" class="nerd-input post-editor-input">' + escapeHtml(field.value || '') + '</textarea>' +
             '</div>';
         }
         return '' +
-          '<div style="display:grid;gap:8px;">' +
-          '  <label for="' + escapeHtml(fieldId) + '" style="font-size:12px;font-weight:800;color:#e2e8f0;">' + escapeHtml(field.label || field.name || 'Campo') + '</label>' +
-          '  <input id="' + escapeHtml(fieldId) + '" data-media-library-field="' + escapeHtml(field.name || '') + '" type="' + escapeHtml(field.type || 'text') + '" value="' + escapeHtml(field.value || '') + '" placeholder="' + escapeHtml(field.placeholder || '') + '" class="nerd-input" style="' + commonStyle + '">' +
+          '<div class="post-editor-field">' +
+          '  <label for="' + escapeHtml(fieldId) + '" class="post-editor-field__label">' + escapeHtml(field.label || field.name || 'Campo') + '</label>' +
+          '  <input id="' + escapeHtml(fieldId) + '" data-media-library-field="' + escapeHtml(field.name || '') + '" type="' + escapeHtml(field.type || 'text') + '" value="' + escapeHtml(field.value || '') + '" placeholder="' + escapeHtml(field.placeholder || '') + '" class="nerd-input post-editor-input">' +
           '</div>';
       }).join('');
       form.innerHTML = '' +
-        '<div style="display:grid;gap:14px;">' +
-        (fieldsHtml ? ('  <div style="display:grid;gap:14px;">' + fieldsHtml + '</div>') : '') +
-        '  <div style="display:grid;gap:8px;">' +
-        '    <label for="post-editor-media-library-search" style="font-size:12px;font-weight:800;color:#e2e8f0;">Buscar por nome</label>' +
-        '    <input id="post-editor-media-library-search" type="text" class="nerd-input" placeholder="Digite o nome ou caminho da midia" style="width:100%;border-radius:14px;padding:12px 14px;background:rgba(248,250,252,.06);background-color:rgba(248,250,252,.06);color:#f8fafc;border:1px solid rgba(103,232,249,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.03);">' +
+        '<div class="post-editor-stack-lg">' +
+        (fieldsHtml ? ('  <div class="post-editor-stack-lg">' + fieldsHtml + '</div>') : '') +
+        '  <div class="post-editor-field">' +
+        '    <label for="post-editor-media-library-search" class="post-editor-field__label">Buscar por nome</label>' +
+        '    <input id="post-editor-media-library-search" type="text" class="nerd-input post-editor-input" placeholder="Digite o nome ou caminho da midia">' +
         '  </div>' +
-        '  <div id="post-editor-media-library-empty" style="display:none;border:1px dashed rgba(148,163,184,.35);border-radius:18px;padding:18px;color:#cbd5e1;font-size:13px;line-height:1.7;background:rgba(255,255,255,.02);">Nenhuma ' + label + ' encontrada para esta busca.</div>' +
-        '  <div id="post-editor-media-library-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;max-height:420px;overflow:auto;padding-right:4px;">' + items.map(function (item) { return buildMediaLibraryCard(item, type); }).join('') + '</div>' +
+        '  <div id="post-editor-media-library-empty" class="post-editor-library-empty post-editor-library-empty--hidden">Nenhuma ' + label + ' encontrada para esta busca.</div>' +
+        '  <div id="post-editor-media-library-grid" class="post-editor-library-grid">' + items.map(function (item) { return buildMediaLibraryCard(item, type); }).join('') + '</div>' +
         '</div>';
     }
 
@@ -1540,8 +1711,11 @@ declare(strict_types=1);
   }
 
   function appendCaretParagraph(html) {
-    return '\n' + html + '\n<p data-editor-caret="1" style="text-align:left;"><br></p>\n';
+    return '\n' + html + '\n<p data-editor-caret="1" class="editor-caret-anchor">&#8203;<br></p>\n';
   }
+
+  window.__postEditorEnsureIdentity = ensurePostIdentity;
+  window.__postEditorDuplicateLibraryMediaToPost = duplicateLibraryMediaToPost;
 
   function indentMarkup(value, prefix) {
     return String(value || '')
@@ -1625,6 +1799,42 @@ declare(strict_types=1);
     return appendCaretParagraph(buildVideoMarkup(value, legenda));
   }
 
+  function applyFormatCommand(command, value) {
+    var root = editor();
+    if (!root) return;
+    restoreRange(currentRange());
+    try {
+      document.execCommand(command, false, value != null ? value : null);
+    } catch (error) {}
+    root.focus();
+    syncHiddenFields();
+    refreshExternalEditorState();
+    saveRange(currentRange());
+  }
+
+  function syncFromHtmlSafe() {
+    var visual = byId('editor-visual');
+    var htmlArea = byId('editor-html');
+    var hidden = hiddenField();
+    if (!visual || !htmlArea) return;
+
+    if (isHtmlPanelActive()) {
+      visual.innerHTML = htmlArea.value;
+      saveRange(null);
+    }
+
+    if (hidden) hidden.value = htmlArea.value;
+
+    var wordCount = byId('wordCount');
+    if (wordCount) {
+      var text = (visual.innerText || '').trim();
+      var words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+      wordCount.textContent = words + ' palavra' + (words !== 1 ? 's' : '');
+    }
+
+    refreshExternalEditorState();
+  }
+
   function formatQuote() {
     var range = currentRange();
     var selection = window.getSelection ? window.getSelection() : null;
@@ -1671,6 +1881,7 @@ declare(strict_types=1);
     saveRange(range);
     askImageData(initialUrl || '').then(function (data) {
       if (!data || !data.url) return;
+      registerKnownUploads(data.url);
       insertAtRange(range, buildFigure(data.url, data.alt, data.legenda));
       toast('Imagem inserida no conteudo.');
     });
@@ -1692,7 +1903,7 @@ declare(strict_types=1);
       return ensurePostIdentity()
         .then(function (identity) {
           if (!identity) return null;
-          return duplicateLibraryImageToPost(item.path, identity);
+          return duplicateLibraryMediaToPost(item.path, identity, { type: 'image' });
         })
         .then(function (payload) {
           if (!payload) return;
@@ -1701,6 +1912,8 @@ declare(strict_types=1);
           }
           if (payload.item) refreshMediaLibraryCache(payload.item);
           var meta = item.meta || {};
+          registerKnownUploads(payload.url || payload.path || '');
+          registerManagedUploads(payload.url || payload.path || '');
           insertAtRange(range, buildFigure(payload.url || payload.path || '', meta.alt || '', meta.legenda || ''));
           toast('Imagem da biblioteca inserida no conteudo.');
         })
@@ -1715,6 +1928,7 @@ declare(strict_types=1);
     saveRange(range);
     askVideoData().then(function (data) {
       if (!data || !data.valor) return;
+      registerKnownUploads(data.valor);
       insertAtRange(range, buildVideoHtml(data.valor, data.legenda || ''));
       toast('Video inserido no conteudo.');
     });
@@ -1733,8 +1947,21 @@ declare(strict_types=1);
     }).then(function (item) {
       if (!item || !item.url) return;
       var meta = item.meta || {};
-      insertAtRange(range, buildVideoHtml(item.path || item.url, meta.legenda || ''));
-      toast('Video da biblioteca inserido no conteudo.');
+      return ensurePostIdentity()
+        .then(function (identity) {
+          if (!identity) return null;
+          return duplicateLibraryMediaToPost(item.path || item.url, identity, { type: 'video' });
+        })
+        .then(function (payload) {
+          if (!payload) return;
+          if (payload.ok !== true) {
+            return alertModal(payload.error || 'Falha ao preparar o video da biblioteca.');
+          }
+          if (payload.item) refreshMediaLibraryCache(payload.item);
+          registerKnownUploads(payload.url || payload.path || '');
+          insertAtRange(range, buildVideoHtml(payload.url || payload.path || '', meta.legenda || ''));
+          toast('Video da biblioteca inserido no conteudo.');
+        });
     });
   }
 
@@ -1752,6 +1979,7 @@ declare(strict_types=1);
       });
     }).then(function (payload) {
       if (!payload || !payload.item) return;
+      registerKnownUploads(payload.item.relative_path || payload.item.public_url || '');
       insertAtRange(range, buildVideoHtml(payload.item.relative_path || payload.item.public_url || '', payload.meta.legenda || ''));
       toast('Video enviado e inserido no conteudo.');
     });
@@ -1802,7 +2030,10 @@ declare(strict_types=1);
     if (subtitle) {
       lines.push('  <p class="en-audio-subtitle">' + escapeHtml(subtitle) + '</p>');
     }
-    lines.push('  <button type="button" class="en-audio-button" data-en-audio-toggle="1">' + escapeHtml(buttonText) + '</button>');
+    lines.push('  <button type="button" class="en-audio-button" data-en-audio-toggle="1">');
+    lines.push('    <span class="en-audio-button-icon" aria-hidden="true">▶</span>');
+    lines.push('    <span class="en-audio-button-text">' + escapeHtml(buttonText) + '</span>');
+    lines.push('  </button>');
     lines.push('</div>');
 
     return lines.join('\n');
@@ -1814,7 +2045,7 @@ declare(strict_types=1);
 
   function mediaBlockFromTarget(target) {
     if (!target || !target.closest) return null;
-    var wrapped = target.closest('[data-en-block="media"], .content-block-image, .content-block-video, figure.article-figure, .en-audio-block, figure');
+    var wrapped = target.closest('[data-en-block="media"], .content-block-image, .content-block-video, figure.article-figure, .en-audio-block');
     if (wrapped) return wrapped;
     return target.closest('img, video, iframe');
   }
@@ -1828,8 +2059,7 @@ declare(strict_types=1);
     if (tagName === 'video' || tagName === 'iframe') return 'video';
     if (block.classList.contains('en-audio-block')) return 'audio';
     if (block.classList.contains('content-block-video')) return 'video';
-    if (block.classList.contains('content-block-image') || block.querySelector('img')) return 'image';
-    if (block.querySelector('video') || block.querySelector('iframe')) return 'video';
+    if (block.classList.contains('content-block-image') || block.classList.contains('article-figure')) return 'image';
     return '';
   }
 
@@ -1873,6 +2103,7 @@ declare(strict_types=1);
     if (!block || !html) return;
     block.outerHTML = html;
     syncHiddenFields();
+    refreshExternalEditorState();
     hideMediaBlockToolbar();
     toast('Bloco atualizado.');
   }
@@ -1883,6 +2114,8 @@ declare(strict_types=1);
     if (type === 'image') {
       openImageBlockBuilder('', data, 'edit').then(function (payload) {
         if (!payload || !payload.path) return;
+        registerKnownUploads(payload.path);
+        registerManagedUploads(payload.path);
         replaceMediaBlock(block, buildFigureMarkup(payload.path, payload.alt || '', payload.legenda || ''));
       });
       return;
@@ -1890,6 +2123,7 @@ declare(strict_types=1);
     if (type === 'video') {
       openVideoBlockBuilder('', data, 'edit').then(function (payload) {
         if (!payload || !payload.path) return;
+        registerKnownUploads(payload.path);
         replaceMediaBlock(block, buildVideoMarkup(payload.path, payload.legenda || ''));
       });
       return;
@@ -1897,9 +2131,82 @@ declare(strict_types=1);
     if (type === 'audio') {
       openAudioBlockBuilder('', data, 'edit').then(function (payload) {
         if (!payload) return;
+        registerKnownUploads([payload.narracao || '', payload.ambiente || '']);
         replaceMediaBlock(block, buildAudioBlockMarkup(payload));
       });
     }
+  }
+
+  function placeCaretInside(node) {
+    if (!node) return;
+    restoreRange(null);
+    var selection = window.getSelection ? window.getSelection() : null;
+    if (!selection) return;
+    var range = document.createRange();
+    range.selectNodeContents(node);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    saveRange(range);
+  }
+
+  function isBlockLikeElement(node) {
+    if (!node || node.nodeType !== 1) return false;
+    return !!(node.matches && node.matches('.content-block, .content-grid-two, figure, .en-audio-block, table, blockquote'));
+  }
+
+  function bindCaretAnchorSupport(root) {
+    if (!root || root.dataset.caretAnchorBound === '1') return;
+    root.dataset.caretAnchorBound = '1';
+
+    root.addEventListener('mousedown', function (event) {
+      var target = event.target;
+      if (!target) return;
+
+      var anchor = target.closest('.editor-caret-anchor');
+      if (anchor) {
+        event.preventDefault();
+        placeCaretInside(anchor);
+        return;
+      }
+
+      var clickedBlock = target.closest('.content-block, .content-grid-two, figure, .en-audio-block, table, blockquote');
+      if (clickedBlock && root.contains(clickedBlock)) {
+        var nextAnchor = clickedBlock.nextElementSibling;
+        if (nextAnchor && nextAnchor.classList && nextAnchor.classList.contains('editor-caret-anchor')) {
+          var blockRect = clickedBlock.getBoundingClientRect();
+          var bottomZoneStart = blockRect.bottom - Math.min(42, Math.max(18, blockRect.height * 0.18));
+          if (event.clientY >= bottomZoneStart) {
+            event.preventDefault();
+            placeCaretInside(nextAnchor);
+            return;
+          }
+        }
+        return;
+      }
+
+      if (target !== root) {
+        return;
+      }
+
+      var blockChildren = Array.prototype.slice.call(root.children || []).filter(function (child) {
+        return isBlockLikeElement(child);
+      });
+
+      for (var i = 0; i < blockChildren.length; i += 1) {
+        var block = blockChildren[i];
+        var next = block.nextElementSibling;
+        if (!next || !next.classList || !next.classList.contains('editor-caret-anchor')) {
+          continue;
+        }
+        var rect = block.getBoundingClientRect();
+        if (event.clientY >= rect.bottom && event.clientY <= rect.bottom + 48) {
+          event.preventDefault();
+          placeCaretInside(next);
+          return;
+        }
+      }
+    });
   }
 
   function hideMediaBlockToolbar() {
@@ -1915,11 +2222,11 @@ declare(strict_types=1);
     toolbar.id = 'postEditorMediaBlockToolbar';
     toolbar.style.cssText = 'position:absolute;z-index:10040;display:flex;flex-wrap:wrap;gap:6px;padding:8px;border-radius:14px;border:1px solid rgba(34,211,238,.28);background:rgba(2,6,23,.96);box-shadow:0 18px 45px rgba(0,0,0,.35);';
     toolbar.innerHTML = '' +
-      '<button type="button" data-action="edit" class="admin-btn admin-btn-primary" style="padding:7px 10px;font-size:12px;">Editar</button>' +
-      '<button type="button" data-action="duplicate" class="admin-btn admin-btn-secondary" style="padding:7px 10px;font-size:12px;">Duplicar</button>' +
-      '<button type="button" data-action="up" class="admin-btn admin-btn-secondary" style="padding:7px 10px;font-size:12px;">Mover acima</button>' +
-      '<button type="button" data-action="down" class="admin-btn admin-btn-secondary" style="padding:7px 10px;font-size:12px;">Mover abaixo</button>' +
-      '<button type="button" data-action="remove" class="admin-btn admin-btn-secondary" style="padding:7px 10px;font-size:12px;color:#fecaca;border-color:rgba(248,113,113,.35);">Remover</button>';
+      '<button type="button" data-action="edit" class="admin-btn admin-btn-primary post-editor-toolbar-btn">Editar</button>' +
+      '<button type="button" data-action="duplicate" class="admin-btn admin-btn-secondary post-editor-toolbar-btn">Duplicar</button>' +
+      '<button type="button" data-action="up" class="admin-btn admin-btn-secondary post-editor-toolbar-btn">Mover acima</button>' +
+      '<button type="button" data-action="down" class="admin-btn admin-btn-secondary post-editor-toolbar-btn">Mover abaixo</button>' +
+      '<button type="button" data-action="remove" class="admin-btn admin-btn-secondary post-editor-toolbar-btn post-editor-toolbar-btn--danger">Remover</button>';
     toolbar.style.left = Math.max(12, rect.left + window.scrollX) + 'px';
     toolbar.style.top = Math.max(12, rect.top + window.scrollY - 48) + 'px';
     toolbar.addEventListener('click', function (event) {
@@ -1962,6 +2269,8 @@ declare(strict_types=1);
       if (!payload || !payload.path) return;
 
       var stored = getStoredRange() || range;
+      registerKnownUploads(payload.path);
+      registerManagedUploads(payload.path);
       insertAtRange(stored, buildFigure(payload.path, payload.alt || '', payload.legenda || ''));
       toast('Bloco de imagem inserido no conteudo.');
     });
@@ -1975,6 +2284,7 @@ declare(strict_types=1);
       if (!payload || !payload.path) return;
 
       var stored = getStoredRange() || range;
+      registerKnownUploads(payload.path);
       insertAtRange(stored, buildVideoHtml(payload.path, payload.legenda || ''));
       toast('Bloco de video inserido no conteudo.');
     });
@@ -2001,8 +2311,207 @@ declare(strict_types=1);
         narracao: narracaoPath,
         ambiente: ambientePath
       });
+      registerKnownUploads([narracaoPath, ambientePath]);
       insertAtRange(stored, html);
       toast('Bloco de audio inserido no conteudo.');
+    });
+  }
+
+  function buildTemplateBlockHtml(type) {
+    var templates = {
+      highlight: [
+        '<div class="content-block content-block-highlight">',
+        '  <div class="content-block-label">Destaque</div>',
+        '  <p>Adicione aqui a informacao principal que precisa ganhar mais peso visual.</p>',
+        '</div>'
+      ].join('\n'),
+      note: [
+        '<div class="content-block content-block-note">',
+        '  <div class="content-block-label">Nota</div>',
+        '  <p>Use este bloco para contexto rapido, observacao editorial ou complemento de leitura.</p>',
+        '</div>'
+      ].join('\n'),
+      success: [
+        '<div class="content-block content-block-success">',
+        '  <div class="content-block-label">Ponto positivo</div>',
+        '  <ul>',
+        '    <li>Adicione aqui um beneficio ou ponto forte.</li>',
+        '    <li>Inclua outro destaque importante.</li>',
+        '  </ul>',
+        '</div>'
+      ].join('\n'),
+      warning: [
+        '<div class="content-block content-block-warning">',
+        '  <div class="content-block-label">Atencao</div>',
+        '  <p>Use este bloco para ressalvas, limites ou riscos que merecem destaque.</p>',
+        '</div>'
+      ].join('\n'),
+      table: [
+        '<div class="content-block content-block-table">',
+        '  <div class="content-block-label">Comparativo</div>',
+        '  <table>',
+        '    <thead>',
+        '      <tr>',
+        '        <th>Item</th>',
+        '        <th>Detalhe</th>',
+        '      </tr>',
+        '    </thead>',
+        '    <tbody>',
+        '      <tr>',
+        '        <td>Exemplo</td>',
+        '        <td>Preencha aqui</td>',
+        '      </tr>',
+        '      <tr>',
+        '        <td>Exemplo 2</td>',
+        '        <td>Continue a tabela</td>',
+        '      </tr>',
+        '    </tbody>',
+        '  </table>',
+        '</div>'
+      ].join('\n'),
+      proscons: [
+        '<div class="content-grid-two">',
+        '  <div class="content-block content-block-success">',
+        '    <div class="content-block-label">Pontos positivos</div>',
+        '    <ul>',
+        '      <li>Liste aqui um ponto forte.</li>',
+        '      <li>Adicione outro ponto positivo.</li>',
+        '    </ul>',
+        '  </div>',
+        '  <div class="content-block content-block-warning">',
+        '    <div class="content-block-label">Pontos de atencao</div>',
+        '    <ul>',
+        '      <li>Liste aqui um limite ou ressalva.</li>',
+        '      <li>Adicione outro ponto de atencao.</li>',
+        '    </ul>',
+        '  </div>',
+        '</div>'
+      ].join('\n'),
+      faq: [
+        '<div class="content-block content-block-faq">',
+        '  <div class="content-block-label">Perguntas frequentes</div>',
+        '  <h3>Pergunta principal</h3>',
+        '  <p>Responda de forma objetiva e clara.</p>',
+        '  <h3>Outra pergunta</h3>',
+        '  <p>Continue com a resposta logo abaixo.</p>',
+        '</div>'
+      ].join('\n'),
+      cta: [
+        '<div class="content-block content-block-highlight">',
+        '  <div class="content-block-label">Proximo passo</div>',
+        '  <p>Convide o leitor para a acao mais importante desta etapa do conteudo.</p>',
+        '  <p><a href="/blog" class="content-cta-link">Explorar o blog</a></p>',
+        '</div>'
+      ].join('\n')
+    };
+
+    return templates[String(type || '').toLowerCase()] || '';
+  }
+
+  function insertTemplateBlock(type) {
+    var html = buildTemplateBlockHtml(type);
+    if (!html) return;
+    var range = currentRange();
+    saveRange(range);
+    insertAtRange(getStoredRange() || range, appendCaretParagraph(html));
+    toast('Bloco inserido no conteudo.');
+  }
+
+  function openBlockLibrary() {
+    var cards = [
+      { type: 'highlight', label: 'Destaque', description: 'Para informacao principal ou punchline editorial.', accent: '#67e8f9' },
+      { type: 'note', label: 'Nota', description: 'Contexto rapido, observacao ou complemento curto.', accent: '#93c5fd' },
+      { type: 'success', label: 'Ponto positivo', description: 'Lista visual para beneficios, acertos ou recomendacoes.', accent: '#86efac' },
+      { type: 'warning', label: 'Atencao', description: 'Ressalvas, limites e avisos que merecem peso.', accent: '#fde68a' },
+      { type: 'table', label: 'Tabela', description: 'Comparativos, fichas tecnicas e blocos tabulares.', accent: '#c4b5fd' },
+      { type: 'proscons', label: 'Pros e contras', description: 'Grid em duas colunas para leitura rapida.', accent: '#f9a8d4' },
+      { type: 'faq', label: 'FAQ', description: 'Perguntas frequentes com respostas em sequencia.', accent: '#a5f3fc' },
+      { type: 'cta', label: 'CTA', description: 'Encerramento com chamada para acao editorial.', accent: '#fca5a5' }
+    ];
+
+    var message = '' +
+      '<div class="post-editor-stack-lg">' +
+      '  <div class="post-editor-builder-note">' +
+      '    Escolha uma estrutura pronta para manter o conteudo consistente. Imagem, video e audio continuam nos atalhos dedicados da barra.' +
+      '  </div>' +
+      '  <div class="post-editor-block-library-grid">' +
+      cards.map(function (card) {
+        return '' +
+          '<button type="button" data-block-type="' + escapeHtml(card.type) + '" class="post-editor-block-card post-editor-block-card--' + escapeHtml(card.type) + '">' +
+          '  <div class="post-editor-block-card__head">' +
+          '    <strong class="post-editor-block-card__title">' + escapeHtml(card.label) + '</strong>' +
+          '    <span class="post-editor-block-card__badge">HTML</span>' +
+          '  </div>' +
+          '  <div class="post-editor-block-card__description">' + escapeHtml(card.description) + '</div>' +
+          '</button>';
+      }).join('') +
+      '  </div>' +
+      '</div>';
+
+    var ui = ensureUi();
+    var modal = ui.modal;
+    var title = byId('postEditorSystemModalTitle');
+    var subtitle = byId('postEditorSystemModalSubtitle');
+    var messageRoot = byId('postEditorSystemModalMessage');
+    var form = byId('postEditorSystemModalForm');
+    var submit = byId('postEditorSystemSubmit');
+    var cancel = byId('postEditorSystemCancel');
+    var closeTop = byId('postEditorSystemCloseTop');
+    var overlay = modal.querySelector('[data-ui-overlay]');
+
+    title.textContent = 'Biblioteca de blocos';
+    subtitle.textContent = 'Insira estruturas prontas no editor sem depender de HTML manual.';
+    subtitle.style.display = 'block';
+    messageRoot.innerHTML = message;
+    form.innerHTML = '';
+    submit.style.display = 'none';
+    cancel.textContent = 'Fechar';
+    cancel.style.display = 'inline-flex';
+    closeTop.style.display = 'inline-flex';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    return new Promise(function (resolve) {
+      function cleanup(result) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        cancel.removeEventListener('click', onCancel);
+        closeTop.removeEventListener('click', onCancel);
+        overlay.removeEventListener('click', onCancel);
+        messageRoot.querySelectorAll('[data-block-type]').forEach(function (button) {
+          button.removeEventListener('click', onPick);
+        });
+        resolve(result || null);
+      }
+
+      function onCancel() {
+        cleanup(null);
+      }
+
+      function onPick(event) {
+        var button = event.currentTarget;
+        var type = String(button.getAttribute('data-block-type') || '');
+        cleanup(type);
+      }
+
+      messageRoot.querySelectorAll('[data-block-type]').forEach(function (button) {
+        button.addEventListener('mouseenter', function () {
+          button.style.transform = 'translateY(-1px)';
+          button.style.borderColor = 'rgba(103,232,249,.34)';
+        });
+        button.addEventListener('mouseleave', function () {
+          button.style.transform = 'translateY(0)';
+          button.style.borderColor = 'rgba(71,85,105,.5)';
+        });
+        button.addEventListener('click', onPick);
+      });
+
+      cancel.addEventListener('click', onCancel);
+      closeTop.addEventListener('click', onCancel);
+      overlay.addEventListener('click', onCancel);
+    }).then(function (type) {
+      if (!type) return;
+      insertTemplateBlock(type);
     });
   }
 
@@ -2069,6 +2578,7 @@ declare(strict_types=1);
   }
   function bindMediaButtons() {
     [
+      ['editor-toolbar-block-library', function () { if (typeof window.abrirBibliotecaDeBlocos === 'function') window.abrirBibliotecaDeBlocos(); }],
       ['editor-image-block-trigger', function () { if (typeof window.inserirBlocoImagem === 'function') window.inserirBlocoImagem(); }],
       ['editor-video-block-trigger', function () { if (typeof window.inserirBlocoVideo === 'function') window.inserirBlocoVideo(); }],
       ['editor-audio-block-trigger', function () { if (typeof window.inserirBlocoAudio === 'function') window.inserirBlocoAudio(); }],
@@ -2152,10 +2662,12 @@ declare(strict_types=1);
     var originalInput = byId('editorImageUpload');
     if (!root || !originalInput) return;
     if (document.body.dataset.postEditorSystemUiReady === '1') {
+      installEditorTabFixes();
       bindMediaButtons();
       return;
     }
     document.body.dataset.postEditorSystemUiReady = '1';
+    installEditorTabFixes();
 
     var fileInput = originalInput.cloneNode(true);
     originalInput.parentNode.replaceChild(fileInput, originalInput);
@@ -2195,9 +2707,13 @@ declare(strict_types=1);
     window.inserirAudioDaBiblioteca = function () { insertAudioBlockFromLibrary(); };
     window.inserirAudioPorUrl = function () { insertAudioBlockFromUrl(); };
     window.inserirBlocoAudio = function () { insertAudioBlock(); };
-    window.inserirLink = function () { insertLinkAtSelection(); };
-    window.limparFormatacao = function () { clearFormattingSelection(); };
-    window.aplicarCitacao = function () { formatQuote(); };
+      window.abrirBibliotecaDeBlocos = function () { openBlockLibrary(); };
+      window.formatar = function (command, value) { applyFormatCommand(command, value); };
+      window.inserirLink = function () { insertLinkAtSelection(); };
+      window.limparFormatacao = function () { clearFormattingSelection(); };
+      window.aplicarCitacao = function () { formatQuote(); };
+      window.syncFromHtml = function () { syncFromHtmlSafe(); };
+      window.atualizarTextarea = function () { syncHiddenFields(); };
 
     fileInput.addEventListener('change', function (event) {
       var file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
@@ -2250,6 +2766,8 @@ declare(strict_types=1);
           }
           return askImageMeta().then(function (meta) {
             if (meta === null) return;
+            registerKnownUploads(payload.url || '');
+            registerManagedUploads(payload.url || '');
             insertAtRange(range, buildFigure(payload.url || '', meta.alt || '', meta.legenda || ''));
             toast('Imagem inserida no conteudo.');
           });
@@ -2263,6 +2781,7 @@ declare(strict_types=1);
     }, true);
 
     bindMediaButtons();
+    bindCaretAnchorSupport(root);
     initInternalLeaveGuard();
     syncHiddenFields();
     saveRange(currentRange());

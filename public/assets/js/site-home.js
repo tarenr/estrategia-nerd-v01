@@ -624,6 +624,40 @@
 
     const state = window.__enAudioBlockState = window.__enAudioBlockState || { active: null };
 
+    const ensureAudioButtonStructure = (button) => {
+      if (!button) return;
+      let iconWrap = button.querySelector('.en-audio-button-icon');
+      let textWrap = button.querySelector('.en-audio-button-text');
+      if (!iconWrap) {
+        iconWrap = document.createElement('span');
+        iconWrap.className = 'en-audio-button-icon';
+        iconWrap.setAttribute('aria-hidden', 'true');
+        iconWrap.textContent = '▶';
+        button.insertBefore(iconWrap, button.firstChild);
+      }
+      if (!textWrap) {
+        const text = String(button.textContent || '').trim();
+        Array.from(button.childNodes).forEach((node) => {
+          if (node !== iconWrap) {
+            button.removeChild(node);
+          }
+        });
+        textWrap = document.createElement('span');
+        textWrap.className = 'en-audio-button-text';
+        textWrap.textContent = text || 'Ouvir narracao';
+        button.appendChild(textWrap);
+      }
+    };
+
+    const setButtonState = (button, iconGlyph, text) => {
+      if (!button) return;
+      ensureAudioButtonStructure(button);
+      const icon = button.querySelector('.en-audio-button-icon');
+      const textNode = button.querySelector('.en-audio-button-text');
+      if (icon) icon.textContent = iconGlyph;
+      if (textNode) textNode.textContent = text;
+    };
+
     const stopActive = () => {
       if (!state.active) return;
       const { narracao, ambiente, button, block } = state.active;
@@ -631,7 +665,7 @@
       try { if (ambiente) { ambiente.pause(); ambiente.currentTime = 0; } } catch (error) {}
       if (button) {
         const initial = button.getAttribute('data-en-audio-initial') || button.textContent || 'Ouvir narracao';
-        button.textContent = initial;
+        setButtonState(button, '▶', initial);
         button.removeAttribute('aria-pressed');
       }
       if (block) {
@@ -645,14 +679,15 @@
       if (!button) return;
       if (button.dataset.bound === '1') return;
       button.dataset.bound = '1';
+      ensureAudioButtonStructure(button);
 
       const narracaoSrc = normalizePublicMediaUrl(block.getAttribute('data-audio-narracao') || '');
       const ambienteSrc = normalizePublicMediaUrl(block.getAttribute('data-audio-ambiente') || '');
-      const initialText = button.textContent || 'Ouvir narracao';
+      const initialText = (button.querySelector('.en-audio-button-text') || button).textContent || 'Ouvir narracao';
       button.setAttribute('data-en-audio-initial', initialText);
 
       if (!narracaoSrc && !ambienteSrc) {
-        button.textContent = 'Audio indisponivel';
+        setButtonState(button, '■', 'Audio indisponivel');
         button.setAttribute('disabled', 'disabled');
         button.setAttribute('aria-disabled', 'true');
         block.classList.add('has-audio-error');
@@ -664,7 +699,7 @@
       if (ambiente) ambiente.loop = true;
 
       const resetUi = () => {
-        button.textContent = initialText;
+        setButtonState(button, '▶', initialText);
         button.removeAttribute('aria-pressed');
         block.classList.remove('is-playing');
       };
@@ -708,13 +743,13 @@
             await ambiente.play();
           }
 
-          button.textContent = 'Pausar';
+          setButtonState(button, '❚❚', 'Pausar');
           button.setAttribute('aria-pressed', 'true');
           block.classList.add('is-playing');
           state.active = { block, button, narracao, ambiente };
         } catch (error) {
           stopActive();
-          button.textContent = 'Audio indisponivel';
+          setButtonState(button, '■', 'Audio indisponivel');
           block.classList.add('has-audio-error');
         }
       });

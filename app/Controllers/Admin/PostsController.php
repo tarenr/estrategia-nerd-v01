@@ -126,6 +126,24 @@ final class PostsController
         echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
+    public function copyLibraryMediaToPost(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo json_encode(['ok' => false, 'error' => 'Token CSRF invalido.'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return;
+        }
+
+        $result = $this->service()->copyLibraryMediaToPost($_POST);
+        if (($result['ok'] ?? false) !== true) {
+            http_response_code(422);
+        }
+
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
     public function cleanupOrphanFiles(): void
     {
         $this->cleanupOrphanFilesLegacy();
@@ -195,7 +213,7 @@ final class PostsController
             return;
         }
 
-        $result = $this->service()->deletePost($id);
+        $result = $this->service()->deletePost($id, Auth::user());
         if (($result['not_found'] ?? false) === true) {
             http_response_code(404);
             echo 'Post nao encontrado.';

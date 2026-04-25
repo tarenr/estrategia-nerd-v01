@@ -60,6 +60,7 @@ $editorMediaLibrary = [
 
         <div class="editor-toolbar-group">
           <button type="button" class="editor-btn" title="Inserir link" onclick="inserirLink()"><i class="fa-solid fa-link"></i></button>
+          <button type="button" id="editor-toolbar-block-library" class="editor-btn" title="Biblioteca de blocos" onclick="return window.abrirBibliotecaDeBlocos ? (window.abrirBibliotecaDeBlocos(), false) : false;"><i class="fa-solid fa-layer-group"></i></button>
           <button type="button" id="editor-toolbar-image-block" class="editor-btn" title="Inserir imagem" onclick="return window.inserirBlocoImagem ? (window.inserirBlocoImagem(), false) : false;"><i class="fa-solid fa-image"></i></button>
           <button type="button" id="editor-toolbar-video-block" class="editor-btn" title="Inserir video" onclick="return window.inserirBlocoVideo ? (window.inserirBlocoVideo(), false) : false;"><i class="fa-solid fa-video"></i></button>
           <button type="button" id="editor-toolbar-audio-block" class="editor-btn" title="Bloco de audio" onclick="return window.inserirBlocoAudio ? (window.inserirBlocoAudio(), false) : false;"><i class="fa-solid fa-volume-high"></i></button>
