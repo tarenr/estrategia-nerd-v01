@@ -32,6 +32,16 @@ $rawPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $rawPath = rtrim($rawPath, '/') ?: '/';
 
 $isAdminDashboard = (bool) preg_match('#/admin$#', $rawPath);
+$adminFlash = \App\Support\Session::pull('admin_flash');
+$adminFlashType = is_array($adminFlash) ? trim((string) ($adminFlash['type'] ?? 'info')) : '';
+$adminFlashMessage = is_array($adminFlash) ? trim((string) ($adminFlash['message'] ?? '')) : '';
+$adminFlashClasses = [
+    'warning' => 'border-amber-500/30 bg-amber-500/10 text-amber-100',
+    'error' => 'border-rose-500/30 bg-rose-500/10 text-rose-100',
+    'success' => 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100',
+    'info' => 'border-cyan-500/30 bg-cyan-500/10 text-cyan-100',
+];
+$adminFlashClass = $adminFlashClasses[$adminFlashType] ?? $adminFlashClasses['info'];
 $currentEnvironment = current_environment();
 $targetEnvironment = target_environment();
 $showEnvironmentSwitcher = is_local_environment();
@@ -165,6 +175,12 @@ $adminFavicon = $adminFavicon !== ''
       </div>
 
       <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 relative z-0 flex flex-col">
+        <?php if ($adminFlashMessage !== ''): ?>
+          <div class="mb-4 rounded-2xl border px-4 py-3 text-sm <?= htmlspecialchars($adminFlashClass, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+            <?= htmlspecialchars($adminFlashMessage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+          </div>
+        <?php endif; ?>
+
         <?php if ($showEnvironmentSwitcher): ?>
           <section class="mb-4 rounded-2xl border border-cyan-500/20 bg-slate-950/50 backdrop-blur px-4 py-4">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
