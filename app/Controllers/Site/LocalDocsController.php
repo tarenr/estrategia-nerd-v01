@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers\Site;
 
+use App\Support\LocalOnlyAccess;
 use App\Support\View;
 
 final class LocalDocsController
@@ -58,16 +59,7 @@ final class LocalDocsController
 
     private function ensureLocalOnly(): void
     {
-        $env = (string) config('app.env', 'production');
-        $debug = (bool) config('app.debug', false);
-
-        if ($env === 'local' || $debug) {
-            return;
-        }
-
-        http_response_code(404);
-        echo 'Pagina nao encontrada.';
-        exit;
+        LocalOnlyAccess::enforce();
     }
 
     private function projectVersion(): string

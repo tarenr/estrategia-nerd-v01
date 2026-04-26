@@ -6,6 +6,7 @@ namespace App\Controllers\Site;
 
 use App\Services\Site\BackupService;
 use App\Support\Csrf;
+use App\Support\LocalOnlyAccess;
 use App\Support\Session;
 use App\Support\View;
 use Scripts\Backup\BackupManager;
@@ -83,16 +84,7 @@ final class BackupToolsController
 
     private function ensureLocalOnly(): void
     {
-        $env = (string) config('app.env', 'production');
-        $debug = (bool) config('app.debug', false);
-
-        if ($env === 'local' || $debug) {
-            return;
-        }
-
-        http_response_code(404);
-        echo 'Página não encontrada.';
-        exit;
+        LocalOnlyAccess::enforce();
     }
 
     private function service(): BackupService

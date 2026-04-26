@@ -7,6 +7,7 @@ namespace App\Controllers\Site;
 use App\Services\Site\BackupService;
 use App\Services\Site\CentralOperacionalService;
 use App\Support\Csrf;
+use App\Support\LocalOnlyAccess;
 use App\Support\Session;
 use App\Support\View;
 use Scripts\Backup\BackupManager;
@@ -206,16 +207,7 @@ final class CentralOperacionalController
 
     private function ensureLocalOnly(): void
     {
-        $env = (string) config('app.env', 'production');
-        $debug = (bool) config('app.debug', false);
-
-        if ($env === 'local' || $debug) {
-            return;
-        }
-
-        http_response_code(404);
-        echo 'Pagina nao encontrada.';
-        exit;
+        LocalOnlyAccess::enforce();
     }
 
     private function assertOperationPhrase(string $phrase, string $targetProfile, string $expectedId, string $defaultPhrase, string $operationLabel): void

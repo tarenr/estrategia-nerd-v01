@@ -16,13 +16,15 @@ declare(strict_types=1);
 
 namespace App\Controllers\Site;
 
+use App\Support\LocalOnlyAccess;
 use App\Support\View;
 
 final class DevController
 {
     public function index(): void
     {
-        // mantenha toda a sua lógica atual acima/abaixo disso (se houver)
+        LocalOnlyAccess::enforce();
+
         View::render('site/dev', [
             'title' => 'Dev — Estratégia Nerd',
         ]);
