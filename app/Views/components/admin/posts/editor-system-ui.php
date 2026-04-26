@@ -30,14 +30,55 @@ declare(strict_types=1);
     return byId('postForm');
   }
 
+  function buildPersistedEditorHtml() {
+    var root = editor();
+    if (!root) return '';
+
+    var clone = root.cloneNode(true);
+    clone.querySelectorAll('.en-audio-block').forEach(function (block) {
+      block.classList.remove('is-playing', 'has-audio-error');
+
+      var button = block.querySelector('[data-en-audio-toggle]');
+      if (!button) return;
+
+      button.removeAttribute('data-preview-audio-bound');
+      button.removeAttribute('data-en-audio-initial');
+      button.removeAttribute('aria-pressed');
+      button.removeAttribute('aria-disabled');
+      button.removeAttribute('disabled');
+
+      var configuredText = String(block.getAttribute('data-button-text') || '').trim() || 'Ouvir narracao';
+      var icon = button.querySelector('.en-audio-button-icon');
+      var text = button.querySelector('.en-audio-button-text');
+
+      if (!icon) {
+        icon = document.createElement('span');
+        icon.className = 'en-audio-button-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        button.insertBefore(icon, button.firstChild);
+      }
+      icon.textContent = '▶';
+
+      if (!text) {
+        text = document.createElement('span');
+        text.className = 'en-audio-button-text';
+        button.appendChild(text);
+      }
+      text.textContent = configuredText;
+    });
+
+    return clone.innerHTML;
+  }
+
   function syncHiddenFields() {
     var root = editor();
     var hidden = hiddenField();
     var html = htmlField();
     if (!root) return;
-    if (hidden) hidden.value = root.innerHTML;
+    var persistedHtml = buildPersistedEditorHtml();
+    if (hidden) hidden.value = persistedHtml;
     if (html) {
-      html.value = root.innerHTML;
+      html.value = persistedHtml;
       if (isHtmlPanelActive() && window.AdminHtmlEditor && typeof window.AdminHtmlEditor.setValueByTextareaId === 'function') {
         window.AdminHtmlEditor.setValueByTextareaId('editor-html', html.value);
       }
@@ -2712,6 +2753,7 @@ declare(strict_types=1);
       window.inserirLink = function () { insertLinkAtSelection(); };
       window.limparFormatacao = function () { clearFormattingSelection(); };
       window.aplicarCitacao = function () { formatQuote(); };
+      window.__postEditorSerializeHtml = function () { return buildPersistedEditorHtml(); };
       window.syncFromHtml = function () { syncFromHtmlSafe(); };
       window.atualizarTextarea = function () { syncHiddenFields(); };
 

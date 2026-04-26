@@ -68,10 +68,14 @@ declare(strict_types=1);
     var hidden = hiddenField();
     if (!root || !hidden) return;
 
-    hidden.value = root.innerHTML;
+    var persistedHtml = typeof window.__postEditorSerializeHtml === 'function'
+      ? String(window.__postEditorSerializeHtml() || '')
+      : String(root.innerHTML || '');
+
+    hidden.value = persistedHtml;
     var html = htmlArea();
     if (html) {
-      html.value = root.innerHTML;
+      html.value = persistedHtml;
       if (isHtmlPanelActive() && window.AdminHtmlEditor && typeof window.AdminHtmlEditor.setValueByTextareaId === 'function') {
         window.AdminHtmlEditor.setValueByTextareaId('editor-html', html.value);
       }
@@ -647,7 +651,13 @@ declare(strict_types=1);
       var isKnown = knownExisting.indexOf(path) !== -1;
       var isCurrentPostFile = currentSlug && path.indexOf('uploads/posts/' + currentSlug + '/') === 0;
       var isManaged = managedFiles.indexOf(path) !== -1;
-      if (!isKnown && !(isCurrentPostFile && isManaged)) {
+      if (isCurrentPostFile) {
+        if (!isKnown) {
+          addKnownExistingUpload(path);
+        }
+        return;
+      }
+      if (!isKnown && !isManaged) {
         missingMedia.push(path);
       }
     });

@@ -549,18 +549,13 @@ final class PostsService
 
     private function postMediaDirectory(string $slug): string
     {
-        return dirname(__DIR__, 3)
-            . DIRECTORY_SEPARATOR . 'public'
-            . DIRECTORY_SEPARATOR . 'uploads'
-            . DIRECTORY_SEPARATOR . 'posts'
+        return $this->postsUploadsRoot()
             . DIRECTORY_SEPARATOR . $slug;
     }
 
     private function postTrashRootDirectory(): string
     {
-        return dirname(__DIR__, 3)
-            . DIRECTORY_SEPARATOR . 'public'
-            . DIRECTORY_SEPARATOR . 'uploads'
+        return $this->uploadsRootDirectory()
             . DIRECTORY_SEPARATOR . 'trash'
             . DIRECTORY_SEPARATOR . 'posts';
     }
@@ -743,7 +738,7 @@ final class PostsService
 
     private function movePostMediaDirectory(string $oldSlug, string $newSlug): array
     {
-        $postsRoot = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'posts';
+        $postsRoot = $this->postsUploadsRoot();
         $oldDir = $postsRoot . DIRECTORY_SEPARATOR . $oldSlug;
         $newDir = $postsRoot . DIRECTORY_SEPARATOR . $newSlug;
         $replacements = [];
@@ -813,7 +808,7 @@ final class PostsService
             return [];
         }
 
-        $publicRoot = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR;
+        $publicRoot = rtrim($this->publicRootDirectory(), '\\/') . DIRECTORY_SEPARATOR;
         $replacements = [];
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)
@@ -1169,7 +1164,7 @@ final class PostsService
             return [];
         }
 
-        $directory = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'posts' . DIRECTORY_SEPARATOR . $slug;
+        $directory = $this->postsUploadsRoot() . DIRECTORY_SEPARATOR . $slug;
         if (!is_dir($directory)) {
             return [];
         }
@@ -1337,7 +1332,7 @@ final class PostsService
             return null;
         }
 
-        $publicRoot = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public';
+        $publicRoot = $this->publicRootDirectory();
         $uploadsDir = $publicRoot . DIRECTORY_SEPARATOR . 'uploads';
         $target = $publicRoot . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $raw);
 
@@ -1466,7 +1461,7 @@ final class PostsService
             return [];
         }
 
-        $directory = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'posts' . DIRECTORY_SEPARATOR . $slug;
+        $directory = $this->postsUploadsRoot() . DIRECTORY_SEPARATOR . $slug;
         if (!is_dir($directory)) {
             return [];
         }
@@ -1561,8 +1556,35 @@ final class PostsService
             return true;
         }
 
-        $fullPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $normalized);
+        $fullPath = $this->uploadsRootDirectory() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, substr($normalized, strlen('uploads/')));
         return is_file($fullPath);
+    }
+
+    private function publicRootDirectory(): string
+    {
+        $projectRoot = base_path();
+        $fallbackPublic = base_path('public');
+
+        if (basename(str_replace('\\', '/', $projectRoot)) === '_app_core') {
+            $parentRoot = dirname($projectRoot);
+            $parentUploads = $parentRoot . DIRECTORY_SEPARATOR . 'uploads';
+            $parentAssets = $parentRoot . DIRECTORY_SEPARATOR . 'assets';
+            if (is_dir($parentUploads) || is_dir($parentAssets)) {
+                return $parentRoot;
+            }
+        }
+
+        return $fallbackPublic;
+    }
+
+    private function uploadsRootDirectory(): string
+    {
+        return $this->publicRootDirectory() . DIRECTORY_SEPARATOR . 'uploads';
+    }
+
+    private function postsUploadsRoot(): string
+    {
+        return $this->uploadsRootDirectory() . DIRECTORY_SEPARATOR . 'posts';
     }
 
     private function normalizeAssetReference(string $value): string
