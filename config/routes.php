@@ -81,6 +81,7 @@ return [
     ['GET',  '/admin/configuracoes',       [\App\Controllers\Admin\ConfiguracoesController::class, 'index'], ['auth', 'capability:multi_env_settings']],
     ['POST', '/admin/configuracoes',       [\App\Controllers\Admin\ConfiguracoesController::class, 'update'], ['auth', 'capability:multi_env_settings']],
     ['GET',  '/admin/health',              [\App\Controllers\Admin\HealthCheckController::class, 'index'], ['auth', 'capability:multi_env_health']],
+    ['GET',  '/admin/auditoria-geral',     [\App\Controllers\Admin\AuditController::class, 'index'], ['auth', 'capability:audit']],
     ['GET',  '/admin/central-operacional', [\App\Controllers\Admin\ContentSyncController::class, 'index'], ['auth', 'capability:content_sync']],
     ['POST', '/admin/central-operacional/sincronizar-conteudo', [\App\Controllers\Admin\ContentSyncController::class, 'syncProductionToStage'], ['auth', 'capability:content_sync']],
 
