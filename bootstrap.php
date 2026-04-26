@@ -78,6 +78,8 @@ if (file_exists($envPath)) {
 $GLOBALS['config'] = [
     'app' => require __DIR__ . '/config/app.php',
     'database' => require __DIR__ . '/config/database.php',
+    'content_sync' => require __DIR__ . '/config/content-sync.php',
+    'environment_capabilities' => require __DIR__ . '/config/environment-capabilities.php',
 ];
 
 /*

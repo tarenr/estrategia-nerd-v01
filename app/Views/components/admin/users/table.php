@@ -11,6 +11,7 @@ $dir = (string) ($dir ?? 'desc');
 $pagination = $pagination ?? ['total' => 0, 'page' => 1, 'per_page' => 10, 'pages' => 1];
 $currentUserId = (int) ($current_user_id ?? 0);
 $activeAdminsTotal = (int) ($active_admins_total ?? 0);
+$requiresProductionConfirmation = (bool) ($requires_production_confirmation ?? false);
 $total = max(0, (int) ($pagination['total'] ?? count($items)));
 $baseUrl = function_exists('url') ? url('/admin/usuarios') : '/admin/usuarios';
 
@@ -143,7 +144,7 @@ $avatarUrl = static function (string $path): string {
               $avatarFocalX = max(0.0, min(100.0, (float) ($item['avatar_focal_x'] ?? 50.0)));
               $avatarFocalY = max(0.0, min(100.0, (float) ($item['avatar_focal_y'] ?? 50.0)));
               $avatarFocusStyle = 'object-position: ' . number_format($avatarFocalX, 2, '.', '') . '% ' . number_format($avatarFocalY, 2, '.', '') . '%;';
-              $canToggle = (bool) ($item['can_toggle'] ?? true);
+              $canToggle = (bool) ($item['can_toggle'] ?? true) && !$requiresProductionConfirmation;
               $canDelete = (bool) ($item['can_delete'] ?? true);
               $isCurrentUser = (bool) ($item['is_current_user'] ?? ($currentUserId > 0 && $id === $currentUserId));
               $isLastActiveAdmin = (bool) ($item['is_last_active_admin'] ?? ($papel === 'admin' && $status === 'ativo' && $activeAdminsTotal <= 1));
@@ -186,6 +187,8 @@ $avatarUrl = static function (string $path): string {
                 </form>
                 <?php if ($statusNote !== ''): ?>
                   <div class="users-table-status-note"><?= htmlspecialchars($statusNote, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                <?php elseif ($requiresProductionConfirmation): ?>
+                  <div class="users-table-status-note">Exige confirmacao</div>
                 <?php endif; ?>
               </td>
               <td class="users-table-td users-table-td-center">

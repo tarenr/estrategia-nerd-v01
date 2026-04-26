@@ -70,21 +70,32 @@ function sidebar_section(string $label): array
 }
 
 /**
- * @return array{type:string,href:string,icon:string,label:string}
+ * @return array{type:string,href:string,icon:string,label:string,capability:?string}
  */
-function sidebar_item(string $href, string $icon, string $label): array
+function sidebar_item(string $href, string $icon, string $label, ?string $capability = null): array
 {
     return [
         'type' => 'item',
         'href' => $href,
         'icon' => $icon,
         'label' => $label,
+        'capability' => $capability,
     ];
+}
+
+function sidebar_item_visible(array $item): bool
+{
+    $capability = $item['capability'] ?? null;
+    if (!is_string($capability) || trim($capability) === '') {
+        return true;
+    }
+
+    return environment_has_capability($capability);
 }
 
 $current = strip_base($currentPath, $basePath);
 
-$items = [
+$rawItems = [
     sidebar_section('Geral'),
     sidebar_item('/admin', 'fa-solid fa-chart-line', 'Dashboard'),
     sidebar_item('/', 'fa-solid fa-globe', 'Ver Site'),
@@ -100,12 +111,33 @@ $items = [
     sidebar_item('/admin/links', 'fa-solid fa-link', 'Links'),
     sidebar_item('/admin/ofertas', 'fa-solid fa-bag-shopping', 'Ofertas'),
     sidebar_section('Sistema'),
-    sidebar_item('/admin/home-e-menus', 'fa-solid fa-diagram-project', 'Home e Menus'),
-    sidebar_item('/admin/configuracoes', 'fa-solid fa-gear', 'Configuracoes'),
-    sidebar_item('/admin/usuarios', 'fa-solid fa-user', 'Usuarios'),
-    sidebar_item('/admin/permissoes', 'fa-solid fa-lock', 'Permissoes'),
-    sidebar_item('/admin/health', 'fa-solid fa-heart-pulse', 'Health Check'),
+    sidebar_item('/admin/home-e-menus', 'fa-solid fa-diagram-project', 'Home e Menus', 'multi_env_menus'),
+    sidebar_item('/admin/configuracoes', 'fa-solid fa-gear', 'Configuracoes', 'multi_env_settings'),
+    sidebar_item('/admin/usuarios', 'fa-solid fa-user', 'Usuarios', 'multi_env_users'),
+    sidebar_item('/admin/health', 'fa-solid fa-heart-pulse', 'Health Check', 'multi_env_health'),
+    sidebar_item('/admin/central-operacional', 'fa-solid fa-arrows-rotate', 'Central Operacional', 'content_sync'),
 ];
+
+$items = [];
+$pendingSection = null;
+
+foreach ($rawItems as $item) {
+    if (($item['type'] ?? 'item') === 'section') {
+        $pendingSection = $item;
+        continue;
+    }
+
+    if (!sidebar_item_visible($item)) {
+        continue;
+    }
+
+    if ($pendingSection !== null) {
+        $items[] = $pendingSection;
+        $pendingSection = null;
+    }
+
+    $items[] = $item;
+}
 ?>
 <nav class="space-y-1 text-sm" aria-label="Navegacao Admin">
   <?php foreach ($items as $item): ?>

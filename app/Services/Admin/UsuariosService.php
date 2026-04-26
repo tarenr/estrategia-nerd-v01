@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\Repositories\UsuarioRepository;
+use App\Support\SystemActivityLogger;
 
 final class UsuariosService
 {
@@ -32,6 +33,7 @@ final class UsuariosService
     public function __construct(
         private UsuarioRepository $usuarios,
         private MidiaService $midia,
+        private string $targetEnvironment = 'local',
     ) {
     }
 
@@ -57,6 +59,10 @@ final class UsuariosService
             'current_user_id' => $currentUserId,
             'active_admins_total' => $this->usuarios->countActiveAdmins(),
             'flash' => trim((string) ($query['flash'] ?? '')),
+            'target_environment' => $this->targetEnvironment,
+            'target_environment_label' => environment_label($this->targetEnvironment),
+            'is_remote_target' => $this->targetEnvironment !== current_environment(),
+            'requires_production_confirmation' => requires_production_confirmation($this->targetEnvironment),
         ];
     }
 
@@ -96,6 +102,10 @@ final class UsuariosService
             'posts_count' => $postsCount,
             'is_current_user' => $isCurrentUser,
             'is_last_active_admin' => $isLastActiveAdmin,
+            'target_environment' => $this->targetEnvironment,
+            'target_environment_label' => environment_label($this->targetEnvironment),
+            'is_remote_target' => $this->targetEnvironment !== current_environment(),
+            'requires_production_confirmation' => requires_production_confirmation($this->targetEnvironment),
         ];
     }
 
@@ -122,6 +132,17 @@ final class UsuariosService
             'avatar_focal_x' => $form['avatar_focal_x'],
             'avatar_focal_y' => $form['avatar_focal_y'],
             'senha' => password_hash($form['senha'], PASSWORD_DEFAULT),
+        ]);
+
+        $created = $this->usuarios->findById($id);
+        SystemActivityLogger::write('system', 'user_created', [
+            'operation_id' => $this->buildOperationId(),
+            'module' => 'users',
+            'current_environment' => current_environment(),
+            'target_environment' => $this->targetEnvironment,
+            'status' => 'ok',
+            'before' => null,
+            'after' => $this->sanitizeUserForLog($created),
         ]);
 
         return ['ok' => true, 'id' => $id];
@@ -165,8 +186,19 @@ final class UsuariosService
             $payload['senha'] = password_hash($form['senha'], PASSWORD_DEFAULT);
         }
 
+        $before = $this->sanitizeUserForLog($usuario);
         $this->usuarios->updateAdmin($id, $payload);
         $fresh = $this->usuarios->findById($id);
+
+        SystemActivityLogger::write('system', 'user_updated', [
+            'operation_id' => $this->buildOperationId(),
+            'module' => 'users',
+            'current_environment' => current_environment(),
+            'target_environment' => $this->targetEnvironment,
+            'status' => 'ok',
+            'before' => $before,
+            'after' => $this->sanitizeUserForLog($fresh),
+        ]);
 
         return [
             'ok' => true,
@@ -192,7 +224,18 @@ final class UsuariosService
             return ['ok' => false, 'flash' => 'cannot_remove_last_admin'];
         }
 
+        $before = $this->sanitizeUserForLog($usuario);
         $this->usuarios->updateStatus($id, $targetStatus);
+        $after = $this->sanitizeUserForLog($this->usuarios->findById($id));
+        SystemActivityLogger::write('system', 'user_status_updated', [
+            'operation_id' => $this->buildOperationId(),
+            'module' => 'users',
+            'current_environment' => current_environment(),
+            'target_environment' => $this->targetEnvironment,
+            'status' => 'ok',
+            'before' => $before,
+            'after' => $after,
+        ]);
         return ['ok' => true, 'flash' => 'status_updated'];
     }
 
@@ -216,8 +259,19 @@ final class UsuariosService
             $this->usuarios->reassignPostsByAuthor($id, (int) ($fallbackAdmin['id'] ?? 0));
         }
 
+        $before = $this->sanitizeUserForLog($usuario);
         $this->removeManagedAvatar((string) ($usuario['avatar_imagem'] ?? ''));
         $this->usuarios->deleteById($id);
+
+        SystemActivityLogger::write('system', 'user_deleted', [
+            'operation_id' => $this->buildOperationId(),
+            'module' => 'users',
+            'current_environment' => current_environment(),
+            'target_environment' => $this->targetEnvironment,
+            'status' => 'ok',
+            'before' => $before,
+            'after' => null,
+        ]);
 
         return ['ok' => true, 'flash' => 'deleted'];
     }
@@ -233,6 +287,11 @@ final class UsuariosService
             'papel_options' => self::PAPEL_OPTIONS,
             'status_options' => self::STATUS_OPTIONS,
             'avatar_icon_options' => self::AVATAR_ICON_OPTIONS,
+            'target_environment' => $this->targetEnvironment,
+            'target_environment_label' => environment_label($this->targetEnvironment),
+            'is_remote_target' => $this->targetEnvironment !== current_environment(),
+            'allow_avatar_uploads' => $this->allowsLocalAvatarManagement(),
+            'requires_production_confirmation' => requires_production_confirmation($this->targetEnvironment),
         ];
     }
 
@@ -448,27 +507,34 @@ final class UsuariosService
     {
         $currentAvatar = trim((string) ($existing['avatar_imagem'] ?? $form['avatar_imagem'] ?? ''));
 
-        if ((int) ($form['limpar_avatar_imagem'] ?? 0) === 1 && $currentAvatar !== '') {
+        if ((int) ($form['limpar_avatar_imagem'] ?? 0) === 1 && $currentAvatar !== '' && $this->allowsLocalAvatarManagement()) {
             $this->removeManagedAvatar($currentAvatar);
             $currentAvatar = '';
         }
 
-        $upload = $this->midia->storeUploadedImage(
-            $files['avatar_upload'] ?? null,
-            'usuarios',
-            'usuario-' . $this->slugify($form['usuario'] !== '' ? $form['usuario'] : 'avatar'),
-            true
-        );
-
-        if (($upload['ok'] ?? false) !== true) {
-            $errors['avatar_upload'] = (string) ($upload['error'] ?? 'Falha no upload do avatar.');
-        }
-
-        if (($upload['skipped'] ?? true) !== true && !empty($upload['path'])) {
-            if ($currentAvatar !== '' && $currentAvatar !== (string) $upload['path']) {
-                $this->removeManagedAvatar($currentAvatar);
+        if (!$this->allowsLocalAvatarManagement()) {
+            $file = $files['avatar_upload'] ?? null;
+            if (is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                $errors['avatar_upload'] = 'Upload de avatar ainda nao esta habilitado para ambiente remoto. Use avatar em icone ou preserve a foto atual deste alvo.';
             }
-            $currentAvatar = (string) $upload['path'];
+        } else {
+            $upload = $this->midia->storeUploadedImage(
+                $files['avatar_upload'] ?? null,
+                'usuarios',
+                'usuario-' . $this->slugify($form['usuario'] !== '' ? $form['usuario'] : 'avatar'),
+                true
+            );
+
+            if (($upload['ok'] ?? false) !== true) {
+                $errors['avatar_upload'] = (string) ($upload['error'] ?? 'Falha no upload do avatar.');
+            }
+
+            if (($upload['skipped'] ?? true) !== true && !empty($upload['path'])) {
+                if ($currentAvatar !== '' && $currentAvatar !== (string) $upload['path']) {
+                    $this->removeManagedAvatar($currentAvatar);
+                }
+                $currentAvatar = (string) $upload['path'];
+            }
         }
 
         $form['avatar_imagem'] = $currentAvatar;
@@ -482,6 +548,10 @@ final class UsuariosService
 
     private function removeManagedAvatar(string $path): void
     {
+        if (!$this->allowsLocalAvatarManagement()) {
+            return;
+        }
+
         $path = trim($path);
         if ($path === '' || !str_starts_with($path, 'uploads/usuarios/')) {
             return;
@@ -551,6 +621,38 @@ final class UsuariosService
     private function isActiveAdmin(array $usuario): bool
     {
         return (string) ($usuario['papel'] ?? '') === 'admin' && (string) ($usuario['status'] ?? '') === 'ativo';
+    }
+
+    private function allowsLocalAvatarManagement(): bool
+    {
+        return $this->targetEnvironment === current_environment();
+    }
+
+    private function buildOperationId(): string
+    {
+        return 'users-' . date('Ymd-His') . '-' . bin2hex(random_bytes(4));
+    }
+
+    private function sanitizeUserForLog(?array $user): ?array
+    {
+        if (!is_array($user)) {
+            return null;
+        }
+
+        return [
+            'id' => (int) ($user['id'] ?? 0),
+            'usuario' => (string) ($user['usuario'] ?? ''),
+            'nome' => (string) ($user['nome'] ?? ''),
+            'email' => (string) ($user['email'] ?? ''),
+            'papel' => (string) ($user['papel'] ?? ''),
+            'status' => (string) ($user['status'] ?? ''),
+            'avatar_tipo' => (string) ($user['avatar_tipo'] ?? ''),
+            'avatar_icone' => (string) ($user['avatar_icone'] ?? ''),
+            'avatar_cor' => (string) ($user['avatar_cor'] ?? ''),
+            'avatar_imagem' => (string) ($user['avatar_imagem'] ?? ''),
+            'avatar_focal_x' => (float) ($user['avatar_focal_x'] ?? 0),
+            'avatar_focal_y' => (float) ($user['avatar_focal_y'] ?? 0),
+        ];
     }
 
     private function wouldRemoveLastActiveAdmin(array $current, array $target): bool

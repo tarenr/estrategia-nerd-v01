@@ -9,13 +9,15 @@ use App\Services\Admin\MidiaService;
 use App\Services\Admin\UsuariosService;
 use App\Support\Auth;
 use App\Support\Csrf;
+use App\Support\ProductionChangeGuard;
+use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
 
 final class UsuariosController
 {
     public function index(): void
     {
-        View::render('admin/users/index', $this->service()->getIndexViewModel($_GET, Auth::id()));
+        View::render('admin/users/index', $this->service()->getIndexViewModel($_GET, $this->effectiveCurrentUserId()));
     }
 
     public function create(): void
@@ -28,6 +30,16 @@ final class UsuariosController
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             http_response_code(419);
             echo 'Token CSRF invalido.';
+            return;
+        }
+
+        if (ProductionChangeGuard::requiresConfirmation(target_environment())
+            && !ProductionChangeGuard::isValidPhrase($_POST['production_confirmation'] ?? null)) {
+            http_response_code(422);
+            View::render('admin/users/create', $this->service()->getCreateViewModel(
+                $_POST,
+                ['production_confirmation' => 'Digite PRODUCAO para confirmar alteracoes estruturais no ambiente de producao.']
+            ));
             return;
         }
 
@@ -64,7 +76,22 @@ final class UsuariosController
             return;
         }
 
-        $result = $this->service()->updateUsuario($id, $_POST, $_FILES, Auth::id());
+        if (ProductionChangeGuard::requiresConfirmation(target_environment())
+            && !ProductionChangeGuard::isValidPhrase($_POST['production_confirmation'] ?? null)) {
+            http_response_code(422);
+            $usuario = $this->service()->getEditViewModel($id, $_POST, [
+                'production_confirmation' => 'Digite PRODUCAO para confirmar alteracoes estruturais no ambiente de producao.',
+            ]);
+            if ($usuario === null) {
+                http_response_code(404);
+                echo 'Usuario nao encontrado.';
+                return;
+            }
+            View::render('admin/users/edit', $usuario);
+            return;
+        }
+
+        $result = $this->service()->updateUsuario($id, $_POST, $_FILES, $this->effectiveCurrentUserId());
         if (($result['not_found'] ?? false) === true) {
             http_response_code(404);
             echo 'Usuario nao encontrado.';
@@ -93,8 +120,13 @@ final class UsuariosController
             return;
         }
 
+        if (ProductionChangeGuard::requiresConfirmation(target_environment())) {
+            header('Location: ' . url('/admin/usuarios?flash=production_confirmation_required'));
+            exit;
+        }
+
         $id = (int) ($_POST['id'] ?? 0);
-        $result = $this->service()->toggleStatus($id, Auth::id());
+        $result = $this->service()->toggleStatus($id, $this->effectiveCurrentUserId());
         if (($result['not_found'] ?? false) === true) {
             http_response_code(404);
             echo 'Usuario nao encontrado.';
@@ -108,7 +140,7 @@ final class UsuariosController
     public function deleteConfirm(): void
     {
         $id = (int) ($_GET['id'] ?? 0);
-        $viewModel = $this->service()->getDeleteViewModel($id, Auth::id());
+        $viewModel = $this->service()->getDeleteViewModel($id, $this->effectiveCurrentUserId());
         if ($viewModel === null) {
             http_response_code(404);
             echo 'Usuario nao encontrado.';
@@ -126,8 +158,24 @@ final class UsuariosController
             return;
         }
 
+        if (ProductionChangeGuard::requiresConfirmation(target_environment())
+            && !ProductionChangeGuard::isValidPhrase($_POST['production_confirmation'] ?? null)) {
+            $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+            $viewModel = $this->service()->getDeleteViewModel($id, $this->effectiveCurrentUserId());
+            if ($viewModel === null) {
+                http_response_code(404);
+                echo 'Usuario nao encontrado.';
+                return;
+            }
+
+            http_response_code(422);
+            $viewModel['errors'] = ['production_confirmation' => 'Digite PRODUCAO para confirmar alteracoes estruturais no ambiente de producao.'];
+            View::render('admin/users/delete', $viewModel);
+            return;
+        }
+
         $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
-        $result = $this->service()->deleteUsuario($id, Auth::id());
+        $result = $this->service()->deleteUsuario($id, $this->effectiveCurrentUserId());
         if (($result['not_found'] ?? false) === true) {
             http_response_code(404);
             echo 'Usuario nao encontrado.';
@@ -140,9 +188,16 @@ final class UsuariosController
 
     private function service(): UsuariosService
     {
-        /** @var \PDO $pdo */
-        $pdo = $GLOBALS['pdo'];
+        $targetEnvironment = target_environment();
+        $pdo = TargetEnvironmentDatabase::pdo($targetEnvironment);
+        /** @var \PDO $localPdo */
+        $localPdo = $GLOBALS['pdo'];
 
-        return new UsuariosService(new UsuarioRepository($pdo), new MidiaService($pdo));
+        return new UsuariosService(new UsuarioRepository($pdo), new MidiaService($localPdo), $targetEnvironment);
+    }
+
+    private function effectiveCurrentUserId(): ?int
+    {
+        return target_environment() === current_environment() ? Auth::id() : null;
     }
 }

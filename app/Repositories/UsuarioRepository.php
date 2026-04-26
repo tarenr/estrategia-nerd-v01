@@ -123,11 +123,14 @@ final class UsuarioRepository
 
     public function insertAdmin(array $data): int
     {
+        $nextId = $this->nextAdminId();
+
         $stmt = $this->pdo->prepare(
-            'INSERT INTO usuarios (usuario, nome, email, papel, status, avatar_tipo, avatar_icone, avatar_cor, avatar_imagem, avatar_focal_x, avatar_focal_y, senha)
-             VALUES (:usuario, :nome, :email, :papel, :status, :avatar_tipo, :avatar_icone, :avatar_cor, :avatar_imagem, :avatar_focal_x, :avatar_focal_y, :senha)'
+            'INSERT INTO usuarios (id, usuario, nome, email, papel, status, avatar_tipo, avatar_icone, avatar_cor, avatar_imagem, avatar_focal_x, avatar_focal_y, senha)
+             VALUES (:id, :usuario, :nome, :email, :papel, :status, :avatar_tipo, :avatar_icone, :avatar_cor, :avatar_imagem, :avatar_focal_x, :avatar_focal_y, :senha)'
         );
         $stmt->execute([
+            'id' => $nextId,
             'usuario' => $data['usuario'],
             'nome' => $data['nome'],
             'email' => $data['email'],
@@ -142,7 +145,7 @@ final class UsuarioRepository
             'senha' => $data['senha'],
         ]);
 
-        return (int) $this->pdo->lastInsertId();
+        return $nextId;
     }
 
     public function updateAdmin(int $id, array $data): void
@@ -323,5 +326,13 @@ final class UsuarioRepository
 
         $direction = strtolower(trim($dir)) === 'asc' ? 'ASC' : 'DESC';
         return $column . ' ' . $direction . ', id DESC';
+    }
+
+    private function nextAdminId(): int
+    {
+        $stmt = $this->pdo->query('SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM usuarios');
+        $nextId = $stmt !== false ? (int) $stmt->fetchColumn() : 1;
+
+        return max(1, $nextId);
     }
 }

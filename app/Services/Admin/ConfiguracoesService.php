@@ -5,6 +5,7 @@ namespace App\Services\Admin;
 
 use App\Repositories\ConfiguracaoRepository;
 use App\Services\Site\SitemapCacheService;
+use App\Support\SystemActivityLogger;
 
 final class ConfiguracoesService
 {
@@ -37,6 +38,7 @@ final class ConfiguracoesService
         private ConfiguracaoRepository $configuracoes,
         private MidiaService $midia,
         private SitemapCacheService $sitemapCache,
+        private string $targetEnvironment = 'local',
     ) {
     }
 
@@ -49,7 +51,12 @@ final class ConfiguracoesService
             'title' => 'Configuracoes',
             'form' => $form,
             'errors' => $errors,
-            'media_items' => $this->midia->recentImages(12),
+            'media_items' => $this->allowsLocalMediaManagement() ? $this->midia->recentImages(12) : [],
+            'target_environment' => $this->targetEnvironment,
+            'target_environment_label' => environment_label($this->targetEnvironment),
+            'is_remote_target' => $this->targetEnvironment !== current_environment(),
+            'allow_media_uploads' => $this->allowsLocalMediaManagement(),
+            'requires_production_confirmation' => requires_production_confirmation($this->targetEnvironment),
         ];
     }
 
@@ -60,11 +67,23 @@ final class ConfiguracoesService
      */
     public function save(array $post, array $files): array
     {
+        $stored = $this->configuracoes->all();
+        $before = array_merge(self::DEFAULTS, $stored);
         $data = $this->normalizeForm($post);
         $errors = $this->validate($data);
 
         if ($errors !== []) {
             return ['ok' => false, 'errors' => $errors, 'old' => $data];
+        }
+
+        if (!$this->allowsLocalMediaManagement()) {
+            foreach (['logo_upload', 'brand_symbol_upload', 'favicon_upload', 'bio_avatar_upload', 'sobre_imagem_upload'] as $input) {
+                $file = $files[$input] ?? null;
+                if (is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+                    $errors['media_remote'] = 'Upload de imagem ainda nao esta habilitado para ambiente remoto. Use URL/caminho existente neste alvo.';
+                    break;
+                }
+            }
         }
 
         $uploads = [
@@ -75,15 +94,17 @@ final class ConfiguracoesService
             'sobre_imagem_upload' => ['field' => 'sobre_imagem_url', 'base' => 'sobre-imagem'],
         ];
 
-        foreach ($uploads as $input => $meta) {
-            $result = $this->midia->storeUploadedImage($files[$input] ?? null, 'configuracoes', $meta['base'], true);
-            if (($result['ok'] ?? false) !== true) {
-                $errors[$meta['field']] = (string) ($result['error'] ?? 'Falha no upload da imagem.');
-                continue;
-            }
+        if ($errors === [] && $this->allowsLocalMediaManagement()) {
+            foreach ($uploads as $input => $meta) {
+                $result = $this->midia->storeUploadedImage($files[$input] ?? null, 'configuracoes', $meta['base'], true);
+                if (($result['ok'] ?? false) !== true) {
+                    $errors[$meta['field']] = (string) ($result['error'] ?? 'Falha no upload da imagem.');
+                    continue;
+                }
 
-            if (($result['skipped'] ?? false) !== true && isset($result['path'])) {
-                $data[$meta['field']] = (string) $result['path'];
+                if (($result['skipped'] ?? false) !== true && isset($result['path'])) {
+                    $data[$meta['field']] = (string) $result['path'];
+                }
             }
         }
 
@@ -92,9 +113,31 @@ final class ConfiguracoesService
         }
 
         $this->configuracoes->saveMany($data);
-        $this->sitemapCache->refreshQuietly();
+        if ($this->targetEnvironment === current_environment()) {
+            $this->sitemapCache->refreshQuietly();
+        }
+
+        SystemActivityLogger::write('system', 'settings_saved', [
+            'operation_id' => $this->buildOperationId(),
+            'module' => 'settings',
+            'current_environment' => current_environment(),
+            'target_environment' => $this->targetEnvironment,
+            'status' => 'ok',
+            'before' => $before,
+            'after' => $data,
+        ]);
 
         return ['ok' => true];
+    }
+
+    private function allowsLocalMediaManagement(): bool
+    {
+        return $this->targetEnvironment === current_environment();
+    }
+
+    private function buildOperationId(): string
+    {
+        return 'settings-' . date('Ymd-His') . '-' . bin2hex(random_bytes(4));
     }
 
     /**

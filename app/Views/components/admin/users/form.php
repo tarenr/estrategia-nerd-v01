@@ -12,6 +12,11 @@ $usuario = is_array($usuario ?? null) ? $usuario : null;
 $papelOptions = is_array($papel_options ?? null) ? $papel_options : [];
 $statusOptions = is_array($status_options ?? null) ? $status_options : [];
 $avatarIconOptions = is_array($avatar_icon_options ?? null) ? $avatar_icon_options : [];
+$targetEnvironment = (string) ($target_environment ?? current_environment());
+$targetEnvironmentLabel = (string) ($target_environment_label ?? environment_label($targetEnvironment));
+$isRemoteTarget = (bool) ($is_remote_target ?? false);
+$allowAvatarUploads = (bool) ($allow_avatar_uploads ?? true);
+$requiresProductionConfirmation = (bool) ($requires_production_confirmation ?? false);
 
 $action = $mode === 'edit'
     ? url('/admin/editar-usuario?id=' . (int) ($form['id'] ?? 0))
@@ -41,9 +46,20 @@ $fieldError = static function (string $key) use ($errors): string {
     </div>
 
     <div class="admin-page-actions">
+      <div class="admin-chip<?= $isRemoteTarget ? ' border-cyan-500/30 text-cyan-200' : '' ?>">Ambiente alvo: <?= htmlspecialchars($targetEnvironmentLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
       <a href="<?= url('/admin/usuarios') ?>" class="admin-btn admin-btn-secondary"><i class="fa-solid fa-arrow-left"></i>Voltar para usuarios</a>
     </div>
   </div>
+
+  <?php if ($isRemoteTarget): ?>
+    <section class="admin-panel border border-cyan-500/20">
+      <div class="text-sm font-bold text-cyan-200">Modo multiambiente ativo</div>
+      <div class="mt-2 text-sm text-slate-300">Voce esta administrando usuarios do ambiente <?= htmlspecialchars($targetEnvironmentLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> a partir do local.</div>
+      <?php if (!$allowAvatarUploads): ?>
+        <div class="mt-2 text-sm text-slate-400">Nesta V1, avatar por upload fica desativado para alvo remoto. Use avatar por icone ou preserve a foto ja existente nesse ambiente.</div>
+      <?php endif; ?>
+    </section>
+  <?php endif; ?>
 
   <form method="POST" action="<?= htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" enctype="multipart/form-data" class="space-y-6" data-users-avatar-form data-avatar-current-url="<?= htmlspecialchars($avatarUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
     <?= Csrf::field() ?>
@@ -166,7 +182,7 @@ $fieldError = static function (string $key) use ($errors): string {
 
               <div class="users-form-field users-form-field-full" data-avatar-photo-fields<?= $avatarTipo === 'foto' ? '' : ' hidden' ?>>
                 <label class="admin-filter-label" for="usuario-avatar-upload">Foto do avatar</label>
-                <input id="usuario-avatar-upload" name="avatar_upload" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,.svg" class="nerd-input admin-filter-control users-file-input" data-avatar-upload>
+                <input id="usuario-avatar-upload" name="avatar_upload" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,.svg" class="nerd-input admin-filter-control users-file-input disabled:cursor-not-allowed disabled:opacity-40" data-avatar-upload<?= !$allowAvatarUploads ? ' disabled' : '' ?>>
                 <?php if ($fieldError('avatar_upload') !== ''): ?><div class="users-form-error"><?= htmlspecialchars($fieldError('avatar_upload'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
               </div>
             </div>
@@ -196,9 +212,30 @@ $fieldError = static function (string $key) use ($errors): string {
     </div>
 
     <section class="admin-panel users-form-actions-panel">
-      <div class="admin-page-actions">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div class="flex-1 min-w-[260px]">
+          <?php if ($requiresProductionConfirmation): ?>
+            <div class="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 space-y-3">
+              <div class="text-sm font-bold text-amber-200">Confirmacao obrigatoria para producao</div>
+              <div class="text-sm text-slate-300">Digite <strong>PRODUCAO</strong> para confirmar esta alteracao estrutural no ambiente de producao.</div>
+              <div class="max-w-sm">
+                <input
+                  type="text"
+                  name="production_confirmation"
+                  value=""
+                  class="nerd-input w-full px-4 py-3 rounded-xl<?= $fieldError('production_confirmation') !== '' ? ' border-rose-500/50' : '' ?>"
+                  placeholder="Digite PRODUCAO"
+                  autocomplete="off"
+                >
+                <?php if ($fieldError('production_confirmation') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('production_confirmation'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+              </div>
+            </div>
+          <?php endif; ?>
+        </div>
+        <div class="admin-page-actions">
         <a href="<?= url('/admin/usuarios') ?>" class="admin-btn admin-btn-secondary">Cancelar</a>
         <button type="submit" class="admin-btn admin-btn-primary"><i class="fa-solid fa-floppy-disk"></i><?= $mode === 'edit' ? 'Salvar alteracoes' : 'Criar usuario' ?></button>
+        </div>
       </div>
     </section>
   </form>

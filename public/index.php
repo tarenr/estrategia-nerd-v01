@@ -26,6 +26,7 @@ $appRoot = is_file($localEmbeddedRoot . '/bootstrap.php')
 require_once $appRoot . '/bootstrap.php';
 
 use App\Support\Auth;
+use App\Support\EnvironmentGuard;
 use App\Support\LocalOnlyAccess;
 use App\Support\View;
 
@@ -156,8 +157,39 @@ if (!$match) {
 
 [$handler, $middleware] = $match;
 
-if ($middleware === 'auth') {
-    Auth::require(url('/login'));
+if (is_array($middleware)) {
+    $middlewares = $middleware;
+} elseif (is_string($middleware) && trim($middleware) !== '') {
+    $middlewares = [$middleware];
+} else {
+    $middlewares = [];
+}
+
+foreach ($middlewares as $currentMiddleware) {
+    if (!is_string($currentMiddleware) || trim($currentMiddleware) === '') {
+        continue;
+    }
+
+    if ($currentMiddleware === 'auth') {
+        Auth::require(url('/login'));
+        continue;
+    }
+
+    if (str_starts_with($currentMiddleware, 'capability:')) {
+        $capability = trim(substr($currentMiddleware, strlen('capability:')));
+        if ($capability === '') {
+            http_response_code(500);
+            echo 'Capability invalida na rota.';
+            exit;
+        }
+
+        EnvironmentGuard::requireCapability($capability);
+        continue;
+    }
+
+    http_response_code(500);
+    echo 'Middleware invalido.';
+    exit;
 }
 
 if (is_array($handler) && count($handler) === 2) {

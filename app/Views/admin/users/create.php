@@ -16,6 +16,10 @@ View::component('admin/users/form', [
     'papel_options' => $papel_options ?? [],
     'status_options' => $status_options ?? [],
     'avatar_icon_options' => $avatar_icon_options ?? [],
+    'target_environment' => $target_environment ?? current_environment(),
+    'target_environment_label' => $target_environment_label ?? environment_label((string) ($target_environment ?? current_environment())),
+    'is_remote_target' => $is_remote_target ?? false,
+    'allow_avatar_uploads' => $allow_avatar_uploads ?? true,
 ]);
 ?>
 <script src="<?= url('/assets/js/admin-users.js?v=' . $adminUsersJsVersion) ?>" defer></script>

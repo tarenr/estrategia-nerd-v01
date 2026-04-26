@@ -3,18 +3,52 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Support\EnvironmentManager;
+use App\Support\TargetEnvironmentDatabase;
 use PDO;
 use Throwable;
 
 final class HealthCheckService
 {
-    public function __construct(private PDO $pdo)
-    {
+    /**
+     * @var array<string, mixed>
+     */
+    private array $targetProfile;
+
+    public function __construct(
+        private PDO $pdo,
+        private string $targetEnvironment
+    ) {
+        $this->targetEnvironment = EnvironmentManager::normalize($this->targetEnvironment);
+        $this->targetProfile = TargetEnvironmentDatabase::profile($this->targetEnvironment);
     }
 
     public function getViewModel(): array
     {
-        $checks = [
+        $isRemoteTarget = $this->isRemoteTarget();
+        $checks = $isRemoteTarget
+            ? $this->buildRemoteChecks()
+            : $this->buildLocalChecks();
+
+        return [
+            'title' => 'Health Check',
+            'checks' => $checks,
+            'summary' => $this->buildSummary($checks),
+            'runtime' => $this->buildRuntime(),
+            'target_environment' => $this->targetEnvironment,
+            'target_environment_label' => environment_label($this->targetEnvironment),
+            'execution_environment' => current_environment(),
+            'execution_environment_label' => environment_label(current_environment()),
+            'is_remote_target' => $isRemoteTarget,
+        ];
+    }
+
+    /**
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    private function buildLocalChecks(): array
+    {
+        return [
             'ambiente' => [
                 $this->checkPhpVersion(),
                 $this->checkAppUrl(),
@@ -41,24 +75,80 @@ final class HealthCheckService
                 $this->checkExtension('gd', 'GD'),
             ],
         ];
+    }
+
+    /**
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    private function buildRemoteChecks(): array
+    {
+        $uploads = (array) ($this->targetProfile['uploads'] ?? []);
+        $mode = strtolower(trim((string) ($uploads['mode'] ?? 'ftp')));
+        $extensionChecks = [
+            $this->checkExtension('pdo_mysql', 'PDO MySQL'),
+        ];
+
+        if ($mode === 'ftp') {
+            $extensionChecks[] = $this->checkExtension('ftp', 'FTP');
+        }
 
         return [
-            'title' => 'Health Check',
-            'checks' => $checks,
-            'summary' => $this->buildSummary($checks),
-            'runtime' => [
-                'php_version' => PHP_VERSION,
-                'app_url' => app_url() !== '' ? app_url() : '(vazio)',
-                'base_path' => base_path(),
-                'upload_root' => base_path('public/uploads'),
-                'session_path' => (string) session_save_path(),
+            'ambiente' => [
+                $this->checkTargetEnvironment(),
+                $this->checkProfileConfiguration(),
+                $this->checkTargetSiteUrl(),
             ],
+            'banco' => [
+                $this->checkDatabaseConnection(),
+                $this->checkTable('posts', 'Tabela de posts'),
+                $this->checkTable('links', 'Tabela de links'),
+                $this->checkTable('configuracoes', 'Tabela de configuracoes'),
+                $this->checkPublishedPosts(),
+            ],
+            'arquivos' => [
+                $this->checkUploadsProfileConfiguration(),
+                $this->checkUploadsTransportMode(),
+                $this->checkUploadsAccess(),
+            ],
+            'extensoes' => $extensionChecks,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildRuntime(): array
+    {
+        $profile = $this->targetProfile;
+        $database = (array) ($profile['database'] ?? []);
+        $uploads = (array) ($profile['uploads'] ?? []);
+
+        if ($this->isRemoteTarget()) {
+            return [
+                'php_version' => PHP_VERSION,
+                'app_url' => $this->fetchTargetConfigValue('site_url') ?: '(nao configurada)',
+                'base_path' => base_path(),
+                'session_path' => (string) session_save_path(),
+                'target_database_host' => (string) ($database['host'] ?? '-'),
+                'target_database_name' => (string) ($database['database'] ?? '-'),
+                'target_uploads_mode' => strtoupper((string) ($uploads['mode'] ?? 'ftp')),
+                'target_uploads_root' => (string) ($uploads['root'] ?? $uploads['path'] ?? '-'),
+            ];
+        }
+
+        return [
+            'php_version' => PHP_VERSION,
+            'app_url' => app_url() !== '' ? app_url() : '(vazio)',
+            'base_path' => base_path(),
+            'upload_root' => base_path('public/uploads'),
+            'session_path' => (string) session_save_path(),
         ];
     }
 
     private function checkPhpVersion(): array
     {
         $ok = version_compare(PHP_VERSION, '8.1.0', '>=');
+
         return [
             'label' => 'Versao do PHP',
             'ok' => $ok,
@@ -72,6 +162,7 @@ final class HealthCheckService
     {
         $value = app_url();
         $ok = $value !== '';
+
         return [
             'label' => 'Base da aplicacao',
             'ok' => $ok,
@@ -84,6 +175,7 @@ final class HealthCheckService
     private function checkTimezone(): array
     {
         $timezone = date_default_timezone_get();
+
         return [
             'label' => 'Timezone ativa',
             'ok' => $timezone !== '',
@@ -98,12 +190,79 @@ final class HealthCheckService
         $path = (string) session_save_path();
         $resolved = $path !== '' ? $path : sys_get_temp_dir();
         $ok = $resolved !== '' && is_dir($resolved) && is_writable($resolved);
+
         return [
             'label' => 'Sessao PHP',
             'ok' => $ok,
             'status' => $ok ? 'ok' : 'fail',
             'value' => $resolved !== '' ? $resolved : '(indefinido)',
             'detail' => $ok ? 'Sessao com pasta acessivel para login e CSRF.' : 'A pasta de sessao nao esta acessivel para escrita.',
+        ];
+    }
+
+    private function checkTargetEnvironment(): array
+    {
+        return [
+            'label' => 'Leitura do ambiente alvo',
+            'ok' => true,
+            'status' => 'ok',
+            'value' => environment_label($this->targetEnvironment),
+            'detail' => 'O diagnostico esta sendo executado no local e consultando o ambiente alvo de forma remota e somente leitura.',
+        ];
+    }
+
+    private function checkProfileConfiguration(): array
+    {
+        $database = (array) ($this->targetProfile['database'] ?? []);
+        $uploads = (array) ($this->targetProfile['uploads'] ?? []);
+
+        $databaseReady = true;
+        foreach (['host', 'database', 'username'] as $required) {
+            if (trim((string) ($database[$required] ?? '')) === '') {
+                $databaseReady = false;
+                break;
+            }
+        }
+
+        $uploadsReady = true;
+        $mode = strtolower(trim((string) ($uploads['mode'] ?? 'ftp')));
+        $requiredFields = $mode === 'local'
+            ? ['path']
+            : ['host', 'username', 'password', 'root'];
+
+        foreach ($requiredFields as $required) {
+            if (trim((string) ($uploads[$required] ?? '')) === '') {
+                $uploadsReady = false;
+                break;
+            }
+        }
+
+        $ok = $databaseReady && $uploadsReady;
+
+        return [
+            'label' => 'Perfil remoto configurado',
+            'ok' => $ok,
+            'status' => $ok ? 'ok' : 'fail',
+            'value' => (string) ($this->targetProfile['label'] ?? environment_label($this->targetEnvironment)),
+            'detail' => $ok
+                ? 'Banco e storage do alvo possuem dados minimos para diagnostico remoto.'
+                : 'Faltam credenciais ou caminhos no perfil configurado para esse ambiente.',
+        ];
+    }
+
+    private function checkTargetSiteUrl(): array
+    {
+        $value = $this->fetchTargetConfigValue('site_url');
+        $ok = $value !== '';
+
+        return [
+            'label' => 'URL principal do portal',
+            'ok' => $ok,
+            'status' => $ok ? 'ok' : 'warn',
+            'value' => $ok ? $value : '(nao configurada)',
+            'detail' => $ok
+                ? 'Valor lido da tabela configuracoes do ambiente alvo.'
+                : 'A configuracao site_url nao foi encontrada ou esta vazia no alvo.',
         ];
     }
 
@@ -150,6 +309,28 @@ final class HealthCheckService
         ];
     }
 
+    private function checkPublishedPosts(): array
+    {
+        try {
+            $stmt = $this->pdo->query("SELECT COUNT(*) FROM posts WHERE status = 'publicado'");
+            $count = (int) ($stmt !== false ? $stmt->fetchColumn() : 0);
+            $ok = $count >= 0;
+        } catch (Throwable) {
+            $count = 0;
+            $ok = false;
+        }
+
+        return [
+            'label' => 'Posts publicados',
+            'ok' => $ok,
+            'status' => $ok ? 'ok' : 'warn',
+            'value' => (string) $count,
+            'detail' => $ok
+                ? 'Contagem basica do ambiente alvo para validar leitura editorial.'
+                : 'Nao foi possivel consultar a contagem de posts publicados no alvo.',
+        ];
+    }
+
     private function checkDirectory(string $relativePath, string $label): array
     {
         $path = base_path($relativePath);
@@ -180,6 +361,140 @@ final class HealthCheckService
         ];
     }
 
+    private function checkUploadsProfileConfiguration(): array
+    {
+        $uploads = (array) ($this->targetProfile['uploads'] ?? []);
+        $mode = strtolower(trim((string) ($uploads['mode'] ?? 'ftp')));
+        $requiredFields = $mode === 'local'
+            ? ['path']
+            : ['host', 'username', 'password', 'root'];
+
+        $missing = [];
+        foreach ($requiredFields as $required) {
+            if (trim((string) ($uploads[$required] ?? '')) === '') {
+                $missing[] = $required;
+            }
+        }
+
+        $ok = $missing === [];
+
+        return [
+            'label' => 'Perfil de uploads',
+            'ok' => $ok,
+            'status' => $ok ? 'ok' : 'fail',
+            'value' => $mode === 'local'
+                ? (string) ($uploads['path'] ?? '(sem path)')
+                : (string) ($uploads['root'] ?? '(sem root)'),
+            'detail' => $ok
+                ? 'O storage do ambiente alvo possui caminho e credenciais configurados.'
+                : 'Campos ausentes no perfil de uploads: ' . implode(', ', $missing) . '.',
+        ];
+    }
+
+    private function checkUploadsTransportMode(): array
+    {
+        $uploads = (array) ($this->targetProfile['uploads'] ?? []);
+        $mode = strtolower(trim((string) ($uploads['mode'] ?? 'ftp')));
+
+        return [
+            'label' => 'Transporte de uploads',
+            'ok' => in_array($mode, ['local', 'ftp'], true),
+            'status' => in_array($mode, ['local', 'ftp'], true) ? 'ok' : 'warn',
+            'value' => strtoupper($mode !== '' ? $mode : 'desconhecido'),
+            'detail' => $mode === 'ftp'
+                ? 'O ambiente alvo usa conexao FTP para o storage remoto.'
+                : ($mode === 'local'
+                    ? 'O ambiente alvo usa path local para uploads.'
+                    : 'Modo de uploads nao reconhecido no perfil.'),
+        ];
+    }
+
+    private function checkUploadsAccess(): array
+    {
+        $uploads = (array) ($this->targetProfile['uploads'] ?? []);
+        $mode = strtolower(trim((string) ($uploads['mode'] ?? 'ftp')));
+
+        if ($mode === 'local') {
+            $path = trim((string) ($uploads['path'] ?? ''));
+            $ok = $path !== '' && is_dir($path);
+
+            return [
+                'label' => 'Acesso ao storage',
+                'ok' => $ok,
+                'status' => $ok ? 'ok' : 'warn',
+                'value' => $path !== '' ? $path : '(nao configurado)',
+                'detail' => $ok
+                    ? 'A pasta de uploads configurada no alvo esta acessivel a partir do local.'
+                    : 'Nao foi possivel validar a pasta de uploads configurada para esse alvo.',
+            ];
+        }
+
+        if (!extension_loaded('ftp')) {
+            return [
+                'label' => 'Acesso ao storage',
+                'ok' => false,
+                'status' => 'fail',
+                'value' => 'FTP indisponivel',
+                'detail' => 'A extensao FTP do PHP local nao esta habilitada para validar o storage remoto.',
+            ];
+        }
+
+        $host = trim((string) ($uploads['host'] ?? ''));
+        $port = (int) ($uploads['port'] ?? 21);
+        $username = (string) ($uploads['username'] ?? '');
+        $password = (string) ($uploads['password'] ?? '');
+        $root = trim((string) ($uploads['root'] ?? ''));
+
+        if ($host === '' || $username === '' || $root === '') {
+            return [
+                'label' => 'Acesso ao storage',
+                'ok' => false,
+                'status' => 'fail',
+                'value' => '(perfil incompleto)',
+                'detail' => 'Nao foi possivel testar o storage remoto porque faltam host, usuario ou raiz.',
+            ];
+        }
+
+        $connection = @ftp_connect($host, $port, 5);
+        if ($connection === false) {
+            return [
+                'label' => 'Acesso ao storage',
+                'ok' => false,
+                'status' => 'fail',
+                'value' => $host . ':' . $port,
+                'detail' => 'Falha ao conectar no servidor FTP configurado para o alvo.',
+            ];
+        }
+
+        try {
+            $loggedIn = @ftp_login($connection, $username, $password);
+            if (!$loggedIn) {
+                return [
+                    'label' => 'Acesso ao storage',
+                    'ok' => false,
+                    'status' => 'fail',
+                    'value' => $host . ':' . $port,
+                    'detail' => 'Falha ao autenticar no FTP configurado para o storage remoto.',
+                ];
+            }
+
+            @ftp_pasv($connection, (bool) ($uploads['passive'] ?? true));
+            $changed = @ftp_chdir($connection, $root);
+
+            return [
+                'label' => 'Acesso ao storage',
+                'ok' => $changed,
+                'status' => $changed ? 'ok' : 'warn',
+                'value' => $root,
+                'detail' => $changed
+                    ? 'Conexao FTP aberta e raiz de uploads acessivel no ambiente alvo.'
+                    : 'Conexao FTP abriu, mas a raiz de uploads nao pode ser acessada no alvo.',
+            ];
+        } finally {
+            @ftp_close($connection);
+        }
+    }
+
     private function checkExtension(string $extension, string $label, bool $required = true): array
     {
         $loaded = extension_loaded($extension);
@@ -198,6 +513,7 @@ final class HealthCheckService
 
     /**
      * @param array<string, array<int, array<string, mixed>>> $checks
+     * @return array<string, int>
      */
     private function buildSummary(array $checks): array
     {
@@ -236,5 +552,23 @@ final class HealthCheckService
         } catch (Throwable) {
             return false;
         }
+    }
+
+    private function fetchTargetConfigValue(string $key): string
+    {
+        try {
+            $stmt = $this->pdo->prepare('SELECT valor FROM configuracoes WHERE chave = :chave LIMIT 1');
+            $stmt->execute(['chave' => $key]);
+            $value = $stmt->fetchColumn();
+
+            return is_string($value) ? trim($value) : '';
+        } catch (Throwable) {
+            return '';
+        }
+    }
+
+    private function isRemoteTarget(): bool
+    {
+        return $this->targetEnvironment !== current_environment();
     }
 }

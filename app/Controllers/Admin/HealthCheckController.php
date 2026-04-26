@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Services\Admin\HealthCheckService;
+use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
 
 final class HealthCheckController
@@ -15,9 +16,9 @@ final class HealthCheckController
 
     private function service(): HealthCheckService
     {
-        /** @var \PDO $pdo */
-        $pdo = $GLOBALS['pdo'];
+        $targetEnvironment = target_environment();
+        $pdo = TargetEnvironmentDatabase::pdo($targetEnvironment);
 
-        return new HealthCheckService($pdo);
+        return new HealthCheckService($pdo, $targetEnvironment);
     }
 }

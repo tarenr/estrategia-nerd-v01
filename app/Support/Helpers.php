@@ -51,6 +51,79 @@ if (!function_exists('config')) {
     }
 }
 
+if (!function_exists('current_environment')) {
+    function current_environment(): string
+    {
+        return \App\Support\EnvironmentManager::current();
+    }
+}
+
+if (!function_exists('target_environment')) {
+    function target_environment(): string
+    {
+        return \App\Support\EnvironmentManager::target();
+    }
+}
+
+if (!function_exists('set_target_environment')) {
+    function set_target_environment(string $environment): void
+    {
+        \App\Support\EnvironmentManager::setTarget($environment);
+    }
+}
+
+if (!function_exists('is_local_environment')) {
+    function is_local_environment(): bool
+    {
+        return \App\Support\EnvironmentManager::isLocal();
+    }
+}
+
+if (!function_exists('can_target_environment')) {
+    function can_target_environment(string $environment): bool
+    {
+        return \App\Support\EnvironmentManager::canTarget($environment);
+    }
+}
+
+if (!function_exists('environment_label')) {
+    function environment_label(string $environment): string
+    {
+        return \App\Support\EnvironmentManager::label($environment);
+    }
+}
+
+if (!function_exists('environment_capabilities')) {
+    /**
+     * @return array<int, string>
+     */
+    function environment_capabilities(?string $environment = null): array
+    {
+        return \App\Support\EnvironmentCapabilities::all($environment);
+    }
+}
+
+if (!function_exists('environment_has_capability')) {
+    function environment_has_capability(string $capability, ?string $environment = null): bool
+    {
+        return \App\Support\EnvironmentCapabilities::has($capability, $environment);
+    }
+}
+
+if (!function_exists('require_environment_capability')) {
+    function require_environment_capability(string $capability): void
+    {
+        \App\Support\EnvironmentGuard::requireCapability($capability);
+    }
+}
+
+if (!function_exists('requires_production_confirmation')) {
+    function requires_production_confirmation(?string $targetEnvironment = null): bool
+    {
+        return \App\Support\ProductionChangeGuard::requiresConfirmation($targetEnvironment);
+    }
+}
+
 if (!function_exists('base_path')) {
     function base_path(string $path = ''): string
     {

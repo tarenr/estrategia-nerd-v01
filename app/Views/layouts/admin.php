@@ -32,6 +32,9 @@ $rawPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $rawPath = rtrim($rawPath, '/') ?: '/';
 
 $isAdminDashboard = (bool) preg_match('#/admin$#', $rawPath);
+$currentEnvironment = current_environment();
+$targetEnvironment = target_environment();
+$showEnvironmentSwitcher = is_local_environment();
 $user = Auth::user() ?? [];
 $userName = trim((string) ($user['nome'] ?? $user['usuario'] ?? 'Equipe'));
 if ($userName === '') {
@@ -162,6 +165,43 @@ $adminFavicon = $adminFavicon !== ''
       </div>
 
       <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 relative z-0 flex flex-col">
+        <?php if ($showEnvironmentSwitcher): ?>
+          <section class="mb-4 rounded-2xl border border-cyan-500/20 bg-slate-950/50 backdrop-blur px-4 py-4">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div class="space-y-2">
+                <div class="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Contexto multiambiente</div>
+                <div class="flex flex-wrap items-center gap-2 text-sm text-slate-300">
+                  <span class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1">
+                    <span class="text-slate-400">Execucao:</span>
+                    <strong class="text-white"><?= htmlspecialchars(environment_label($currentEnvironment), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong>
+                  </span>
+                  <span class="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1">
+                    <span class="text-cyan-200">Alvo:</span>
+                    <strong class="text-white"><?= htmlspecialchars(environment_label($targetEnvironment), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong>
+                  </span>
+                </div>
+                <div class="text-xs text-slate-400">O admin esta rodando no local. Os modulos multiambiente vao usar o alvo selecionado abaixo.</div>
+              </div>
+
+              <form method="POST" action="<?= htmlspecialchars(url('/admin/ambiente-alvo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <?= Csrf::field() ?>
+                <input type="hidden" name="redirect_to" value="<?= htmlspecialchars((string) ($_SERVER['REQUEST_URI'] ?? url('/admin')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                <label class="flex min-w-[180px] flex-col gap-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                  <span>Ambiente alvo</span>
+                  <select name="target_environment" class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-white focus:border-cyan-400 focus:outline-none">
+                    <?php foreach (\App\Support\EnvironmentManager::allowedTargets() as $environmentOption): ?>
+                      <option value="<?= htmlspecialchars($environmentOption, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"<?= $environmentOption === $targetEnvironment ? ' selected' : '' ?>>
+                        <?= htmlspecialchars(environment_label($environmentOption), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </label>
+                <button type="submit" class="admin-btn admin-btn-secondary whitespace-nowrap">Trocar ambiente</button>
+              </form>
+            </div>
+          </section>
+        <?php endif; ?>
+
         <div class="rounded-2xl border border-slate-800/70 bg-slate-950/40 backdrop-blur p-6 flex-1">
           <?= $content ?? '' ?>
         </div>

@@ -7,12 +7,14 @@ namespace App\Services\Admin;
 use App\Repositories\ConfiguracaoRepository;
 use App\Services\Site\SitemapCacheService;
 use App\Support\SiteSections;
+use App\Support\SystemActivityLogger;
 
 final class HomeMenusService
 {
     public function __construct(
         private ConfiguracaoRepository $configuracoes,
         private SitemapCacheService $sitemapCache,
+        private string $targetEnvironment = 'local',
     )
     {
     }
@@ -29,6 +31,10 @@ final class HomeMenusService
             'sections' => $sections,
             'summary' => SiteSections::summary($sections),
             'errors' => $errors,
+            'target_environment' => $this->targetEnvironment,
+            'target_environment_label' => environment_label($this->targetEnvironment),
+            'is_remote_target' => $this->targetEnvironment !== current_environment(),
+            'requires_production_confirmation' => requires_production_confirmation($this->targetEnvironment),
         ];
     }
 
@@ -38,6 +44,8 @@ final class HomeMenusService
      */
     public function save(array $post): array
     {
+        $stored = $this->configuracoes->all();
+        $beforeSections = SiteSections::fromStorage((string) ($stored[SiteSections::CONFIG_KEY] ?? ''));
         $sections = SiteSections::normalizeForm((array) ($post['sections'] ?? []));
         $errors = $this->validate($sections);
 
@@ -52,7 +60,27 @@ final class HomeMenusService
         $this->configuracoes->saveMany([
             SiteSections::CONFIG_KEY => SiteSections::toStorage($sections),
         ]);
-        $this->sitemapCache->refreshQuietly();
+
+        if ($this->targetEnvironment === current_environment()) {
+            $this->sitemapCache->refreshQuietly();
+        }
+
+        $operationId = $this->buildOperationId();
+        SystemActivityLogger::write('system', 'home_menus_saved', [
+            'operation_id' => $operationId,
+            'module' => 'home_menus',
+            'current_environment' => current_environment(),
+            'target_environment' => $this->targetEnvironment,
+            'status' => 'ok',
+            'before' => [
+                'sections' => $beforeSections,
+                'summary' => SiteSections::summary($beforeSections),
+            ],
+            'after' => [
+                'sections' => $sections,
+                'summary' => SiteSections::summary($sections),
+            ],
+        ]);
 
         return ['ok' => true];
     }
@@ -78,5 +106,10 @@ final class HomeMenusService
         }
 
         return $errors;
+    }
+
+    private function buildOperationId(): string
+    {
+        return 'home-menus-' . date('Ymd-His') . '-' . bin2hex(random_bytes(4));
     }
 }

@@ -7,6 +7,8 @@ $form = $form ?? [];
 $errors = $errors ?? [];
 $mediaItems = $media_items ?? [];
 $quickMediaItems = array_slice($mediaItems, 0, 4);
+$allowMediaUploads = (bool) ($allow_media_uploads ?? true);
+$requiresProductionConfirmation = (bool) ($requires_production_confirmation ?? false);
 $action = (string) ($action ?? '#');
 $submitLabel = (string) ($submitLabel ?? 'Salvar configuracoes');
 
@@ -165,6 +167,12 @@ $aboutPreview = $resolvePreview((string) ($form['sobre_imagem_url'] ?? ''));
       <div class="text-xs text-slate-400 mt-1">Logo, favicon e avatar da pagina de links com upload direto ou reaproveitamento da biblioteca.</div>
     </div>
 
+    <?php if (!$allowMediaUploads): ?>
+      <div class="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 text-sm text-amber-100">
+        O alvo atual e remoto. Nesta V1, uploads e selecao da biblioteca local ficam desativados aqui. Voce ainda pode ajustar os caminhos/URLs manualmente se o arquivo ja existir no ambiente de destino.
+      </div>
+    <?php endif; ?>
+
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
       <?php
       $mediaFields = [
@@ -238,7 +246,7 @@ $aboutPreview = $resolvePreview((string) ($form['sobre_imagem_url'] ?? ''));
 
           <div>
             <label for="<?= htmlspecialchars($field['upload'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="block text-sm font-bold text-slate-200 mb-2">Enviar arquivo</label>
-            <input id="<?= htmlspecialchars($field['upload'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" name="<?= htmlspecialchars($field['upload'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" type="file" accept="image/*" class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-xl file:border-0 file:bg-cyan-500/15 file:px-4 file:py-2 file:font-bold file:text-cyan-100 hover:file:bg-cyan-500/25" data-settings-upload-input="<?= htmlspecialchars($field['key'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+            <input id="<?= htmlspecialchars($field['upload'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" name="<?= htmlspecialchars($field['upload'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" type="file" accept="image/*" class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-xl file:border-0 file:bg-cyan-500/15 file:px-4 file:py-2 file:font-bold file:text-cyan-100 hover:file:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-40" data-settings-upload-input="<?= htmlspecialchars($field['key'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"<?= !$allowMediaUploads ? ' disabled' : '' ?>>
           </div>
         </div>
       <?php endforeach; ?>
@@ -253,7 +261,9 @@ $aboutPreview = $resolvePreview((string) ($form['sobre_imagem_url'] ?? ''));
         <a href="<?= htmlspecialchars(url('/admin/midia'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary !px-3 !py-2 text-xs">Abrir midia</a>
       </div>
 
-      <?php if ($quickMediaItems === []): ?>
+      <?php if (!$allowMediaUploads): ?>
+        <div class="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-6 text-sm text-slate-400">Biblioteca local desativada para ambiente remoto nesta V1.</div>
+      <?php elseif ($quickMediaItems === []): ?>
         <div class="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-6 text-sm text-slate-400">Nenhuma imagem recente encontrada na biblioteca.</div>
       <?php else: ?>
         <div class="settings-media-quick-grid">
@@ -424,7 +434,26 @@ $aboutPreview = $resolvePreview((string) ($form['sobre_imagem_url'] ?? ''));
   </section>
 
   <section class="admin-panel flex flex-wrap items-center justify-between gap-3">
-    <div class="text-xs text-slate-400">Essas configuracoes devem sustentar o portal principal, a futura pagina /links e blocos institucionais do projeto.</div>
+    <div class="flex-1 min-w-[260px] space-y-3">
+      <div class="text-xs text-slate-400">Essas configuracoes devem sustentar o portal principal, a futura pagina /links e blocos institucionais do projeto.</div>
+      <?php if ($requiresProductionConfirmation): ?>
+        <div class="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 space-y-3">
+          <div class="text-sm font-bold text-amber-200">Confirmacao obrigatoria para producao</div>
+          <div class="text-sm text-slate-300">Digite <strong>PRODUCAO</strong> para confirmar esta alteracao estrutural no ambiente de producao.</div>
+          <div class="max-w-sm">
+            <input
+              type="text"
+              name="production_confirmation"
+              value=""
+              class="nerd-input w-full px-4 py-3 rounded-xl<?= $fieldError('production_confirmation') !== '' ? ' border-rose-500/50' : '' ?>"
+              placeholder="Digite PRODUCAO"
+              autocomplete="off"
+            >
+            <?php if ($fieldError('production_confirmation') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('production_confirmation'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+          </div>
+        </div>
+      <?php endif; ?>
+    </div>
     <div class="flex flex-wrap gap-2">
       <button type="submit" class="admin-btn admin-btn-primary"><?= htmlspecialchars($submitLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></button>
     </div>

@@ -7,6 +7,8 @@ use App\Support\Csrf;
 $sections = is_array($sections ?? null) ? $sections : [];
 $errors = is_array($errors ?? null) ? $errors : [];
 $action = (string) ($action ?? url('/admin/home-e-menus'));
+$requiresProductionConfirmation = (bool) ($requires_production_confirmation ?? false);
+$productionConfirmationError = trim((string) ($errors['production_confirmation'] ?? ''));
 ?>
 
 <section class="admin-panel home-menus-panel">
@@ -136,6 +138,26 @@ $action = (string) ($action ?? url('/admin/home-e-menus'));
         </tbody>
       </table>
     </div>
+
+    <?php if ($requiresProductionConfirmation): ?>
+      <div class="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 space-y-3">
+        <div class="text-sm font-bold text-amber-200">Confirmacao obrigatoria para producao</div>
+        <div class="text-sm text-slate-300">Digite <strong>PRODUCAO</strong> para confirmar esta alteracao estrutural no ambiente de producao.</div>
+        <div class="max-w-sm">
+          <input
+            type="text"
+            name="production_confirmation"
+            value=""
+            class="nerd-input w-full px-4 py-3 rounded-xl<?= $productionConfirmationError !== '' ? ' border-rose-500/50' : '' ?>"
+            placeholder="Digite PRODUCAO"
+            autocomplete="off"
+          >
+          <?php if ($productionConfirmationError !== ''): ?>
+            <div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($productionConfirmationError, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <?php endif; ?>
+        </div>
+      </div>
+    <?php endif; ?>
 
     <div class="flex justify-end">
       <button type="submit" class="admin-btn admin-btn-primary">Salvar estrutura</button>
