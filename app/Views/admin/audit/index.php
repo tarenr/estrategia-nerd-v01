@@ -22,7 +22,21 @@ $statusBadgeClass = static function (string $status): string {
 };
 ?>
 
-<div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+<?php
+$environmentTabIds = [];
+foreach ($environments as $index => $environment) {
+    $label = strtolower((string) ($environment['key'] ?? $environment['label'] ?? ('ambiente-' . $index)));
+    $label = preg_replace('/[^a-z0-9]+/', '-', $label) ?? ('ambiente-' . $index);
+    $label = trim($label, '-');
+    if ($label === '') {
+        $label = 'ambiente-' . $index;
+    }
+
+    $environmentTabIds[$index] = $label;
+}
+?>
+
+<div class="max-w-7xl mx-auto px-4 py-6 space-y-6" data-audit-tabs>
   <div class="admin-page-header">
     <div class="admin-page-heading">
       <h1 class="admin-page-title">Auditoria Geral</h1>
@@ -31,7 +45,7 @@ $statusBadgeClass = static function (string $status): string {
       </div>
     </div>
     <div class="admin-page-actions">
-      <a href="<?= htmlspecialchars(url('/admin/auditoria-geral'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary">Rodar novamente</a>
+      <a href="<?= htmlspecialchars(url('/admin/auditoria-geral'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary" data-admin-audit-trigger="1">Rodar novamente</a>
     </div>
   </div>
 
@@ -80,9 +94,54 @@ $statusBadgeClass = static function (string $status): string {
     </article>
   </section>
 
+  <section class="admin-panel">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <h2 class="font-orbitron text-lg font-black text-white">Ambientes auditados</h2>
+        <div class="mt-1 text-sm text-slate-400">Abra um ambiente por vez para ler os achados com mais foco e menos rolagem.</div>
+      </div>
+      <div class="flex flex-wrap gap-2" role="tablist" aria-label="Ambientes da auditoria">
+        <?php foreach ($environments as $index => $environment): ?>
+          <?php
+            $status = (string) ($environment['status'] ?? 'warn');
+            $tabId = $environmentTabIds[$index] ?? ('ambiente-' . $index);
+            $isFirstTab = $index === 0;
+            $tabClasses = $isFirstTab
+                ? 'border-cyan-400/40 bg-cyan-500/15 text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.12)]'
+                : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:border-cyan-500/20 hover:text-cyan-200';
+            $statusDotClass = match ($status) {
+                'ok' => 'bg-emerald-300',
+                'warn' => 'bg-amber-300',
+                default => 'bg-rose-300',
+            };
+          ?>
+          <button
+            type="button"
+            role="tab"
+            id="audit-tab-<?= htmlspecialchars($tabId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            class="inline-flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-bold transition <?= $tabClasses ?>"
+            data-audit-tab
+            data-audit-target="<?= htmlspecialchars($tabId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            aria-selected="<?= $isFirstTab ? 'true' : 'false' ?>"
+            aria-controls="audit-panel-<?= htmlspecialchars($tabId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            tabindex="<?= $isFirstTab ? '0' : '-1' ?>"
+          >
+            <span class="inline-flex h-2.5 w-2.5 rounded-full <?= $statusDotClass ?>"></span>
+            <span><?= htmlspecialchars((string) ($environment['label'] ?? 'Ambiente'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+            <span class="inline-flex items-center rounded-full bg-slate-950/50 px-2 py-0.5 text-[11px] uppercase tracking-[0.14em] text-slate-300">
+              <?= htmlspecialchars(strtoupper($status), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+            </span>
+          </button>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  </section>
+
   <div class="space-y-6">
-    <?php foreach ($environments as $environment): ?>
+    <?php foreach ($environments as $index => $environment): ?>
       <?php
+        $tabId = $environmentTabIds[$index] ?? ('ambiente-' . $index);
+        $isFirstPanel = $index === 0;
         $envSummary = (array) ($environment['summary'] ?? []);
         $checks = (array) ($environment['checks'] ?? []);
         $criticalFindings = (array) ($environment['critical_findings'] ?? []);
@@ -90,7 +149,14 @@ $statusBadgeClass = static function (string $status): string {
         $metrics = (array) ($environment['metrics'] ?? []);
         $status = (string) ($environment['status'] ?? 'warn');
       ?>
-      <section class="admin-panel space-y-5">
+      <section
+        id="audit-panel-<?= htmlspecialchars($tabId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+        class="admin-panel space-y-5<?= $isFirstPanel ? '' : ' hidden' ?>"
+        role="tabpanel"
+        aria-labelledby="audit-tab-<?= htmlspecialchars($tabId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+        data-audit-panel
+        data-audit-panel-id="<?= htmlspecialchars($tabId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+      >
         <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div class="space-y-3">
             <div class="flex flex-wrap items-center gap-3">
@@ -199,3 +265,71 @@ $statusBadgeClass = static function (string $status): string {
     <?php endforeach; ?>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var root = document.querySelector('[data-audit-tabs]');
+    if (!root) {
+      return;
+    }
+
+    var tabs = Array.prototype.slice.call(root.querySelectorAll('[data-audit-tab]'));
+    var panels = Array.prototype.slice.call(root.querySelectorAll('[data-audit-panel]'));
+
+    if (tabs.length === 0 || panels.length === 0) {
+      return;
+    }
+
+    var setActiveTab = function (targetId) {
+      tabs.forEach(function (tab, index) {
+        var isActive = tab.getAttribute('data-audit-target') === targetId;
+        tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        tab.setAttribute('tabindex', isActive ? '0' : '-1');
+
+        tab.classList.toggle('border-cyan-400/40', isActive);
+        tab.classList.toggle('bg-cyan-500/15', isActive);
+        tab.classList.toggle('text-cyan-100', isActive);
+        tab.classList.toggle('shadow-[0_0_24px_rgba(34,211,238,0.12)]', isActive);
+        tab.classList.toggle('border-slate-700', !isActive);
+        tab.classList.toggle('bg-slate-900/60', !isActive);
+        tab.classList.toggle('text-slate-300', !isActive);
+
+        if (isActive) {
+          tabs[index].focus({ preventScroll: true });
+        }
+      });
+
+      panels.forEach(function (panel) {
+        var isActive = panel.getAttribute('data-audit-panel-id') === targetId;
+        panel.classList.toggle('hidden', !isActive);
+      });
+    };
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        setActiveTab(tab.getAttribute('data-audit-target') || '');
+      });
+
+      tab.addEventListener('keydown', function (event) {
+        var currentIndex = tabs.indexOf(tab);
+        if (currentIndex === -1) {
+          return;
+        }
+
+        var nextIndex = currentIndex;
+        if (event.key === 'ArrowRight') {
+          nextIndex = (currentIndex + 1) % tabs.length;
+        } else if (event.key === 'ArrowLeft') {
+          nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        } else {
+          return;
+        }
+
+        event.preventDefault();
+        var nextTab = tabs[nextIndex];
+        var nextTarget = nextTab.getAttribute('data-audit-target') || '';
+        setActiveTab(nextTarget);
+      });
+    });
+  });
+</script>

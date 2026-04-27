@@ -150,7 +150,7 @@ foreach ($rawItems as $item) {
       </div>
       <?php continue; ?>
     <?php endif; ?>
-    <a href="<?= url($item['href']) ?>" class="<?= sidebar_item_class($current, $item['href']) ?>" data-sb-item aria-label="<?= htmlspecialchars($item['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+    <a href="<?= url($item['href']) ?>" class="<?= sidebar_item_class($current, $item['href']) ?>" data-sb-item<?= ($item['href'] === '/admin/auditoria-geral') ? ' data-admin-audit-trigger="1"' : '' ?> aria-label="<?= htmlspecialchars($item['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
       <span class="sidebar-icon w-7 text-center shrink-0 text-[18px]" aria-hidden="true" data-tooltip="<?= htmlspecialchars($item['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
         <i class="<?= htmlspecialchars($item['icon'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"></i>
       </span>

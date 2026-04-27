@@ -120,6 +120,28 @@ $adminFavicon = $adminFavicon !== ''
 </head>
 
 <body class="bg-slate-950 text-slate-100 min-h-screen" data-admin-build="<?= htmlspecialchars((string) $adminBuildVersion, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+  <div id="adminAuditLoadingOverlay" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-950/85 px-4 backdrop-blur-sm" aria-hidden="true">
+    <div class="w-full max-w-lg rounded-[28px] border border-cyan-500/20 bg-slate-950/95 p-6 shadow-[0_0_60px_rgba(8,145,178,0.25)]">
+      <div class="flex items-center gap-4">
+        <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-cyan-500/25 bg-cyan-500/10 text-cyan-200">
+          <span class="inline-flex h-7 w-7 animate-spin rounded-full border-2 border-cyan-300/35 border-t-cyan-300"></span>
+        </div>
+        <div class="min-w-0">
+          <div class="font-orbitron text-lg font-black text-white">Executando auditoria geral</div>
+          <div id="adminAuditLoadingStep" class="mt-1 text-sm font-semibold text-cyan-100">Preparando a leitura dos ambientes.</div>
+        </div>
+      </div>
+      <div class="mt-5 overflow-hidden rounded-full border border-slate-800 bg-slate-900/80">
+        <div class="h-2 w-full origin-left bg-gradient-to-r from-cyan-400 via-sky-400 to-cyan-300 animate-pulse"></div>
+      </div>
+      <div id="adminAuditLoadingDetail" class="mt-4 text-sm leading-6 text-slate-300">
+        Consultando banco, storage, rotas criticas e consistencia editorial de local, stage e producao.
+      </div>
+      <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+        A tela fica bloqueada ate a resposta voltar com o resultado atualizado.
+      </div>
+    </div>
+  </div>
   <div class="min-h-screen flex w-full min-w-0">
       <div id="adminSidebarWrap" class="relative shrink-0">
         <aside id="adminSidebar" data-collapsed="0" class="w-[260px] border-r border-slate-800/70 bg-slate-950/60 backdrop-blur transition-[width] duration-200 ease-out overflow-visible">
@@ -237,6 +259,73 @@ $adminFavicon = $adminFavicon !== ''
       <?php if ($isAdminDashboard): ?>
         <script src="<?= url('/assets/js/admin-dashboard.js?v=' . $adminDashboardJsVersion) ?>" defer></script>
       <?php endif; ?>
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          var overlay = document.getElementById('adminAuditLoadingOverlay');
+          if (!overlay) {
+            return;
+          }
+
+          var stepNode = document.getElementById('adminAuditLoadingStep');
+          var detailNode = document.getElementById('adminAuditLoadingDetail');
+          var phaseTimer = null;
+          var phases = [
+            {
+              title: 'Preparando a leitura dos ambientes.',
+              detail: 'Reunindo a configuracao base para comparar local, stage e producao com a mesma regua.'
+            },
+            {
+              title: 'Consultando banco e configuracoes.',
+              detail: 'Lendo posts, categorias, links e os dados editoriais que entram na auditoria.'
+            },
+            {
+              title: 'Validando storage e midias.',
+              detail: 'Conferindo capa, thumb, referencias do HTML e a disponibilidade dos uploads principais.'
+            },
+            {
+              title: 'Checando rotas e consolidando achados.',
+              detail: 'Testando rotas criticas e preparando o resumo final da leitura.'
+            }
+          ];
+
+          var showOverlay = function () {
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
+
+            var index = 0;
+            if (stepNode) {
+              stepNode.textContent = phases[0].title;
+            }
+            if (detailNode) {
+              detailNode.textContent = phases[0].detail;
+            }
+
+            if (phaseTimer !== null) {
+              window.clearInterval(phaseTimer);
+            }
+
+            phaseTimer = window.setInterval(function () {
+              index = (index + 1) % phases.length;
+              if (stepNode) {
+                stepNode.textContent = phases[index].title;
+              }
+              if (detailNode) {
+                detailNode.textContent = phases[index].detail;
+              }
+            }, 1200);
+          };
+
+          document.addEventListener('click', function (event) {
+            var trigger = event.target.closest('[data-admin-audit-trigger]');
+            if (!trigger) {
+              return;
+            }
+
+            showOverlay();
+          });
+        });
+      </script>
     </div>
 </body>
 
