@@ -6,6 +6,7 @@ $tabs = is_array($tabs ?? null) ? $tabs : [];
 $activeTab = (string) ($active_tab ?? array_key_first($tabs) ?? 'visao-geral');
 $activeConfig = is_array($tabs[$activeTab] ?? null) ? $tabs[$activeTab] : reset($tabs);
 $contentHtml = (string) ($content_html ?? '');
+$activeTabUrl = (string) ($active_tab_url ?? url('/admin/central-operacional?aba=' . $activeTab));
 ?>
 <section class="space-y-5">
   <style>
@@ -66,9 +67,15 @@ $contentHtml = (string) ($content_html ?? '');
     </div>
   </div>
 
-  <section aria-labelledby="operations-tab-content">
+  <section aria-labelledby="operations-tab-content" data-operations-hub-content data-loaded="<?= $contentHtml !== '' ? 'true' : 'false' ?>">
     <h2 id="operations-tab-content" class="sr-only"><?= htmlspecialchars((string) ($activeConfig['label'] ?? 'Central Operacional'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h2>
-    <?= $contentHtml ?>
+    <?php if ($contentHtml !== ''): ?>
+      <?= $contentHtml ?>
+    <?php else: ?>
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 text-sm text-slate-400">
+        Carregando conteudo operacional...
+      </div>
+    <?php endif; ?>
   </section>
 </section>
 <script>
@@ -78,12 +85,104 @@ $contentHtml = (string) ($content_html ?? '');
       return;
     }
 
-    const links = document.querySelectorAll('a[href*="/admin/central-operacional?aba="]');
-    for (const link of links) {
-      link.addEventListener('click', () => {
-        overlay.classList.add('is-visible');
-        overlay.setAttribute('aria-hidden', 'false');
+    const content = document.querySelector('[data-operations-hub-content]');
+    const links = Array.from(document.querySelectorAll('a[href*="/admin/central-operacional?aba="]'));
+    if (!content || links.length === 0) {
+      return;
+    }
+
+    const activeTabUrl = <?= json_encode($activeTabUrl, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+
+    const setLoading = (visible) => {
+      overlay.classList.toggle('is-visible', visible);
+      overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    };
+
+    const activateLink = (url) => {
+      links.forEach((link) => {
+        const isActive = link.href === url;
+        link.classList.toggle('border-cyan-300/70', isActive);
+        link.classList.toggle('bg-cyan-500/15', isActive);
+        link.classList.toggle('text-cyan-100', isActive);
+        link.classList.toggle('shadow-[0_0_24px_rgba(34,211,238,0.12)]', isActive);
+        link.classList.toggle('border-slate-700', !isActive);
+        link.classList.toggle('bg-slate-950/70', !isActive);
+        link.classList.toggle('text-slate-200', !isActive);
+        link.setAttribute('aria-current', isActive ? 'page' : 'false');
       });
+    };
+
+    const rehydrateScripts = (root) => {
+      for (const oldScript of root.querySelectorAll('script')) {
+        const nextScript = document.createElement('script');
+        for (const attr of oldScript.attributes) {
+          nextScript.setAttribute(attr.name, attr.value);
+        }
+        nextScript.textContent = oldScript.textContent;
+        oldScript.replaceWith(nextScript);
+      }
+    };
+
+    const withFragment = (url) => {
+      const next = new URL(url, window.location.origin);
+      next.searchParams.set('fragment', '1');
+      return next.toString();
+    };
+
+    const loadTab = async (url, push = true) => {
+      setLoading(true);
+
+      try {
+        const response = await fetch(withFragment(url), {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        if (!response.ok) {
+          window.location.href = url;
+          return;
+        }
+
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const nextContent = doc.querySelector('[data-operations-hub-content]');
+
+        if (!nextContent) {
+          window.location.href = url;
+          return;
+        }
+
+        content.innerHTML = nextContent.innerHTML;
+        rehydrateScripts(content);
+        activateLink(url);
+
+        if (push) {
+          window.history.pushState({ operationsHub: true }, '', url);
+        }
+      } catch (error) {
+        window.location.href = url;
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    links.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        loadTab(link.href, true);
+      });
+    });
+
+    window.addEventListener('popstate', () => {
+      if (window.location.pathname.includes('/admin/central-operacional')) {
+        loadTab(window.location.href, false);
+      }
+    });
+
+    if (content.dataset.loaded !== 'true') {
+      loadTab(activeTabUrl, false);
     }
   })();
 </script>

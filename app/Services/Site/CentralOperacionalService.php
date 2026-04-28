@@ -18,112 +18,15 @@ final class CentralOperacionalService
     ) {
     }
 
-    public function getViewModel(?array $flash = null): array
+    public function getViewModel(?array $flash = null, string $overviewSection = 'resumo'): array
     {
-        $backupViewModel = $this->backupService->getViewModel();
-        $backupStatus = (array) ($backupViewModel['backup_status'] ?? []);
-        $contentStatus = $this->contentManager->status();
-        $contentPackages = $this->presentContentPackages((array) ($contentStatus['items'] ?? []));
-        $parityStatus = $this->contentManager->parityStatus();
-        $deploymentPolicy = $this->deployManager->deploymentPolicyStatus();
-        $codeStatus = $this->deployManager->codeStatus();
-        $technicalStatus = $this->deployManager->technicalBackupStatus();
-        $logCategories = [
-            'dados' => [
-                'label' => 'Backup de dados',
-                'entries' => $this->operationLogger->recentEntries(8, 'dados'),
-                'latest_file' => $this->operationLogger->latestLogFile('dados'),
-            ],
-            'tecnico' => [
-                'label' => 'Backup tecnico',
-                'entries' => $this->operationLogger->recentEntries(8, 'tecnico'),
-                'latest_file' => $this->operationLogger->latestLogFile('tecnico'),
-            ],
-            'conteudo' => [
-                'label' => 'Pacote de conteudo',
-                'entries' => $this->operationLogger->recentEntries(8, 'conteudo'),
-                'latest_file' => $this->operationLogger->latestLogFile('conteudo'),
-            ],
-        ];
-
         return [
-            'title' => 'Central Operacional | Estratégia Nerd',
-            'meta_description' => 'Painel local com visão consolidada de backup, deploy técnico, conteúdo e política operacional.',
+            'title' => 'Central Operacional | EstratÃ©gia Nerd',
+            'meta_description' => 'Painel local com visÃ£o consolidada de backup, deploy tÃ©cnico, conteÃºdo e polÃ­tica operacional.',
             'site_chrome' => false,
             'body_class' => 'central-operacional-body',
             'flash' => is_array($flash) ? $flash : null,
-            'operations_status' => [
-                'policy' => $deploymentPolicy,
-                'backup' => [
-                    'root' => (string) ($backupStatus['backup_root'] ?? ''),
-                    'total' => (int) ($backupStatus['total_backups'] ?? 0),
-                    'latest' => is_array($backupStatus['latest'] ?? null) ? $backupStatus['latest'] : null,
-                    'latest_uploaded' => is_array($backupStatus['latest_uploaded'] ?? null) ? $backupStatus['latest_uploaded'] : null,
-                    'running' => is_array($backupStatus['running'] ?? null) ? $backupStatus['running'] : null,
-                    'items' => array_values((array) ($backupStatus['items'] ?? [])),
-                    'items_by_profile' => $this->groupBackupsByProfile(array_values((array) ($backupStatus['items'] ?? []))),
-                    'local_ready' => $this->backupService->profileReady('local'),
-                    'stage_ready' => $this->backupService->profileReady('stage'),
-                    'production_ready' => $this->backupService->profileReady('production'),
-                ],
-                'content' => [
-                    'root' => (string) ($contentStatus['package_root'] ?? ''),
-                    'total' => count($contentPackages),
-                    'latest' => $contentPackages[0] ?? null,
-                    'latest_stage_apply' => is_array($contentStatus['latest_stage_apply'] ?? null) ? $contentStatus['latest_stage_apply'] : null,
-                    'latest_production_apply' => is_array($contentStatus['latest_production_apply'] ?? null) ? $contentStatus['latest_production_apply'] : null,
-                    'items' => $contentPackages,
-                    'stage_ready' => $this->contentManager->profileReady('stage'),
-                    'production_ready' => $this->contentManager->profileReady('production'),
-                ],
-                'code' => [
-                    'root' => (string) ($codeStatus['package_root'] ?? ''),
-                    'total' => (int) ($codeStatus['total_packages'] ?? 0),
-                    'latest' => is_array($codeStatus['latest'] ?? null) ? $codeStatus['latest'] : null,
-                    'latest_stage_apply' => is_array($codeStatus['latest_stage_apply'] ?? null) ? $codeStatus['latest_stage_apply'] : null,
-                    'latest_production_apply' => is_array($codeStatus['latest_production_apply'] ?? null) ? $codeStatus['latest_production_apply'] : null,
-                    'items' => array_values((array) ($codeStatus['items'] ?? [])),
-                    'stage_ready' => $this->deployManager->profileReady('stage'),
-                    'production_ready' => $this->deployManager->profileReady('production'),
-                ],
-                'technical_backup' => [
-                    'root' => (string) ($technicalStatus['backup_root'] ?? ''),
-                    'local_latest' => $this->latestTechnicalBackup((array) ($technicalStatus['profiles']['local'] ?? [])),
-                    'stage_latest' => $this->latestTechnicalBackup((array) ($technicalStatus['profiles']['stage'] ?? [])),
-                    'production_latest' => $this->latestTechnicalBackup((array) ($technicalStatus['profiles']['production'] ?? [])),
-                    'local_ready' => $this->deployManager->profileReady('local'),
-                    'stage_ready' => $this->deployManager->profileReady('stage'),
-                    'production_ready' => $this->deployManager->profileReady('production'),
-                    'profiles' => [
-                        'local' => $this->presentTechnicalBackups((array) ($technicalStatus['profiles']['local'] ?? [])),
-                        'stage' => $this->presentTechnicalBackups((array) ($technicalStatus['profiles']['stage'] ?? [])),
-                        'production' => $this->presentTechnicalBackups((array) ($technicalStatus['profiles']['production'] ?? [])),
-                    ],
-                ],
-                'logs' => [
-                    'categories' => [
-                        'dados' => [
-                            'label' => (string) ($logCategories['dados']['label'] ?? 'Backup de dados'),
-                            'latest_file' => $logCategories['dados']['latest_file'] ?? null,
-                            'entries' => $logCategories['dados']['entries'] ?? [],
-                            'total_loaded' => count((array) ($logCategories['dados']['entries'] ?? [])),
-                        ],
-                        'tecnico' => [
-                            'label' => (string) ($logCategories['tecnico']['label'] ?? 'Backup tecnico'),
-                            'latest_file' => $logCategories['tecnico']['latest_file'] ?? null,
-                            'entries' => $logCategories['tecnico']['entries'] ?? [],
-                            'total_loaded' => count((array) ($logCategories['tecnico']['entries'] ?? [])),
-                        ],
-                        'conteudo' => [
-                            'label' => (string) ($logCategories['conteudo']['label'] ?? 'Pacote de conteudo'),
-                            'latest_file' => $logCategories['conteudo']['latest_file'] ?? null,
-                            'entries' => $logCategories['conteudo']['entries'] ?? [],
-                            'total_loaded' => count((array) ($logCategories['conteudo']['entries'] ?? [])),
-                        ],
-                    ],
-                ],
-                'parity' => $parityStatus,
-            ],
+            'operations_status' => $this->buildOverviewStatus($overviewSection),
         ];
     }
 
@@ -311,5 +214,160 @@ final class CentralOperacionalService
         }
 
         return $groups;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildOverviewStatus(string $overviewSection): array
+    {
+        return match (strtolower(trim($overviewSection))) {
+            'backups' => $this->buildBackupsStatus(),
+            'pacotes' => $this->buildPackagesStatus(),
+            'historico' => $this->buildHistoryStatus(),
+            default => $this->buildSummaryStatus(),
+        };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildSummaryStatus(): array
+    {
+        return [
+            'policy' => $this->deployManager->deploymentPolicyStatus(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildBackupsStatus(): array
+    {
+        $backupViewModel = $this->backupService->getViewModel();
+        $backupStatus = (array) ($backupViewModel['backup_status'] ?? []);
+        $technicalStatus = $this->deployManager->technicalBackupStatus();
+
+        return [
+            'backup' => [
+                'root' => (string) ($backupStatus['backup_root'] ?? ''),
+                'total' => (int) ($backupStatus['total_backups'] ?? 0),
+                'latest' => is_array($backupStatus['latest'] ?? null) ? $backupStatus['latest'] : null,
+                'latest_uploaded' => is_array($backupStatus['latest_uploaded'] ?? null) ? $backupStatus['latest_uploaded'] : null,
+                'running' => is_array($backupStatus['running'] ?? null) ? $backupStatus['running'] : null,
+                'items' => array_values((array) ($backupStatus['items'] ?? [])),
+                'items_by_profile' => $this->groupBackupsByProfile(array_values((array) ($backupStatus['items'] ?? []))),
+                'local_ready' => $this->backupService->profileReady('local'),
+                'stage_ready' => $this->backupService->profileReady('stage'),
+                'production_ready' => $this->backupService->profileReady('production'),
+            ],
+            'technical_backup' => [
+                'root' => (string) ($technicalStatus['backup_root'] ?? ''),
+                'local_latest' => $this->latestTechnicalBackup((array) ($technicalStatus['profiles']['local'] ?? [])),
+                'stage_latest' => $this->latestTechnicalBackup((array) ($technicalStatus['profiles']['stage'] ?? [])),
+                'production_latest' => $this->latestTechnicalBackup((array) ($technicalStatus['profiles']['production'] ?? [])),
+                'local_ready' => $this->deployManager->profileReady('local'),
+                'stage_ready' => $this->deployManager->profileReady('stage'),
+                'production_ready' => $this->deployManager->profileReady('production'),
+                'profiles' => [
+                    'local' => $this->presentTechnicalBackups((array) ($technicalStatus['profiles']['local'] ?? [])),
+                    'stage' => $this->presentTechnicalBackups((array) ($technicalStatus['profiles']['stage'] ?? [])),
+                    'production' => $this->presentTechnicalBackups((array) ($technicalStatus['profiles']['production'] ?? [])),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildPackagesStatus(): array
+    {
+        $contentStatus = $this->contentManager->status();
+        $contentPackages = $this->presentContentPackages((array) ($contentStatus['items'] ?? []));
+        $parityStatus = $this->contentManager->parityStatus();
+        $codeStatus = $this->deployManager->codeStatus();
+
+        return [
+            'content' => [
+                'root' => (string) ($contentStatus['package_root'] ?? ''),
+                'total' => count($contentPackages),
+                'latest' => $contentPackages[0] ?? null,
+                'latest_stage_apply' => is_array($contentStatus['latest_stage_apply'] ?? null) ? $contentStatus['latest_stage_apply'] : null,
+                'latest_production_apply' => is_array($contentStatus['latest_production_apply'] ?? null) ? $contentStatus['latest_production_apply'] : null,
+                'items' => $contentPackages,
+                'stage_ready' => $this->contentManager->profileReady('stage'),
+                'production_ready' => $this->contentManager->profileReady('production'),
+            ],
+            'code' => [
+                'root' => (string) ($codeStatus['package_root'] ?? ''),
+                'total' => (int) ($codeStatus['total_packages'] ?? 0),
+                'latest' => is_array($codeStatus['latest'] ?? null) ? $codeStatus['latest'] : null,
+                'latest_stage_apply' => is_array($codeStatus['latest_stage_apply'] ?? null) ? $codeStatus['latest_stage_apply'] : null,
+                'latest_production_apply' => is_array($codeStatus['latest_production_apply'] ?? null) ? $codeStatus['latest_production_apply'] : null,
+                'items' => array_values((array) ($codeStatus['items'] ?? [])),
+                'stage_ready' => $this->deployManager->profileReady('stage'),
+                'production_ready' => $this->deployManager->profileReady('production'),
+            ],
+            'parity' => $parityStatus,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildHistoryStatus(): array
+    {
+        return [
+            'logs' => [
+                'categories' => [
+                    'dados' => [
+                        'label' => 'Backup de dados',
+                        'latest_file' => $this->operationLogger->latestLogFile('dados'),
+                        'entries' => $this->presentOperationEntries($this->operationLogger->recentEntries(5, 'dados')),
+                    ],
+                    'tecnico' => [
+                        'label' => 'Backup tecnico',
+                        'latest_file' => $this->operationLogger->latestLogFile('tecnico'),
+                        'entries' => $this->presentOperationEntries($this->operationLogger->recentEntries(5, 'tecnico')),
+                    ],
+                    'conteudo' => [
+                        'label' => 'Conteudo e deploy',
+                        'latest_file' => $this->operationLogger->latestLogFile('conteudo'),
+                        'entries' => $this->presentOperationEntries($this->operationLogger->recentEntries(5, 'conteudo')),
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $entries
+     * @return array<int, array<string, mixed>>
+     */
+    private function presentOperationEntries(array $entries): array
+    {
+        $presented = [];
+
+        foreach ($entries as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $context = is_array($entry['context'] ?? null) ? $entry['context'] : [];
+
+            $presented[] = [
+                'timestamp' => (string) ($entry['timestamp'] ?? ''),
+                'type' => (string) ($entry['tipo'] ?? ''),
+                'origin' => (string) ($entry['origem'] ?? ''),
+                'destination' => (string) ($entry['destino'] ?? ''),
+                'identifier' => (string) ($entry['id'] ?? ''),
+                'status' => (string) ($entry['status'] ?? ''),
+                'message' => (string) ($entry['msg'] ?? 'Sem resumo adicional.'),
+                'context' => $context,
+            ];
+        }
+
+        return $presented;
     }
 }

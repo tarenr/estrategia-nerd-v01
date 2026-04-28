@@ -8,6 +8,10 @@ $projectVersion = trim((string) ($project_version ?? 'local'));
 $generatedAt = trim((string) ($generated_at ?? date('Y-m-d H:i:s')));
 $featureDocs = is_array($feature_docs ?? null) ? $feature_docs : [];
 $releaseDocs = is_array($release_docs ?? null) ? $release_docs : [];
+$changeDocs = is_array($change_docs ?? null) ? $change_docs : [];
+$selectedChangeDoc = is_array($selected_change_doc ?? null) ? $selected_change_doc : null;
+$changeDocBaseUrl = trim((string) ($change_doc_base_url ?? url('/local/mudancas/documento?grupo=')));
+$changeDocDataBaseUrl = trim((string) ($change_doc_data_base_url ?? url('/local/mudancas/documento-dados?grupo=')));
 $activityLogs = is_array($activity_logs ?? null) ? $activity_logs : [];
 $operationLogs = is_array($operation_logs ?? null) ? $operation_logs : [];
 
@@ -82,6 +86,10 @@ $formatSystemEvent = static function (array $item) use ($activityEventMeta): arr
     .doc-table td { padding: 0.72rem 0.75rem; vertical-align: top; }
     .doc-row { border: 1px solid rgba(51, 65, 85, 0.95); background: rgba(2, 6, 23, 0.72); }
     .doc-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .changes-col-file { width: 16%; }
+    .changes-col-updated { width: 20%; }
+    .changes-col-path { width: 56%; }
+    .changes-col-open { width: 8%; }
     .doc-context-toggle[open] summary i { transform: rotate(180deg); }
     .changes-tab-panel[hidden] { display: none; }
     .changes-tab-button.is-active {
@@ -125,6 +133,7 @@ $formatSystemEvent = static function (array $item) use ($activityEventMeta): arr
       color: rgba(254, 205, 211, 0.98);
       background: rgba(127, 29, 29, 0.28);
     }
+    .change-doc-panel[hidden] { display: none; }
   </style>
 
   <div class="<?= $adminEmbed ? 'space-y-6' : 'mx-auto max-w-7xl space-y-6' ?>">
@@ -152,29 +161,88 @@ $formatSystemEvent = static function (array $item) use ($activityEventMeta): arr
           <p class="mt-1 font-rajdhani text-2xl font-bold text-white"><?= count($featureDocs) ?></p>
         </div>
         <div class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
+          <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Mudancas registradas</p>
+          <p class="mt-1 font-rajdhani text-2xl font-bold text-white"><?= count($changeDocs) ?></p>
+        </div>
+        <div class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
           <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Logs operacionais</p>
           <p class="mt-1 font-rajdhani text-2xl font-bold text-white"><?= count($operationLogs) ?></p>
         </div>
       </div>
     </header>
 
+    <?php
+      $closeUrl = $adminEmbed
+          ? url('/admin/base-tecnica?aba=mudancas')
+          : url('/local/mudancas');
+    ?>
+      <section id="change-doc-panel" class="change-doc-panel rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_32px_rgba(6,182,212,0.08)]" <?= $selectedChangeDoc === null ? 'hidden' : '' ?>>
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Documento aberto</p>
+            <h2 id="change-doc-title" class="mt-2 font-orbitron text-2xl font-black tracking-tight text-white"><?= htmlspecialchars((string) ($selectedChangeDoc['file'] ?? 'arquivo.md'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h2>
+            <p class="mt-3 max-w-4xl text-sm leading-7 text-slate-300">Leitura do arquivo diretamente dentro da aba <span class="font-semibold text-white">Mudancas</span>, sem sair do admin.</p>
+          </div>
+          <a id="change-doc-close" href="<?= htmlspecialchars($closeUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">
+            Fechar leitura
+          </a>
+        </div>
+
+        <div class="mt-5 grid gap-3 md:grid-cols-3">
+          <div class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Grupo</p>
+            <p id="change-doc-group" class="mt-1 font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($selectedChangeDoc['group'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+          </div>
+          <div class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Atualizado em</p>
+            <p id="change-doc-updated" class="mt-1 text-sm text-slate-200"><?= htmlspecialchars((string) ($selectedChangeDoc['updated_at'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+          </div>
+          <div class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Caminho</p>
+            <p id="change-doc-path" class="mt-1 text-sm text-slate-200 doc-mono"><?= htmlspecialchars((string) ($selectedChangeDoc['path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+          </div>
+        </div>
+
+        <div class="mt-5 doc-card">
+          <pre id="change-doc-body" class="doc-pre"><?= htmlspecialchars((string) ($selectedChangeDoc['body'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></pre>
+        </div>
+      </section>
+
     <div class="grid gap-6 xl:grid-cols-2">
       <section class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
         <h2 class="font-orbitron text-xl font-bold text-cyan-200">Features recentes</h2>
         <div class="mt-4 overflow-x-auto">
           <table class="doc-table">
+            <colgroup>
+              <col class="changes-col-file">
+              <col class="changes-col-updated">
+              <col class="changes-col-path">
+              <col class="changes-col-open">
+            </colgroup>
             <thead>
-              <tr><th>Arquivo</th><th>Atualizado em</th><th>Caminho</th></tr>
+              <tr><th>Arquivo</th><th>Atualizado em</th><th>Caminho</th><th>Abrir</th></tr>
             </thead>
             <tbody>
               <?php if ($featureDocs === []): ?>
-                <tr class="doc-row"><td colspan="3" class="text-slate-400">Nenhum documento de feature encontrado ainda.</td></tr>
+                <tr class="doc-row"><td colspan="4" class="text-slate-400">Nenhum documento de feature encontrado ainda.</td></tr>
               <?php else: ?>
                 <?php foreach ($featureDocs as $item): ?>
                   <tr class="doc-row">
                     <td class="text-white doc-mono"><?= htmlspecialchars((string) ($item['name'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                     <td class="text-slate-300"><?= htmlspecialchars((string) ($item['updated_at'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                     <td class="text-slate-400 doc-mono"><?= htmlspecialchars((string) ($item['path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                    <td>
+                      <a
+                        href="<?= htmlspecialchars($changeDocBaseUrl . 'features&arquivo=' . rawurlencode((string) ($item['name'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                        data-doc-link="true"
+                        data-doc-data-url="<?= htmlspecialchars($changeDocDataBaseUrl . 'features&arquivo=' . rawurlencode((string) ($item['name'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20"
+                        title="Abrir arquivo"
+                        aria-label="Abrir arquivo"
+                      >
+                        <i class="fa-solid fa-arrow-up-right-from-square text-sm" aria-hidden="true"></i>
+                      </a>
+                    </td>
                   </tr>
                 <?php endforeach; ?>
               <?php endif; ?>
@@ -187,18 +255,36 @@ $formatSystemEvent = static function (array $item) use ($activityEventMeta): arr
         <h2 class="font-orbitron text-xl font-bold text-cyan-200">Releases recentes</h2>
         <div class="mt-4 overflow-x-auto">
           <table class="doc-table">
+            <colgroup>
+              <col class="changes-col-file">
+              <col class="changes-col-updated">
+              <col class="changes-col-path">
+              <col class="changes-col-open">
+            </colgroup>
             <thead>
-              <tr><th>Arquivo</th><th>Atualizado em</th><th>Caminho</th></tr>
+              <tr><th>Arquivo</th><th>Atualizado em</th><th>Caminho</th><th>Abrir</th></tr>
             </thead>
             <tbody>
               <?php if ($releaseDocs === []): ?>
-                <tr class="doc-row"><td colspan="3" class="text-slate-400">Nenhum documento de release encontrado ainda.</td></tr>
+                <tr class="doc-row"><td colspan="4" class="text-slate-400">Nenhum documento de release encontrado ainda.</td></tr>
               <?php else: ?>
                 <?php foreach ($releaseDocs as $item): ?>
                   <tr class="doc-row">
                     <td class="text-white doc-mono"><?= htmlspecialchars((string) ($item['name'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                     <td class="text-slate-300"><?= htmlspecialchars((string) ($item['updated_at'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                     <td class="text-slate-400 doc-mono"><?= htmlspecialchars((string) ($item['path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                    <td>
+                      <a
+                        href="<?= htmlspecialchars($changeDocBaseUrl . 'releases&arquivo=' . rawurlencode((string) ($item['name'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                        data-doc-link="true"
+                        data-doc-data-url="<?= htmlspecialchars($changeDocDataBaseUrl . 'releases&arquivo=' . rawurlencode((string) ($item['name'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20"
+                        title="Abrir arquivo"
+                        aria-label="Abrir arquivo"
+                      >
+                        <i class="fa-solid fa-arrow-up-right-from-square text-sm" aria-hidden="true"></i>
+                      </a>
+                    </td>
                   </tr>
                 <?php endforeach; ?>
               <?php endif; ?>
@@ -207,6 +293,65 @@ $formatSystemEvent = static function (array $item) use ($activityEventMeta): arr
         </div>
       </section>
     </div>
+
+    <section class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
+      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 class="font-orbitron text-xl font-bold text-cyan-200">Registro completo de mudancas</h2>
+          <p class="mt-2 text-sm leading-7 text-slate-400">Aqui ficam todas as features e releases documentadas na governanca oficial do projeto, ordenadas pela atualizacao mais recente.</p>
+        </div>
+        <div class="rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">
+          <span class="text-slate-500">Total listado:</span>
+          <span class="ml-2 font-semibold text-white"><?= count($changeDocs) ?></span>
+        </div>
+      </div>
+
+      <div class="mt-4 overflow-x-auto">
+        <table class="doc-table">
+          <colgroup>
+            <col style="width: 12%;">
+            <col class="changes-col-file">
+            <col class="changes-col-updated">
+            <col style="width: 44%;">
+            <col class="changes-col-open">
+          </colgroup>
+          <thead>
+            <tr><th>Tipo</th><th>Arquivo</th><th>Atualizado em</th><th>Caminho</th><th>Abrir</th></tr>
+          </thead>
+          <tbody>
+            <?php if ($changeDocs === []): ?>
+              <tr class="doc-row"><td colspan="5" class="text-slate-400">Nenhuma mudanca documentada ainda.</td></tr>
+            <?php else: ?>
+              <?php foreach ($changeDocs as $item): ?>
+                <tr class="doc-row">
+                  <td>
+                    <span class="rounded-full border border-slate-700 bg-slate-950/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-300">
+                      <?= htmlspecialchars((string) ($item['type'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                    </span>
+                  </td>
+                  <td class="text-white doc-mono"><?= htmlspecialchars((string) ($item['name'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="text-slate-300"><?= htmlspecialchars((string) ($item['updated_at'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="text-slate-400 doc-mono"><?= htmlspecialchars((string) ($item['path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td>
+                    <?php $group = strtolower((string) ($item['type'] ?? '')) === 'release' ? 'releases' : 'features'; ?>
+                    <a
+                      href="<?= htmlspecialchars($changeDocBaseUrl . $group . '&arquivo=' . rawurlencode((string) ($item['name'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                      data-doc-link="true"
+                      data-doc-data-url="<?= htmlspecialchars($changeDocDataBaseUrl . $group . '&arquivo=' . rawurlencode((string) ($item['name'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                      class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-400/40 bg-cyan-500/10 text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20"
+                      title="Abrir arquivo"
+                      aria-label="Abrir arquivo"
+                    >
+                      <i class="fa-solid fa-arrow-up-right-from-square text-sm" aria-hidden="true"></i>
+                    </a>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
     <section class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
       <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -367,6 +512,88 @@ $formatSystemEvent = static function (array $item) use ($activityEventMeta): arr
         button.addEventListener('click', () => {
           activate(button.dataset.changesTab || 'atividade');
         });
+      });
+    })();
+
+    (() => {
+      const panel = document.getElementById('change-doc-panel');
+      const closeLink = document.getElementById('change-doc-close');
+      const title = document.getElementById('change-doc-title');
+      const group = document.getElementById('change-doc-group');
+      const updated = document.getElementById('change-doc-updated');
+      const path = document.getElementById('change-doc-path');
+      const body = document.getElementById('change-doc-body');
+
+      if (!panel || !closeLink || !title || !group || !updated || !path || !body) {
+        return;
+      }
+
+      const baseUrl = <?= json_encode($closeUrl, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+
+      const openDocument = (payload, nextUrl) => {
+        title.textContent = payload.file || 'arquivo.md';
+        group.textContent = payload.group || '';
+        updated.textContent = payload.updated_at || '';
+        path.textContent = payload.path || '';
+        body.textContent = payload.body || '';
+        panel.hidden = false;
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.pushState({ changeDocOpen: true }, '', nextUrl);
+      };
+
+      const closeDocument = (push = true) => {
+        panel.hidden = true;
+        if (push) {
+          window.history.pushState({ changeDocOpen: false }, '', baseUrl);
+        }
+      };
+
+      for (const link of document.querySelectorAll('[data-doc-link="true"]')) {
+        link.addEventListener('click', async (event) => {
+          event.preventDefault();
+          const nextUrl = link.getAttribute('href') || '';
+          const dataUrl = link.getAttribute('data-doc-data-url') || '';
+
+          if (dataUrl === '') {
+            window.location.href = nextUrl;
+            return;
+          }
+
+          try {
+            const response = await fetch(dataUrl, {
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            });
+
+            if (!response.ok) {
+              window.location.href = nextUrl;
+              return;
+            }
+
+            const payload = await response.json();
+            openDocument(payload, nextUrl);
+          } catch (error) {
+            window.location.href = nextUrl;
+          }
+        });
+      }
+
+      closeLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        closeDocument(true);
+      });
+
+      window.addEventListener('popstate', () => {
+        const params = new URLSearchParams(window.location.search);
+        const hasDocParams = params.get('grupo') && params.get('arquivo');
+
+        if (hasDocParams) {
+          window.location.reload();
+          return;
+        }
+
+        closeDocument(false);
       });
     })();
   </script>

@@ -66,7 +66,7 @@ $contentHtml = (string) ($content_html ?? '');
     </div>
   </div>
 
-  <section aria-labelledby="knowledge-tab-content">
+  <section aria-labelledby="knowledge-tab-content" data-knowledge-hub-content>
     <h2 id="knowledge-tab-content" class="sr-only"><?= htmlspecialchars((string) ($activeConfig['label'] ?? 'Base Tecnica'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h2>
     <?= $contentHtml ?>
   </section>
@@ -78,12 +78,92 @@ $contentHtml = (string) ($content_html ?? '');
       return;
     }
 
-    const links = document.querySelectorAll('a[href*="/admin/base-tecnica?aba="]');
-    for (const link of links) {
-      link.addEventListener('click', () => {
-        overlay.classList.add('is-visible');
-        overlay.setAttribute('aria-hidden', 'false');
-      });
+    const content = document.querySelector('[data-knowledge-hub-content]');
+    const links = Array.from(document.querySelectorAll('a[href*="/admin/base-tecnica?aba="]'));
+    if (!content || links.length === 0) {
+      return;
     }
+
+    const setLoading = (visible) => {
+      overlay.classList.toggle('is-visible', visible);
+      overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
+    };
+
+    const activateLink = (url) => {
+      links.forEach((link) => {
+        const isActive = link.href === url;
+        link.classList.toggle('border-cyan-300/70', isActive);
+        link.classList.toggle('bg-cyan-500/15', isActive);
+        link.classList.toggle('text-cyan-100', isActive);
+        link.classList.toggle('shadow-[0_0_24px_rgba(34,211,238,0.12)]', isActive);
+        link.classList.toggle('border-slate-700', !isActive);
+        link.classList.toggle('bg-slate-950/70', !isActive);
+        link.classList.toggle('text-slate-200', !isActive);
+        link.setAttribute('aria-current', isActive ? 'page' : 'false');
+      });
+    };
+
+    const rehydrateScripts = (root) => {
+      for (const oldScript of root.querySelectorAll('script')) {
+        const nextScript = document.createElement('script');
+        for (const attr of oldScript.attributes) {
+          nextScript.setAttribute(attr.name, attr.value);
+        }
+        nextScript.textContent = oldScript.textContent;
+        oldScript.replaceWith(nextScript);
+      }
+    };
+
+    const loadTab = async (url, push = true) => {
+      setLoading(true);
+
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        if (!response.ok) {
+          window.location.href = url;
+          return;
+        }
+
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const nextContent = doc.querySelector('[data-knowledge-hub-content]');
+
+        if (!nextContent) {
+          window.location.href = url;
+          return;
+        }
+
+        content.innerHTML = nextContent.innerHTML;
+        rehydrateScripts(content);
+        activateLink(url);
+
+        if (push) {
+          window.history.pushState({ knowledgeHub: true }, '', url);
+        }
+      } catch (error) {
+        window.location.href = url;
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    links.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        loadTab(link.href, true);
+      });
+    });
+
+    window.addEventListener('popstate', () => {
+      if (window.location.pathname.includes('/admin/base-tecnica')) {
+        loadTab(window.location.href, false);
+      }
+    });
   })();
 </script>

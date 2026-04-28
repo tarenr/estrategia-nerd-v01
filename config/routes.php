@@ -113,6 +113,8 @@ return [
     ['GET',  '/local/docs',          [\App\Controllers\Site\LocalDocsController::class, 'index'], null],
     ['GET',  '/local/regras',        [\App\Controllers\Site\LocalDocsController::class, 'rules'], null],
     ['GET',  '/local/mudancas',      [\App\Controllers\Site\LocalDocsController::class, 'changes'], null],
+    ['GET',  '/local/mudancas/documento', [\App\Controllers\Site\LocalDocsController::class, 'changeDocument'], null],
+    ['GET',  '/local/mudancas/documento-dados', [\App\Controllers\Site\LocalDocsController::class, 'changeDocumentData'], null],
     ['GET',  '/local/blog-estruturas', [\App\Controllers\Site\LocalDocsController::class, 'blogStructures'], null],
     ['GET',  '/local/estruturas-conteudo', [\App\Controllers\Site\LocalDocsController::class, 'blogStructures'], null],
     ['GET',  '/local/backlog',       [\App\Controllers\Site\LocalDocsController::class, 'backlog'], null],

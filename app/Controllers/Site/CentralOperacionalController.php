@@ -21,21 +21,33 @@ final class CentralOperacionalController
     {
         $this->ensureLocalOnly();
 
+        if ($this->isOverviewFragmentRequest()) {
+            echo $this->renderOverviewSection(false);
+            return;
+        }
+
         View::render('site/central-operacional', $this->viewData());
     }
 
     /**
      * @return array<string,mixed>
      */
-    public function viewData(bool $adminEmbed = false): array
+    public function viewData(bool $adminEmbed = false, ?string $overviewSection = null, ?string $overviewBaseUrl = null): array
     {
         $flash = Session::pull('operations_flash');
+        $section = $this->normalizeOverviewSection($overviewSection);
+        $baseUrl = $overviewBaseUrl ?? ($adminEmbed ? url('/admin/central-operacional?aba=visao-geral') : url('/local/operacoes'));
 
         return $this->service()->getViewModel(
-            is_array($flash) ? $flash : null
+            is_array($flash) ? $flash : null,
+            $section
         ) + [
             'embed_mode' => $adminEmbed ? true : $this->embedMode(),
             'admin_embed' => $adminEmbed,
+            'overview_section' => $section,
+            'overview_sections' => $this->overviewSections(),
+            'overview_base_url' => $baseUrl,
+            'overview_fragment_base_url' => $baseUrl,
         ];
     }
 
@@ -224,6 +236,55 @@ final class CentralOperacionalController
     private function embedMode(): bool
     {
         return (string) ($_GET['embed'] ?? '0') === '1';
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    private function overviewSections(): array
+    {
+        return [
+            'resumo' => [
+                'label' => 'Resumo',
+                'description' => 'Politica e orientacao rapida.',
+            ],
+            'backups' => [
+                'label' => 'Backups',
+                'description' => 'Dados e snapshots tecnicos.',
+            ],
+            'pacotes' => [
+                'label' => 'Pacotes',
+                'description' => 'Conteudo, codigo e paridade.',
+            ],
+            'historico' => [
+                'label' => 'Historico',
+                'description' => 'Eventos recentes por categoria.',
+            ],
+        ];
+    }
+
+    private function normalizeOverviewSection(?string $section = null): string
+    {
+        $value = strtolower(trim((string) ($section ?? ($_GET['secao'] ?? 'resumo'))));
+        $allowed = array_keys($this->overviewSections());
+
+        return in_array($value, $allowed, true) ? $value : 'resumo';
+    }
+
+    private function isOverviewFragmentRequest(): bool
+    {
+        return (string) ($_GET['overview_fragment'] ?? '0') === '1';
+    }
+
+    public function renderOverviewSection(bool $adminEmbed): string
+    {
+        $data = $this->viewData(
+            $adminEmbed,
+            $this->normalizeOverviewSection(),
+            $adminEmbed ? url('/admin/central-operacional?aba=visao-geral') : url('/local/operacoes')
+        );
+
+        return View::fragment('site/partials/operations-overview-content', $data);
     }
 
     private function assertOperationPhrase(string $phrase, string $targetProfile, string $expectedId, string $defaultPhrase, string $operationLabel): void

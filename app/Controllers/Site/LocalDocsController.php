@@ -38,6 +38,51 @@ final class LocalDocsController
         View::render('site/local-changes', $this->changesViewData());
     }
 
+    public function changeDocument(): void
+    {
+        $this->ensureLocalOnly();
+
+        $document = $this->selectedChangeDocument();
+        if ($document === null) {
+            http_response_code(404);
+            echo 'Documento nao encontrado.';
+            exit;
+        }
+
+        View::render('site/local-doc-file', [
+            'title' => $document['file'] . ' | Estrategia Nerd',
+            'meta_description' => 'Documento interno de governanca e historico de mudancas do projeto.',
+            'site_chrome' => false,
+            'project_version' => $this->projectVersion(),
+            'generated_at' => date('Y-m-d H:i:s'),
+            'embed_mode' => $this->embedMode(),
+            'admin_embed' => false,
+            'doc_group' => $document['group'],
+            'doc_file' => $document['file'],
+            'doc_path' => $document['path'],
+            'doc_body' => $document['body'],
+        ]);
+    }
+
+    public function changeDocumentData(): void
+    {
+        $this->ensureLocalOnly();
+
+        $document = $this->selectedChangeDocument();
+        if ($document === null) {
+            http_response_code(404);
+            header('Content-Type: application/json; charset=UTF-8');
+            echo (string) json_encode([
+                'error' => 'Documento nao encontrado.',
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+
+        header('Content-Type: application/json; charset=UTF-8');
+        echo (string) json_encode($document, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
     /**
      * @return array<string,mixed>
      */
@@ -107,6 +152,8 @@ final class LocalDocsController
      */
     public function changesViewData(bool $adminEmbed = false): array
     {
+        $selectedDocument = $this->selectedChangeDocument();
+
         return [
             'title' => 'Mudancas Recentes | Estrategia Nerd',
             'meta_description' => 'Historico local de alteracoes, operacoes e documentos recentes do projeto.',
@@ -117,6 +164,12 @@ final class LocalDocsController
             'admin_embed' => $adminEmbed,
             'feature_docs' => $this->recentDocs('features'),
             'release_docs' => $this->recentDocs('releases'),
+            'change_docs' => $this->allChangeDocs(),
+            'selected_change_doc' => $selectedDocument,
+            'change_doc_base_url' => $adminEmbed
+                ? url('/admin/base-tecnica?aba=mudancas&grupo=')
+                : url('/local/mudancas/documento?grupo='),
+            'change_doc_data_base_url' => url('/local/mudancas/documento-dados?grupo='),
             'activity_logs' => $this->recentActivityLogs(),
             'operation_logs' => $this->recentOperationLogs(),
         ];
@@ -195,6 +248,79 @@ final class LocalDocsController
         }
 
         return $items;
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function allDocs(string $folder, string $typeLabel): array
+    {
+        $directory = base_path('docs/' . trim($folder, '/'));
+        if (!is_dir($directory)) {
+            return [];
+        }
+
+        $items = [];
+        $files = glob($directory . DIRECTORY_SEPARATOR . '*.md');
+        if ($files === false) {
+            return [];
+        }
+
+        foreach ($files as $file) {
+            $items[] = [
+                'type' => $typeLabel,
+                'name' => basename($file),
+                'path' => $file,
+                'updated_at' => date('Y-m-d H:i:s', (int) filemtime($file)),
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function allChangeDocs(): array
+    {
+        $items = array_merge(
+            $this->allDocs('features', 'Feature'),
+            $this->allDocs('releases', 'Release')
+        );
+
+        usort(
+            $items,
+            static fn (array $left, array $right): int => strtotime((string) ($right['updated_at'] ?? '')) <=> strtotime((string) ($left['updated_at'] ?? ''))
+        );
+
+        return $items;
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    private function selectedChangeDocument(): ?array
+    {
+        $group = strtolower(trim((string) ($_GET['grupo'] ?? '')));
+        $file = basename(trim((string) ($_GET['arquivo'] ?? '')));
+        $allowedGroups = ['features', 'releases'];
+
+        if (!in_array($group, $allowedGroups, true) || $file === '' || !str_ends_with(strtolower($file), '.md')) {
+            return null;
+        }
+
+        $path = base_path('docs/' . $group . '/' . $file);
+        if (!is_file($path)) {
+            return null;
+        }
+
+        return [
+            'group' => $group,
+            'file' => $file,
+            'path' => $path,
+            'body' => (string) file_get_contents($path),
+            'updated_at' => date('Y-m-d H:i:s', (int) filemtime($path)),
+        ];
     }
 
     /**

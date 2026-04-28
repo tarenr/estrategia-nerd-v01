@@ -56,7 +56,9 @@ final class KnowledgeHubController
     private function cachedContentHtml(string $tab, string $view): string
     {
         $section = strtolower(trim((string) ($_GET['secao'] ?? '')));
-        $cacheKey = 'admin.knowledge_hub.' . $tab . '.' . $section;
+        $docGroup = strtolower(trim((string) ($_GET['grupo'] ?? '')));
+        $docFile = basename(trim((string) ($_GET['arquivo'] ?? '')));
+        $cacheKey = 'admin.knowledge_hub.' . $tab . '.' . $section . '.' . $docGroup . '.' . $docFile;
         $cache = Session::get($cacheKey);
 
         if (is_array($cache)) {
