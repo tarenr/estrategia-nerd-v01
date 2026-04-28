@@ -17,13 +17,23 @@ final class ContentSyncToolsController
     {
         $this->ensureLocalOnly();
 
+        if ($this->isProgressRequest()) {
+            $this->progress();
+            return;
+        }
+
+        if ($this->isSectionFragmentRequest()) {
+            echo $this->renderSection(false);
+            return;
+        }
+
         View::render('site/content-sync-tools', $this->viewData());
     }
 
     /**
      * @return array<string,mixed>
      */
-    public function viewData(bool $adminEmbed = false): array
+    public function viewData(bool $adminEmbed = false, ?string $section = null, ?string $baseUrl = null): array
     {
         $manager = $this->manager();
         $deployManager = $this->deployManager();
@@ -32,6 +42,8 @@ final class ContentSyncToolsController
         $lastVerification = Session::pull('content_sync_verification');
         $lastPostCheck = Session::pull('content_sync_postcheck');
         $deploymentPolicy = $deployManager->deploymentPolicyStatus();
+        $activeSection = $this->normalizeSection($section);
+        $resolvedBaseUrl = $baseUrl ?? ($adminEmbed ? url('/admin/central-operacional?aba=conteudo') : url('/local/conteudo'));
 
         return [
             'title' => 'Conteudo Local | Estrategia Nerd',
@@ -39,8 +51,13 @@ final class ContentSyncToolsController
             'site_chrome' => false,
             'embed_mode' => $adminEmbed ? true : $this->embedMode(),
             'admin_embed' => $adminEmbed,
+            'content_section' => $activeSection,
+            'content_sections' => $this->sections(),
+            'content_base_url' => $resolvedBaseUrl,
             'content_status' => $this->presentStatus($status),
             'code_status' => $this->presentCodeStatus($deployManager->codeStatus()),
+            'recent_editorial_applications' => $this->collectRecentApplications($status, 'editorial'),
+            'recent_code_applications' => $this->collectRecentApplications($deployManager->codeStatus(), 'codigo'),
             'parity_status' => $manager->parityStatus(),
             'deployment_policy' => $deploymentPolicy,
             'flash' => is_array($flash) ? $flash : null,
@@ -56,29 +73,42 @@ final class ContentSyncToolsController
     public function handle(): void
     {
         $this->ensureLocalOnly();
+        $redirectTarget = $this->normalizeRedirectTarget($_POST['redirect_to'] ?? null);
 
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             $this->flash('error', 'Sessao expirada. Atualize a pagina e tente novamente.');
-            $this->redirect();
+            $this->redirect($redirectTarget);
         }
 
         $action = strtolower(trim((string) ($_POST['action'] ?? '')));
         $manager = $this->manager();
         $deployManager = $this->deployManager();
+        $respondJson = $this->wantsJsonResponse();
+        $progressId = $this->normalizeProgressId($_POST['progress_id'] ?? null);
+        $successMessage = null;
 
         try {
+            $this->closeSessionWrite();
+
             switch ($action) {
                 case 'export':
                     $profile = strtolower(trim((string) ($_POST['profile'] ?? 'local')));
-                    $manifest = $manager->export($profile);
-                    $this->flash('success', sprintf('Pacote %s gerado com sucesso.', (string) ($manifest['package_id'] ?? '')));
+                    $type = strtolower(trim((string) ($_POST['package_type'] ?? 'editorial')));
+                    if ($type === 'codigo') {
+                        $manifest = $manager->exportCode(null, $progressId);
+                        $successMessage = sprintf('Pacote tecnico %s gerado com sucesso.', (string) ($manifest['package_id'] ?? ''));
+                        break;
+                    }
+
+                    $manifest = $manager->export($profile, $progressId);
+                    $successMessage = sprintf('Pacote %s gerado com sucesso.', (string) ($manifest['package_id'] ?? ''));
                     break;
 
                 case 'verify':
                     $packageId = $this->normalizeOptionalId($_POST['package_id'] ?? 'latest');
-                    $verification = $manager->verify($packageId);
+                    $verification = $manager->verify($packageId, $progressId);
                     Session::put('content_sync_verification', $verification);
-                    $this->flash('success', 'Verificacao concluida.');
+                    $successMessage = 'Verificacao concluida.';
                     break;
 
                 case 'apply':
@@ -89,9 +119,9 @@ final class ContentSyncToolsController
 
                     $packageId = $this->normalizeOptionalId($_POST['package_id'] ?? 'latest');
                     $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'production')));
-                    $result = $manager->apply($packageId, $targetProfile, true);
+                    $result = $manager->apply($packageId, $targetProfile, true, $progressId);
                     Session::put('content_sync_postcheck', $manager->parityStatus());
-                    $this->flash('success', sprintf('Pacote %s aplicado em %s.', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? '')));
+                    $successMessage = sprintf('Pacote %s aplicado em %s.', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? ''));
                     break;
 
                 case 'apply_code':
@@ -102,19 +132,41 @@ final class ContentSyncToolsController
 
                     $packageId = $this->normalizeOptionalId($_POST['package_id'] ?? 'latest');
                     $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'production')));
-                    $result = $deployManager->applyCode($packageId, $targetProfile, true);
+                    $result = $deployManager->applyCode($packageId, $targetProfile, true, $progressId);
                     Session::put('content_sync_postcheck', $manager->parityStatus());
-                    $this->flash('success', sprintf('Pacote de codigo %s aplicado em %s (%d arquivos).', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? ''), (int) ($result['result']['files_applied'] ?? 0)));
+                    $successMessage = sprintf('Pacote de codigo %s aplicado em %s (%d arquivos).', (string) ($result['package_id'] ?? ''), (string) ($result['target_profile'] ?? ''), (int) ($result['result']['files_applied'] ?? 0));
                     break;
 
                 default:
                     throw new \RuntimeException('Acao invalida para a rotina de conteudo.');
             }
         } catch (\Throwable $exception) {
+            $this->reopenSessionWrite();
             $this->flash('error', $exception->getMessage());
+            if ($respondJson) {
+                $this->json([
+                    'ok' => false,
+                    'redirect_url' => $redirectTarget ?? url('/local/conteudo'),
+                    'message' => $exception->getMessage(),
+                ], 422);
+            }
+            $this->redirect($redirectTarget);
         }
 
-        $this->redirect();
+        $this->reopenSessionWrite();
+        if ($successMessage !== null) {
+            $this->flash('success', $successMessage);
+        }
+
+        if ($respondJson) {
+            $this->json([
+                'ok' => true,
+                'redirect_url' => $redirectTarget ?? url('/local/conteudo'),
+                'message' => $successMessage ?? 'Rotina executada com sucesso.',
+            ]);
+        }
+
+        $this->redirect($redirectTarget);
     }
 
     private function ensureLocalOnly(): void
@@ -125,6 +177,66 @@ final class ContentSyncToolsController
     private function embedMode(): bool
     {
         return (string) ($_GET['embed'] ?? '0') === '1';
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    private function sections(): array
+    {
+        return [
+            'resumo' => [
+                'label' => 'Resumo',
+                'description' => 'Politica, paridade e ultimos pacotes.',
+            ],
+            'editorial' => [
+                'label' => 'Editorial',
+                'description' => 'Pacotes e acoes de conteudo.',
+            ],
+            'codigo' => [
+                'label' => 'Codigo',
+                'description' => 'Pacotes tecnicos e deploy.',
+            ],
+            'publicacao' => [
+                'label' => 'Publicacao',
+                'description' => 'Promocao controlada e pos-check.',
+            ],
+        ];
+    }
+
+    private function normalizeSection(?string $section = null): string
+    {
+        $value = strtolower(trim((string) ($section ?? ($_GET['content_secao'] ?? 'resumo'))));
+        $allowed = array_keys($this->sections());
+
+        return in_array($value, $allowed, true) ? $value : 'resumo';
+    }
+
+    private function isSectionFragmentRequest(): bool
+    {
+        return (string) ($_GET['content_fragment'] ?? '0') === '1';
+    }
+
+    private function isProgressRequest(): bool
+    {
+        return (string) ($_GET['content_progress'] ?? '0') === '1';
+    }
+
+    public function renderSection(bool $adminEmbed): string
+    {
+        $data = $this->viewData(
+            $adminEmbed,
+            $this->normalizeSection(),
+            $adminEmbed ? url('/admin/central-operacional?aba=conteudo') : url('/local/conteudo')
+        );
+
+        return View::fragment('site/partials/content-sync-content', $data);
+    }
+
+    public function progress(): void
+    {
+        $this->ensureLocalOnly();
+        $this->json($this->manager()->getProgress($this->normalizeProgressId($_GET['id'] ?? null)));
     }
 
     private function manager(): ContentSyncManager
@@ -141,9 +253,9 @@ final class ContentSyncToolsController
         return new DeployManager(require base_path('config/deploy.php'));
     }
 
-    private function redirect(): void
+    private function redirect(?string $target = null): void
     {
-        header('Location: ' . url('/local/conteudo'));
+        header('Location: ' . ($target ?? url('/local/conteudo')));
         exit;
     }
 
@@ -275,6 +387,45 @@ final class ContentSyncToolsController
         ];
     }
 
+    /**
+     * @param array<string, mixed> $status
+     * @return array<int, array<string, mixed>>
+     */
+    private function collectRecentApplications(array $status, string $kind): array
+    {
+        $history = [];
+
+        foreach ((array) ($status['items'] ?? []) as $item) {
+            $packageId = (string) ($item['package_id'] ?? '');
+            $sourceProfile = (string) ($item['source_profile'] ?? ($kind === 'codigo' ? 'local' : ''));
+            $sourceLabel = (string) ($item['source_profile_label'] ?? ($kind === 'codigo' ? 'Local' : $sourceProfile));
+
+            foreach ((array) ($item['applied_targets'] ?? []) as $apply) {
+                if (!is_array($apply)) {
+                    continue;
+                }
+
+                $history[] = [
+                    'kind' => $kind,
+                    'package_id' => $packageId,
+                    'source_profile' => $sourceProfile,
+                    'source_profile_label' => $sourceLabel,
+                    'target_profile' => (string) ($apply['target_profile'] ?? ''),
+                    'target_profile_label' => (string) ($apply['target_profile_label'] ?? ''),
+                    'applied_at' => (string) ($apply['applied_at'] ?? ''),
+                    'result' => is_array($apply['result'] ?? null) ? $apply['result'] : [],
+                ];
+            }
+        }
+
+        usort(
+            $history,
+            static fn(array $left, array $right): int => strcmp((string) ($right['applied_at'] ?? ''), (string) ($left['applied_at'] ?? ''))
+        );
+
+        return array_slice($history, 0, 10);
+    }
+
     private function presentLastApply(array $targets): ?array
     {
         if ($targets === []) {
@@ -291,5 +442,56 @@ final class ContentSyncToolsController
             'target_profile_label' => (string) ($last['target_profile_label'] ?? ''),
             'applied_at' => (string) ($last['applied_at'] ?? ''),
         ];
+    }
+
+    private function normalizeRedirectTarget(mixed $target): ?string
+    {
+        $value = trim((string) $target);
+        if ($value === '' || !str_starts_with($value, '/')) {
+            return null;
+        }
+
+        return $value;
+    }
+
+    private function normalizeProgressId(mixed $value): ?string
+    {
+        $progressId = strtolower(trim((string) $value));
+        if ($progressId === '' || !preg_match('/^[a-z0-9_-]{8,80}$/', $progressId)) {
+            return null;
+        }
+
+        return $progressId;
+    }
+
+    private function wantsJsonResponse(): bool
+    {
+        return strtolower(trim((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''))) === 'xmlhttprequest'
+            || strtolower(trim((string) ($_POST['response'] ?? ''))) === 'json';
+    }
+
+    private function closeSessionWrite(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+    }
+
+    private function reopenSessionWrite(): void
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            @session_start();
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function json(array $payload, int $status = 200): void
+    {
+        http_response_code($status);
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
     }
 }

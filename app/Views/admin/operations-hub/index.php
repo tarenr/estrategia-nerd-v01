@@ -10,38 +10,10 @@ $activeTabUrl = (string) ($active_tab_url ?? url('/admin/central-operacional?aba
 ?>
 <section class="space-y-5">
   <style>
-    .admin-hub-loading {
-      position: fixed;
-      inset: 0;
-      z-index: 9998;
+    .admin-hub-inline-loading[hidden] {
       display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(2, 6, 23, 0.58);
-      backdrop-filter: blur(8px);
-    }
-
-    .admin-hub-loading.is-visible {
-      display: flex;
-    }
-
-    .admin-hub-loading-card {
-      width: min(92vw, 26rem);
-      border-radius: 1.5rem;
-      border: 1px solid rgba(34, 211, 238, 0.2);
-      background: rgba(15, 23, 42, 0.96);
-      padding: 1.25rem 1.35rem;
-      box-shadow: 0 0 32px rgba(6, 182, 212, 0.12);
     }
   </style>
-
-  <div id="operations-hub-loading" class="admin-hub-loading" aria-hidden="true">
-    <div class="admin-hub-loading-card">
-      <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Carregando</p>
-      <h2 class="mt-3 font-orbitron text-xl font-black text-white">Abrindo aba</h2>
-      <p class="mt-3 text-sm leading-7 text-slate-300">Estamos preparando o conteudo operacional desta area.</p>
-    </div>
-  </div>
 
 <header class="rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_30px_rgba(6,182,212,0.06)]">
     <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Central Tecnica Local</p>
@@ -57,6 +29,7 @@ $activeTabUrl = (string) ($active_tab_url ?? url('/admin/central-operacional?aba
         <?php $isActive = $key === $activeTab; ?>
         <a
           href="<?= htmlspecialchars(url('/admin/central-operacional?aba=' . $key), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+          data-operations-hub-link="true"
           class="rounded-2xl border px-4 py-4 transition <?= $isActive ? 'border-cyan-300/70 bg-cyan-500/15 text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.12)]' : 'border-slate-700 bg-slate-950/70 text-slate-200 hover:border-cyan-400/50 hover:bg-cyan-500/10' ?>"
           aria-current="<?= $isActive ? 'page' : 'false' ?>"
         >
@@ -69,6 +42,9 @@ $activeTabUrl = (string) ($active_tab_url ?? url('/admin/central-operacional?aba
 
   <section aria-labelledby="operations-tab-content" data-operations-hub-content data-loaded="<?= $contentHtml !== '' ? 'true' : 'false' ?>">
     <h2 id="operations-tab-content" class="sr-only"><?= htmlspecialchars((string) ($activeConfig['label'] ?? 'Central Operacional'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h2>
+    <div id="operations-hub-loading" class="admin-hub-inline-loading mb-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100" hidden>
+      Carregando conteudo operacional...
+    </div>
     <?php if ($contentHtml !== ''): ?>
       <?= $contentHtml ?>
     <?php else: ?>
@@ -86,7 +62,7 @@ $activeTabUrl = (string) ($active_tab_url ?? url('/admin/central-operacional?aba
     }
 
     const content = document.querySelector('[data-operations-hub-content]');
-    const links = Array.from(document.querySelectorAll('a[href*="/admin/central-operacional?aba="]'));
+    const links = Array.from(document.querySelectorAll('[data-operations-hub-link="true"]'));
     if (!content || links.length === 0) {
       return;
     }
@@ -94,8 +70,7 @@ $activeTabUrl = (string) ($active_tab_url ?? url('/admin/central-operacional?aba
     const activeTabUrl = <?= json_encode($activeTabUrl, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
     const setLoading = (visible) => {
-      overlay.classList.toggle('is-visible', visible);
-      overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      overlay.hidden = !visible;
     };
 
     const activateLink = (url) => {

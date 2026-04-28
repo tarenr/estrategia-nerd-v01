@@ -19,6 +19,7 @@ final class ContentSyncManager
         'stage' => '02-stage',
         'production' => '03-prod',
     ];
+    private const PROGRESS_TITLE = 'Executando rotina de conteudo';
 
     private array $columnSupportCache = [];
     private OperationLogger $logger;
@@ -29,10 +30,20 @@ final class ContentSyncManager
         $this->logger = new OperationLogger($this->operationRoot());
     }
 
-    public function export(string $profileName = 'local'): array
+    public function export(string $profileName = 'local', ?string $progressId = null): array
     {
+        $this->allowLongRunningProcess();
         $profile = $this->profile($profileName);
         $root = $this->packageRoot();
+        $profileLabel = (string) ($profile['label'] ?? $profileName);
+        $this->writeProgress($progressId, [
+            'status' => 'running',
+            'title' => self::PROGRESS_TITLE,
+            'stage' => 'Validando origem',
+            'message' => sprintf('Preparando a exportacao editorial da origem %s.', $profileLabel),
+            'percent' => 6,
+            'updated_at' => date('c'),
+        ]);
         $lock = $this->acquireRunLock($root, 'export', $profileName, (string) ($profile['label'] ?? $profileName));
         $packageId = $this->buildPackageId('PC', $profileName);
         $packageDir = $this->profilePackageRoot($profileName) . DIRECTORY_SEPARATOR . $packageId;
@@ -60,10 +71,21 @@ final class ContentSyncManager
         $tmpDir = '';
 
         try {
+            $this->updateProgress($progressId, 'Conectando banco', sprintf('Abrindo a base da origem %s para montar o pacote %s.', $profileLabel, $packageId), 14);
             $pdo = $this->connectPdo((array) ($profile['database'] ?? []));
+            $this->updateProgress($progressId, 'Lendo conteudo', 'Carregando categorias, posts, historico de slugs, links e configuracoes publicas.', 22);
             $payload = $this->exportPayload($pdo);
 
+            $totalFiles = count((array) ($payload['files'] ?? []));
+            $index = 0;
             foreach ($payload['files'] as $fileName => $rows) {
+                $index++;
+                $this->updateProgress(
+                    $progressId,
+                    'Gravando JSONs',
+                    sprintf('Gerando %s (%d de %d) para o pacote %s.', $fileName, $index, max(1, $totalFiles), $packageId),
+                    22 + (int) round(($index / max(1, $totalFiles)) * 18)
+                );
                 $filePath = $dataDir . DIRECTORY_SEPARATOR . $fileName;
                 $this->writeJson($filePath, $rows);
                 $manifest['data_files'][$fileName] = $this->fileDetails($filePath, 'data/' . $fileName);
@@ -77,21 +99,34 @@ final class ContentSyncManager
                 'configuracoes' => count((array) ($payload['files']['configuracoes.json'] ?? [])),
             ];
 
+            $this->updateProgress($progressId, 'Coletando uploads', 'Montando a amostra de uploads referenciados pelo conteudo selecionado.', 44);
             $tmpDir = $this->materializeUploadsSubset((array) ($profile['uploads'] ?? []), (array) ($payload['upload_paths'] ?? []));
             $zipPath = $packageDir . DIRECTORY_SEPARATOR . 'uploads.zip';
+            $this->updateProgress($progressId, 'Compactando uploads', 'Gerando uploads.zip para acompanhar o pacote editorial.', 58);
             $this->compressDirectory($tmpDir, $zipPath);
             $manifest['uploads'] = $this->fileDetails($zipPath, 'uploads.zip');
             $manifest['uploads']['included_files'] = count((array) ($payload['upload_paths'] ?? []));
             $manifest['uploads']['paths'] = array_values((array) ($payload['upload_paths'] ?? []));
 
+            $this->updateProgress($progressId, 'Verificando pacote', 'Conferindo manifesto, JSONs e uploads gerados antes de liberar o pacote.', 78);
             $verification = $this->verifyPackageDirectory($packageDir, $manifest);
             $manifest['verification'] = $verification;
             $manifest['is_valid'] = (bool) ($verification['is_valid'] ?? false);
             $manifest['status'] = 'ready';
+            $this->updateProgress($progressId, 'Gravando manifesto', 'Registrando no manifesto local que o pacote editorial foi concluido.', 92);
             $this->writeManifest($packageDir, $manifest);
             $this->logOperation('pacote_conteudo', $profileName, $profileName, (string) $packageId, 'OK', 'Pacote de conteudo gerado.', [
                 'posts' => (int) ($manifest['stats']['posts'] ?? 0),
                 'uploads' => (int) ($manifest['uploads']['included_files'] ?? 0),
+            ]);
+
+            $this->writeProgress($progressId, [
+                'status' => 'completed',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Pacote concluido',
+                'message' => sprintf('Pacote %s gerado com sucesso a partir da origem %s.', $packageId, $profileLabel),
+                'percent' => 100,
+                'updated_at' => date('c'),
             ]);
 
             return $manifest;
@@ -100,6 +135,14 @@ final class ContentSyncManager
             $manifest['error'] = $exception->getMessage();
             $this->writeManifest($packageDir, $manifest);
             $this->logOperation('pacote_conteudo', $profileName, $profileName, (string) $packageId, 'FAIL', $exception->getMessage());
+            $this->writeProgress($progressId, [
+                'status' => 'error',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Falha na exportacao',
+                'message' => $exception->getMessage(),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
             throw $exception;
         } finally {
             if ($tmpDir !== '' && str_contains($tmpDir, sys_get_temp_dir())) {
@@ -144,9 +187,18 @@ final class ContentSyncManager
         ];
     }
 
-    public function exportCode(?string $notes = null): array
+    public function exportCode(?string $notes = null, ?string $progressId = null): array
     {
+        $this->allowLongRunningProcess();
         $root = $this->codePackageRoot();
+        $this->writeProgress($progressId, [
+            'status' => 'running',
+            'title' => self::PROGRESS_TITLE,
+            'stage' => 'Preparando pacote tecnico',
+            'message' => 'Lendo alteracoes atuais para montar um novo pacote de codigo.',
+            'percent' => 8,
+            'updated_at' => date('c'),
+        ]);
         $lock = $this->acquireRunLock($root, 'export_code', 'local', 'Local / Codigo');
         $packageId = $this->buildCodePackageId();
         $packageDir = $root . DIRECTORY_SEPARATOR . $packageId;
@@ -171,6 +223,7 @@ final class ContentSyncManager
         ];
 
         try {
+            $this->updateProgress($progressId, 'Selecionando arquivos', 'Separando apenas os arquivos tecnicos elegiveis para o pacote atual.', 18);
             $selection = $this->collectCodePackageFiles();
             $files = (array) ($selection['files'] ?? []);
             $ignored = (array) ($selection['ignored'] ?? []);
@@ -179,8 +232,10 @@ final class ContentSyncManager
                 throw new RuntimeException('Nenhum arquivo tecnico elegivel foi encontrado nas alteracoes atuais.');
             }
 
+            $this->updateProgress($progressId, 'Copiando arquivos', sprintf('Copiando %d arquivos para a estrutura do pacote tecnico.', count($files)), 44);
             $this->copyCodePackageFiles($files, $filesDir);
             $zipPath = $root . DIRECTORY_SEPARATOR . $packageId . '.zip';
+            $this->updateProgress($progressId, 'Compactando pacote tecnico', 'Gerando o zip final do pacote de codigo.', 68);
             $this->compressDirectory($packageDir, $zipPath);
 
             $manifest['files'] = array_values($files);
@@ -188,9 +243,19 @@ final class ContentSyncManager
             $manifest['files_count'] = count($files);
             $manifest['zip_path'] = $zipPath;
 
+            $this->updateProgress($progressId, 'Gravando manifesto tecnico', 'Registrando os arquivos incluidos e o commit atual.', 90);
             $this->writeJson($packageDir . DIRECTORY_SEPARATOR . 'manifest.json', $manifest);
             $this->logOperation('pacote_tecnico', 'local', 'local', $packageId, 'OK', 'Pacote tecnico gerado com sucesso.', [
                 'files' => count($files),
+            ]);
+
+            $this->writeProgress($progressId, [
+                'status' => 'completed',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Pacote tecnico concluido',
+                'message' => sprintf('Pacote tecnico %s gerado com sucesso.', $packageId),
+                'percent' => 100,
+                'updated_at' => date('c'),
             ]);
 
             return $manifest;
@@ -202,6 +267,14 @@ final class ContentSyncManager
             }
 
             $this->logOperation('pacote_tecnico', 'local', 'local', $packageId, 'FAIL', $exception->getMessage());
+            $this->writeProgress($progressId, [
+                'status' => 'error',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Falha no pacote tecnico',
+                'message' => $exception->getMessage(),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
             throw $exception;
         } finally {
             $this->releaseRunLock($lock);
@@ -322,42 +395,65 @@ final class ContentSyncManager
         }
     }
 
-    public function verify(string $packageId): array
+    public function verify(?string $packageId, ?string $progressId = null): array
     {
-        $packageId = trim($packageId);
-        if ($packageId === '' || strtolower($packageId) === 'latest') {
-            throw new RuntimeException('package_id e obrigatorio para verificar pacote de conteudo.');
-        }
-
+        $this->allowLongRunningProcess();
+        $this->writeProgress($progressId, [
+            'status' => 'running',
+            'title' => self::PROGRESS_TITLE,
+            'stage' => 'Localizando pacote',
+            'message' => 'Preparando a verificacao do pacote editorial informado.',
+            'percent' => 10,
+            'updated_at' => date('c'),
+        ]);
+        $requestedPackageId = trim((string) $packageId);
         $package = $this->packageById($packageId);
         if ($package === null) {
             throw new RuntimeException('Nenhum pacote encontrado para verificar.');
         }
+        $resolvedPackageId = (string) ($package['package_id'] ?? ($requestedPackageId !== '' ? $requestedPackageId : 'ultimo disponivel'));
 
+        $this->updateProgress($progressId, 'Lendo manifesto', sprintf('Pacote %s encontrado. Conferindo manifesto e arquivos internos.', $resolvedPackageId), 28);
         $verification = $this->verifyPackageDirectory((string) $package['_dir'], $package);
         $package['verification'] = $verification;
         $package['is_valid'] = (bool) ($verification['is_valid'] ?? false);
+        $this->updateProgress($progressId, 'Gravando verificacao', 'Atualizando o manifesto local com o resultado da verificacao.', 84);
         $this->writeManifest((string) $package['_dir'], $package);
         $this->logOperation('verificacao_conteudo', (string) ($package['source_profile'] ?? 'stage'), (string) ($package['source_profile'] ?? 'stage'), (string) ($package['package_id'] ?? ''), ($package['is_valid'] ?? false) ? 'OK' : 'FAIL', 'Verificacao de pacote de conteudo executada.');
+
+        $this->writeProgress($progressId, [
+                'status' => 'completed',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Verificacao concluida',
+                'message' => sprintf('Pacote %s verificado com status %s.', $resolvedPackageId, ($package['is_valid'] ?? false) ? 'valido' : 'invalido'),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
 
         return $package;
     }
 
-    public function apply(string $packageId, string $targetProfile = 'production', bool $force = false): array
+    public function apply(?string $packageId, string $targetProfile = 'production', bool $force = false, ?string $progressId = null): array
     {
+        $this->allowLongRunningProcess();
+        $this->writeProgress($progressId, [
+            'status' => 'running',
+            'title' => self::PROGRESS_TITLE,
+            'stage' => 'Validando publicacao',
+            'message' => 'Preparando a aplicacao editorial no ambiente de destino.',
+            'percent' => 6,
+            'updated_at' => date('c'),
+        ]);
         if (!$force) {
             throw new RuntimeException('Publicacao exige confirmacao explicita.');
         }
 
-        $packageId = trim($packageId);
-        if ($packageId === '' || strtolower($packageId) === 'latest') {
-            throw new RuntimeException('package_id e obrigatorio para aplicar conteudo.');
-        }
-
+        $requestedPackageId = trim((string) $packageId);
         $package = $this->packageById($packageId);
         if ($package === null) {
             throw new RuntimeException('Nenhum pacote encontrado para aplicar.');
         }
+        $resolvedPackageId = (string) ($package['package_id'] ?? ($requestedPackageId !== '' ? $requestedPackageId : 'ultimo disponivel'));
 
         $sourceProfile = strtolower(trim((string) ($package['source_profile'] ?? '')));
         $allowedTargets = $this->allowedApplyTargets($sourceProfile);
@@ -377,20 +473,29 @@ final class ContentSyncManager
 
         $this->assertProductionPublishAllowed($targetProfile);
         $profile = $this->profile($targetProfile);
+        $profileLabel = (string) ($profile['label'] ?? $targetProfile);
         $lock = $this->acquireRunLock($this->packageRoot(), 'apply', $targetProfile, (string) ($profile['label'] ?? $targetProfile));
         $tmpDir = '';
 
         try {
+            $this->updateProgress($progressId, 'Lendo pacote', sprintf('Pacote %s validado. Preparando a aplicacao em %s.', $resolvedPackageId, $profileLabel), 18);
             $payload = $this->readPayload((string) $package['_dir']);
+            $this->updateProgress($progressId, 'Conectando destino', sprintf('Abrindo o banco do ambiente %s.', $profileLabel), 26);
             $pdo = $this->connectPdo((array) ($profile['database'] ?? []));
+            $this->updateProgress($progressId, 'Extraindo uploads', 'Descompactando uploads.zip para aplicar os arquivos referenciados.', 34);
             $tmpDir = $this->extractArchive((string) $package['_dir'] . DIRECTORY_SEPARATOR . 'uploads.zip');
 
             $pdo->beginTransaction();
             try {
+                $this->updateProgress($progressId, 'Aplicando categorias', 'Atualizando categorias editoriais no banco de destino.', 44);
                 $categories = $this->applyCategories($pdo, (array) ($payload['categoria_post.json'] ?? []));
+                $this->updateProgress($progressId, 'Aplicando posts', 'Atualizando posts e historico de slugs no banco de destino.', 56);
                 $posts = $this->applyPosts($pdo, (array) ($payload['posts.json'] ?? []), (array) ($payload['post_slug_history.json'] ?? []), $categories);
+                $this->updateProgress($progressId, 'Aplicando links', 'Atualizando links publicos do pacote editorial.', 64);
                 $links = $this->applyLinks($pdo, (array) ($payload['links.json'] ?? []));
+                $this->updateProgress($progressId, 'Aplicando configuracoes', 'Atualizando configuracoes publicas do ambiente de destino.', 70);
                 $configs = $this->applyConfiguracoes($pdo, (array) ($payload['configuracoes.json'] ?? []));
+                $this->updateProgress($progressId, 'Validando integridade', 'Conferindo a integridade dos posts aplicados antes do commit final.', 78);
                 $this->assertAppliedPostIntegrity($pdo, (array) ($payload['posts.json'] ?? []));
                 $pdo->commit();
             } catch (\Throwable $exception) {
@@ -398,6 +503,7 @@ final class ContentSyncManager
                 throw $exception;
             }
 
+            $this->updateProgress($progressId, 'Aplicando uploads', 'Copiando uploads referenciados para o ambiente de destino.', 86);
             $uploads = $this->applyUploads((array) ($profile['uploads'] ?? []), $tmpDir);
             $apply = [
                 'target_profile' => $targetProfile,
@@ -408,13 +514,31 @@ final class ContentSyncManager
             $package['applied_targets'] = array_values(array_merge((array) ($package['applied_targets'] ?? []), [$apply]));
             $package['verification'] = $verification;
             $package['is_valid'] = true;
+            $this->updateProgress($progressId, 'Gravando aplicacao', 'Registrando no manifesto local que este pacote ja foi aplicado no destino.', 94);
             $this->writeManifest((string) $package['_dir'], $package);
             $type = strtolower(trim($targetProfile)) === 'production' ? 'promocao_conteudo' : 'aplicacao_conteudo';
             $this->logOperation($type, (string) ($package['source_profile'] ?? 'stage'), $targetProfile, (string) ($package['package_id'] ?? ''), 'OK', 'Pacote de conteudo aplicado com sucesso.');
 
+            $this->writeProgress($progressId, [
+                'status' => 'completed',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Aplicacao concluida',
+                'message' => sprintf('Pacote %s aplicado com sucesso em %s.', (string) ($package['package_id'] ?? $resolvedPackageId), $profileLabel),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
+
             return ['package_id' => $package['package_id'] ?? null, 'target_profile' => $targetProfile, 'applied_at' => $apply['applied_at'], 'result' => $apply['result']];
         } catch (\Throwable $exception) {
             $this->logOperation('aplicacao_conteudo', (string) ($package['source_profile'] ?? 'stage'), $targetProfile, (string) ($package['package_id'] ?? ($packageId ?? '')), 'FAIL', $exception->getMessage());
+            $this->writeProgress($progressId, [
+                'status' => 'error',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Falha na aplicacao',
+                'message' => $exception->getMessage(),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
             throw $exception;
         } finally {
             if ($tmpDir !== '' && str_contains($tmpDir, sys_get_temp_dir())) {
@@ -424,21 +548,27 @@ final class ContentSyncManager
         }
     }
 
-    public function applyCode(string $packageId, string $targetProfile = 'production', bool $force = false): array
+    public function applyCode(?string $packageId, string $targetProfile = 'production', bool $force = false, ?string $progressId = null): array
     {
+        $this->allowLongRunningProcess();
+        $this->writeProgress($progressId, [
+            'status' => 'running',
+            'title' => self::PROGRESS_TITLE,
+            'stage' => 'Validando deploy tecnico',
+            'message' => 'Preparando a aplicacao do pacote de codigo no destino escolhido.',
+            'percent' => 6,
+            'updated_at' => date('c'),
+        ]);
         if (!$force) {
             throw new RuntimeException('Publicacao de codigo exige confirmacao explicita.');
         }
 
-        $packageId = trim($packageId);
-        if ($packageId === '' || strtolower($packageId) === 'latest') {
-            throw new RuntimeException('package_id e obrigatorio para deploy tecnico.');
-        }
-
+        $requestedPackageId = trim((string) $packageId);
         $package = $this->codePackageById($packageId);
         if ($package === null) {
             throw new RuntimeException('Nenhum pacote de codigo encontrado para aplicar.');
         }
+        $resolvedPackageId = (string) ($package['package_id'] ?? ($requestedPackageId !== '' ? $requestedPackageId : 'ultimo disponivel'));
 
         $this->assertProductionPublishAllowed($targetProfile);
         $profile = $this->profile($targetProfile);
@@ -452,6 +582,7 @@ final class ContentSyncManager
                 throw new RuntimeException('Arquivo ZIP do pacote de codigo nao encontrado.');
             }
 
+            $this->updateProgress($progressId, 'Extraindo pacote tecnico', sprintf('Abrindo o pacote %s para preparar o deploy tecnico.', $resolvedPackageId), 24);
             $tmpDir = $this->extractArchive($zipPath);
             $sourceDir = $tmpDir . DIRECTORY_SEPARATOR . 'files';
             if (!is_dir($sourceDir)) {
@@ -459,6 +590,7 @@ final class ContentSyncManager
             }
 
             $deployConfig = $this->codeDeployConfig($targetProfile);
+            $this->updateProgress($progressId, 'Aplicando arquivos tecnicos', sprintf('Enviando os arquivos do pacote tecnico para %s.', $profileLabel), 56);
             $result = $this->deployCode($deployConfig, $sourceDir);
             $apply = [
                 'target_profile' => $targetProfile,
@@ -469,11 +601,21 @@ final class ContentSyncManager
             $package['applied_targets'] = array_values(array_merge((array) ($package['applied_targets'] ?? []), [$apply]));
             $manifestDir = (string) ($package['_dir'] ?? '');
             if ($manifestDir !== '') {
+                $this->updateProgress($progressId, 'Gravando deploy tecnico', 'Atualizando o manifesto local do pacote tecnico com o destino aplicado.', 90);
                 $this->writeManifest($manifestDir, $package);
             }
             $type = strtolower(trim($targetProfile)) === 'production' ? 'deploy_tecnico' : 'deploy_tecnico_stage';
             $this->logOperation($type, 'local', $targetProfile, (string) ($package['package_id'] ?? ''), 'OK', 'Pacote tecnico aplicado com sucesso.', [
                 'files' => (int) ($result['files_applied'] ?? 0),
+            ]);
+
+            $this->writeProgress($progressId, [
+                'status' => 'completed',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Deploy tecnico concluido',
+                'message' => sprintf('Pacote tecnico %s aplicado com sucesso em %s.', (string) ($package['package_id'] ?? $resolvedPackageId), $profileLabel),
+                'percent' => 100,
+                'updated_at' => date('c'),
             ]);
 
             return [
@@ -485,6 +627,14 @@ final class ContentSyncManager
             ];
         } catch (\Throwable $exception) {
             $this->logOperation('deploy_tecnico', 'local', $targetProfile, (string) ($package['package_id'] ?? ($packageId ?? '')), 'FAIL', $exception->getMessage());
+            $this->writeProgress($progressId, [
+                'status' => 'error',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Falha no deploy tecnico',
+                'message' => $exception->getMessage(),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
             throw $exception;
         } finally {
             if ($tmpDir !== '' && str_contains($tmpDir, sys_get_temp_dir())) {
@@ -2201,6 +2351,47 @@ final class ContentSyncManager
         return is_array($decoded) ? $decoded : null;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getProgress(?string $progressId): array
+    {
+        $progress = $this->normalizeProgressId($progressId);
+        if ($progress === null) {
+            return [
+                'status' => 'idle',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Aguardando',
+                'message' => 'Nenhuma rotina de conteudo em andamento.',
+                'percent' => 0,
+            ];
+        }
+
+        $path = $this->progressPath($progress);
+        if (!is_file($path)) {
+            return [
+                'status' => 'idle',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Aguardando',
+                'message' => 'Nenhum progresso encontrado para esta rotina.',
+                'percent' => 0,
+            ];
+        }
+
+        $decoded = json_decode((string) file_get_contents($path), true);
+        if (!is_array($decoded)) {
+            return [
+                'status' => 'error',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Erro de leitura',
+                'message' => 'Nao foi possivel ler o andamento atual da rotina.',
+                'percent' => 0,
+            ];
+        }
+
+        return $decoded;
+    }
+
     private function latestAppliedTarget(array $items, string $targetProfile): ?array
     {
         foreach ($items as $item) {
@@ -2344,5 +2535,62 @@ final class ContentSyncManager
             }
         }
         @rmdir($directory);
+    }
+
+    private function allowLongRunningProcess(): void
+    {
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
+    }
+
+    private function normalizeProgressId(?string $progressId): ?string
+    {
+        $value = strtolower(trim((string) $progressId));
+        if ($value === '' || !preg_match('/^[a-z0-9_-]{8,80}$/', $value)) {
+            return null;
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function writeProgress(?string $progressId, array $payload): void
+    {
+        $progress = $this->normalizeProgressId($progressId);
+        if ($progress === null) {
+            return;
+        }
+
+        $path = $this->progressPath($progress);
+        $directory = dirname($path);
+        if (!is_dir($directory) && !mkdir($directory, 0777, true) && !is_dir($directory)) {
+            return;
+        }
+
+        file_put_contents(
+            $path,
+            json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
+    }
+
+    private function updateProgress(?string $progressId, string $stage, string $message, int $percent): void
+    {
+        $this->writeProgress($progressId, [
+            'status' => 'running',
+            'title' => self::PROGRESS_TITLE,
+            'stage' => $stage,
+            'message' => $message,
+            'percent' => max(0, min(100, $percent)),
+            'updated_at' => date('c'),
+        ]);
+    }
+
+    private function progressPath(string $progressId): string
+    {
+        $baseDirectory = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'content-sync' . DIRECTORY_SEPARATOR . 'progress';
+        return $baseDirectory . DIRECTORY_SEPARATOR . $progressId . '.json';
     }
 }

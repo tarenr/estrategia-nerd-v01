@@ -56,6 +56,7 @@ $contentHtml = (string) ($content_html ?? '');
         <?php $isActive = $key === $activeTab; ?>
         <a
           href="<?= htmlspecialchars(url('/admin/base-tecnica?aba=' . $key), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+          data-knowledge-hub-link="true"
           class="rounded-2xl border px-4 py-4 transition <?= $isActive ? 'border-cyan-300/70 bg-cyan-500/15 text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.12)]' : 'border-slate-700 bg-slate-950/70 text-slate-200 hover:border-cyan-400/50 hover:bg-cyan-500/10' ?>"
           aria-current="<?= $isActive ? 'page' : 'false' ?>"
         >
@@ -79,7 +80,7 @@ $contentHtml = (string) ($content_html ?? '');
     }
 
     const content = document.querySelector('[data-knowledge-hub-content]');
-    const links = Array.from(document.querySelectorAll('a[href*="/admin/base-tecnica?aba="]'));
+    const links = Array.from(document.querySelectorAll('[data-knowledge-hub-link="true"]'));
     if (!content || links.length === 0) {
       return;
     }

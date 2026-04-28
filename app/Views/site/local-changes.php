@@ -86,6 +86,16 @@ $formatSystemEvent = static function (array $item) use ($activityEventMeta): arr
     .doc-table td { padding: 0.72rem 0.75rem; vertical-align: top; }
     .doc-row { border: 1px solid rgba(51, 65, 85, 0.95); background: rgba(2, 6, 23, 0.72); }
     .doc-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .doc-pre {
+      max-width: 100%;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-size: 0.84rem;
+      line-height: 1.75;
+      color: rgba(226, 232, 240, 0.96);
+    }
     .changes-col-file { width: 16%; }
     .changes-col-updated { width: 20%; }
     .changes-col-path { width: 56%; }
@@ -134,6 +144,9 @@ $formatSystemEvent = static function (array $item) use ($activityEventMeta): arr
       background: rgba(127, 29, 29, 0.28);
     }
     .change-doc-panel[hidden] { display: none; }
+    .change-doc-panel {
+      overflow: hidden;
+    }
   </style>
 
   <div class="<?= $adminEmbed ? 'space-y-6' : 'mx-auto max-w-7xl space-y-6' ?>">

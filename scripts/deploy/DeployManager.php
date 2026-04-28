@@ -47,9 +47,9 @@ final class DeployManager
         return $this->contentSync->codeStatus();
     }
 
-    public function applyCode(string $packageId, string $targetProfile = 'production', bool $force = false): array
+    public function applyCode(?string $packageId, string $targetProfile = 'production', bool $force = false, ?string $progressId = null): array
     {
-        return $this->contentSync->applyCode($packageId, $targetProfile, $force);
+        return $this->contentSync->applyCode($packageId, $targetProfile, $force, $progressId);
     }
 
     public function profileReady(string $profileName): bool

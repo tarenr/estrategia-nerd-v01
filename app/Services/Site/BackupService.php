@@ -14,27 +14,50 @@ final class BackupService
     ) {
     }
 
-    public function getViewModel(?array $flash = null, ?array $lastVerification = null): array
+    public function getViewModel(string $section = 'resumo', int $historyPage = 1, int $historyPerPage = 10, ?array $flash = null, ?array $lastVerification = null): array
     {
+        $section = strtolower(trim($section));
+        $withVerification = $section === 'historico';
+        $historyPage = max(1, $historyPage);
+        $historyPerPage = max(5, min(50, $historyPerPage));
+        $historyOffset = ($historyPage - 1) * $historyPerPage;
+
+        $status = $this->manager->status(
+            $withVerification,
+            $withVerification ? $historyPerPage : null,
+            $withVerification ? $historyOffset : 0
+        );
+
+        $totalBackups = (int) ($status['total_backups'] ?? 0);
+        $historyPages = max(1, (int) ceil($totalBackups / max(1, $historyPerPage)));
+
         return [
-            'title' => 'Backup Local | Estratégia Nerd',
-            'meta_description' => 'Painel local de backup, verificação e restore do projeto.',
+            'title' => 'Backup de Ambiente | Estrategia Nerd',
+            'meta_description' => 'Painel local de backup de ambiente, verificacao e restore do projeto.',
             'site_chrome' => false,
-            'backup_status' => $this->presentStatus($this->manager->status()),
+            'backup_status' => $this->presentStatus($status, $withVerification),
             'flash' => is_array($flash) ? $flash : null,
             'last_verification' => is_array($lastVerification) ? $lastVerification : null,
+            'local_ready' => $this->profileReady('local'),
+            'stage_ready' => $this->profileReady('stage'),
             'production_ready' => $this->productionProfileReady(),
+            'backup_history_pagination' => [
+                'total' => $totalBackups,
+                'page' => min($historyPage, $historyPages),
+                'per_page' => $historyPerPage,
+                'pages' => $historyPages,
+            ],
         ];
     }
 
-    public function run(string $profile): array
+    public function run(string $profile, ?string $progressId = null): array
     {
-        return $this->manager->run($profile);
+        return $this->manager->run($profile, $progressId);
     }
 
-    public function verify(string $backupId): array
+    public function verify(?string $backupId, ?string $progressId = null): array
     {
-        return $this->manager->verify($backupId);
+        return $this->manager->verify($backupId, $progressId);
     }
 
     public function markUploaded(?string $backupId): array
@@ -42,9 +65,9 @@ final class BackupService
         return $this->manager->markUploaded($backupId);
     }
 
-    public function restore(string $backupId, string $targetProfile, string $scope): array
+    public function restore(?string $backupId, string $targetProfile, string $scope, ?string $progressId = null): array
     {
-        return $this->manager->restore($backupId, $targetProfile, $scope, true);
+        return $this->manager->restore($backupId, $targetProfile, $scope, true, $progressId);
     }
 
     public function profileReady(string $profileName): bool
@@ -99,12 +122,16 @@ final class BackupService
         return true;
     }
 
-    private function presentStatus(array $status): array
+    private function presentStatus(array $status, bool $withVerification = true): array
     {
         $items = [];
         foreach ((array) ($status['items'] ?? []) as $item) {
             $databaseBytes = (int) ($item['database']['size_bytes'] ?? 0);
             $uploadsBytes = (int) ($item['uploads']['size_bytes'] ?? 0);
+            $isValid = $withVerification
+                ? (bool) ($item['is_valid'] ?? false)
+                : strtolower((string) ($item['status'] ?? '')) === 'ready';
+
             $items[] = [
                 'backup_id' => (string) ($item['backup_id'] ?? ''),
                 'profile' => (string) ($item['profile'] ?? ''),
@@ -112,12 +139,12 @@ final class BackupService
                 'created_at' => (string) ($item['created_at'] ?? ''),
                 'cloud_uploaded' => (bool) ($item['cloud_uploaded'] ?? false),
                 'cloud_uploaded_at' => (string) ($item['cloud_uploaded_at'] ?? ''),
-                'is_valid' => (bool) ($item['is_valid'] ?? false),
+                'is_valid' => $isValid,
                 'database_size' => $this->formatBytes($databaseBytes),
                 'uploads_size' => $this->formatBytes($uploadsBytes),
                 'total_size' => $this->formatBytes($databaseBytes + $uploadsBytes),
-                'database_status' => (string) ($item['verification']['database']['message'] ?? '—'),
-                'uploads_status' => (string) ($item['verification']['uploads']['message'] ?? '—'),
+                'database_status' => (string) ($item['verification']['database']['message'] ?? ($withVerification ? '—' : 'Nao verificado nesta consulta.')),
+                'uploads_status' => (string) ($item['verification']['uploads']['message'] ?? ($withVerification ? '—' : 'Nao verificado nesta consulta.')),
             ];
         }
 
@@ -151,7 +178,7 @@ final class BackupService
 
         return [
             'profile' => (string) ($running['profile'] ?? ''),
-            'profile_label' => (string) ($running['profile_label'] ?? 'Backup em execução'),
+            'profile_label' => (string) ($running['profile_label'] ?? 'Backup em execucao'),
             'started_at' => (string) ($running['started_at'] ?? ''),
         ];
     }

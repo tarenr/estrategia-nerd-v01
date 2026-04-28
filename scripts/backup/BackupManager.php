@@ -18,6 +18,7 @@ final class BackupManager
         'stage' => '02-stage',
         'production' => '03-prod',
     ];
+    private const PROGRESS_TITLE = 'Executando rotina de backup';
 
     private OperationLogger $logger;
 
@@ -27,11 +28,21 @@ final class BackupManager
         $this->logger = new OperationLogger($this->operationRoot());
     }
 
-    public function run(string $profileName = 'local'): array
+    public function run(string $profileName = 'local', ?string $progressId = null): array
     {
+        $this->allowLongRunningProcess();
         $profile = $this->profile($profileName);
         $operationRoot = $this->backupRoot();
         $backupRoot = $this->profileBackupRoot($profileName);
+        $profileLabel = (string) ($profile['label'] ?? $profileName);
+        $this->writeProgress($progressId, [
+            'status' => 'running',
+            'title' => self::PROGRESS_TITLE,
+            'stage' => 'Validando ambiente',
+            'message' => sprintf('Preparando o backup de ambiente do perfil %s.', $profileLabel),
+            'percent' => 6,
+            'updated_at' => date('c'),
+        ]);
         $lock = $this->acquireRunLock($operationRoot, $profileName, (string) ($profile['label'] ?? $profileName));
         $profileSlug = trim((string) ($profile['slug'] ?? $profileName));
         $backupId = $this->buildBackupId('BD', $profileName);
@@ -60,19 +71,33 @@ final class BackupManager
 
         try {
             $databasePath = $backupDir . DIRECTORY_SEPARATOR . 'database.sql';
+            $this->updateProgress($progressId, 'Exportando banco', sprintf('Gerando database.sql do ambiente %s.', $profileLabel), 22);
             $this->backupDatabase((array) ($profile['database'] ?? []), $databasePath);
             $manifest['database'] = $this->fileDetails($databasePath, 'database.sql');
 
             $uploadsZipPath = $backupDir . DIRECTORY_SEPARATOR . 'uploads.zip';
+            $this->updateProgress($progressId, 'Coletando uploads', sprintf('Preparando a arvore de uploads do ambiente %s.', $profileLabel), 44);
             $temporaryDirectory = $this->materializeUploads((array) ($profile['uploads'] ?? []));
+            $this->updateProgress($progressId, 'Compactando uploads', 'Gerando uploads.zip para fechar o backup de ambiente.', 64);
             $this->compressDirectory($temporaryDirectory, $uploadsZipPath);
             $manifest['uploads'] = $this->fileDetails($uploadsZipPath, 'uploads.zip');
 
             $manifest['status'] = 'ready';
             $manifest['verified_at'] = date('c');
+            $this->updateProgress($progressId, 'Gravando manifesto', 'Registrando o manifesto local do backup gerado.', 88);
             $this->writeManifest($backupDir, $manifest);
+            $this->updateProgress($progressId, 'Aplicando retencao', 'Limpando backups excedentes conforme a politica de retencao.', 94);
             $this->applyRetention($profileName);
             $this->logOperation('backup_dados', $profileName, $profileName, (string) $backupId, 'OK', 'Backup de dados concluido.');
+
+            $this->writeProgress($progressId, [
+                'status' => 'completed',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Backup concluido',
+                'message' => sprintf('Backup %s concluido com sucesso para o ambiente %s.', $backupId, $profileLabel),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
 
             return $manifest;
         } catch (\Throwable $exception) {
@@ -80,6 +105,14 @@ final class BackupManager
             $manifest['error'] = $exception->getMessage();
             $this->writeManifest($backupDir, $manifest);
             $this->logOperation('backup_dados', $profileName, $profileName, (string) $backupId, 'FAIL', $exception->getMessage());
+            $this->writeProgress($progressId, [
+                'status' => 'error',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Falha no backup',
+                'message' => $exception->getMessage(),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
             throw $exception;
         } finally {
             if ($temporaryDirectory !== '' && str_contains($temporaryDirectory, sys_get_temp_dir())) {
@@ -90,14 +123,39 @@ final class BackupManager
         }
     }
 
-    public function status(): array
+    public function status(bool $withVerification = true, ?int $limit = null, int $offset = 0): array
     {
         $backupRoot = $this->backupRoot();
-        $items = $this->allBackups();
+        $allItems = $this->allBackups(false);
+        $totalBackups = count($allItems);
+        $items = $allItems;
+
+        if ($limit !== null && $limit > 0) {
+            $items = array_slice($allItems, max(0, $offset), $limit);
+        }
+
+        if ($withVerification) {
+            foreach ($items as &$manifest) {
+                $directory = (string) ($manifest['_dir'] ?? '');
+                if ($directory === '') {
+                    continue;
+                }
+
+                $manifest['verification'] = [
+                    'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
+                    'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
+                ];
+                $manifest['is_valid'] =
+                    (bool) ($manifest['verification']['database']['valid'] ?? false)
+                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false);
+            }
+            unset($manifest);
+        }
+
         $latest = $items[0] ?? null;
         $latestUploaded = null;
 
-        foreach ($items as $item) {
+        foreach ($allItems as $item) {
             if (($item['cloud_uploaded'] ?? false) === true) {
                 $latestUploaded = $item;
                 break;
@@ -106,7 +164,7 @@ final class BackupManager
 
         return [
             'backup_root' => $backupRoot,
-            'total_backups' => count($items),
+            'total_backups' => $totalBackups,
             'latest' => $latest,
             'latest_uploaded' => $latestUploaded,
             'running' => $this->readRunLock($backupRoot),
@@ -129,41 +187,98 @@ final class BackupManager
         return $backup;
     }
 
-    public function verify(string $backupId): array
+    public function markCloudUploaded(string $backupId, array $metadata = []): array
     {
-        $backupId = trim($backupId);
-        if ($backupId === '' || strtolower($backupId) === 'latest') {
-            throw new RuntimeException('backup_id e obrigatorio para verificar backup de dados.');
-        }
-
-        $backup = $this->backupById($backupId);
+        $backup = $this->backupById($backupId, false);
         if ($backup === null) {
-            throw new RuntimeException('Nenhum backup encontrado para verificar.');
+            throw new RuntimeException('Nenhum backup encontrado para registrar envio em nuvem.');
         }
 
-        $backup['database_verification'] = $this->verifyEntry((array) ($backup['database'] ?? []), (string) $backup['_dir']);
-        $backup['uploads_verification'] = $this->verifyEntry((array) ($backup['uploads'] ?? []), (string) $backup['_dir']);
-        $backup['is_valid'] = ($backup['database_verification']['valid'] ?? false) && ($backup['uploads_verification']['valid'] ?? false);
-        $this->logOperation('backup_verificacao', (string) ($backup['profile'] ?? 'local'), (string) ($backup['profile'] ?? 'local'), (string) ($backup['backup_id'] ?? ''), ($backup['is_valid'] ?? false) ? 'OK' : 'FAIL', 'Verificacao de backup executada.');
+        $backup['cloud_uploaded'] = true;
+        $backup['cloud_uploaded_at'] = date('c');
+        $backup['cloud_provider'] = (string) ($metadata['provider'] ?? 'dropbox');
+        $backup['cloud_destination'] = (string) ($metadata['destination'] ?? '');
+        $backup['cloud_remote_id'] = (string) ($metadata['remote_id'] ?? '');
+        $backup['cloud_uploaded_files'] = (array) ($metadata['uploaded_files'] ?? []);
+        $backup['cloud_uploaded_files_count'] = (int) ($metadata['uploaded_files_count'] ?? count((array) ($metadata['uploaded_files'] ?? [])));
+        $backup['cloud_uploaded_size_bytes'] = (int) ($metadata['uploaded_size_bytes'] ?? 0);
+
+        $this->writeManifest((string) $backup['_dir'], $backup);
+        $this->logOperation(
+            'backup_envio_nuvem',
+            (string) ($backup['profile'] ?? 'local'),
+            'dropbox',
+            (string) ($backup['backup_id'] ?? ''),
+            'OK',
+            'Backup enviado para a nuvem.',
+            [
+                'destination' => (string) ($metadata['destination'] ?? ''),
+                'provider' => (string) ($metadata['provider'] ?? 'dropbox'),
+            ]
+        );
 
         return $backup;
     }
 
-    public function restore(string $backupId, string $targetProfile = 'local', string $scope = 'all', bool $force = false): array
+    public function verify(?string $backupId, ?string $progressId = null): array
     {
+        $this->allowLongRunningProcess();
+        $this->writeProgress($progressId, [
+            'status' => 'running',
+            'title' => self::PROGRESS_TITLE,
+            'stage' => 'Localizando backup',
+            'message' => 'Preparando a verificacao do backup informado.',
+            'percent' => 10,
+            'updated_at' => date('c'),
+        ]);
+        $requestedBackupId = trim((string) $backupId);
+        $backup = $this->backupById($backupId, false);
+        if ($backup === null) {
+            throw new RuntimeException('Nenhum backup encontrado para verificar.');
+        }
+
+        $resolvedBackupId = (string) ($backup['backup_id'] ?? ($requestedBackupId !== '' ? $requestedBackupId : 'ultimo disponivel'));
+
+        $this->updateProgress($progressId, 'Verificando banco', sprintf('Conferindo o manifesto e o arquivo SQL do backup %s.', $resolvedBackupId), 36);
+        $backup['database_verification'] = $this->verifyEntry((array) ($backup['database'] ?? []), (string) $backup['_dir']);
+        $this->updateProgress($progressId, 'Verificando uploads', 'Conferindo uploads.zip e seus checksums.', 72);
+        $backup['uploads_verification'] = $this->verifyEntry((array) ($backup['uploads'] ?? []), (string) $backup['_dir']);
+        $backup['is_valid'] = ($backup['database_verification']['valid'] ?? false) && ($backup['uploads_verification']['valid'] ?? false);
+        $this->logOperation('backup_verificacao', (string) ($backup['profile'] ?? 'local'), (string) ($backup['profile'] ?? 'local'), (string) ($backup['backup_id'] ?? ''), ($backup['is_valid'] ?? false) ? 'OK' : 'FAIL', 'Verificacao de backup executada.');
+
+        $this->writeProgress($progressId, [
+                'status' => 'completed',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Verificacao concluida',
+                'message' => sprintf('Backup %s verificado com status %s.', $resolvedBackupId, ($backup['is_valid'] ?? false) ? 'valido' : 'invalido'),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
+
+        return $backup;
+    }
+
+    public function restore(?string $backupId, string $targetProfile = 'local', string $scope = 'all', bool $force = false, ?string $progressId = null): array
+    {
+        $this->allowLongRunningProcess();
+        $this->writeProgress($progressId, [
+            'status' => 'running',
+            'title' => self::PROGRESS_TITLE,
+            'stage' => 'Validando restore',
+            'message' => 'Preparando a restauracao completa do ambiente selecionado.',
+            'percent' => 6,
+            'updated_at' => date('c'),
+        ]);
         if (!$force) {
             throw new RuntimeException('Restore exige confirmacao explicita. Use o comando com --force.');
         }
 
-        $backupId = trim($backupId);
-        if ($backupId === '' || strtolower($backupId) === 'latest') {
-            throw new RuntimeException('backup_id e obrigatorio para restore de dados.');
-        }
-
-        $backup = $this->backupById($backupId);
+        $requestedBackupId = trim((string) $backupId);
+        $backup = $this->backupById($backupId, false);
         if ($backup === null) {
             throw new RuntimeException('Nenhum backup encontrado para restaurar.');
         }
+        $resolvedBackupId = (string) ($backup['backup_id'] ?? ($requestedBackupId !== '' ? $requestedBackupId : 'ultimo disponivel'));
 
         $sourceProfile = strtolower(trim((string) ($backup['profile'] ?? '')));
         $targetProfile = strtolower(trim($targetProfile));
@@ -185,6 +300,7 @@ final class BackupManager
         try {
             if ($scope === 'all' || $scope === 'database') {
                 $databaseFile = (string) (($backup['database']['name'] ?? '') ?: 'database.sql');
+                $this->updateProgress($progressId, 'Restaurando banco', sprintf('Aplicando database.sql no ambiente %s.', (string) ($profile['label'] ?? $targetProfile)), 34);
                 $this->restoreDatabase((array) ($profile['database'] ?? []), (string) $backup['_dir'] . DIRECTORY_SEPARATOR . $databaseFile);
                 $restored[] = 'database';
             }
@@ -192,8 +308,10 @@ final class BackupManager
             if ($scope === 'all' || $scope === 'uploads') {
                 $uploadsFile = (string) (($backup['uploads']['name'] ?? '') ?: 'uploads.zip');
                 $zipPath = (string) $backup['_dir'] . DIRECTORY_SEPARATOR . $uploadsFile;
+                $this->updateProgress($progressId, 'Extraindo uploads', 'Descompactando uploads.zip do backup selecionado.', 62);
                 $tmpDirectory = $this->extractArchive($zipPath);
                 try {
+                    $this->updateProgress($progressId, 'Restaurando uploads', 'Sincronizando os uploads do backup para o ambiente de destino.', 82);
                     $this->restoreUploads((array) ($profile['uploads'] ?? []), $tmpDirectory);
                 } finally {
                     $this->removeDirectory($tmpDirectory);
@@ -214,14 +332,77 @@ final class BackupManager
                 'scope' => $scope,
             ]);
 
+            $this->writeProgress($progressId, [
+                'status' => 'completed',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Restore concluido',
+                'message' => sprintf('Backup %s restaurado com sucesso no ambiente %s.', $resolvedBackupId, (string) ($profile['label'] ?? $targetProfile)),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
+
             return $result;
         } catch (\Throwable $exception) {
             $this->logOperation('restore_dados', (string) ($backup['profile'] ?? 'local'), $targetProfile, (string) ($backup['backup_id'] ?? ''), 'FAIL', $exception->getMessage(), [
                 'scope' => $scope,
                 'restored' => $restored,
             ]);
+            $this->writeProgress($progressId, [
+                'status' => 'error',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Falha no restore',
+                'message' => $exception->getMessage(),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
             throw $exception;
         }
+    }
+
+    public function findBackup(?string $backupId = null, bool $withVerification = false): ?array
+    {
+        return $this->backupById($backupId, $withVerification);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getProgress(?string $progressId): array
+    {
+        $progress = $this->normalizeProgressId($progressId);
+        if ($progress === null) {
+            return [
+                'status' => 'idle',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Aguardando',
+                'message' => 'Nenhuma rotina de backup em andamento.',
+                'percent' => 0,
+            ];
+        }
+
+        $path = $this->progressPath($progress);
+        if (!is_file($path)) {
+            return [
+                'status' => 'idle',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Aguardando',
+                'message' => 'Nenhum progresso encontrado para esta rotina.',
+                'percent' => 0,
+            ];
+        }
+
+        $decoded = json_decode((string) file_get_contents($path), true);
+        if (!is_array($decoded)) {
+            return [
+                'status' => 'error',
+                'title' => self::PROGRESS_TITLE,
+                'stage' => 'Erro de leitura',
+                'message' => 'Nao foi possivel ler o andamento atual do backup.',
+                'percent' => 0,
+            ];
+        }
+
+        return $decoded;
     }
 
     private function operationRoot(): string
@@ -798,7 +979,7 @@ final class BackupManager
         );
     }
 
-    private function allBackups(): array
+    private function allBackups(bool $withVerification = true): array
     {
         $directories = [];
         foreach ($this->backupSearchRoots() as $root) {
@@ -818,15 +999,7 @@ final class BackupManager
             if (!is_array($manifest)) {
                 continue;
             }
-
             $manifest['_dir'] = $directory;
-            $manifest['verification'] = [
-                'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
-                'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
-            ];
-            $manifest['is_valid'] =
-                (bool) ($manifest['verification']['database']['valid'] ?? false)
-                && (bool) ($manifest['verification']['uploads']['valid'] ?? false);
 
             $items[] = $manifest;
         }
@@ -838,12 +1011,30 @@ final class BackupManager
             return $rightTime <=> $leftTime;
         });
 
+        if ($withVerification) {
+            foreach ($items as &$manifest) {
+                $directory = (string) ($manifest['_dir'] ?? '');
+                if ($directory === '') {
+                    continue;
+                }
+
+                $manifest['verification'] = [
+                    'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
+                    'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
+                ];
+                $manifest['is_valid'] =
+                    (bool) ($manifest['verification']['database']['valid'] ?? false)
+                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false);
+            }
+            unset($manifest);
+        }
+
         return $items;
     }
 
-    private function backupById(?string $backupId): ?array
+    private function backupById(?string $backupId, bool $withVerification = true): ?array
     {
-        $items = $this->allBackups();
+        $items = $this->allBackups($withVerification);
         if ($backupId === null || trim($backupId) === '' || strtolower(trim($backupId)) === 'latest') {
             return $items[0] ?? null;
         }
@@ -890,7 +1081,7 @@ final class BackupManager
     private function applyRetention(string $profileName): void
     {
         $keep = max(1, (int) ($this->config['retention'] ?? 14));
-        $items = $this->backupsBySearchRoot($this->profileBackupRoot($profileName));
+        $items = $this->backupsBySearchRoot($this->profileBackupRoot($profileName), false);
         $itemsToRemove = array_slice($items, $keep);
 
         foreach ($itemsToRemove as $item) {
@@ -924,7 +1115,7 @@ final class BackupManager
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function backupsBySearchRoot(string $root): array
+    private function backupsBySearchRoot(string $root, bool $withVerification = true): array
     {
         $directories = glob($root . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [];
         $items = [];
@@ -941,13 +1132,15 @@ final class BackupManager
             }
 
             $manifest['_dir'] = $directory;
-            $manifest['verification'] = [
-                'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
-                'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
-            ];
-            $manifest['is_valid'] =
-                (bool) ($manifest['verification']['database']['valid'] ?? false)
-                && (bool) ($manifest['verification']['uploads']['valid'] ?? false);
+            if ($withVerification) {
+                $manifest['verification'] = [
+                    'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
+                    'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
+                ];
+                $manifest['is_valid'] =
+                    (bool) ($manifest['verification']['database']['valid'] ?? false)
+                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false);
+            }
 
             $items[] = $manifest;
         }
@@ -988,5 +1181,62 @@ final class BackupManager
         }
 
         @rmdir($directory);
+    }
+
+    private function allowLongRunningProcess(): void
+    {
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
+    }
+
+    private function normalizeProgressId(?string $progressId): ?string
+    {
+        $value = strtolower(trim((string) $progressId));
+        if ($value === '' || !preg_match('/^[a-z0-9_-]{8,80}$/', $value)) {
+            return null;
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function writeProgress(?string $progressId, array $payload): void
+    {
+        $progress = $this->normalizeProgressId($progressId);
+        if ($progress === null) {
+            return;
+        }
+
+        $path = $this->progressPath($progress);
+        $directory = dirname($path);
+        if (!is_dir($directory) && !mkdir($directory, 0777, true) && !is_dir($directory)) {
+            return;
+        }
+
+        file_put_contents(
+            $path,
+            json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
+    }
+
+    private function updateProgress(?string $progressId, string $stage, string $message, int $percent): void
+    {
+        $this->writeProgress($progressId, [
+            'status' => 'running',
+            'title' => self::PROGRESS_TITLE,
+            'stage' => $stage,
+            'message' => $message,
+            'percent' => max(0, min(100, $percent)),
+            'updated_at' => date('c'),
+        ]);
+    }
+
+    private function progressPath(string $progressId): string
+    {
+        $baseDirectory = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'backup-progress';
+        return $baseDirectory . DIRECTORY_SEPARATOR . $progressId . '.json';
     }
 }

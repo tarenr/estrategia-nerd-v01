@@ -23,28 +23,8 @@ $sectionUrl = static function (string $section) use ($overviewBaseUrl): string {
 ?>
 <section class="<?= $adminEmbed ? 'text-slate-100' : 'min-h-screen bg-slate-950 px-4 py-8 text-slate-100' ?>">
   <style>
-    .operations-overview-loading {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
+    .operations-overview-inline-loading[hidden] {
       display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(2, 6, 23, 0.84);
-      backdrop-filter: blur(12px);
-    }
-
-    .operations-overview-loading.is-visible {
-      display: flex;
-    }
-
-    .operations-overview-loading-card {
-      width: min(92vw, 28rem);
-      border-radius: 1.75rem;
-      border: 1px solid rgba(34, 211, 238, 0.25);
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.96));
-      padding: 1.5rem;
-      box-shadow: 0 0 40px rgba(6, 182, 212, 0.12);
     }
 
     .operations-summary-card {
@@ -119,14 +99,6 @@ $sectionUrl = static function (string $section) use ($overviewBaseUrl): string {
     }
   </style>
 
-  <div id="operations-overview-loading" class="operations-overview-loading" aria-hidden="true">
-    <div class="operations-overview-loading-card">
-      <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Carregando</p>
-      <h2 class="mt-3 font-orbitron text-2xl font-black text-white">Abrindo subaba</h2>
-      <p class="mt-3 text-sm leading-7 text-slate-300">Estamos trazendo so o bloco operacional desta leitura para manter a central mais leve.</p>
-    </div>
-  </div>
-
   <div class="<?= $adminEmbed ? 'space-y-6' : 'mx-auto max-w-7xl space-y-6' ?>">
     <?php if (!$embedMode): ?>
       <?php \App\Support\View::component('site/local-tools-nav', ['active' => 'operations']); ?>
@@ -161,6 +133,10 @@ $sectionUrl = static function (string $section) use ($overviewBaseUrl): string {
       </div>
     </div>
 
+    <div id="operations-overview-loading" class="operations-overview-inline-loading rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100" hidden>
+      Carregando bloco operacional...
+    </div>
+
     <div data-operations-overview-content>
       <?= \App\Support\View::fragment('site/partials/operations-overview-content', get_defined_vars()) ?>
     </div>
@@ -177,8 +153,7 @@ $sectionUrl = static function (string $section) use ($overviewBaseUrl): string {
       }
 
       const setLoading = (visible) => {
-        overlay.classList.toggle('is-visible', visible);
-        overlay.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        overlay.hidden = !visible;
       };
 
       const activateLink = (url) => {

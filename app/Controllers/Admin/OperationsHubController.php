@@ -18,6 +18,8 @@ final class OperationsHubController
     {
         $tab = strtolower(trim((string) ($_GET['aba'] ?? 'visao-geral')));
         $overviewSection = $this->normalizeOverviewSection();
+        $backupSection = $this->normalizeBackupSection();
+        $contentSection = $this->normalizeContentSection();
         $allowedTabs = ['visao-geral', 'backup-restore', 'conteudo'];
         if (!in_array($tab, $allowedTabs, true)) {
             $tab = 'visao-geral';
@@ -46,27 +48,52 @@ final class OperationsHubController
             return;
         }
 
-        if ($this->isFragmentRequest()) {
-            echo $this->renderContentSection($tab, (string) $tabs[$tab]['view'], $overviewSection);
+        if ($tab === 'backup-restore' && $this->isBackupFragmentRequest()) {
+            echo (new BackupToolsController())->renderSection(true);
             return;
         }
 
-        $contentHtml = $this->cachedContentHtml($tab, (string) $tabs[$tab]['view'], $overviewSection, false);
+        if ($tab === 'conteudo' && $this->isContentFragmentRequest()) {
+            echo (new ContentSyncToolsController())->renderSection(true);
+            return;
+        }
+
+        if ($this->isFragmentRequest()) {
+            echo $this->renderContentSection($tab, (string) $tabs[$tab]['view'], $overviewSection, $backupSection, $contentSection);
+            return;
+        }
+
+        $contentHtml = $this->cachedContentHtml($tab, (string) $tabs[$tab]['view'], $overviewSection, $backupSection, $contentSection, false);
+
+        $activeTabUrl = match ($tab) {
+            'backup-restore' => url('/admin/central-operacional?aba=backup-restore&backup_secao=' . $backupSection),
+            'conteudo' => url('/admin/central-operacional?aba=conteudo&content_secao=' . $contentSection),
+            default => url('/admin/central-operacional?aba=visao-geral&secao=' . $overviewSection),
+        };
 
         View::render('admin/operations-hub/index', [
             'title' => 'Central Operacional | Estrategia Nerd',
             'active_tab' => $tab,
             'tabs' => $tabs,
             'content_html' => $contentHtml,
-            'active_tab_url' => $tab === 'visao-geral'
-                ? url('/admin/central-operacional?aba=visao-geral&secao=' . $overviewSection)
-                : url('/admin/central-operacional?aba=' . $tab),
+            'active_tab_url' => $activeTabUrl,
         ]);
     }
 
-    private function cachedContentHtml(string $tab, string $view, string $overviewSection = 'resumo', bool $allowBuild = true): string
+    private function cachedContentHtml(
+        string $tab,
+        string $view,
+        string $overviewSection = 'resumo',
+        string $backupSection = 'resumo',
+        string $contentSection = 'resumo',
+        bool $allowBuild = true
+    ): string
     {
-        $cacheSuffix = $tab === 'visao-geral' ? '.' . $overviewSection : '';
+        $cacheSuffix = match ($tab) {
+            'backup-restore' => '.' . $backupSection,
+            'conteudo' => '.' . $contentSection,
+            default => '.' . $overviewSection,
+        };
         $cacheKey = 'admin.operations_hub.' . $tab . $cacheSuffix;
         $cache = Session::get($cacheKey);
 
@@ -84,8 +111,16 @@ final class OperationsHubController
         }
 
         $contentData = match ($tab) {
-            'backup-restore' => (new BackupToolsController())->viewData(true),
-            'conteudo' => (new ContentSyncToolsController())->viewData(true),
+            'backup-restore' => (new BackupToolsController())->viewData(
+                true,
+                $backupSection,
+                url('/admin/central-operacional?aba=backup-restore')
+            ),
+            'conteudo' => (new ContentSyncToolsController())->viewData(
+                true,
+                $contentSection,
+                url('/admin/central-operacional?aba=conteudo')
+            ),
             default => (new CentralOperacionalController())->viewData(
                 true,
                 $overviewSection,
@@ -103,9 +138,15 @@ final class OperationsHubController
         return $html;
     }
 
-    private function renderContentSection(string $tab, string $view, string $overviewSection = 'resumo'): string
+    private function renderContentSection(
+        string $tab,
+        string $view,
+        string $overviewSection = 'resumo',
+        string $backupSection = 'resumo',
+        string $contentSection = 'resumo'
+    ): string
     {
-        $contentHtml = $this->cachedContentHtml($tab, $view, $overviewSection, true);
+        $contentHtml = $this->cachedContentHtml($tab, $view, $overviewSection, $backupSection, $contentSection, true);
         $activeConfig = [
             'label' => match ($tab) {
                 'backup-restore' => 'Backup e Restore',
@@ -144,10 +185,36 @@ final class OperationsHubController
         return (string) ($_GET['overview_fragment'] ?? '0') === '1';
     }
 
+    private function isBackupFragmentRequest(): bool
+    {
+        return (string) ($_GET['backup_fragment'] ?? '0') === '1';
+    }
+
+    private function isContentFragmentRequest(): bool
+    {
+        return (string) ($_GET['content_fragment'] ?? '0') === '1';
+    }
+
     private function normalizeOverviewSection(): string
     {
         $section = strtolower(trim((string) ($_GET['secao'] ?? 'resumo')));
         $allowed = ['resumo', 'backups', 'pacotes', 'historico'];
+
+        return in_array($section, $allowed, true) ? $section : 'resumo';
+    }
+
+    private function normalizeBackupSection(): string
+    {
+        $section = strtolower(trim((string) ($_GET['backup_secao'] ?? 'resumo')));
+        $allowed = ['resumo', 'acoes', 'restore', 'historico'];
+
+        return in_array($section, $allowed, true) ? $section : 'resumo';
+    }
+
+    private function normalizeContentSection(): string
+    {
+        $section = strtolower(trim((string) ($_GET['content_secao'] ?? 'resumo')));
+        $allowed = ['resumo', 'editorial', 'codigo', 'publicacao'];
 
         return in_array($section, $allowed, true) ? $section : 'resumo';
     }
