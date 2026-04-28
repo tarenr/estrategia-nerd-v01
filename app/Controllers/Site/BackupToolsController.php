@@ -17,13 +17,24 @@ final class BackupToolsController
     {
         $this->ensureLocalOnly();
 
+        View::render('site/backup-tools', $this->viewData());
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public function viewData(bool $adminEmbed = false): array
+    {
         $flash = Session::pull('backup_tools_flash');
         $lastVerification = Session::pull('backup_tools_verification');
 
-        View::render('site/backup-tools', $this->service()->getViewModel(
+        return $this->service()->getViewModel(
             is_array($flash) ? $flash : null,
             is_array($lastVerification) ? $lastVerification : null
-        ));
+        ) + [
+            'embed_mode' => $adminEmbed ? true : $this->embedMode(),
+            'admin_embed' => $adminEmbed,
+        ];
     }
 
     public function handle(): void
@@ -85,6 +96,11 @@ final class BackupToolsController
     private function ensureLocalOnly(): void
     {
         LocalOnlyAccess::enforce();
+    }
+
+    private function embedMode(): bool
+    {
+        return (string) ($_GET['embed'] ?? '0') === '1';
     }
 
     private function service(): BackupService

@@ -116,7 +116,8 @@ $rawItems = [
     sidebar_item('/admin/usuarios', 'fa-solid fa-user', 'Usuarios', 'multi_env_users'),
     sidebar_item('/admin/health', 'fa-solid fa-heart-pulse', 'Health Check', 'multi_env_health'),
     sidebar_item('/admin/auditoria-geral', 'fa-solid fa-shield-heart', 'Auditoria Geral', 'audit'),
-    sidebar_item('/admin/central-operacional', 'fa-solid fa-arrows-rotate', 'Central Operacional', 'content_sync'),
+    sidebar_item('/admin/base-tecnica', 'fa-solid fa-book-open-reader', 'Base Tecnica', 'docs'),
+    sidebar_item('/admin/central-operacional', 'fa-solid fa-arrows-rotate', 'Central Operacional', 'operations'),
 ];
 
 $items = [];

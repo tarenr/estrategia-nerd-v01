@@ -255,6 +255,16 @@ $adminFavicon = $adminFavicon !== ''
         </footer>
       </main>
 
+      <button
+        type="button"
+        id="adminBackToTop"
+        class="fixed bottom-5 right-5 z-40 hidden h-11 w-11 items-center justify-center rounded-full border border-cyan-500/30 bg-slate-950/90 text-cyan-200 shadow-[0_0_24px_rgba(6,182,212,0.16)] transition hover:border-cyan-300 hover:bg-cyan-500/10 hover:text-white"
+        aria-label="Voltar ao inicio da tela"
+        title="Voltar ao inicio"
+      >
+        <i class="fa-solid fa-arrow-up text-sm" aria-hidden="true"></i>
+      </button>
+
       <script src="<?= url('/assets/js/admin-layout.js?v=' . $adminLayoutJsVersion) ?>" defer></script>
       <?php if ($isAdminDashboard): ?>
         <script src="<?= url('/assets/js/admin-dashboard.js?v=' . $adminDashboardJsVersion) ?>" defer></script>
@@ -316,15 +326,34 @@ $adminFavicon = $adminFavicon !== ''
             }, 1200);
           };
 
-          document.addEventListener('click', function (event) {
-            var trigger = event.target.closest('[data-admin-audit-trigger]');
-            if (!trigger) {
-              return;
-            }
+        document.addEventListener('click', function (event) {
+          var trigger = event.target.closest('[data-admin-audit-trigger]');
+          if (!trigger) {
+            return;
+          }
 
-            showOverlay();
-          });
+          showOverlay();
         });
+
+        var backToTopButton = document.getElementById('adminBackToTop');
+        if (backToTopButton) {
+          var toggleBackToTop = function () {
+            var shouldShow = window.scrollY > 320;
+            backToTopButton.classList.toggle('hidden', !shouldShow);
+            backToTopButton.classList.toggle('flex', shouldShow);
+          };
+
+          backToTopButton.addEventListener('click', function () {
+            window.scrollTo({
+              top: 0,
+              behavior: 'smooth'
+            });
+          });
+
+          window.addEventListener('scroll', toggleBackToTop, { passive: true });
+          toggleBackToTop();
+        }
+      });
       </script>
     </div>
 </body>

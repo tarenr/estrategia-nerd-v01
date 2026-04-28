@@ -65,6 +65,22 @@ final class View
         echo self::renderFile($file, $data);
     }
 
+    /**
+     * Renderiza uma view sem aplicar layout.
+     *
+     * @param array<string,mixed> $data
+     */
+    public static function fragment(string $view, array $data = []): string
+    {
+        $viewFile = base_path('app/Views/' . ltrim($view, '/') . '.php');
+
+        if (!is_file($viewFile)) {
+            throw new \RuntimeException("View não encontrada: {$view}");
+        }
+
+        return self::renderFile($viewFile, $data);
+    }
+
     private static function resolveLayout(string $view): string
     {
         return str_starts_with($view, 'admin/') ? 'layouts/admin.php' : 'layouts/site.php';

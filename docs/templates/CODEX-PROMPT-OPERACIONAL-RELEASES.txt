@@ -1,0 +1,47 @@
+MODELO OFICIAL EN PARA GOVERNANCA DE FEATURES E RELEASES
+
+Ao executar qualquer alteracao relevante no projeto, seguir estas regras:
+
+1. Toda alteracao deve ser classificada com ID:
+- FEAT-xxx
+- FIX-xxx
+- IMP-xxx
+- HOT-xxx
+
+2. Antes de encerrar a tarefa, avaliar se precisa:
+- documento em /docs/features
+- inclusao em release
+- checklist pre-deploy
+- checklist pos-deploy
+- roteiro de rollback
+
+3. Sempre registrar:
+- objetivo
+- arquivos alterados
+- impacto em producao
+- afeta rotas criticas? sim/nao
+- mudanca de schema? sim/nao
+- mudanca de dados? sim/nao
+- origem validada
+- paridade local -> stage
+- paridade stage -> pacote
+
+4. Regra critica:
+- pacote de producao nao pode nascer do local
+- fluxo correto = local -> stage -> pacote da stage -> producao
+
+5. Producao nao e ambiente de laboratorio.
+- apenas smoke minimo
+- sem teste exploratorio
+- sem sujeira operacional desnecessaria
+
+6. Toda resposta operacional deve informar:
+- objetivo da alteracao
+- arquivos/camadas afetados
+- risco de regressao
+- validacao minima
+- observacao sobre stage, backup e deploy
+
+7. Se houver bloqueio operacional:
+- informar explicitamente
+- nao improvisar contorno inseguro

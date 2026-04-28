@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+$embedMode = (bool) ($embed_mode ?? false);
+$adminEmbed = (bool) ($admin_embed ?? false);
+
 use App\Support\Csrf;
 
 $backupStatus = (array) ($backup_status ?? []);
@@ -19,7 +22,7 @@ $alertClasses = [
 ];
 $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses['success']) : '';
 ?>
-<section class="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
+<section class="<?= $adminEmbed ? 'text-slate-100' : 'min-h-screen bg-slate-950 px-4 py-8 text-slate-100' ?>">
   <style>
     .backup-progress-overlay {
       position: fixed;
@@ -92,8 +95,10 @@ $flashClass = $flash !== null ? ($alertClasses[$flash['type']] ?? $alertClasses[
     </div>
   </div>
 
-  <div class="mx-auto max-w-7xl space-y-6">
-    <?php \App\Support\View::component('site/local-tools-nav', ['active' => 'backup']); ?>
+  <div class="<?= $adminEmbed ? 'space-y-6' : 'mx-auto max-w-7xl space-y-6' ?>">
+    <?php if (!$embedMode): ?>
+      <?php \App\Support\View::component('site/local-tools-nav', ['active' => 'backup']); ?>
+    <?php endif; ?>
 
     <div class="flex flex-col gap-3 rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_40px_rgba(6,182,212,0.08)]">
       <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

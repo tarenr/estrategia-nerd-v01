@@ -21,11 +21,22 @@ final class CentralOperacionalController
     {
         $this->ensureLocalOnly();
 
+        View::render('site/central-operacional', $this->viewData());
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public function viewData(bool $adminEmbed = false): array
+    {
         $flash = Session::pull('operations_flash');
 
-        View::render('site/central-operacional', $this->service()->getViewModel(
+        return $this->service()->getViewModel(
             is_array($flash) ? $flash : null
-        ));
+        ) + [
+            'embed_mode' => $adminEmbed ? true : $this->embedMode(),
+            'admin_embed' => $adminEmbed,
+        ];
     }
 
     public function handle(): void
@@ -208,6 +219,11 @@ final class CentralOperacionalController
     private function ensureLocalOnly(): void
     {
         LocalOnlyAccess::enforce();
+    }
+
+    private function embedMode(): bool
+    {
+        return (string) ($_GET['embed'] ?? '0') === '1';
     }
 
     private function assertOperationPhrase(string $phrase, string $targetProfile, string $expectedId, string $defaultPhrase, string $operationLabel): void

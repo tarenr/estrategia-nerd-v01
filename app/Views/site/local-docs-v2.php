@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+$embedMode = (bool) ($embed_mode ?? false);
+$adminEmbed = (bool) ($admin_embed ?? false);
 $projectVersion = trim((string) ($project_version ?? 'local'));
 $generatedAt = trim((string) ($generated_at ?? date('Y-m-d H:i:s')));
 $projectName = (string) config('app.name', 'Estrategia Nerd');
@@ -15,7 +17,7 @@ $approvedSource = strtolower(trim((string) ($_ENV['CONTENT_SYNC_APPROVED_PACKAGE
 $stageLabel = trim((string) ($_ENV['CONTENT_SYNC_STAGE_LABEL'] ?? 'estrategia-nerd-stage'));
 $productionAllowed = $currentSource !== '' && $approvedSource !== '' && $currentSource === $approvedSource;
 ?>
-<section class="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
+<section class="<?= $adminEmbed ? 'text-slate-100' : 'min-h-screen bg-slate-950 px-4 py-8 text-slate-100' ?>">
   <style>
     .doc-card { border: 1px solid rgba(51, 65, 85, 0.9); background: rgba(2, 6, 23, 0.65); border-radius: 1rem; padding: 1rem; }
     .doc-label { font-family: Orbitron, ui-sans-serif, system-ui; font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(148, 163, 184, 0.95); }
@@ -27,8 +29,10 @@ $productionAllowed = $currentSource !== '' && $approvedSource !== '' && $current
     .doc-table td { padding: 0.7rem 0.75rem; vertical-align: top; }
     .doc-row { border: 1px solid rgba(51, 65, 85, 0.95); background: rgba(2, 6, 23, 0.7); }
   </style>
-  <div class="mx-auto max-w-7xl space-y-6">
-    <?php \App\Support\View::component('site/local-tools-nav', ['active' => 'docs']); ?>
+  <div class="<?= $adminEmbed ? 'space-y-6' : 'mx-auto max-w-7xl space-y-6' ?>">
+    <?php if (!$embedMode): ?>
+      <?php \App\Support\View::component('site/local-tools-nav', ['active' => 'docs']); ?>
+    <?php endif; ?>
 
     <header class="rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_40px_rgba(6,182,212,0.08)]">
       <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Documentacao Interna Local</p>
@@ -50,9 +54,10 @@ $productionAllowed = $currentSource !== '' && $approvedSource !== '' && $current
           <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#deploy">8. Deploy operacional</a>
           <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#backup">9. Backup e restore</a>
           <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#ambiente">10. Configuracao de ambiente</a>
-          <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#diagnostico">11. Erros comuns e diagnostico</a>
-          <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#evolucao">12. Evolucao tecnica</a>
-          <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#governanca">13. Governanca da documentacao</a>
+          <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#governanca-releases">11. Governanca de releases</a>
+          <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#diagnostico">12. Erros comuns e diagnostico</a>
+          <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#evolucao">13. Evolucao tecnica</a>
+          <a class="block rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-2 hover:border-cyan-400/60" href="#governanca">14. Governanca da documentacao</a>
         </nav>
       </aside>
 
@@ -127,11 +132,53 @@ $productionAllowed = $currentSource !== '' && $approvedSource !== '' && $current
 
         <section id="ambiente" class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6"><h2 class="font-orbitron text-xl font-bold text-cyan-200">10) Configuracoes de ambiente (.env)</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Variavel</th><th>Finalidade</th><th>Obs</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">APP_ENV / APP_DEBUG / APP_URL</td><td class="text-slate-300">Controle de ambiente, debug e URL base.</td><td class="text-slate-400">Producao deve estar com debug desligado.</td></tr><tr class="doc-row"><td class="text-white">DB_HOST / DB_PORT / DB_DATABASE / DB_USERNAME / DB_PASSWORD</td><td class="text-slate-300">Conexao principal do sistema.</td><td class="text-slate-400">Nao versionar segredo real.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_PRODUCTION_*</td><td class="text-slate-300">Acesso remoto para backup de producao.</td><td class="text-slate-400">Obrigatorio para backup remoto.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_CURRENT_SOURCE</td><td class="text-slate-300">Identifica a origem atual da operacao (`local`, `stage`, etc.).</td><td class="text-slate-400">Usado para travar publish inseguro.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_APPROVED_PACKAGE_SOURCE</td><td class="text-slate-300">Origem autorizada para pacote de producao.</td><td class="text-slate-400">Padrao recomendado: `stage`.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_LABEL</td><td class="text-slate-300">Nome humano da stage oficial.</td><td class="text-slate-400">Ex.: `estrategia-nerd-stage`.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_DB_*</td><td class="text-slate-300">Banco remoto da stage para homologacao.</td><td class="text-slate-400">Nao reaproveitar credencial de producao.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_FTP_*</td><td class="text-slate-300">Uploads remotos da stage.</td><td class="text-slate-400">Mantem midias e banco homologados no mesmo ambiente.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_CODE_*</td><td class="text-slate-300">Deploy tecnico dedicado da stage.</td><td class="text-slate-400">Separar raiz tecnica da stage da raiz de producao.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_PRODUCTION_*</td><td class="text-slate-300">Sync de conteudo e deploy de codigo.</td><td class="text-slate-400">Separar dados de conteudo e codigo.</td></tr></tbody></table></div><p class="mt-3 text-sm text-slate-300">Seguranca: `.env` nao pode ser commitado com credencial real. Usar `.env.example` como referencia limpa.</p></section>
 
-        <section id="diagnostico" class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6"><h2 class="font-orbitron text-xl font-bold text-cyan-200">11) Erros comuns e diagnostico rapido</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Problema</th><th>Possivel causa</th><th>Acao recomendada</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">Imagem nao aparece</td><td class="text-slate-300">Path quebrado ou arquivo fora de uploads.</td><td class="text-slate-400">Revisar referencia no banco e em `public/uploads`.</td></tr><tr class="doc-row"><td class="text-white">Rota nao carrega</td><td class="text-slate-300">Regra em `config/routes.php`, `public/index.php` ou `.htaccess` incorreta.</td><td class="text-slate-400">Rodar preflight e validar entrada publica.</td></tr><tr class="doc-row"><td class="text-white">Conteudo nao sincroniza</td><td class="text-slate-300">Pacote invalido, lock ativo ou alvo remoto incompleto.</td><td class="text-slate-400">Verificar manifesto, lock e credenciais `CONTENT_SYNC_PRODUCTION_*`.</td></tr><tr class="doc-row"><td class="text-white">Pacote falha na validacao</td><td class="text-slate-300">JSON ausente, upload faltando ou manifesto inconsistente.</td><td class="text-slate-400">Executar verificacao do pacote e revisar arquivos referenciados.</td></tr><tr class="doc-row"><td class="text-white">Texto com acentuacao quebrada</td><td class="text-slate-300">Arquivo salvo com encoding invalido ou copia com mojibake.</td><td class="text-slate-400">Executar preflight e corrigir na origem antes do deploy.</td></tr></tbody></table></div></section>
+        <section id="governanca-releases" class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
+          <h2 class="font-orbitron text-xl font-bold text-cyan-200">11) Governanca oficial de releases</h2>
+          <div class="doc-card doc-rule mt-4">
+            <p class="doc-label">Objetivo</p>
+            <p class="mt-2 text-sm text-slate-200">
+              Toda alteracao relevante do EN deve ter rastreabilidade, documentacao minima, teste minimo, impacto conhecido, origem validada e paridade entre ambientes.
+            </p>
+          </div>
+          <div class="mt-4 overflow-x-auto">
+            <table class="doc-table">
+              <thead>
+                <tr><th>Diretorio</th><th>Responsabilidade</th><th>Uso oficial</th></tr>
+              </thead>
+              <tbody>
+                <tr class="doc-row"><td class="text-white">docs/features</td><td class="text-slate-300">Documento de cada feature, fix, melhoria ou hotfix.</td><td class="text-slate-400">Usar um arquivo por entrega com ID oficial.</td></tr>
+                <tr class="doc-row"><td class="text-white">docs/releases</td><td class="text-slate-300">Documento de cada release.</td><td class="text-slate-400">Registrar o que entra, o que fica fora e o estado do deploy.</td></tr>
+                <tr class="doc-row"><td class="text-white">docs/checklists</td><td class="text-slate-300">Checklist pre e pos deploy.</td><td class="text-slate-400">Obrigatorio em toda publicacao controlada.</td></tr>
+                <tr class="doc-row"><td class="text-white">docs/rollback</td><td class="text-slate-300">Roteiro de retorno controlado.</td><td class="text-slate-400">Toda release deve saber como voltar.</td></tr>
+                <tr class="doc-row"><td class="text-white">docs/templates</td><td class="text-slate-300">Modelos oficiais do EN.</td><td class="text-slate-400">Base para features, releases, rollback e prompt operacional.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-card doc-example mt-4">
+            <p class="doc-label">Campos obrigatorios</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
+              <li>Impacto em producao: baixo, medio ou alto</li>
+              <li>Afeta rotas criticas: sim ou nao</li>
+              <li>Mudanca de schema: sim ou nao</li>
+              <li>Mudanca de dados: sim ou nao</li>
+              <li>Origem validada: estrategia-nerd-stage</li>
+              <li>Paridade local -> stage: validada ou nao validada</li>
+              <li>Paridade stage -> pacote: validada ou nao validada</li>
+            </ul>
+          </div>
+          <div class="doc-card doc-alert mt-4">
+            <p class="doc-label">Regra de ouro</p>
+            <p class="mt-2 text-sm text-amber-100">
+              Nada sobe sem ID, documentacao minima, teste minimo, impacto conhecido, origem validada e paridade confirmada.
+            </p>
+          </div>
+        </section>
 
-        <section id="evolucao" class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6"><h2 class="font-orbitron text-xl font-bold text-cyan-200">12) Evolucao tecnica</h2><div class="doc-card doc-example mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Versao inicial do portal editorial e dashboard admin.</li><li>Criacao da Central Nerd como pagina de conversao.</li><li>Adicao da rotina local de backup com restore controlado.</li><li>Implementacao da sincronizacao de conteudo/codigo com paridade.</li><li>Reforco de preflight, documentacao interna e bloqueio por origem aprovada.</li></ul></div></section>
+        <section id="diagnostico" class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6"><h2 class="font-orbitron text-xl font-bold text-cyan-200">12) Erros comuns e diagnostico rapido</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Problema</th><th>Possivel causa</th><th>Acao recomendada</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">Imagem nao aparece</td><td class="text-slate-300">Path quebrado ou arquivo fora de uploads.</td><td class="text-slate-400">Revisar referencia no banco e em `public/uploads`.</td></tr><tr class="doc-row"><td class="text-white">Rota nao carrega</td><td class="text-slate-300">Regra em `config/routes.php`, `public/index.php` ou `.htaccess` incorreta.</td><td class="text-slate-400">Rodar preflight e validar entrada publica.</td></tr><tr class="doc-row"><td class="text-white">Conteudo nao sincroniza</td><td class="text-slate-300">Pacote invalido, lock ativo ou alvo remoto incompleto.</td><td class="text-slate-400">Verificar manifesto, lock e credenciais `CONTENT_SYNC_PRODUCTION_*`.</td></tr><tr class="doc-row"><td class="text-white">Pacote falha na validacao</td><td class="text-slate-300">JSON ausente, upload faltando ou manifesto inconsistente.</td><td class="text-slate-400">Executar verificacao do pacote e revisar arquivos referenciados.</td></tr><tr class="doc-row"><td class="text-white">Texto com acentuacao quebrada</td><td class="text-slate-300">Arquivo salvo com encoding invalido ou copia com mojibake.</td><td class="text-slate-400">Executar preflight e corrigir na origem antes do deploy.</td></tr></tbody></table></div></section>
 
-        <section id="governanca" class="rounded-3xl border border-fuchsia-500/20 bg-slate-900/80 p-6"><h2 class="font-orbitron text-xl font-bold text-fuchsia-200">13) Governanca da documentacao</h2><p class="mt-3 text-sm leading-7 text-slate-300">Esta pagina e a documentacao principal local do portal. Toda mudanca estrutural, operacional ou de deploy deve atualizar esta base no mesmo ciclo de trabalho.</p><div class="mt-4 rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/10 p-4 text-sm text-fuchsia-50"><ol class="list-decimal space-y-1 pl-5"><li>Atualizar a secao impactada da documentacao principal.</li><li>Revisar compatibilidade com `docs/CODEX-REGRAS-PERMANENTES.txt`.</li><li>Executar preflight antes de qualquer empacotamento.</li><li>Registrar observacao operacional no fechamento da tarefa.</li></ol></div></section>
+        <section id="evolucao" class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6"><h2 class="font-orbitron text-xl font-bold text-cyan-200">13) Evolucao tecnica</h2><div class="doc-card doc-example mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Versao inicial do portal editorial e dashboard admin.</li><li>Criacao da Central Nerd como pagina de conversao.</li><li>Adicao da rotina local de backup com restore controlado.</li><li>Implementacao da sincronizacao de conteudo/codigo com paridade.</li><li>Reforco de preflight, documentacao interna, governanca de releases e bloqueio por origem aprovada.</li></ul></div></section>
+
+        <section id="governanca" class="rounded-3xl border border-fuchsia-500/20 bg-slate-900/80 p-6"><h2 class="font-orbitron text-xl font-bold text-fuchsia-200">14) Governanca da documentacao</h2><p class="mt-3 text-sm leading-7 text-slate-300">Esta pagina e a documentacao principal local do portal. Toda mudanca estrutural, operacional, de release ou de deploy deve atualizar esta base no mesmo ciclo de trabalho.</p><div class="mt-4 rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/10 p-4 text-sm text-fuchsia-50"><ol class="list-decimal space-y-1 pl-5"><li>Atualizar a secao impactada da documentacao principal.</li><li>Revisar compatibilidade com `docs/CODEX-REGRAS-PERMANENTES.txt`.</li><li>Atualizar feature/release/checklist/rollback quando a alteracao exigir.</li><li>Executar preflight antes de qualquer empacotamento.</li><li>Registrar observacao operacional no fechamento da tarefa.</li></ol></div></section>
       </div>
     </article>
   </div>

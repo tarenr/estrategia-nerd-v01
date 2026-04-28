@@ -17,6 +17,14 @@ final class ContentSyncToolsController
     {
         $this->ensureLocalOnly();
 
+        View::render('site/content-sync-tools', $this->viewData());
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public function viewData(bool $adminEmbed = false): array
+    {
         $manager = $this->manager();
         $deployManager = $this->deployManager();
         $status = $manager->status();
@@ -25,10 +33,12 @@ final class ContentSyncToolsController
         $lastPostCheck = Session::pull('content_sync_postcheck');
         $deploymentPolicy = $deployManager->deploymentPolicyStatus();
 
-        View::render('site/content-sync-tools', [
+        return [
             'title' => 'Conteudo Local | Estrategia Nerd',
             'meta_description' => 'Painel local para exportar, validar e publicar conteudo em stage e producao.',
             'site_chrome' => false,
+            'embed_mode' => $adminEmbed ? true : $this->embedMode(),
+            'admin_embed' => $adminEmbed,
             'content_status' => $this->presentStatus($status),
             'code_status' => $this->presentCodeStatus($deployManager->codeStatus()),
             'parity_status' => $manager->parityStatus(),
@@ -40,7 +50,7 @@ final class ContentSyncToolsController
             'stage_code_ready' => $this->codeProfileReady('stage'),
             'production_ready' => $this->profileReady('production'),
             'production_code_ready' => $this->codeProfileReady('production'),
-        ]);
+        ];
     }
 
     public function handle(): void
@@ -110,6 +120,11 @@ final class ContentSyncToolsController
     private function ensureLocalOnly(): void
     {
         LocalOnlyAccess::enforce();
+    }
+
+    private function embedMode(): bool
+    {
+        return (string) ($_GET['embed'] ?? '0') === '1';
     }
 
     private function manager(): ContentSyncManager

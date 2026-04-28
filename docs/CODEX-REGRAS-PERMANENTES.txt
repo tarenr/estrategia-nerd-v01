@@ -74,6 +74,12 @@ Se nao puder confirmar a origem como stage:
 - nao gerar pacote
 - considerar operacao insegura
 
+Se o fluxo tecnico atual ainda permitir:
+- local -> producao
+- pacote gerado fora da stage
+
+isso deve ser tratado como DESVIO CRITICO e nao como fluxo aceito.
+
 ============================================================
 4. FLUXO OPERACIONAL OFICIAL (OBRIGATORIO)
 ============================================================
@@ -108,6 +114,12 @@ Antes de qualquer deploy, deve ser confirmado:
 
 Se qualquer item nao for confirmado:
 >>> BLOQUEAR OPERACAO <<<
+
+Tambem deve ser confirmado:
+- package_id
+- backup_id
+- origem real do pacote
+- validacao executada na stage
 
 ============================================================
 6. BACKUP (OBRIGATORIO)
@@ -147,6 +159,24 @@ Tambem validar:
 - status HTTP correto nas rotas publicas criticas
 
 Se nao testar, a alteracao nao esta completa.
+
+============================================================
+7.1 TESTE EM PRODUCAO (LIMITE OBRIGATORIO)
+============================================================
+
+Producao NAO e ambiente de laboratorio.
+
+Em producao, permitir apenas:
+- smoke minimo de sanidade
+- confirmacao de login/logout
+- verificacao de rota publica critica
+- checagem pos-deploy objetiva
+
+Em producao, NAO usar:
+- testes exploratorios
+- criacao de usuario temporario
+- cenarios artificiais de falha repetidos
+- fluxos de validacao agressivos que deveriam rodar no local/stage
 
 ============================================================
 8. SEGURANCA OBRIGATORIA
@@ -255,6 +285,7 @@ Sempre que possivel, automatizar:
 - verificacao de status HTTP das rotas criticas
 - registro de pos-deploy
 - bloqueio de operacao insegura
+- smoke tests automatizados de auth e rotas criticas
 
 Automacao nao substitui analise.
 Mas ausencia de automacao em ponto critico aumenta risco operacional.
@@ -280,3 +311,47 @@ Prioridade absoluta:
 3. Seguir fluxo com estrategia-nerd-stage
 4. Manter sistema estavel
 5. Restaurar paridade entre os ambientes
+
+============================================================
+16. GOVERNANCA OFICIAL DE FEATURES E RELEASES
+============================================================
+
+Toda alteracao relevante deve seguir o modelo oficial EN em `/docs`.
+
+Estrutura oficial:
+
+- /docs/features
+- /docs/releases
+- /docs/checklists
+- /docs/rollback
+- /docs/templates
+
+Toda alteracao relevante deve ter:
+
+- ID
+- objetivo
+- arquivos afetados
+- impacto em producao
+- mudanca de schema
+- mudanca de dados
+- dependencia conhecida
+- validacao minima
+
+Campos obrigatorios para feature/release:
+
+- Impacto em producao: baixo/medio/alto
+- Afeta rotas criticas: sim/nao
+- Mudanca de schema: sim/nao
+- Mudanca de dados: sim/nao
+- Origem validada: estrategia-nerd-stage
+- Paridade local -> stage: validada/nao validada
+- Paridade stage -> pacote: validada/nao validada
+
+Nada sobe sem:
+
+- ID
+- documentacao minima
+- teste minimo
+- impacto conhecido
+- origem validada
+- paridade confirmada
