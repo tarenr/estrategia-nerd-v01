@@ -8,6 +8,8 @@ $docGroup = trim((string) ($doc_group ?? 'docs'));
 $docFile = trim((string) ($doc_file ?? 'arquivo.md'));
 $docPath = trim((string) ($doc_path ?? ''));
 $docBody = trim((string) ($doc_body ?? ''));
+$backUrl = trim((string) ($back_url ?? url('/local/mudancas')));
+$backLabel = trim((string) ($back_label ?? 'Voltar para Mudancas'));
 ?>
 <section class="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
   <style>
@@ -27,8 +29,8 @@ $docBody = trim((string) ($doc_body ?? ''));
             Visualizacao direta do arquivo documentado na governanca oficial do projeto.
           </p>
         </div>
-        <a href="<?= htmlspecialchars(url('/local/mudancas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">
-          Voltar para Mudancas
+        <a href="<?= htmlspecialchars($backUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">
+          <?= htmlspecialchars($backLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
         </a>
       </div>
 

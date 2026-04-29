@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\Site\BackupToolsController;
 use App\Controllers\Site\CentralOperacionalController;
 use App\Controllers\Site\ContentSyncToolsController;
+use App\Controllers\Site\SearchConsoleMonitorController;
 use App\Support\Session;
 use App\Support\View;
 
@@ -20,7 +21,8 @@ final class OperationsHubController
         $overviewSection = $this->normalizeOverviewSection();
         $backupSection = $this->normalizeBackupSection();
         $contentSection = $this->normalizeContentSection();
-        $allowedTabs = ['visao-geral', 'backup-restore', 'conteudo'];
+        $monitorSection = $this->normalizeMonitorSection();
+        $allowedTabs = ['visao-geral', 'backup-restore', 'conteudo', 'monitoramento'];
         if (!in_array($tab, $allowedTabs, true)) {
             $tab = 'visao-geral';
         }
@@ -41,6 +43,11 @@ final class OperationsHubController
                 'description' => 'Pacotes, publicacao e paridade editorial.',
                 'view' => 'site/content-sync-tools',
             ],
+            'monitoramento' => [
+                'label' => 'Monitoramento',
+                'description' => 'Search Console, indexacao e sinais externos.',
+                'view' => 'site/search-console-monitor',
+            ],
         ];
 
         if ($tab === 'visao-geral' && $this->isOverviewFragmentRequest()) {
@@ -58,16 +65,22 @@ final class OperationsHubController
             return;
         }
 
-        if ($this->isFragmentRequest()) {
-            echo $this->renderContentSection($tab, (string) $tabs[$tab]['view'], $overviewSection, $backupSection, $contentSection);
+        if ($tab === 'monitoramento' && $this->isMonitorFragmentRequest()) {
+            echo (new SearchConsoleMonitorController())->renderSection(true);
             return;
         }
 
-        $contentHtml = $this->cachedContentHtml($tab, (string) $tabs[$tab]['view'], $overviewSection, $backupSection, $contentSection, false);
+        if ($this->isFragmentRequest()) {
+            echo $this->renderContentSection($tab, (string) $tabs[$tab]['view'], $overviewSection, $backupSection, $contentSection, $monitorSection);
+            return;
+        }
+
+        $contentHtml = $this->cachedContentHtml($tab, (string) $tabs[$tab]['view'], $overviewSection, $backupSection, $contentSection, $monitorSection, false);
 
         $activeTabUrl = match ($tab) {
             'backup-restore' => url('/admin/central-operacional?aba=backup-restore&backup_secao=' . $backupSection),
             'conteudo' => url('/admin/central-operacional?aba=conteudo&content_secao=' . $contentSection),
+            'monitoramento' => url('/admin/central-operacional?aba=monitoramento&monitor_secao=' . $monitorSection),
             default => url('/admin/central-operacional?aba=visao-geral&secao=' . $overviewSection),
         };
 
@@ -86,12 +99,14 @@ final class OperationsHubController
         string $overviewSection = 'resumo',
         string $backupSection = 'resumo',
         string $contentSection = 'resumo',
+        string $monitorSection = 'resumo',
         bool $allowBuild = true
     ): string
     {
         $cacheSuffix = match ($tab) {
             'backup-restore' => '.' . $backupSection,
             'conteudo' => '.' . $contentSection,
+            'monitoramento' => '.' . $monitorSection,
             default => '.' . $overviewSection,
         };
         $cacheKey = 'admin.operations_hub.' . $tab . $cacheSuffix;
@@ -121,6 +136,11 @@ final class OperationsHubController
                 $contentSection,
                 url('/admin/central-operacional?aba=conteudo')
             ),
+            'monitoramento' => (new SearchConsoleMonitorController())->viewData(
+                true,
+                $monitorSection,
+                url('/admin/central-operacional?aba=monitoramento')
+            ),
             default => (new CentralOperacionalController())->viewData(
                 true,
                 $overviewSection,
@@ -143,14 +163,16 @@ final class OperationsHubController
         string $view,
         string $overviewSection = 'resumo',
         string $backupSection = 'resumo',
-        string $contentSection = 'resumo'
+        string $contentSection = 'resumo',
+        string $monitorSection = 'resumo'
     ): string
     {
-        $contentHtml = $this->cachedContentHtml($tab, $view, $overviewSection, $backupSection, $contentSection, true);
+        $contentHtml = $this->cachedContentHtml($tab, $view, $overviewSection, $backupSection, $contentSection, $monitorSection, true);
         $activeConfig = [
             'label' => match ($tab) {
                 'backup-restore' => 'Backup e Restore',
                 'conteudo' => 'Conteudo',
+                'monitoramento' => 'Monitoramento',
                 default => 'Visao Geral',
             },
         ];
@@ -195,6 +217,11 @@ final class OperationsHubController
         return (string) ($_GET['content_fragment'] ?? '0') === '1';
     }
 
+    private function isMonitorFragmentRequest(): bool
+    {
+        return (string) ($_GET['monitor_fragment'] ?? '0') === '1';
+    }
+
     private function normalizeOverviewSection(): string
     {
         $section = strtolower(trim((string) ($_GET['secao'] ?? 'resumo')));
@@ -215,6 +242,14 @@ final class OperationsHubController
     {
         $section = strtolower(trim((string) ($_GET['content_secao'] ?? 'resumo')));
         $allowed = ['resumo', 'editorial', 'codigo', 'publicacao'];
+
+        return in_array($section, $allowed, true) ? $section : 'resumo';
+    }
+
+    private function normalizeMonitorSection(): string
+    {
+        $section = strtolower(trim((string) ($_GET['monitor_secao'] ?? 'resumo')));
+        $allowed = ['resumo', 'inspecao'];
 
         return in_array($section, $allowed, true) ? $section : 'resumo';
     }

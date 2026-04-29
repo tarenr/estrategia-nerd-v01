@@ -77,11 +77,12 @@ if (!is_array($routes)) {
 
 $match = null;
 $routeParams = [];
+$allowedMethods = $method === 'HEAD' ? ['HEAD', 'GET'] : [$method];
 foreach ($routes as $route) {
     [$m, $p, $handler, $middleware] = $route;
 
     $p = rtrim((string) $p, '/') ?: '/';
-    if (strtoupper((string) $m) !== $method) {
+    if (!in_array(strtoupper((string) $m), $allowedMethods, true)) {
         continue;
     }
 

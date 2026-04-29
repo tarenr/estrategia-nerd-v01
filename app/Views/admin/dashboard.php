@@ -21,7 +21,21 @@ function fmt_k(int|string $number): string
     $value = (int) $number;
     return $value >= 1000 ? (string) round($value / 1000, 1) . 'k' : (string) $value;
 }
-function cover_url(?string $imagemCapa): string
+function dashboard_public_url(string $baseUrl, string $path = ''): string
+{
+    $baseUrl = rtrim(trim($baseUrl), '/');
+    if ($baseUrl === '') {
+        return $path !== '' ? $path : '';
+    }
+
+    if ($path === '' || $path === '/') {
+        return $baseUrl . '/';
+    }
+
+    return $baseUrl . '/' . ltrim($path, '/');
+}
+
+function cover_url(?string $imagemCapa, string $publicBaseUrl = ''): string
 {
     $raw = is_string($imagemCapa) ? trim($imagemCapa) : '';
     if ($raw === '') {
@@ -31,14 +45,14 @@ function cover_url(?string $imagemCapa): string
     $raw = ltrim($raw, '/');
 
     if (str_starts_with($raw, 'uploads/')) {
-        return url('/' . $raw);
+        return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, $raw) : url('/' . $raw);
     }
 
     if (str_contains($raw, '/')) {
-        return url('/' . $raw);
+        return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, $raw) : url('/' . $raw);
     }
 
-    return url('/uploads/' . basename($raw));
+    return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, 'uploads/' . basename($raw)) : url('/uploads/' . basename($raw));
 }
 function link_type_label(string $tipo, bool $promocao = false): string
 {
@@ -70,10 +84,14 @@ function admin_clean_post_title(?string $value): string
     return $value !== '' ? $value : 'Sem titulo';
 }
 
-function dashboard_post_url(?array $post): string
+function dashboard_post_url(?array $post, string $publicBaseUrl = ''): string
 {
     $slug = trim((string) ($post['slug'] ?? ''));
-    return $slug !== '' ? url('/post/' . rawurlencode($slug)) : '';
+    if ($slug === '') {
+        return '';
+    }
+
+    return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, 'post/' . rawurlencode($slug)) : url('/post/' . rawurlencode($slug));
 }
 
 function status_badge_class(string $status): string
@@ -247,6 +265,10 @@ $curViews = (int) ($current['views'] ?? 0);
 $curPosts = (int) ($current['posts_novos'] ?? 0);
 $curSubs = (int) ($current['inscricoes'] ?? 0);
 $postsRecentes = is_array($posts_recentes ?? null) ? $posts_recentes : [];
+$targetPublicBaseUrl = trim((string) ($target_public_base_url ?? ''));
+$targetEnvironment = (string) ($target_environment ?? current_environment());
+$targetEnvironmentLabel = (string) ($target_environment_label ?? environment_label($targetEnvironment));
+$isRemoteTarget = (bool) ($is_remote_target ?? false);
 
 if (is_array($series)) {
     $series = array_values($series);
@@ -430,6 +452,16 @@ $todayCards = [
     <div class="admin-page-heading">
       <h1 class="admin-page-title">Dashboard</h1>
       <div class="admin-page-subtitle">Metricas do portal, desempenho editorial e visao diaria do admin.</div>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <div class="admin-chip<?= $isRemoteTarget ? ' border-cyan-500/30 text-cyan-200' : '' ?>">
+          Ambiente alvo: <?= e($targetEnvironmentLabel) ?>
+        </div>
+        <?php if ($isRemoteTarget): ?>
+          <div class="admin-chip border-emerald-500/30 text-emerald-200">
+            Lendo dados remotos para <?= e($targetEnvironmentLabel) ?>
+          </div>
+        <?php endif; ?>
+      </div>
     </div>
 
     <div class="admin-page-actions">
@@ -438,10 +470,10 @@ $todayCards = [
         <?= e($startLabel) ?> a <?= e($endLabel) ?>
       </div>
 
-      <form action="<?= e(url('/admin')) ?>" method="get">
-        <input type="date" id="startDate" name="start" value="<?= e($startIn) ?>" class="nerd-input px-3 py-2 rounded-xl text-xs font-black" aria-label="Data inicial">
-        <input type="date" id="endDate" name="end" value="<?= e($endIn) ?>" class="nerd-input px-3 py-2 rounded-xl text-xs font-black" aria-label="Data final">
-        <button type="submit" class="admin-btn admin-btn-primary">
+      <form id="js-date-range-form" action="<?= e(url('/admin')) ?>" method="get" class="flex flex-wrap items-center gap-2">
+        <input type="date" id="js-start-date" name="start" value="<?= e($startIn) ?>" class="nerd-input px-3 py-2 rounded-xl text-xs font-black" aria-label="Data inicial">
+        <input type="date" id="js-end-date" name="end" value="<?= e($endIn) ?>" class="nerd-input px-3 py-2 rounded-xl text-xs font-black" aria-label="Data final">
+        <button type="submit" id="js-apply-range" class="admin-btn admin-btn-primary">
           <i class="fa-solid fa-filter"></i>
           Aplicar
         </button>
@@ -643,7 +675,7 @@ $todayCards = [
           <?php
             $editorialPost = is_array($editorialCard['post'] ?? null) ? $editorialCard['post'] : null;
             $editorialTitle = admin_clean_post_title((string) ($editorialPost['titulo'] ?? ''));
-            $editorialHref = dashboard_post_url($editorialPost);
+            $editorialHref = dashboard_post_url($editorialPost, $targetPublicBaseUrl);
           ?>
           <article class="dashboard-editorial-card dashboard-editorial-card-<?= e((string) ($editorialCard['tone'] ?? 'views')) ?>">
             <div class="dashboard-editorial-card-top">
@@ -772,12 +804,12 @@ $todayCards = [
           <div class="dashboard-link-stack">
             <?php foreach (($top_links_clicks ?? []) as $topLink): ?>
               <?php $topLinkSlug = trim((string) ($topLink['slug'] ?? '')); ?>
-              <?php $topLinkAdminHref = $topLinkSlug !== '' ? url('/admin/links?busca=' . rawurlencode($topLinkSlug)) : ''; ?>
+              <?php $topLinkPublicHref = $topLinkSlug !== '' ? dashboard_public_url($targetPublicBaseUrl, 'link/' . rawurlencode($topLinkSlug)) : ''; ?>
               <div class="dashboard-link-row">
                 <div class="dashboard-link-copy">
                   <div class="dashboard-link-title">
-                    <?php if ($topLinkAdminHref !== ''): ?>
-                      <a href="<?= e($topLinkAdminHref) ?>"><?= e((string) ($topLink['titulo'] ?? 'Link')) ?></a>
+                    <?php if ($topLinkPublicHref !== ''): ?>
+                      <a href="<?= e($topLinkPublicHref) ?>" target="_blank" rel="noopener noreferrer"><?= e((string) ($topLink['titulo'] ?? 'Link')) ?></a>
                     <?php else: ?>
                       <span><?= e((string) ($topLink['titulo'] ?? 'Link')) ?></span>
                     <?php endif; ?>
@@ -859,7 +891,7 @@ $todayCards = [
       <div class="dashboard-recent-stack">
         <?php foreach ($postsRecentes as $post): ?>
           <?php
-            $cover = cover_url($post['imagem_capa'] ?? null);
+            $cover = cover_url($post['imagem_capa'] ?? null, $targetPublicBaseUrl);
             $tituloLimpo = admin_clean_post_title((string) ($post['titulo'] ?? ''));
             $status = (string) ($post['status'] ?? '');
             $dataPub = (string) ($post['data_publicacao'] ?? '');
@@ -869,7 +901,7 @@ $todayCards = [
             $catNome = (string) ($post['categoria_nome'] ?? '');
             $catCor = (string) ($post['categoria_cor'] ?? '#00d4ff');
             $postId = (int) ($post['id'] ?? 0);
-            $postPublicUrl = dashboard_post_url($post);
+            $postPublicUrl = dashboard_post_url($post, $targetPublicBaseUrl);
           ?>
           <article class="dashboard-recent-row group">
             <div class="dashboard-recent-media <?= $cover === '' ? 'dashboard-recent-media-fallback' : '' ?>">

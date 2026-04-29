@@ -32,6 +32,7 @@ $rawPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $rawPath = rtrim($rawPath, '/') ?: '/';
 
 $isAdminDashboard = (bool) preg_match('#/admin$#', $rawPath);
+$hideEnvironmentSwitcher = (bool) preg_match('#/admin/(base-tecnica|central-operacional)$#', $rawPath);
 $adminFlash = \App\Support\Session::pull('admin_flash');
 $adminFlashType = is_array($adminFlash) ? trim((string) ($adminFlash['type'] ?? 'info')) : '';
 $adminFlashMessage = is_array($adminFlash) ? trim((string) ($adminFlash['message'] ?? '')) : '';
@@ -44,7 +45,7 @@ $adminFlashClasses = [
 $adminFlashClass = $adminFlashClasses[$adminFlashType] ?? $adminFlashClasses['info'];
 $currentEnvironment = current_environment();
 $targetEnvironment = target_environment();
-$showEnvironmentSwitcher = is_local_environment();
+$showEnvironmentSwitcher = is_local_environment() && !$hideEnvironmentSwitcher;
 $user = Auth::user() ?? [];
 $userName = trim((string) ($user['nome'] ?? $user['usuario'] ?? 'Equipe'));
 if ($userName === '') {

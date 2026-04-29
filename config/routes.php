@@ -107,6 +107,7 @@ return [
     ['POST', '/local/backup',        [\App\Controllers\Site\BackupToolsController::class, 'handle'], null],
     ['GET',  '/local/backup/dropbox/callback', [\App\Controllers\Site\BackupToolsController::class, 'dropboxCallback'], null],
     ['GET',  '/local/operacoes',     [\App\Controllers\Site\CentralOperacionalController::class, 'index'], null],
+    ['GET',  '/local/monitoramento', [\App\Controllers\Site\SearchConsoleMonitorController::class, 'index'], null],
     ['POST', '/local/operacoes',     [\App\Controllers\Site\CentralOperacionalController::class, 'handle'], null],
     ['GET',  '/local/conteudo',      [\App\Controllers\Site\ContentSyncToolsController::class, 'index'], null],
     ['POST', '/local/conteudo',      [\App\Controllers\Site\ContentSyncToolsController::class, 'handle'], null],

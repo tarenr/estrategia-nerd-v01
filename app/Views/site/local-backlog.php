@@ -7,7 +7,7 @@ $adminEmbed = (bool) ($admin_embed ?? false);
 $projectVersion = trim((string) ($project_version ?? 'local'));
 $generatedAt = trim((string) ($generated_at ?? date('Y-m-d H:i:s')));
 $phaseCount = 5;
-$taskCount = 58;
+$taskCount = 60;
 $currentSuggestedPhase = 'Fase 1';
 $currentFocus = 'Auditoria critica de seguranca, rotas sensiveis e trilha editorial de midia tipada';
 $executionRule = 'Concluir itens criticos da Fase 1 e estabilizar Fase 2 antes de expansao forte em Fase 3/4.';
@@ -65,6 +65,8 @@ $phaseTaskMap = [
         ['id' => 'F5-T05', 'title' => 'Rastreabilidade de deploy/sync'],
         ['id' => 'F5-T06', 'title' => 'Rastreabilidade de backup/restore'],
         ['id' => 'F5-T07', 'title' => 'Rotina mensal de revisao'],
+        ['id' => 'F5-T08', 'title' => 'Revisar e aprofundar a documentacao central'],
+        ['id' => 'F5-T09', 'title' => 'Criar suite inicial de testes automatizados'],
     ],
 ];
 $phaseTaskDetails = [
@@ -115,6 +117,8 @@ $phaseTaskDetails = [
         ['id' => 'F5-T05', 'title' => 'Fortalecer rastreabilidade de deploy/sync com IDs de pacote e status por etapa.', 'priority' => 'Alta', 'impact' => 'Alto', 'effort' => 'Medio', 'criterion' => 'Historico de pacotes e etapas registrado com IDs unicos.', 'dependencies' => ['F5-T01', 'F5-T02'], 'result' => 'Historico confiavel de publicacao e rollback.', 'critical' => false],
         ['id' => 'F5-T06', 'title' => 'Fortalecer rastreabilidade de backup/restore com verificacao e registro de escopo.', 'priority' => 'Alta', 'impact' => 'Alto', 'effort' => 'Medio', 'criterion' => 'Log de backup/restore com escopo, resultado e evidencias.', 'dependencies' => ['F5-T01', 'F1-T10'], 'result' => 'Operacao de backup auditavel ponta a ponta.', 'critical' => false],
         ['id' => 'F5-T07', 'title' => 'Consolidar rotina de revisao mensal da documentacao + backlog + pendencias abertas.', 'priority' => 'Media', 'impact' => 'Medio', 'effort' => 'Baixo', 'criterion' => 'Ritual mensal registrado com ata e atualizacao de backlog.', 'dependencies' => ['F5-T05', 'F5-T06'], 'result' => 'Ciclo continuo de manutencao orientado por dados.', 'critical' => false],
+        ['id' => 'F5-T08', 'title' => 'Revisar e aprofundar a documentacao central antes de abrir docs complementares.', 'priority' => 'Media', 'impact' => 'Medio', 'effort' => 'Medio', 'criterion' => 'Checklist das secoes centrais revisado com lacunas, aprofundamentos e proximos desdobramentos documentados.', 'dependencies' => ['F5-T07'], 'result' => 'Base Tecnica mais completa e pronta para virar hub de docs complementares no momento certo.', 'critical' => false],
+        ['id' => 'F5-T09', 'title' => 'Criar suite inicial de testes automatizados para auth, ambiente e rotas criticas.', 'priority' => 'Alta', 'impact' => 'Alto', 'effort' => 'Medio', 'criterion' => 'Smoke automatizado cobrindo auth, ambiente e rotas criticas executa com resultado rastreavel.', 'dependencies' => ['F1-T05', 'F1-T07', 'F1-T09', 'F5-T01'], 'result' => 'Base minima de testes automatizados pronta para prevenir regressao operacional.', 'critical' => false],
     ],
 ];
 $complementaryTracks = [

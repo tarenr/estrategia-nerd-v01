@@ -61,6 +61,14 @@ final class LocalDocsController
             'doc_file' => $document['file'],
             'doc_path' => $document['path'],
             'doc_body' => $document['body'],
+            'back_url' => $this->requestedBackUrl(
+                $document['group'] === 'governanca'
+                    ? url('/local/documentacao?docs_secao=governanca-releases')
+                    : url('/local/mudancas')
+            ),
+            'back_label' => $document['group'] === 'governanca'
+                ? 'Voltar para Documentacao'
+                : 'Voltar para Mudancas',
         ]);
     }
 
@@ -303,7 +311,7 @@ final class LocalDocsController
     {
         $group = strtolower(trim((string) ($_GET['grupo'] ?? '')));
         $file = basename(trim((string) ($_GET['arquivo'] ?? '')));
-        $allowedGroups = ['features', 'releases'];
+        $allowedGroups = ['features', 'releases', 'governanca'];
 
         if (!in_array($group, $allowedGroups, true) || $file === '' || !str_ends_with(strtolower($file), '.md')) {
             return null;
@@ -321,6 +329,21 @@ final class LocalDocsController
             'body' => (string) file_get_contents($path),
             'updated_at' => date('Y-m-d H:i:s', (int) filemtime($path)),
         ];
+    }
+
+    private function requestedBackUrl(string $default): string
+    {
+        $backUrl = trim((string) ($_GET['redirect_to'] ?? ''));
+        if ($backUrl === '') {
+            return $default;
+        }
+
+        $localRoot = rtrim(url('/'), '/');
+        if (!str_starts_with($backUrl, $localRoot)) {
+            return $default;
+        }
+
+        return $backUrl;
     }
 
     /**

@@ -24,6 +24,7 @@ use App\Repositories\LinkRepository;
 use App\Repositories\NewsletterRepository;
 use App\Repositories\PostRepository;
 use App\Services\Admin\DashboardService;
+use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
 
 final class DashboardController
@@ -62,8 +63,8 @@ final class DashboardController
      */
     private function buildPayload(): array
     {
-        /** @var \PDO $pdo */
-        $pdo = $GLOBALS['pdo'];
+        $targetEnvironment = target_environment();
+        $pdo = TargetEnvironmentDatabase::pdo($targetEnvironment);
 
         $posts = new PostRepository($pdo);
         $estatisticas = new EstatisticaRepository($pdo);
@@ -74,6 +75,7 @@ final class DashboardController
         $linkClicks = new LinkClickRepository($pdo);
 
         $service = new DashboardService(
+            $pdo,
             $posts,
             $estatisticas,
             $newsletter,
@@ -81,6 +83,7 @@ final class DashboardController
             $categorias,
             $links,
             $linkClicks,
+            $targetEnvironment,
         );
 
         [$start, $end, $days] = $this->resolveRangeFromRequest();
@@ -89,6 +92,9 @@ final class DashboardController
         $payload['start'] = $payload['start'] ?? $start;
         $payload['end'] = $payload['end'] ?? $end;
         $payload['days'] = $payload['days'] ?? $days;
+        $payload['target_environment'] = $payload['target_environment'] ?? $targetEnvironment;
+        $payload['target_environment_label'] = $payload['target_environment_label'] ?? environment_label($targetEnvironment);
+        $payload['is_remote_target'] = $payload['is_remote_target'] ?? ($targetEnvironment !== current_environment());
 
         return $payload;
     }

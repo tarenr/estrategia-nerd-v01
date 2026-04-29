@@ -19,12 +19,12 @@ $activeTabUrl = (string) ($active_tab_url ?? url('/admin/central-operacional?aba
     <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Central Tecnica Local</p>
     <h1 class="mt-2 font-orbitron text-3xl font-black tracking-tight text-white">Central Operacional em abas</h1>
     <p class="mt-3 max-w-4xl text-sm leading-7 text-slate-300">
-      Este modulo centraliza as operacoes tecnicas locais do projeto. Backup, restore, conteudo e visao geral ficam agrupados no mesmo menu principal do admin.
+      Este modulo centraliza as operacoes tecnicas locais do projeto. Visao geral, backup, conteudo e monitoramento externo ficam agrupados no mesmo menu principal do admin.
     </p>
   </header>
 
   <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-4">
-    <div class="grid gap-3 md:grid-cols-3">
+    <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       <?php foreach ($tabs as $key => $tab): ?>
         <?php $isActive = $key === $activeTab; ?>
         <a

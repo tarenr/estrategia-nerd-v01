@@ -31,6 +31,7 @@ use Throwable;
 final class DashboardService
 {
     public function __construct(
+        private PDO $pdo,
         private PostRepository $posts,
         private EstatisticaRepository $estatisticas,
         private NewsletterRepository $newsletter,
@@ -38,6 +39,7 @@ final class DashboardService
         private CategoriaPostRepository $categorias,
         private LinkRepository $links,
         private LinkClickRepository $linkClicks,
+        private string $targetEnvironment = 'local',
     ) {
     }
 
@@ -222,6 +224,10 @@ final class DashboardService
             ],
 
             'posts_recentes' => $this->posts->latestWithCategoria(5),
+            'target_public_base_url' => $this->resolveTargetPublicBaseUrl(),
+            'target_environment' => $this->targetEnvironment,
+            'target_environment_label' => environment_label($this->targetEnvironment),
+            'is_remote_target' => $this->targetEnvironment !== current_environment(),
         ];
     }
 
@@ -427,12 +433,42 @@ final class DashboardService
 
     private function pdo(): PDO
     {
-        $pdo = $GLOBALS['pdo'] ?? null;
-        if (!$pdo instanceof PDO) {
-            throw new \RuntimeException('PDO nao disponivel em $GLOBALS["pdo"]');
+        return $this->pdo;
+    }
+
+    private function resolveTargetPublicBaseUrl(): string
+    {
+        $siteUrl = $this->fetchConfigValue('site_url');
+        if ($siteUrl !== '' && preg_match('~^https?://~i', $siteUrl)) {
+            return rtrim($siteUrl, '/');
         }
 
-        return $pdo;
+        if ($this->targetEnvironment === 'local') {
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = trim((string) ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+            $base = $siteUrl !== '' ? $siteUrl : app_url();
+            if ($base === '') {
+                return $scheme . '://' . $host;
+            }
+
+            if (preg_match('~^https?://~i', $base)) {
+                return rtrim($base, '/');
+            }
+
+            return rtrim($scheme . '://' . $host . '/' . ltrim($base, '/'), '/');
+        }
+
+        return rtrim($siteUrl, '/');
+    }
+
+    private function fetchConfigValue(string $key): string
+    {
+        $stmt = $this->pdo->prepare('SELECT valor FROM configuracoes WHERE chave = :chave LIMIT 1');
+        $stmt->bindValue('chave', $key);
+        $stmt->execute();
+        $value = $stmt->fetchColumn();
+
+        return is_string($value) ? trim(public_text($value)) : '';
     }
 
     private function parseYmd(?string $value): ?string
