@@ -33,6 +33,7 @@ $rawPath = rtrim($rawPath, '/') ?: '/';
 
 $isAdminDashboard = (bool) preg_match('#/admin$#', $rawPath);
 $environmentSwitcherPaths = [
+    '#/admin$#',
     '#/admin/home-e-menus$#',
     '#/admin/configuracoes$#',
     '#/admin/health$#',
