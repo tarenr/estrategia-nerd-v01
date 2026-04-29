@@ -22,6 +22,12 @@ $nonIndexedPosts = array_values((array) ($searchConsole['non_indexed_posts'] ?? 
 $inspection = is_array($searchConsole['inspection'] ?? null) ? $searchConsole['inspection'] : [];
 $inspectionResult = is_array($inspection['result'] ?? null) ? $inspection['result'] : null;
 $screenError = trim((string) ($searchConsole['error'] ?? ''));
+$cache = is_array($searchConsole['cache'] ?? null) ? $searchConsole['cache'] : [];
+$cacheEnabled = (bool) ($cache['enabled'] ?? false);
+$cacheHit = (bool) ($cache['hit'] ?? false);
+$cacheForcedRefresh = (bool) ($cache['forced_refresh'] ?? false);
+$cacheCachedAt = trim((string) ($cache['cached_at'] ?? ''));
+$cacheExpiresAt = trim((string) ($cache['expires_at'] ?? ''));
 
 $sectionUrl = static function (string $section, array $extra = []) use ($monitorBaseUrl): string {
     $separator = str_contains($monitorBaseUrl, '?') ? '&' : '?';
@@ -53,6 +59,18 @@ $pill = static function (string $label, string $tone = 'default'): string {
   <?php if ($screenError !== ''): ?>
     <div class="rounded-2xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
       <?= htmlspecialchars($screenError, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+    </div>
+  <?php endif; ?>
+
+  <?php if ($monitorSection === 'resumo' && $cacheEnabled): ?>
+    <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-sm text-slate-300">
+      <div>
+        <strong class="text-slate-100"><?= $cacheHit ? 'Dados em cache' : ($cacheForcedRefresh ? 'Busca atualizada agora' : 'Busca recente') ?></strong>
+        <?php if ($cacheCachedAt !== ''): ?>
+          <span class="ml-2 text-slate-400">Atualizado em <?= htmlspecialchars($cacheCachedAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?><?= $cacheExpiresAt !== '' ? ' | expira em ' . htmlspecialchars($cacheExpiresAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : '' ?></span>
+        <?php endif; ?>
+      </div>
+      <a href="<?= htmlspecialchars($sectionUrl('resumo', ['search_console_refresh' => '1']), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Atualizar agora</a>
     </div>
   <?php endif; ?>
 

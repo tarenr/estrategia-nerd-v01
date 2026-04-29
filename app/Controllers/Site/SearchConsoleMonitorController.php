@@ -29,7 +29,8 @@ final class SearchConsoleMonitorController
     {
         $activeSection = $this->normalizeSection($section);
         $inspectionUrl = trim((string) ($_GET['inspection_url'] ?? ''));
-        $viewModel = $this->service()->dashboard($activeSection, $inspectionUrl !== '' ? $inspectionUrl : null);
+        $forceRefresh = (string) ($_GET['search_console_refresh'] ?? '0') === '1';
+        $viewModel = $this->service()->dashboard($activeSection, $inspectionUrl !== '' ? $inspectionUrl : null, $forceRefresh);
         $resolvedBaseUrl = $baseUrl ?? ($adminEmbed ? url('/admin/central-operacional?aba=monitoramento') : url('/local/monitoramento'));
 
         return [

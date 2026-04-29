@@ -9,6 +9,7 @@ use PDO;
 
 final class SearchConsoleService
 {
+    private const DASHBOARD_CACHE_TTL = 900;
     private const CRITICAL_URLS_CACHE_TTL = 900;
     private const NON_INDEXED_POSTS_CACHE_TTL = 3600;
     private const NON_INDEXED_POSTS_LIMIT = 24;
@@ -21,11 +22,13 @@ final class SearchConsoleService
     /**
      * @return array<string, mixed>
      */
-    public function dashboard(string $section = 'resumo', ?string $inspectionUrl = null): array
+    public function dashboard(string $section = 'resumo', ?string $inspectionUrl = null, bool $forceRefresh = false): array
     {
         $siteUrl = trim((string) ($_ENV['GOOGLE_SEARCH_CONSOLE_SITE_URL'] ?? ''));
         $configured = $this->isConfigured();
         $activeSection = in_array($section, ['resumo', 'inspecao'], true) ? $section : 'resumo';
+        $cacheable = $activeSection === 'resumo' && ($inspectionUrl === null || $inspectionUrl === '');
+        $cacheKey = $this->dashboardCacheKey($activeSection, $siteUrl);
 
         $data = [
             'configured' => $configured,
@@ -48,6 +51,14 @@ final class SearchConsoleService
                 'result' => null,
                 'error' => null,
             ],
+            'cache' => [
+                'enabled' => $cacheable,
+                'hit' => false,
+                'forced_refresh' => $forceRefresh,
+                'cached_at' => null,
+                'expires_at' => null,
+                'ttl_seconds' => self::DASHBOARD_CACHE_TTL,
+            ],
             'error' => null,
         ];
 
@@ -57,6 +68,13 @@ final class SearchConsoleService
         }
 
         try {
+            if ($cacheable && !$forceRefresh) {
+                $cached = $this->loadDashboardCacheEntry($cacheKey);
+                if ($cached !== null) {
+                    return $cached;
+                }
+            }
+
             $accessToken = $this->fetchAccessToken();
             $data['token_status'] = 'Autenticado';
 
@@ -100,6 +118,10 @@ final class SearchConsoleService
             if ($activeSection === 'inspecao' && $inspectionUrl !== null && $inspectionUrl !== '') {
                 $data['inspection']['result'] = $this->inspectUrl($accessToken, $siteUrl, $inspectionUrl);
             }
+
+            if ($cacheable && $data['error'] === null) {
+                $data = $this->persistDashboardCacheEntry($cacheKey, $data);
+            }
         } catch (\Throwable $exception) {
             $data['error'] = $exception->getMessage();
             $data['token_status'] = 'Falhou';
@@ -107,6 +129,11 @@ final class SearchConsoleService
         }
 
         return $data;
+    }
+
+    private function dashboardCacheKey(string $section, string $siteUrl): string
+    {
+        return $section . ':' . hash('sha256', $siteUrl);
     }
 
     public function isConfigured(): bool
@@ -741,6 +768,88 @@ final class SearchConsoleService
     private function criticalUrlsCacheFile(): string
     {
         return base_path('storage/app/search-console/critical-urls-cache.json');
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function loadDashboardCacheEntry(string $cacheKey): ?array
+    {
+        $cache = $this->loadDashboardCache();
+        $entry = is_array($cache[$cacheKey] ?? null) ? $cache[$cacheKey] : null;
+        if ($entry === null) {
+            return null;
+        }
+
+        $cachedAt = (int) ($entry['cached_at'] ?? 0);
+        $data = is_array($entry['data'] ?? null) ? $entry['data'] : null;
+        if ($cachedAt <= 0 || $data === null || (time() - $cachedAt) > self::DASHBOARD_CACHE_TTL) {
+            return null;
+        }
+
+        $data['cache'] = [
+            'enabled' => true,
+            'hit' => true,
+            'forced_refresh' => false,
+            'cached_at' => date('Y-m-d H:i:s', $cachedAt),
+            'expires_at' => date('Y-m-d H:i:s', $cachedAt + self::DASHBOARD_CACHE_TTL),
+            'ttl_seconds' => self::DASHBOARD_CACHE_TTL,
+        ];
+
+        return $data;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private function persistDashboardCacheEntry(string $cacheKey, array $data): array
+    {
+        $cachedAt = time();
+        $data['cache'] = [
+            'enabled' => true,
+            'hit' => false,
+            'forced_refresh' => (bool) ($data['cache']['forced_refresh'] ?? false),
+            'cached_at' => date('Y-m-d H:i:s', $cachedAt),
+            'expires_at' => date('Y-m-d H:i:s', $cachedAt + self::DASHBOARD_CACHE_TTL),
+            'ttl_seconds' => self::DASHBOARD_CACHE_TTL,
+        ];
+
+        $cache = $this->loadDashboardCache();
+        $cache[$cacheKey] = [
+            'cached_at' => $cachedAt,
+            'data' => $data,
+        ];
+
+        $file = $this->dashboardCacheFile();
+        $directory = dirname($file);
+        if (!is_dir($directory)) {
+            @mkdir($directory, 0775, true);
+        }
+
+        @file_put_contents($file, (string) json_encode($cache, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        return $data;
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function loadDashboardCache(): array
+    {
+        $file = $this->dashboardCacheFile();
+        if (!is_file($file)) {
+            return [];
+        }
+
+        $decoded = json_decode((string) file_get_contents($file), true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function dashboardCacheFile(): string
+    {
+        return base_path('storage/app/search-console/dashboard-cache.json');
     }
 
     /**
