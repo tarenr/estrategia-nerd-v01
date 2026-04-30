@@ -1204,7 +1204,7 @@ final class ContentSyncManager
 
     private function applyLinks(PDO $pdo, array $links): array
     {
-        $stats = ['created' => 0, 'updated' => 0];
+        $stats = ['created' => 0, 'updated' => 0, 'deleted_duplicates' => 0];
 
         foreach ($links as $link) {
             $slug = trim((string) ($link['slug'] ?? ''));
@@ -1240,13 +1240,63 @@ final class ContentSyncManager
                 $stmt->execute($data + ['id' => (int) $existing['id']]);
                 $stats['updated']++;
             } else {
-                $stmt = $pdo->prepare('INSERT INTO links (titulo, slug, url, tipo, promocao, desconto_percentual, desconto_contexto, codigo_cupom, secao_publica, subgrupo_publico, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque, expira_em) VALUES (:titulo, :slug, :url, :tipo, :promocao, :desconto_percentual, :desconto_contexto, :codigo_cupom, :secao_publica, :subgrupo_publico, :descricao, :cta_curto, :texto_botao, :selo, :imagem, :posicao, :status, :destaque, :expira_em)');
-                $stmt->execute($data);
-                $stats['created']++;
+                $existingByUrl = $data['url'] !== ''
+                    ? $this->fetchOne($pdo, 'SELECT id FROM links WHERE url = :url ORDER BY id ASC LIMIT 1', ['url' => $data['url']])
+                    : null;
+
+                if ($existingByUrl !== null) {
+                    $stmt = $pdo->prepare('UPDATE links SET titulo = :titulo, slug = :slug, url = :url, tipo = :tipo, promocao = :promocao, desconto_percentual = :desconto_percentual, desconto_contexto = :desconto_contexto, codigo_cupom = :codigo_cupom, secao_publica = :secao_publica, subgrupo_publico = :subgrupo_publico, descricao = :descricao, cta_curto = :cta_curto, texto_botao = :texto_botao, selo = :selo, imagem = :imagem, posicao = :posicao, status = :status, destaque = :destaque, expira_em = :expira_em WHERE id = :id');
+                    $stmt->execute($data + ['id' => (int) $existingByUrl['id']]);
+                    $stats['updated']++;
+                } else {
+                    $stmt = $pdo->prepare('INSERT INTO links (titulo, slug, url, tipo, promocao, desconto_percentual, desconto_contexto, codigo_cupom, secao_publica, subgrupo_publico, descricao, cta_curto, texto_botao, selo, imagem, posicao, status, destaque, expira_em) VALUES (:titulo, :slug, :url, :tipo, :promocao, :desconto_percentual, :desconto_contexto, :codigo_cupom, :secao_publica, :subgrupo_publico, :descricao, :cta_curto, :texto_botao, :selo, :imagem, :posicao, :status, :destaque, :expira_em)');
+                    $stmt->execute($data);
+                    $stats['created']++;
+                }
             }
         }
 
+        $stats['deleted_duplicates'] = $this->deleteStaleLinkDuplicates($pdo, $links);
+
         return $stats;
+    }
+
+    private function deleteStaleLinkDuplicates(PDO $pdo, array $links): int
+    {
+        $deleted = 0;
+
+        foreach ($links as $link) {
+            $slug = trim((string) ($link['slug'] ?? ''));
+            $url = trim((string) ($link['url'] ?? ''));
+            if ($slug === '' || $url === '') {
+                continue;
+            }
+
+            $current = $this->fetchOne($pdo, 'SELECT id FROM links WHERE slug = :slug AND url = :url LIMIT 1', [
+                'slug' => $slug,
+                'url' => $url,
+            ]);
+            if ($current === null) {
+                continue;
+            }
+
+            $duplicates = $this->fetchAll($pdo, 'SELECT id FROM links WHERE url = :url AND slug <> :slug', [
+                'url' => $url,
+                'slug' => $slug,
+            ]);
+            foreach ($duplicates as $duplicate) {
+                $duplicateId = (int) ($duplicate['id'] ?? 0);
+                if ($duplicateId <= 0) {
+                    continue;
+                }
+
+                $stmt = $pdo->prepare('DELETE FROM links WHERE id = :id LIMIT 1');
+                $stmt->execute(['id' => $duplicateId]);
+                $deleted += $stmt->rowCount();
+            }
+        }
+
+        return $deleted;
     }
 
     private function applyConfiguracoes(PDO $pdo, array $configs): array
@@ -2135,6 +2185,7 @@ final class ContentSyncManager
     private function allowedApplyTargets(string $sourceProfile): array
     {
         return match (strtolower(trim($sourceProfile))) {
+            'local' => ['stage'],
             'stage' => ['local', 'production'],
             'production' => ['local', 'stage'],
             default => [],

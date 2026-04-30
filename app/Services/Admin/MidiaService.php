@@ -86,6 +86,72 @@ final class MidiaService
         return $result;
     }
 
+    public function storeLinkCoverImage(mixed $file, string $slug): array
+    {
+        $slug = $this->slugify($slug);
+        if ($slug === '') {
+            return ['ok' => false, 'error' => 'Nao foi possivel preparar a pasta da capa do link.'];
+        }
+
+        return $this->storeUploadedMedia($file, 'links/' . $slug, 'capa', true, 'image');
+    }
+
+    public function moveLinkCoverToSlug(string $path, string $slug): array
+    {
+        $slug = $this->slugify($slug);
+        $relativePath = $this->normalizeManagedPath($path);
+        if ($slug === '' || $relativePath === null || !str_starts_with($relativePath, 'uploads/links/')) {
+            return ['ok' => true, 'skipped' => true, 'path' => $path];
+        }
+
+        $resolved = $this->resolveManagedFile($relativePath);
+        if ($resolved === null) {
+            return ['ok' => false, 'error' => 'A capa atual do link nao foi encontrada nos uploads.'];
+        }
+
+        $absoluteSource = (string) ($resolved['absolute_path'] ?? '');
+        $extension = strtolower((string) pathinfo($absoluteSource, PATHINFO_EXTENSION));
+        if ($absoluteSource === '' || $extension === '' || !in_array($extension, self::IMAGE_EXTENSIONS, true)) {
+            return ['ok' => false, 'error' => 'Nao foi possivel identificar a capa atual do link.'];
+        }
+
+        $targetRelativeDir = 'uploads/links/' . $slug;
+        $targetRelativePath = $targetRelativeDir . '/capa.' . $extension;
+        if ($relativePath === $targetRelativePath) {
+            return ['ok' => true, 'skipped' => true, 'path' => $targetRelativePath];
+        }
+
+        $targetDir = $this->publicRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $targetRelativeDir);
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+            return ['ok' => false, 'error' => 'Nao foi possivel criar a pasta da capa do link.'];
+        }
+
+        foreach (glob($targetDir . DIRECTORY_SEPARATOR . 'capa.*') ?: [] as $existingTarget) {
+            $realExisting = realpath($existingTarget);
+            $realSource = realpath($absoluteSource);
+            if ($realExisting !== false && $realSource !== false && $realExisting === $realSource) {
+                return ['ok' => true, 'skipped' => true, 'path' => $targetRelativePath];
+            }
+
+            if ($this->filesHaveSameContent($absoluteSource, $existingTarget)) {
+                @unlink($absoluteSource);
+                $this->removeEmptyUploadDirectory(dirname($absoluteSource));
+                return ['ok' => true, 'skipped' => false, 'path' => $targetRelativePath];
+            }
+
+            return ['ok' => false, 'error' => 'Ja existe uma capa para a pasta deste slug. Revise a pasta uploads/links/' . $slug . '.'];
+        }
+
+        $absoluteTarget = $targetDir . DIRECTORY_SEPARATOR . 'capa.' . $extension;
+        if (!$this->moveUploadFile($absoluteSource, $absoluteTarget)) {
+            return ['ok' => false, 'error' => 'Nao foi possivel mover a capa para a nova pasta do link.'];
+        }
+
+        $this->removeEmptyUploadDirectory(dirname($absoluteSource));
+
+        return ['ok' => true, 'skipped' => false, 'path' => $targetRelativePath];
+    }
+
     public function storePostBodyImage(mixed $file, string $slug): array
     {
         $target = $this->preparePostBodyImageTarget($slug);
@@ -1604,6 +1670,61 @@ final class MidiaService
         }
 
         $this->deleteFilesByBase($directory, $slug . '-' . $role);
+    }
+
+    private function removeEmptyUploadDirectory(string $directory): void
+    {
+        $uploadsRoot = realpath($this->managedUploadsRoot());
+        $target = realpath($directory);
+        if ($uploadsRoot === false || $target === false || !$this->pathStartsWith($target, $uploadsRoot)) {
+            return;
+        }
+
+        $items = @scandir($target);
+        if ($items === false || array_diff($items, ['.', '..']) !== []) {
+            return;
+        }
+
+        @rmdir($target);
+    }
+
+    private function moveUploadFile(string $source, string $target): bool
+    {
+        if (@rename($source, $target)) {
+            return true;
+        }
+
+        if (!@copy($source, $target)) {
+            return false;
+        }
+
+        $sourceSize = @filesize($source);
+        $targetSize = @filesize($target);
+        if ($sourceSize === false || $targetSize === false || $sourceSize !== $targetSize) {
+            @unlink($target);
+            return false;
+        }
+
+        @unlink($source);
+
+        return true;
+    }
+
+    private function filesHaveSameContent(string $left, string $right): bool
+    {
+        if (!is_file($left) || !is_file($right)) {
+            return false;
+        }
+
+        $leftSize = @filesize($left);
+        $rightSize = @filesize($right);
+        if ($leftSize === false || $rightSize === false || $leftSize !== $rightSize) {
+            return false;
+        }
+
+        $leftHash = @hash_file('sha256', $left);
+        $rightHash = @hash_file('sha256', $right);
+        return is_string($leftHash) && is_string($rightHash) && $leftHash === $rightHash;
     }
 
     private function detectMimeType(string $path): string

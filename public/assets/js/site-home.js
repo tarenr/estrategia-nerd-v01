@@ -354,13 +354,36 @@
   }
 
   const tocLinks = Array.from(document.querySelectorAll('.toc-link'));
-  const articleSections = Array.from(document.querySelectorAll('.article-content h2[id]'));
+  const articleSections = Array.from(document.querySelectorAll('.article-content h2[id], .article-content h3[id]'));
   if (tocLinks.length > 0 && articleSections.length > 0) {
+    const scrollToArticleTarget = (target) => {
+      const siteHeader = document.querySelector('body > header');
+      const headerHeight = siteHeader ? siteHeader.getBoundingClientRect().height : 0;
+      const offset = Math.max(112, headerHeight + 42);
+      const top = target.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    };
+
+    tocLinks.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        const href = link.getAttribute('href') || '';
+        if (!href.startsWith('#') || href.length <= 1) return;
+
+        const id = decodeURIComponent(href.slice(1));
+        const target = document.getElementById(id);
+        if (!target) return;
+
+        event.preventDefault();
+        scrollToArticleTarget(target);
+        window.history.pushState(null, '', `#${encodeURIComponent(id)}`);
+      });
+    });
+
     const activateCurrentSection = () => {
       let currentId = articleSections[0]?.id || '';
       articleSections.forEach((section) => {
         const top = section.getBoundingClientRect().top;
-        if (top <= 140) {
+        if (top <= 180) {
           currentId = section.id;
         }
       });

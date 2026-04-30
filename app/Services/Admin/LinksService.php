@@ -127,18 +127,17 @@ final class LinksService
     {
         $form = $this->normalizeForm($input);
         $errors = $this->validateForm($form);
+        $slugBase = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']);
+        $slug = $this->links->nextAvailableSlug($slugBase);
 
         if ($errors === []) {
-            $slugPreview = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']);
-            $this->applyImageUpload($form, $_FILES ?? [], $errors, $slugPreview);
+            $this->applyImageUpload($form, $_FILES ?? [], $errors, $slug);
         }
 
         if ($errors !== []) {
             return ['ok' => false, 'viewModel' => $this->buildFormViewModel('create', $form, $errors)];
         }
 
-        $slugBase = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']);
-        $slug = $this->links->nextAvailableSlug($slugBase);
         $id = $this->links->insertAdmin($this->payloadFromForm($form, $slug));
         $this->enforceSingleFeaturedProduct($form, $id);
 
@@ -154,18 +153,20 @@ final class LinksService
 
         $form = $this->normalizeForm($input, $id);
         $errors = $this->validateForm($form, $id);
+        $slugBase = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']);
+        $slug = $this->links->nextAvailableSlug($slugBase, $id);
 
         if ($errors === []) {
-            $slugPreview = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']);
-            $this->applyImageUpload($form, $_FILES ?? [], $errors, $slugPreview, $link);
+            $uploaded = $this->applyImageUpload($form, $_FILES ?? [], $errors, $slug, $link);
+            if (!$uploaded && $errors === []) {
+                $this->syncExistingImageSlug($form, $errors, $link, $slug);
+            }
         }
 
         if ($errors !== []) {
             return ['ok' => false, 'viewModel' => $this->buildFormViewModel('edit', $form, $errors, $link)];
         }
 
-        $slugBase = $this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']);
-        $slug = $this->links->nextAvailableSlug($slugBase, $id);
         $this->links->updateAdmin($id, $this->payloadFromForm($form, $slug));
         $this->enforceSingleFeaturedProduct($form, $id);
 
@@ -374,22 +375,22 @@ final class LinksService
         return ['ok' => true, 'mode' => $direction === 'up' ? 'order_up' : 'order_down'];
     }
 
-    private function applyImageUpload(array &$form, array $files, array &$errors, string $slug, ?array $existingLink = null): void
+    private function applyImageUpload(array &$form, array $files, array &$errors, string $slug, ?array $existingLink = null): bool
     {
         $slug = $slug !== '' ? $slug : 'link';
-        $result = $this->midia->storeUploadedImage($files['imagem_upload'] ?? null, 'links', $slug . '-cover', true);
+        $result = $this->midia->storeLinkCoverImage($files['imagem_upload'] ?? null, $slug);
         if (($result['ok'] ?? false) !== true) {
             $errors['imagem'] = (string) ($result['error'] ?? 'Falha no upload da imagem do link.');
-            return;
+            return false;
         }
 
         if (($result['skipped'] ?? false) === true) {
-            return;
+            return false;
         }
 
         $newPath = trim((string) ($result['path'] ?? ''));
         if ($newPath === '') {
-            return;
+            return false;
         }
 
         $oldPath = trim((string) ($form['imagem'] ?? ''));
@@ -404,6 +405,33 @@ final class LinksService
 
         if ($oldPath !== '' && $oldPath !== $newPath) {
             $this->midia->delete($oldPath);
+        }
+
+        return true;
+    }
+
+    private function syncExistingImageSlug(array &$form, array &$errors, array $existingLink, string $slug): void
+    {
+        $currentPath = trim((string) ($form['imagem'] ?? ''));
+        $storedPath = trim((string) ($existingLink['imagem'] ?? ''));
+        if ($currentPath === '' || $storedPath === '' || $currentPath !== $storedPath) {
+            return;
+        }
+
+        $oldSlug = trim((string) ($existingLink['slug'] ?? ''));
+        if ($oldSlug === '' || $oldSlug === $slug) {
+            return;
+        }
+
+        $result = $this->midia->moveLinkCoverToSlug($currentPath, $slug);
+        if (($result['ok'] ?? false) !== true) {
+            $errors['imagem'] = (string) ($result['error'] ?? 'Falha ao reorganizar a capa do link.');
+            return;
+        }
+
+        $newPath = trim((string) ($result['path'] ?? ''));
+        if ($newPath !== '') {
+            $form['imagem'] = $newPath;
         }
     }
 

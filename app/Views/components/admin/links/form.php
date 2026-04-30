@@ -231,14 +231,14 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
 
   <section class="admin-panel space-y-5">
     <div>
-      <h2 class="font-orbitron text-lg font-black text-white">Imagem do link</h2>
-      <div class="text-xs text-slate-400 mt-1">Envie a imagem sem sair da tela ou reaproveite itens recentes da biblioteca.</div>
+      <h2 class="font-orbitron text-lg font-black text-white">Capa do link</h2>
+      <div class="text-xs text-slate-400 mt-1">Envie a capa sem sair da tela ou reaproveite itens recentes da biblioteca.</div>
     </div>
 
     <div class="rounded-2xl border border-cyan-500/15 bg-slate-950/40 p-4 space-y-4">
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h3 class="text-sm font-black text-white">Midia principal</h3>
+          <h3 class="text-sm font-black text-white">Imagem de capa</h3>
           <div class="text-xs text-slate-400 mt-1">Ideal para botoes visuais, ofertas e cards destacados na Central Nerd.</div>
         </div>
         <button type="button" class="admin-btn admin-btn-secondary !px-3 !py-2 text-xs" id="limparImagemLink">Limpar</button>
@@ -257,11 +257,11 @@ $imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ?
         <div class="space-y-3">
           <div>
             <label for="imagem" class="block text-sm font-bold text-slate-200 mb-2">URL ou caminho</label>
-            <input id="imagem" name="imagem" type="text" value="<?= htmlspecialchars($imageValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="/uploads/links/banner.webp ou https://..." data-link-image-input>
+            <input id="imagem" name="imagem" type="text" value="<?= htmlspecialchars($imageValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input w-full px-4 py-3 rounded-xl" placeholder="/uploads/links/slug-do-link/capa.webp ou https://..." data-link-image-input>
             <?php if ($fieldError('imagem') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('imagem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
           </div>
           <div>
-            <label for="imagem_upload" class="block text-sm font-bold text-slate-200 mb-2">Enviar nova imagem</label>
+            <label for="imagem_upload" class="block text-sm font-bold text-slate-200 mb-2">Enviar nova capa</label>
             <input id="imagem_upload" name="imagem_upload" type="file" accept="image/*" class="block w-full text-sm text-slate-300 file:mr-4 file:rounded-xl file:border-0 file:bg-cyan-500/15 file:px-4 file:py-2 file:font-bold file:text-cyan-100 hover:file:bg-cyan-500/25">
             <div class="text-xs text-slate-500 mt-2">Formatos aceitos: JPG, PNG, WEBP, GIF e SVG.</div>
           </div>

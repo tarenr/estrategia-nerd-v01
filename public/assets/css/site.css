@@ -1527,6 +1527,14 @@ body {
   text-shadow: 0 0 24px rgba(34, 211, 238, 0.08);
 }
 
+.post-hero-title[id],
+.article-content h1[id],
+.article-content h2[id],
+.article-content h3[id],
+#comentarios {
+  scroll-margin-top: 9rem;
+}
+
 .article-content h3 {
   font-family: 'Orbitron', sans-serif;
   font-size: clamp(1.28rem, 1.9vw, 1.55rem);
@@ -3962,6 +3970,14 @@ body {
 
   .article-content h2 {
     font-size: 1.38rem;
+  }
+
+  .post-hero-title[id],
+  .article-content h1[id],
+  .article-content h2[id],
+  .article-content h3[id],
+  #comentarios {
+    scroll-margin-top: 7rem;
   }
 
   .article-content h3 {
