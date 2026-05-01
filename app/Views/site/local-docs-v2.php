@@ -249,14 +249,14 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
           <div class="doc-card doc-example mt-4"><p class="doc-label">Rollback e hotfix</p><ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200"><li>Interromper novas publicacoes.</li><li>Restaurar ultimo backup valido.</li><li>Reaplicar pacote tecnico estavel.</li><li>Validar paginas criticas e dashboard.</li><li>Replicar hotfix em stage/local antes de encerrar a tarefa.</li></ol></div>
         </section>
 
-        <section id="backup" data-doc-panel="backup" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'backup' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">9) Backup e restore</h2><div class="doc-card doc-rule mt-4"><p class="doc-label">Visao geral</p><p class="mt-2 text-sm text-slate-200">Backup e etapa obrigatoria antes de qualquer deploy ou restore em ambiente sensivel.</p></div><ul class="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-300"><li>Inclui dump do banco, pacote de uploads e manifesto de integridade.</li><li>Deve ser executado antes de deploy, restore ou mudanca estrutural.</li><li>Producao usa credenciais `BACKUP_PRODUCTION_*` para DB remoto e FTP remoto.</li><li>Restore so deve ocorrer com confirmacao explicita e backup anterior preservado.</li><li>A modal de Backup e Restore agora acompanha as etapas reais da rotina: exportacao do banco, coleta de uploads, compactacao, verificacao, restore de banco e restore de uploads.</li><li>O envio para nuvem continua sendo uma trilha separada, na subaba `Nuvem`, para nao misturar recovery local com transporte remoto.</li></ul>
+        <section id="backup" data-doc-panel="backup" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'backup' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">9) Backup e restore</h2><div class="doc-card doc-rule mt-4"><p class="doc-label">Visao geral</p><p class="mt-2 text-sm text-slate-200">Backup e etapa obrigatoria antes de qualquer deploy ou restore em ambiente sensivel.</p></div><ul class="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-300"><li>Inclui dump do banco, pacote de uploads, pacote de arquivos do sistema e manifesto de integridade.</li><li>Deve ser executado antes de deploy, restore ou mudanca estrutural.</li><li>Producao usa credenciais `BACKUP_PRODUCTION_*` para DB remoto, FTP de uploads e FTP dos arquivos do sistema.</li><li>Restore so deve ocorrer com confirmacao explicita e backup anterior preservado.</li><li>A modal de Backup e Restore agora acompanha as etapas reais da rotina: exportacao do banco, coleta de uploads, coleta dos arquivos do sistema, compactacao, verificacao e restore completo.</li><li>O envio para nuvem continua sendo uma trilha separada, na subaba `Nuvem`, e tambem envia o backup completo para o Dropbox.</li></ul>
           <div class="mt-4 grid gap-4 xl:grid-cols-2">
             <div class="doc-card">
               <p class="doc-label">Tipos de acao</p>
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li><strong>Backup de ambiente</strong>: gera novo backup completo de banco + uploads.</li>
-                <li><strong>Verificar ultimo</strong>: checa integridade do manifesto, banco e uploads do ultimo backup.</li>
-                <li><strong>Restore completo</strong>: recompõe o ambiente com banco + uploads de um backup escolhido.</li>
+                <li><strong>Backup de ambiente</strong>: gera novo backup completo de banco + uploads + arquivos do sistema.</li>
+                <li><strong>Verificar ultimo</strong>: checa integridade do manifesto, banco, uploads e arquivos do sistema do ultimo backup.</li>
+                <li><strong>Restore completo</strong>: recompoe o ambiente com banco + uploads + arquivos do sistema de um backup escolhido.</li>
               </ul>
             </div>
             <div class="doc-card">
@@ -272,7 +272,7 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
             <p class="doc-label">Passo a passo - backup</p>
             <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
               <li>Escolher o ambiente correto e confirmar que a rotina nao esta travada por outra operacao.</li>
-              <li>Executar o backup e acompanhar na modal as etapas de banco, uploads, compactacao e manifesto.</li>
+              <li>Executar o backup e acompanhar na modal as etapas de banco, uploads, arquivos do sistema, compactacao e manifesto.</li>
               <li>Confirmar o novo <code>backup_id</code> no resumo e no historico paginado.</li>
               <li>Executar `Verificar ultimo` se o backup for entrar em ciclo critico de deploy ou restore.</li>
             </ol>
@@ -282,14 +282,14 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
             <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
               <li>Preservar um backup anterior do estado atual antes de restaurar.</li>
               <li>Escolher o <code>backup_id</code> correto e confirmar o destino exato.</li>
-              <li>Acompanhar a rotina pelas etapas reais de restore do banco, extracao e restore de uploads.</li>
+              <li>Acompanhar a rotina pelas etapas reais de restore do banco, extracao, restore de uploads e restore dos arquivos do sistema.</li>
               <li>Executar validacao funcional minima do ambiente apos concluir.</li>
             </ol>
           </div>
           <div class="doc-card doc-alert mt-4">
             <p class="doc-label">Cuidados</p>
             <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
-              <li>Restore completo sobrescreve banco e uploads do destino.</li>
+              <li>Restore completo sobrescreve banco, uploads e arquivos do sistema do destino.</li>
               <li>Nao usar restore para "testar" fluxo em producao.</li>
               <li>Se a verificacao falhar, nao reutilizar o backup ate corrigir a integridade.</li>
             </ul>
@@ -309,6 +309,7 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
                 <li><code>manifest.json</code> do backup</li>
                 <li><code>database.sql</code> do ambiente</li>
                 <li><code>uploads.zip</code> do ambiente</li>
+                <li><code>system-files.zip</code> com arquivos do sistema</li>
                 <li>Metadados locais de envio e confirmacao</li>
               </ul>
             </div>
@@ -319,6 +320,8 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
                 <li>Envio manual do ultimo backup</li>
                 <li>Envio manual de backup especifico</li>
                 <li>Envio automatico logo apos gerar backup</li>
+                <li>Consulta de espaco usado, total e livre pela API do Dropbox</li>
+                <li>Exclusao controlada de backup remoto com confirmacao pelo ID</li>
               </ul>
             </div>
           </div>
@@ -327,7 +330,7 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
             <pre class="mt-2 overflow-x-auto text-xs leading-6 text-slate-200"><code>/Estrategia Nerd/backups-ambiente/local/{BACKUP_ID}
 /Estrategia Nerd/backups-ambiente/stage/{BACKUP_ID}
 /Estrategia Nerd/backups-ambiente/production/{BACKUP_ID}</code></pre>
-            <p class="mt-3 text-sm text-slate-300">Cada pasta de backup remoto recebe o manifesto, o dump do banco e o zip de uploads do ambiente correspondente.</p>
+            <p class="mt-3 text-sm text-slate-300">Cada pasta de backup remoto recebe o manifesto, o dump do banco, o zip de uploads e o zip dos arquivos do sistema do ambiente correspondente.</p>
           </div>
           <div class="doc-card mt-4">
             <p class="doc-label">Historico e rastreabilidade</p>
@@ -335,7 +338,10 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
               <li>A subaba <strong>Nuvem</strong> separa <strong>Conexao e envio</strong> de <strong>Historico de envios</strong>.</li>
               <li>O manifesto local passa a registrar provedor, destino remoto, horario e status do envio.</li>
               <li>Ao concluir, a confirmacao permanece na propria tela da nuvem, sem jogar o usuario para fora do contexto.</li>
-              <li>A modal do envio mostra etapas reais, incluindo pasta remota, manifesto, banco, uploads e gravacao do historico local.</li>
+              <li>O painel consulta <code>users/get_space_usage</code> para exibir cota total, uso atual e espaco livre da conta conectada.</li>
+              <li>O historico de envios mostra o tamanho total do pacote enviado para apoiar controle de consumo da nuvem.</li>
+              <li>A exclusao usa <code>files/delete_v2</code>, exige <code>files.metadata.write</code> e remove somente a pasta remota registrada no manifesto do backup.</li>
+              <li>A modal do envio mostra etapas reais, incluindo pasta remota, manifesto, banco, uploads, arquivos do sistema e gravacao do historico local.</li>
             </ul>
           </div>
           <div class="doc-card mt-4">
@@ -352,7 +358,7 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
             <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
               <li>Garantir que existe um backup valido no ambiente desejado.</li>
               <li>Usar `Enviar ultimo backup` ou escolher um backup especifico.</li>
-              <li>Acompanhar manifesto, banco, uploads e finalizacao do historico pela modal de progresso real.</li>
+              <li>Acompanhar manifesto, banco, uploads, arquivos do sistema e finalizacao do historico pela modal de progresso real.</li>
               <li>Conferir o item novo no `Historico de envios` com destino e horario.</li>
             </ol>
           </div>
@@ -362,6 +368,7 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
               <li>Dropbox complementa o backup local; nao substitui a copia local nem o restore controlado.</li>
               <li>Credenciais OAuth e tokens devem ficar apenas no ambiente local, nunca em codigo versionado.</li>
               <li>Se mudar permissao do app no Dropbox, a conta pode precisar reconectar para renovar os scopes.</li>
+              <li>Para remover backup remoto, digitar o ID exato do backup; a rotina bloqueia destinos fora da raiz configurada.</li>
             </ul>
           </div>
         </section>
@@ -429,7 +436,7 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
               <p class="doc-label">Troubleshooting - backup</p>
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
                 <li>Checar <code>backup_root</code> e perfil do ambiente.</li>
-                <li>Confirmar manifesto, <code>database.sql</code> e <code>uploads.zip</code>.</li>
+                <li>Confirmar manifesto, <code>database.sql</code>, <code>uploads.zip</code> e <code>system-files.zip</code>.</li>
                 <li>Se a verificacao falhar, nao usar o backup no restore nem no Dropbox.</li>
               </ul>
             </div>

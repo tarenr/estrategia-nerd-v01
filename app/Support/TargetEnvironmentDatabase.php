@@ -17,7 +17,7 @@ final class TargetEnvironmentDatabase
     {
         $target = EnvironmentManager::normalize($targetEnvironment ?? EnvironmentManager::target());
 
-        if ($target === 'local' && isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
+        if ($target === EnvironmentManager::current() && isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
             return $GLOBALS['pdo'];
         }
 

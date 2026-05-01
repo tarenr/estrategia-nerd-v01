@@ -74,15 +74,25 @@ final class BackupToolsController
     {
         $this->ensureLocalOnly();
         $redirectTarget = $this->normalizeRedirectTarget($_POST['redirect_to'] ?? null);
+        $respondJson = $this->wantsJsonResponse();
 
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
-            $this->flash('error', 'Sessao expirada. Atualize a pagina e tente novamente.');
+            $message = 'Sessao expirada. Atualize a pagina e tente novamente.';
+            $this->flash('error', $message);
+
+            if ($respondJson) {
+                $this->json([
+                    'ok' => false,
+                    'redirect_url' => $redirectTarget ?? url('/local/backup?backup_secao=nuvem'),
+                    'message' => $message,
+                ], 403);
+            }
+
             $this->redirect($redirectTarget);
         }
 
         $action = strtolower(trim((string) ($_POST['action'] ?? '')));
         $service = $this->service();
-        $respondJson = $this->wantsJsonResponse();
         $longCloudAction = in_array($action, ['dropbox_upload_latest', 'dropbox_upload_backup'], true);
         $longLocalAction = in_array($action, ['run', 'verify', 'restore'], true);
         $successMessage = null;
@@ -107,7 +117,7 @@ final class BackupToolsController
                         }
                     }
 
-                    $successMessage = sprintf('Backup %s concluido com sucesso.%s', (string) ($manifest['backup_id'] ?? ''), $cloudNotice);
+                    $successMessage = sprintf('Backup completo %s concluido com sucesso.%s', (string) ($manifest['backup_id'] ?? ''), $cloudNotice);
                     break;
 
                 case 'verify':
@@ -123,6 +133,19 @@ final class BackupToolsController
                     $successMessage = sprintf('Backup %s marcado como enviado para a nuvem.', (string) ($backup['backup_id'] ?? ''));
                     break;
 
+                case 'delete_local_backup':
+                    $backupId = $this->normalizeOptionalId($_POST['backup_id'] ?? '');
+                    if ($backupId === null) {
+                        throw new \RuntimeException('Selecione um backup valido para excluir da pasta local.');
+                    }
+
+                    $deleted = $this->manager()->deleteLocalBackup(
+                        $backupId,
+                        (string) ($_POST['delete_confirmation'] ?? '')
+                    );
+                    $successMessage = sprintf('Backup %s removido da pasta local.', (string) ($deleted['backup_id'] ?? $backupId));
+                    break;
+
                 case 'restore':
                     $phrase = trim((string) ($_POST['restore_phrase'] ?? ''));
                     if (mb_strtoupper($phrase, 'UTF-8') !== 'RESTAURAR') {
@@ -133,7 +156,7 @@ final class BackupToolsController
                     $targetProfile = strtolower(trim((string) ($_POST['target_profile'] ?? 'local')));
                     $scope = strtolower(trim((string) ($_POST['scope'] ?? 'all')));
                     $result = $service->restore($backupId, $targetProfile, $scope, $this->normalizeProgressId($_POST['progress_id'] ?? null));
-                    $successMessage = sprintf('Restore concluido do backup %s (%s).', (string) ($result['backup_id'] ?? ''), (string) ($result['scope'] ?? 'all'));
+                    $successMessage = sprintf('Restore completo concluido do backup %s (%s).', (string) ($result['backup_id'] ?? ''), (string) ($result['scope'] ?? 'all'));
                     break;
 
                 case 'dropbox_connect':
@@ -171,11 +194,26 @@ final class BackupToolsController
                     $successMessage = sprintf('Backup %s enviado ao Dropbox em %s.', $backupId, (string) ($cloudUpload['destination'] ?? '/'));
                     break;
 
+                case 'dropbox_delete_backup':
+                    $backupId = $this->normalizeOptionalId($_POST['backup_id'] ?? '');
+                    if ($backupId === null) {
+                        throw new \RuntimeException('Selecione um backup valido para remover do Dropbox.');
+                    }
+
+                    $cloudDelete = $this->cloudService()->deleteBackup(
+                        $this->manager(),
+                        $backupId,
+                        (string) ($_POST['delete_confirmation'] ?? '')
+                    );
+                    $successMessage = sprintf('Backup %s removido do Dropbox em %s.', $backupId, (string) ($cloudDelete['destination'] ?? '/'));
+                    break;
+
                 default:
                     throw new \RuntimeException('Acao de backup invalida.');
             }
         } catch (\Throwable $exception) {
             $this->reopenSessionWrite();
+            $this->clearOperationsHubBackupCache();
             $this->flash('error', $exception->getMessage());
             if ($respondJson) {
                 $this->json([
@@ -188,6 +226,7 @@ final class BackupToolsController
         }
 
         $this->reopenSessionWrite();
+        $this->clearOperationsHubBackupCache();
         if ($successMessage !== null) {
             $this->flash('success', $successMessage);
         }
@@ -397,6 +436,13 @@ final class BackupToolsController
             'type' => $type,
             'message' => $message,
         ]);
+    }
+
+    private function clearOperationsHubBackupCache(): void
+    {
+        foreach (array_keys($this->sections()) as $section) {
+            Session::forget('admin.operations_hub.backup-restore.' . $section);
+        }
     }
 
     private function normalizeOptionalId(mixed $backupId): ?string

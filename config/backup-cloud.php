@@ -15,6 +15,7 @@ return [
         'scopes' => [
             'files.content.write',
             'files.content.read',
+            'files.metadata.write',
             'account_info.read',
         ],
     ],

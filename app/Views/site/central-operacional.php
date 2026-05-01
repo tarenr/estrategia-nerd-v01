@@ -117,7 +117,7 @@ $sectionUrl = static function (string $section) use ($overviewBaseUrl): string {
     <?php endif; ?>
 
     <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-4">
-      <div class="grid gap-3 xl:grid-cols-4">
+      <div class="grid gap-3 xl:grid-cols-5">
         <?php foreach ($overviewSections as $key => $section): ?>
           <?php $isActive = $key === $overviewSection; ?>
           <a

@@ -134,7 +134,13 @@ Backup deve acontecer SEMPRE antes de:
 Backup inclui:
 - Banco de dados (dump)
 - Uploads
+- Arquivos do sistema
 - Manifesto de integridade
+
+Em hospedagem com public_html/_app_core:
+- Backup de sistema deve usar _app_core como raiz tecnica
+- A pasta stage dentro de public_html nunca deve entrar no backup de producao
+- Uploads ficam em pacote separado e nao devem ser misturados ao sistema
 
 Backup nunca e opcional.
 

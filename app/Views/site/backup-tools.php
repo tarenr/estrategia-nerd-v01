@@ -247,6 +247,40 @@ $sectionUrl = static function (string $section) use ($backupBaseUrl): string {
         return next.toString();
       };
 
+      const plainResponseMessage = (text, fallback) => {
+        if (!text) {
+          return fallback;
+        }
+
+        const normalized = text
+          .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+          .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        return normalized ? normalized.slice(0, 220) : fallback;
+      };
+
+      const readActionResponse = async (response, fallback) => {
+        const text = await response.text();
+        let payload = null;
+
+        if (text) {
+          try {
+            payload = JSON.parse(text);
+          } catch (error) {
+            payload = null;
+          }
+        }
+
+        if (!response.ok || !payload) {
+          throw new Error(payload?.message || plainResponseMessage(text, `${fallback} HTTP ${response.status}.`));
+        }
+
+        return payload;
+      };
+
       const pollProgress = (progressId) => {
         stopProgressPolling();
         pollTimer = window.setInterval(async () => {
@@ -311,18 +345,14 @@ $sectionUrl = static function (string $section) use ($backupBaseUrl): string {
           pollProgress(progressId);
 
           try {
-            const response = await fetch(form.action, {
+            const response = await fetch(form.getAttribute('action') || window.location.href, {
               method: 'POST',
               body: formData,
               headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
 
-            const payload = await response.json().catch(() => null);
+            const payload = await readActionResponse(response, 'Nao foi possivel concluir a rotina de backup.');
             stopProgressPolling();
-
-            if (!response.ok || !payload) {
-              throw new Error(payload?.message || 'Nao foi possivel concluir a rotina de backup.');
-            }
 
             setModalState({
               title: payload.ok ? 'Rotina concluida' : 'Falha na rotina',
@@ -372,19 +402,15 @@ $sectionUrl = static function (string $section) use ($backupBaseUrl): string {
           pollProgress(progressId);
 
           try {
-            const response = await fetch(form.action, {
+            const response = await fetch(form.getAttribute('action') || window.location.href, {
               method: 'POST',
               body: formData,
               headers: { 'X-Requested-With': 'XMLHttpRequest' },
               signal: currentCloudController.signal,
             });
 
-            const payload = await response.json().catch(() => null);
+            const payload = await readActionResponse(response, 'Nao foi possivel concluir o envio para Dropbox.');
             stopProgressPolling();
-
-            if (!response.ok || !payload) {
-              throw new Error(payload?.message || 'Nao foi possivel concluir o envio para Dropbox.');
-            }
 
             setModalState({
               title: payload.ok ? 'Envio concluido' : 'Falha no envio',

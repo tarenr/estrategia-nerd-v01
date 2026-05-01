@@ -80,6 +80,7 @@ final class BackupService
 
         $database = (array) ($profile['database'] ?? []);
         $uploads = (array) ($profile['uploads'] ?? []);
+        $systemFiles = (array) ($profile['system_files'] ?? []);
 
         foreach (['host', 'database', 'username'] as $required) {
             if (trim((string) ($database[$required] ?? '')) === '') {
@@ -89,11 +90,24 @@ final class BackupService
 
         $mode = strtolower((string) ($uploads['mode'] ?? 'local'));
         if ($mode === 'local') {
-            return trim((string) ($uploads['path'] ?? '')) !== '';
+            if (trim((string) ($uploads['path'] ?? '')) === '') {
+                return false;
+            }
+        } else {
+            foreach (['host', 'username', 'password', 'root'] as $required) {
+                if (trim((string) ($uploads[$required] ?? '')) === '') {
+                    return false;
+                }
+            }
+        }
+
+        $systemMode = strtolower((string) ($systemFiles['mode'] ?? 'local'));
+        if ($systemMode === 'local') {
+            return trim((string) ($systemFiles['root'] ?? '')) !== '';
         }
 
         foreach (['host', 'username', 'password', 'root'] as $required) {
-            if (trim((string) ($uploads[$required] ?? '')) === '') {
+            if (trim((string) ($systemFiles[$required] ?? '')) === '') {
                 return false;
             }
         }
@@ -106,6 +120,7 @@ final class BackupService
         $profile = (array) ($this->config['profiles']['production'] ?? []);
         $database = (array) ($profile['database'] ?? []);
         $uploads = (array) ($profile['uploads'] ?? []);
+        $systemFiles = (array) ($profile['system_files'] ?? []);
 
         foreach (['host', 'database', 'username'] as $required) {
             if (trim((string) ($database[$required] ?? '')) === '') {
@@ -115,6 +130,12 @@ final class BackupService
 
         foreach (['host', 'username', 'password', 'root'] as $required) {
             if (trim((string) ($uploads[$required] ?? '')) === '') {
+                return false;
+            }
+        }
+
+        foreach (['host', 'username', 'password', 'root'] as $required) {
+            if (trim((string) ($systemFiles[$required] ?? '')) === '') {
                 return false;
             }
         }
@@ -128,6 +149,7 @@ final class BackupService
         foreach ((array) ($status['items'] ?? []) as $item) {
             $databaseBytes = (int) ($item['database']['size_bytes'] ?? 0);
             $uploadsBytes = (int) ($item['uploads']['size_bytes'] ?? 0);
+            $systemFilesBytes = (int) ($item['system_files']['size_bytes'] ?? 0);
             $isValid = $withVerification
                 ? (bool) ($item['is_valid'] ?? false)
                 : strtolower((string) ($item['status'] ?? '')) === 'ready';
@@ -140,9 +162,12 @@ final class BackupService
                 'cloud_uploaded' => (bool) ($item['cloud_uploaded'] ?? false),
                 'cloud_uploaded_at' => (string) ($item['cloud_uploaded_at'] ?? ''),
                 'is_valid' => $isValid,
+                'kind' => (string) ($item['kind'] ?? 'data_uploads'),
+                'system_files_count' => (int) ($item['system_files_count'] ?? 0),
                 'database_size' => $this->formatBytes($databaseBytes),
                 'uploads_size' => $this->formatBytes($uploadsBytes),
-                'total_size' => $this->formatBytes($databaseBytes + $uploadsBytes),
+                'system_files_size' => $systemFilesBytes > 0 ? $this->formatBytes($systemFilesBytes) : '-',
+                'total_size' => $this->formatBytes($databaseBytes + $uploadsBytes + $systemFilesBytes),
                 'database_status' => (string) ($item['verification']['database']['message'] ?? ($withVerification ? '—' : 'Nao verificado nesta consulta.')),
                 'uploads_status' => (string) ($item['verification']['uploads']['message'] ?? ($withVerification ? '—' : 'Nao verificado nesta consulta.')),
             ];

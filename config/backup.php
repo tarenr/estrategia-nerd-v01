@@ -4,6 +4,22 @@ declare(strict_types=1);
 
 $databaseConfig = require __DIR__ . '/database.php';
 
+$stageUploadsRoot = (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_ROOT'] ?? '');
+$stageSystemRootDefault = (string) preg_replace('~/uploads/?$~i', '', $stageUploadsRoot);
+if ($stageSystemRootDefault === '' || $stageSystemRootDefault === $stageUploadsRoot) {
+    $stageSystemRootDefault = '';
+}
+
+$productionUploadsRoot = (string) ($_ENV['BACKUP_PRODUCTION_FTP_ROOT'] ?? '');
+$productionSystemRootDefault = (string) preg_replace('~/uploads/?$~i', '', $productionUploadsRoot);
+if ($productionSystemRootDefault === '' || $productionSystemRootDefault === $productionUploadsRoot) {
+    $productionSystemRootDefault = '';
+}
+
+$parseCsv = static function (string $value): array {
+    return array_values(array_filter(array_map('trim', explode(',', $value)), static fn (string $item): bool => $item !== ''));
+};
+
 return [
     'backup_root' => $_ENV['BACKUP_ROOT'] ?? 'D:\\Taren\\Documents\\Backup\\Estratégia Nerd',
     'retention' => max(1, (int) ($_ENV['BACKUP_RETENTION'] ?? 14)),
@@ -23,6 +39,10 @@ return [
             'uploads' => [
                 'mode' => 'local',
                 'path' => dirname(__DIR__) . '/public/uploads',
+            ],
+            'system_files' => [
+                'mode' => 'local',
+                'root' => dirname(__DIR__),
             ],
         ],
         'stage' => [
@@ -44,6 +64,15 @@ return [
                 'root' => (string) ($_ENV['CONTENT_SYNC_STAGE_FTP_ROOT'] ?? ''),
                 'passive' => !in_array(strtolower((string) ($_ENV['CONTENT_SYNC_STAGE_FTP_PASSIVE'] ?? 'true')), ['0', 'false', 'off', 'no'], true),
             ],
+            'system_files' => [
+                'mode' => (string) ($_ENV['BACKUP_STAGE_SYSTEM_MODE'] ?? ($_ENV['CONTENT_SYNC_STAGE_CODE_MODE'] ?? 'ftp')),
+                'host' => (string) ($_ENV['BACKUP_STAGE_SYSTEM_FTP_HOST'] ?? ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_HOST'] ?? ($_ENV['CONTENT_SYNC_STAGE_FTP_HOST'] ?? ''))),
+                'port' => (int) ($_ENV['BACKUP_STAGE_SYSTEM_FTP_PORT'] ?? ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_PORT'] ?? ($_ENV['CONTENT_SYNC_STAGE_FTP_PORT'] ?? 21))),
+                'username' => (string) ($_ENV['BACKUP_STAGE_SYSTEM_FTP_USERNAME'] ?? ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_USERNAME'] ?? ($_ENV['CONTENT_SYNC_STAGE_FTP_USERNAME'] ?? ''))),
+                'password' => (string) ($_ENV['BACKUP_STAGE_SYSTEM_FTP_PASSWORD'] ?? ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_PASSWORD'] ?? ($_ENV['CONTENT_SYNC_STAGE_FTP_PASSWORD'] ?? ''))),
+                'root' => (string) ($_ENV['BACKUP_STAGE_SYSTEM_FTP_ROOT'] ?? ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_ROOT'] ?? $stageSystemRootDefault)),
+                'passive' => !in_array(strtolower((string) ($_ENV['BACKUP_STAGE_SYSTEM_FTP_PASSIVE'] ?? ($_ENV['CONTENT_SYNC_STAGE_CODE_FTP_PASSIVE'] ?? ($_ENV['CONTENT_SYNC_STAGE_FTP_PASSIVE'] ?? 'true')))), ['0', 'false', 'off', 'no'], true),
+            ],
         ],
         'production' => [
             'label' => 'Producao',
@@ -63,6 +92,16 @@ return [
                 'password' => (string) ($_ENV['BACKUP_PRODUCTION_FTP_PASSWORD'] ?? ''),
                 'root' => (string) ($_ENV['BACKUP_PRODUCTION_FTP_ROOT'] ?? ''),
                 'passive' => !in_array(strtolower((string) ($_ENV['BACKUP_PRODUCTION_FTP_PASSIVE'] ?? 'true')), ['0', 'false', 'off', 'no'], true),
+            ],
+            'system_files' => [
+                'mode' => (string) ($_ENV['BACKUP_PRODUCTION_SYSTEM_MODE'] ?? ($_ENV['CONTENT_SYNC_PRODUCTION_CODE_MODE'] ?? 'ftp')),
+                'host' => (string) ($_ENV['BACKUP_PRODUCTION_SYSTEM_FTP_HOST'] ?? ($_ENV['CONTENT_SYNC_PRODUCTION_CODE_FTP_HOST'] ?? ($_ENV['BACKUP_PRODUCTION_FTP_HOST'] ?? ''))),
+                'port' => (int) ($_ENV['BACKUP_PRODUCTION_SYSTEM_FTP_PORT'] ?? ($_ENV['CONTENT_SYNC_PRODUCTION_CODE_FTP_PORT'] ?? ($_ENV['BACKUP_PRODUCTION_FTP_PORT'] ?? 21))),
+                'username' => (string) ($_ENV['BACKUP_PRODUCTION_SYSTEM_FTP_USERNAME'] ?? ($_ENV['CONTENT_SYNC_PRODUCTION_CODE_FTP_USERNAME'] ?? ($_ENV['BACKUP_PRODUCTION_FTP_USERNAME'] ?? ''))),
+                'password' => (string) ($_ENV['BACKUP_PRODUCTION_SYSTEM_FTP_PASSWORD'] ?? ($_ENV['CONTENT_SYNC_PRODUCTION_CODE_FTP_PASSWORD'] ?? ($_ENV['BACKUP_PRODUCTION_FTP_PASSWORD'] ?? ''))),
+                'root' => (string) ($_ENV['BACKUP_PRODUCTION_SYSTEM_FTP_ROOT'] ?? ($_ENV['CONTENT_SYNC_PRODUCTION_CODE_FTP_ROOT'] ?? $productionSystemRootDefault)),
+                'passive' => !in_array(strtolower((string) ($_ENV['BACKUP_PRODUCTION_SYSTEM_FTP_PASSIVE'] ?? ($_ENV['CONTENT_SYNC_PRODUCTION_CODE_FTP_PASSIVE'] ?? ($_ENV['BACKUP_PRODUCTION_FTP_PASSIVE'] ?? 'true')))), ['0', 'false', 'off', 'no'], true),
+                'exclude' => $parseCsv((string) ($_ENV['BACKUP_PRODUCTION_SYSTEM_EXCLUDE'] ?? 'stage')),
             ],
         ],
     ],

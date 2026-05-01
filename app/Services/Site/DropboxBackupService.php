@@ -12,7 +12,9 @@ final class DropboxBackupService
     private const AUTHORIZE_URL = 'https://www.dropbox.com/oauth2/authorize';
     private const TOKEN_URL = 'https://api.dropboxapi.com/oauth2/token';
     private const CURRENT_ACCOUNT_URL = 'https://api.dropboxapi.com/2/users/get_current_account';
+    private const SPACE_USAGE_URL = 'https://api.dropboxapi.com/2/users/get_space_usage';
     private const CREATE_FOLDER_URL = 'https://api.dropboxapi.com/2/files/create_folder_v2';
+    private const DELETE_URL = 'https://api.dropboxapi.com/2/files/delete_v2';
     private const UPLOAD_URL = 'https://content.dropboxapi.com/2/files/upload';
     private const UPLOAD_SESSION_START_URL = 'https://content.dropboxapi.com/2/files/upload_session/start';
     private const UPLOAD_SESSION_APPEND_URL = 'https://content.dropboxapi.com/2/files/upload_session/append_v2';
@@ -30,6 +32,10 @@ final class DropboxBackupService
     {
         $state = $this->readState();
         $connected = $this->isConnectedState($state);
+        $spaceUsage = $connected ? $this->spaceUsage($state) : [
+            'available' => false,
+            'message' => 'Conecte a conta do Dropbox para consultar o espaco disponivel.',
+        ];
         $page = max(1, $page);
         $perPage = max(5, min(50, $perPage));
         $recentBackups = (array) ($manager->status(false, null, 0)['items'] ?? []);
@@ -40,6 +46,7 @@ final class DropboxBackupService
                 continue;
             }
 
+            $uploadedBytes = $this->uploadedBackupBytes($item);
             $allUploads[] = [
                 'backup_id' => (string) ($item['backup_id'] ?? ''),
                 'profile_label' => $this->profileLabel((string) ($item['profile'] ?? '')),
@@ -47,6 +54,9 @@ final class DropboxBackupService
                 'cloud_uploaded_at' => (string) ($item['cloud_uploaded_at'] ?? ''),
                 'cloud_destination' => (string) ($item['cloud_destination'] ?? ''),
                 'cloud_provider' => (string) ($item['cloud_provider'] ?? 'Dropbox'),
+                'cloud_uploaded_size_bytes' => $uploadedBytes,
+                'cloud_uploaded_size' => $uploadedBytes > 0 ? $this->formatBytes($uploadedBytes) : '-',
+                'cloud_uploaded_files_count' => (int) ($item['cloud_uploaded_files_count'] ?? 0),
             ];
         }
 
@@ -70,6 +80,7 @@ final class DropboxBackupService
                 'redirect_uri' => $this->redirectUri(),
                 'last_upload' => is_array($state['last_upload'] ?? null) ? $state['last_upload'] : null,
                 'recommended_scopes' => implode(', ', (array) ($this->config['dropbox']['scopes'] ?? [])),
+                'space_usage' => $spaceUsage,
             ],
             'backup_cloud_recent_uploads' => $recentUploads,
             'backup_cloud_pagination' => [
@@ -195,6 +206,10 @@ final class DropboxBackupService
             }
 
             $backupCode = (string) ($backup['backup_id'] ?? '');
+            if (($backup['cloud_uploaded'] ?? false) === true) {
+                throw new RuntimeException(sprintf('Backup %s ja foi enviado para a nuvem.', $backupCode));
+            }
+
             $this->updateProgress($progress, 'Localizando backup', sprintf('Backup %s localizado e pronto para envio.', $backupCode), 12);
 
             $directory = (string) ($backup['_dir'] ?? '');
@@ -217,12 +232,18 @@ final class DropboxBackupService
                 (string) (($backup['database']['name'] ?? '') ?: 'database.sql'),
                 (string) (($backup['uploads']['name'] ?? '') ?: 'uploads.zip'),
             ];
+            $systemFilesEntry = (string) (($backup['system_files']['name'] ?? '') ?: '');
+            if ($systemFilesEntry !== '') {
+                $entries[] = $systemFilesEntry;
+            }
 
             $uploadedFiles = [];
             $uploadedSize = 0;
             $basePercents = [
                 'manifest.json' => 28,
                 'database.sql' => 42,
+                'uploads.zip' => 58,
+                'system-files.zip' => 76,
             ];
 
             foreach ($entries as $entry) {
@@ -287,6 +308,57 @@ final class DropboxBackupService
             ]);
             throw $exception;
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function deleteBackup(BackupManager $manager, string $backupId, string $confirmation): array
+    {
+        $backupId = trim($backupId);
+        if ($backupId === '' || strtolower($backupId) === 'latest') {
+            throw new RuntimeException('Informe o ID exato do backup que sera removido do Dropbox.');
+        }
+
+        if (!hash_equals($backupId, trim($confirmation))) {
+            throw new RuntimeException('Confirmacao invalida. Digite o ID exato do backup para remover do Dropbox.');
+        }
+
+        $state = $this->requireConnectedState();
+        $backup = $manager->findBackup($backupId, false);
+        if (!is_array($backup)) {
+            throw new RuntimeException('Backup nao encontrado no historico local.');
+        }
+
+        if (($backup['cloud_uploaded'] ?? false) !== true) {
+            throw new RuntimeException('Este backup nao esta marcado como enviado ao Dropbox.');
+        }
+
+        $remotePath = $this->deleteTargetPath($backup);
+        $accessToken = $this->freshAccessToken($state);
+        $metadata = $this->rpc(self::DELETE_URL, $accessToken, [
+            'path' => $remotePath,
+        ]);
+
+        $manager->markCloudDeleted($backupId, [
+            'provider' => 'dropbox',
+            'destination' => $remotePath,
+            'dropbox_metadata' => $metadata,
+        ]);
+
+        $state['last_delete'] = [
+            'backup_id' => $backupId,
+            'destination' => $remotePath,
+            'deleted_at' => date('c'),
+        ];
+        $this->writeState($state);
+
+        return [
+            'provider' => 'dropbox',
+            'backup_id' => $backupId,
+            'destination' => $remotePath,
+            'metadata' => $metadata,
+        ];
     }
 
     /**
@@ -525,6 +597,106 @@ final class DropboxBackupService
     }
 
     /**
+     * @param array<string, mixed> $backup
+     */
+    private function deleteTargetPath(array $backup): string
+    {
+        $backupId = (string) ($backup['backup_id'] ?? '');
+        $profile = strtolower((string) ($backup['profile'] ?? 'local'));
+        $destination = $this->normalizeDropboxPath((string) ($backup['cloud_destination'] ?? ''));
+        if ($destination === '/' || $destination === '') {
+            throw new RuntimeException('Destino remoto do backup nao esta registrado no manifesto local.');
+        }
+
+        $expected = $this->normalizeDropboxPath($this->remoteRoot() . '/' . $profile . '/' . $backupId);
+        $root = $this->normalizeDropboxPath($this->remoteRoot());
+        if ($destination !== $expected || !str_starts_with($destination . '/', $root . '/')) {
+            throw new RuntimeException('Destino remoto bloqueado por seguranca: ' . $destination);
+        }
+
+        if (!preg_match('/^B[A-Z]-[A-Z]+-\d{8}-\d{6}$/', $backupId)) {
+            throw new RuntimeException('ID de backup fora do padrao esperado para exclusao.');
+        }
+
+        return $destination;
+    }
+
+    /**
+     * @param array<string, mixed> $backup
+     */
+    private function uploadedBackupBytes(array $backup): int
+    {
+        $cloudBytes = (int) ($backup['cloud_uploaded_size_bytes'] ?? 0);
+        if ($cloudBytes > 0) {
+            return $cloudBytes;
+        }
+
+        $total = (int) ($backup['database']['size_bytes'] ?? 0)
+            + (int) ($backup['uploads']['size_bytes'] ?? 0)
+            + (int) ($backup['system_files']['size_bytes'] ?? 0);
+
+        return max(0, $total);
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return array<string, mixed>
+     */
+    private function spaceUsage(array $state): array
+    {
+        try {
+            $accessState = $state;
+            $accessToken = $this->freshAccessToken($accessState);
+            $payload = $this->rpc(self::SPACE_USAGE_URL, $accessToken, []);
+            $usedBytes = max(0, (int) ($payload['used'] ?? 0));
+            $allocation = is_array($payload['allocation'] ?? null) ? $payload['allocation'] : [];
+            $allocatedBytes = $this->allocatedBytesFromAllocation($allocation);
+            $freeBytes = $allocatedBytes > 0 ? max(0, $allocatedBytes - $usedBytes) : null;
+            $percentUsed = $allocatedBytes > 0 ? min(100, round(($usedBytes / $allocatedBytes) * 100, 1)) : null;
+
+            return [
+                'available' => $allocatedBytes > 0,
+                'used_bytes' => $usedBytes,
+                'allocated_bytes' => $allocatedBytes,
+                'free_bytes' => $freeBytes,
+                'used' => $this->formatBytes($usedBytes),
+                'allocated' => $allocatedBytes > 0 ? $this->formatBytes($allocatedBytes) : '-',
+                'free' => $freeBytes !== null ? $this->formatBytes($freeBytes) : '-',
+                'percent_used' => $percentUsed,
+                'allocation_type' => (string) ($allocation['.tag'] ?? ''),
+                'message' => $allocatedBytes > 0 ? '' : 'Dropbox nao retornou o limite total da conta.',
+            ];
+        } catch (\Throwable $exception) {
+            return [
+                'available' => false,
+                'message' => 'Nao foi possivel consultar o espaco do Dropbox: ' . $exception->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $allocation
+     */
+    private function allocatedBytesFromAllocation(array $allocation): int
+    {
+        $allocated = $allocation['allocated'] ?? null;
+        if (is_numeric($allocated)) {
+            return max(0, (int) $allocated);
+        }
+
+        foreach ($allocation as $value) {
+            if (is_array($value)) {
+                $nested = $this->allocatedBytesFromAllocation($value);
+                if ($nested > 0) {
+                    return $nested;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function uploadFile(string $accessToken, string $localPath, string $remotePath, ?string $progressId = null, ?string $entryName = null): array
@@ -619,7 +791,7 @@ final class DropboxBackupService
                 $progressPercent = 58 + (int) round(($nextOffset / max(1, $size)) * 30);
                 $this->updateProgress(
                     $progressId,
-                    'Enviando uploads.zip',
+                    'Enviando arquivo grande',
                     sprintf('Enviando %s: %.1f%% concluido (%s de %s).', $entryName, ($nextOffset / max(1, $size)) * 100, $this->formatBytes($nextOffset), $this->formatBytes($size)),
                     min(90, $progressPercent)
                 );
@@ -656,7 +828,7 @@ final class DropboxBackupService
 
             $this->updateProgress(
                 $progressId,
-                'Finalizando uploads.zip',
+                'Finalizando arquivo grande',
                 sprintf('Concluindo o envio de %s e fechando a sessao remota.', $entryName),
                 92
             );

@@ -6,6 +6,7 @@ use App\Support\Csrf;
 
 $backupStatus = (array) ($backup_status ?? []);
 $items = (array) ($backupStatus['items'] ?? []);
+$pendingCloudItems = array_values(array_filter($items, static fn ($item): bool => is_array($item) && (($item['cloud_uploaded'] ?? false) !== true)));
 $running = $backupStatus['running'] ?? null;
 $lastVerification = is_array($last_verification ?? null) ? $last_verification : null;
 $localReady = (bool) ($local_ready ?? true);
@@ -55,6 +56,7 @@ foreach ($items as $backupItem) {
 }
 
 $backupCloud = is_array($backup_cloud ?? null) ? $backup_cloud : [];
+$cloudSpaceUsage = is_array($backupCloud['space_usage'] ?? null) ? $backupCloud['space_usage'] : [];
 $backupCloudRecentUploads = is_array($backup_cloud_recent_uploads ?? null) ? $backup_cloud_recent_uploads : [];
 $backupCloudPagination = is_array($backup_cloud_pagination ?? null) ? $backup_cloud_pagination : ['total' => count($backupCloudRecentUploads), 'page' => 1, 'per_page' => 5, 'pages' => 1];
 $backupCloudTab = (string) ($backup_cloud_tab ?? 'painel');
@@ -110,11 +112,12 @@ if (($cloudEnd - $cloudStart) < 4) {
           <div class="mt-4 text-sm text-slate-300">
             <?php if (is_array($entry)): ?>
               <div class="font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($entry['backup_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-              <div class="mt-1 text-slate-400">Ultimo backup de banco e uploads deste ambiente.</div>
+              <div class="mt-1 text-slate-400">Ultimo backup completo: banco, uploads e arquivos do sistema.</div>
               <div class="mt-4 grid gap-2 text-sm">
                 <div class="flex items-center justify-between"><span class="text-slate-500">Validade</span><span class="<?= ($entry['is_valid'] ?? false) ? 'text-emerald-300' : 'text-rose-300' ?>"><?= ($entry['is_valid'] ?? false) ? 'OK' : 'Falhou' ?></span></div>
                 <div class="flex items-center justify-between"><span class="text-slate-500">Banco</span><span><?= htmlspecialchars((string) ($entry['database_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
                 <div class="flex items-center justify-between"><span class="text-slate-500">Uploads</span><span><?= htmlspecialchars((string) ($entry['uploads_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+                <div class="flex items-center justify-between"><span class="text-slate-500">Sistema</span><span><?= htmlspecialchars((string) ($entry['system_files_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
                 <div class="flex items-center justify-between"><span class="text-slate-500">Pacote</span><span><?= htmlspecialchars((string) ($entry['total_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
               </div>
             <?php else: ?>
@@ -150,9 +153,9 @@ if (($cloudEnd - $cloudStart) < 4) {
       <h2 class="font-orbitron text-lg font-bold text-white">Acoes de backup de ambiente</h2>
       <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <?php foreach ([
-            'local' => ['label' => 'Backup local', 'message' => 'Estamos exportando o banco local e compactando os uploads.', 'button' => 'Executar agora', 'ready' => $localReady, 'button_class' => 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:border-cyan-300 hover:bg-cyan-500/20'],
-            'stage' => ['label' => 'Backup stage', 'message' => 'Estamos conectando no banco e nos uploads da stage para gerar o backup de ambiente.', 'button' => 'Executar stage', 'ready' => $stageReady, 'button_class' => 'border-sky-400/40 bg-sky-500/10 text-sky-200 hover:border-sky-300 hover:bg-sky-500/20'],
-            'production' => ['label' => 'Backup producao', 'message' => 'Estamos conectando no banco remoto e baixando os uploads da hospedagem.', 'button' => 'Executar producao', 'ready' => $productionReady, 'button_class' => 'border-fuchsia-400/40 bg-fuchsia-500/10 text-fuchsia-200 hover:border-fuchsia-300 hover:bg-fuchsia-500/20'],
+            'local' => ['label' => 'Backup local', 'message' => 'Estamos exportando banco, uploads e arquivos do sistema local.', 'button' => 'Executar agora', 'ready' => $localReady, 'button_class' => 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:border-cyan-300 hover:bg-cyan-500/20'],
+            'stage' => ['label' => 'Backup stage', 'message' => 'Estamos coletando banco, uploads e arquivos do sistema da stage.', 'button' => 'Executar stage', 'ready' => $stageReady, 'button_class' => 'border-sky-400/40 bg-sky-500/10 text-sky-200 hover:border-sky-300 hover:bg-sky-500/20'],
+            'production' => ['label' => 'Backup producao', 'message' => 'Estamos coletando banco, uploads e arquivos do sistema da producao.', 'button' => 'Executar producao', 'ready' => $productionReady, 'button_class' => 'border-fuchsia-400/40 bg-fuchsia-500/10 text-fuchsia-200 hover:border-fuchsia-300 hover:bg-fuchsia-500/20'],
         ] as $profileKey => $meta): ?>
           <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-backup-async="true" data-progress-title="Executando <?= htmlspecialchars($meta['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-progress-message="<?= htmlspecialchars($meta['message'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-progress-stage="<?= htmlspecialchars($meta['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
             <?= Csrf::field() ?>
@@ -160,7 +163,7 @@ if (($cloudEnd - $cloudStart) < 4) {
             <input type="hidden" name="action" value="run">
             <input type="hidden" name="profile" value="<?= htmlspecialchars($profileKey, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
             <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80"><?= htmlspecialchars($meta['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
-            <p class="mt-2 text-sm text-slate-400">Gera backup de ambiente do banco e dos uploads do perfil selecionado.</p>
+            <p class="mt-2 text-sm text-slate-400">Gera backup completo do ambiente: banco, uploads e arquivos do sistema.</p>
             <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold transition <?= $meta['ready'] ? $meta['button_class'] : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $meta['ready'] ? '' : 'disabled' ?>><?= htmlspecialchars($meta['button'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></button>
           </form>
         <?php endforeach; ?>
@@ -171,7 +174,7 @@ if (($cloudEnd - $cloudStart) < 4) {
           <input type="hidden" name="action" value="verify">
           <input type="hidden" name="backup_id" value="latest">
           <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Verificar ultimo</p>
-          <p class="mt-2 text-sm text-slate-400">Confirma se o manifesto, o dump e o zip do ultimo backup estao integros.</p>
+          <p class="mt-2 text-sm text-slate-400">Confirma se o manifesto, o dump, uploads.zip e system-files.zip estao integros.</p>
           <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300 hover:bg-emerald-500/20">Verificar</button>
         </form>
       </div>
@@ -180,7 +183,7 @@ if (($cloudEnd - $cloudStart) < 4) {
     <div class="grid gap-6 xl:grid-cols-[1.1fr_1fr]">
       <div class="rounded-3xl border border-rose-500/20 bg-slate-900/80 p-6">
         <h2 class="font-orbitron text-lg font-bold text-white">Restore de ambiente completo</h2>
-        <p class="mt-2 text-sm leading-7 text-slate-400">Use esta area so quando for realmente necessario voltar o ambiente inteiro. O restore aplica <span class="font-semibold text-white">banco + uploads</span> do backup escolhido no destino informado. A confirmacao exige a frase <span class="font-semibold text-white">RESTAURAR</span>.</p>
+        <p class="mt-2 text-sm leading-7 text-slate-400">Use esta area so quando for realmente necessario voltar o ambiente inteiro. O restore aplica <span class="font-semibold text-white">banco + uploads + arquivos do sistema</span> do backup escolhido no destino informado. A confirmacao exige a frase <span class="font-semibold text-white">RESTAURAR</span>.</p>
 
         <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form mt-5 space-y-4" data-backup-async="true" data-progress-title="Executando restore" data-progress-message="Estamos aplicando o backup selecionado. Esse passo pode sobrescrever banco ou uploads." data-progress-stage="Restore">
           <?= Csrf::field() ?>
@@ -209,7 +212,7 @@ if (($cloudEnd - $cloudStart) < 4) {
             </div>
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4">
               <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Escopo fixo</div>
-              <div class="mt-2 text-sm font-semibold text-white">Banco + uploads</div>
+              <div class="mt-2 text-sm font-semibold text-white">Banco + uploads + sistema</div>
               <div class="mt-1 text-xs text-slate-400">O restore desta rotina sempre recompoe o ambiente completo.</div>
             </div>
           </div>
@@ -238,6 +241,10 @@ if (($cloudEnd - $cloudStart) < 4) {
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <div class="text-xs uppercase tracking-[0.25em] text-slate-500">Uploads</div>
               <div class="mt-2 text-sm text-white"><?= htmlspecialchars((string) ($lastVerification['uploads_verification']['message'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <div class="text-xs uppercase tracking-[0.25em] text-slate-500">Sistema</div>
+              <div class="mt-2 text-sm text-white"><?= htmlspecialchars((string) ($lastVerification['system_files_verification']['message'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
             </div>
           </div>
         <?php else: ?>
@@ -280,18 +287,50 @@ if (($cloudEnd - $cloudStart) < 4) {
                   <div>Total: <span class="text-white"><?= htmlspecialchars((string) ($item['total_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
                   <div class="mt-1 text-xs text-slate-500">Banco: <?= htmlspecialchars((string) ($item['database_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                   <div class="text-xs text-slate-500">Uploads: <?= htmlspecialchars((string) ($item['uploads_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="text-xs text-slate-500">Sistema: <?= htmlspecialchars((string) ($item['system_files_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </td>
                 <td class="px-4 py-4 align-top">
                   <div class="<?= ($item['is_valid'] ?? false) ? 'text-emerald-300' : 'text-rose-300' ?>"><?= ($item['is_valid'] ?? false) ? 'OK' : 'Falhou' ?></div>
+                  <div class="mt-2 text-xs <?= ($item['cloud_uploaded'] ?? false) ? 'text-sky-300' : 'text-slate-500' ?>">
+                    <?= ($item['cloud_uploaded'] ?? false) ? 'Nuvem: enviado' : 'Nuvem: pendente' ?>
+                  </div>
+                  <?php if ($item['cloud_uploaded'] ?? false): ?>
+                    <div class="mt-1 text-[11px] text-slate-500"><?= htmlspecialchars((string) ($item['cloud_uploaded_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <?php endif; ?>
                 </td>
                 <td class="px-4 py-4 align-top">
-                  <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form inline-flex" data-backup-async="true" data-progress-title="Verificando backup" data-progress-message="Estamos conferindo a integridade do pacote selecionado." data-progress-stage="Verificacao">
-                    <?= Csrf::field() ?>
-                    <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($currentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                    <input type="hidden" name="action" value="verify">
-                    <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                    <button type="submit" class="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20">Verificar</button>
-                  </form>
+                  <div class="grid min-w-[18rem] gap-2">
+                    <div class="flex flex-wrap gap-2">
+                      <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form inline-flex" data-backup-async="true" data-progress-title="Verificando backup" data-progress-message="Estamos conferindo a integridade do pacote selecionado." data-progress-stage="Verificacao">
+                        <?= Csrf::field() ?>
+                        <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($currentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                        <input type="hidden" name="action" value="verify">
+                        <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                        <button type="submit" class="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20">Verificar</button>
+                      </form>
+
+                      <?php if ($item['cloud_uploaded'] ?? false): ?>
+                        <span class="inline-flex items-center rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200">Enviado para nuvem</span>
+                      <?php else: ?>
+                        <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form inline-flex" data-backup-cloud-async="true" data-progress-title="Enviando backup para nuvem" data-progress-message="Validando conexao Dropbox e preparando o backup escolhido para envio." data-progress-stage="Preparando envio">
+                          <?= Csrf::field() ?>
+                          <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($currentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                          <input type="hidden" name="action" value="dropbox_upload_backup">
+                          <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                          <button type="submit" class="rounded-xl border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-200 transition hover:bg-sky-500/20">Enviar para nuvem</button>
+                        </form>
+                      <?php endif; ?>
+                    </div>
+
+                    <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form grid gap-2 rounded-xl border border-rose-500/20 bg-rose-500/5 p-2">
+                      <?= Csrf::field() ?>
+                      <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($currentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <input type="hidden" name="action" value="delete_local_backup">
+                      <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <input type="text" name="delete_confirmation" placeholder="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="w-full rounded-lg border border-slate-700 bg-slate-950/80 px-2 py-2 text-xs text-white outline-none focus:border-rose-400">
+                      <button type="submit" class="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/20">Excluir da pasta local</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -386,16 +425,50 @@ if (($cloudEnd - $cloudStart) < 4) {
                 </div>
               <?php else: ?>
                 <div class="mt-3 font-rajdhani text-2xl font-bold text-white">Dropbox pronto para conectar</div>
-                <div class="mt-1 text-sm text-slate-400">Depois de autorizar, os uploads poderao ser feitos manualmente ou automaticamente apos cada backup.</div>
+                <div class="mt-1 text-sm text-slate-400">Depois de autorizar, os backups completos poderao ser enviados manualmente ou automaticamente.</div>
               <?php endif; ?>
             </div>
 
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Automacao</div>
               <div class="mt-3 font-rajdhani text-2xl font-bold text-white"><?= ($backupCloud['auto_upload_enabled'] ?? false) ? 'Ativa' : 'Manual' ?></div>
-              <div class="mt-1 text-sm text-slate-400">Quando ativa, todo novo backup de ambiente tenta subir automaticamente para o Dropbox logo apos ser gerado.</div>
+              <div class="mt-1 text-sm text-slate-400">Quando ativa, todo novo backup completo tenta subir automaticamente para o Dropbox logo apos ser gerado.</div>
               <?php if (is_array($backupCloud['last_upload'] ?? null)): ?>
                 <div class="mt-4 rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-3 text-xs text-slate-300">Ultimo envio: <span class="font-semibold text-white"><?= htmlspecialchars((string) (($backupCloud['last_upload']['backup_id'] ?? '-') . ' em ' . ($backupCloud['last_upload']['uploaded_at'] ?? '-')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+              <?php endif; ?>
+            </div>
+
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 md:col-span-2">
+              <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Espaco Dropbox</div>
+                  <div class="mt-3 font-rajdhani text-2xl font-bold text-white">
+                    <?php if (($cloudSpaceUsage['available'] ?? false) === true): ?>
+                      <?= htmlspecialchars((string) ($cloudSpaceUsage['free'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> livres
+                    <?php else: ?>
+                      Indisponivel
+                    <?php endif; ?>
+                  </div>
+                </div>
+                <?php if (($cloudSpaceUsage['available'] ?? false) === true): ?>
+                  <span class="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+                    <?= htmlspecialchars((string) ($cloudSpaceUsage['percent_used'] ?? '0'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>% usado
+                  </span>
+                <?php endif; ?>
+              </div>
+
+              <?php if (($cloudSpaceUsage['available'] ?? false) === true): ?>
+                <?php $spacePercent = max(0, min(100, (float) ($cloudSpaceUsage['percent_used'] ?? 0))); ?>
+                <div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+                  <div class="h-full rounded-full bg-cyan-400" style="width: <?= htmlspecialchars((string) $spacePercent, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>%"></div>
+                </div>
+                <div class="mt-4 grid gap-2 text-sm md:grid-cols-3">
+                  <div class="flex items-center justify-between gap-3 md:block"><span class="text-slate-500">Usado</span><span class="font-semibold text-white md:mt-1 md:block"><?= htmlspecialchars((string) ($cloudSpaceUsage['used'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+                  <div class="flex items-center justify-between gap-3 md:block"><span class="text-slate-500">Total</span><span class="font-semibold text-white md:mt-1 md:block"><?= htmlspecialchars((string) ($cloudSpaceUsage['allocated'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+                  <div class="flex items-center justify-between gap-3 md:block"><span class="text-slate-500">Livre</span><span class="font-semibold text-white md:mt-1 md:block"><?= htmlspecialchars((string) ($cloudSpaceUsage['free'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+                </div>
+              <?php else: ?>
+                <p class="mt-3 text-sm leading-7 text-slate-400"><?= htmlspecialchars((string) ($cloudSpaceUsage['message'] ?? 'A consulta sera exibida quando a conta estiver conectada.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
               <?php endif; ?>
             </div>
           </div>
@@ -416,7 +489,7 @@ if (($cloudEnd - $cloudStart) < 4) {
                 <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                 <input type="hidden" name="action" value="dropbox_upload_latest">
                 <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Enviar ultimo backup</p>
-                <p class="mt-2 text-sm text-slate-400">Usa o backup mais recente disponivel e envia manifesto, banco e uploads para o Dropbox.</p>
+                <p class="mt-2 text-sm text-slate-400">Usa o backup mais recente disponivel e envia manifesto, banco, uploads e arquivos do sistema para o Dropbox.</p>
                 <div class="mt-auto pt-4">
                   <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:border-sky-300 hover:bg-sky-500/20">Enviar agora</button>
                 </div>
@@ -450,17 +523,23 @@ if (($cloudEnd - $cloudStart) < 4) {
           <?php if ($backupCloud['connected'] ?? false): ?>
             <div class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <h3 class="font-orbitron text-sm font-bold text-white">Enviar backup especifico</h3>
-              <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form mt-4 grid gap-4 md:grid-cols-[1fr_auto]" data-backup-cloud-async="true" data-progress-title="Enviando backup selecionado" data-progress-message="Validando conexao Dropbox e preparando o backup escolhido para envio." data-progress-stage="Preparando envio">
-                <?= Csrf::field() ?>
-                <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                <input type="hidden" name="action" value="dropbox_upload_backup">
-                <select name="backup_id" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
-                  <?php foreach ($items as $item): ?>
-                    <option value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars((string) (($item['backup_id'] ?? '') . ' - ' . ($item['profile_label'] ?? 'Backup')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
-                  <?php endforeach; ?>
-                </select>
-                <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-5 py-3 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Enviar selecionado</button>
-              </form>
+              <?php if ($pendingCloudItems !== []): ?>
+                <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form mt-4 grid gap-4 md:grid-cols-[1fr_auto]" data-backup-cloud-async="true" data-progress-title="Enviando backup selecionado" data-progress-message="Validando conexao Dropbox e preparando o backup escolhido para envio." data-progress-stage="Preparando envio">
+                  <?= Csrf::field() ?>
+                  <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                  <input type="hidden" name="action" value="dropbox_upload_backup">
+                  <select name="backup_id" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
+                    <?php foreach ($pendingCloudItems as $item): ?>
+                      <option value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars((string) (($item['backup_id'] ?? '') . ' - ' . ($item['profile_label'] ?? 'Backup')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                  <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-5 py-3 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Enviar selecionado</button>
+                </form>
+              <?php else: ?>
+                <div class="mt-4 rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                  Todos os backups locais listados ja foram enviados para a nuvem.
+                </div>
+              <?php endif; ?>
             </div>
           <?php endif; ?>
         <?php endif; ?>
@@ -480,7 +559,18 @@ if (($cloudEnd - $cloudStart) < 4) {
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Automacao</div>
               <div class="mt-2 font-rajdhani text-2xl font-bold text-white"><?= ($backupCloud['auto_upload_enabled'] ?? false) ? 'Ativa' : 'Manual' ?></div>
-              <div class="mt-1 text-sm text-slate-400"><?= ($backupCloud['auto_upload_enabled'] ?? false) ? 'Todo novo backup tenta subir para o Dropbox logo apos a geracao.' : 'Os envios sao disparados manualmente a partir desta subaba.' ?></div>
+              <div class="mt-1 text-sm text-slate-400"><?= ($backupCloud['auto_upload_enabled'] ?? false) ? 'Todo novo backup completo tenta subir para o Dropbox logo apos a geracao.' : 'Os envios sao disparados manualmente a partir desta subaba.' ?></div>
+            </div>
+
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Espaco Dropbox</div>
+              <?php if (($cloudSpaceUsage['available'] ?? false) === true): ?>
+                <div class="mt-2 font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($cloudSpaceUsage['free'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                <div class="mt-1 text-sm text-slate-400"><?= htmlspecialchars((string) ($cloudSpaceUsage['used'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> usados de <?= htmlspecialchars((string) ($cloudSpaceUsage['allocated'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>.</div>
+              <?php else: ?>
+                <div class="mt-2 font-rajdhani text-2xl font-bold text-white">Indisponivel</div>
+                <div class="mt-1 text-sm text-slate-400"><?= htmlspecialchars((string) ($cloudSpaceUsage['message'] ?? 'Conecte a conta para consultar a cota.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <?php endif; ?>
             </div>
 
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
@@ -515,8 +605,20 @@ if (($cloudEnd - $cloudStart) < 4) {
                 </div>
                 <div class="mt-3 grid gap-2 text-sm text-slate-300">
                   <div class="flex items-center justify-between gap-4"><span class="text-slate-500">Enviado em</span><span><?= htmlspecialchars((string) ($upload['cloud_uploaded_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+                  <div class="flex items-center justify-between gap-4"><span class="text-slate-500">Tamanho enviado</span><span class="font-semibold text-white"><?= htmlspecialchars((string) ($upload['cloud_uploaded_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
                   <div class="flex items-start justify-between gap-4"><span class="text-slate-500">Destino</span><span class="max-w-[16rem] break-all text-right"><?= htmlspecialchars((string) ($upload['cloud_destination'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
                 </div>
+                <form method="POST" action="<?= url('/local/backup') ?>" class="mt-4 grid gap-3 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-3 md:grid-cols-[1fr_auto] md:items-end">
+                  <?= Csrf::field() ?>
+                  <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                  <input type="hidden" name="action" value="dropbox_delete_backup">
+                  <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($upload['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                  <label class="block">
+                    <span class="text-xs uppercase tracking-[0.2em] text-rose-200/70">Confirmar exclusao</span>
+                    <input type="text" name="delete_confirmation" placeholder="<?= htmlspecialchars((string) ($upload['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none focus:border-rose-400">
+                  </label>
+                  <button type="submit" class="inline-flex items-center justify-center rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20">Excluir do Dropbox</button>
+                </form>
               </div>
             <?php endforeach; ?>
           </div>

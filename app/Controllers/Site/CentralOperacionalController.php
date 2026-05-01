@@ -6,6 +6,7 @@ namespace App\Controllers\Site;
 
 use App\Services\Site\BackupService;
 use App\Services\Site\CentralOperacionalService;
+use App\Services\Site\SmokeTestService;
 use App\Support\Csrf;
 use App\Support\LocalOnlyAccess;
 use App\Support\Session;
@@ -54,10 +55,11 @@ final class CentralOperacionalController
     public function handle(): void
     {
         $this->ensureLocalOnly();
+        $redirectTarget = $this->normalizeRedirectTarget($_POST['redirect_to'] ?? null);
 
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             $this->flash('error', 'Sessao expirada. Atualize a pagina e tente novamente.');
-            $this->redirect();
+            $this->redirect($redirectTarget);
         }
 
         $action = strtolower(trim((string) ($_POST['action'] ?? '')));
@@ -218,6 +220,24 @@ final class CentralOperacionalController
                     ));
                     break;
 
+                case 'run_smoke_tests':
+                    $environment = strtolower(trim((string) ($_POST['environment'] ?? 'stage')));
+                    if (!in_array($environment, ['local', 'stage', 'production'], true)) {
+                        throw new \RuntimeException('Ambiente invalido para testes automatizados.');
+                    }
+
+                    $result = $this->service()->runSmokeTest($environment);
+                    $summary = (array) ($result['summary'] ?? []);
+                    $this->flash('success', sprintf(
+                        'Testes %s finalizados com status %s: %d OK, %d falhas, %d ignorados.',
+                        strtoupper($environment),
+                        strtoupper((string) ($result['status'] ?? 'fail')),
+                        (int) ($summary['ok'] ?? 0),
+                        (int) ($summary['fail'] ?? 0),
+                        (int) ($summary['skip'] ?? 0)
+                    ));
+                    break;
+
                 default:
                     throw new \RuntimeException('Acao invalida na central operacional.');
             }
@@ -225,7 +245,7 @@ final class CentralOperacionalController
             $this->flash('error', $exception->getMessage());
         }
 
-        $this->redirect();
+        $this->redirect($redirectTarget);
     }
 
     private function ensureLocalOnly(): void
@@ -259,6 +279,10 @@ final class CentralOperacionalController
             'historico' => [
                 'label' => 'Historico',
                 'description' => 'Eventos recentes por categoria.',
+            ],
+            'testes' => [
+                'label' => 'Testes',
+                'description' => 'Smoke tests por ambiente.',
             ],
         ];
     }
@@ -321,14 +345,29 @@ final class CentralOperacionalController
             new BackupService(new BackupManager($backupConfig), $backupConfig),
             new ContentSyncManager($contentConfig),
             new DeployManager($deployConfig),
-            new OperationLogger((string) ($backupConfig['backup_root'] ?? ''))
+            new OperationLogger((string) ($backupConfig['backup_root'] ?? '')),
+            new SmokeTestService(require base_path('config/smoke-tests.php'))
         );
     }
 
-    private function redirect(): void
+    private function redirect(?string $target = null): void
     {
-        header('Location: ' . url('/local/operacoes'));
+        header('Location: ' . ($target !== null ? $target : url('/local/operacoes')));
         exit;
+    }
+
+    private function normalizeRedirectTarget(mixed $value): ?string
+    {
+        $target = trim((string) $value);
+        if ($target === '' || preg_match('~^https?://~i', $target)) {
+            return null;
+        }
+
+        if (!str_starts_with($target, '/')) {
+            return null;
+        }
+
+        return $target;
     }
 
     private function flash(string $type, string $message): void

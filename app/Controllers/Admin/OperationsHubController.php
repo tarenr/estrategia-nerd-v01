@@ -225,7 +225,7 @@ final class OperationsHubController
     private function normalizeOverviewSection(): string
     {
         $section = strtolower(trim((string) ($_GET['secao'] ?? 'resumo')));
-        $allowed = ['resumo', 'backups', 'pacotes', 'historico'];
+        $allowed = ['resumo', 'backups', 'pacotes', 'historico', 'testes'];
 
         return in_array($section, $allowed, true) ? $section : 'resumo';
     }

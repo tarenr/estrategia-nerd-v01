@@ -107,7 +107,7 @@ final class OperationLogger
         $line .= PHP_EOL;
 
         $logPath = $this->buildCategoryLogPath($this->resolveCategory($type));
-        if (file_put_contents($logPath, $line, FILE_APPEND | LOCK_EX) === false) {
+        if (@file_put_contents($logPath, $line, FILE_APPEND | LOCK_EX) === false) {
             throw new \RuntimeException('Nao foi possivel gravar o log operacional.');
         }
     }

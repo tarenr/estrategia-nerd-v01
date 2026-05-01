@@ -18,6 +18,23 @@ final class BackupManager
         'stage' => '02-stage',
         'production' => '03-prod',
     ];
+    private const SYSTEM_FILE_EXCLUDED_EXACT = [
+        '.git',
+        'node_modules',
+        'storage',
+        'public/uploads',
+        'vendor',
+    ];
+    private const SYSTEM_FILE_EXCLUDED_PREFIXES = [
+        '.git/',
+        'node_modules/',
+        'storage/',
+        'public/uploads/',
+        'vendor/',
+    ];
+    private const SYSTEM_FILE_EXCLUDED_SEGMENTS = [
+        'uploads',
+    ];
     private const PROGRESS_TITLE = 'Executando rotina de backup';
 
     private OperationLogger $logger;
@@ -35,6 +52,8 @@ final class BackupManager
         $operationRoot = $this->backupRoot();
         $backupRoot = $this->profileBackupRoot($profileName);
         $profileLabel = (string) ($profile['label'] ?? $profileName);
+        $lock = null;
+        $backupId = '';
         $this->writeProgress($progressId, [
             'status' => 'running',
             'title' => self::PROGRESS_TITLE,
@@ -43,33 +62,38 @@ final class BackupManager
             'percent' => 6,
             'updated_at' => date('c'),
         ]);
-        $lock = $this->acquireRunLock($operationRoot, $profileName, (string) ($profile['label'] ?? $profileName));
-        $profileSlug = trim((string) ($profile['slug'] ?? $profileName));
-        $backupId = $this->buildBackupId('BD', $profileName);
-        $backupDir = $backupRoot . DIRECTORY_SEPARATOR . $backupId;
-
-        if (!is_dir($backupDir) && !mkdir($backupDir, 0777, true) && !is_dir($backupDir)) {
-            $this->releaseRunLock($lock);
-            throw new RuntimeException('Nao foi possivel criar a pasta do backup: ' . $backupDir);
-        }
-
-        $manifest = [
-            'backup_id' => $backupId,
-            'profile' => $profileName,
-            'profile_label' => (string) ($profile['label'] ?? $profileName),
-            'profile_slug' => $profileSlug,
-            'created_at' => date('c'),
-            'status' => 'running',
-            'cloud_uploaded' => false,
-            'cloud_uploaded_at' => null,
-            'database' => null,
-            'uploads' => null,
-            'error' => null,
-        ];
 
         $temporaryDirectory = '';
+        $manifest = [];
+        $backupDir = '';
 
         try {
+            $lock = $this->acquireRunLock($operationRoot, $profileName, (string) ($profile['label'] ?? $profileName));
+            $profileSlug = trim((string) ($profile['slug'] ?? $profileName));
+            $backupId = $this->buildBackupId('BS', $profileName);
+            $backupDir = $backupRoot . DIRECTORY_SEPARATOR . $backupId;
+
+            if (!is_dir($backupDir) && !mkdir($backupDir, 0777, true) && !is_dir($backupDir)) {
+                throw new RuntimeException('Nao foi possivel criar a pasta do backup: ' . $backupDir);
+            }
+
+            $manifest = [
+                'backup_id' => $backupId,
+                'profile' => $profileName,
+                'profile_label' => (string) ($profile['label'] ?? $profileName),
+                'profile_slug' => $profileSlug,
+                'created_at' => date('c'),
+                'status' => 'running',
+                'kind' => 'system_full',
+                'cloud_uploaded' => false,
+                'cloud_uploaded_at' => null,
+                'database' => null,
+                'uploads' => null,
+                'system_files' => null,
+                'system_files_count' => 0,
+                'error' => null,
+            ];
+
             $databasePath = $backupDir . DIRECTORY_SEPARATOR . 'database.sql';
             $this->updateProgress($progressId, 'Exportando banco', sprintf('Gerando database.sql do ambiente %s.', $profileLabel), 22);
             $this->backupDatabase((array) ($profile['database'] ?? []), $databasePath);
@@ -81,14 +105,26 @@ final class BackupManager
             $this->updateProgress($progressId, 'Compactando uploads', 'Gerando uploads.zip para fechar o backup de ambiente.', 64);
             $this->compressDirectory($temporaryDirectory, $uploadsZipPath);
             $manifest['uploads'] = $this->fileDetails($uploadsZipPath, 'uploads.zip');
+            if ($temporaryDirectory !== '' && str_contains($temporaryDirectory, sys_get_temp_dir())) {
+                $this->removeDirectory($temporaryDirectory);
+                $temporaryDirectory = '';
+            }
+
+            $systemFilesZipPath = $backupDir . DIRECTORY_SEPARATOR . 'system-files.zip';
+            $this->updateProgress($progressId, 'Coletando sistema', sprintf('Preparando arquivos do sistema do ambiente %s.', $profileLabel), 72);
+            $temporaryDirectory = $this->materializeSystemFiles((array) ($profile['system_files'] ?? []), (array) ($profile['uploads'] ?? []));
+            $manifest['system_files_count'] = $this->countFiles($temporaryDirectory);
+            $this->updateProgress($progressId, 'Compactando sistema', 'Gerando system-files.zip com os arquivos do sistema.', 82);
+            $this->compressDirectory($temporaryDirectory, $systemFilesZipPath);
+            $manifest['system_files'] = $this->fileDetails($systemFilesZipPath, 'system-files.zip');
 
             $manifest['status'] = 'ready';
             $manifest['verified_at'] = date('c');
-            $this->updateProgress($progressId, 'Gravando manifesto', 'Registrando o manifesto local do backup gerado.', 88);
+            $this->updateProgress($progressId, 'Gravando manifesto', 'Registrando o manifesto local do backup gerado.', 90);
             $this->writeManifest($backupDir, $manifest);
             $this->updateProgress($progressId, 'Aplicando retencao', 'Limpando backups excedentes conforme a politica de retencao.', 94);
             $this->applyRetention($profileName);
-            $this->logOperation('backup_dados', $profileName, $profileName, (string) $backupId, 'OK', 'Backup de dados concluido.');
+            $this->logOperation('backup_dados', $profileName, $profileName, (string) $backupId, 'OK', 'Backup completo do sistema concluido.');
 
             $this->writeProgress($progressId, [
                 'status' => 'completed',
@@ -101,10 +137,12 @@ final class BackupManager
 
             return $manifest;
         } catch (\Throwable $exception) {
-            $manifest['status'] = 'failed';
-            $manifest['error'] = $exception->getMessage();
-            $this->writeManifest($backupDir, $manifest);
-            $this->logOperation('backup_dados', $profileName, $profileName, (string) $backupId, 'FAIL', $exception->getMessage());
+            if ($manifest !== [] && $backupDir !== '') {
+                $manifest['status'] = 'failed';
+                $manifest['error'] = $exception->getMessage();
+                $this->writeManifest($backupDir, $manifest);
+            }
+            $this->logOperation('backup_dados', $profileName, $profileName, $backupId !== '' ? (string) $backupId : 'sem-id', 'FAIL', $exception->getMessage());
             $this->writeProgress($progressId, [
                 'status' => 'error',
                 'title' => self::PROGRESS_TITLE,
@@ -119,7 +157,9 @@ final class BackupManager
                 $this->removeDirectory($temporaryDirectory);
             }
 
-            $this->releaseRunLock($lock);
+            if (is_array($lock)) {
+                $this->releaseRunLock($lock);
+            }
         }
     }
 
@@ -144,10 +184,15 @@ final class BackupManager
                 $manifest['verification'] = [
                     'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
                     'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
+                    'system_files' => $this->verifyEntry((array) ($manifest['system_files'] ?? []), $directory),
                 ];
                 $manifest['is_valid'] =
                     (bool) ($manifest['verification']['database']['valid'] ?? false)
-                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false);
+                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false)
+                    && (
+                        !array_key_exists('system_files', $manifest)
+                        || (bool) ($manifest['verification']['system_files']['valid'] ?? false)
+                    );
             }
             unset($manifest);
         }
@@ -220,6 +265,82 @@ final class BackupManager
         return $backup;
     }
 
+    public function markCloudDeleted(string $backupId, array $metadata = []): array
+    {
+        $backup = $this->backupById($backupId, false);
+        if ($backup === null) {
+            throw new RuntimeException('Nenhum backup encontrado para registrar exclusao da nuvem.');
+        }
+
+        $backup['cloud_uploaded'] = false;
+        $backup['cloud_deleted'] = true;
+        $backup['cloud_deleted_at'] = date('c');
+        $backup['cloud_deleted_provider'] = (string) ($metadata['provider'] ?? 'dropbox');
+        $backup['cloud_deleted_destination'] = (string) ($metadata['destination'] ?? ($backup['cloud_destination'] ?? ''));
+        $backup['cloud_delete_metadata'] = is_array($metadata['dropbox_metadata'] ?? null) ? $metadata['dropbox_metadata'] : [];
+
+        $this->writeManifest((string) $backup['_dir'], $backup);
+        $this->logOperation(
+            'backup_exclusao_nuvem',
+            (string) ($backup['profile'] ?? 'local'),
+            'dropbox',
+            (string) ($backup['backup_id'] ?? ''),
+            'OK',
+            'Backup removido da nuvem.',
+            [
+                'destination' => (string) ($metadata['destination'] ?? ''),
+                'provider' => (string) ($metadata['provider'] ?? 'dropbox'),
+            ]
+        );
+
+        return $backup;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function deleteLocalBackup(string $backupId, string $confirmation): array
+    {
+        $backupId = trim($backupId);
+        if ($backupId === '' || strtolower($backupId) === 'latest') {
+            throw new RuntimeException('Informe o ID exato do backup que sera excluido da pasta local.');
+        }
+
+        if (!hash_equals($backupId, trim($confirmation))) {
+            throw new RuntimeException('Confirmacao invalida. Digite o ID exato do backup para excluir da pasta local.');
+        }
+
+        $backup = $this->backupById($backupId, false);
+        if ($backup === null) {
+            throw new RuntimeException('Backup nao encontrado para exclusao local.');
+        }
+
+        $directory = (string) ($backup['_dir'] ?? '');
+        $this->assertBackupDirectoryCanBeDeleted($directory, $backupId);
+        $profile = (string) ($backup['profile'] ?? 'local');
+        $this->removeDirectory($directory);
+        if (is_dir($directory)) {
+            throw new RuntimeException('Nao foi possivel remover completamente a pasta local do backup.');
+        }
+
+        $this->logOperation(
+            'backup_exclusao_local',
+            $profile,
+            $profile,
+            $backupId,
+            'OK',
+            'Backup removido da pasta local.',
+            ['directory' => $directory]
+        );
+
+        return [
+            'backup_id' => $backupId,
+            'profile' => $profile,
+            'directory' => $directory,
+            'deleted_at' => date('c'),
+        ];
+    }
+
     public function verify(?string $backupId, ?string $progressId = null): array
     {
         $this->allowLongRunningProcess();
@@ -241,9 +362,17 @@ final class BackupManager
 
         $this->updateProgress($progressId, 'Verificando banco', sprintf('Conferindo o manifesto e o arquivo SQL do backup %s.', $resolvedBackupId), 36);
         $backup['database_verification'] = $this->verifyEntry((array) ($backup['database'] ?? []), (string) $backup['_dir']);
-        $this->updateProgress($progressId, 'Verificando uploads', 'Conferindo uploads.zip e seus checksums.', 72);
+        $this->updateProgress($progressId, 'Verificando uploads', 'Conferindo uploads.zip e seus checksums.', 58);
         $backup['uploads_verification'] = $this->verifyEntry((array) ($backup['uploads'] ?? []), (string) $backup['_dir']);
-        $backup['is_valid'] = ($backup['database_verification']['valid'] ?? false) && ($backup['uploads_verification']['valid'] ?? false);
+        $this->updateProgress($progressId, 'Verificando sistema', 'Conferindo system-files.zip e seu checksum.', 78);
+        $backup['system_files_verification'] = $this->verifyEntry((array) ($backup['system_files'] ?? []), (string) $backup['_dir']);
+        $backup['is_valid'] =
+            ($backup['database_verification']['valid'] ?? false)
+            && ($backup['uploads_verification']['valid'] ?? false)
+            && (
+                !array_key_exists('system_files', $backup)
+                || ($backup['system_files_verification']['valid'] ?? false)
+            );
         $this->logOperation('backup_verificacao', (string) ($backup['profile'] ?? 'local'), (string) ($backup['profile'] ?? 'local'), (string) ($backup['backup_id'] ?? ''), ($backup['is_valid'] ?? false) ? 'OK' : 'FAIL', 'Verificacao de backup executada.');
 
         $this->writeProgress($progressId, [
@@ -292,8 +421,8 @@ final class BackupManager
 
         $profile = $this->profile($targetProfile);
         $scope = strtolower(trim($scope));
-        if (!in_array($scope, ['all', 'database', 'uploads'], true)) {
-            throw new RuntimeException('Escopo de restore invalido. Use all, database ou uploads.');
+        if (!in_array($scope, ['all', 'database', 'uploads', 'system_files'], true)) {
+            throw new RuntimeException('Escopo de restore invalido. Use all, database, uploads ou system_files.');
         }
 
         $restored = [];
@@ -317,6 +446,24 @@ final class BackupManager
                     $this->removeDirectory($tmpDirectory);
                 }
                 $restored[] = 'uploads';
+            }
+
+            if ($scope === 'all' || $scope === 'system_files') {
+                $systemFilesFile = (string) (($backup['system_files']['name'] ?? '') ?: '');
+                if ($systemFilesFile === '') {
+                    throw new RuntimeException('Este backup nao possui system-files.zip para restore completo.');
+                }
+
+                $zipPath = (string) $backup['_dir'] . DIRECTORY_SEPARATOR . $systemFilesFile;
+                $this->updateProgress($progressId, 'Extraindo sistema', 'Descompactando system-files.zip do backup selecionado.', 88);
+                $tmpDirectory = $this->extractArchive($zipPath);
+                try {
+                    $this->updateProgress($progressId, 'Restaurando sistema', 'Sincronizando arquivos do sistema do backup para o ambiente de destino.', 94);
+                    $this->restoreSystemFiles((array) ($profile['system_files'] ?? []), $tmpDirectory);
+                } finally {
+                    $this->removeDirectory($tmpDirectory);
+                }
+                $restored[] = 'system_files';
             }
 
             $result = [
@@ -710,6 +857,59 @@ final class BackupManager
         return $tmpRoot;
     }
 
+    private function materializeSystemFiles(array $systemConfig, array $uploadsConfig): string
+    {
+        $mode = strtolower((string) ($systemConfig['mode'] ?? 'local'));
+        $tmpRoot = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'en-system-files-' . bin2hex(random_bytes(6));
+        if (!mkdir($tmpRoot, 0777, true) && !is_dir($tmpRoot)) {
+            throw new RuntimeException('Nao foi possivel criar a pasta temporaria do backup do sistema.');
+        }
+
+        if ($mode === 'local') {
+            $sourceRoot = (string) ($systemConfig['root'] ?? '');
+            if ($sourceRoot === '' || !is_dir($sourceRoot)) {
+                throw new RuntimeException('Raiz local do sistema nao encontrada: ' . $sourceRoot);
+            }
+
+            $this->copyFilteredSystemTree($sourceRoot, $tmpRoot, $this->normalizeSystemExcludes($systemConfig['exclude'] ?? []));
+            $this->ensureDirectoryHasContent($tmpRoot);
+
+            return $tmpRoot;
+        }
+
+        if ($mode !== 'ftp') {
+            throw new RuntimeException('Modo de backup de arquivos do sistema nao suportado: ' . $mode);
+        }
+
+        foreach (['host', 'port', 'username', 'password', 'root'] as $required) {
+            if (trim((string) ($systemConfig[$required] ?? '')) === '') {
+                throw new RuntimeException('Configuracao FTP incompleta para backup do sistema: faltando ' . $required);
+            }
+        }
+
+        $connection = @ftp_connect((string) $systemConfig['host'], (int) $systemConfig['port'], 30);
+        if ($connection === false) {
+            throw new RuntimeException('Nao foi possivel conectar ao FTP configurado para arquivos do sistema.');
+        }
+
+        try {
+            if (!@ftp_login($connection, (string) $systemConfig['username'], (string) $systemConfig['password'])) {
+                throw new RuntimeException('Falha de login no FTP para backup do sistema.');
+            }
+
+            ftp_pasv($connection, (bool) ($systemConfig['passive'] ?? true));
+            $root = $this->resolveFtpSystemRoot($connection, (string) $systemConfig['root']);
+            $uploadsRoot = rtrim((string) ($uploadsConfig['root'] ?? ''), '/');
+            $uploadsRelative = $this->relativeRemotePath($root, $uploadsRoot);
+            $this->downloadFtpSystemTree($connection, $root, $tmpRoot, '', $uploadsRelative, $this->normalizeSystemExcludes($systemConfig['exclude'] ?? []));
+            $this->ensureDirectoryHasContent($tmpRoot);
+        } finally {
+            ftp_close($connection);
+        }
+
+        return $tmpRoot;
+    }
+
     private function restoreUploads(array $uploadsConfig, string $sourceDirectory): void
     {
         $mode = strtolower((string) ($uploadsConfig['mode'] ?? 'local'));
@@ -745,6 +945,47 @@ final class BackupManager
 
             ftp_pasv($connection, (bool) ($uploadsConfig['passive'] ?? true));
             $this->uploadFtpTree($connection, $sourceDirectory, rtrim((string) $uploadsConfig['root'], '/'));
+        } finally {
+            ftp_close($connection);
+        }
+    }
+
+    private function restoreSystemFiles(array $systemConfig, string $sourceDirectory): void
+    {
+        $mode = strtolower((string) ($systemConfig['mode'] ?? 'local'));
+        if ($mode === 'local') {
+            $destinationRoot = (string) ($systemConfig['root'] ?? '');
+            if ($destinationRoot === '' || !is_dir($destinationRoot)) {
+                throw new RuntimeException('Destino local do sistema nao configurado.');
+            }
+
+            $this->copySystemFilesToDestination($sourceDirectory, $destinationRoot);
+            return;
+        }
+
+        if ($mode !== 'ftp') {
+            throw new RuntimeException('Modo de restore de arquivos do sistema nao suportado: ' . $mode);
+        }
+
+        foreach (['host', 'port', 'username', 'password', 'root'] as $required) {
+            if (trim((string) ($systemConfig[$required] ?? '')) === '') {
+                throw new RuntimeException('Configuracao FTP incompleta para restore do sistema: faltando ' . $required);
+            }
+        }
+
+        $connection = @ftp_connect((string) $systemConfig['host'], (int) $systemConfig['port'], 30);
+        if ($connection === false) {
+            throw new RuntimeException('Nao foi possivel conectar ao FTP configurado para restore do sistema.');
+        }
+
+        try {
+            if (!@ftp_login($connection, (string) $systemConfig['username'], (string) $systemConfig['password'])) {
+                throw new RuntimeException('Falha de login no FTP para restore do sistema.');
+            }
+
+            ftp_pasv($connection, (bool) ($systemConfig['passive'] ?? true));
+            $root = $this->resolveFtpSystemRoot($connection, (string) $systemConfig['root']);
+            $this->uploadFtpSystemTree($connection, $sourceDirectory, $root);
         } finally {
             ftp_close($connection);
         }
@@ -879,6 +1120,95 @@ final class BackupManager
         }
     }
 
+    private function resolveFtpSystemRoot($connection, string $configuredRoot): string
+    {
+        $root = rtrim(trim(str_replace('\\', '/', $configuredRoot)), '/');
+        if ($root === '') {
+            throw new RuntimeException('Raiz FTP do sistema nao configurada.');
+        }
+
+        if (str_ends_with(strtolower($root), '/_app_core')) {
+            return $root;
+        }
+
+        if (@ftp_size($connection, $root . '/_app_core/bootstrap.php') >= 0) {
+            return $root . '/_app_core';
+        }
+
+        return $root;
+    }
+
+    private function downloadFtpSystemTree($connection, string $remoteDirectory, string $localDirectory, string $relativeBase = '', string $uploadsRelative = '', array $excludedPaths = []): void
+    {
+        if (!is_dir($localDirectory) && !mkdir($localDirectory, 0777, true) && !is_dir($localDirectory)) {
+            throw new RuntimeException('Nao foi possivel criar pasta local temporaria do sistema: ' . $localDirectory);
+        }
+
+        $items = function_exists('ftp_mlsd') ? @ftp_mlsd($connection, $remoteDirectory) : false;
+        if (is_array($items)) {
+            foreach ($items as $item) {
+                $name = (string) ($item['name'] ?? '');
+                if ($name === '' || $name === '.' || $name === '..') {
+                    continue;
+                }
+
+                $relative = ltrim($relativeBase . '/' . $name, '/');
+                if (!$this->shouldIncludeSystemRelativePath($relative, $uploadsRelative, $excludedPaths)) {
+                    continue;
+                }
+
+                $remotePath = $remoteDirectory . '/' . $name;
+                $localPath = $localDirectory . DIRECTORY_SEPARATOR . $name;
+                $type = strtolower((string) ($item['type'] ?? ''));
+
+                if ($type === 'dir') {
+                    $this->downloadFtpSystemTree($connection, $remotePath, $localPath, $relative, $uploadsRelative, $excludedPaths);
+                    continue;
+                }
+
+                if (!@ftp_get($connection, $localPath, $remotePath, FTP_BINARY)) {
+                    throw new RuntimeException('Falha ao baixar arquivo do sistema via FTP: ' . $remotePath);
+                }
+            }
+            return;
+        }
+
+        $rawItems = @ftp_rawlist($connection, $remoteDirectory);
+        if ($rawItems === false) {
+            throw new RuntimeException('Nao foi possivel listar o diretorio FTP do sistema: ' . $remoteDirectory);
+        }
+
+        foreach ($rawItems as $rawItem) {
+            $parts = preg_split('/\s+/', trim((string) $rawItem), 9);
+            if (!is_array($parts) || count($parts) < 9) {
+                continue;
+            }
+
+            $name = $parts[8];
+            if ($name === '.' || $name === '..') {
+                continue;
+            }
+
+            $relative = ltrim($relativeBase . '/' . $name, '/');
+            if (!$this->shouldIncludeSystemRelativePath($relative, $uploadsRelative, $excludedPaths)) {
+                continue;
+            }
+
+            $remotePath = $remoteDirectory . '/' . $name;
+            $localPath = $localDirectory . DIRECTORY_SEPARATOR . $name;
+            $isDirectory = str_starts_with((string) $parts[0], 'd');
+
+            if ($isDirectory) {
+                $this->downloadFtpSystemTree($connection, $remotePath, $localPath, $relative, $uploadsRelative, $excludedPaths);
+                continue;
+            }
+
+            if (!@ftp_get($connection, $localPath, $remotePath, FTP_BINARY)) {
+                throw new RuntimeException('Falha ao baixar arquivo do sistema via FTP: ' . $remotePath);
+            }
+        }
+    }
+
     private function uploadFtpTree($connection, string $localDirectory, string $remoteDirectory): void
     {
         if (!is_dir($localDirectory)) {
@@ -909,6 +1239,45 @@ final class BackupManager
 
             if (!@ftp_put($connection, $remotePath, $localPath, FTP_BINARY)) {
                 throw new RuntimeException('Falha ao enviar arquivo FTP: ' . $remotePath);
+            }
+        }
+    }
+
+    private function uploadFtpSystemTree($connection, string $localDirectory, string $remoteDirectory, string $relativeBase = ''): void
+    {
+        if (!is_dir($localDirectory)) {
+            throw new RuntimeException('Diretorio local de restore do sistema nao encontrado: ' . $localDirectory);
+        }
+
+        $this->ensureFtpDirectory($connection, $remoteDirectory);
+        $items = scandir($localDirectory);
+        if ($items === false) {
+            throw new RuntimeException('Nao foi possivel ler a pasta local de restore do sistema.');
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $relative = ltrim($relativeBase . '/' . $item, '/');
+            if (!$this->shouldIncludeSystemRelativePath($relative)) {
+                continue;
+            }
+
+            $localPath = $localDirectory . DIRECTORY_SEPARATOR . $item;
+            if ($item === '.backup-empty') {
+                continue;
+            }
+            $remotePath = $remoteDirectory . '/' . $item;
+
+            if (is_dir($localPath)) {
+                $this->uploadFtpSystemTree($connection, $localPath, $remotePath, $relative);
+                continue;
+            }
+
+            if (!@ftp_put($connection, $remotePath, $localPath, FTP_BINARY)) {
+                throw new RuntimeException('Falha ao enviar arquivo do sistema via FTP: ' . $remotePath);
             }
         }
     }
@@ -956,6 +1325,159 @@ final class BackupManager
         }
     }
 
+    private function copyFilteredSystemTree(string $sourceRoot, string $destinationRoot, array $excludedPaths = []): void
+    {
+        $normalizedSourceRoot = rtrim(str_replace('\\', '/', realpath($sourceRoot) ?: $sourceRoot), '/');
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($sourceRoot, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $item) {
+            if (!$item->isFile()) {
+                continue;
+            }
+
+            $sourcePath = $item->getPathname();
+            $normalizedSourcePath = str_replace('\\', '/', $sourcePath);
+            $relative = ltrim(substr($normalizedSourcePath, strlen($normalizedSourceRoot)), '/');
+            if (!$this->shouldIncludeSystemRelativePath($relative, '', $excludedPaths)) {
+                continue;
+            }
+
+            $destinationPath = $destinationRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+            $destinationDir = dirname($destinationPath);
+            if (!is_dir($destinationDir) && !mkdir($destinationDir, 0777, true) && !is_dir($destinationDir)) {
+                throw new RuntimeException('Nao foi possivel criar a pasta temporaria do arquivo do sistema: ' . $destinationDir);
+            }
+
+            if (!copy($sourcePath, $destinationPath)) {
+                throw new RuntimeException('Falha ao copiar arquivo do sistema: ' . $relative);
+            }
+        }
+    }
+
+    private function copySystemFilesToDestination(string $sourceRoot, string $destinationRoot): void
+    {
+        $normalizedSourceRoot = rtrim(str_replace('\\', '/', realpath($sourceRoot) ?: $sourceRoot), '/');
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($sourceRoot, \FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($iterator as $item) {
+            if (!$item->isFile()) {
+                continue;
+            }
+
+            $sourcePath = $item->getPathname();
+            $normalizedSourcePath = str_replace('\\', '/', $sourcePath);
+            $relative = ltrim(substr($normalizedSourcePath, strlen($normalizedSourceRoot)), '/');
+            if (!$this->shouldIncludeSystemRelativePath($relative)) {
+                continue;
+            }
+
+            $destinationPath = $destinationRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative);
+            $destinationDir = dirname($destinationPath);
+            if (!is_dir($destinationDir) && !mkdir($destinationDir, 0777, true) && !is_dir($destinationDir)) {
+                throw new RuntimeException('Nao foi possivel criar pasta de destino para restore do sistema: ' . $relative);
+            }
+
+            if (!copy($sourcePath, $destinationPath)) {
+                throw new RuntimeException('Falha ao restaurar arquivo do sistema: ' . $relative);
+            }
+        }
+    }
+
+    private function shouldIncludeSystemRelativePath(string $relativePath, string $uploadsRelative = '', array $excludedPaths = []): bool
+    {
+        $normalized = strtolower(ltrim(str_replace('\\', '/', trim($relativePath)), '/'));
+        if ($normalized === '' || str_contains($normalized, '..')) {
+            return false;
+        }
+
+        $segments = array_values(array_filter(explode('/', $normalized), static fn (string $segment): bool => $segment !== ''));
+        foreach (self::SYSTEM_FILE_EXCLUDED_SEGMENTS as $segment) {
+            if (in_array($segment, $segments, true)) {
+                return false;
+            }
+        }
+
+        $uploads = strtolower(ltrim(str_replace('\\', '/', trim($uploadsRelative)), '/'));
+        if ($uploads !== '' && ($normalized === $uploads || str_starts_with($normalized, $uploads . '/'))) {
+            return false;
+        }
+
+        if (in_array($normalized, self::SYSTEM_FILE_EXCLUDED_EXACT, true)) {
+            return false;
+        }
+
+        foreach (self::SYSTEM_FILE_EXCLUDED_PREFIXES as $prefix) {
+            if (str_starts_with($normalized, $prefix)) {
+                return false;
+            }
+        }
+
+        foreach ($excludedPaths as $excludedPath) {
+            if ($normalized === $excludedPath || str_starts_with($normalized, $excludedPath . '/')) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function normalizeSystemExcludes(mixed $excludedPaths): array
+    {
+        if (is_string($excludedPaths)) {
+            $excludedPaths = explode(',', $excludedPaths);
+        }
+
+        if (!is_array($excludedPaths)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($excludedPaths as $excludedPath) {
+            $path = strtolower(trim(str_replace('\\', '/', (string) $excludedPath), '/'));
+            if ($path === '' || str_contains($path, '..')) {
+                continue;
+            }
+
+            $normalized[] = $path;
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
+    private function relativeRemotePath(string $root, string $candidate): string
+    {
+        $root = trim(str_replace('\\', '/', $root), '/');
+        $candidate = trim(str_replace('\\', '/', $candidate), '/');
+        if ($root === '' || $candidate === '' || !str_starts_with($candidate, $root . '/')) {
+            return '';
+        }
+
+        return substr($candidate, strlen($root) + 1);
+    }
+
+    private function countFiles(string $directory): int
+    {
+        if (!is_dir($directory)) {
+            return 0;
+        }
+
+        $count = 0;
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $item) {
+            if ($item->isFile()) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
     private function fileDetails(string $path, string $name): array
     {
         if (!is_file($path)) {
@@ -972,7 +1494,7 @@ final class BackupManager
 
     private function writeManifest(string $backupDir, array $manifest): void
     {
-        unset($manifest['_dir'], $manifest['database_verification'], $manifest['uploads_verification'], $manifest['verification'], $manifest['is_valid']);
+        unset($manifest['_dir'], $manifest['database_verification'], $manifest['uploads_verification'], $manifest['system_files_verification'], $manifest['verification'], $manifest['is_valid']);
         file_put_contents(
             $backupDir . DIRECTORY_SEPARATOR . 'manifest.json',
             json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
@@ -1021,10 +1543,15 @@ final class BackupManager
                 $manifest['verification'] = [
                     'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
                     'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
+                    'system_files' => $this->verifyEntry((array) ($manifest['system_files'] ?? []), $directory),
                 ];
                 $manifest['is_valid'] =
                     (bool) ($manifest['verification']['database']['valid'] ?? false)
-                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false);
+                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false)
+                    && (
+                        !array_key_exists('system_files', $manifest)
+                        || (bool) ($manifest['verification']['system_files']['valid'] ?? false)
+                    );
             }
             unset($manifest);
         }
@@ -1092,6 +1619,41 @@ final class BackupManager
         }
     }
 
+    private function assertBackupDirectoryCanBeDeleted(string $directory, string $backupId): void
+    {
+        if ($directory === '' || !is_dir($directory)) {
+            throw new RuntimeException('Pasta local do backup nao encontrada.');
+        }
+
+        $realDirectory = realpath($directory);
+        if ($realDirectory === false) {
+            throw new RuntimeException('Nao foi possivel resolver a pasta local do backup.');
+        }
+
+        $allowed = false;
+        foreach ($this->backupSearchRoots() as $root) {
+            $realRoot = realpath($root);
+            if ($realRoot === false) {
+                continue;
+            }
+
+            $normalizedRoot = rtrim(str_replace('\\', '/', $realRoot), '/');
+            $normalizedDirectory = rtrim(str_replace('\\', '/', $realDirectory), '/');
+            if (str_starts_with($normalizedDirectory . '/', $normalizedRoot . '/')) {
+                $allowed = true;
+                break;
+            }
+        }
+
+        if (!$allowed) {
+            throw new RuntimeException('Exclusao bloqueada: pasta fora da raiz de backups.');
+        }
+
+        if (basename($realDirectory) !== $backupId || !preg_match('/^B[A-Z]-[A-Z]+-\d{8}-\d{6}$/', $backupId)) {
+            throw new RuntimeException('Exclusao bloqueada: ID ou pasta fora do padrao esperado.');
+        }
+    }
+
     /**
      * @return array<int, string>
      */
@@ -1136,10 +1698,15 @@ final class BackupManager
                 $manifest['verification'] = [
                     'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
                     'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
+                    'system_files' => $this->verifyEntry((array) ($manifest['system_files'] ?? []), $directory),
                 ];
                 $manifest['is_valid'] =
                     (bool) ($manifest['verification']['database']['valid'] ?? false)
-                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false);
+                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false)
+                    && (
+                        !array_key_exists('system_files', $manifest)
+                        || (bool) ($manifest['verification']['system_files']['valid'] ?? false)
+                    );
             }
 
             $items[] = $manifest;

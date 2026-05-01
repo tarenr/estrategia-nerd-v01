@@ -11,6 +11,7 @@ $content = (array) ($operationsStatus['content'] ?? []);
 $code = (array) ($operationsStatus['code'] ?? []);
 $technicalBackup = (array) ($operationsStatus['technical_backup'] ?? []);
 $parity = (array) ($operationsStatus['parity'] ?? []);
+$smokeTests = (array) ($operationsStatus['smoke_tests'] ?? []);
 $logCategories = is_array($operationsStatus['logs']['categories'] ?? null) ? $operationsStatus['logs']['categories'] : [];
 
 $productionGateOpen = (bool) ($policy['production_allowed'] ?? false);
@@ -31,6 +32,12 @@ $latestTechnicalProduction = is_array($technicalBackup['production_latest'] ?? n
 
 $backupTabUrl = $adminEmbed ? url('/admin/central-operacional?aba=backup-restore') : url('/local/backup');
 $contentTabUrl = $adminEmbed ? url('/admin/central-operacional?aba=conteudo') : url('/local/conteudo');
+$testsReturnUrl = $adminEmbed
+    ? url('/admin/central-operacional?aba=visao-geral&secao=testes')
+    : url('/local/operacoes?secao=testes');
+$testsReturnPath = (string) parse_url($testsReturnUrl, PHP_URL_PATH);
+$testsReturnQuery = (string) parse_url($testsReturnUrl, PHP_URL_QUERY);
+$testsReturnTarget = $testsReturnPath . ($testsReturnQuery !== '' ? '?' . $testsReturnQuery : '');
 
 $metaLine = static function (string $label, string $value): string {
     return '<div class="flex items-start justify-between gap-4"><span class="text-slate-500">' . htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span><strong class="text-right font-semibold text-slate-100">' . htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</strong></div>';
@@ -44,6 +51,15 @@ $pill = static function (string $label, string $tone = 'default'): string {
     };
 
     return '<span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ' . $classes . '">' . htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>';
+};
+
+$statusPill = static function (string $status) use ($pill): string {
+    return match (strtolower($status)) {
+        'ok' => $pill('OK', 'ok'),
+        'fail' => $pill('Falhou', 'warn'),
+        'skip' => $pill('Ignorado'),
+        default => $pill('Pendente'),
+    };
 };
 ?>
 <section data-operations-overview-panel class="space-y-6">
@@ -283,6 +299,126 @@ $pill = static function (string $label, string $tone = 'default'): string {
           <?php endforeach; ?>
           <?php if ((array) ($parity['recommendations'] ?? []) === []): ?>
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">Nenhuma recomendacao pendente no momento.</div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+  <?php elseif ($overviewSection === 'testes'): ?>
+    <?php
+      $smokeEnvironments = is_array($smokeTests['environments'] ?? null) ? $smokeTests['environments'] : [];
+      $latestByEnvironment = is_array($smokeTests['latest_by_environment'] ?? null) ? $smokeTests['latest_by_environment'] : [];
+      $smokeHistory = is_array($smokeTests['history'] ?? null) ? $smokeTests['history'] : [];
+    ?>
+    <div class="rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_40px_rgba(6,182,212,0.08)]">
+      <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Testes Automatizados</p>
+      <h2 class="mt-2 font-orbitron text-3xl font-black tracking-tight text-white">Smoke tests por ambiente</h2>
+      <p class="mt-3 max-w-4xl text-sm leading-7 text-slate-300">Executa verificacoes seguras de leitura antes de considerar uma promocao tecnica. A stage so fica apta quando os testes obrigatorios passam sem falhas.</p>
+    </div>
+
+    <div class="grid gap-4 xl:grid-cols-3">
+      <?php foreach ($smokeEnvironments as $environment): ?>
+        <?php
+          $key = (string) ($environment['key'] ?? '');
+          $latest = is_array($latestByEnvironment[$key] ?? null) ? $latestByEnvironment[$key] : [];
+          $summary = is_array($latest['summary'] ?? null) ? $latest['summary'] : [];
+          $status = (string) ($latest['status'] ?? 'pending');
+        ?>
+        <div class="operations-summary-card <?= $key === 'stage' ? 'operations-summary-card--highlight' : '' ?>">
+          <div>
+            <p class="operations-summary-label"><?= htmlspecialchars((string) ($environment['label'] ?? $key), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+            <div class="operations-summary-headline <?= $status === 'ok' ? 'text-emerald-300' : ($status === 'fail' ? 'text-amber-300' : 'text-white') ?>">
+              <?= $status === 'ok' ? 'OK' : ($status === 'fail' ? 'Falhou' : 'Sem teste') ?>
+            </div>
+            <p class="operations-summary-note break-all"><?= htmlspecialchars((string) ($environment['base_url'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+          </div>
+          <div>
+            <div class="operations-summary-list">
+              <?= $metaLine('Ultima execucao', (string) ($latest['finished_at'] ?? 'Nunca')) ?>
+              <?= $metaLine('Resultado', sprintf('%d OK / %d falhas / %d ignorados', (int) ($summary['ok'] ?? 0), (int) ($summary['fail'] ?? 0), (int) ($summary['skip'] ?? 0))) ?>
+            </div>
+            <form method="POST" action="<?= htmlspecialchars(url('/local/operacoes'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-4">
+              <?= \App\Support\Csrf::field() ?>
+              <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($testsReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+              <input type="hidden" name="action" value="run_smoke_tests">
+              <input type="hidden" name="environment" value="<?= htmlspecialchars($key, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+              <button type="submit" class="inline-flex w-full items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Executar testes</button>
+            </form>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+
+    <?php $stageLatest = is_array($latestByEnvironment['stage'] ?? null) ? $latestByEnvironment['stage'] : []; ?>
+    <div class="rounded-3xl border <?= (bool) ($stageLatest['ready_for_technical_deploy'] ?? false) ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-amber-500/30 bg-amber-500/10' ?> p-5">
+      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="font-orbitron text-xs uppercase tracking-[0.25em] <?= (bool) ($stageLatest['ready_for_technical_deploy'] ?? false) ? 'text-emerald-200' : 'text-amber-200' ?>">Trava de promocao tecnica</p>
+          <p class="mt-2 text-lg font-semibold text-white"><?= (bool) ($stageLatest['ready_for_technical_deploy'] ?? false) ? 'Stage apta para pacote tecnico' : 'Stage ainda nao liberada para pacote tecnico' ?></p>
+        </div>
+        <?= $statusPill((string) ($stageLatest['status'] ?? 'pending')) ?>
+      </div>
+    </div>
+
+    <div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
+        <h3 class="font-orbitron text-lg font-bold text-white">Detalhes da ultima execucao</h3>
+        <?php $latestOverall = $smokeHistory[0] ?? null; ?>
+        <?php if (is_array($latestOverall)): ?>
+          <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p class="font-semibold text-white"><?= htmlspecialchars((string) ($latestOverall['id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+                <p class="mt-1 text-sm text-slate-400"><?= htmlspecialchars((string) ($latestOverall['environment_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> - <?= htmlspecialchars((string) ($latestOverall['finished_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+              </div>
+              <?= $statusPill((string) ($latestOverall['status'] ?? 'pending')) ?>
+            </div>
+          </div>
+          <div class="mt-4 overflow-hidden rounded-2xl border border-slate-800">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-950/80 text-xs uppercase tracking-[0.2em] text-slate-500">
+                <tr>
+                  <th class="px-4 py-3">Teste</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">HTTP</th>
+                  <th class="px-4 py-3">Tempo</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800 bg-slate-950/50">
+                <?php foreach ((array) ($latestOverall['tests'] ?? []) as $test): ?>
+                  <tr>
+                    <td class="px-4 py-3">
+                      <div class="font-semibold text-white"><?= htmlspecialchars((string) ($test['name'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                      <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($test['message'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                    </td>
+                    <td class="px-4 py-3"><?= $statusPill((string) ($test['status'] ?? 'pending')) ?></td>
+                    <td class="px-4 py-3 text-slate-300"><?= htmlspecialchars((string) ($test['http_status'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                    <td class="px-4 py-3 text-slate-300"><?= (int) ($test['duration_ms'] ?? 0) ?>ms</td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php else: ?>
+          <p class="mt-4 text-sm text-slate-400">Nenhum teste executado ainda.</p>
+        <?php endif; ?>
+      </div>
+
+      <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
+        <h3 class="font-orbitron text-lg font-bold text-white">Historico recente</h3>
+        <div class="mt-5 space-y-3">
+          <?php foreach ($smokeHistory as $run): ?>
+            <?php $runSummary = is_array($run['summary'] ?? null) ? $run['summary'] : []; ?>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <div class="flex items-center justify-between gap-4">
+                <p class="font-semibold text-white"><?= htmlspecialchars((string) ($run['environment_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+                <?= $statusPill((string) ($run['status'] ?? 'pending')) ?>
+              </div>
+              <p class="mt-2 text-xs text-slate-500"><?= htmlspecialchars((string) ($run['id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+              <p class="mt-2 text-sm text-slate-300"><?= (int) ($runSummary['ok'] ?? 0) ?> OK, <?= (int) ($runSummary['fail'] ?? 0) ?> falhas, <?= (int) ($runSummary['skip'] ?? 0) ?> ignorados</p>
+            </div>
+          <?php endforeach; ?>
+          <?php if ($smokeHistory === []): ?>
+            <p class="text-sm text-slate-400">Sem historico registrado.</p>
           <?php endif; ?>
         </div>
       </div>

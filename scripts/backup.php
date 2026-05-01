@@ -25,6 +25,7 @@ try {
             echo 'Pasta: ' . dirname((string) (($manifest['database']['path'] ?? '') ?: ($manifest['uploads']['path'] ?? ''))) . PHP_EOL;
             echo 'Banco: ' . number_format(((int) ($manifest['database']['size_bytes'] ?? 0)) / 1024, 1, ',', '.') . ' KB' . PHP_EOL;
             echo 'Uploads: ' . number_format(((int) ($manifest['uploads']['size_bytes'] ?? 0)) / 1024, 1, ',', '.') . ' KB' . PHP_EOL;
+            echo 'Sistema: ' . number_format(((int) ($manifest['system_files']['size_bytes'] ?? 0)) / 1024, 1, ',', '.') . ' KB' . PHP_EOL;
             break;
 
         case 'status':
@@ -70,6 +71,7 @@ try {
             echo 'Verificacao do backup ' . ($backup['backup_id'] ?? '-') . PHP_EOL;
             echo '- Banco: ' . ($backup['database_verification']['message'] ?? 'sem info') . PHP_EOL;
             echo '- Uploads: ' . ($backup['uploads_verification']['message'] ?? 'sem info') . PHP_EOL;
+            echo '- Sistema: ' . ($backup['system_files_verification']['message'] ?? 'sem info') . PHP_EOL;
             echo '- Resultado final: ' . (($backup['is_valid'] ?? false) ? 'valido' : 'invalido') . PHP_EOL;
             break;
 
@@ -94,13 +96,23 @@ try {
             echo 'Restaurado: ' . implode(', ', (array) ($result['restored'] ?? [])) . PHP_EOL;
             break;
 
+        case 'delete-local':
+            $backupId = (string) ($argv[2] ?? '');
+            $confirmation = (string) ($argv[3] ?? '');
+            $result = $manager->deleteLocalBackup($backupId, $confirmation);
+            echo 'Backup removido da pasta local.' . PHP_EOL;
+            echo 'ID: ' . ($result['backup_id'] ?? '-') . PHP_EOL;
+            echo 'Pasta: ' . ($result['directory'] ?? '-') . PHP_EOL;
+            break;
+
         default:
             echo 'Uso:' . PHP_EOL;
-            echo '  php scripts/backup.php run [local|production]' . PHP_EOL;
+            echo '  php scripts/backup.php run [local|stage|production]' . PHP_EOL;
             echo '  php scripts/backup.php status' . PHP_EOL;
             echo '  php scripts/backup.php verify [backup_id|latest]' . PHP_EOL;
             echo '  php scripts/backup.php mark-uploaded [backup_id|latest]' . PHP_EOL;
-            echo '  php scripts/backup.php restore [backup_id|latest] [local|production] [all|database|uploads] --force' . PHP_EOL;
+            echo '  php scripts/backup.php delete-local [backup_id] [confirmacao_id]' . PHP_EOL;
+            echo '  php scripts/backup.php restore [backup_id|latest] [local|stage|production] [all|database|uploads|system_files] --force' . PHP_EOL;
             exit(0);
     }
 } catch (Throwable $exception) {

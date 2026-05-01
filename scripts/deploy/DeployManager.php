@@ -20,6 +20,7 @@ final class DeployManager
     ];
     private const PROTECTED_TECHNICAL_PATHS = [
         '.env',
+        '.env.example',
         '_app_core/.env',
         'index.php',
         '.htaccess',
@@ -701,6 +702,12 @@ final class DeployManager
         $normalized = strtolower(ltrim(str_replace('\\', '/', trim($relativePath)), '/'));
         if ($normalized === '' || str_contains($normalized, '..')) {
             return false;
+        }
+
+        foreach (['storage/', 'uploads/', 'public/uploads/', 'stage/'] as $blockedRoot) {
+            if (str_starts_with($normalized, $blockedRoot)) {
+                return false;
+            }
         }
 
         return !in_array($normalized, self::PROTECTED_TECHNICAL_PATHS, true);

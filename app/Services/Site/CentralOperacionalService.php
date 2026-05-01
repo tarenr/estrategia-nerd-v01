@@ -14,7 +14,8 @@ final class CentralOperacionalService
         private BackupService $backupService,
         private ContentSyncManager $contentManager,
         private DeployManager $deployManager,
-        private OperationLogger $operationLogger
+        private OperationLogger $operationLogger,
+        private ?SmokeTestService $smokeTestService = null
     ) {
     }
 
@@ -110,6 +111,11 @@ final class CentralOperacionalService
     public function rollbackTechnical(string $backupId, string $targetProfile): array
     {
         return $this->deployManager->rollbackTecnico($targetProfile, $backupId, true);
+    }
+
+    public function runSmokeTest(string $environment): array
+    {
+        return $this->smokeTests()->run($environment);
     }
 
     private function latestTechnicalBackup(array $items): ?array
@@ -224,6 +230,7 @@ final class CentralOperacionalService
         return match (strtolower(trim($overviewSection))) {
             'backups' => $this->buildBackupsStatus(),
             'pacotes' => $this->buildPackagesStatus(),
+            'testes' => $this->buildSmokeTestsStatus(),
             'historico' => $this->buildHistoryStatus(),
             default => $this->buildSummaryStatus(),
         };
@@ -342,6 +349,16 @@ final class CentralOperacionalService
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    private function buildSmokeTestsStatus(): array
+    {
+        return [
+            'smoke_tests' => $this->smokeTests()->viewModel(),
+        ];
+    }
+
+    /**
      * @param array<int, array<string, mixed>> $entries
      * @return array<int, array<string, mixed>>
      */
@@ -369,5 +386,16 @@ final class CentralOperacionalService
         }
 
         return $presented;
+    }
+
+    private function smokeTests(): SmokeTestService
+    {
+        if ($this->smokeTestService instanceof SmokeTestService) {
+            return $this->smokeTestService;
+        }
+
+        $this->smokeTestService = new SmokeTestService(require base_path('config/smoke-tests.php'));
+
+        return $this->smokeTestService;
     }
 }
