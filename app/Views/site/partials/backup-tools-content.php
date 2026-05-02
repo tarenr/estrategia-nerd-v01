@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Support\Csrf;
 
 $backupStatus = (array) ($backup_status ?? []);
+$compactCopy = (bool) ($embed_mode ?? false);
 $items = (array) ($backupStatus['items'] ?? []);
 $pendingCloudItems = array_values(array_filter($items, static fn ($item): bool => is_array($item) && (($item['cloud_uploaded'] ?? false) !== true)));
 $running = $backupStatus['running'] ?? null;
@@ -21,13 +22,36 @@ $historyTotal = max(0, (int) ($historyPagination['total'] ?? count($items)));
 $historyFirstItem = $historyTotal > 0 ? (($historyPage - 1) * $historyPerPage) + 1 : 0;
 $historyLastItem = $historyTotal > 0 ? min($historyTotal, (($historyPage - 1) * $historyPerPage) + count($items)) : 0;
 $historyBaseUrl = (string) ($backup_base_url ?? url('/local/backup'));
-$historyBuildUrl = static function (int $page, ?int $perPage = null) use ($historyBaseUrl, $historyPerPage): string {
+$historySearch = trim((string) ($_GET['backup_busca'] ?? ''));
+$historyEnvironment = strtolower(trim((string) ($_GET['backup_ambiente'] ?? '')));
+$historyFilterStatus = strtolower(trim((string) ($_GET['backup_status'] ?? '')));
+$historySort = strtolower(trim((string) ($_GET['backup_ordem'] ?? 'data_desc')));
+$allowedHistoryEnvironments = ['', 'local', 'stage', 'production'];
+$allowedHistoryStatuses = ['', 'valido', 'falhou', 'nuvem', 'pendente'];
+$allowedHistorySorts = ['data_desc', 'data_asc', 'ambiente', 'tamanho_desc', 'tamanho_asc'];
+if (!in_array($historyEnvironment, $allowedHistoryEnvironments, true)) {
+    $historyEnvironment = '';
+}
+if (!in_array($historyFilterStatus, $allowedHistoryStatuses, true)) {
+    $historyFilterStatus = '';
+}
+if (!in_array($historySort, $allowedHistorySorts, true)) {
+    $historySort = 'data_desc';
+}
+$historyBuildUrl = static function (int $page, ?int $perPage = null) use ($historyBaseUrl, $historyPerPage, $historySearch, $historyEnvironment, $historyFilterStatus, $historySort): string {
     $separator = str_contains($historyBaseUrl, '?') ? '&' : '?';
+    $query = [
+        'backup_secao' => 'historico',
+        'backup_pagina' => max(1, $page),
+        'backup_por_pagina' => $perPage ?? $historyPerPage,
+        'backup_busca' => $historySearch,
+        'backup_ambiente' => $historyEnvironment,
+        'backup_status' => $historyFilterStatus,
+        'backup_ordem' => $historySort,
+    ];
+    $query = array_filter($query, static fn ($value): bool => !($value === '' || $value === null));
 
-    return $historyBaseUrl
-        . $separator
-        . 'backup_secao=historico&backup_pagina=' . max(1, $page)
-        . '&backup_por_pagina=' . ($perPage ?? $historyPerPage);
+    return $historyBaseUrl . $separator . http_build_query($query);
 };
 $currentReturnUrl = $backupSection === 'historico'
     ? $historyBuildUrl($historyPage, $historyPerPage)
@@ -87,6 +111,89 @@ if (($cloudEnd - $cloudStart) < 4) {
     $cloudStart = max(1, $cloudEnd - 4);
     $cloudEnd = min($cloudPages, $cloudStart + 4);
 }
+
+$parseSize = static function (string $value): float {
+    if (!preg_match('/([\d\.,]+)\s*([KMGT]?B)/i', $value, $matches)) {
+        return 0.0;
+    }
+
+    $number = (float) str_replace(',', '.', str_replace('.', '', $matches[1]));
+    $unit = strtoupper($matches[2]);
+    $factor = match ($unit) {
+        'KB' => 1024,
+        'MB' => 1024 ** 2,
+        'GB' => 1024 ** 3,
+        'TB' => 1024 ** 4,
+        default => 1,
+    };
+
+    return $number * $factor;
+};
+
+$relativeTime = static function (string $value): string {
+    $timestamp = strtotime($value);
+    if ($timestamp === false) {
+        return 'sem leitura relativa';
+    }
+
+    $diff = max(0, time() - $timestamp);
+    if ($diff < 60) {
+        return 'agora ha pouco';
+    }
+    if ($diff < 3600) {
+        return 'ha ' . (int) floor($diff / 60) . ' min';
+    }
+    if ($diff < 86400) {
+        return 'ha ' . (int) floor($diff / 3600) . ' h';
+    }
+
+    return 'ha ' . (int) floor($diff / 86400) . ' dia(s)';
+};
+
+$historyVisibleItems = array_values(array_filter($items, static function ($item) use ($historySearch, $historyEnvironment, $historyFilterStatus): bool {
+    if (!is_array($item)) {
+        return false;
+    }
+
+    $profile = strtolower((string) ($item['profile'] ?? ''));
+    if ($historyEnvironment !== '' && $profile !== $historyEnvironment) {
+        return false;
+    }
+
+    if ($historySearch !== '') {
+        $haystack = strtolower((string) ($item['backup_id'] ?? '') . ' ' . (string) ($item['profile_label'] ?? '') . ' ' . $profile);
+        if (!str_contains($haystack, strtolower($historySearch))) {
+            return false;
+        }
+    }
+
+    $valid = (bool) ($item['is_valid'] ?? false);
+    $cloud = (bool) ($item['cloud_uploaded'] ?? false);
+    return match ($historyFilterStatus) {
+        'valido' => $valid,
+        'falhou' => !$valid,
+        'nuvem' => $cloud,
+        'pendente' => !$cloud,
+        default => true,
+    };
+}));
+
+usort($historyVisibleItems, static function (array $a, array $b) use ($historySort, $parseSize): int {
+    return match ($historySort) {
+        'data_asc' => strcmp((string) ($a['created_at'] ?? ''), (string) ($b['created_at'] ?? '')),
+        'ambiente' => strcmp((string) ($a['profile_label'] ?? ''), (string) ($b['profile_label'] ?? '')),
+        'tamanho_asc' => $parseSize((string) ($a['total_size'] ?? '')) <=> $parseSize((string) ($b['total_size'] ?? '')),
+        'tamanho_desc' => $parseSize((string) ($b['total_size'] ?? '')) <=> $parseSize((string) ($a['total_size'] ?? '')),
+        default => strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? '')),
+    };
+});
+
+$historySummary = [
+    'total' => count($items),
+    'valid' => count(array_filter($items, static fn ($item): bool => is_array($item) && (bool) ($item['is_valid'] ?? false))),
+    'cloud' => count(array_filter($items, static fn ($item): bool => is_array($item) && (bool) ($item['cloud_uploaded'] ?? false))),
+    'production' => count(array_filter($items, static fn ($item): bool => is_array($item) && strtolower((string) ($item['profile'] ?? '')) === 'production')),
+];
 ?>
 <section data-backup-tools-panel class="space-y-6">
   <?php if ($backupSection === 'resumo'): ?>
@@ -112,7 +219,9 @@ if (($cloudEnd - $cloudStart) < 4) {
           <div class="mt-4 text-sm text-slate-300">
             <?php if (is_array($entry)): ?>
               <div class="font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($entry['backup_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-              <div class="mt-1 text-slate-400">Ultimo backup completo: banco, uploads e arquivos do sistema.</div>
+              <?php if (!$compactCopy): ?>
+                <div class="mt-1 text-slate-400">Ultimo backup completo: banco, uploads e arquivos do sistema.</div>
+              <?php endif; ?>
               <div class="mt-4 grid gap-2 text-sm">
                 <div class="flex items-center justify-between"><span class="text-slate-500">Validade</span><span class="<?= ($entry['is_valid'] ?? false) ? 'text-emerald-300' : 'text-rose-300' ?>"><?= ($entry['is_valid'] ?? false) ? 'OK' : 'Falhou' ?></span></div>
                 <div class="flex items-center justify-between"><span class="text-slate-500">Banco</span><span><?= htmlspecialchars((string) ($entry['database_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
@@ -139,7 +248,9 @@ if (($cloudEnd - $cloudStart) < 4) {
         <p class="font-orbitron text-xs uppercase tracking-[0.25em] text-cyan-300/80">Prontidao</p>
         <div class="mt-4 text-sm text-slate-300">
           <div class="font-rajdhani text-2xl font-bold text-white">3 ambientes</div>
-          <div class="mt-1 text-slate-400">Confere se cada perfil ja esta pronto para executar a rotina de backup de ambiente.</div>
+          <?php if (!$compactCopy): ?>
+            <div class="mt-1 text-slate-400">Confere se cada perfil ja esta pronto para executar a rotina de backup de ambiente.</div>
+          <?php endif; ?>
           <div class="mt-4 grid gap-2 text-sm">
             <div class="flex items-center justify-between"><span class="text-slate-500">Local</span><span class="<?= $localReady ? 'text-emerald-300' : 'text-amber-300' ?>"><?= $localReady ? 'Pronto' : 'Pendente' ?></span></div>
             <div class="flex items-center justify-between"><span class="text-slate-500">Stage</span><span class="<?= $stageReady ? 'text-emerald-300' : 'text-amber-300' ?>"><?= $stageReady ? 'Pronto' : 'Pendente' ?></span></div>
@@ -163,7 +274,9 @@ if (($cloudEnd - $cloudStart) < 4) {
             <input type="hidden" name="action" value="run">
             <input type="hidden" name="profile" value="<?= htmlspecialchars($profileKey, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
             <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80"><?= htmlspecialchars($meta['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
-            <p class="mt-2 text-sm text-slate-400">Gera backup completo do ambiente: banco, uploads e arquivos do sistema.</p>
+            <?php if (!$compactCopy): ?>
+              <p class="mt-2 text-sm text-slate-400">Gera backup completo do ambiente: banco, uploads e arquivos do sistema.</p>
+            <?php endif; ?>
             <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold transition <?= $meta['ready'] ? $meta['button_class'] : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $meta['ready'] ? '' : 'disabled' ?>><?= htmlspecialchars($meta['button'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></button>
           </form>
         <?php endforeach; ?>
@@ -174,7 +287,9 @@ if (($cloudEnd - $cloudStart) < 4) {
           <input type="hidden" name="action" value="verify">
           <input type="hidden" name="backup_id" value="latest">
           <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Verificar ultimo</p>
-          <p class="mt-2 text-sm text-slate-400">Confirma se o manifesto, o dump, uploads.zip e system-files.zip estao integros.</p>
+          <?php if (!$compactCopy): ?>
+            <p class="mt-2 text-sm text-slate-400">Confirma se o manifesto, o dump, uploads.zip e system-files.zip estao integros.</p>
+          <?php endif; ?>
           <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300 hover:bg-emerald-500/20">Verificar</button>
         </form>
       </div>
@@ -183,7 +298,9 @@ if (($cloudEnd - $cloudStart) < 4) {
     <div class="grid gap-6 xl:grid-cols-[1.1fr_1fr]">
       <div class="rounded-3xl border border-rose-500/20 bg-slate-900/80 p-6">
         <h2 class="font-orbitron text-lg font-bold text-white">Restore de ambiente completo</h2>
-        <p class="mt-2 text-sm leading-7 text-slate-400">Use esta area so quando for realmente necessario voltar o ambiente inteiro. O restore aplica <span class="font-semibold text-white">banco + uploads + arquivos do sistema</span> do backup escolhido no destino informado. A confirmacao exige a frase <span class="font-semibold text-white">RESTAURAR</span>.</p>
+        <?php if (!$compactCopy): ?>
+          <p class="mt-2 text-sm leading-7 text-slate-400">Use esta area so quando for realmente necessario voltar o ambiente inteiro. O restore aplica <span class="font-semibold text-white">banco + uploads + arquivos do sistema</span> do backup escolhido no destino informado. A confirmacao exige a frase <span class="font-semibold text-white">RESTAURAR</span>.</p>
+        <?php endif; ?>
 
         <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form mt-5 space-y-4" data-backup-async="true" data-progress-title="Executando restore" data-progress-message="Estamos aplicando o backup selecionado. Esse passo pode sobrescrever banco ou uploads." data-progress-stage="Restore">
           <?= Csrf::field() ?>
@@ -213,7 +330,9 @@ if (($cloudEnd - $cloudStart) < 4) {
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4">
               <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Escopo fixo</div>
               <div class="mt-2 text-sm font-semibold text-white">Banco + uploads + sistema</div>
-              <div class="mt-1 text-xs text-slate-400">O restore desta rotina sempre recompoe o ambiente completo.</div>
+              <?php if (!$compactCopy): ?>
+                <div class="mt-1 text-xs text-slate-400">O restore desta rotina sempre recompoe o ambiente completo.</div>
+              <?php endif; ?>
             </div>
           </div>
 
@@ -257,83 +376,143 @@ if (($cloudEnd - $cloudStart) < 4) {
       <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <h2 class="font-orbitron text-lg font-bold text-white">Backups recentes</h2>
-          <p class="mt-1 text-sm text-slate-400">A lista abaixo mostra validade, tamanho e o estado dos pacotes de ambiente salvos localmente.</p>
+          <?php if (!$compactCopy): ?>
+            <p class="mt-1 text-sm text-slate-400">A lista abaixo mostra validade, tamanho e o estado dos pacotes de ambiente salvos localmente.</p>
+          <?php endif; ?>
         </div>
       </div>
+
+      <div class="mt-5 grid gap-3 md:grid-cols-4">
+        <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Total</div>
+          <div class="mt-2 text-2xl font-black text-white"><?= (int) $historySummary['total'] ?></div>
+        </div>
+        <div class="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4">
+          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-emerald-200/75">Validos</div>
+          <div class="mt-2 text-2xl font-black text-white"><?= (int) $historySummary['valid'] ?></div>
+        </div>
+        <div class="rounded-2xl border border-sky-500/25 bg-sky-500/10 p-4">
+          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-sky-200/75">Nuvem</div>
+          <div class="mt-2 text-2xl font-black text-white"><?= (int) $historySummary['cloud'] ?></div>
+        </div>
+        <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-amber-200/75">Producao</div>
+          <div class="mt-2 text-2xl font-black text-white"><?= (int) $historySummary['production'] ?></div>
+        </div>
+      </div>
+
+      <form method="GET" action="<?= htmlspecialchars($historyBaseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+        <input type="hidden" name="backup_secao" value="historico">
+        <div class="grid gap-3 xl:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_auto]">
+          <input type="search" name="backup_busca" value="<?= htmlspecialchars($historySearch, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" placeholder="Buscar backup..." class="min-h-11 rounded-xl border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none focus:border-cyan-400">
+          <select name="backup_ambiente" class="min-h-11 rounded-xl border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none focus:border-cyan-400">
+            <option value="">Todos ambientes</option>
+            <option value="local" <?= $historyEnvironment === 'local' ? 'selected' : '' ?>>Local</option>
+            <option value="stage" <?= $historyEnvironment === 'stage' ? 'selected' : '' ?>>Stage</option>
+            <option value="production" <?= $historyEnvironment === 'production' ? 'selected' : '' ?>>Producao</option>
+          </select>
+          <select name="backup_status" class="min-h-11 rounded-xl border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none focus:border-cyan-400">
+            <option value="">Todos status</option>
+            <option value="valido" <?= $historyFilterStatus === 'valido' ? 'selected' : '' ?>>Validos</option>
+            <option value="falhou" <?= $historyFilterStatus === 'falhou' ? 'selected' : '' ?>>Falhou</option>
+            <option value="nuvem" <?= $historyFilterStatus === 'nuvem' ? 'selected' : '' ?>>Enviados nuvem</option>
+            <option value="pendente" <?= $historyFilterStatus === 'pendente' ? 'selected' : '' ?>>Nuvem pendente</option>
+          </select>
+          <select name="backup_ordem" class="min-h-11 rounded-xl border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none focus:border-cyan-400">
+            <option value="data_desc" <?= $historySort === 'data_desc' ? 'selected' : '' ?>>Mais recentes</option>
+            <option value="data_asc" <?= $historySort === 'data_asc' ? 'selected' : '' ?>>Mais antigos</option>
+            <option value="ambiente" <?= $historySort === 'ambiente' ? 'selected' : '' ?>>Ambiente</option>
+            <option value="tamanho_desc" <?= $historySort === 'tamanho_desc' ? 'selected' : '' ?>>Maior pacote</option>
+            <option value="tamanho_asc" <?= $historySort === 'tamanho_asc' ? 'selected' : '' ?>>Menor pacote</option>
+          </select>
+          <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 text-xs font-black uppercase tracking-[0.12em] text-cyan-100 transition hover:border-cyan-300 hover:bg-cyan-500/18">Filtrar</button>
+        </div>
+      </form>
 
       <div class="mt-5 overflow-x-auto">
         <table class="min-w-full border-separate border-spacing-y-3 text-sm text-slate-200">
           <thead>
-            <tr class="text-left text-xs uppercase tracking-[0.2em] text-slate-500">
-              <th class="px-4 py-2">Backup</th>
-              <th class="px-4 py-2">Perfil</th>
-              <th class="px-4 py-2">Pacote</th>
-              <th class="px-4 py-2">Validade</th>
-              <th class="px-4 py-2">Acoes</th>
+            <tr class="text-left font-orbitron text-[10px] uppercase tracking-[0.18em] text-slate-500">
+              <th class="px-4 py-2">Data / Identificador</th>
+              <th class="px-4 py-2">Ambiente</th>
+              <th class="px-4 py-2">Conteudo / Tamanho</th>
+              <th class="px-4 py-2">Status</th>
+              <th class="px-4 py-2 text-right">Acoes</th>
             </tr>
           </thead>
           <tbody>
-            <?php foreach ($items as $item): ?>
-              <tr class="rounded-2xl border border-slate-800 bg-slate-950/70">
-                <td class="px-4 py-4 align-top">
+            <?php foreach ($historyVisibleItems as $item): ?>
+              <?php
+                $isProductionBackup = strtolower((string) ($item['profile'] ?? '')) === 'production';
+                $isValidBackup = (bool) ($item['is_valid'] ?? false);
+                $isCloudBackup = (bool) ($item['cloud_uploaded'] ?? false);
+                $createdAt = (string) ($item['created_at'] ?? '-');
+              ?>
+              <tr class="<?= $isProductionBackup ? 'outline outline-1 outline-amber-400/30' : '' ?> rounded-2xl border border-slate-800 bg-slate-950/70 transition hover:bg-slate-950">
+                <td class="rounded-l-2xl border-y border-l border-slate-800 px-4 py-4 align-top">
                   <div class="font-semibold text-white"><?= htmlspecialchars((string) ($item['backup_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($item['created_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars($createdAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="mt-1 text-[11px] text-cyan-300/70"><?= htmlspecialchars($relativeTime($createdAt), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </td>
-                <td class="px-4 py-4 align-top">
-                  <div><?= htmlspecialchars((string) ($item['profile_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($item['profile'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                <td class="border-y border-slate-800 px-4 py-4 align-top">
+                  <span class="inline-flex rounded-full border px-3 py-1 text-xs font-black <?= $isProductionBackup ? 'border-amber-400/35 bg-amber-500/10 text-amber-100' : 'border-slate-700 bg-slate-900/80 text-slate-200' ?>">
+                    <?= htmlspecialchars((string) ($item['profile_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                  </span>
+                  <div class="mt-2 text-xs text-slate-500"><?= htmlspecialchars((string) ($item['profile'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </td>
-                <td class="px-4 py-4 align-top">
-                  <div>Total: <span class="text-white"><?= htmlspecialchars((string) ($item['total_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
-                  <div class="mt-1 text-xs text-slate-500">Banco: <?= htmlspecialchars((string) ($item['database_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <div class="text-xs text-slate-500">Uploads: <?= htmlspecialchars((string) ($item['uploads_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <div class="text-xs text-slate-500">Sistema: <?= htmlspecialchars((string) ($item['system_files_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                </td>
-                <td class="px-4 py-4 align-top">
-                  <div class="<?= ($item['is_valid'] ?? false) ? 'text-emerald-300' : 'text-rose-300' ?>"><?= ($item['is_valid'] ?? false) ? 'OK' : 'Falhou' ?></div>
-                  <div class="mt-2 text-xs <?= ($item['cloud_uploaded'] ?? false) ? 'text-sky-300' : 'text-slate-500' ?>">
-                    <?= ($item['cloud_uploaded'] ?? false) ? 'Nuvem: enviado' : 'Nuvem: pendente' ?>
+                <td class="border-y border-slate-800 px-4 py-4 align-top">
+                  <div class="font-black text-white"><?= htmlspecialchars((string) ($item['total_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="mt-2 grid gap-1 text-xs text-slate-500">
+                    <div>Banco: <span class="text-slate-300"><?= htmlspecialchars((string) ($item['database_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+                    <div>Uploads: <span class="text-slate-300"><?= htmlspecialchars((string) ($item['uploads_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+                    <div>Sistema: <span class="text-slate-300"><?= htmlspecialchars((string) ($item['system_files_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
                   </div>
-                  <?php if ($item['cloud_uploaded'] ?? false): ?>
-                    <div class="mt-1 text-[11px] text-slate-500"><?= htmlspecialchars((string) ($item['cloud_uploaded_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <?php endif; ?>
                 </td>
-                <td class="px-4 py-4 align-top">
-                  <div class="grid min-w-[18rem] gap-2">
-                    <div class="flex flex-wrap gap-2">
-                      <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form inline-flex" data-backup-async="true" data-progress-title="Verificando backup" data-progress-message="Estamos conferindo a integridade do pacote selecionado." data-progress-stage="Verificacao">
+                <td class="border-y border-slate-800 px-4 py-4 align-top">
+                  <div class="flex flex-wrap gap-2">
+                    <span class="inline-flex rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] <?= $isValidBackup ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200' : 'border-rose-400/30 bg-rose-500/10 text-rose-200' ?>"><?= $isValidBackup ? 'Valido' : 'Falhou' ?></span>
+                  </div>
+                </td>
+                <td class="rounded-r-2xl border-y border-r border-slate-800 px-4 py-4 align-top">
+                  <div class="flex min-w-[18rem] flex-col items-stretch gap-2 md:items-end">
+                    <div class="grid w-full max-w-xs gap-2">
+                      <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form" data-backup-async="true" data-progress-title="Verificando backup" data-progress-message="Estamos conferindo a integridade do pacote selecionado." data-progress-stage="Verificacao">
                         <?= Csrf::field() ?>
                         <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($currentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                         <input type="hidden" name="action" value="verify">
                         <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                        <button type="submit" class="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20">Verificar</button>
+                        <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20">Verificar</button>
                       </form>
 
-                      <?php if ($item['cloud_uploaded'] ?? false): ?>
-                        <span class="inline-flex items-center rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200">Enviado para nuvem</span>
-                      <?php else: ?>
-                        <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form inline-flex" data-backup-cloud-async="true" data-progress-title="Enviando backup para nuvem" data-progress-message="Validando conexao Dropbox e preparando o backup escolhido para envio." data-progress-stage="Preparando envio">
+                      <?php if (!$isCloudBackup): ?>
+                        <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form" data-backup-cloud-async="true" data-progress-title="Enviando backup para nuvem" data-progress-message="Validando conexao Dropbox e preparando o backup escolhido para envio." data-progress-stage="Preparando envio">
                           <?= Csrf::field() ?>
                           <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($currentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="dropbox_upload_backup">
                           <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                          <button type="submit" class="rounded-xl border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-200 transition hover:bg-sky-500/20">Enviar para nuvem</button>
+                          <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-200 transition hover:bg-sky-500/20">Enviar nuvem</button>
                         </form>
                       <?php endif; ?>
                     </div>
 
-                    <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form grid gap-2 rounded-xl border border-rose-500/20 bg-rose-500/5 p-2">
+                    <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form grid w-full max-w-xs gap-2 rounded-xl border border-slate-800 bg-slate-900/50 p-2">
                       <?= Csrf::field() ?>
                       <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($currentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                       <input type="hidden" name="action" value="delete_local_backup">
                       <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                      <input type="text" name="delete_confirmation" placeholder="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="w-full rounded-lg border border-slate-700 bg-slate-950/80 px-2 py-2 text-xs text-white outline-none focus:border-rose-400">
-                      <button type="submit" class="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/20">Excluir da pasta local</button>
+                      <input type="text" name="delete_confirmation" placeholder="Confirmar ID para excluir" class="w-full rounded-lg border border-slate-700 bg-slate-950/80 px-2 py-2 text-xs text-white outline-none focus:border-rose-400">
+                      <button type="submit" class="rounded-xl border border-rose-400/30 bg-transparent px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/10">Excluir local</button>
                     </form>
                   </div>
                 </td>
               </tr>
             <?php endforeach; ?>
+
+            <?php if ($historyVisibleItems === []): ?>
+              <tr>
+                <td colspan="5" class="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-8 text-center text-sm text-slate-400">Nenhum backup encontrado para os filtros atuais.</td>
+              </tr>
+            <?php endif; ?>
           </tbody>
         </table>
       </div>

@@ -433,6 +433,95 @@ final class ContentSyncManager
         return $package;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function deleteLocalPackage(string $packageId, string $confirmation): array
+    {
+        $packageId = trim($packageId);
+        if ($packageId === '' || strtolower($packageId) === 'latest') {
+            throw new RuntimeException('Informe o ID exato do pacote editorial que sera excluido da pasta local.');
+        }
+
+        if (!hash_equals($packageId, trim($confirmation))) {
+            throw new RuntimeException('Confirmacao invalida. Digite o ID exato do pacote editorial para excluir da pasta local.');
+        }
+
+        $package = $this->packageById($packageId);
+        if ($package === null) {
+            throw new RuntimeException('Pacote editorial nao encontrado para exclusao local.');
+        }
+
+        $directory = (string) ($package['_dir'] ?? '');
+        $this->assertPackageDirectoryCanBeDeleted($directory, $packageId);
+        $profile = (string) ($package['source_profile'] ?? 'local');
+        $this->removeDirectory($directory);
+        if (is_dir($directory)) {
+            throw new RuntimeException('Nao foi possivel remover completamente a pasta local do pacote editorial.');
+        }
+
+        $this->logOperation(
+            'pacote_conteudo_exclusao_local',
+            $profile,
+            $profile,
+            $packageId,
+            'OK',
+            'Pacote editorial removido da pasta local.',
+            ['directory' => $directory]
+        );
+
+        return [
+            'package_id' => $packageId,
+            'profile' => $profile,
+            'directory' => $directory,
+            'deleted_at' => date('c'),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function markCloudDeleted(string $packageId, array $metadata = []): array
+    {
+        $packageId = trim($packageId);
+        if ($packageId === '' || strtolower($packageId) === 'latest') {
+            throw new RuntimeException('Informe o ID exato do pacote editorial para registrar exclusao da nuvem.');
+        }
+
+        $package = $this->packageById($packageId);
+        if ($package === null) {
+            throw new RuntimeException('Pacote editorial nao encontrado para registrar exclusao da nuvem.');
+        }
+
+        $package['cloud_uploaded'] = false;
+        $package['cloud_deleted'] = true;
+        $package['cloud_deleted_at'] = date('c');
+        $package['cloud_deleted_provider'] = (string) ($metadata['provider'] ?? 'dropbox');
+        $package['cloud_deleted_destination'] = (string) ($metadata['destination'] ?? ($package['cloud_destination'] ?? ''));
+        $package['cloud_delete_metadata'] = is_array($metadata['dropbox_metadata'] ?? null) ? $metadata['dropbox_metadata'] : [];
+        unset(
+            $package['cloud_uploaded_at'],
+            $package['cloud_destination'],
+            $package['cloud_provider'],
+            $package['cloud_uploaded_files'],
+            $package['cloud_uploaded_files_count'],
+            $package['cloud_uploaded_size_bytes']
+        );
+
+        $this->writeManifest((string) ($package['_dir'] ?? ''), $package);
+        $this->logOperation(
+            'pacote_conteudo_exclusao_nuvem',
+            (string) ($package['source_profile'] ?? 'local'),
+            (string) ($package['source_profile'] ?? 'local'),
+            $packageId,
+            'OK',
+            'Pacote editorial removido da nuvem.',
+            ['destination' => (string) ($metadata['destination'] ?? '')]
+        );
+
+        return $package;
+    }
+
     public function apply(?string $packageId, string $targetProfile = 'production', bool $force = false, ?string $progressId = null): array
     {
         $this->allowLongRunningProcess();
@@ -2177,6 +2266,37 @@ final class ContentSyncManager
         }
 
         return array_values(array_unique($roots));
+    }
+
+    private function assertPackageDirectoryCanBeDeleted(string $directory, string $packageId): void
+    {
+        if ($directory === '' || !is_dir($directory)) {
+            throw new RuntimeException('Pasta local do pacote editorial nao encontrada.');
+        }
+
+        $realDirectory = realpath($directory);
+        if ($realDirectory === false) {
+            throw new RuntimeException('Nao foi possivel resolver a pasta local do pacote editorial.');
+        }
+
+        $basename = basename($realDirectory);
+        if (!hash_equals($packageId, $basename)) {
+            throw new RuntimeException('A pasta encontrada nao corresponde ao ID do pacote informado.');
+        }
+
+        foreach ($this->packageSearchRoots() as $root) {
+            $realRoot = realpath($root);
+            if ($realRoot === false) {
+                continue;
+            }
+
+            $prefix = rtrim($realRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+            if (str_starts_with($realDirectory . DIRECTORY_SEPARATOR, $prefix)) {
+                return;
+            }
+        }
+
+        throw new RuntimeException('A pasta do pacote esta fora das raizes permitidas para exclusao.');
     }
 
     /**

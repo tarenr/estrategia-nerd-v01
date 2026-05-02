@@ -61,6 +61,18 @@
     localStorage.setItem(KEY, next ? '1' : '0');
     apply(next);
   });
+
+  scroll.querySelectorAll('[data-sb-submenu-summary]').forEach((summary) => {
+    summary.addEventListener('click', (event) => {
+      if (sidebar.dataset.collapsed !== '1') return;
+
+      const href = summary.dataset.collapsedHref;
+      if (!href) return;
+
+      event.preventDefault();
+      window.location.href = href;
+    });
+  });
 })();
 
 (function () {

@@ -102,34 +102,39 @@ $sectionUrl = static function (string $section) use ($backupBaseUrl): string {
       <?php \App\Support\View::component('site/local-tools-nav', ['active' => 'backup']); ?>
     <?php endif; ?>
 
-    <div class="flex flex-col gap-3 rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_40px_rgba(6,182,212,0.08)]">
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Rotina Local</p>
-          <h1 class="mt-2 font-orbitron text-3xl font-black tracking-tight text-white">Backup de Ambiente</h1>
-          <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-300">Esta area concentra backup e restore de ambiente para local, stage e producao. As subabas separam resumo, execucao, restore e historico para manter a entrada mais leve.</p>
+    <?php if (!$embedMode): ?>
+      <div class="flex flex-col gap-3 rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_40px_rgba(6,182,212,0.08)]">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Rotina Local</p>
+            <h1 class="mt-2 font-orbitron text-3xl font-black tracking-tight text-white">Backup de Ambiente</h1>
+            <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-300">Esta area concentra backup e restore de ambiente para local, stage e producao. As subabas separam resumo, execucao, restore e historico para manter a entrada mais leve.</p>
+          </div>
         </div>
       </div>
+    <?php endif; ?>
 
-      <?php if ($flash !== null): ?>
-        <div class="rounded-2xl border px-4 py-3 text-sm <?= htmlspecialchars($flashClass, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-          <?= htmlspecialchars((string) ($flash['message'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
-        </div>
-      <?php endif; ?>
-    </div>
+    <?php if ($flash !== null): ?>
+      <div class="rounded-2xl border px-4 py-3 text-sm <?= htmlspecialchars($flashClass, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+        <?= htmlspecialchars((string) ($flash['message'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+      </div>
+    <?php endif; ?>
 
-    <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-4">
-      <div class="grid gap-3 xl:grid-cols-5">
+    <div class="rounded-[1.25rem] border border-slate-800 bg-slate-950/70 p-2">
+      <?php $sectionCount = max(1, count($backupSections)); ?>
+      <div class="grid gap-2 md:grid-cols-2 <?= $sectionCount >= 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-' . $sectionCount ?>">
         <?php foreach ($backupSections as $key => $section): ?>
           <?php $isActive = $key === $backupSection; ?>
           <a
             href="<?= htmlspecialchars($sectionUrl((string) $key), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
             data-backup-link="true"
-            class="rounded-2xl border px-4 py-4 transition <?= $isActive ? 'border-cyan-300/70 bg-cyan-500/15 text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.12)]' : 'border-slate-700 bg-slate-950/70 text-slate-200 hover:border-cyan-400/50 hover:bg-cyan-500/10' ?>"
+            class="flex min-h-11 items-center rounded-xl border px-4 py-3 text-left transition <?= $isActive ? 'border-cyan-400/45 bg-cyan-500/10 text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.12)]' : 'border-slate-800 bg-slate-900/70 text-slate-300 hover:border-cyan-500/35 hover:bg-cyan-500/10 hover:text-cyan-100' ?>"
             aria-current="<?= $isActive ? 'page' : 'false' ?>"
           >
-            <div class="font-orbitron text-sm font-bold tracking-wide"><?= htmlspecialchars((string) ($section['label'] ?? $key), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-            <div class="mt-1 text-xs text-slate-400"><?= htmlspecialchars((string) ($section['description'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <div class="font-orbitron text-xs font-black uppercase tracking-[0.14em]"><?= htmlspecialchars((string) ($section['label'] ?? $key), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <?php if (!$embedMode): ?>
+              <div class="mt-1 text-xs text-slate-400"><?= htmlspecialchars((string) ($section['description'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <?php endif; ?>
           </a>
         <?php endforeach; ?>
       </div>

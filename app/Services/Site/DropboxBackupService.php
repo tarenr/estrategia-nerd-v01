@@ -6,6 +6,7 @@ namespace App\Services\Site;
 
 use RuntimeException;
 use Scripts\Backup\BackupManager;
+use Scripts\ContentSync\ContentSyncManager;
 
 final class DropboxBackupService
 {
@@ -92,6 +93,162 @@ final class DropboxBackupService
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getEditorialPanelData(ContentSyncManager $manager): array
+    {
+        $state = $this->readState();
+        $status = $manager->status();
+        $items = [];
+        $totalUploaded = 0;
+
+        foreach ((array) ($status['items'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $bytes = $this->contentPackageBytes($item);
+            $uploaded = (bool) ($item['cloud_uploaded'] ?? false);
+            if ($uploaded) {
+                $totalUploaded += $bytes;
+            }
+
+            $items[] = [
+                'package_id' => (string) ($item['package_id'] ?? ''),
+                'source_profile' => (string) ($item['source_profile'] ?? ''),
+                'source_profile_label' => (string) ($item['source_profile_label'] ?? $this->profileLabel((string) ($item['source_profile'] ?? ''))),
+                'created_at' => (string) ($item['created_at'] ?? ''),
+                'is_valid' => (bool) ($item['is_valid'] ?? false),
+                'cloud_uploaded' => $uploaded,
+                'cloud_uploaded_at' => (string) ($item['cloud_uploaded_at'] ?? ''),
+                'cloud_destination' => (string) ($item['cloud_destination'] ?? ''),
+                'cloud_uploaded_size' => $bytes > 0 ? $this->formatBytes($bytes) : '-',
+                'stats' => is_array($item['stats'] ?? null) ? $item['stats'] : [],
+                'uploads' => is_array($item['uploads'] ?? null) ? $item['uploads'] : [],
+            ];
+        }
+
+        return [
+            'items' => $items,
+            'pending' => array_values(array_filter($items, static fn (array $item): bool => ($item['cloud_uploaded'] ?? false) !== true)),
+            'uploaded' => array_values(array_filter($items, static fn (array $item): bool => ($item['cloud_uploaded'] ?? false) === true)),
+            'total' => count($items),
+            'total_uploaded_size' => $this->formatBytes($totalUploaded),
+            'remote_root' => $this->editorialRemoteRoot(),
+            'auto_upload_enabled' => (bool) ($state['editorial_auto_upload_enabled'] ?? false),
+            'last_upload' => is_array($state['last_editorial_upload'] ?? null) ? $state['last_editorial_upload'] : null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function uploadLatestEditorial(ContentSyncManager $manager, ?string $progressId = null): array
+    {
+        return $this->uploadEditorialPackage($manager, null, $progressId);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function uploadEditorialPackage(ContentSyncManager $manager, ?string $packageId = null, ?string $progressId = null): array
+    {
+        $this->allowLongRunningUpload();
+        $progress = $this->normalizeProgressId($progressId);
+
+        try {
+            $state = $this->requireConnectedState();
+            $package = $this->findContentPackage($manager, $packageId);
+            if ($package === null) {
+                throw new RuntimeException('Nenhum pacote editorial encontrado para enviar ao Dropbox.');
+            }
+
+            $packageCode = (string) ($package['package_id'] ?? '');
+            if ($packageCode === '') {
+                throw new RuntimeException('Pacote editorial sem identificador.');
+            }
+
+            if ((bool) ($package['cloud_uploaded'] ?? false)) {
+                throw new RuntimeException(sprintf('Pacote editorial %s ja foi enviado para a nuvem.', $packageCode));
+            }
+
+            $directory = (string) ($package['_dir'] ?? '');
+            if ($directory === '' || !is_dir($directory)) {
+                throw new RuntimeException('Pasta do pacote editorial nao encontrada para envio.');
+            }
+
+            $accessToken = $this->freshAccessToken($state);
+            $profile = strtolower((string) ($package['source_profile'] ?? 'local'));
+            $remoteFolder = $this->normalizeDropboxPath($this->editorialRemoteRoot() . '/' . $profile . '/' . $packageCode);
+
+            $this->ensureRemoteFolder($accessToken, $this->normalizeDropboxPath($this->editorialRemoteRoot()));
+            $this->ensureRemoteFolder($accessToken, $this->normalizeDropboxPath($this->editorialRemoteRoot() . '/' . $profile));
+            $this->ensureRemoteFolder($accessToken, $remoteFolder);
+
+            $entries = ['manifest.json'];
+            foreach (glob($directory . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . '*.json') ?: [] as $file) {
+                if (is_file($file)) {
+                    $entries[] = 'data/' . basename($file);
+                }
+            }
+            if (is_file($directory . DIRECTORY_SEPARATOR . 'uploads.zip')) {
+                $entries[] = 'uploads.zip';
+            }
+
+            $uploadedFiles = [];
+            $uploadedSize = 0;
+            foreach ($entries as $index => $entry) {
+                $localPath = $directory . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $entry);
+                if (!is_file($localPath)) {
+                    throw new RuntimeException('Arquivo do pacote editorial ausente para envio: ' . $entry);
+                }
+
+                $remotePath = $remoteFolder . '/' . $entry;
+                $metadata = $this->uploadFile($accessToken, $localPath, $remotePath, $progress, $entry);
+                $uploadedSize += (int) filesize($localPath);
+                $uploadedFiles[] = [
+                    'name' => $entry,
+                    'path' => $remotePath,
+                    'id' => (string) ($metadata['id'] ?? ''),
+                    'rev' => (string) ($metadata['rev'] ?? ''),
+                ];
+            }
+
+            $result = [
+                'provider' => 'dropbox',
+                'package_id' => $packageCode,
+                'destination' => $remoteFolder,
+                'uploaded_files' => $uploadedFiles,
+                'uploaded_files_count' => count($uploadedFiles),
+                'uploaded_size_bytes' => $uploadedSize,
+            ];
+
+            $this->markContentPackageCloudUploaded($package, $result);
+
+            $state['last_editorial_upload'] = [
+                'package_id' => $packageCode,
+                'profile' => $profile,
+                'destination' => $remoteFolder,
+                'uploaded_at' => date('c'),
+                'files' => count($uploadedFiles),
+            ];
+            $this->writeState($state);
+
+            return $result;
+        } catch (\Throwable $exception) {
+            $this->writeProgress($progress, [
+                'status' => 'error',
+                'title' => 'Enviando pacote editorial para Dropbox',
+                'stage' => 'Falha no envio',
+                'message' => $exception->getMessage(),
+                'percent' => 100,
+                'updated_at' => date('c'),
+            ]);
+            throw $exception;
+        }
+    }
+
     public function authorizationUrl(string $state): string
     {
         $this->assertConfigured();
@@ -160,6 +317,18 @@ final class DropboxBackupService
     {
         $state = $this->requireConnectedState();
         $state['auto_upload_enabled'] = $enabled;
+        $this->writeState($state);
+
+        return $state;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function setEditorialAutoUpload(bool $enabled): array
+    {
+        $state = $this->requireConnectedState();
+        $state['editorial_auto_upload_enabled'] = $enabled;
         $this->writeState($state);
 
         return $state;
@@ -364,6 +533,62 @@ final class DropboxBackupService
     /**
      * @return array<string, mixed>
      */
+    public function deleteEditorialPackage(ContentSyncManager $manager, string $packageId, string $confirmation): array
+    {
+        $packageId = trim($packageId);
+        if ($packageId === '' || strtolower($packageId) === 'latest') {
+            throw new RuntimeException('Informe o ID exato do pacote editorial que sera removido do Dropbox.');
+        }
+
+        if (!hash_equals($packageId, trim($confirmation))) {
+            throw new RuntimeException('Confirmacao invalida. Digite o ID exato do pacote editorial para remover do Dropbox.');
+        }
+
+        $state = $this->requireConnectedState();
+        $package = $this->findContentPackage($manager, $packageId);
+        if (!is_array($package)) {
+            throw new RuntimeException('Pacote editorial nao encontrado no historico local.');
+        }
+
+        if (($package['cloud_uploaded'] ?? false) !== true) {
+            throw new RuntimeException('Este pacote editorial nao esta marcado como enviado ao Dropbox.');
+        }
+
+        $remotePath = (string) ($package['cloud_destination'] ?? '');
+        if ($remotePath === '') {
+            $profile = strtolower((string) ($package['source_profile'] ?? 'local'));
+            $remotePath = $this->normalizeDropboxPath($this->editorialRemoteRoot() . '/' . $profile . '/' . $packageId);
+        }
+
+        $accessToken = $this->freshAccessToken($state);
+        $metadata = $this->rpc(self::DELETE_URL, $accessToken, [
+            'path' => $remotePath,
+        ]);
+
+        $manager->markCloudDeleted($packageId, [
+            'provider' => 'dropbox',
+            'destination' => $remotePath,
+            'dropbox_metadata' => $metadata,
+        ]);
+
+        $state['last_editorial_delete'] = [
+            'package_id' => $packageId,
+            'destination' => $remotePath,
+            'deleted_at' => date('c'),
+        ];
+        $this->writeState($state);
+
+        return [
+            'provider' => 'dropbox',
+            'package_id' => $packageId,
+            'destination' => $remotePath,
+            'metadata' => $metadata,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function getProgress(?string $progressId): array
     {
         $progress = $this->normalizeProgressId($progressId);
@@ -432,6 +657,11 @@ final class DropboxBackupService
     private function remoteRoot(): string
     {
         return $this->normalizeDropboxPath((string) ($this->config['dropbox']['remote_root'] ?? '/Estrategia Nerd/backups-ambiente'));
+    }
+
+    private function editorialRemoteRoot(): string
+    {
+        return $this->normalizeDropboxPath((string) ($this->config['dropbox']['editorial_remote_root'] ?? '/Estrategia Nerd/backups-editoriais'));
     }
 
     private function statePath(): string
@@ -636,6 +866,92 @@ final class DropboxBackupService
             + (int) ($backup['system_files']['size_bytes'] ?? 0);
 
         return max(0, $total);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function findContentPackage(ContentSyncManager $manager, ?string $packageId): ?array
+    {
+        $items = (array) ($manager->status()['items'] ?? []);
+        $requested = strtolower(trim((string) $packageId));
+        if ($requested === '' || $requested === 'latest') {
+            return is_array($items[0] ?? null) ? $items[0] : null;
+        }
+
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            if ((string) ($item['package_id'] ?? '') === $packageId) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $package
+     */
+    private function contentPackageBytes(array $package): int
+    {
+        $directory = (string) ($package['_dir'] ?? '');
+        if ($directory === '' || !is_dir($directory)) {
+            return 0;
+        }
+
+        $total = 0;
+        foreach (['manifest.json', 'uploads.zip'] as $entry) {
+            $path = $directory . DIRECTORY_SEPARATOR . $entry;
+            if (is_file($path)) {
+                $total += (int) filesize($path);
+            }
+        }
+
+        foreach (glob($directory . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . '*.json') ?: [] as $path) {
+            if (is_file($path)) {
+                $total += (int) filesize($path);
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * @param array<string, mixed> $package
+     * @param array<string, mixed> $result
+     */
+    private function markContentPackageCloudUploaded(array $package, array $result): void
+    {
+        $directory = (string) ($package['_dir'] ?? '');
+        if ($directory === '') {
+            return;
+        }
+
+        $manifestPath = $directory . DIRECTORY_SEPARATOR . 'manifest.json';
+        if (!is_file($manifestPath)) {
+            return;
+        }
+
+        $manifest = json_decode((string) file_get_contents($manifestPath), true);
+        if (!is_array($manifest)) {
+            return;
+        }
+
+        $manifest['cloud_uploaded'] = true;
+        $manifest['cloud_provider'] = 'Dropbox';
+        $manifest['cloud_uploaded_at'] = date('c');
+        $manifest['cloud_destination'] = (string) ($result['destination'] ?? '');
+        $manifest['cloud_uploaded_size_bytes'] = (int) ($result['uploaded_size_bytes'] ?? 0);
+        $manifest['cloud_uploaded_files_count'] = (int) ($result['uploaded_files_count'] ?? 0);
+        $manifest['cloud_uploaded_files'] = array_values((array) ($result['uploaded_files'] ?? []));
+
+        file_put_contents(
+            $manifestPath,
+            json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+        );
     }
 
     /**

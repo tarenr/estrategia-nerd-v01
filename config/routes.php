@@ -84,6 +84,12 @@ return [
     ['GET',  '/admin/auditoria-geral',     [\App\Controllers\Admin\AuditController::class, 'index'], ['auth', 'capability:audit']],
     ['GET',  '/admin/base-tecnica',        [\App\Controllers\Admin\KnowledgeHubController::class, 'index'], ['auth', 'capability:docs']],
     ['GET',  '/admin/central-operacional', [\App\Controllers\Admin\OperationsHubController::class, 'index'], ['auth', 'capability:operations']],
+    ['GET',  '/admin/central-operacional-v2', [\App\Controllers\Admin\OperationsV2Controller::class, 'index'], ['auth', 'capability:operations']],
+    ['GET',  '/admin/central-operacional-v2/backup-sistemico', [\App\Controllers\Admin\OperationsV2Controller::class, 'backupSistemico'], ['auth', 'capability:operations']],
+    ['GET',  '/admin/central-operacional-v2/backup-editorial', [\App\Controllers\Admin\OperationsV2Controller::class, 'backupEditorial'], ['auth', 'capability:operations']],
+    ['GET',  '/admin/central-operacional-v2/backup-em-nuvem', [\App\Controllers\Admin\OperationsV2Controller::class, 'backupEmNuvem'], ['auth', 'capability:operations']],
+    ['POST', '/admin/central-operacional-v2/backup-em-nuvem', [\App\Controllers\Admin\OperationsV2Controller::class, 'backupEmNuvem'], ['auth', 'capability:operations']],
+    ['GET',  '/admin/central-operacional-v2/observabilidade', [\App\Controllers\Admin\OperationsV2Controller::class, 'observabilidade'], ['auth', 'capability:operations']],
     ['POST', '/admin/central-operacional/sincronizar-conteudo', [\App\Controllers\Admin\ContentSyncController::class, 'syncProductionToStage'], ['auth', 'capability:content_sync']],
 
     ['GET',  '/admin/links',               [\App\Controllers\Admin\LinksController::class, 'index'], 'auth'],

@@ -12,6 +12,7 @@ return [
         'client_secret' => (string) ($_ENV['BACKUP_DROPBOX_APP_SECRET'] ?? ''),
         'redirect_uri' => (string) ($_ENV['BACKUP_DROPBOX_REDIRECT_URI'] ?? url('/local/backup/dropbox/callback')),
         'remote_root' => (string) ($_ENV['BACKUP_DROPBOX_REMOTE_ROOT'] ?? '/Estrategia Nerd/backups-ambiente'),
+        'editorial_remote_root' => (string) ($_ENV['BACKUP_DROPBOX_EDITORIAL_REMOTE_ROOT'] ?? '/Estrategia Nerd/backups-editoriais'),
         'scopes' => [
             'files.content.write',
             'files.content.read',

@@ -111,6 +111,19 @@ final class ContentSyncToolsController
                     $successMessage = 'Verificacao concluida.';
                     break;
 
+                case 'delete_local_package':
+                    $packageId = trim((string) ($_POST['package_id'] ?? ''));
+                    if ($packageId === '') {
+                        throw new \RuntimeException('Selecione um pacote editorial valido para excluir da pasta local.');
+                    }
+
+                    $deleted = $manager->deleteLocalPackage(
+                        $packageId,
+                        (string) ($_POST['delete_confirmation'] ?? '')
+                    );
+                    $successMessage = sprintf('Pacote editorial %s removido da pasta local.', (string) ($deleted['package_id'] ?? $packageId));
+                    break;
+
                 case 'apply':
                     $phrase = trim((string) ($_POST['apply_phrase'] ?? ''));
                     if (mb_strtoupper($phrase, 'UTF-8') !== 'PUBLICAR') {
@@ -334,6 +347,14 @@ final class ContentSyncToolsController
                 'source_profile_label' => (string) ($item['source_profile_label'] ?? ''),
                 'created_at' => (string) ($item['created_at'] ?? ''),
                 'is_valid' => (bool) ($item['is_valid'] ?? false),
+                'cloud_uploaded' => (bool) ($item['cloud_uploaded'] ?? false),
+                'cloud_uploaded_at' => (string) ($item['cloud_uploaded_at'] ?? ''),
+                'cloud_destination' => (string) ($item['cloud_destination'] ?? ''),
+                'cloud_provider' => (string) ($item['cloud_provider'] ?? ''),
+                'cloud_uploaded_size_bytes' => (int) ($item['cloud_uploaded_size_bytes'] ?? 0),
+                'cloud_uploaded_files_count' => (int) ($item['cloud_uploaded_files_count'] ?? 0),
+                'cloud_deleted' => (bool) ($item['cloud_deleted'] ?? false),
+                'cloud_deleted_at' => (string) ($item['cloud_deleted_at'] ?? ''),
                 'stats' => [
                     'posts' => (int) ($item['stats']['posts'] ?? 0),
                     'links' => (int) ($item['stats']['links'] ?? 0),
