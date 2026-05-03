@@ -387,7 +387,7 @@ final class DashboardService
         bool $rangeCoversPublishedHistory
     ): bool
     {
-        if ($totalViews <= 0) {
+        if ($totalViews <= 0 || !$rangeCoversPublishedHistory) {
             return false;
         }
 
@@ -439,14 +439,10 @@ final class DashboardService
     private function resolveTargetPublicBaseUrl(): string
     {
         $siteUrl = $this->fetchConfigValue('site_url');
-        if ($siteUrl !== '' && preg_match('~^https?://~i', $siteUrl)) {
-            return rtrim($siteUrl, '/');
-        }
-
         if ($this->targetEnvironment === 'local') {
             $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
             $host = trim((string) ($_SERVER['HTTP_HOST'] ?? 'localhost'));
-            $base = $siteUrl !== '' ? $siteUrl : app_url();
+            $base = app_url();
             if ($base === '') {
                 return $scheme . '://' . $host;
             }
@@ -456,6 +452,10 @@ final class DashboardService
             }
 
             return rtrim($scheme . '://' . $host . '/' . ltrim($base, '/'), '/');
+        }
+
+        if ($siteUrl !== '' && preg_match('~^https?://~i', $siteUrl)) {
+            return rtrim($siteUrl, '/');
         }
 
         return rtrim($siteUrl, '/');

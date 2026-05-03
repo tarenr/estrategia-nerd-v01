@@ -11,7 +11,7 @@
   "use strict";
 
   const path = window.location.pathname || "";
-  if (!/^\/admin(?:\/dashboard)?\/?$/.test(path)) return;
+  if (!/(?:^|\/)admin(?:\/dashboard)?\/?$/.test(path)) return;
 
   const form = document.getElementById("js-date-range-form");
   const startInput = document.getElementById("js-start-date");
@@ -36,29 +36,6 @@
     const month = String(date.getUTCMonth() + 1).padStart(2, "0");
     const day = String(date.getUTCDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
-  }
-
-  function applyBounds() {
-    const start = parseYmd(startInput.value);
-    const end = parseYmd(endInput.value);
-
-    if (start) {
-      endInput.min = fmtYmd(start);
-      const maxEnd = new Date(start.getTime() + (89 * MS_DAY));
-      endInput.max = fmtYmd(maxEnd);
-    } else {
-      endInput.min = "";
-      endInput.max = "";
-    }
-
-    if (end) {
-      startInput.max = fmtYmd(end);
-      const minStart = new Date(end.getTime() - (89 * MS_DAY));
-      startInput.min = fmtYmd(minStart);
-    } else {
-      startInput.min = "";
-      startInput.max = "";
-    }
   }
 
   function clampValues() {
@@ -87,21 +64,7 @@
     endInput.value = fmtYmd(end);
   }
 
-  startInput.addEventListener("change", function () {
-    clampValues();
-    applyBounds();
-  });
-
-  endInput.addEventListener("change", function () {
-    clampValues();
-    applyBounds();
-  });
-
   form.addEventListener("submit", function () {
     clampValues();
-    applyBounds();
   });
-
-  clampValues();
-  applyBounds();
 })();

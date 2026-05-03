@@ -264,6 +264,9 @@ $current = is_array($chart['current'] ?? null) ? $chart['current'] : [];
 $curViews = (int) ($current['views'] ?? 0);
 $curPosts = (int) ($current['posts_novos'] ?? 0);
 $curSubs = (int) ($current['inscricoes'] ?? 0);
+$periodViewsDailyAverage = (int) round($days > 0 ? $curViews / $days : 0);
+$periodPostsDailyAverage = (float) ($days > 0 ? $curPosts / $days : 0);
+$periodSubsDailyAverage = (float) ($days > 0 ? $curSubs / $days : 0);
 $postsRecentes = is_array($posts_recentes ?? null) ? $posts_recentes : [];
 $targetPublicBaseUrl = trim((string) ($target_public_base_url ?? ''));
 $targetEnvironment = (string) ($target_environment ?? current_environment());
@@ -484,32 +487,31 @@ $todayCards = [
     <section class="dashboard-kpi-grid">
     <article class="stat-card stat-card-compact admin-summary-card">
       <div class="stat-icon" style="background: linear-gradient(135deg, rgba(96,165,250,.92), rgba(59,130,246,.92)); color:#60a5fa;"><i class="fa-solid fa-newspaper"></i></div>
-      <div class="stat-value neon-text" style="color:#60a5fa;"><?= fmt($totalPosts) ?></div>
-      <div class="stat-label">Total de posts</div>
-      <div class="admin-summary-card__hint">Volume editorial disponivel no painel.</div>
+      <div class="stat-value neon-text" style="color:#60a5fa;"><?= fmt($curPosts) ?></div>
+      <div class="stat-label">Posts no periodo</div>
+      <div class="admin-summary-card__hint">Publicacoes dentro do filtro aplicado.</div>
       <div class="stat-support">
-        <div class="stat-support-line"><span class="stat-support-label">Publicados</span><span class="stat-support-value" style="color:#60a5fa;"><?= fmt($postsPublicados) ?></span></div>
-        <div class="stat-support-line"><span class="stat-support-label">Rascunhos</span><span class="stat-support-value"><?= fmt($postsRascunho) ?></span></div>
-        <div class="stat-support-line"><span class="stat-support-label">Agendados</span><span class="stat-support-value"><?= fmt($postsAgendados) ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Media diaria</span><span class="stat-support-value" style="color:#60a5fa;"><?= number_format($periodPostsDailyAverage, 1, ',', '.') ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Total no painel</span><span class="stat-support-value"><?= fmt($totalPosts) ?></span></div>
       </div>
     </article>
 
     <article class="stat-card stat-card-compact admin-summary-card">
       <div class="stat-icon" style="background: linear-gradient(135deg, rgba(34,211,238,.92), rgba(37,99,235,.92)); color: var(--neon-blue);"><i class="fa-solid fa-eye"></i></div>
-      <div class="stat-value neon-text" style="color: var(--neon-blue);"><?= fmt_k($totalViews) ?></div>
-      <div class="stat-label">Views totais</div>
-      <div class="admin-summary-card__hint">Alcance acumulado do portal no periodo.</div>
+      <div class="stat-value neon-text" style="color: var(--neon-blue);"><?= fmt_k($curViews) ?></div>
+      <div class="stat-label">Views no periodo</div>
+      <div class="admin-summary-card__hint">Alcance registrado dentro do filtro aplicado.</div>
       <div class="stat-support">
-        <div class="stat-support-line"><span class="stat-support-label">Hoje</span><span class="stat-support-value" style="color: var(--neon-blue);">+<?= fmt_k($viewsHoje) ?></span></div>
-        <div class="stat-support-line"><span class="stat-support-label">Ultimos 7 dias</span><span class="stat-support-value" style="color: var(--neon-blue);">+<?= fmt_k($viewsSemana) ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Media diaria</span><span class="stat-support-value" style="color: var(--neon-blue);"><?= fmt_k($periodViewsDailyAverage) ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Total geral</span><span class="stat-support-value" style="color: var(--neon-blue);"><?= fmt_k($totalViews) ?></span></div>
       </div>
     </article>
 
     <article class="stat-card stat-card-compact admin-summary-card">
       <div class="stat-icon" style="background: linear-gradient(135deg, rgba(168,85,247,.88), rgba(236,72,153,.88)); color:#c084fc;"><i class="fa-solid fa-heart"></i></div>
       <div class="stat-value neon-text" style="color:#c084fc;"><?= fmt_k($likesTotal) ?></div>
-      <div class="stat-label">Curtidas</div>
-      <div class="admin-summary-card__hint">Resposta direta do publico ao conteudo.</div>
+      <div class="stat-label">Engajamento geral</div>
+      <div class="admin-summary-card__hint">Acumulado historico do conteudo publicado.</div>
       <div class="stat-support">
         <div class="stat-support-line"><span class="stat-support-label">Comentarios</span><span class="stat-support-value" style="color:#c084fc;"><?= fmt_k($totalComentarios) ?></span></div>
         <div class="stat-support-line"><span class="stat-support-label">Engajamento</span><span class="stat-support-value" style="color:#c084fc;"><?= number_format($engagementRate, 2, ',', '.') ?>%</span></div>
@@ -529,12 +531,12 @@ $todayCards = [
 
     <article class="stat-card stat-card-compact admin-summary-card">
       <div class="stat-icon" style="background: linear-gradient(135deg, rgba(34,197,94,.88), rgba(6,182,212,.88)); color:#34d399;"><i class="fa-solid fa-envelope"></i></div>
-      <div class="stat-value neon-text" style="color:#34d399;"><?= fmt_k($totalInscritos) ?></div>
-      <div class="stat-label">Inscritos ativos</div>
-      <div class="admin-summary-card__hint">Base pronta para ativacao e distribuicao propria.</div>
+      <div class="stat-value neon-text" style="color:#34d399;"><?= fmt_k($curSubs) ?></div>
+      <div class="stat-label">Inscricoes no periodo</div>
+      <div class="admin-summary-card__hint">Novos cadastros dentro do filtro aplicado.</div>
       <div class="stat-support">
-        <div class="stat-support-line"><span class="stat-support-label">Hoje</span><span class="stat-support-value" style="color:#34d399;">+<?= fmt($inscritosHoje) ?></span></div>
-        <div class="stat-support-line"><span class="stat-support-label">Ultimos 30 dias</span><span class="stat-support-value" style="color:#34d399;">+<?= fmt($inscritosNovos30) ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Media diaria</span><span class="stat-support-value" style="color:#34d399;"><?= number_format($periodSubsDailyAverage, 1, ',', '.') ?></span></div>
+        <div class="stat-support-line"><span class="stat-support-label">Base total</span><span class="stat-support-value" style="color:#34d399;"><?= fmt_k($totalInscritos) ?></span></div>
       </div>
     </article>
   </section>
@@ -569,7 +571,7 @@ $todayCards = [
           <div class="activity-summary-label">Views no periodo</div>
         </div>
         <div class="activity-summary-value activity-summary-value-views"><?= fmt($curViews) ?></div>
-        <div class="activity-summary-meta">Media de <?= fmt((int) round($days > 0 ? $curViews / $days : 0)) ?> por dia</div>
+        <div class="activity-summary-meta">Media de <?= fmt($periodViewsDailyAverage) ?> por dia</div>
       </div>
       <div class="activity-summary-card">
         <div class="activity-summary-top">
@@ -577,7 +579,7 @@ $todayCards = [
           <div class="activity-summary-label">Posts novos</div>
         </div>
         <div class="activity-summary-value activity-summary-value-posts"><?= fmt($curPosts) ?></div>
-        <div class="activity-summary-meta">Media de <?= number_format(($days > 0 ? $curPosts / $days : 0), 1, ',', '.') ?> por dia</div>
+        <div class="activity-summary-meta">Media de <?= number_format($periodPostsDailyAverage, 1, ',', '.') ?> por dia</div>
       </div>
       <div class="activity-summary-card">
         <div class="activity-summary-top">
@@ -585,7 +587,7 @@ $todayCards = [
           <div class="activity-summary-label">Inscricoes</div>
         </div>
         <div class="activity-summary-value activity-summary-value-subs"><?= fmt($curSubs) ?></div>
-        <div class="activity-summary-meta">Media de <?= number_format(($days > 0 ? $curSubs / $days : 0), 1, ',', '.') ?> por dia</div>
+        <div class="activity-summary-meta">Media de <?= number_format($periodSubsDailyAverage, 1, ',', '.') ?> por dia</div>
       </div>
     </div>
 
@@ -955,57 +957,3 @@ $todayCards = [
     <?php endif; ?>
   </section>
 </div>
-
-<script>
-  (() => {
-    const startEl = document.getElementById('startDate');
-    const endEl = document.getElementById('endDate');
-    if (!startEl || !endEl) return;
-
-    const MS_DAY = 24 * 60 * 60 * 1000;
-    const parse = (value) => {
-      if (!value) return null;
-      const [year, month, day] = value.split('-').map(Number);
-      if (!year || !month || !day) return null;
-      return new Date(Date.UTC(year, month - 1, day));
-    };
-    const format = (date) => {
-      const year = date.getUTCFullYear();
-      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(date.getUTCDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-    const clampTo90FromStart = () => {
-      const start = parse(startEl.value);
-      const end = parse(endEl.value);
-      if (!start) return;
-      const maxEnd = new Date(start.getTime() + (89 * MS_DAY));
-      endEl.min = format(start);
-      endEl.max = format(maxEnd);
-      if (end) {
-        if (end < start) endEl.value = format(start);
-        else if (end > maxEnd) endEl.value = format(maxEnd);
-      } else {
-        endEl.value = format(start);
-      }
-    };
-    const clampStartFromEnd = () => {
-      const start = parse(startEl.value);
-      const end = parse(endEl.value);
-      if (!end) return;
-      const minStart = new Date(end.getTime() - (89 * MS_DAY));
-      startEl.max = format(end);
-      startEl.min = format(minStart);
-      if (start) {
-        if (start > end) startEl.value = format(end);
-        else if (start < minStart) startEl.value = format(minStart);
-      } else {
-        startEl.value = format(minStart);
-      }
-    };
-    startEl.addEventListener('change', () => { clampTo90FromStart(); clampStartFromEnd(); });
-    endEl.addEventListener('change', () => { clampStartFromEnd(); clampTo90FromStart(); });
-    clampTo90FromStart();
-    clampStartFromEnd();
-  })();
-</script>

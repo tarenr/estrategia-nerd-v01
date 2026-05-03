@@ -6,9 +6,9 @@
  * @author      Taren Felipe Ribeiro
  * @version     1.0.0
  * @purpose     Controller do Dashboard Admin
- * @description Renderiza o dashboard e expoe endpoint JSON para atualizacao live.
+ * @description Renderiza o dashboard e expoe endpoint JSON para consultas auxiliares.
  * @usage       GET /admin, GET /admin/api/dashboard
- * @notes       Range por data (start/end) com default 30 dias e clamp maximo 90 dias.
+ * @notes       A tela usa submit GET com start/end. Range default 30 dias e clamp maximo 90 dias.
  * -----------------------------------------------------------------------------
  */
 

@@ -19,9 +19,10 @@ use App\Support\View;
 
 $title = $title ?? 'Admin';
 
-$adminCssPath = dirname(__DIR__, 2) . '/public/assets/css/admin.css';
-$adminLayoutJsPath = dirname(__DIR__, 2) . '/public/assets/js/admin-layout.js';
-$adminDashboardJsPath = dirname(__DIR__, 2) . '/public/assets/js/admin-dashboard.js';
+$projectRoot = dirname(__DIR__, 3);
+$adminCssPath = $projectRoot . '/public/assets/css/admin.css';
+$adminLayoutJsPath = $projectRoot . '/public/assets/js/admin-layout.js';
+$adminDashboardJsPath = $projectRoot . '/public/assets/js/admin-dashboard.js';
 
 $adminCssVersion = is_file($adminCssPath) ? (string) filemtime($adminCssPath) : '1';
 $adminLayoutJsVersion = is_file($adminLayoutJsPath) ? (string) filemtime($adminLayoutJsPath) : '1';
