@@ -22,8 +22,8 @@ final class CentralOperacionalService
     public function getViewModel(?array $flash = null, string $overviewSection = 'resumo'): array
     {
         return [
-            'title' => 'Central Operacional | EstratÃ©gia Nerd',
-            'meta_description' => 'Painel local com visÃ£o consolidada de backup, deploy tÃ©cnico, conteÃºdo e polÃ­tica operacional.',
+            'title' => 'Central Operacional | Estratégia Nerd',
+            'meta_description' => 'Painel local com visão consolidada de backup, deploy técnico, conteúdo e política operacional.',
             'site_chrome' => false,
             'body_class' => 'central-operacional-body',
             'flash' => is_array($flash) ? $flash : null,

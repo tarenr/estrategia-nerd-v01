@@ -208,8 +208,8 @@ final class OperationsV2Controller
                 $enabled = in_array(strtolower(trim((string) ($_POST['enabled'] ?? '0'))), ['1', 'true', 'on', 'yes'], true);
                 $this->cloudService()->setEditorialAutoUpload($enabled);
                 $this->cloudFlash('success', $enabled
-                    ? 'Envio automÃ¡tico editorial ativado.'
-                    : 'Envio automÃ¡tico editorial desativado.'
+                    ? 'Envio automático editorial ativado.'
+                    : 'Envio automático editorial desativado.'
                 );
                 $this->redirect($redirect);
                 return;

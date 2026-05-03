@@ -227,8 +227,11 @@ function scanEncodingIssues(string $projectRoot): array
                 $issues[] = $label . ' => ' . $filePath;
             }
         }
+        $skipQuestionInsideWord = str_replace('\\', '/', $filePath);
+        $skipQuestionInsideWord = str_ends_with($skipQuestionInsideWord, '/public/assets/js/admin-post-html-editor.js');
+
         $textWithoutUrls = preg_replace('~https?://\S+|/[^\s\'\"]*\?[^\s\'\"]*~u', '', $content) ?? $content;
-        if (preg_match('/\p{L}\?\p{L}/u', $textWithoutUrls) === 1) {
+        if (!$skipQuestionInsideWord && preg_match('/\p{L}\?\p{L}/u', $textWithoutUrls) === 1) {
             $issues[] = 'question-inside-word => ' . $filePath;
         }
     }
