@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\Site\BackupToolsController;
 use App\Controllers\Site\ContentSyncToolsController;
+use App\Controllers\Site\SearchConsoleMonitorController;
 use App\Services\Admin\Presenters\OperationsV2Presenter;
 use App\Services\Site\DropboxBackupService;
 use App\Support\Csrf;
@@ -137,6 +138,26 @@ final class OperationsV2Controller
         ]);
     }
 
+    public function seoTecnico(): void
+    {
+        $module = $this->modules()['seo-tecnico'];
+        $baseUrl = url('/admin/central-operacional-v2/seo-tecnico');
+        $section = is_string($_GET['monitor_secao'] ?? null) ? (string) $_GET['monitor_secao'] : 'resumo';
+        $searchConsole = (new SearchConsoleMonitorController())->viewData(true, $section, $baseUrl);
+
+        if ((string) ($_GET['monitor_fragment'] ?? '0') === '1') {
+            header('Content-Type: text/html; charset=UTF-8');
+            echo View::fragment('site/partials/search-console-monitor-content', $searchConsole);
+            return;
+        }
+
+        View::render('admin/operations-v2/seo-tecnico', [
+            'title' => ($module['label'] ?? 'SEO Tecnico') . ' | Estrategia Nerd',
+            'module' => $module,
+            'search_console_tools' => $searchConsole,
+        ]);
+    }
+
     /**
      * @return array<string, array<string, string>>
      */
@@ -171,6 +192,12 @@ final class OperationsV2Controller
                 'description' => 'Leitura organizada para logs, histórico, alertas e sinais operacionais.',
                 'status' => 'planejado',
                 'href' => url('/admin/central-operacional-v2/observabilidade'),
+            ],
+            'seo-tecnico' => [
+                'label' => 'SEO Tecnico',
+                'description' => 'Search Console, indexacao, sitemaps e URLs criticas.',
+                'status' => 'em-leitura',
+                'href' => url('/admin/central-operacional-v2/seo-tecnico'),
             ],
         ];
     }
@@ -208,8 +235,8 @@ final class OperationsV2Controller
                 $enabled = in_array(strtolower(trim((string) ($_POST['enabled'] ?? '0'))), ['1', 'true', 'on', 'yes'], true);
                 $this->cloudService()->setEditorialAutoUpload($enabled);
                 $this->cloudFlash('success', $enabled
-                    ? 'Envio automático editorial ativado.'
-                    : 'Envio automático editorial desativado.'
+                    ? 'Envio automatico editorial ativado.'
+                    : 'Envio automatico editorial desativado.'
                 );
                 $this->redirect($redirect);
                 return;

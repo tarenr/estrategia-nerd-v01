@@ -54,6 +54,13 @@ $pill = static function (string $label, string $tone = 'default'): string {
 
     return '<span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ' . $classes . '">' . htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>';
 };
+
+$metricTile = static function (string $label, string $value): string {
+    return '<span class="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2">'
+        . '<span class="block font-orbitron text-[10px] uppercase tracking-[0.18em] text-slate-500">' . htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>'
+        . '<span class="mt-1 block text-base font-bold text-slate-100">' . htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>'
+        . '</span>';
+};
 ?>
 <section data-search-console-panel class="space-y-6">
   <?php if ($screenError !== ''): ?>
@@ -93,7 +100,11 @@ $pill = static function (string $label, string $tone = 'default'): string {
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
         <p class="font-orbitron text-xs uppercase tracking-[0.25em] text-cyan-300/80">Sitemaps</p>
         <div class="mt-4 text-3xl font-bold text-white"><?= count($sitemaps) ?></div>
-        <p class="mt-3 text-sm text-slate-400">Sitemaps conhecidos pela API para a propriedade conectada.</p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <?= $pill($sitemaps === [] ? 'Leitura pendente' : 'Processado', $sitemaps === [] ? 'warn' : 'ok') ?>
+          <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300">Erros: <?= array_sum(array_map(static fn(array $item): int => (int) ($item['errors'] ?? 0), $sitemaps)) ?></span>
+          <span class="inline-flex items-center rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300">Avisos: <?= array_sum(array_map(static fn(array $item): int => (int) ($item['warnings'] ?? 0), $sitemaps)) ?></span>
+        </div>
       </div>
 
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
@@ -170,32 +181,32 @@ $pill = static function (string $label, string $tone = 'default'): string {
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <div class="font-semibold text-slate-100"><?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <div class="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500"><?= htmlspecialchars((string) ($item['source'] ?? 'site'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="mt-1 text-[13px] uppercase tracking-[0.18em] text-slate-500"><?= htmlspecialchars((string) ($item['source'] ?? 'site'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
                 <?= $pill((string) ($result['verdict'] ?? 'Sem verdict'), $tone) ?>
               </div>
-              <div class="mt-3 break-all text-sm text-slate-300"><?= htmlspecialchars((string) ($item['url'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-              <div class="mt-4 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
+              <div class="mt-3 break-all text-base font-medium text-slate-300"><?= htmlspecialchars((string) ($item['url'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <div class="mt-4 grid gap-3 text-[15px] text-slate-300 md:grid-cols-2">
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
-                  <div class="text-slate-500">Coverage</div>
-                  <div class="mt-1 font-medium text-slate-100"><?= htmlspecialchars((string) ($result['coverage_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="text-[13px] text-slate-500">Coverage</div>
+                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($result['coverage_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
-                  <div class="text-slate-500">Indexing</div>
-                  <div class="mt-1 font-medium text-slate-100"><?= htmlspecialchars((string) ($result['indexing_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="text-[13px] text-slate-500">Indexing</div>
+                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($result['indexing_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 md:col-span-2">
-                  <div class="text-slate-500">Google canonical</div>
-                  <div class="mt-1 break-all font-medium text-slate-100"><?= htmlspecialchars((string) ($result['google_canonical'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="text-[13px] text-slate-500">Google canonical</div>
+                  <div class="mt-1 break-all text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($result['google_canonical'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
-                  <div class="text-slate-500">Ultimo crawl</div>
-                  <div class="mt-1 font-medium text-slate-100"><?= htmlspecialchars((string) ($result['last_crawl_time'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="text-[13px] text-slate-500">Ultimo crawl</div>
+                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($result['last_crawl_time'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
-                  <div class="text-slate-500">Robots.txt</div>
-                  <div class="mt-1 font-medium text-slate-100"><?= htmlspecialchars((string) ($result['robots_txt_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="text-[13px] text-slate-500">Robots.txt</div>
+                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($result['robots_txt_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
               </div>
               <div class="mt-4">
@@ -209,34 +220,6 @@ $pill = static function (string $label, string $tone = 'default'): string {
 
     <div class="grid gap-6 xl:grid-cols-2">
       <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-        <p class="font-orbitron text-xs uppercase tracking-[0.25em] text-cyan-300/80">Sitemaps</p>
-        <h3 class="mt-2 font-orbitron text-xl font-bold text-white">Arquivos conhecidos</h3>
-        <div class="mt-5 space-y-3">
-          <?php if ($sitemaps === []): ?>
-            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-400">Nenhum sitemap retornado pela API.</div>
-          <?php else: ?>
-            <?php foreach ($sitemaps as $sitemap): ?>
-              <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-                <div class="flex items-start justify-between gap-4">
-                  <div class="break-all font-semibold text-slate-100"><?= htmlspecialchars((string) ($sitemap['path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <div class="flex flex-wrap justify-end gap-2">
-                    <?= $pill((string) ($sitemap['type'] ?? 'sitemap')) ?>
-                    <?= $pill((bool) ($sitemap['pending'] ?? false) ? 'Pendente' : 'Processado', (bool) ($sitemap['pending'] ?? false) ? 'warn' : 'ok') ?>
-                  </div>
-                </div>
-                <div class="mt-3 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
-                  <div>Enviado: <?= htmlspecialchars((string) ($sitemap['last_submitted'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <div>Baixado: <?= htmlspecialchars((string) ($sitemap['last_downloaded'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <div>Erros: <?= (int) ($sitemap['errors'] ?? 0) ?></div>
-                  <div>Avisos: <?= (int) ($sitemap['warnings'] ?? 0) ?></div>
-                </div>
-              </div>
-            <?php endforeach; ?>
-          <?php endif; ?>
-        </div>
-      </div>
-
-      <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
         <p class="font-orbitron text-xs uppercase tracking-[0.25em] text-cyan-300/80">Performance organica</p>
         <h3 class="mt-2 font-orbitron text-xl font-bold text-white">Top consultas e paginas</h3>
         <div class="mt-5 grid gap-4">
@@ -247,9 +230,13 @@ $pill = static function (string $label, string $tone = 'default'): string {
                 <div class="text-sm text-slate-400">Sem consultas retornadas para o periodo.</div>
               <?php else: ?>
                 <?php foreach ($topQueries as $item): ?>
-                  <div class="border-b border-slate-800 pb-3 last:border-b-0 last:pb-0">
-                    <div class="font-medium text-slate-100"><?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                    <div class="mt-1 text-xs text-slate-400">Cliques: <?= number_format((float) ($item['clicks'] ?? 0), 0, ',', '.') ?> | CTR: <?= number_format(((float) ($item['ctr'] ?? 0)) * 100, 2, ',', '.') ?>% | Posicao: <?= number_format((float) ($item['position'] ?? 0), 2, ',', '.') ?></div>
+                  <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+                    <div class="text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                    <div class="mt-3 grid gap-2 sm:grid-cols-3">
+                      <?= $metricTile('Cliques', number_format((float) ($item['clicks'] ?? 0), 0, ',', '.')) ?>
+                      <?= $metricTile('CTR', number_format(((float) ($item['ctr'] ?? 0)) * 100, 2, ',', '.') . '%') ?>
+                      <?= $metricTile('Posicao', number_format((float) ($item['position'] ?? 0), 2, ',', '.')) ?>
+                    </div>
                   </div>
                 <?php endforeach; ?>
               <?php endif; ?>
@@ -263,9 +250,13 @@ $pill = static function (string $label, string $tone = 'default'): string {
                 <div class="text-sm text-slate-400">Sem paginas retornadas para o periodo.</div>
               <?php else: ?>
                 <?php foreach ($topPages as $item): ?>
-                  <div class="border-b border-slate-800 pb-3 last:border-b-0 last:pb-0">
-                    <div class="break-all font-medium text-slate-100"><?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                    <div class="mt-1 text-xs text-slate-400">Cliques: <?= number_format((float) ($item['clicks'] ?? 0), 0, ',', '.') ?> | Impressões: <?= number_format((float) ($item['impressions'] ?? 0), 0, ',', '.') ?> | Posicao: <?= number_format((float) ($item['position'] ?? 0), 2, ',', '.') ?></div>
+                  <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+                    <div class="break-all text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                    <div class="mt-3 grid gap-2 sm:grid-cols-3">
+                      <?= $metricTile('Cliques', number_format((float) ($item['clicks'] ?? 0), 0, ',', '.')) ?>
+                      <?= $metricTile('Impressoes', number_format((float) ($item['impressions'] ?? 0), 0, ',', '.')) ?>
+                      <?= $metricTile('Posicao', number_format((float) ($item['position'] ?? 0), 2, ',', '.')) ?>
+                    </div>
                   </div>
                 <?php endforeach; ?>
               <?php endif; ?>

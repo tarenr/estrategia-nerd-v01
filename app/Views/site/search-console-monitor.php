@@ -104,7 +104,9 @@ $sectionUrl = static function (string $section) use ($monitorBaseUrl): string {
 
       const isMonitorUrl = (url) => {
         const next = new URL(url, window.location.origin);
-        return next.pathname.includes('/monitoramento') || next.searchParams.get('aba') === 'monitoramento';
+        return next.pathname.includes('/monitoramento')
+          || next.pathname.includes('/seo-tecnico')
+          || next.searchParams.get('aba') === 'monitoramento';
       };
 
       const loadSection = async (url, push = true) => {
