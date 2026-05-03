@@ -6,8 +6,8 @@ use App\Support\View;
 
 $module = is_array($module ?? null) ? $module : [];
 $moduleKey = (string) ($module_key ?? '');
-$label = (string) ($module['label'] ?? 'Central Operacional V2');
-$description = (string) ($module['description'] ?? 'Página de leitura da Central Operacional V2.');
+$label = (string) ($module['label'] ?? 'Central Operacional');
+$description = (string) ($module['description'] ?? 'Página de leitura da Central Operacional.');
 
 $notes = [
     'backup-sistemico' => [
@@ -27,11 +27,11 @@ $notes = [
     ],
 ];
 
-$moduleNotes = $notes[$moduleKey] ?? ['Módulo V2 em preparação.'];
+$moduleNotes = $notes[$moduleKey] ?? ['Módulo em preparação.'];
 ?>
 <section class="space-y-6">
   <?php View::component('admin/v2/page-header', [
-      'eyebrow' => 'Central Operacional V2',
+      'eyebrow' => 'Central Operacional',
       'title' => $label,
       'description' => $description,
       'actions' => [

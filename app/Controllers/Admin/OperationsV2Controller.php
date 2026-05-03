@@ -28,7 +28,7 @@ final class OperationsV2Controller
         }
 
         View::render('admin/operations-v2/index', [
-            'title' => 'Central Operacional V2 | Estrategia Nerd',
+            'title' => 'Central Operacional | Estrategia Nerd',
             'planned_modules' => $this->modules(),
             'overview' => $overview,
         ]);
@@ -145,7 +145,7 @@ final class OperationsV2Controller
         return [
             'visao-geral' => [
                 'label' => 'Visão Geral',
-                'description' => 'Entrada executiva da Central Operacional V2.',
+                'description' => 'Entrada executiva da Central Operacional.',
                 'status' => 'em-leitura',
             ],
             'backup-sistemico' => [
@@ -186,7 +186,7 @@ final class OperationsV2Controller
         }
 
         View::render('admin/operations-v2/show', [
-            'title' => ($module['label'] ?? 'Central Operacional V2') . ' | Estrategia Nerd',
+            'title' => ($module['label'] ?? 'Central Operacional') . ' | Estrategia Nerd',
             'module' => $module,
             'module_key' => $moduleKey,
         ]);

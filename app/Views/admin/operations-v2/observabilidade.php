@@ -16,7 +16,7 @@ $alerts = is_array($observability['alerts'] ?? null) ? $observability['alerts'] 
 ?>
 <section class="space-y-6">
   <?php View::component('admin/v2/page-header', [
-      'eyebrow' => 'Central Operacional V2',
+      'eyebrow' => 'Central Operacional',
       'title' => (string) ($module['label'] ?? 'Observabilidade'),
       'description' => '',
       'actions' => [

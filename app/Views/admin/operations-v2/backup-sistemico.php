@@ -11,7 +11,7 @@ $backupTools['embed_mode'] = true;
 ?>
 <section class="space-y-6">
   <?php View::component('admin/v2/page-header', [
-      'eyebrow' => 'Central Operacional V2',
+      'eyebrow' => 'Central Operacional',
       'title' => (string) ($module['label'] ?? 'Backup Sistêmico e Restore'),
       'description' => '',
       'actions' => [

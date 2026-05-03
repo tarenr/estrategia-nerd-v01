@@ -228,6 +228,24 @@ Voce deve:
 - Nao deixar hotfix apenas em producao
 - Reproduzir em stage/local toda correcao feita em producao
 
+REGRA ESPECIFICA PARA MENUS, SIDEBAR E NAVEGACAO:
+
+- Nunca alterar sidebar, menus ou navegacao por ambiente sem explicar antes a estrategia
+- Nunca assumir que local, stage e producao devem ter o mesmo menu
+- Nunca remover, ocultar ou reorganizar menus globalmente quando a solicitacao citar apenas um ambiente
+- Antes de alterar navegacao, informar:
+  - qual ambiente sera afetado
+  - quais itens entram
+  - quais itens saem
+  - se a regra sera global ou condicional por ambiente
+  - quais arquivos serao alterados
+- So executar a mudanca depois de confirmacao explicita do responsavel
+- Em caso de duvida entre alteracao global e alteracao especifica de ambiente, bloquear a execucao e perguntar
+- Local deve preservar ferramentas tecnicas quando elas forem necessarias para operacao, documentacao, testes e manutencao
+- Stage e producao podem ter navegacao editorial reduzida, mas isso deve ser tratado como regra especifica de ambiente
+- Alteracao de arquivos so pode comecar depois de confirmacao explicita com termos como "esta liberado" ou "pode fazer"
+- Pedidos de analise, explicacao, opiniao, planejamento ou "veja" nao autorizam alteracao de arquivos
+
 ============================================================
 11. SAIDA OPERACIONAL OBRIGATORIA
 ============================================================

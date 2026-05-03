@@ -68,13 +68,14 @@ function sidebar_submenu_class(bool $active): string
 }
 
 /**
- * @return array{type:string,label:string}
+ * @return array{type:string,label:string,collapsed_label:string}
  */
-function sidebar_section(string $label): array
+function sidebar_section(string $label, string $collapsedLabel = ''): array
 {
     return [
         'type' => 'section',
         'label' => $label,
+        'collapsed_label' => $collapsedLabel,
     ];
 }
 
@@ -136,30 +137,38 @@ $rawItems = [
     sidebar_item('/', 'fa-solid fa-globe', 'Ver Site'),
     sidebar_section('Conteudo'),
     sidebar_item('/admin/posts', 'fa-solid fa-newspaper', 'Posts'),
-    sidebar_item('/admin/criar-post', 'fa-solid fa-square-plus', 'Criar Post'),
-    sidebar_item('/admin/categorias', 'fa-solid fa-tags', 'Categorias'),
+    sidebar_item('/admin/categorias', 'fa-solid fa-tags', 'Categoria'),
     sidebar_item('/admin/comentarios', 'fa-solid fa-comments', 'Comentarios'),
     sidebar_item('/admin/midia', 'fa-solid fa-photo-film', 'Midia'),
-    sidebar_section('Alcance'),
+    sidebar_section('Crescimento'),
     sidebar_item('/admin/newsletter', 'fa-solid fa-envelope-open-text', 'Newsletter'),
-    sidebar_section('Monetizacao'),
     sidebar_item('/admin/links', 'fa-solid fa-link', 'Links'),
-    sidebar_item('/admin/ofertas', 'fa-solid fa-bag-shopping', 'Ofertas'),
     sidebar_section('Sistema'),
     sidebar_item('/admin/home-e-menus', 'fa-solid fa-diagram-project', 'Home e Menus', 'multi_env_menus'),
-    sidebar_item('/admin/configuracoes', 'fa-solid fa-gear', 'Configuracoes', 'multi_env_settings'),
     sidebar_item('/admin/usuarios', 'fa-solid fa-user', 'Usuarios', 'multi_env_users'),
+    sidebar_item('/admin/configuracoes', 'fa-solid fa-gear', 'Configuracoes', 'multi_env_settings'),
     sidebar_item('/admin/health', 'fa-solid fa-heart-pulse', 'Health Check', 'multi_env_health'),
+    sidebar_section('Operacional'),
     sidebar_item('/admin/auditoria-geral', 'fa-solid fa-shield-heart', 'Auditoria Geral', 'audit'),
-    sidebar_item('/admin/base-tecnica', 'fa-solid fa-book-open-reader', 'Base Tecnica', 'docs'),
-    sidebar_item('/admin/central-operacional', 'fa-solid fa-arrows-rotate', 'Central Operacional', 'operations'),
-    sidebar_submenu('fa-solid fa-arrows-spin', 'Central Operacional V2', [
+    sidebar_submenu('fa-solid fa-arrows-spin', 'Central Operacional', [
         sidebar_item('/admin/central-operacional-v2', 'fa-solid fa-gauge-high', 'Visão Geral', 'operations'),
         sidebar_item('/admin/central-operacional-v2/backup-sistemico', 'fa-solid fa-server', 'Backup Sistêmico', 'operations'),
         sidebar_item('/admin/central-operacional-v2/backup-editorial', 'fa-solid fa-newspaper', 'Backup Editorial', 'operations'),
         sidebar_item('/admin/central-operacional-v2/backup-em-nuvem', 'fa-solid fa-cloud-arrow-up', 'Backup em Nuvem', 'operations'),
         sidebar_item('/admin/central-operacional-v2/observabilidade', 'fa-solid fa-chart-simple', 'Observabilidade', 'operations'),
     ], 'operations'),
+    sidebar_item('/admin/testes', 'fa-solid fa-vial-circle-check', 'Testes', 'operations'),
+    sidebar_section('Central Tecnica', "Central\nTecnica"),
+    sidebar_submenu('fa-solid fa-book-open-reader', 'Base de Conhecimento', [
+        sidebar_item('/admin/central-tecnica/base-conhecimento', 'fa-solid fa-gauge-high', 'Visao Geral', 'docs'),
+        sidebar_item('/admin/central-tecnica/base-conhecimento/backlog', 'fa-solid fa-list-check', 'Backlog', 'docs'),
+        sidebar_item('/admin/central-tecnica/base-conhecimento/documentacao', 'fa-solid fa-book-open', 'Documentacao Tecnica', 'docs'),
+        sidebar_item('/admin/central-tecnica/base-conhecimento/regras', 'fa-solid fa-scale-balanced', 'Regras de Negocio', 'docs'),
+        sidebar_item('/admin/central-tecnica/base-conhecimento/mudancas', 'fa-solid fa-clock-rotate-left', 'Historico de Mudancas', 'docs'),
+        sidebar_item('/admin/central-tecnica/base-conhecimento/procedimentos', 'fa-solid fa-clipboard-list', 'Procedimentos', 'docs'),
+        sidebar_item('/admin/central-tecnica/base-conhecimento/padroes', 'fa-solid fa-compass-drafting', 'Padroes e Boas Praticas', 'docs'),
+        sidebar_item('/admin/central-tecnica/base-conhecimento/faq', 'fa-solid fa-circle-question', 'FAQ', 'docs'),
+    ], 'docs'),
 ];
 
 $items = [];
@@ -186,9 +195,16 @@ foreach ($rawItems as $item) {
 <nav class="space-y-1 text-sm" aria-label="Navegacao Admin">
   <?php foreach ($items as $item): ?>
     <?php if (($item['type'] ?? 'item') === 'section'): ?>
-      <div class="sidebar-section-label pt-4 pb-2 first:pt-0" data-sb-section>
+      <?php
+        $collapsedLabel = (string) ($item['collapsed_label'] ?? '');
+        $hasCollapsedLabel = trim($collapsedLabel) !== '';
+      ?>
+      <div class="sidebar-section-label pt-4 pb-2 first:pt-0" data-sb-section<?= $hasCollapsedLabel ? ' data-collapsed-label="1"' : '' ?>>
         <div class="sidebar-section-text">
-          <?= htmlspecialchars($item['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+          <span class="sidebar-section-text-full"><?= htmlspecialchars($item['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+          <?php if ($hasCollapsedLabel): ?>
+            <span class="sidebar-section-text-collapsed"><?= nl2br(htmlspecialchars($collapsedLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')) ?></span>
+          <?php endif; ?>
         </div>
       </div>
       <?php continue; ?>

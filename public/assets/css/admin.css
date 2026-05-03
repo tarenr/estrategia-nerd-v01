@@ -811,6 +811,19 @@ textarea.admin-filter-control {
     font-size: 9px;
 }
 
+.sidebar-section-text-collapsed {
+    display: none;
+}
+
+#adminSidebar[data-collapsed="1"] .sidebar-section-label[data-collapsed-label="1"] .sidebar-section-text-full {
+    display: none;
+}
+
+#adminSidebar[data-collapsed="1"] .sidebar-section-label[data-collapsed-label="1"] .sidebar-section-text-collapsed {
+    display: inline;
+    line-height: 1.25;
+}
+
 #adminSidebar[data-collapsed="1"] #adminSidebarScroll {
     display: flex;
     flex-direction: column;

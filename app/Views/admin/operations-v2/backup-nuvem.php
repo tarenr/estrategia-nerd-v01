@@ -299,7 +299,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
 ?>
 <section class="space-y-6" data-cloud-backup-root>
   <?php View::component('admin/v2/page-header', [
-      'eyebrow' => 'Central Operacional V2',
+      'eyebrow' => 'Central Operacional',
       'title' => (string) ($module['label'] ?? 'Backup em Nuvem'),
       'description' => '',
       'actions' => [

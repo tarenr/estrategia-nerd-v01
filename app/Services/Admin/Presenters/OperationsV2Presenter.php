@@ -475,7 +475,23 @@ final class OperationsV2Presenter
             return 'Sem aplicação registrada';
         }
 
-        return implode(', ', array_map(static fn ($target): string => (string) $target, $targets));
+        $labels = [];
+        foreach ($targets as $target) {
+            if (is_array($target)) {
+                $label = trim((string) ($target['target_profile_label'] ?? $target['target_profile'] ?? $target['environment'] ?? ''));
+                if ($label !== '') {
+                    $labels[] = $label;
+                }
+                continue;
+            }
+
+            $label = trim((string) $target);
+            if ($label !== '') {
+                $labels[] = $label;
+            }
+        }
+
+        return $labels !== [] ? implode(', ', array_unique($labels)) : 'Sem aplicação registrada';
     }
 
     /**

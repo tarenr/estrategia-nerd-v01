@@ -16,8 +16,8 @@ $facts = is_array($overview['facts'] ?? null) ? $overview['facts'] : [];
 
 <section class="space-y-6" data-operations-v2-root style="animation: admin-v2-fade-in .22s ease-out both;">
   <?php View::component('admin/v2/page-header', [
-      'eyebrow' => 'Operacional V2',
-      'title' => 'Central Operacional V2',
+      'eyebrow' => 'Operacional',
+      'title' => 'Central Operacional',
       'description' => '',
   ]); ?>
 
