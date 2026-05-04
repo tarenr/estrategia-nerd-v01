@@ -56,9 +56,31 @@ final class BlogController
             exit;
         }
 
+        $this->redirectLegacyPageToFriendly('/blog');
+        $this->renderIndex((int) ($_GET['page'] ?? 1));
+    }
+
+    public function indexPage(string $page): void
+    {
+        if (!site_section_public_active('blog')) {
+            http_response_code(404);
+            echo 'Blog indisponível no momento.';
+            return;
+        }
+
+        $pageNumber = max(1, (int) $page);
+        if ($pageNumber <= 1) {
+            $this->redirectTo(url('/blog'));
+        }
+
+        $this->renderIndex($pageNumber);
+    }
+
+    private function renderIndex(int $page): void
+    {
         View::render('site/blog', $this->service()->getViewModel([
             'busca' => (string) ($_GET['q'] ?? ''),
-            'page' => (int) ($_GET['page'] ?? 1),
+            'page' => $page,
         ]));
     }
 
@@ -83,13 +105,69 @@ final class BlogController
             return;
         }
 
-        View::render('site/blog', $service->getViewModel([
+        $this->redirectLegacyPageToFriendly('/blog/' . rawurlencode($slug));
+        $this->renderCategory($slug, $category, (int) ($_GET['page'] ?? 1));
+    }
+
+    public function categoryPage(string $slug, string $page): void
+    {
+        if (!site_section_public_active('blog')) {
+            http_response_code(404);
+            echo 'Blog indisponivel no momento.';
+            return;
+        }
+
+        $slug = strtolower(trim($slug));
+        if ($slug === '' || in_array($slug, self::RESERVED_CATEGORY_SLUGS, true)) {
+            $this->notFound($slug);
+            return;
+        }
+
+        $service = $this->service();
+        $category = $service->findCategoryForRoute($slug);
+        if ($category === null) {
+            $this->notFound($slug);
+            return;
+        }
+
+        $pageNumber = max(1, (int) $page);
+        if ($pageNumber <= 1) {
+            $this->redirectTo(url('/blog/' . rawurlencode($slug)));
+        }
+
+        $this->renderCategory($slug, $category, $pageNumber);
+    }
+
+    private function renderCategory(string $slug, array $category, int $page): void
+    {
+        View::render('site/blog', $this->service()->getViewModel([
             'busca' => (string) ($_GET['q'] ?? ''),
             'categoria' => $slug,
             'category_route' => true,
             'resolved_category' => $category,
-            'page' => (int) ($_GET['page'] ?? 1),
+            'page' => $page,
         ]));
+    }
+
+    private function redirectLegacyPageToFriendly(string $basePath): void
+    {
+        $search = trim((string) ($_GET['q'] ?? ''));
+        if ($search !== '' || !array_key_exists('page', $_GET)) {
+            return;
+        }
+
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $target = $page > 1
+            ? url(rtrim($basePath, '/') . '/pagina/' . $page)
+            : url($basePath);
+
+        $this->redirectTo($target);
+    }
+
+    private function redirectTo(string $target): void
+    {
+        header('Location: ' . $target, true, 301);
+        exit;
     }
 
     private function notFound(string $slug): void

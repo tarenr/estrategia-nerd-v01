@@ -2,6 +2,7 @@
 use App\Support\View;
 
 $latestPosts = $latest_posts ?? [];
+$featuredPosts = $featured_posts ?? [];
 $siteMeta = $site_meta ?? [];
 $hero = $hero ?? [];
 $homeIntro = $home_intro ?? [];
@@ -59,14 +60,20 @@ $hasSocialLinks = array_reduce(
     false
 );
 $contactHref = site_contact_fallback_href($siteEmail);
+$homeEnhancementCssPath = base_path('public/assets/css/site-hero-preview.css');
+$homeEnhancementJsPath = base_path('public/assets/js/site-hero-preview.js');
+$homeEnhancementCssVersion = is_file($homeEnhancementCssPath) ? ((string) filemtime($homeEnhancementCssPath) . '-' . (string) filesize($homeEnhancementCssPath)) : '1';
+$homeEnhancementJsVersion = is_file($homeEnhancementJsPath) ? ((string) filemtime($homeEnhancementJsPath) . '-' . (string) filesize($homeEnhancementJsPath)) : '1';
 ?>
 
-<div class="site-home-page">
+<link rel="stylesheet" href="<?= url('/assets/css/site-hero-preview.css?v=' . $homeEnhancementCssVersion) ?>">
+
+<div class="site-home-page site-home-hero-preview-page">
   <div class="circuit-bg"></div>
   <div class="scanline"></div>
   <div id="siteToast" class="site-toast" aria-live="polite"></div>
 
-  <?= View::component('site/home/header-hero', [
+  <?= View::component('site/home/header-hero-preview', [
       'site_name' => $siteName,
       'site_description' => $siteDescription,
       'site_kicker' => $siteKicker,
@@ -76,17 +83,20 @@ $contactHref = site_contact_fallback_href($siteEmail);
       'hero' => $hero,
   ]) ?>
 
-  <?= View::component('site/home/about', [
+  <?= View::component('site/home/about-preview', [
       'about_mark' => $aboutMark,
       'bio_title' => $bioTitle,
       'home_intro' => $homeIntro,
       'topic_links' => $topicLinks,
   ]) ?>
 
-  <?= View::component('site/home/posts', [
+  <div class="site-preview-reveal-wrap" data-reveal>
+    <?= View::component('site/home/posts-preview', [
       'latest_posts' => $latestPosts,
+      'featured_posts' => $featuredPosts,
       'posts_section' => $postsSection,
-  ]) ?>
+    ]) ?>
+  </div>
 
   <?php if ($showNewsletterHome): ?>
     <?= View::component('site/home/newsletter') ?>
@@ -106,3 +116,5 @@ $contactHref = site_contact_fallback_href($siteEmail);
       'contact_href' => $contactHref,
   ]) ?>
 </div>
+
+<script src="<?= url('/assets/js/site-hero-preview.js?v=' . $homeEnhancementJsVersion) ?>" defer></script>

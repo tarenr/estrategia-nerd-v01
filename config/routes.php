@@ -16,6 +16,8 @@ return [
     ['GET',  '/sitemap.xml', [\App\Controllers\Site\SeoController::class, 'sitemap'], null],
     ['HEAD', '/sitemap.xml', [\App\Controllers\Site\SeoController::class, 'sitemap'], null],
     ['GET',  '/blog',   [\App\Controllers\Site\BlogController::class, 'index'], null],
+    ['GET',  '/blog/pagina/{page}',   [\App\Controllers\Site\BlogController::class, 'indexPage'], null],
+    ['GET',  '/blog/{slug}/pagina/{page}',   [\App\Controllers\Site\BlogController::class, 'categoryPage'], null],
     ['GET',  '/blog/{slug}',   [\App\Controllers\Site\BlogController::class, 'category'], null],
     ['GET',  '/central-nerd',   [\App\Controllers\Site\CentralController::class, 'index'], null],
     ['GET',  '/link/{slug}', [\App\Controllers\Site\LinkController::class, 'go'], null],
@@ -137,5 +139,6 @@ return [
     ['GET',  '/local/blog-estruturas', [\App\Controllers\Site\LocalDocsController::class, 'blogStructures'], null],
     ['GET',  '/local/estruturas-conteudo', [\App\Controllers\Site\LocalDocsController::class, 'blogStructures'], null],
     ['GET',  '/local/backlog',       [\App\Controllers\Site\LocalDocsController::class, 'backlog'], null],
+    ['GET',  '/local/preview/home-hero-circuito', [\App\Controllers\Site\HomeController::class, 'heroPreview'], null],
     ['GET',  '/dev',                 [\App\Controllers\Site\DevController::class, 'index'], null],
 ];

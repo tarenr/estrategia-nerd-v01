@@ -20,8 +20,9 @@ final class HomeService
 
     public function getViewModel(): array
     {
-        $featuredPosts = $this->normalizePosts($this->posts->featuredPublic(2));
-        $latestPosts = $this->normalizePosts($this->posts->latestPublicWithCategoria(6, array_map(static fn (array $post): int => (int) ($post['id'] ?? 0), $featuredPosts)));
+        $featuredPosts = $this->normalizePosts($this->posts->featuredPublic(5));
+        $latestExcludeIds = array_map(static fn (array $post): int => (int) ($post['id'] ?? 0), $featuredPosts);
+        $latestPosts = $this->normalizePosts($this->posts->latestPublicWithCategoria(6, $latestExcludeIds));
         $categories = $this->normalizeCategories($this->categorias->listForHome(4));
         $links = $this->normalizeLinks($this->links->listForHome(6));
         $siteMeta = [
@@ -300,6 +301,7 @@ final class HomeService
                 'views' => (int) ($item['views'] ?? 0),
                 'tempo_leitura' => (int) ($item['tempo_leitura'] ?? 5),
                 'comentarios_count' => (int) ($item['comentarios_count'] ?? 0),
+                'destaque' => (int) ($item['destaque'] ?? 0),
                 'url' => url('/post/' . (string) ($item['slug'] ?? '')),
                 'data' => $this->formatDate((string) ($item['data_publicacao'] ?? '')),
             ];

@@ -17,6 +17,17 @@ final class HomeController
         View::render('site/home', $this->service()->getViewModel());
     }
 
+    public function heroPreview(): void
+    {
+        $viewModel = $this->service()->getViewModel();
+        $viewModel['title'] = 'Preview Hero Circuito | Estrategia Nerd';
+        $viewModel['canonical_url'] = url('/local/preview/home-hero-circuito');
+        $viewModel['meta_robots'] = 'noindex, nofollow';
+        $viewModel['structured_data'] = [];
+
+        View::render('site/home-hero-preview', $viewModel);
+    }
+
     private function service(): HomeService
     {
         /** @var \PDO $pdo */

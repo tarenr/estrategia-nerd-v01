@@ -228,6 +228,10 @@ final class BlogService
             ? '/blog/' . rawurlencode($category)
             : '/blog';
 
+        if ($search === '' && $page > 1) {
+            return url($base . '/pagina/' . $page);
+        }
+
         return url($base . ($query !== '' ? '?' . $query : ''));
     }
 

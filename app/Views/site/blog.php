@@ -99,10 +99,21 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $i
         }
         $params[$key] = $value;
     }
-    $query = http_build_query($params);
+
     $base = $targetCategory !== '' && $targetCategory !== 'all'
         ? '/blog/' . rawurlencode($targetCategory)
         : '/blog';
+
+    if ($q === '') {
+        $page = max(1, (int) ($params['page'] ?? 1));
+        unset($params['page']);
+        $query = http_build_query($params);
+        $friendlyPath = $page > 1 ? $base . '/pagina/' . $page : $base;
+
+        return url($friendlyPath . ($query !== '' ? '?' . $query : ''));
+    }
+
+    $query = http_build_query($params);
 
     return url($base . ($query !== '' ? '?' . $query : ''));
 };
@@ -192,9 +203,9 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $i
   <?php if (is_array($featured)): ?>
     <section class="py-16">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <article class="featured-post site-reveal rounded-3xl overflow-hidden bg-slate-800/50 border border-cyan-500/20" data-reveal>
+        <article class="featured-post site-reveal site-blog-featured-card rounded-3xl overflow-hidden bg-slate-800/50 border" data-reveal>
           <div class="grid lg:grid-cols-2">
-            <div class="h-64 lg:h-auto bg-gradient-to-br from-cyan-600 via-blue-700 to-purple-800 relative">
+            <div class="h-64 lg:h-auto site-blog-featured-media relative">
               <?php if ((string) ($featured['imagem'] ?? '') !== ''): ?>
                 <img src="<?= htmlspecialchars((string) $featured['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars(public_title((string) ($featured['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
               <?php else: ?>
@@ -205,24 +216,24 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $i
                 </div>
               <?php endif; ?>
               <div class="absolute top-4 left-4">
-                <span class="px-3 py-1 bg-cyan-500 text-slate-900 text-xs font-bold rounded-full">Destaque</span>
+                <span class="px-3 py-1 site-blog-featured-pill text-xs font-bold rounded-full">Destaque</span>
               </div>
             </div>
             <div class="p-8 lg:p-12 featured-content flex flex-col justify-center">
               <div class="flex items-center gap-4 text-sm text-gray-400 mb-4 flex-wrap">
-                <span class="text-cyan-400 font-semibold"><?= htmlspecialchars(strtoupper((string) ($featured['categoria_nome'] ?? 'BLOG')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                <span class="site-blog-category-label font-semibold"><?= htmlspecialchars(strtoupper((string) ($featured['categoria_nome'] ?? 'BLOG')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
                 <span>&bull;</span>
                 <span><?= htmlspecialchars((string) ($featured['data'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
                 <span>&bull;</span>
                 <span><?= (int) ($featured['tempo_leitura'] ?? 5) ?> min leitura</span>
               </div>
-              <h2 class="font-orbitron text-3xl lg:text-4xl font-bold text-white mb-4 hover:text-cyan-400 transition-colors">
+              <h2 class="font-orbitron text-3xl lg:text-4xl font-bold text-white mb-4 transition-colors site-blog-featured-title">
                 <a href="<?= htmlspecialchars((string) ($featured['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars(public_title((string) ($featured['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
               </h2>
               <p class="text-gray-400 text-lg mb-6 leading-relaxed">
                 <?= htmlspecialchars((string) ($featured['resumo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
               </p>
-              <a href="<?= htmlspecialchars((string) ($featured['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center text-cyan-400 font-bold text-lg hover:text-cyan-300 transition-colors group">
+              <a href="<?= htmlspecialchars((string) ($featured['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center site-blog-accent-link font-bold text-lg transition-colors group">
                 Ler artigo completo
                 <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
@@ -238,63 +249,45 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $i
   <section class="py-16 bg-slate-900/30">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <?php if ($posts !== []): ?>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="posts-grid">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 site-blog-post-grid" id="posts-grid">
           <?php foreach ($posts as $index => $post): ?>
             <?php
-              $tone = match ($index % 3) {
-                  0 => [
-                      'hero' => 'from-cyan-600 to-blue-800',
-                      'pill' => 'bg-cyan-500 text-slate-900',
-                      'title' => 'group-hover:text-cyan-400',
-                      'link' => 'text-cyan-400 hover:text-cyan-300',
-                      'icon' => '<svg class="w-16 h-16 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>',
-                  ],
-                  1 => [
-                      'hero' => 'from-purple-600 to-pink-800',
-                      'pill' => 'bg-purple-500 text-white',
-                      'title' => 'group-hover:text-purple-400',
-                      'link' => 'text-purple-400 hover:text-purple-300',
-                      'icon' => '<svg class="w-16 h-16 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
-                  ],
-                  default => [
-                      'hero' => 'from-green-600 to-teal-800',
-                      'pill' => 'bg-green-500 text-slate-900',
-                      'title' => 'group-hover:text-green-400',
-                      'link' => 'text-green-400 hover:text-green-300',
-                      'icon' => '<svg class="w-16 h-16 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
-                  ],
-              };
+              $categoryColor = trim((string) ($post['categoria_cor'] ?? '#22d3ee'));
+              if (preg_match('/^#[0-9a-fA-F]{6}$/', $categoryColor) !== 1) {
+                  $categoryColor = '#22d3ee';
+              }
+              $icon = '<svg class="w-16 h-16 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>';
             ?>
-            <article class="nerd-card site-reveal bg-slate-800/50 rounded-2xl overflow-hidden group cursor-pointer post-item" data-category="<?= htmlspecialchars((string) ($post['categoria_slug'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-reveal>
-              <a href="<?= htmlspecialchars((string) ($post['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="block">
+            <article class="nerd-card site-reveal site-blog-post-card bg-slate-800/50 rounded-2xl overflow-hidden group cursor-pointer post-item" style="--blog-card-accent: <?= htmlspecialchars($categoryColor, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-category="<?= htmlspecialchars((string) ($post['categoria_slug'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-reveal>
+              <a href="<?= htmlspecialchars((string) ($post['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-blog-post-card-anchor">
                 <div class="relative h-48 overflow-hidden">
-                  <div class="absolute inset-0 bg-gradient-to-br <?= $tone['hero'] ?>"></div>
+                  <div class="absolute inset-0 site-blog-post-card-fallback"></div>
                   <?php if ((string) ($post['imagem'] ?? '') !== ''): ?>
                     <img src="<?= htmlspecialchars((string) $post['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
                     <div class="absolute inset-0 bg-slate-950/20"></div>
                   <?php else: ?>
                     <div class="absolute inset-0 flex items-center justify-center">
-                      <?= $tone['icon'] ?>
+                      <?= $icon ?>
                     </div>
                   <?php endif; ?>
-                  <div class="absolute top-4 left-4 px-3 py-1 <?= $tone['pill'] ?> text-xs font-bold rounded-full">
+                  <div class="absolute top-4 left-4 px-3 py-1 site-blog-post-card-pill text-xs font-bold rounded-full">
                     <?= htmlspecialchars((string) ($post['categoria_nome'] ?? 'Blog'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                   </div>
                 </div>
-                <div class="p-6">
+                <div class="p-6 site-blog-post-card-body">
                   <div class="flex items-center text-sm text-gray-400 mb-3">
                     <span><?= htmlspecialchars((string) ($post['data'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
                     <span class="mx-2">&bull;</span>
                     <span><?= (int) ($post['tempo_leitura'] ?? 5) ?> min leitura</span>
                   </div>
-                  <h3 class="font-orbitron text-xl font-bold text-white mb-3 transition-colors line-clamp-2 <?= $tone['title'] ?>">
+                  <h3 class="font-orbitron text-xl font-bold text-white mb-3 transition-colors line-clamp-2 site-blog-post-card-title">
                     <?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                   </h3>
-                  <p class="text-gray-400 text-sm mb-4">
+                  <p class="text-gray-400 text-sm mb-4 site-blog-post-card-copy">
                     <?= htmlspecialchars((string) ($post['resumo'] ?? 'Materia publicada no portal.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                   </p>
-                  <div class="flex items-center justify-between">
-                    <span class="inline-flex items-center font-semibold transition-colors <?= $tone['link'] ?>">
+                  <div class="flex items-center justify-between site-blog-post-card-footer">
+                    <span class="inline-flex items-center font-semibold transition-colors site-blog-post-card-link">
                       Ler mais
                       <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
