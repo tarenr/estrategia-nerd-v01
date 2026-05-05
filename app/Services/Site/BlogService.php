@@ -126,6 +126,8 @@ final class BlogService
             'imagem' => $this->toPublicUrl($image),
             'tempo_leitura' => (int) ($item['tempo_leitura'] ?? 5),
             'views' => (int) ($item['views'] ?? 0),
+            'curtidas' => (int) ($item['curtidas'] ?? 0),
+            'comentarios_count' => (int) ($item['comentarios_count'] ?? 0),
             'url' => url('/post/' . (string) ($item['slug'] ?? '')),
             'data' => $this->formatDate((string) ($item['data_publicacao'] ?? '')),
         ];

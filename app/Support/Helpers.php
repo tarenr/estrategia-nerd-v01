@@ -299,10 +299,15 @@ if (!function_exists('site_menu_items')) {
                 continue;
             }
 
+            $href = site_section_href($key);
+            if ($key === 'blog' && SiteSections::isVisibleOnHome($section)) {
+                $href = rtrim(url('/'), '/') . '#blog';
+            }
+
             $items[] = [
                 'key' => $key,
                 'label' => (string) ($section['label'] ?? ''),
-                'href' => site_section_href($key),
+                'href' => $href,
                 'is_cta' => (string) ($section['menu_variant'] ?? 'default') === 'cta',
             ];
         }

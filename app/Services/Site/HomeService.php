@@ -71,7 +71,7 @@ final class HomeService
                 'descriptor' => "Tecnologia, games, gadgets e cultura geek para descobrir, comparar e decidir melhor",
                 'description' => "O Estrat\u{00E9}gia Nerd re\u{00FA}ne reviews, comparativos, dicas pr\u{00E1}ticas, listas e ofertas para quem quer montar setup melhor, cortar ru\u{00ED}do e acertar no pr\u{00F3}ximo clique.",
                 'primary_cta' => [
-                    'href' => site_section_public_active('blog') ? site_section_href('blog') : url('/blog'),
+                    'href' => site_section_visible_on_home('blog') ? rtrim(url('/'), '/') . '#blog' : url('/blog'),
                     'label' => "Explorar o blog",
                 ],
                 'secondary_cta' => $this->buildSecondaryCta(),
@@ -224,7 +224,7 @@ final class HomeService
         $links = [
             [
                 'label' => 'blog',
-                'url' => site_section_public_active('blog') ? site_section_href('blog') : url('/blog'),
+                'url' => site_section_visible_on_home('blog') ? rtrim(url('/'), '/') . '#blog' : url('/blog'),
             ],
         ];
 
@@ -250,7 +250,7 @@ final class HomeService
         $links = [
             [
                 'label' => 'blog completo',
-                'url' => site_section_public_active('blog') ? site_section_href('blog') : url('/blog'),
+                'url' => url('/blog'),
             ],
         ];
 
@@ -299,6 +299,7 @@ final class HomeService
                 'categoria_cor' => (string) ($item['categoria_cor'] ?? '#00d4ff'),
                 'imagem' => $this->toPublicUrl($image),
                 'views' => (int) ($item['views'] ?? 0),
+                'curtidas' => (int) ($item['curtidas'] ?? 0),
                 'tempo_leitura' => (int) ($item['tempo_leitura'] ?? 5),
                 'comentarios_count' => (int) ($item['comentarios_count'] ?? 0),
                 'destaque' => (int) ($item['destaque'] ?? 0),

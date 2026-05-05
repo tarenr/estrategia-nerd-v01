@@ -233,12 +233,19 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $i
               <p class="text-gray-400 text-lg mb-6 leading-relaxed">
                 <?= htmlspecialchars((string) ($featured['resumo'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
               </p>
-              <a href="<?= htmlspecialchars((string) ($featured['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center site-blog-accent-link font-bold text-lg transition-colors group">
-                Ler artigo completo
-                <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
-              </a>
+              <div class="site-blog-featured-footer">
+                <a href="<?= htmlspecialchars((string) ($featured['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center site-blog-accent-link font-bold text-lg transition-colors group">
+                  Ler artigo completo
+                  <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                  </svg>
+                </a>
+                <?= View::component('site/shared/post-metrics', [
+                    'views' => (int) ($featured['views'] ?? 0),
+                    'likes' => (int) ($featured['curtidas'] ?? 0),
+                    'comments' => (int) ($featured['comentarios_count'] ?? 0),
+                ]) ?>
+              </div>
             </div>
           </div>
         </article>
@@ -293,13 +300,11 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $i
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                       </svg>
                     </span>
-                    <div class="flex items-center text-gray-500 text-sm">
-                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                      </svg>
-                      <?= number_format((int) ($post['views'] ?? 0), 0, ',', '.') ?>
-                    </div>
+                    <?= View::component('site/shared/post-metrics', [
+                        'views' => (int) ($post['views'] ?? 0),
+                        'likes' => (int) ($post['curtidas'] ?? 0),
+                        'comments' => (int) ($post['comentarios_count'] ?? 0),
+                    ]) ?>
                   </div>
                 </div>
               </a>

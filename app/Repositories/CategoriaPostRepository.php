@@ -197,7 +197,7 @@ final class CategoriaPostRepository
                 WHERE COALESCE(c.ativo, 1) = 1
                 GROUP BY c.id, c.nome, c.slug, c.cor, c.ordem
                 HAVING COUNT(p.id) > 0
-                ORDER BY total_posts DESC, total_views DESC, c.ordem ASC, c.nome ASC
+                ORDER BY total_views DESC, total_posts DESC, c.ordem ASC, c.nome ASC
                 LIMIT :limit";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);

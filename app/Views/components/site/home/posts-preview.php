@@ -74,12 +74,19 @@ $contextLinks = (array) ($postsSection['context_links'] ?? []);
                               <p class="text-gray-300 text-sm mb-4 site-preview-post-card-copy">
                                   <?= htmlspecialchars((string) ($post['resumo'] ?? 'Materia publicada no portal.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                               </p>
-                              <span class="inline-flex items-center font-semibold transition-colors site-preview-post-card-link">
-                                  Ler a materia
-                                  <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                                  </svg>
-                              </span>
+                              <div class="site-preview-post-card-footer">
+                                  <span class="inline-flex items-center font-semibold transition-colors site-preview-post-card-link">
+                                      Ler a materia
+                                      <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                      </svg>
+                                  </span>
+                                  <?= View::component('site/shared/post-metrics', [
+                                      'views' => (int) ($post['views'] ?? 0),
+                                      'likes' => (int) ($post['curtidas'] ?? 0),
+                                      'comments' => (int) ($post['comentarios_count'] ?? 0),
+                                  ]) ?>
+                              </div>
                           </div>
                       </a>
                   </article>

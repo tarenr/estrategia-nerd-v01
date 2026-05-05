@@ -41,7 +41,7 @@ $getDesktopClass = static function (array $item) use ($activePage): string {
 
       <div class="hidden md:flex items-center gap-8 text-sm font-semibold tracking-[0.16em] uppercase text-slate-300">
         <?php foreach ($menuItems as $item): ?>
-          <a href="<?= htmlspecialchars((string) ($item['href'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="<?= htmlspecialchars($getDesktopClass($item), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+          <a href="<?= htmlspecialchars((string) ($item['href'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-nav-link <?= htmlspecialchars($getDesktopClass($item), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-site-nav-link data-site-section="<?= htmlspecialchars((string) ($item['key'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
             <?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
           </a>
         <?php endforeach; ?>
@@ -56,7 +56,7 @@ $getDesktopClass = static function (array $item) use ($activePage): string {
   <div id="siteMobileMenu" class="site-mobile-menu md:hidden" data-site-mobile-menu hidden>
     <div class="px-4 pb-4 flex flex-col gap-3 text-sm font-semibold tracking-[0.12em] uppercase text-slate-300">
       <?php foreach ($menuItems as $item): ?>
-        <a href="<?= htmlspecialchars((string) ($item['href'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-mobile-link">
+        <a href="<?= htmlspecialchars((string) ($item['href'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="site-mobile-link" data-site-nav-link data-site-section="<?= htmlspecialchars((string) ($item['key'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
           <?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
         </a>
       <?php endforeach; ?>

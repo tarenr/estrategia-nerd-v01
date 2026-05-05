@@ -129,7 +129,7 @@ final class PostRepository
             $where[] = 'p.id NOT IN (' . implode(',', $excludeIds) . ')';
         }
 
-        $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.status, p.data_publicacao, COALESCE(p.views, 0) AS views, COALESCE(p.tempo_leitura, 5) AS tempo_leitura, COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque, c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
+        $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.status, p.data_publicacao, COALESCE(p.views, 0) AS views, COALESCE(p.curtidas, 0) AS curtidas, COALESCE(p.tempo_leitura, 5) AS tempo_leitura, COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque, c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
                 FROM posts p
                 LEFT JOIN categoria_post c ON c.id = p.categoria_post_id
                 WHERE " . implode(' AND ', $where) . "
@@ -145,7 +145,7 @@ final class PostRepository
     public function featuredPublic(int $limit = 2): array
     {
         $limit = max(1, min(6, $limit));
-        $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.data_publicacao, COALESCE(p.views, 0) AS views, COALESCE(p.tempo_leitura, 5) AS tempo_leitura, COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque, c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
+        $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.data_publicacao, COALESCE(p.views, 0) AS views, COALESCE(p.curtidas, 0) AS curtidas, COALESCE(p.tempo_leitura, 5) AS tempo_leitura, COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque, c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
                 FROM posts p
                 LEFT JOIN categoria_post c ON c.id = p.categoria_post_id
                 WHERE p.status = 'publicado'
@@ -176,7 +176,7 @@ final class PostRepository
         }
 
         $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
-                       COALESCE(p.views, 0) AS views, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
+                       COALESCE(p.views, 0) AS views, COALESCE(p.curtidas, 0) AS curtidas, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
                        COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
                        c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
                 FROM posts p
@@ -207,7 +207,7 @@ final class PostRepository
         [$whereSql, $params] = $this->buildPublicWhere($filters);
 
         $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
-                       COALESCE(p.views, 0) AS views, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
+                       COALESCE(p.views, 0) AS views, COALESCE(p.curtidas, 0) AS curtidas, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
                        COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
                        c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
                 FROM posts p
@@ -335,7 +335,7 @@ final class PostRepository
     {
         $limit = max(1, min(6, $limit));
         $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
-                       COALESCE(p.views, 0) AS views, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
+                       COALESCE(p.views, 0) AS views, COALESCE(p.curtidas, 0) AS curtidas, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
                        COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
                        c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
                 FROM posts p
@@ -365,7 +365,7 @@ final class PostRepository
         }
 
         $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
-                       COALESCE(p.views, 0) AS views, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
+                       COALESCE(p.views, 0) AS views, COALESCE(p.curtidas, 0) AS curtidas, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
                        COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
                        c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
                 FROM posts p

@@ -1,4 +1,6 @@
 <?php
+use App\Support\View;
+
 $posts = array_values(array_filter(
     (array) ($featured_posts ?? []),
     static fn (array $post): bool => (int) ($post['destaque'] ?? 0) === 1
@@ -42,7 +44,14 @@ if ($posts === []) {
                 </div>
                 <h3><?= htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h3>
                 <p><?= htmlspecialchars($summary !== '' ? $summary : 'Materia publicada no portal.', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
-                <span class="site-preview-feature-link">Ler artigo completo</span>
+                <div class="site-preview-feature-footer">
+                  <span class="site-preview-feature-link">Ler artigo completo</span>
+                  <?= View::component('site/shared/post-metrics', [
+                      'views' => (int) ($post['views'] ?? 0),
+                      'likes' => (int) ($post['curtidas'] ?? 0),
+                      'comments' => (int) ($post['comentarios_count'] ?? 0),
+                  ]) ?>
+                </div>
               </div>
             </a>
           </article>
