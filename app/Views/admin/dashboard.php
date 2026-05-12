@@ -272,6 +272,7 @@ $targetPublicBaseUrl = trim((string) ($target_public_base_url ?? ''));
 $targetEnvironment = (string) ($target_environment ?? current_environment());
 $targetEnvironmentLabel = (string) ($target_environment_label ?? environment_label($targetEnvironment));
 $isRemoteTarget = (bool) ($is_remote_target ?? false);
+$dashboardConnectionError = is_array($dashboard_connection_error ?? null) ? $dashboard_connection_error : null;
 
 if (is_array($series)) {
     $series = array_values($series);
@@ -484,7 +485,19 @@ $todayCards = [
     </div>
   </div>
 
-    <section class="dashboard-kpi-grid">
+  <?php if ($dashboardConnectionError !== null): ?>
+    <div class="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-5 py-4 text-amber-100">
+      <div class="flex items-start gap-3">
+        <i class="fa-solid fa-triangle-exclamation mt-1 text-amber-300"></i>
+        <div>
+          <div class="font-orbitron text-sm font-black uppercase tracking-[0.16em]"><?= e((string) ($dashboardConnectionError['title'] ?? 'Dashboard indisponivel')) ?></div>
+          <div class="mt-2 text-sm text-amber-50/90"><?= e((string) ($dashboardConnectionError['message'] ?? 'Revise a configuracao do ambiente alvo.')) ?></div>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
+
+  <section class="dashboard-kpi-grid">
     <article class="stat-card stat-card-compact admin-summary-card">
       <div class="stat-icon" style="background: linear-gradient(135deg, rgba(96,165,250,.92), rgba(59,130,246,.92)); color:#60a5fa;"><i class="fa-solid fa-newspaper"></i></div>
       <div class="stat-value neon-text" style="color:#60a5fa;"><?= fmt($curPosts) ?></div>

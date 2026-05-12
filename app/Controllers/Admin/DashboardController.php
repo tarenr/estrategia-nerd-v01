@@ -26,6 +26,7 @@ use App\Repositories\PostRepository;
 use App\Services\Admin\DashboardService;
 use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
+use Throwable;
 
 final class DashboardController
 {
@@ -64,7 +65,19 @@ final class DashboardController
     private function buildPayload(): array
     {
         $targetEnvironment = target_environment();
-        $pdo = TargetEnvironmentDatabase::pdo($targetEnvironment);
+        [$start, $end, $days] = $this->resolveRangeFromRequest();
+
+        try {
+            $pdo = TargetEnvironmentDatabase::pdo($targetEnvironment);
+        } catch (Throwable $exception) {
+            error_log(sprintf(
+                'Dashboard unavailable for target environment "%s": %s',
+                $targetEnvironment,
+                $exception->getMessage()
+            ));
+
+            return $this->unavailablePayload($targetEnvironment, $start, $end, $days, $exception);
+        }
 
         $posts = new PostRepository($pdo);
         $estatisticas = new EstatisticaRepository($pdo);
@@ -86,8 +99,6 @@ final class DashboardController
             $targetEnvironment,
         );
 
-        [$start, $end, $days] = $this->resolveRangeFromRequest();
-
         $payload = $service->getDashboardData($start, $end);
         $payload['start'] = $payload['start'] ?? $start;
         $payload['end'] = $payload['end'] ?? $end;
@@ -97,6 +108,67 @@ final class DashboardController
         $payload['is_remote_target'] = $payload['is_remote_target'] ?? ($targetEnvironment !== current_environment());
 
         return $payload;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function unavailablePayload(string $targetEnvironment, string $start, string $end, int $days, Throwable $exception): array
+    {
+        return [
+            'days' => $days,
+            'start' => $start,
+            'end' => $end,
+            'chart' => [
+                'series' => [],
+                'current' => [
+                    'views' => 0,
+                    'posts_novos' => 0,
+                    'inscricoes' => 0,
+                ],
+                'previous' => [
+                    'views' => 0,
+                    'posts_novos' => 0,
+                    'inscricoes' => 0,
+                ],
+                'delta_abs' => [
+                    'views' => 0,
+                    'posts_novos' => 0,
+                    'inscricoes' => 0,
+                ],
+                'delta_percent' => [
+                    'views' => 0.0,
+                    'posts_novos' => 0.0,
+                    'inscricoes' => 0.0,
+                ],
+            ],
+            'posts_recentes' => [],
+            'top_links_clicks' => [],
+            'link_section_clicks' => [],
+            'target_environment' => $targetEnvironment,
+            'target_environment_label' => environment_label($targetEnvironment),
+            'target_public_base_url' => '',
+            'is_remote_target' => $targetEnvironment !== current_environment(),
+            'dashboard_connection_error' => [
+                'title' => 'Nao foi possivel conectar ao banco do ambiente alvo.',
+                'message' => $this->friendlyConnectionMessage($targetEnvironment, $exception),
+            ],
+        ];
+    }
+
+    private function friendlyConnectionMessage(string $targetEnvironment, Throwable $exception): string
+    {
+        $message = $exception->getMessage();
+
+        if (str_contains($message, 'Access denied')) {
+            $variables = $targetEnvironment === 'production'
+                ? 'CONTENT_SYNC_PRODUCTION_DB_* ou BACKUP_PRODUCTION_DB_*'
+                : 'CONTENT_SYNC_' . strtoupper($targetEnvironment) . '_DB_*';
+
+            return 'O MySQL recusou as credenciais configuradas para ' . environment_label($targetEnvironment) . '. Revise as variaveis ' . $variables . ' no .env e confirme se o acesso remoto esta liberado para este IP.';
+        }
+
+        return 'Verifique host, porta, nome do banco e credenciais configuradas para ' . environment_label($targetEnvironment) . '. Detalhe tecnico foi registrado no log da aplicacao.';
     }
 
     /**
