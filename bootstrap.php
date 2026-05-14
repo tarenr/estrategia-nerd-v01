@@ -158,6 +158,197 @@ $dsn = sprintf(
     $db['charset']
 );
 
+if (!function_exists('en_render_database_connection_error')) {
+    function en_render_database_connection_error(PDOException $exception, bool $debug = false): never
+    {
+        http_response_code(503);
+
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=UTF-8');
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+            header('Pragma: no-cache');
+            header('Retry-After: 300');
+        }
+
+        $requestId = bin2hex(random_bytes(4));
+        $rawEnvironment = strtolower(trim((string) config('app.env', env('APP_ENV', 'production'))));
+        $environment = htmlspecialchars($rawEnvironment !== '' ? $rawEnvironment : 'production', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $detail = $debug ? htmlspecialchars($exception->getMessage(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : '';
+        $copy = match ($rawEnvironment) {
+            'stage' => [
+                'badge' => 'Ambiente indisponível',
+                'title' => 'Acesso temporariamente pausado',
+                'message' => 'Este ambiente está passando por uma verificação técnica e deve voltar em breve.',
+                'action' => 'aguardar a normalização do ambiente.',
+            ],
+            'production' => [
+                'badge' => 'Acesso temporário',
+                'title' => 'Voltamos em breve',
+                'message' => 'Estamos realizando uma verificação rápida para manter o Estratégia Nerd estável. Tente acessar novamente em alguns minutos.',
+                'action' => 'aguardar a normalização do acesso.',
+            ],
+            default => [
+                'badge' => 'Serviço indisponível',
+                'title' => 'Falha temporária no painel',
+                'message' => 'Não foi possível conectar ao banco deste ambiente. A aplicação está protegida e o detalhe técnico foi registrado para verificação operacional.',
+                'action' => 'conferir DB_* no .env, permissão do usuário MySQL e disponibilidade do servidor.',
+            ],
+        };
+        $showOperationalMeta = !in_array($rawEnvironment, ['stage', 'production'], true);
+        $badge = htmlspecialchars($copy['badge'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $title = htmlspecialchars($copy['title'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $message = htmlspecialchars($copy['message'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $action = htmlspecialchars($copy['action'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        echo <<<HTML
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Serviço temporariamente indisponível | Estratégia Nerd</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #020617;
+      --panel: rgba(15, 23, 42, .92);
+      --border: rgba(34, 211, 238, .22);
+      --cyan: #22d3ee;
+      --blue: #2563eb;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(34, 211, 238, .14), transparent 28%),
+        radial-gradient(circle at 80% 85%, rgba(37, 99, 235, .16), transparent 32%),
+        linear-gradient(135deg, #020617 0%, #0f172a 55%, #020617 100%);
+      color: var(--text);
+      font-family: Rajdhani, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .08;
+      background-image:
+        linear-gradient(rgba(34, 211, 238, .45) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 211, 238, .45) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+    main {
+      position: relative;
+      width: min(100%, 560px);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 24px 80px rgba(8, 47, 73, .35);
+    }
+    .bar {
+      height: 4px;
+      background: linear-gradient(90deg, var(--cyan), var(--blue));
+    }
+    .content {
+      padding: 34px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(251, 191, 36, .35);
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: #fde68a;
+      background: rgba(251, 191, 36, .08);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 18px 0 10px;
+      font-family: Orbitron, Rajdhani, ui-sans-serif, system-ui;
+      font-size: clamp(26px, 5vw, 38px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    .meta {
+      display: grid;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(148, 163, 184, .16);
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .meta strong {
+      color: var(--text);
+      font-weight: 800;
+    }
+    .detail {
+      margin-top: 18px;
+      overflow-wrap: anywhere;
+      border: 1px solid rgba(248, 113, 113, .25);
+      border-radius: 12px;
+      padding: 12px;
+      color: #fecaca;
+      background: rgba(127, 29, 29, .22);
+      font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+  </style>
+</head>
+<body>
+  <main role="alert" aria-live="assertive">
+    <div class="bar"></div>
+    <section class="content">
+      <div class="badge"><span aria-hidden="true">!</span> {$badge}</div>
+      <h1>{$title}</h1>
+      <p>{$message}</p>
+      <div class="meta">
+        <div><strong>Código de suporte:</strong> DB-{$requestId}</div>
+HTML;
+
+        if ($showOperationalMeta) {
+            echo <<<HTML
+        <div><strong>Ambiente:</strong> {$environment}</div>
+        <div><strong>Próxima ação:</strong> {$action}</div>
+HTML;
+        }
+
+        echo <<<HTML
+      </div>
+HTML;
+
+        if ($detail !== '') {
+            echo '<div class="detail">' . $detail . '</div>';
+        }
+
+        echo <<<HTML
+    </section>
+  </main>
+</body>
+</html>
+HTML;
+        exit;
+    }
+}
+
 try {
     $GLOBALS['pdo'] = new PDO(
         $dsn,
@@ -170,10 +361,6 @@ try {
         ]
     );
 } catch (PDOException $exception) {
-    if (config('app.debug', false)) {
-        die('Erro ao conectar com o banco: ' . $exception->getMessage());
-    }
-
     error_log($exception->getMessage());
-    die('Erro interno ao conectar com o banco.');
+    en_render_database_connection_error($exception, (bool) config('app.debug', false));
 }
