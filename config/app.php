@@ -20,4 +20,5 @@ return [
     'url' => rtrim((string) ($_ENV['APP_URL'] ?? ''), '/'),
     'timezone' => $_ENV['APP_TIMEZONE'] ?? 'America/Sao_Paulo',
     'session_name' => $_ENV['SESSION_NAME'] ?? 'estrategia_nerd_session',
+    'session_save_path' => $_ENV['SESSION_SAVE_PATH'] ?? null,
 ];

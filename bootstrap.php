@@ -123,6 +123,24 @@ if (config('app.debug', false)) {
 if (session_status() === PHP_SESSION_NONE) {
     session_name(config('app.session_name', 'estrategia_nerd_session'));
 
+    $sessionSavePath = trim((string) config('app.session_save_path', ''));
+    $appEnvironment = strtolower(trim((string) config('app.env', env('APP_ENV', 'production'))));
+    if ($sessionSavePath === '' && in_array($appEnvironment, ['local', 'development', 'dev'], true)) {
+        $sessionSavePath = base_path('storage/sessions');
+    }
+
+    if ($sessionSavePath !== '') {
+        if (!is_dir($sessionSavePath)) {
+            @mkdir($sessionSavePath, 0775, true);
+        }
+
+        if (is_dir($sessionSavePath) && is_writable($sessionSavePath)) {
+            session_save_path($sessionSavePath);
+        } else {
+            error_log('Session save path unavailable: ' . $sessionSavePath);
+        }
+    }
+
     $forwardedProto = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
     $httpsValue = strtolower((string) ($_SERVER['HTTPS'] ?? ''));
     $serverPort = (string) ($_SERVER['SERVER_PORT'] ?? '');
