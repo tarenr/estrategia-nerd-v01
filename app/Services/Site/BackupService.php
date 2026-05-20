@@ -50,9 +50,9 @@ final class BackupService
         ];
     }
 
-    public function run(string $profile, ?string $progressId = null): array
+    public function run(string $profile, ?string $progressId = null, bool $includeUploads = true): array
     {
-        return $this->manager->run($profile, $progressId);
+        return $this->manager->run($profile, $progressId, $includeUploads);
     }
 
     public function verify(?string $backupId, ?string $progressId = null): array
@@ -150,6 +150,7 @@ final class BackupService
             $databaseBytes = (int) ($item['database']['size_bytes'] ?? 0);
             $uploadsBytes = (int) ($item['uploads']['size_bytes'] ?? 0);
             $systemFilesBytes = (int) ($item['system_files']['size_bytes'] ?? 0);
+            $includesUploads = $this->backupIncludesUploads($item);
             $isValid = $withVerification
                 ? (bool) ($item['is_valid'] ?? false)
                 : strtolower((string) ($item['status'] ?? '')) === 'ready';
@@ -163,9 +164,10 @@ final class BackupService
                 'cloud_uploaded_at' => (string) ($item['cloud_uploaded_at'] ?? ''),
                 'is_valid' => $isValid,
                 'kind' => (string) ($item['kind'] ?? 'data_uploads'),
+                'includes_uploads' => $includesUploads,
                 'system_files_count' => (int) ($item['system_files_count'] ?? 0),
                 'database_size' => $this->formatBytes($databaseBytes),
-                'uploads_size' => $this->formatBytes($uploadsBytes),
+                'uploads_size' => $includesUploads ? $this->formatBytes($uploadsBytes) : 'Nao incluido',
                 'system_files_size' => $systemFilesBytes > 0 ? $this->formatBytes($systemFilesBytes) : '-',
                 'total_size' => $this->formatBytes($databaseBytes + $uploadsBytes + $systemFilesBytes),
                 'database_status' => (string) ($item['verification']['database']['message'] ?? ($withVerification ? '—' : 'Nao verificado nesta consulta.')),
@@ -216,6 +218,20 @@ final class BackupService
             'local' => 'Local / Homologacao',
             default => $fallback !== '' ? $fallback : 'Backup',
         };
+    }
+
+    private function backupIncludesUploads(array $item): bool
+    {
+        if (array_key_exists('includes_uploads', $item)) {
+            return (bool) $item['includes_uploads'];
+        }
+
+        $uploads = $item['uploads'] ?? null;
+        if (is_array($uploads) && array_key_exists('included', $uploads)) {
+            return (bool) $uploads['included'];
+        }
+
+        return is_array($uploads) && trim((string) ($uploads['name'] ?? '')) !== '';
     }
 
     private function formatBytes(int $bytes): string

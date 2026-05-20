@@ -22,6 +22,11 @@ $historyTotal = max(0, (int) ($historyPagination['total'] ?? count($items)));
 $historyFirstItem = $historyTotal > 0 ? (($historyPage - 1) * $historyPerPage) + 1 : 0;
 $historyLastItem = $historyTotal > 0 ? min($historyTotal, (($historyPage - 1) * $historyPerPage) + count($items)) : 0;
 $historyBaseUrl = (string) ($backup_base_url ?? url('/local/backup'));
+$historyBasePath = parse_url($historyBaseUrl, PHP_URL_PATH);
+$historyBaseQuery = parse_url($historyBaseUrl, PHP_URL_QUERY);
+$usesPrettyBackupSections = is_string($historyBasePath)
+    && str_contains($historyBasePath, '/central-operacional-v2/backup-sistemico')
+    && ($historyBaseQuery === null || $historyBaseQuery === false || $historyBaseQuery === '');
 $historySearch = trim((string) ($_GET['backup_busca'] ?? ''));
 $historyEnvironment = strtolower(trim((string) ($_GET['backup_ambiente'] ?? '')));
 $historyFilterStatus = strtolower(trim((string) ($_GET['backup_status'] ?? '')));
@@ -38,10 +43,8 @@ if (!in_array($historyFilterStatus, $allowedHistoryStatuses, true)) {
 if (!in_array($historySort, $allowedHistorySorts, true)) {
     $historySort = 'data_desc';
 }
-$historyBuildUrl = static function (int $page, ?int $perPage = null) use ($historyBaseUrl, $historyPerPage, $historySearch, $historyEnvironment, $historyFilterStatus, $historySort): string {
-    $separator = str_contains($historyBaseUrl, '?') ? '&' : '?';
+$historyBuildUrl = static function (int $page, ?int $perPage = null) use ($historyBaseUrl, $historyPerPage, $historySearch, $historyEnvironment, $historyFilterStatus, $historySort, $usesPrettyBackupSections): string {
     $query = [
-        'backup_secao' => 'historico',
         'backup_pagina' => max(1, $page),
         'backup_por_pagina' => $perPage ?? $historyPerPage,
         'backup_busca' => $historySearch,
@@ -49,13 +52,20 @@ $historyBuildUrl = static function (int $page, ?int $perPage = null) use ($histo
         'backup_status' => $historyFilterStatus,
         'backup_ordem' => $historySort,
     ];
+    if (!$usesPrettyBackupSections) {
+        $query = ['backup_secao' => 'historico'] + $query;
+    }
     $query = array_filter($query, static fn ($value): bool => !($value === '' || $value === null));
+    $base = $usesPrettyBackupSections ? rtrim($historyBaseUrl, '/') . '/historico' : $historyBaseUrl;
+    $separator = str_contains($base, '?') ? '&' : '?';
 
-    return $historyBaseUrl . $separator . http_build_query($query);
+    return $base . $separator . http_build_query($query);
 };
 $currentReturnUrl = $backupSection === 'historico'
     ? $historyBuildUrl($historyPage, $historyPerPage)
-    : ($historyBaseUrl . (str_contains($historyBaseUrl, '?') ? '&' : '?') . 'backup_secao=' . rawurlencode($backupSection));
+    : ($usesPrettyBackupSections
+        ? rtrim($historyBaseUrl, '/') . '/' . rawurlencode($backupSection)
+        : ($historyBaseUrl . (str_contains($historyBaseUrl, '?') ? '&' : '?') . 'backup_secao=' . rawurlencode($backupSection)));
 $currentReturnPath = (string) parse_url($currentReturnUrl, PHP_URL_PATH);
 $currentReturnQuery = (string) parse_url($currentReturnUrl, PHP_URL_QUERY);
 $currentReturnTarget = $currentReturnPath . ($currentReturnQuery !== '' ? '?' . $currentReturnQuery : '');
@@ -220,7 +230,7 @@ $historySummary = [
             <?php if (is_array($entry)): ?>
               <div class="font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($entry['backup_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
               <?php if (!$compactCopy): ?>
-                <div class="mt-1 text-slate-400">Ultimo backup completo: banco, uploads e arquivos do sistema.</div>
+                <div class="mt-1 text-slate-400"><?= ($entry['includes_uploads'] ?? true) ? 'Ultimo backup: banco, uploads e arquivos do sistema.' : 'Ultimo backup leve: banco e arquivos do sistema, sem uploads.' ?></div>
               <?php endif; ?>
               <div class="mt-4 grid gap-2 text-sm">
                 <div class="flex items-center justify-between"><span class="text-slate-500">Validade</span><span class="<?= ($entry['is_valid'] ?? false) ? 'text-emerald-300' : 'text-rose-300' ?>"><?= ($entry['is_valid'] ?? false) ? 'OK' : 'Falhou' ?></span></div>
@@ -264,9 +274,9 @@ $historySummary = [
       <h2 class="font-orbitron text-lg font-bold text-white">Acoes de backup de ambiente</h2>
       <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <?php foreach ([
-            'local' => ['label' => 'Backup local', 'message' => 'Estamos exportando banco, uploads e arquivos do sistema local.', 'button' => 'Executar agora', 'ready' => $localReady, 'button_class' => 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:border-cyan-300 hover:bg-cyan-500/20'],
-            'stage' => ['label' => 'Backup stage', 'message' => 'Estamos coletando banco, uploads e arquivos do sistema da stage.', 'button' => 'Executar stage', 'ready' => $stageReady, 'button_class' => 'border-sky-400/40 bg-sky-500/10 text-sky-200 hover:border-sky-300 hover:bg-sky-500/20'],
-            'production' => ['label' => 'Backup producao', 'message' => 'Estamos coletando banco, uploads e arquivos do sistema da producao.', 'button' => 'Executar producao', 'ready' => $productionReady, 'button_class' => 'border-fuchsia-400/40 bg-fuchsia-500/10 text-fuchsia-200 hover:border-fuchsia-300 hover:bg-fuchsia-500/20'],
+            'local' => ['label' => 'Backup local', 'message' => 'Estamos exportando banco e arquivos do sistema local. Uploads entram somente se a opcao estiver marcada.', 'button' => 'Executar agora', 'ready' => $localReady, 'button_class' => 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:border-cyan-300 hover:bg-cyan-500/20'],
+            'stage' => ['label' => 'Backup stage', 'message' => 'Estamos coletando banco e arquivos do sistema da stage. Uploads entram somente se a opcao estiver marcada.', 'button' => 'Executar stage', 'ready' => $stageReady, 'button_class' => 'border-sky-400/40 bg-sky-500/10 text-sky-200 hover:border-sky-300 hover:bg-sky-500/20'],
+            'production' => ['label' => 'Backup producao', 'message' => 'Estamos coletando banco e arquivos do sistema da producao. Uploads entram somente se a opcao estiver marcada.', 'button' => 'Executar producao', 'ready' => $productionReady, 'button_class' => 'border-fuchsia-400/40 bg-fuchsia-500/10 text-fuchsia-200 hover:border-fuchsia-300 hover:bg-fuchsia-500/20'],
         ] as $profileKey => $meta): ?>
           <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-backup-async="true" data-progress-title="Executando <?= htmlspecialchars($meta['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-progress-message="<?= htmlspecialchars($meta['message'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-progress-stage="<?= htmlspecialchars($meta['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
             <?= Csrf::field() ?>
@@ -275,8 +285,15 @@ $historySummary = [
             <input type="hidden" name="profile" value="<?= htmlspecialchars($profileKey, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
             <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80"><?= htmlspecialchars($meta['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
             <?php if (!$compactCopy): ?>
-              <p class="mt-2 text-sm text-slate-400">Gera backup completo do ambiente: banco, uploads e arquivos do sistema.</p>
+              <p class="mt-2 text-sm text-slate-400">Gera backup de banco e sistema. Marque uploads apenas quando quiser incluir as midias no pacote.</p>
             <?php endif; ?>
+            <label class="mt-4 flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3 text-sm text-slate-300">
+              <input type="checkbox" name="include_uploads" value="1" class="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-950 text-cyan-400 focus:ring-cyan-400">
+              <span>
+                <span class="block font-semibold text-white">Incluir pasta uploads</span>
+                <span class="mt-1 block text-xs leading-5 text-slate-500">Use quando precisar de backup completo com midias. Desmarcado gera pacote menor.</span>
+              </span>
+            </label>
             <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold transition <?= $meta['ready'] ? $meta['button_class'] : 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-500' ?>" <?= $meta['ready'] ? '' : 'disabled' ?>><?= htmlspecialchars($meta['button'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></button>
           </form>
         <?php endforeach; ?>
@@ -288,7 +305,7 @@ $historySummary = [
           <input type="hidden" name="backup_id" value="latest">
           <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Verificar ultimo</p>
           <?php if (!$compactCopy): ?>
-            <p class="mt-2 text-sm text-slate-400">Confirma se o manifesto, o dump, uploads.zip e system-files.zip estao integros.</p>
+            <p class="mt-2 text-sm text-slate-400">Confirma se o manifesto, o dump e os arquivos gerados estao integros. Uploads podem estar ausentes por escolha do backup.</p>
           <?php endif; ?>
           <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300 hover:bg-emerald-500/20">Verificar</button>
         </form>
@@ -299,7 +316,7 @@ $historySummary = [
       <div class="rounded-3xl border border-rose-500/20 bg-slate-900/80 p-6">
         <h2 class="font-orbitron text-lg font-bold text-white">Restore de ambiente completo</h2>
         <?php if (!$compactCopy): ?>
-          <p class="mt-2 text-sm leading-7 text-slate-400">Use esta area so quando for realmente necessario voltar o ambiente inteiro. O restore aplica <span class="font-semibold text-white">banco + uploads + arquivos do sistema</span> do backup escolhido no destino informado. A confirmacao exige a frase <span class="font-semibold text-white">RESTAURAR</span>.</p>
+          <p class="mt-2 text-sm leading-7 text-slate-400">Use esta area so quando for realmente necessario voltar o ambiente. O restore aplica os blocos disponiveis no backup escolhido: banco, sistema e uploads quando o backup tiver sido gerado com midias. A confirmacao exige a frase <span class="font-semibold text-white">RESTAURAR</span>.</p>
         <?php endif; ?>
 
         <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form mt-5 space-y-4" data-backup-async="true" data-progress-title="Executando restore" data-progress-message="Estamos aplicando o backup selecionado. Esse passo pode sobrescrever banco ou uploads." data-progress-stage="Restore">
@@ -329,9 +346,9 @@ $historySummary = [
             </div>
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-4">
               <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Escopo fixo</div>
-              <div class="mt-2 text-sm font-semibold text-white">Banco + uploads + sistema</div>
+              <div class="mt-2 text-sm font-semibold text-white">Banco + sistema + uploads se existirem</div>
               <?php if (!$compactCopy): ?>
-                <div class="mt-1 text-xs text-slate-400">O restore desta rotina sempre recompoe o ambiente completo.</div>
+                <div class="mt-1 text-xs text-slate-400">Backups sem uploads restauram somente banco e sistema.</div>
               <?php endif; ?>
             </div>
           </div>
@@ -401,8 +418,10 @@ $historySummary = [
         </div>
       </div>
 
-      <form method="GET" action="<?= htmlspecialchars($historyBaseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-        <input type="hidden" name="backup_secao" value="historico">
+      <form method="GET" action="<?= htmlspecialchars($usesPrettyBackupSections ? rtrim($historyBaseUrl, '/') . '/historico' : $historyBaseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+        <?php if (!$usesPrettyBackupSections): ?>
+          <input type="hidden" name="backup_secao" value="historico">
+        <?php endif; ?>
         <div class="grid gap-3 xl:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_auto]">
           <input type="search" name="backup_busca" value="<?= htmlspecialchars($historySearch, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" placeholder="Buscar backup..." class="min-h-11 rounded-xl border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none focus:border-cyan-400">
           <select name="backup_ambiente" class="min-h-11 rounded-xl border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none focus:border-cyan-400">
@@ -668,7 +687,7 @@ $historySummary = [
                 <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                 <input type="hidden" name="action" value="dropbox_upload_latest">
                 <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Enviar ultimo backup</p>
-                <p class="mt-2 text-sm text-slate-400">Usa o backup mais recente disponivel e envia manifesto, banco, uploads e arquivos do sistema para o Dropbox.</p>
+                <p class="mt-2 text-sm text-slate-400">Usa o backup mais recente disponivel e envia manifesto, banco, sistema e uploads quando existirem.</p>
                 <div class="mt-auto pt-4">
                   <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:border-sky-300 hover:bg-sky-500/20">Enviar agora</button>
                 </div>

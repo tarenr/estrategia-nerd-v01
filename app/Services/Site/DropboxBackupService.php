@@ -399,8 +399,11 @@ final class DropboxBackupService
             $entries = [
                 'manifest.json',
                 (string) (($backup['database']['name'] ?? '') ?: 'database.sql'),
-                (string) (($backup['uploads']['name'] ?? '') ?: 'uploads.zip'),
             ];
+            $uploadsEntry = (string) (($backup['uploads']['name'] ?? '') ?: '');
+            if ($uploadsEntry !== '') {
+                $entries[] = $uploadsEntry;
+            }
             $systemFilesEntry = (string) (($backup['system_files']['name'] ?? '') ?: '');
             if ($systemFilesEntry !== '') {
                 $entries[] = $systemFilesEntry;
@@ -1024,8 +1027,12 @@ final class DropboxBackupService
 
         if ($size <= 150 * 1024 * 1024) {
             $label = $entryName ?? basename($localPath);
-            $this->updateProgress($progressId, 'Enviando arquivo', sprintf('Enviando %s em upload direto.', $label), $label === 'manifest.json' ? 34 : 48);
-            return $this->simpleUpload($accessToken, $localPath, $remotePath);
+            $routinePercent = $label === 'manifest.json' ? 34 : 48;
+            $this->updateProgress($progressId, 'Enviando arquivo', sprintf('Enviando %s em upload direto.', $label), $routinePercent);
+            $metadata = $this->simpleUpload($accessToken, $localPath, $remotePath);
+            $this->updateProgress($progressId, 'Arquivo enviado', sprintf('%s enviado ao Dropbox.', $label), $routinePercent);
+
+            return $metadata;
         }
 
         return $this->sessionUpload($accessToken, $localPath, $remotePath, $size, $progressId, $entryName ?? basename($localPath));
@@ -1066,7 +1073,7 @@ final class DropboxBackupService
      */
     private function sessionUpload(string $accessToken, string $localPath, string $remotePath, int $size, ?string $progressId = null, string $entryName = 'uploads.zip'): array
     {
-        $this->updateProgress($progressId, 'Iniciando upload grande', sprintf('Abrindo sessao de upload para %s.', $entryName), 58);
+        $this->updateFileProgress($progressId, 'Iniciando upload grande', sprintf('Abrindo sessao de upload para %s.', $entryName), 58, $entryName, 0, $size);
         $startResponse = $this->curl(
             self::UPLOAD_SESSION_START_URL,
             [
@@ -1105,13 +1112,6 @@ final class DropboxBackupService
 
                 $nextOffset = $offset + strlen($chunk);
                 $progressPercent = 58 + (int) round(($nextOffset / max(1, $size)) * 30);
-                $this->updateProgress(
-                    $progressId,
-                    'Enviando arquivo grande',
-                    sprintf('Enviando %s: %.1f%% concluido (%s de %s).', $entryName, ($nextOffset / max(1, $size)) * 100, $this->formatBytes($nextOffset), $this->formatBytes($size)),
-                    min(90, $progressPercent)
-                );
-
                 $this->curl(
                     self::UPLOAD_SESSION_APPEND_URL,
                     [
@@ -1135,6 +1135,15 @@ final class DropboxBackupService
                 );
 
                 $offset += strlen($chunk);
+                $this->updateFileProgress(
+                    $progressId,
+                    'Enviando arquivo grande',
+                    sprintf('Enviando %s: %.1f%% concluido (%s de %s).', $entryName, ($offset / max(1, $size)) * 100, $this->formatBytes($offset), $this->formatBytes($size)),
+                    min(90, $progressPercent),
+                    $entryName,
+                    $offset,
+                    $size
+                );
             }
 
             $lastChunk = stream_get_contents($handle);
@@ -1142,11 +1151,14 @@ final class DropboxBackupService
                 throw new RuntimeException('Falha ao ler o bloco final do arquivo para upload.');
             }
 
-            $this->updateProgress(
+            $this->updateFileProgress(
                 $progressId,
                 'Finalizando arquivo grande',
                 sprintf('Concluindo o envio de %s e fechando a sessao remota.', $entryName),
-                92
+                92,
+                $entryName,
+                $size,
+                $size
             );
 
             $finishResponse = $this->curl(
@@ -1306,15 +1318,38 @@ final class DropboxBackupService
         );
     }
 
-    private function updateProgress(?string $progressId, string $stage, string $message, int $percent): void
+    /**
+     * @param array<string, mixed> $extra
+     */
+    private function updateProgress(?string $progressId, string $stage, string $message, int $percent, array $extra = []): void
     {
-        $this->writeProgress($progressId, [
+        $payload = [
             'status' => 'running',
             'title' => self::PROGRESS_TITLE,
             'stage' => $stage,
             'message' => $message,
             'percent' => max(0, min(100, $percent)),
             'updated_at' => date('c'),
+        ];
+
+        $this->writeProgress($progressId, array_merge($payload, $extra));
+    }
+
+    private function updateFileProgress(?string $progressId, string $stage, string $message, int $percent, string $fileName, int $sentBytes, int $totalBytes): void
+    {
+        $sentBytes = max(0, $sentBytes);
+        $totalBytes = max(1, $totalBytes);
+        $filePercent = max(0, min(100, round(($sentBytes / $totalBytes) * 100, 1)));
+
+        $this->updateProgress($progressId, $stage, $message, $percent, [
+            'file' => [
+                'name' => $fileName,
+                'percent' => $filePercent,
+                'sent_bytes' => $sentBytes,
+                'total_bytes' => $totalBytes,
+                'sent_label' => $this->formatBytes($sentBytes),
+                'total_label' => $this->formatBytes($totalBytes),
+            ],
         ]);
     }
 

@@ -11,7 +11,16 @@ $contentTools['embed_mode'] = true;
 $editorialSection = (string) ($contentTools['editorial_section'] ?? 'resumo');
 $editorialSections = is_array($contentTools['editorial_sections'] ?? null) ? $contentTools['editorial_sections'] : [];
 $editorialBaseUrl = (string) ($contentTools['editorial_base_url'] ?? url('/admin/central-operacional-v2/backup-editorial'));
-$sectionUrl = static function (string $section) use ($editorialBaseUrl): string {
+$editorialBasePath = parse_url($editorialBaseUrl, PHP_URL_PATH);
+$editorialBaseQuery = parse_url($editorialBaseUrl, PHP_URL_QUERY);
+$usesPrettyEditorialSections = is_string($editorialBasePath)
+    && str_contains($editorialBasePath, '/central-operacional-v2/backup-editorial')
+    && ($editorialBaseQuery === null || $editorialBaseQuery === false || $editorialBaseQuery === '');
+$sectionUrl = static function (string $section) use ($editorialBaseUrl, $usesPrettyEditorialSections): string {
+    if ($usesPrettyEditorialSections) {
+        return rtrim($editorialBaseUrl, '/') . '/' . rawurlencode($section);
+    }
+
     $separator = str_contains($editorialBaseUrl, '?') ? '&' : '?';
 
     return $editorialBaseUrl . $separator . 'editorial_secao=' . rawurlencode($section);
@@ -170,11 +179,21 @@ $sectionUrl = static function (string $section) use ($editorialBaseUrl): string 
       };
 
       const activateLink = (url) => {
+        const sectionFromUrl = (value) => {
+          const current = new URL(value, window.location.origin);
+          const byQuery = current.searchParams.get('editorial_secao');
+          if (byQuery) return byQuery;
+          const marker = '/backup-editorial/';
+          if (current.pathname.includes(marker)) {
+            return decodeURIComponent(current.pathname.slice(current.pathname.indexOf(marker) + marker.length).split('/')[0] || 'resumo');
+          }
+          return 'resumo';
+        };
         const current = new URL(url, window.location.origin);
-        const activeSection = current.searchParams.get('editorial_secao') || 'resumo';
+        const activeSection = sectionFromUrl(current.toString());
         topLinks.forEach((link) => {
           const linkUrl = new URL(link.href, window.location.origin);
-          const isActive = (linkUrl.searchParams.get('editorial_secao') || 'resumo') === activeSection;
+          const isActive = sectionFromUrl(linkUrl.toString()) === activeSection;
           link.classList.toggle('border-cyan-400/45', isActive);
           link.classList.toggle('bg-cyan-500/10', isActive);
           link.classList.toggle('text-cyan-100', isActive);

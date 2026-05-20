@@ -257,10 +257,18 @@ if (($historyEndPage - $historyStartPage) < 4) {
 }
 
 $cloudBaseUrl = function_exists('url') ? url('/admin/central-operacional-v2/backup-em-nuvem') : '/admin/central-operacional-v2/backup-em-nuvem';
-$cloudHistoryReturnTarget = '/admin/central-operacional-v2/backup-em-nuvem?cloud_tab=history';
-$cloudBuildUrl = static function (array $overrides = []) use ($cloudBaseUrl, $cloudSort, $cloudDir, $cloudPage, $cloudPerPage, $cloudSearch, $cloudEnvironment, $cloudStatus): string {
+$cloudOverviewUrl = rtrim($cloudBaseUrl, '/') . '/resumo';
+$cloudHistoryUrl = rtrim($cloudBaseUrl, '/') . '/historico';
+$cloudReturnTarget = static function (string $target): string {
+    $path = (string) parse_url($target, PHP_URL_PATH);
+    $query = (string) parse_url($target, PHP_URL_QUERY);
+
+    return $path . ($query !== '' ? '?' . $query : '');
+};
+$cloudOverviewReturnTarget = $cloudReturnTarget($cloudBaseUrl);
+$cloudHistoryReturnTarget = $cloudReturnTarget($cloudHistoryUrl);
+$cloudBuildUrl = static function (array $overrides = []) use ($cloudHistoryUrl, $cloudSort, $cloudDir, $cloudPage, $cloudPerPage, $cloudSearch, $cloudEnvironment, $cloudStatus): string {
     $query = [
-        'cloud_tab' => 'history',
         'cloud_sort' => $cloudSort,
         'cloud_dir' => $cloudDir,
         'cloud_page' => $cloudPage,
@@ -277,7 +285,7 @@ $cloudBuildUrl = static function (array $overrides = []) use ($cloudBaseUrl, $cl
     $query = array_filter($query, static fn ($value): bool => !($value === '' || $value === null || $value === 0));
     $qs = http_build_query($query);
 
-    return $qs !== '' ? $cloudBaseUrl . '?' . $qs : $cloudBaseUrl;
+    return $qs !== '' ? $cloudHistoryUrl . '?' . $qs : $cloudHistoryUrl;
 };
 $cloudSortLink = static function (string $column) use ($cloudSort, $cloudDir, $cloudBuildUrl): string {
     $nextDir = ($cloudSort === $column && $cloudDir === 'asc') ? 'desc' : 'asc';
@@ -319,14 +327,106 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
     </div>
   <?php endif; ?>
 
+  <style>
+    .cloud-progress-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      overflow: auto;
+      padding: 2rem 1rem;
+      background: rgba(2, 6, 23, 0.84);
+      backdrop-filter: blur(12px);
+    }
+
+    .cloud-progress-overlay.is-visible {
+      display: flex;
+    }
+
+    .cloud-progress-card {
+      box-sizing: border-box;
+      width: min(92vw, 44rem);
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 4rem);
+      overflow: auto;
+      contain: layout paint;
+      border-radius: 1.35rem;
+      border: 1px solid rgba(34, 211, 238, 0.28);
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(2, 6, 23, 0.94));
+      padding: 1.5rem;
+      box-shadow: 0 0 34px rgba(6, 182, 212, 0.1);
+    }
+
+    .cloud-progress-card h2 {
+      overflow-wrap: anywhere;
+    }
+
+    .cloud-progress-bar {
+      height: 0.8rem;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(51, 65, 85, 0.8);
+    }
+
+    .cloud-progress-fill {
+      height: 100%;
+      width: 8%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #22d3ee, #60a5fa, #c084fc);
+      box-shadow: 0 0 24px rgba(96, 165, 250, 0.35);
+      transition: width 0.4s ease;
+    }
+
+    .cloud-file-progress {
+      display: none;
+    }
+
+    .cloud-file-progress.is-visible {
+      display: grid;
+    }
+
+    @media (max-width: 640px) {
+      .cloud-progress-card { padding: 1rem; }
+    }
+  </style>
+
+  <div id="cloud-progress-overlay" class="cloud-progress-overlay" aria-hidden="true" tabindex="-1">
+    <div class="cloud-progress-card" role="status" aria-live="polite">
+      <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Processando</p>
+      <h2 id="cloud-progress-title" class="mt-3 font-orbitron text-2xl font-black text-white">Enviando para nuvem</h2>
+      <p id="cloud-progress-message" class="mt-3 text-sm leading-7 text-slate-300">Validando a acao e preparando o envio.</p>
+      <div class="mt-6 cloud-progress-bar">
+        <div id="cloud-progress-fill" class="cloud-progress-fill"></div>
+      </div>
+      <div class="mt-4 flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
+        <span id="cloud-progress-stage">Preparando</span>
+        <span id="cloud-progress-percent">0%</span>
+      </div>
+      <div id="cloud-file-progress" class="cloud-file-progress mt-4 gap-2 rounded-2xl border border-slate-700/70 bg-slate-950/70 p-3">
+        <div class="flex items-center justify-between gap-3 text-xs font-semibold text-slate-300">
+          <span id="cloud-file-name" class="truncate">Arquivo atual</span>
+          <span id="cloud-file-percent" class="font-orbitron text-cyan-200">0%</span>
+        </div>
+        <div class="h-2 overflow-hidden rounded-full bg-slate-800">
+          <div id="cloud-file-fill" class="h-full rounded-full bg-cyan-300 transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <div id="cloud-file-bytes" class="text-xs text-slate-500">0 B de 0 B</div>
+      </div>
+      <p id="cloud-progress-meta" class="mt-4 text-xs text-slate-500">Aguardando atualizacao da rotina de backup em nuvem.</p>
+    </div>
+  </div>
+
   <div class="rounded-[1.25rem] border border-slate-800 bg-slate-950/70 p-2">
     <div class="grid gap-2 md:grid-cols-2">
-      <button type="button" class="flex min-h-11 items-center rounded-xl border border-cyan-400/45 bg-cyan-500/10 px-4 py-3 text-left font-orbitron text-xs font-black uppercase tracking-[0.14em] text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.12)] transition hover:border-cyan-300 hover:bg-cyan-500/15" data-cloud-tab="overview">
+      <a href="<?= htmlspecialchars($cloudOverviewUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="flex min-h-11 items-center rounded-xl border border-cyan-400/45 bg-cyan-500/10 px-4 py-3 text-left font-orbitron text-xs font-black uppercase tracking-[0.14em] text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.12)] transition hover:border-cyan-300 hover:bg-cyan-500/15" data-cloud-tab="overview">
         Visao Geral
-      </button>
-      <button type="button" class="flex min-h-11 items-center rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-left font-orbitron text-xs font-black uppercase tracking-[0.14em] text-slate-300 transition hover:border-cyan-500/35 hover:bg-cyan-500/10 hover:text-cyan-100" data-cloud-tab="history">
+      </a>
+      <a href="<?= htmlspecialchars($cloudHistoryUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="flex min-h-11 items-center rounded-xl border border-slate-800 bg-slate-900/70 px-4 py-3 text-left font-orbitron text-xs font-black uppercase tracking-[0.14em] text-slate-300 transition hover:border-cyan-500/35 hover:bg-cyan-500/10 hover:text-cyan-100" data-cloud-tab="history">
         Historico de Envios
-      </button>
+      </a>
     </div>
   </div>
 
@@ -408,9 +508,9 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
 
     <?php if ($backupCloud['connected'] ?? false): ?>
       <div class="mt-4 grid gap-3 md:grid-cols-3">
-        <form method="POST" action="<?= htmlspecialchars(url('/local/backup'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+        <form method="POST" action="<?= htmlspecialchars(url('/local/backup'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Atualizando automacao sistemica" data-progress-message="Salvando a politica de envio automatico dos backups sistemicos." data-progress-stage="Automacao Dropbox">
           <?= Csrf::field() ?>
-          <input type="hidden" name="redirect_to" value="<?= htmlspecialchars('/admin/central-operacional-v2/backup-em-nuvem', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+          <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudOverviewReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
           <input type="hidden" name="action" value="dropbox_auto_upload">
           <input type="hidden" name="enabled" value="<?= $systemAutoEnabled ? '0' : '1' ?>">
           <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300/80">Envio Automatico - Sistema</div>
@@ -420,7 +520,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
           </div>
         </form>
 
-        <form method="POST" action="<?= htmlspecialchars(url('/admin/central-operacional-v2/backup-em-nuvem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+        <form method="POST" action="<?= htmlspecialchars(url('/admin/central-operacional-v2/backup-em-nuvem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Atualizando automacao editorial" data-progress-message="Salvando a politica de envio automatico dos pacotes editoriais." data-progress-stage="Automacao Dropbox">
           <?= Csrf::field() ?>
           <input type="hidden" name="action" value="dropbox_editorial_auto_upload">
           <input type="hidden" name="enabled" value="<?= $editorialAutoEnabled ? '0' : '1' ?>">
@@ -431,9 +531,9 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
           </div>
         </form>
 
-        <form method="POST" action="<?= htmlspecialchars(url('/local/backup'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+        <form method="POST" action="<?= htmlspecialchars(url('/local/backup'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Desconectando Dropbox" data-progress-message="Removendo a vinculacao local com a conta do Dropbox." data-progress-stage="Dropbox">
           <?= Csrf::field() ?>
-          <input type="hidden" name="redirect_to" value="<?= htmlspecialchars('/admin/central-operacional-v2/backup-em-nuvem', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+          <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudOverviewReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
           <input type="hidden" name="action" value="dropbox_disconnect">
           <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-rose-300/80">Desconectar</div>
           <p class="mt-2 text-xs font-semibold leading-5 text-slate-400">Remove tokens locais sem apagar backups ja enviados.</p>
@@ -443,9 +543,9 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
         </form>
       </div>
     <?php else: ?>
-      <form method="POST" action="<?= htmlspecialchars(url('/local/backup'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-4 rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4">
+      <form method="POST" action="<?= htmlspecialchars(url('/local/backup'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form mt-4 rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4" data-progress-title="Conectando Dropbox" data-progress-message="Abrindo a autorizacao segura do Dropbox para vincular a conta." data-progress-stage="Dropbox OAuth">
         <?= Csrf::field() ?>
-        <input type="hidden" name="redirect_to" value="<?= htmlspecialchars('/admin/central-operacional-v2/backup-em-nuvem', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+        <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudOverviewReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
         <input type="hidden" name="action" value="dropbox_connect">
         <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Conectar Dropbox</div>
         <p class="mt-2 text-xs font-semibold leading-5 text-cyan-100/80">Vincula a conta para consultar espaco e registrar envios em nuvem.</p>
@@ -602,8 +702,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
         </div>
       </div>
 
-      <form method="GET" action="<?= htmlspecialchars($cloudBaseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-cloud-history-filters>
-        <input type="hidden" name="cloud_tab" value="history">
+      <form method="GET" action="<?= htmlspecialchars($cloudHistoryUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-cloud-history-filters>
         <div class="grid gap-3 xl:grid-cols-[1.2fr_0.8fr_0.8fr_auto]">
           <input type="search" name="cloud_busca" value="<?= htmlspecialchars($cloudSearch, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" placeholder="Buscar envio..." data-cloud-filter-search class="min-h-11 rounded-xl border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none focus:border-cyan-400">
           <select name="cloud_ambiente" data-cloud-filter-environment class="min-h-11 rounded-xl border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none focus:border-cyan-400">
@@ -657,7 +756,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
                   <td class="px-4 py-3">
                     <div class="flex min-w-[15rem] flex-col gap-2">
                       <?php if (($row['type_key'] ?? '') === 'system'): ?>
-                        <form method="POST" action="<?= url('/local/backup') ?>" class="inline-flex">
+                        <form method="POST" action="<?= url('/local/backup') ?>" class="cloud-action-form inline-flex" data-progress-title="Verificando backup sistemico" data-progress-message="Conferindo manifesto, banco, uploads e arquivos do sistema." data-progress-stage="Verificacao">
                           <?= Csrf::field() ?>
                           <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudHistoryReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="verify">
@@ -665,7 +764,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
                           <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-xs font-black text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-500/20">Verificar</button>
                         </form>
                         <?php if (($row['status'] ?? '') === 'Enviado'): ?>
-                          <form method="POST" action="<?= url('/local/backup') ?>" class="rounded-xl border border-rose-400/25 bg-rose-500/5 p-2">
+                          <form method="POST" action="<?= url('/local/backup') ?>" class="cloud-action-form rounded-xl border border-rose-400/25 bg-rose-500/5 p-2" data-progress-title="Excluindo backup da nuvem" data-progress-message="Solicitando remocao segura do backup selecionado no Dropbox." data-progress-stage="Exclusao Dropbox">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudHistoryReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                             <input type="hidden" name="action" value="dropbox_delete_backup">
@@ -674,7 +773,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
                             <button type="submit" class="mt-2 inline-flex w-full items-center justify-center rounded-lg border border-rose-400/30 bg-transparent px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/10">Excluir da nuvem</button>
                           </form>
                         <?php else: ?>
-                          <form method="POST" action="<?= url('/local/backup') ?>" class="inline-flex">
+                          <form method="POST" action="<?= url('/local/backup') ?>" class="cloud-action-form inline-flex" data-progress-title="Enviando backup para nuvem" data-progress-message="Validando conexao Dropbox e preparando o backup selecionado para envio." data-progress-stage="Envio para nuvem">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudHistoryReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                             <input type="hidden" name="action" value="dropbox_upload_backup">
@@ -683,7 +782,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
                           </form>
                         <?php endif; ?>
                       <?php else: ?>
-                        <form method="POST" action="<?= url('/local/conteudo') ?>" class="inline-flex">
+                        <form method="POST" action="<?= url('/local/conteudo') ?>" class="cloud-action-form inline-flex" data-progress-title="Verificando pacote editorial" data-progress-message="Conferindo manifesto, JSONs e uploads do pacote selecionado." data-progress-stage="Verificacao editorial">
                           <?= Csrf::field() ?>
                           <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudHistoryReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="verify">
@@ -691,7 +790,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
                           <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-xs font-black text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-500/20">Verificar</button>
                         </form>
                         <?php if (($row['status'] ?? '') === 'Enviado'): ?>
-                          <form method="POST" action="<?= url('/admin/central-operacional-v2/backup-em-nuvem') ?>" class="rounded-xl border border-rose-400/25 bg-rose-500/5 p-2">
+                          <form method="POST" action="<?= url('/admin/central-operacional-v2/backup-em-nuvem') ?>" class="cloud-action-form rounded-xl border border-rose-400/25 bg-rose-500/5 p-2" data-progress-title="Excluindo pacote da nuvem" data-progress-message="Solicitando remocao segura do pacote editorial no Dropbox." data-progress-stage="Exclusao Dropbox">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudHistoryReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                             <input type="hidden" name="action" value="dropbox_delete_editorial_package">
@@ -700,7 +799,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
                             <button type="submit" class="mt-2 inline-flex w-full items-center justify-center rounded-lg border border-rose-400/30 bg-transparent px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/10">Excluir da nuvem</button>
                           </form>
                         <?php else: ?>
-                          <form method="POST" action="<?= url('/admin/central-operacional-v2/backup-em-nuvem') ?>" class="inline-flex">
+                          <form method="POST" action="<?= url('/admin/central-operacional-v2/backup-em-nuvem') ?>" class="cloud-action-form inline-flex" data-progress-title="Enviando pacote editorial" data-progress-message="Validando conexao Dropbox e preparando o pacote editorial para envio." data-progress-stage="Envio para nuvem">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudHistoryReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                             <input type="hidden" name="action" value="dropbox_upload_editorial_package">
@@ -763,6 +862,18 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
       return;
     }
 
+    var overlay = document.getElementById('cloud-progress-overlay');
+    var progressTitle = document.getElementById('cloud-progress-title');
+    var progressMessage = document.getElementById('cloud-progress-message');
+    var progressStage = document.getElementById('cloud-progress-stage');
+    var progressPercent = document.getElementById('cloud-progress-percent');
+    var progressFill = document.getElementById('cloud-progress-fill');
+    var progressMeta = document.getElementById('cloud-progress-meta');
+    var fileProgress = document.getElementById('cloud-file-progress');
+    var fileName = document.getElementById('cloud-file-name');
+    var filePercent = document.getElementById('cloud-file-percent');
+    var fileFill = document.getElementById('cloud-file-fill');
+    var fileBytes = document.getElementById('cloud-file-bytes');
     var tabs = Array.prototype.slice.call(root.querySelectorAll('[data-cloud-tab]'));
     var panels = Array.prototype.slice.call(root.querySelectorAll('[data-cloud-tab-panel]'));
     var historyRows = <?= json_encode($allHistoryRows, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]' ?>;
@@ -780,6 +891,204 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
     var systemActionUrl = <?= json_encode(url('/local/backup'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: "''" ?>;
     var editorialActionUrl = <?= json_encode(url('/local/conteudo'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: "''" ?>;
     var cloudActionUrl = <?= json_encode(url('/admin/central-operacional-v2/backup-em-nuvem'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: "''" ?>;
+    var cloudPollTimer = null;
+
+    function setModalState(state) {
+      if (!overlay || !progressTitle || !progressMessage || !progressStage || !progressPercent || !progressFill || !progressMeta) {
+        return;
+      }
+
+      var percent = Math.max(0, Math.min(100, Number(state.percent || 10)));
+      var file = state.file && typeof state.file === 'object' ? state.file : null;
+      var fileProgressValue = file && file.percent !== undefined ? Math.max(0, Math.min(100, Number(file.percent || 0))) : null;
+      var visiblePercent = fileProgressValue !== null ? fileProgressValue : percent;
+      progressTitle.textContent = state.title || 'Enviando para nuvem';
+      progressMessage.textContent = state.message || 'Validando a acao e preparando o envio.';
+      progressStage.textContent = state.stage || 'Preparando';
+      progressPercent.textContent = fileProgressValue !== null ? 'Arquivo ' + visiblePercent + '%' : percent + '%';
+      progressFill.style.width = Math.max(6, visiblePercent) + '%';
+      if (fileProgress && fileName && filePercent && fileFill && fileBytes) {
+        if (file) {
+          fileProgress.classList.add('is-visible');
+          fileName.textContent = file.name || 'Arquivo atual';
+          filePercent.textContent = visiblePercent + '%';
+          fileFill.style.width = Math.max(3, visiblePercent) + '%';
+          fileBytes.textContent = (file.sent_label || '0 B') + ' de ' + (file.total_label || '0 B');
+        } else {
+          fileProgress.classList.remove('is-visible');
+          fileFill.style.width = '0%';
+        }
+      }
+      if (state.meta) {
+        progressMeta.textContent = state.meta;
+      }
+    }
+
+    function showModal(form) {
+      if (!overlay) {
+        return;
+      }
+
+      root.classList.add('is-cloud-busy');
+      overlay.classList.add('is-visible');
+      overlay.setAttribute('aria-hidden', 'false');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      overlay.focus({ preventScroll: true });
+      setModalState({
+        title: form && form.dataset.progressTitle ? form.dataset.progressTitle : 'Enviando para nuvem',
+        message: form && form.dataset.progressMessage ? form.dataset.progressMessage : 'Validando a acao e preparando o envio.',
+        stage: form && form.dataset.progressStage ? form.dataset.progressStage : 'Preparando',
+        percent: 12,
+        meta: 'Aguardando atualizacao da rotina de backup em nuvem.'
+      });
+    }
+
+    function hideModalSoon() {
+      window.setTimeout(function () {
+        if (!overlay) {
+          return;
+        }
+        overlay.classList.remove('is-visible');
+        overlay.setAttribute('aria-hidden', 'true');
+        root.classList.remove('is-cloud-busy');
+      }, 650);
+    }
+
+    function stopCloudPolling() {
+      if (cloudPollTimer !== null) {
+        window.clearInterval(cloudPollTimer);
+        cloudPollTimer = null;
+      }
+    }
+
+    function progressEndpoint(form, progressId) {
+      var action = String((form.querySelector('input[name="action"]') || {}).value || '');
+      var formAction = String(form.getAttribute('action') || '');
+      var endpoint = new URL(systemActionUrl, window.location.origin);
+      if (formAction.indexOf('/local/conteudo') !== -1 || action === 'verify' && form.querySelector('input[name="package_id"]')) {
+        endpoint = new URL(editorialActionUrl, window.location.origin);
+        endpoint.searchParams.set('content_progress', '1');
+      } else {
+        endpoint.searchParams.set('backup_progress', '1');
+      }
+      endpoint.searchParams.set('id', progressId);
+
+      return endpoint.toString();
+    }
+
+    function pollCloudProgress(form, progressId) {
+      stopCloudPolling();
+      cloudPollTimer = window.setInterval(function () {
+        fetch(progressEndpoint(form, progressId), {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+          .then(function (response) {
+            return response.ok ? response.json() : null;
+          })
+          .then(function (payload) {
+            if (!payload) {
+              return;
+            }
+            setModalState({
+              title: payload.title || (form.dataset.progressTitle || 'Enviando para nuvem'),
+              message: payload.message || (form.dataset.progressMessage || 'Processando rotina na nuvem.'),
+              stage: payload.stage || payload.status || (form.dataset.progressStage || 'Processando'),
+              percent: payload.percent || 18,
+              file: payload.file || null,
+              meta: payload.file
+                ? 'Rotina: ' + Math.max(0, Math.min(100, Number(payload.percent || 0))) + '%. Ultima atualizacao: ' + (payload.updated_at || '-')
+                : (payload.updated_at ? 'Ultima atualizacao: ' + payload.updated_at : 'Aguardando nova etapa da rotina.')
+            });
+          })
+          .catch(function () {
+            // Mantem a ultima etapa visivel ate a acao principal responder.
+          });
+      }, 900);
+    }
+
+    function responseMessage(text, fallback) {
+      if (!text) {
+        return fallback;
+      }
+
+      try {
+        var payload = JSON.parse(text);
+        return payload.message || fallback;
+      } catch (error) {
+        return text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220) || fallback;
+      }
+    }
+
+    root.addEventListener('submit', function (event) {
+      var form = event.target;
+      if (!(form instanceof HTMLFormElement) || !form.classList.contains('cloud-action-form')) {
+        return;
+      }
+
+      if (root.classList.contains('is-cloud-busy')) {
+        event.preventDefault();
+        return;
+      }
+
+      var actionName = String((form.querySelector('input[name="action"]') || {}).value || '');
+      if (actionName === 'dropbox_connect') {
+        showModal(form);
+        return;
+      }
+
+      event.preventDefault();
+      var progressId = 'cloud_' + Date.now().toString(36) + '_' + Math.random().toString(16).slice(2, 10);
+      var formData = new FormData(form);
+      formData.set('response', 'json');
+      formData.set('progress_id', progressId);
+
+      showModal(form);
+      pollCloudProgress(form, progressId);
+
+      fetch(form.getAttribute('action') || window.location.href, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(function (response) {
+          return response.text().then(function (text) {
+            var payload = null;
+            try {
+              payload = text ? JSON.parse(text) : null;
+            } catch (error) {
+              payload = null;
+            }
+            if (!response.ok || !payload) {
+              throw new Error(payload && payload.message ? payload.message : responseMessage(text, 'Nao foi possivel concluir a rotina de nuvem.'));
+            }
+            return payload;
+          });
+        })
+        .then(function (payload) {
+          stopCloudPolling();
+          setModalState({
+            title: payload.ok ? 'Rotina concluida' : 'Falha na rotina',
+            message: payload.message || 'Rotina de nuvem concluida.',
+            stage: payload.ok ? 'Atualizando painel' : 'Falha',
+            percent: 100,
+            meta: 'Atualizando a tela com o resultado final.'
+          });
+          window.setTimeout(function () {
+            window.location.href = new URL(payload.redirect_url || window.location.href, window.location.origin).toString();
+          }, 450);
+        })
+        .catch(function (error) {
+          stopCloudPolling();
+          setModalState({
+            title: 'Falha na rotina',
+            message: error && error.message ? error.message : 'Nao foi possivel concluir a rotina de nuvem.',
+            stage: 'Erro',
+            percent: 100,
+            meta: 'A rotina retornou erro. Revise a mensagem antes de tentar novamente.'
+          });
+          hideModalSoon();
+        });
+    });
 
     function escapeHtml(value) {
       return String(value == null ? '' : value)
@@ -818,11 +1127,14 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
       return '<button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border px-3 py-2 text-xs font-black transition ' + (tones[tone] || tones.verify) + '">' + escapeHtml(label) + '</button>';
     }
 
-    function postForm(actionUrl, fields, buttonHtml, wrapperClass) {
+    function postForm(actionUrl, fields, buttonHtml, wrapperClass, progress) {
       var inputs = Object.keys(fields || {}).map(function (name) {
         return hiddenInput(name, fields[name]);
       }).join('');
-      return '<form method="POST" action="' + escapeHtml(actionUrl) + '" class="' + escapeHtml(wrapperClass || 'inline-flex w-full') + '">'
+      var progressAttrs = progress
+        ? ' data-progress-title="' + escapeHtml(progress.title || '') + '" data-progress-message="' + escapeHtml(progress.message || '') + '" data-progress-stage="' + escapeHtml(progress.stage || '') + '"'
+        : '';
+      return '<form method="POST" action="' + escapeHtml(actionUrl) + '" class="' + escapeHtml(wrapperClass || 'cloud-action-form inline-flex w-full') + '"' + progressAttrs + '>'
         + csrfField
         + hiddenInput('redirect_to', cloudReturnTarget)
         + inputs
@@ -830,11 +1142,14 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
         + '</form>';
     }
 
-    function deleteForm(actionUrl, fields, label) {
+    function deleteForm(actionUrl, fields, label, progress) {
       var inputs = Object.keys(fields || {}).map(function (name) {
         return hiddenInput(name, fields[name]);
       }).join('');
-      return '<form method="POST" action="' + escapeHtml(actionUrl) + '" class="rounded-xl border border-rose-400/25 bg-rose-500/5 p-2">'
+      var progressAttrs = progress
+        ? ' data-progress-title="' + escapeHtml(progress.title || '') + '" data-progress-message="' + escapeHtml(progress.message || '') + '" data-progress-stage="' + escapeHtml(progress.stage || '') + '"'
+        : '';
+      return '<form method="POST" action="' + escapeHtml(actionUrl) + '" class="cloud-action-form rounded-xl border border-rose-400/25 bg-rose-500/5 p-2"' + progressAttrs + '>'
         + csrfField
         + hiddenInput('redirect_to', cloudReturnTarget)
         + inputs
@@ -849,15 +1164,39 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
       var html = '<div class="flex min-w-[15rem] flex-col gap-2">';
 
       if (row.type_key === 'system') {
-        html += postForm(systemActionUrl, { action: 'verify', backup_id: id }, actionButton('Verificar', 'verify'));
+        html += postForm(systemActionUrl, { action: 'verify', backup_id: id }, actionButton('Verificar', 'verify'), null, {
+          title: 'Verificando backup sistemico',
+          message: 'Conferindo manifesto, banco, uploads e arquivos do sistema.',
+          stage: 'Verificacao'
+        });
         html += sent
-          ? deleteForm(systemActionUrl, { action: 'dropbox_delete_backup', backup_id: id }, 'Excluir da nuvem')
-          : postForm(systemActionUrl, { action: 'dropbox_upload_backup', backup_id: id }, actionButton('Enviar nuvem', 'upload'));
+          ? deleteForm(systemActionUrl, { action: 'dropbox_delete_backup', backup_id: id }, 'Excluir da nuvem', {
+            title: 'Excluindo backup da nuvem',
+            message: 'Solicitando remocao segura do backup selecionado no Dropbox.',
+            stage: 'Exclusao Dropbox'
+          })
+          : postForm(systemActionUrl, { action: 'dropbox_upload_backup', backup_id: id }, actionButton('Enviar nuvem', 'upload'), null, {
+            title: 'Enviando backup para nuvem',
+            message: 'Validando conexao Dropbox e preparando o backup selecionado para envio.',
+            stage: 'Envio para nuvem'
+          });
       } else {
-        html += postForm(editorialActionUrl, { action: 'verify', package_id: id }, actionButton('Verificar', 'verify'));
+        html += postForm(editorialActionUrl, { action: 'verify', package_id: id }, actionButton('Verificar', 'verify'), null, {
+          title: 'Verificando pacote editorial',
+          message: 'Conferindo manifesto, JSONs e uploads do pacote selecionado.',
+          stage: 'Verificacao editorial'
+        });
         html += sent
-          ? deleteForm(cloudActionUrl, { action: 'dropbox_delete_editorial_package', package_id: id }, 'Excluir da nuvem')
-          : postForm(cloudActionUrl, { action: 'dropbox_upload_editorial_package', package_id: id }, actionButton('Enviar nuvem', 'upload'));
+          ? deleteForm(cloudActionUrl, { action: 'dropbox_delete_editorial_package', package_id: id }, 'Excluir da nuvem', {
+            title: 'Excluindo pacote da nuvem',
+            message: 'Solicitando remocao segura do pacote editorial no Dropbox.',
+            stage: 'Exclusao Dropbox'
+          })
+          : postForm(cloudActionUrl, { action: 'dropbox_upload_editorial_package', package_id: id }, actionButton('Enviar nuvem', 'upload'), null, {
+            title: 'Enviando pacote editorial',
+            message: 'Validando conexao Dropbox e preparando o pacote editorial para envio.',
+            stage: 'Envio para nuvem'
+          });
       }
 
       return html + '</div>';
@@ -928,8 +1267,14 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
     }
 
     tabs.forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        activate(tab.getAttribute('data-cloud-tab') || 'overview');
+      tab.addEventListener('click', function (event) {
+        if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        var name = tab.getAttribute('data-cloud-tab') || 'overview';
+        activate(name);
+        if (tab instanceof HTMLAnchorElement) {
+          window.history.pushState({}, '', tab.href);
+        }
       });
     });
 

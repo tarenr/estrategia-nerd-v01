@@ -18,6 +18,20 @@ final class OperationsV2Controller
 {
     public function index(): void
     {
+        if (isset($_GET['painel'])) {
+            $legacyPanel = strtolower(trim((string) $_GET['painel']));
+            $legacyRedirects = [
+                'backup-sistemico' => url('/admin/central-operacional-v2/backup-sistemico/resumo'),
+                'backup-editorial' => url('/admin/central-operacional-v2/backup-editorial/resumo'),
+                'backup-nuvem' => url('/admin/central-operacional-v2/backup-em-nuvem/resumo'),
+                'observabilidade' => url('/admin/central-operacional-v2/observabilidade'),
+                'seo-tecnico' => url('/admin/central-operacional-v2/seo-tecnico/resumo'),
+            ];
+
+            $this->redirect($legacyRedirects[$legacyPanel] ?? url('/admin/central-operacional-v2'));
+            return;
+        }
+
         $overview = (new OperationsV2Presenter())->overview();
 
         if ((string) ($_GET['fragment'] ?? '0') === '1') {
@@ -35,12 +49,14 @@ final class OperationsV2Controller
         ]);
     }
 
-    public function backupSistemico(): void
+    public function backupSistemico(?string $backupSecao = null): void
     {
         $module = $this->modules()['backup-sistemico'];
-        $section = is_string($_GET['backup_secao'] ?? null) ? (string) $_GET['backup_secao'] : 'resumo';
+        $section = is_string($backupSecao) && $backupSecao !== ''
+            ? $backupSecao
+            : (is_string($_GET['backup_secao'] ?? null) ? (string) $_GET['backup_secao'] : 'resumo');
         if ($section === 'nuvem') {
-            $this->redirect('/admin/central-operacional-v2/backup-em-nuvem');
+            $this->redirect(url('/admin/central-operacional-v2/backup-em-nuvem'));
             return;
         }
 
@@ -66,10 +82,12 @@ final class OperationsV2Controller
         ]);
     }
 
-    public function backupEditorial(): void
+    public function backupEditorial(?string $editorialSecao = null): void
     {
         $module = $this->modules()['backup-editorial'];
-        $section = is_string($_GET['editorial_secao'] ?? null) ? (string) $_GET['editorial_secao'] : 'resumo';
+        $section = is_string($editorialSecao) && $editorialSecao !== ''
+            ? $editorialSecao
+            : (is_string($_GET['editorial_secao'] ?? null) ? (string) $_GET['editorial_secao'] : 'resumo');
         $allowedSections = ['resumo', 'acoes', 'restore', 'historico'];
         if (!in_array($section, $allowedSections, true)) {
             $section = 'resumo';
@@ -103,8 +121,12 @@ final class OperationsV2Controller
         ]);
     }
 
-    public function backupEmNuvem(): void
+    public function backupEmNuvem(?string $cloudSecao = null): void
     {
+        if (is_string($cloudSecao) && $cloudSecao !== '') {
+            $_GET['cloud_tab'] = in_array($cloudSecao, ['historico', 'history'], true) ? 'history' : 'overview';
+        }
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->handleCloudAction();
             return;
@@ -138,11 +160,13 @@ final class OperationsV2Controller
         ]);
     }
 
-    public function seoTecnico(): void
+    public function seoTecnico(?string $monitorSecao = null): void
     {
         $module = $this->modules()['seo-tecnico'];
         $baseUrl = url('/admin/central-operacional-v2/seo-tecnico');
-        $section = is_string($_GET['monitor_secao'] ?? null) ? (string) $_GET['monitor_secao'] : 'resumo';
+        $section = is_string($monitorSecao) && $monitorSecao !== ''
+            ? $monitorSecao
+            : (is_string($_GET['monitor_secao'] ?? null) ? (string) $_GET['monitor_secao'] : 'resumo');
         $searchConsole = (new SearchConsoleMonitorController())->viewData(true, $section, $baseUrl);
 
         if ((string) ($_GET['monitor_fragment'] ?? '0') === '1') {
@@ -208,7 +232,7 @@ final class OperationsV2Controller
         $module = $modules[$moduleKey] ?? null;
 
         if ($module === null) {
-            $this->redirect('/admin/central-operacional-v2');
+            $this->redirect(url('/admin/central-operacional-v2'));
             return;
         }
 
@@ -222,8 +246,18 @@ final class OperationsV2Controller
     private function handleCloudAction(): void
     {
         $redirect = $this->normalizeRedirectTarget($_POST['redirect_to'] ?? null) ?? url('/admin/central-operacional-v2/backup-em-nuvem');
+        $respondJson = $this->wantsJsonResponse();
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             $this->cloudFlash('error', 'Sessão expirada. Atualize a página e tente novamente.');
+            if ($respondJson) {
+                $this->json([
+                    'ok' => false,
+                    'redirect_url' => $redirect,
+                    'message' => 'Sessão expirada. Atualize a página e tente novamente.',
+                ], 403);
+                return;
+            }
+
             $this->redirect($redirect);
             return;
         }
@@ -238,6 +272,17 @@ final class OperationsV2Controller
                     ? 'Envio automatico editorial ativado.'
                     : 'Envio automatico editorial desativado.'
                 );
+                if ($respondJson) {
+                    $this->json([
+                        'ok' => true,
+                        'redirect_url' => $redirect,
+                        'message' => $enabled
+                            ? 'Envio automatico editorial ativado.'
+                            : 'Envio automatico editorial desativado.',
+                    ]);
+                    return;
+                }
+
                 $this->redirect($redirect);
                 return;
             }
@@ -281,6 +326,23 @@ final class OperationsV2Controller
             }
         } catch (\Throwable $exception) {
             $this->cloudFlash('error', $exception->getMessage());
+            if ($respondJson) {
+                $this->json([
+                    'ok' => false,
+                    'redirect_url' => $redirect,
+                    'message' => $exception->getMessage(),
+                ], 422);
+                return;
+            }
+        }
+
+        if ($respondJson) {
+            $this->json([
+                'ok' => true,
+                'redirect_url' => $redirect,
+                'message' => 'Rotina de nuvem concluida.',
+            ]);
+            return;
         }
 
         $this->redirect($redirect);
@@ -330,5 +392,22 @@ final class OperationsV2Controller
         }
 
         return $progressId;
+    }
+
+    private function wantsJsonResponse(): bool
+    {
+        return strtolower(trim((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''))) === 'xmlhttprequest'
+            || strtolower(trim((string) ($_POST['response'] ?? ''))) === 'json';
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function json(array $payload, int $status = 200): void
+    {
+        http_response_code($status);
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
     }
 }

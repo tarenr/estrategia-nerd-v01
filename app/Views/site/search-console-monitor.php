@@ -9,6 +9,12 @@ $monitorSections = is_array($monitor_sections ?? null) ? $monitor_sections : [];
 $monitorBaseUrl = (string) ($monitor_base_url ?? ($adminEmbed ? url('/admin/central-operacional?aba=monitoramento') : url('/local/monitoramento')));
 
 $sectionUrl = static function (string $section) use ($monitorBaseUrl): string {
+    $basePath = parse_url($monitorBaseUrl, PHP_URL_PATH);
+    $baseQuery = parse_url($monitorBaseUrl, PHP_URL_QUERY);
+    if (is_string($basePath) && str_contains($basePath, '/seo-tecnico') && ($baseQuery === null || $baseQuery === false || $baseQuery === '')) {
+        return rtrim($monitorBaseUrl, '/') . '/' . rawurlencode($section);
+    }
+
     $separator = str_contains($monitorBaseUrl, '?') ? '&' : '?';
     return $monitorBaseUrl . $separator . 'monitor_secao=' . rawurlencode($section);
 };

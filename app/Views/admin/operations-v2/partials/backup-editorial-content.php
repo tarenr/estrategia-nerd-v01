@@ -6,8 +6,30 @@ use App\Support\Csrf;
 
 $section = (string) ($editorial_section ?? 'resumo');
 $baseUrl = (string) ($editorial_base_url ?? url('/admin/central-operacional-v2/backup-editorial'));
+$basePath = parse_url($baseUrl, PHP_URL_PATH);
+$baseQuery = parse_url($baseUrl, PHP_URL_QUERY);
+$usesPrettyEditorialSections = is_string($basePath)
+    && str_contains($basePath, '/central-operacional-v2/backup-editorial')
+    && ($baseQuery === null || $baseQuery === false || $baseQuery === '');
+$sectionUrl = static function (string $targetSection, array $query = []) use ($baseUrl, $usesPrettyEditorialSections): string {
+    if ($usesPrettyEditorialSections) {
+        $url = rtrim($baseUrl, '/') . '/' . rawurlencode($targetSection);
+    } else {
+        $url = $baseUrl;
+        $query = ['editorial_secao' => $targetSection] + $query;
+    }
+
+    $query = array_filter($query, static fn ($value): bool => !($value === '' || $value === null || $value === 0));
+    if ($query !== []) {
+        $url .= (str_contains($url, '?') ? '&' : '?') . http_build_query($query);
+    }
+
+    return $url;
+};
 $redirectPath = parse_url($baseUrl, PHP_URL_PATH) ?: '/admin/central-operacional-v2/backup-editorial';
-$redirectTo = $redirectPath . '?editorial_secao=' . rawurlencode($section);
+$redirectTo = (string) parse_url($sectionUrl($section), PHP_URL_PATH);
+$redirectQuery = (string) parse_url($sectionUrl($section), PHP_URL_QUERY);
+$redirectTo .= $redirectQuery !== '' ? '?' . $redirectQuery : '';
 $status = (array) ($content_status ?? []);
 $items = array_values(array_filter((array) ($status['items'] ?? []), 'is_array'));
 $running = is_array($status['running'] ?? null) ? $status['running'] : null;
@@ -426,18 +448,15 @@ $buildActionForm = static function (string $action, array $hidden, string $butto
       $offset = ($page - 1) * $perPage;
       $pageRows = array_slice($rows, $offset, $perPage);
       $nextDir = $dir === 'asc' ? 'desc' : 'asc';
-      $sortUrl = static function (string $field) use ($baseUrl, $nextDir, $search, $environment, $historyStatus, $perPage): string {
-          $query = [
-              'editorial_secao' => 'historico',
+      $sortUrl = static function (string $field) use ($sectionUrl, $nextDir, $search, $environment, $historyStatus, $perPage): string {
+          return $sectionUrl('historico', [
               'editorial_sort' => $field,
               'editorial_dir' => $nextDir,
               'editorial_busca' => $search,
               'editorial_ambiente' => $environment,
               'editorial_status' => $historyStatus,
               'editorial_per_page' => $perPage,
-          ];
-
-          return $baseUrl . '?' . http_build_query($query);
+          ]);
       };
     ?>
     <style>
@@ -474,8 +493,10 @@ $buildActionForm = static function (string $action, array $hidden, string $butto
       <div class="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4"><p class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-amber-200/75">Producao</p><div class="mt-2 text-2xl font-black text-white"><?= $productionCount ?></div></div>
     </div>
 
-    <form method="GET" action="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-      <input type="hidden" name="editorial_secao" value="historico">
+    <form method="GET" action="<?= htmlspecialchars($sectionUrl('historico'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+      <?php if (!$usesPrettyEditorialSections): ?>
+        <input type="hidden" name="editorial_secao" value="historico">
+      <?php endif; ?>
       <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.3fr_0.8fr_0.8fr_0.7fr_auto]">
         <input name="editorial_busca" value="<?= htmlspecialchars($search, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" placeholder="Buscar pacote..." class="min-h-11 rounded-xl border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none focus:border-cyan-400">
         <select name="editorial_ambiente" class="min-h-11 rounded-xl border border-slate-700 bg-slate-950/80 px-4 text-sm text-white outline-none focus:border-cyan-400">
@@ -575,9 +596,8 @@ $buildActionForm = static function (string $action, array $hidden, string $butto
       <span><?= $totalRows ?> registro(s) · pagina <?= $page ?> de <?= $totalPages ?></span>
       <div class="flex gap-2">
         <?php
-          $pageUrl = static function (int $target) use ($baseUrl, $search, $environment, $historyStatus, $sort, $dir, $perPage): string {
-              return $baseUrl . '?' . http_build_query([
-                  'editorial_secao' => 'historico',
+          $pageUrl = static function (int $target) use ($sectionUrl, $search, $environment, $historyStatus, $sort, $dir, $perPage): string {
+              return $sectionUrl('historico', [
                   'editorial_busca' => $search,
                   'editorial_ambiente' => $environment,
                   'editorial_status' => $historyStatus,

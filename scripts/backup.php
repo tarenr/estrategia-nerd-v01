@@ -18,13 +18,14 @@ try {
     switch ($command) {
         case 'run':
             $profile = (string) ($argv[2] ?? 'local');
-            $manifest = $manager->run($profile);
+            $includeUploads = !in_array('--no-uploads', $argv, true);
+            $manifest = $manager->run($profile, null, $includeUploads);
             echo 'Backup concluido com sucesso.' . PHP_EOL;
             echo 'ID: ' . ($manifest['backup_id'] ?? '-') . PHP_EOL;
             echo 'Perfil: ' . ($manifest['profile_label'] ?? '-') . PHP_EOL;
             echo 'Pasta: ' . dirname((string) (($manifest['database']['path'] ?? '') ?: ($manifest['uploads']['path'] ?? ''))) . PHP_EOL;
             echo 'Banco: ' . number_format(((int) ($manifest['database']['size_bytes'] ?? 0)) / 1024, 1, ',', '.') . ' KB' . PHP_EOL;
-            echo 'Uploads: ' . number_format(((int) ($manifest['uploads']['size_bytes'] ?? 0)) / 1024, 1, ',', '.') . ' KB' . PHP_EOL;
+            echo 'Uploads: ' . ($includeUploads ? number_format(((int) ($manifest['uploads']['size_bytes'] ?? 0)) / 1024, 1, ',', '.') . ' KB' : 'nao incluido') . PHP_EOL;
             echo 'Sistema: ' . number_format(((int) ($manifest['system_files']['size_bytes'] ?? 0)) / 1024, 1, ',', '.') . ' KB' . PHP_EOL;
             break;
 
@@ -107,7 +108,7 @@ try {
 
         default:
             echo 'Uso:' . PHP_EOL;
-            echo '  php scripts/backup.php run [local|stage|production]' . PHP_EOL;
+            echo '  php scripts/backup.php run [local|stage|production] [--no-uploads]' . PHP_EOL;
             echo '  php scripts/backup.php status' . PHP_EOL;
             echo '  php scripts/backup.php verify [backup_id|latest]' . PHP_EOL;
             echo '  php scripts/backup.php mark-uploaded [backup_id|latest]' . PHP_EOL;

@@ -105,7 +105,8 @@ final class BackupToolsController
             switch ($action) {
                 case 'run':
                     $profile = strtolower(trim((string) ($_POST['profile'] ?? 'local')));
-                    $manifest = $service->run($profile, $this->normalizeProgressId($_POST['progress_id'] ?? null));
+                    $includeUploads = in_array(strtolower(trim((string) ($_POST['include_uploads'] ?? '0'))), ['1', 'true', 'on', 'yes'], true);
+                    $manifest = $service->run($profile, $this->normalizeProgressId($_POST['progress_id'] ?? null), $includeUploads);
                     $cloudNotice = '';
 
                     if ($this->cloudService()->autoUploadEnabled()) {
@@ -117,7 +118,12 @@ final class BackupToolsController
                         }
                     }
 
-                    $successMessage = sprintf('Backup completo %s concluido com sucesso.%s', (string) ($manifest['backup_id'] ?? ''), $cloudNotice);
+                    $successMessage = sprintf(
+                        'Backup %s %s concluido com sucesso.%s',
+                        (string) ($manifest['backup_id'] ?? ''),
+                        $includeUploads ? 'com uploads' : 'sem uploads',
+                        $cloudNotice
+                    );
                     break;
 
                 case 'verify':

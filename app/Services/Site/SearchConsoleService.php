@@ -46,6 +46,15 @@ final class SearchConsoleService
             ],
             'critical_urls' => [],
             'non_indexed_posts' => [],
+            'non_indexed_posts_cache' => [
+                'mode' => 'not_loaded',
+                'cached_count' => 0,
+                'stale_count' => 0,
+                'missing_count' => 0,
+                'oldest_cached_at' => null,
+                'newest_cached_at' => null,
+                'ttl_seconds' => self::NON_INDEXED_POSTS_CACHE_TTL,
+            ],
             'inspection' => [
                 'requested_url' => $inspectionUrl,
                 'result' => null,
@@ -73,6 +82,15 @@ final class SearchConsoleService
                 if ($cached !== null) {
                     return $cached;
                 }
+            }
+
+            if ($activeSection === 'inspecao' && !$forceRefresh && ($inspectionUrl === null || $inspectionUrl === '')) {
+                $nonIndexedPosts = $this->fetchNonIndexedPostsFromCacheOnly($siteUrl);
+                $data['non_indexed_posts'] = $nonIndexedPosts['items'];
+                $data['non_indexed_posts_cache'] = $nonIndexedPosts['cache'];
+                $data['token_status'] = 'Cache local';
+
+                return $data;
             }
 
             $accessToken = $this->fetchAccessToken();
@@ -112,7 +130,9 @@ final class SearchConsoleService
             }
 
             if ($activeSection === 'inspecao') {
-                $data['non_indexed_posts'] = $this->fetchNonIndexedPosts($accessToken, $siteUrl);
+                $nonIndexedPosts = $this->fetchNonIndexedPosts($accessToken, $siteUrl, $forceRefresh);
+                $data['non_indexed_posts'] = $nonIndexedPosts['items'];
+                $data['non_indexed_posts_cache'] = $nonIndexedPosts['cache'];
             }
 
             if ($activeSection === 'inspecao' && $inspectionUrl !== null && $inspectionUrl !== '') {
@@ -429,13 +449,27 @@ final class SearchConsoleService
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array{items: array<int, array<string, mixed>>, cache: array<string, mixed>}
      */
-    private function fetchNonIndexedPosts(string $accessToken, string $siteUrl): array
+    private function fetchNonIndexedPosts(string $accessToken, string $siteUrl, bool $forceRefresh = false): array
     {
+        $cacheMeta = [
+            'mode' => $forceRefresh ? 'refreshed' : 'cache',
+            'cached_count' => 0,
+            'stale_count' => 0,
+            'missing_count' => 0,
+            'oldest_cached_at' => null,
+            'newest_cached_at' => null,
+            'ttl_seconds' => self::NON_INDEXED_POSTS_CACHE_TTL,
+        ];
         $targets = $this->nonIndexedPostsList($siteUrl);
         if ($targets === []) {
-            return [];
+            $cacheMeta['mode'] = 'empty';
+
+            return [
+                'items' => [],
+                'cache' => $cacheMeta,
+            ];
         }
 
         $cache = $this->loadNonIndexedPostsCache();
@@ -454,17 +488,41 @@ final class SearchConsoleService
 
             if ($cached !== null) {
                 $cachedAt = (int) ($cached['cached_at'] ?? 0);
-                if ($cachedAt > 0 && ($now - $cachedAt) <= self::NON_INDEXED_POSTS_CACHE_TTL && is_array($cached['result'] ?? null)) {
+                if ($cachedAt > 0 && is_array($cached['result'] ?? null)) {
+                    $cacheMeta['cached_count']++;
+                    $cacheMeta['oldest_cached_at'] = $cacheMeta['oldest_cached_at'] === null
+                        ? $cachedAt
+                        : min((int) $cacheMeta['oldest_cached_at'], $cachedAt);
+                    $cacheMeta['newest_cached_at'] = $cacheMeta['newest_cached_at'] === null
+                        ? $cachedAt
+                        : max((int) $cacheMeta['newest_cached_at'], $cachedAt);
+
+                    if (($now - $cachedAt) > self::NON_INDEXED_POSTS_CACHE_TTL) {
+                        $cacheMeta['stale_count']++;
+                    }
+                }
+
+                if (!$forceRefresh && $cachedAt > 0 && is_array($cached['result'] ?? null)) {
                     $inspection = $cached['result'];
                 }
             }
 
-            if ($inspection === null) {
+            if ($inspection === null && $forceRefresh) {
                 $inspection = $this->inspectUrl($accessToken, $siteUrl, $url);
                 $updatedCache[$url] = [
                     'cached_at' => $now,
                     'result' => $inspection,
                 ];
+                $cacheMeta['cached_count']++;
+                $cacheMeta['newest_cached_at'] = $now;
+                $cacheMeta['oldest_cached_at'] = $cacheMeta['oldest_cached_at'] === null
+                    ? $now
+                    : min((int) $cacheMeta['oldest_cached_at'], $now);
+            }
+
+            if ($inspection === null) {
+                $cacheMeta['missing_count']++;
+                continue;
             }
 
             if ($this->isIndexedInspection($inspection)) {
@@ -481,11 +539,104 @@ final class SearchConsoleService
             ];
         }
 
-        if ($updatedCache !== $cache) {
+        if ($forceRefresh && $updatedCache !== $cache) {
             $this->persistNonIndexedPostsCache($updatedCache);
+            $cacheMeta['cached_count'] = count($targets);
+            $cacheMeta['stale_count'] = 0;
+            $cacheMeta['missing_count'] = 0;
+            $cacheMeta['mode'] = 'refreshed';
+        } elseif ($cacheMeta['cached_count'] === 0) {
+            $cacheMeta['mode'] = 'empty';
+        } elseif ($cacheMeta['stale_count'] > 0 || $cacheMeta['missing_count'] > 0) {
+            $cacheMeta['mode'] = 'stale';
         }
 
-        return $results;
+        if (is_int($cacheMeta['oldest_cached_at'])) {
+            $cacheMeta['oldest_cached_at'] = date('d/m/Y H:i', $cacheMeta['oldest_cached_at']);
+        }
+
+        if (is_int($cacheMeta['newest_cached_at'])) {
+            $cacheMeta['newest_cached_at'] = date('d/m/Y H:i', $cacheMeta['newest_cached_at']);
+        }
+
+        return [
+            'items' => $results,
+            'cache' => $cacheMeta,
+        ];
+    }
+
+    /**
+     * @return array{items: array<int, array<string, mixed>>, cache: array<string, mixed>}
+     */
+    private function fetchNonIndexedPostsFromCacheOnly(string $siteUrl): array
+    {
+        $base = rtrim($siteUrl, '/');
+        $cache = $this->loadNonIndexedPostsCache();
+        $now = time();
+        $results = [];
+        $cachedCount = 0;
+        $staleCount = 0;
+        $oldestCachedAt = null;
+        $newestCachedAt = null;
+
+        foreach ($cache as $url => $cached) {
+            if (!is_string($url) || ($base !== '' && !str_starts_with($url, $base . '/post/'))) {
+                continue;
+            }
+
+            if (!is_array($cached) || !is_array($cached['result'] ?? null)) {
+                continue;
+            }
+
+            $cachedAt = (int) ($cached['cached_at'] ?? 0);
+            if ($cachedAt <= 0) {
+                continue;
+            }
+
+            $cachedCount++;
+            $oldestCachedAt = $oldestCachedAt === null ? $cachedAt : min($oldestCachedAt, $cachedAt);
+            $newestCachedAt = $newestCachedAt === null ? $cachedAt : max($newestCachedAt, $cachedAt);
+
+            if (($now - $cachedAt) > self::NON_INDEXED_POSTS_CACHE_TTL) {
+                $staleCount++;
+            }
+
+            $inspection = $cached['result'];
+            if ($this->isIndexedInspection($inspection)) {
+                continue;
+            }
+
+            $path = (string) parse_url($url, PHP_URL_PATH);
+            $slug = trim((string) preg_replace('#^/post/#', '', $path), '/');
+
+            $results[] = [
+                'label' => $slug !== '' ? rawurldecode($slug) : $url,
+                'url' => $url,
+                'lastmod' => '',
+                'result' => $inspection,
+                'reason' => $this->inspectionReason($inspection),
+                'tone' => $this->inspectionTone($inspection),
+            ];
+
+            if (count($results) >= self::NON_INDEXED_POSTS_LIMIT) {
+                break;
+            }
+        }
+
+        $cacheMeta = [
+            'mode' => $cachedCount === 0 ? 'empty' : ($staleCount > 0 ? 'stale' : 'cache'),
+            'cached_count' => $cachedCount,
+            'stale_count' => $staleCount,
+            'missing_count' => 0,
+            'oldest_cached_at' => $oldestCachedAt !== null ? date('d/m/Y H:i', $oldestCachedAt) : null,
+            'newest_cached_at' => $newestCachedAt !== null ? date('d/m/Y H:i', $newestCachedAt) : null,
+            'ttl_seconds' => self::NON_INDEXED_POSTS_CACHE_TTL,
+        ];
+
+        return [
+            'items' => $results,
+            'cache' => $cacheMeta,
+        ];
     }
 
     /**

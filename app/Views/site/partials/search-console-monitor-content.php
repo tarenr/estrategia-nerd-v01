@@ -19,6 +19,7 @@ $topQueries = array_values((array) ($performance['top_queries'] ?? []));
 $topPages = array_values((array) ($performance['top_pages'] ?? []));
 $criticalUrls = array_values((array) ($searchConsole['critical_urls'] ?? []));
 $nonIndexedPosts = array_values((array) ($searchConsole['non_indexed_posts'] ?? []));
+$nonIndexedPostsCache = is_array($searchConsole['non_indexed_posts_cache'] ?? null) ? $searchConsole['non_indexed_posts_cache'] : [];
 $inspection = is_array($searchConsole['inspection'] ?? null) ? $searchConsole['inspection'] : [];
 $inspectionResult = is_array($inspection['result'] ?? null) ? $inspection['result'] : null;
 $screenError = trim((string) ($searchConsole['error'] ?? ''));
@@ -28,10 +29,19 @@ $cacheHit = (bool) ($cache['hit'] ?? false);
 $cacheForcedRefresh = (bool) ($cache['forced_refresh'] ?? false);
 $cacheCachedAt = trim((string) ($cache['cached_at'] ?? ''));
 $cacheExpiresAt = trim((string) ($cache['expires_at'] ?? ''));
+$monitorBasePath = parse_url($monitorBaseUrl, PHP_URL_PATH);
+$monitorBaseQuery = parse_url($monitorBaseUrl, PHP_URL_QUERY);
+$usesPrettyMonitorSections = is_string($monitorBasePath)
+    && str_contains($monitorBasePath, '/seo-tecnico')
+    && ($monitorBaseQuery === null || $monitorBaseQuery === false || $monitorBaseQuery === '');
 
-$sectionUrl = static function (string $section, array $extra = []) use ($monitorBaseUrl): string {
-    $separator = str_contains($monitorBaseUrl, '?') ? '&' : '?';
-    $url = $monitorBaseUrl . $separator . 'monitor_secao=' . rawurlencode($section);
+$sectionUrl = static function (string $section, array $extra = []) use ($monitorBaseUrl, $usesPrettyMonitorSections): string {
+    if ($usesPrettyMonitorSections) {
+        $url = rtrim($monitorBaseUrl, '/') . '/' . rawurlencode($section);
+    } else {
+        $separator = str_contains($monitorBaseUrl, '?') ? '&' : '?';
+        $url = $monitorBaseUrl . $separator . 'monitor_secao=' . rawurlencode($section);
+    }
 
     foreach ($extra as $key => $value) {
         if ($value === null || $value === '') {
@@ -61,6 +71,67 @@ $metricTile = static function (string $label, string $value): string {
         . '<span class="mt-1 block text-base font-bold text-slate-100">' . htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</span>'
         . '</span>';
 };
+
+$inspectionLabel = static function (string $field, mixed $value): string {
+    $raw = trim((string) $value);
+    if ($raw === '') {
+        return match ($field) {
+            'last_crawl_time' => 'Sem rastreamento registrado',
+            'canonical' => 'Nao informado',
+            default => 'Ainda sem dado retornado',
+        };
+    }
+
+    $key = strtoupper($raw);
+
+    return match ($field) {
+        'verdict' => match ($key) {
+            'PASS' => 'Indexado',
+            'FAIL' => 'Com problema',
+            'PARTIAL' => 'Parcial',
+            'NEUTRAL' => 'Neutro',
+            default => $raw,
+        },
+        'indexing_state' => match ($key) {
+            'INDEXING_ALLOWED' => 'Indexacao permitida',
+            'BLOCKED_BY_META_TAG' => 'Bloqueado por meta tag',
+            'BLOCKED_BY_HTTP_HEADER' => 'Bloqueado por cabecalho HTTP',
+            'BLOCKED_BY_ROBOTS_TXT' => 'Bloqueado pelo robots.txt',
+            'INDEXING_STATE_UNSPECIFIED' => 'Ainda sem estado de indexacao definido',
+            default => $raw,
+        },
+        'robots_txt_state' => match ($key) {
+            'ALLOWED' => 'Permitido pelo robots.txt',
+            'DISALLOWED' => 'Bloqueado pelo robots.txt',
+            'ROBOTS_TXT_STATE_UNSPECIFIED' => 'Ainda sem leitura de robots.txt',
+            default => $raw,
+        },
+        'page_fetch_state' => match ($key) {
+            'SUCCESSFUL' => 'Busca da pagina concluida',
+            'SOFT_404' => 'Google interpretou como soft 404',
+            'BLOCKED_ROBOTS_TXT' => 'Busca bloqueada pelo robots.txt',
+            'NOT_FOUND' => 'Pagina nao encontrada',
+            'ACCESS_DENIED' => 'Acesso negado ao Google',
+            'SERVER_ERROR' => 'Erro do servidor ao buscar',
+            'REDIRECT_ERROR' => 'Erro de redirecionamento',
+            'PAGE_FETCH_STATE_UNSPECIFIED' => 'Ainda sem tentativa de busca registrada',
+            default => $raw,
+        },
+        'coverage_state' => match (true) {
+            str_contains(strtolower($raw), 'google nao reconhece')
+                || str_contains(strtolower($raw), 'google não reconhece')
+                || str_contains(strtolower($raw), 'unknown to google') => 'O Google ainda nao reconhece esta URL',
+            str_contains(strtolower($raw), 'detectad')
+                && (str_contains(strtolower($raw), 'nao indexad') || str_contains(strtolower($raw), 'não indexad')) => 'Detectada, mas ainda nao indexada',
+            str_contains(strtolower($raw), 'rastreada')
+                && (str_contains(strtolower($raw), 'nao indexad') || str_contains(strtolower($raw), 'não indexad')) => 'Rastreada, mas ainda nao indexada',
+            str_contains(strtolower($raw), 'indexad') => $raw,
+            default => $raw,
+        },
+        default => $raw,
+    };
+};
+
 ?>
 <section data-search-console-panel class="space-y-6">
   <?php if ($screenError !== ''): ?>
@@ -184,17 +255,17 @@ $metricTile = static function (string $label, string $value): string {
                   <div class="text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                   <div class="mt-1 text-[13px] uppercase tracking-[0.18em] text-slate-500"><?= htmlspecialchars((string) ($item['source'] ?? 'site'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
-                <?= $pill((string) ($result['verdict'] ?? 'Sem verdict'), $tone) ?>
+                <?= $pill($inspectionLabel('verdict', $result['verdict'] ?? ''), $tone) ?>
               </div>
               <div class="mt-3 break-all text-base font-medium text-slate-300"><?= htmlspecialchars((string) ($item['url'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
               <div class="mt-4 grid gap-3 text-[15px] text-slate-300 md:grid-cols-2">
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
                   <div class="text-[13px] text-slate-500">Coverage</div>
-                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($result['coverage_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars($inspectionLabel('coverage_state', $result['coverage_state'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
                   <div class="text-[13px] text-slate-500">Indexing</div>
-                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($result['indexing_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars($inspectionLabel('indexing_state', $result['indexing_state'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3 md:col-span-2">
                   <div class="text-[13px] text-slate-500">Google canonical</div>
@@ -202,11 +273,11 @@ $metricTile = static function (string $label, string $value): string {
                 </div>
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
                   <div class="text-[13px] text-slate-500">Ultimo crawl</div>
-                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($result['last_crawl_time'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars($inspectionLabel('last_crawl_time', $result['last_crawl_time'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
                 <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-3">
                   <div class="text-[13px] text-slate-500">Robots.txt</div>
-                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars((string) ($result['robots_txt_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                  <div class="mt-1 text-base font-semibold text-slate-100"><?= htmlspecialchars($inspectionLabel('robots_txt_state', $result['robots_txt_state'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 </div>
               </div>
               <div class="mt-4">
@@ -273,8 +344,10 @@ $metricTile = static function (string $label, string $value): string {
     </div>
 
     <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-      <form method="GET" action="<?= htmlspecialchars($monitorBaseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="space-y-4" data-monitor-inspection-form="true">
-        <input type="hidden" name="monitor_secao" value="inspecao">
+      <form method="GET" action="<?= htmlspecialchars($sectionUrl('inspecao'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="space-y-4" data-monitor-inspection-form="true">
+        <?php if (!$usesPrettyMonitorSections): ?>
+          <input type="hidden" name="monitor_secao" value="inspecao">
+        <?php endif; ?>
         <div>
           <label for="inspection-url" class="block text-sm font-semibold text-slate-200">URL para inspecionar</label>
           <input id="inspection-url" name="inspection_url" type="url" required value="<?= htmlspecialchars($inspectionUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" placeholder="https://estrategianerd.com.br/" class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20">
@@ -295,8 +368,35 @@ $metricTile = static function (string $label, string $value): string {
         <?= $pill(count($nonIndexedPosts) . ' URLs', $nonIndexedPosts === [] ? 'ok' : 'warn') ?>
       </div>
 
+      <?php
+        $nonIndexedCacheMode = (string) ($nonIndexedPostsCache['mode'] ?? 'not_loaded');
+        $nonIndexedCacheLabel = match ($nonIndexedCacheMode) {
+            'refreshed' => 'Analise atualizada agora',
+            'stale' => 'Exibindo ultimo cache disponivel',
+            'empty' => 'Sem cache de analise',
+            default => 'Cache da analise',
+        };
+        $nonIndexedCacheTone = $nonIndexedCacheMode === 'refreshed' ? 'ok' : ($nonIndexedCacheMode === 'empty' ? 'warn' : 'default');
+        $nonIndexedCacheDate = trim((string) ($nonIndexedPostsCache['newest_cached_at'] ?? ''));
+      ?>
+      <div class="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">
+        <div>
+          <strong class="text-slate-100"><?= htmlspecialchars($nonIndexedCacheLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong>
+          <?php if ($nonIndexedCacheDate !== ''): ?>
+            <span class="ml-2 text-slate-400">Ultima leitura: <?= htmlspecialchars($nonIndexedCacheDate, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+          <?php endif; ?>
+          <?php if ((int) ($nonIndexedPostsCache['missing_count'] ?? 0) > 0): ?>
+            <span class="ml-2 text-amber-200"><?= (int) $nonIndexedPostsCache['missing_count'] ?> URLs sem cache.</span>
+          <?php endif; ?>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <?= $pill((int) ($nonIndexedPostsCache['cached_count'] ?? 0) . ' em cache', $nonIndexedCacheTone) ?>
+          <a href="<?= htmlspecialchars($sectionUrl('inspecao', ['search_console_refresh' => '1']), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Atualizar analise</a>
+        </div>
+      </div>
+
       <?php if ($nonIndexedPosts === []): ?>
-        <div class="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">Nenhum post nao indexado apareceu no lote recente inspecionado pela API.</div>
+        <div class="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">Nenhum post nao indexado apareceu no cache atual. Use Atualizar analise para consultar novamente o Google.</div>
       <?php else: ?>
         <div class="mt-5 overflow-x-auto">
           <table class="min-w-full divide-y divide-slate-800 text-sm">
@@ -322,15 +422,15 @@ $metricTile = static function (string $label, string $value): string {
                   </td>
                   <td class="px-4 py-4 text-slate-300">
                     <div class="font-medium text-slate-100"><?= htmlspecialchars((string) ($item['reason'] ?? 'Motivo nao informado'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                    <div class="mt-1 text-xs text-slate-500">Coverage: <?= htmlspecialchars((string) ($result['coverage_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                    <div class="mt-1 text-xs text-slate-500">Coverage: <?= htmlspecialchars($inspectionLabel('coverage_state', $result['coverage_state'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                   </td>
                   <td class="px-4 py-4">
                     <div class="flex flex-wrap gap-2">
-                      <?= $pill((string) ($result['verdict'] ?? 'Sem verdict'), (string) ($item['tone'] ?? 'warn')) ?>
+                      <?= $pill($inspectionLabel('verdict', $result['verdict'] ?? ''), (string) ($item['tone'] ?? 'warn')) ?>
                     </div>
-                    <div class="mt-2 text-xs text-slate-400"><?= htmlspecialchars((string) ($result['indexing_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                    <div class="mt-2 text-xs text-slate-400"><?= htmlspecialchars($inspectionLabel('indexing_state', $result['indexing_state'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                   </td>
-                  <td class="px-4 py-4 text-slate-300"><?= htmlspecialchars((string) ($result['last_crawl_time'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                  <td class="px-4 py-4 text-slate-300"><?= htmlspecialchars($inspectionLabel('last_crawl_time', $result['last_crawl_time'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                   <td class="px-4 py-4">
                     <a href="<?= htmlspecialchars($sectionUrl('inspecao', ['inspection_url' => (string) ($item['url'] ?? '')]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Inspecionar</a>
                   </td>
@@ -346,13 +446,13 @@ $metricTile = static function (string $label, string $value): string {
       <div class="grid gap-6 xl:grid-cols-2">
         <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
           <p class="font-orbitron text-xs uppercase tracking-[0.25em] text-cyan-300/80">Status indexado</p>
-          <h3 class="mt-2 font-orbitron text-xl font-bold text-white"><?= htmlspecialchars((string) ($inspectionResult['verdict'] ?? 'Sem verdict'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h3>
+          <h3 class="mt-2 font-orbitron text-xl font-bold text-white"><?= htmlspecialchars($inspectionLabel('verdict', $inspectionResult['verdict'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h3>
           <div class="mt-5 space-y-3 text-sm text-slate-300">
-            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">Coverage state: <strong class="text-slate-100"><?= htmlspecialchars((string) ($inspectionResult['coverage_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></div>
-            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">Indexing state: <strong class="text-slate-100"><?= htmlspecialchars((string) ($inspectionResult['indexing_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></div>
-            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">Robots.txt: <strong class="text-slate-100"><?= htmlspecialchars((string) ($inspectionResult['robots_txt_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></div>
-            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">Page fetch: <strong class="text-slate-100"><?= htmlspecialchars((string) ($inspectionResult['page_fetch_state'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></div>
-            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">Ultimo crawl: <strong class="text-slate-100"><?= htmlspecialchars((string) ($inspectionResult['last_crawl_time'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">Cobertura: <strong class="text-slate-100"><?= htmlspecialchars($inspectionLabel('coverage_state', $inspectionResult['coverage_state'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">Indexacao: <strong class="text-slate-100"><?= htmlspecialchars($inspectionLabel('indexing_state', $inspectionResult['indexing_state'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">Robots.txt: <strong class="text-slate-100"><?= htmlspecialchars($inspectionLabel('robots_txt_state', $inspectionResult['robots_txt_state'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">Busca da pagina: <strong class="text-slate-100"><?= htmlspecialchars($inspectionLabel('page_fetch_state', $inspectionResult['page_fetch_state'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">Ultimo crawl: <strong class="text-slate-100"><?= htmlspecialchars($inspectionLabel('last_crawl_time', $inspectionResult['last_crawl_time'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong></div>
           </div>
         </div>
 
@@ -361,11 +461,11 @@ $metricTile = static function (string $label, string $value): string {
           <div class="mt-5 space-y-3 text-sm text-slate-300">
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <div class="text-slate-500">Google canonical</div>
-              <div class="mt-2 break-all text-slate-100"><?= htmlspecialchars((string) ($inspectionResult['google_canonical'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <div class="mt-2 break-all text-slate-100"><?= htmlspecialchars($inspectionLabel('canonical', $inspectionResult['google_canonical'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
             </div>
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <div class="text-slate-500">User canonical</div>
-              <div class="mt-2 break-all text-slate-100"><?= htmlspecialchars((string) ($inspectionResult['user_canonical'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+              <div class="mt-2 break-all text-slate-100"><?= htmlspecialchars($inspectionLabel('canonical', $inspectionResult['user_canonical'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
             </div>
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <div class="text-slate-500">Sitemaps</div>

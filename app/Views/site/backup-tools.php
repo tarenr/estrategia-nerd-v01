@@ -13,8 +13,17 @@ $flashClass = $flash !== null
 $backupSection = (string) ($backup_section ?? 'resumo');
 $backupSections = is_array($backup_sections ?? null) ? $backup_sections : [];
 $backupBaseUrl = (string) ($backup_base_url ?? ($adminEmbed ? url('/admin/central-operacional?aba=backup-restore') : url('/local/backup')));
+$backupBasePath = parse_url($backupBaseUrl, PHP_URL_PATH);
+$backupBaseQuery = parse_url($backupBaseUrl, PHP_URL_QUERY);
+$usesPrettyBackupSections = is_string($backupBasePath)
+    && str_contains($backupBasePath, '/central-operacional-v2/backup-sistemico')
+    && ($backupBaseQuery === null || $backupBaseQuery === false || $backupBaseQuery === '');
 
-$sectionUrl = static function (string $section) use ($backupBaseUrl): string {
+$sectionUrl = static function (string $section) use ($backupBaseUrl, $usesPrettyBackupSections): string {
+    if ($usesPrettyBackupSections) {
+        return rtrim($backupBaseUrl, '/') . '/' . rawurlencode($section);
+    }
+
     $separator = str_contains($backupBaseUrl, '?') ? '&' : '?';
 
     return $backupBaseUrl . $separator . 'backup_secao=' . rawurlencode($section);
@@ -215,8 +224,19 @@ $sectionUrl = static function (string $section) use ($backupBaseUrl): string {
       };
 
       const activateLink = (url) => {
+        const sectionFromUrl = (value) => {
+          const current = new URL(value, window.location.origin);
+          const byQuery = current.searchParams.get('backup_secao');
+          if (byQuery) return byQuery;
+          const marker = '/backup-sistemico/';
+          if (current.pathname.includes(marker)) {
+            return decodeURIComponent(current.pathname.slice(current.pathname.indexOf(marker) + marker.length).split('/')[0] || 'resumo');
+          }
+          return 'resumo';
+        };
+        const activeSection = sectionFromUrl(url);
         links.forEach((link) => {
-          const isActive = link.href === url;
+          const isActive = sectionFromUrl(link.href) === activeSection;
           link.classList.toggle('border-cyan-300/70', isActive);
           link.classList.toggle('bg-cyan-500/15', isActive);
           link.classList.toggle('text-cyan-100', isActive);

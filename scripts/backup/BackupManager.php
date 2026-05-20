@@ -45,7 +45,7 @@ final class BackupManager
         $this->logger = new OperationLogger($this->operationRoot());
     }
 
-    public function run(string $profileName = 'local', ?string $progressId = null): array
+    public function run(string $profileName = 'local', ?string $progressId = null, bool $includeUploads = true): array
     {
         $this->allowLongRunningProcess();
         $profile = $this->profile($profileName);
@@ -84,7 +84,8 @@ final class BackupManager
                 'profile_slug' => $profileSlug,
                 'created_at' => date('c'),
                 'status' => 'running',
-                'kind' => 'system_full',
+                'kind' => $includeUploads ? 'system_full' : 'system_without_uploads',
+                'includes_uploads' => $includeUploads,
                 'cloud_uploaded' => false,
                 'cloud_uploaded_at' => null,
                 'database' => null,
@@ -99,15 +100,26 @@ final class BackupManager
             $this->backupDatabase((array) ($profile['database'] ?? []), $databasePath);
             $manifest['database'] = $this->fileDetails($databasePath, 'database.sql');
 
-            $uploadsZipPath = $backupDir . DIRECTORY_SEPARATOR . 'uploads.zip';
-            $this->updateProgress($progressId, 'Coletando uploads', sprintf('Preparando a arvore de uploads do ambiente %s.', $profileLabel), 44);
-            $temporaryDirectory = $this->materializeUploads((array) ($profile['uploads'] ?? []));
-            $this->updateProgress($progressId, 'Compactando uploads', 'Gerando uploads.zip para fechar o backup de ambiente.', 64);
-            $this->compressDirectory($temporaryDirectory, $uploadsZipPath);
-            $manifest['uploads'] = $this->fileDetails($uploadsZipPath, 'uploads.zip');
-            if ($temporaryDirectory !== '' && str_contains($temporaryDirectory, sys_get_temp_dir())) {
-                $this->removeDirectory($temporaryDirectory);
-                $temporaryDirectory = '';
+            if ($includeUploads) {
+                $uploadsZipPath = $backupDir . DIRECTORY_SEPARATOR . 'uploads.zip';
+                $this->updateProgress($progressId, 'Coletando uploads', sprintf('Preparando a arvore de uploads do ambiente %s.', $profileLabel), 44);
+                $temporaryDirectory = $this->materializeUploads((array) ($profile['uploads'] ?? []));
+                $this->updateProgress($progressId, 'Compactando uploads', 'Gerando uploads.zip para fechar o backup de ambiente.', 64);
+                $this->compressDirectory($temporaryDirectory, $uploadsZipPath);
+                $manifest['uploads'] = $this->fileDetails($uploadsZipPath, 'uploads.zip');
+                if ($temporaryDirectory !== '' && str_contains($temporaryDirectory, sys_get_temp_dir())) {
+                    $this->removeDirectory($temporaryDirectory);
+                    $temporaryDirectory = '';
+                }
+            } else {
+                $manifest['uploads'] = [
+                    'included' => false,
+                    'name' => null,
+                    'size_bytes' => 0,
+                    'sha256' => null,
+                    'message' => 'Uploads ignorados por escolha da rotina.',
+                ];
+                $this->updateProgress($progressId, 'Pulando uploads', 'Backup configurado para gerar somente banco e sistema.', 64);
             }
 
             $systemFilesZipPath = $backupDir . DIRECTORY_SEPARATOR . 'system-files.zip';
@@ -124,7 +136,7 @@ final class BackupManager
             $this->writeManifest($backupDir, $manifest);
             $this->updateProgress($progressId, 'Aplicando retencao', 'Limpando backups excedentes conforme a politica de retencao.', 94);
             $this->applyRetention($profileName);
-            $this->logOperation('backup_dados', $profileName, $profileName, (string) $backupId, 'OK', 'Backup completo do sistema concluido.');
+            $this->logOperation('backup_dados', $profileName, $profileName, (string) $backupId, 'OK', $includeUploads ? 'Backup completo do sistema concluido.' : 'Backup do sistema sem uploads concluido.');
 
             $this->writeProgress($progressId, [
                 'status' => 'completed',
@@ -181,18 +193,8 @@ final class BackupManager
                     continue;
                 }
 
-                $manifest['verification'] = [
-                    'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
-                    'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
-                    'system_files' => $this->verifyEntry((array) ($manifest['system_files'] ?? []), $directory),
-                ];
-                $manifest['is_valid'] =
-                    (bool) ($manifest['verification']['database']['valid'] ?? false)
-                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false)
-                    && (
-                        !array_key_exists('system_files', $manifest)
-                        || (bool) ($manifest['verification']['system_files']['valid'] ?? false)
-                    );
+                $manifest['verification'] = $this->verifyBackupManifest($manifest, $directory);
+                $manifest['is_valid'] = $this->backupVerificationIsValid($manifest, $manifest['verification']);
             }
             unset($manifest);
         }
@@ -362,17 +364,18 @@ final class BackupManager
 
         $this->updateProgress($progressId, 'Verificando banco', sprintf('Conferindo o manifesto e o arquivo SQL do backup %s.', $resolvedBackupId), 36);
         $backup['database_verification'] = $this->verifyEntry((array) ($backup['database'] ?? []), (string) $backup['_dir']);
-        $this->updateProgress($progressId, 'Verificando uploads', 'Conferindo uploads.zip e seus checksums.', 58);
-        $backup['uploads_verification'] = $this->verifyEntry((array) ($backup['uploads'] ?? []), (string) $backup['_dir']);
+        $hasUploads = $this->backupIncludesUploads($backup);
+        $this->updateProgress($progressId, $hasUploads ? 'Verificando uploads' : 'Uploads ignorados', $hasUploads ? 'Conferindo uploads.zip e seus checksums.' : 'Este backup foi gerado sem uploads.zip.', 58);
+        $backup['uploads_verification'] = $hasUploads
+            ? $this->verifyEntry((array) ($backup['uploads'] ?? []), (string) $backup['_dir'])
+            : $this->skippedVerification('Uploads nao incluidos neste backup.');
         $this->updateProgress($progressId, 'Verificando sistema', 'Conferindo system-files.zip e seu checksum.', 78);
         $backup['system_files_verification'] = $this->verifyEntry((array) ($backup['system_files'] ?? []), (string) $backup['_dir']);
-        $backup['is_valid'] =
-            ($backup['database_verification']['valid'] ?? false)
-            && ($backup['uploads_verification']['valid'] ?? false)
-            && (
-                !array_key_exists('system_files', $backup)
-                || ($backup['system_files_verification']['valid'] ?? false)
-            );
+        $backup['is_valid'] = $this->backupVerificationIsValid($backup, [
+            'database' => $backup['database_verification'],
+            'uploads' => $backup['uploads_verification'],
+            'system_files' => $backup['system_files_verification'],
+        ]);
         $this->logOperation('backup_verificacao', (string) ($backup['profile'] ?? 'local'), (string) ($backup['profile'] ?? 'local'), (string) ($backup['backup_id'] ?? ''), ($backup['is_valid'] ?? false) ? 'OK' : 'FAIL', 'Verificacao de backup executada.');
 
         $this->writeProgress($progressId, [
@@ -434,7 +437,7 @@ final class BackupManager
                 $restored[] = 'database';
             }
 
-            if ($scope === 'all' || $scope === 'uploads') {
+            if (($scope === 'all' || $scope === 'uploads') && $this->backupIncludesUploads($backup)) {
                 $uploadsFile = (string) (($backup['uploads']['name'] ?? '') ?: 'uploads.zip');
                 $zipPath = (string) $backup['_dir'] . DIRECTORY_SEPARATOR . $uploadsFile;
                 $this->updateProgress($progressId, 'Extraindo uploads', 'Descompactando uploads.zip do backup selecionado.', 62);
@@ -446,6 +449,8 @@ final class BackupManager
                     $this->removeDirectory($tmpDirectory);
                 }
                 $restored[] = 'uploads';
+            } elseif ($scope === 'uploads') {
+                throw new RuntimeException('Este backup foi gerado sem uploads.zip.');
             }
 
             if ($scope === 'all' || $scope === 'system_files') {
@@ -1540,18 +1545,8 @@ final class BackupManager
                     continue;
                 }
 
-                $manifest['verification'] = [
-                    'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
-                    'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
-                    'system_files' => $this->verifyEntry((array) ($manifest['system_files'] ?? []), $directory),
-                ];
-                $manifest['is_valid'] =
-                    (bool) ($manifest['verification']['database']['valid'] ?? false)
-                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false)
-                    && (
-                        !array_key_exists('system_files', $manifest)
-                        || (bool) ($manifest['verification']['system_files']['valid'] ?? false)
-                    );
+                $manifest['verification'] = $this->verifyBackupManifest($manifest, $directory);
+                $manifest['is_valid'] = $this->backupVerificationIsValid($manifest, $manifest['verification']);
             }
             unset($manifest);
         }
@@ -1603,6 +1598,50 @@ final class BackupManager
         }
 
         return ['valid' => true, 'message' => 'OK'];
+    }
+
+    private function verifyBackupManifest(array $manifest, string $directory): array
+    {
+        return [
+            'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
+            'uploads' => $this->backupIncludesUploads($manifest)
+                ? $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory)
+                : $this->skippedVerification('Uploads nao incluidos neste backup.'),
+            'system_files' => $this->verifyEntry((array) ($manifest['system_files'] ?? []), $directory),
+        ];
+    }
+
+    private function backupVerificationIsValid(array $manifest, array $verification): bool
+    {
+        $uploadsValid = $this->backupIncludesUploads($manifest)
+            ? (bool) ($verification['uploads']['valid'] ?? false)
+            : true;
+
+        return (bool) ($verification['database']['valid'] ?? false)
+            && $uploadsValid
+            && (
+                !array_key_exists('system_files', $manifest)
+                || (bool) ($verification['system_files']['valid'] ?? false)
+            );
+    }
+
+    private function backupIncludesUploads(array $manifest): bool
+    {
+        if (array_key_exists('includes_uploads', $manifest)) {
+            return (bool) $manifest['includes_uploads'];
+        }
+
+        $uploads = $manifest['uploads'] ?? null;
+        if (is_array($uploads) && array_key_exists('included', $uploads)) {
+            return (bool) $uploads['included'];
+        }
+
+        return is_array($uploads) && trim((string) ($uploads['name'] ?? '')) !== '';
+    }
+
+    private function skippedVerification(string $message): array
+    {
+        return ['valid' => true, 'skipped' => true, 'message' => $message];
     }
 
     private function applyRetention(string $profileName): void
@@ -1695,18 +1734,8 @@ final class BackupManager
 
             $manifest['_dir'] = $directory;
             if ($withVerification) {
-                $manifest['verification'] = [
-                    'database' => $this->verifyEntry((array) ($manifest['database'] ?? []), $directory),
-                    'uploads' => $this->verifyEntry((array) ($manifest['uploads'] ?? []), $directory),
-                    'system_files' => $this->verifyEntry((array) ($manifest['system_files'] ?? []), $directory),
-                ];
-                $manifest['is_valid'] =
-                    (bool) ($manifest['verification']['database']['valid'] ?? false)
-                    && (bool) ($manifest['verification']['uploads']['valid'] ?? false)
-                    && (
-                        !array_key_exists('system_files', $manifest)
-                        || (bool) ($manifest['verification']['system_files']['valid'] ?? false)
-                    );
+                $manifest['verification'] = $this->verifyBackupManifest($manifest, $directory);
+                $manifest['is_valid'] = $this->backupVerificationIsValid($manifest, $manifest['verification']);
             }
 
             $items[] = $manifest;
