@@ -12,6 +12,8 @@ $code = (array) ($operationsStatus['code'] ?? []);
 $technicalBackup = (array) ($operationsStatus['technical_backup'] ?? []);
 $parity = (array) ($operationsStatus['parity'] ?? []);
 $smokeTests = (array) ($operationsStatus['smoke_tests'] ?? []);
+$logsAvailable = (bool) ($operationsStatus['logs']['available'] ?? true);
+$logsUnavailableReason = (string) ($operationsStatus['logs']['unavailable_reason'] ?? '');
 $logCategories = is_array($operationsStatus['logs']['categories'] ?? null) ? $operationsStatus['logs']['categories'] : [];
 
 $productionGateOpen = (bool) ($policy['production_allowed'] ?? false);
@@ -429,6 +431,12 @@ $statusPill = static function (string $status) use ($pill): string {
       <h2 class="mt-2 font-orbitron text-3xl font-black tracking-tight text-white">Leitura operacional recente</h2>
       <p class="mt-3 max-w-4xl text-sm leading-7 text-slate-300">Cada grupo abaixo carrega so os ultimos eventos relevantes para a central. Isso ajuda a diagnosticar o que aconteceu sem pesar a entrada da pagina.</p>
     </div>
+
+    <?php if (!$logsAvailable): ?>
+      <div class="rounded-3xl border border-amber-400/30 bg-amber-500/10 p-5 text-sm font-semibold text-amber-100">
+        Logs operacionais indisponiveis: <?= htmlspecialchars($logsUnavailableReason !== '' ? $logsUnavailableReason : 'pasta operacional nao acessivel.', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+      </div>
+    <?php endif; ?>
 
     <div class="grid gap-6 xl:grid-cols-3">
       <?php foreach ($logCategories as $categoryKey => $category): ?>

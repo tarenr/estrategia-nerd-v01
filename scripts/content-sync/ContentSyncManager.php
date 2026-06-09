@@ -154,13 +154,30 @@ final class ContentSyncManager
 
     public function status(): array
     {
-        $root = $this->packageRoot();
+        try {
+            $root = $this->packageRoot();
+        } catch (RuntimeException $exception) {
+            return [
+                'package_root' => (string) ($this->config['package_root'] ?? ''),
+                'available' => false,
+                'unavailable_reason' => $exception->getMessage(),
+                'total_packages' => 0,
+                'latest' => null,
+                'latest_stage_apply' => null,
+                'latest_production_apply' => null,
+                'running' => null,
+                'items' => [],
+            ];
+        }
+
         $items = $this->allPackages();
         $latestStageApply = $this->latestAppliedTarget($items, 'stage');
         $latestProductionApply = $this->latestAppliedTarget($items, 'production');
 
         return [
             'package_root' => $root,
+            'available' => true,
+            'unavailable_reason' => '',
             'total_packages' => count($items),
             'latest' => $items[0] ?? null,
             'latest_stage_apply' => $latestStageApply,
@@ -172,13 +189,29 @@ final class ContentSyncManager
 
     public function codeStatus(): array
     {
-        $root = $this->codePackageRoot();
+        try {
+            $root = $this->codePackageRoot();
+        } catch (RuntimeException $exception) {
+            return [
+                'package_root' => (string) ($this->config['code_package_root'] ?? ''),
+                'available' => false,
+                'unavailable_reason' => $exception->getMessage(),
+                'total_packages' => 0,
+                'latest' => null,
+                'latest_stage_apply' => null,
+                'latest_production_apply' => null,
+                'items' => [],
+            ];
+        }
+
         $items = $this->allCodePackages();
         $latestStageApply = $this->latestAppliedTarget($items, 'stage');
         $latestProductionApply = $this->latestAppliedTarget($items, 'production');
 
         return [
             'package_root' => $root,
+            'available' => true,
+            'unavailable_reason' => '',
             'total_packages' => count($items),
             'latest' => $items[0] ?? null,
             'latest_stage_apply' => $latestStageApply,
@@ -1679,7 +1712,7 @@ final class ContentSyncManager
         if ($root === '') {
             throw new RuntimeException('CONTENT_SYNC_ROOT nao configurado.');
         }
-        if (!is_dir($root) && !mkdir($root, 0777, true) && !is_dir($root)) {
+        if (!is_dir($root) && !@mkdir($root, 0777, true) && !is_dir($root)) {
             throw new RuntimeException('Nao foi possivel criar a pasta raiz dos pacotes: ' . $root);
         }
         return $root;
@@ -1694,7 +1727,7 @@ final class ContentSyncManager
         }
 
         $root = $baseRoot . DIRECTORY_SEPARATOR . $directory . DIRECTORY_SEPARATOR . 'conteudo';
-        if (!is_dir($root) && !mkdir($root, 0777, true) && !is_dir($root)) {
+        if (!is_dir($root) && !@mkdir($root, 0777, true) && !is_dir($root)) {
             throw new RuntimeException('Nao foi possivel criar a pasta de conteudo do perfil: ' . $root);
         }
 
@@ -1722,7 +1755,7 @@ final class ContentSyncManager
         if ($root === '') {
             throw new RuntimeException('CONTENT_SYNC_CODE_ROOT nao configurado.');
         }
-        if (!is_dir($root) && !mkdir($root, 0777, true) && !is_dir($root)) {
+        if (!is_dir($root) && !@mkdir($root, 0777, true) && !is_dir($root)) {
             throw new RuntimeException('Nao foi possivel criar a pasta raiz dos pacotes de codigo: ' . $root);
         }
         return $root;

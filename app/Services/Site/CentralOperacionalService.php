@@ -327,6 +327,8 @@ final class CentralOperacionalService
     {
         return [
             'logs' => [
+                'available' => $this->operationLogger->isAvailable(),
+                'unavailable_reason' => (string) ($this->operationLogger->unavailableReason() ?? ''),
                 'categories' => [
                     'dados' => [
                         'label' => 'Backup de dados',

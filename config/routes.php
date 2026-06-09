@@ -85,6 +85,7 @@ return [
     ['GET',  '/admin/health',              [\App\Controllers\Admin\HealthCheckController::class, 'index'], ['auth', 'capability:multi_env_health']],
     ['GET',  '/admin/auditoria-geral',     [\App\Controllers\Admin\AuditController::class, 'index'], ['auth', 'capability:audit']],
     ['GET',  '/admin/testes',              [\App\Controllers\Admin\AutomatedTestsController::class, 'index'], ['auth', 'capability:operations']],
+    ['POST', '/admin/testes',              [\App\Controllers\Admin\AutomatedTestsController::class, 'run'], ['auth', 'capability:operations']],
     ['GET',  '/admin/base-tecnica',        [\App\Controllers\Admin\KnowledgeHubController::class, 'index'], ['auth', 'capability:docs']],
     ['GET',  '/admin/central-tecnica',     [\App\Controllers\Admin\TechnicalCenterController::class, 'index'], ['auth', 'capability:docs']],
     ['GET',  '/admin/central-tecnica/base-conhecimento', [\App\Controllers\Admin\TechnicalCenterController::class, 'baseConhecimento'], ['auth', 'capability:docs']],

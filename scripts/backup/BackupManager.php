@@ -177,7 +177,21 @@ final class BackupManager
 
     public function status(bool $withVerification = true, ?int $limit = null, int $offset = 0): array
     {
-        $backupRoot = $this->backupRoot();
+        try {
+            $backupRoot = $this->backupRoot();
+        } catch (RuntimeException $exception) {
+            return [
+                'backup_root' => (string) ($this->config['backup_root'] ?? ''),
+                'available' => false,
+                'unavailable_reason' => $exception->getMessage(),
+                'total_backups' => 0,
+                'latest' => null,
+                'latest_uploaded' => null,
+                'running' => null,
+                'items' => [],
+            ];
+        }
+
         $allItems = $this->allBackups(false);
         $totalBackups = count($allItems);
         $items = $allItems;
@@ -211,6 +225,8 @@ final class BackupManager
 
         return [
             'backup_root' => $backupRoot,
+            'available' => true,
+            'unavailable_reason' => '',
             'total_backups' => $totalBackups,
             'latest' => $latest,
             'latest_uploaded' => $latestUploaded,
@@ -682,7 +698,7 @@ final class BackupManager
             throw new RuntimeException('BACKUP_ROOT nao configurado.');
         }
 
-        if (!is_dir($root) && !mkdir($root, 0777, true) && !is_dir($root)) {
+        if (!is_dir($root) && !@mkdir($root, 0777, true) && !is_dir($root)) {
             throw new RuntimeException('Nao foi possivel criar a pasta raiz de backup: ' . $root);
         }
 
@@ -698,7 +714,7 @@ final class BackupManager
         }
 
         $root = $baseRoot . DIRECTORY_SEPARATOR . $directory . DIRECTORY_SEPARATOR . 'dados';
-        if (!is_dir($root) && !mkdir($root, 0777, true) && !is_dir($root)) {
+        if (!is_dir($root) && !@mkdir($root, 0777, true) && !is_dir($root)) {
             throw new RuntimeException('Nao foi possivel criar a pasta de dados do backup: ' . $root);
         }
 

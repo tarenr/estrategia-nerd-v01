@@ -28,6 +28,7 @@ final class OperationsV2Presenter
 
         $historyStatus = is_array($historyData['operations_status'] ?? null) ? $historyData['operations_status'] : [];
         $testsStatus = is_array($testsData['operations_status'] ?? null) ? $testsData['operations_status'] : [];
+        $logsMeta = is_array($historyStatus['logs'] ?? null) ? $historyStatus['logs'] : [];
         $logs = is_array($historyStatus['logs']['categories'] ?? null) ? $historyStatus['logs']['categories'] : [];
         $smoke = is_array($testsStatus['smoke_tests'] ?? null) ? $testsStatus['smoke_tests'] : [];
         $applicationLogs = $this->recentApplicationLogs(12);
@@ -79,7 +80,7 @@ final class OperationsV2Presenter
             'smoke_history' => $this->presentSmokeHistory($smokeHistory),
             'operation_logs' => $this->presentOperationLogCategories($logs),
             'application_logs' => $applicationLogs,
-            'alerts' => $this->observabilityAlerts($environments, $applicationLogs, $criticalCount),
+            'alerts' => $this->observabilityAlerts($environments, $applicationLogs, $criticalCount, $logsMeta),
         ];
     }
 
@@ -832,9 +833,17 @@ final class OperationsV2Presenter
      * @param array<int, array<string, string>> $applicationLogs
      * @return array<int, array<string, string>>
      */
-    private function observabilityAlerts(array $environments, array $applicationLogs, int $criticalCount): array
+    private function observabilityAlerts(array $environments, array $applicationLogs, int $criticalCount, array $logsMeta = []): array
     {
         $alerts = [];
+        if (array_key_exists('available', $logsMeta) && !(bool) ($logsMeta['available'] ?? true)) {
+            $alerts[] = [
+                'label' => 'Logs operacionais indisponiveis',
+                'text' => (string) ($logsMeta['unavailable_reason'] ?? 'Pasta operacional nao acessivel.'),
+                'tone' => 'warning',
+            ];
+        }
+
         foreach ($environments as $environment) {
             if (($environment['status'] ?? '') !== 'OK') {
                 $alerts[] = [

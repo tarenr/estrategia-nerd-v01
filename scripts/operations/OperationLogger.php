@@ -41,6 +41,8 @@ final class OperationLogger
         'promocao_conteudo' => self::CATEGORY_CONTENT,
     ];
 
+    private ?string $unavailableReason = null;
+
     public function __construct(private string $rootPath)
     {
         $this->ensureStructure();
@@ -67,10 +69,23 @@ final class OperationLogger
                 continue;
             }
 
-            if (!mkdir($directory, 0777, true) && !is_dir($directory)) {
-                throw new \RuntimeException('Nao foi possivel criar a pasta operacional: ' . $directory);
+            if (!@mkdir($directory, 0777, true) && !is_dir($directory)) {
+                $this->unavailableReason = 'Nao foi possivel criar a pasta operacional: ' . $directory;
+                return;
             }
         }
+
+        $this->unavailableReason = null;
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->unavailableReason === null;
+    }
+
+    public function unavailableReason(): ?string
+    {
+        return $this->unavailableReason;
     }
 
     /**
@@ -85,6 +100,11 @@ final class OperationLogger
         string $message,
         array $context = []
     ): void {
+        $this->ensureStructure();
+        if (!$this->isAvailable()) {
+            throw new \RuntimeException($this->unavailableReason ?? 'Log operacional indisponivel.');
+        }
+
         $line = sprintf(
             '[%s] tipo=%s origem=%s destino=%s id=%s status=%s msg="%s"',
             date('Y-m-d H:i:s'),
@@ -117,6 +137,10 @@ final class OperationLogger
      */
     public function recentEntries(int $limit = 20, ?string $category = null): array
     {
+        if (!$this->isAvailable()) {
+            return [];
+        }
+
         $limit = max(1, $limit);
         $entries = [];
 
@@ -144,6 +168,10 @@ final class OperationLogger
 
     public function latestLogFile(?string $category = null): ?string
     {
+        if (!$this->isAvailable()) {
+            return null;
+        }
+
         $files = $this->logFiles($category);
         if ($files === []) {
             return null;
