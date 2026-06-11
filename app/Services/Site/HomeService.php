@@ -71,7 +71,7 @@ final class HomeService
                 'descriptor' => "Tecnologia, games, gadgets e cultura geek para descobrir, comparar e decidir melhor",
                 'description' => "O Estrat\u{00E9}gia Nerd re\u{00FA}ne reviews, comparativos, dicas pr\u{00E1}ticas, listas e ofertas para quem quer montar setup melhor, cortar ru\u{00ED}do e acertar no pr\u{00F3}ximo clique.",
                 'primary_cta' => [
-                    'href' => site_section_visible_on_home('blog') ? rtrim(url('/'), '/') . '#blog' : url('/blog'),
+                    'href' => site_section_visible_on_home('blog') ? rtrim(url('/'), '/') . '/#blog' : url('/blog'),
                     'label' => "Explorar o blog",
                 ],
                 'secondary_cta' => $this->buildSecondaryCta(),
@@ -224,7 +224,7 @@ final class HomeService
         $links = [
             [
                 'label' => 'blog',
-                'url' => site_section_visible_on_home('blog') ? rtrim(url('/'), '/') . '#blog' : url('/blog'),
+                'url' => site_section_visible_on_home('blog') ? rtrim(url('/'), '/') . '/#blog' : url('/blog'),
             ],
         ];
 

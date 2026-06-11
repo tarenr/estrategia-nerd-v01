@@ -280,7 +280,7 @@ if (!function_exists('site_section_href')) {
         $routeType = (string) ($section['route_type'] ?? 'route');
 
         if ($routeType === 'anchor') {
-            return rtrim(url('/'), '/') . $path;
+            return rtrim(url('/'), '/') . '/' . ltrim($path, '/');
         }
 
         return url($path);
@@ -301,7 +301,7 @@ if (!function_exists('site_menu_items')) {
 
             $href = site_section_href($key);
             if ($key === 'blog' && SiteSections::isVisibleOnHome($section)) {
-                $href = rtrim(url('/'), '/') . '#blog';
+                $href = rtrim(url('/'), '/') . '/#blog';
             }
 
             $items[] = [
