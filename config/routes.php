@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 return [
     ['GET',  '/',       [\App\Controllers\Site\HomeController::class, 'index'], null],
+    ['GET',  '/home-preview', [\App\Controllers\Site\HomeController::class, 'conversionPreview'], null],
     ['GET',  '/robots.txt', [\App\Controllers\Site\SeoController::class, 'robots'], null],
     ['HEAD', '/robots.txt', [\App\Controllers\Site\SeoController::class, 'robots'], null],
     ['GET',  '/sitemap.xml', [\App\Controllers\Site\SeoController::class, 'sitemap'], null],
@@ -95,6 +96,7 @@ return [
     ['GET',  '/admin/central-tecnica/base-conhecimento/mudancas', [\App\Controllers\Admin\TechnicalCenterController::class, 'mudancas'], ['auth', 'capability:docs']],
     ['GET',  '/admin/central-tecnica/base-conhecimento/procedimentos', [\App\Controllers\Admin\TechnicalCenterController::class, 'procedimentos'], ['auth', 'capability:docs']],
     ['GET',  '/admin/central-tecnica/base-conhecimento/padroes', [\App\Controllers\Admin\TechnicalCenterController::class, 'padroes'], ['auth', 'capability:docs']],
+    ['GET',  '/admin/central-tecnica/base-conhecimento/estruturas-posts', [\App\Controllers\Admin\TechnicalCenterController::class, 'estruturasPosts'], ['auth', 'capability:docs']],
     ['GET',  '/admin/central-tecnica/base-conhecimento/faq', [\App\Controllers\Admin\TechnicalCenterController::class, 'faq'], ['auth', 'capability:docs']],
     ['GET',  '/admin/central-operacional', [\App\Controllers\Admin\OperationsHubController::class, 'index'], ['auth', 'capability:operations']],
     ['GET',  '/admin/central-operacional-v2', [\App\Controllers\Admin\OperationsV2Controller::class, 'index'], ['auth', 'capability:operations']],

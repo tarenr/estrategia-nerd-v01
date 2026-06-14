@@ -87,6 +87,65 @@ $isPlanned = $contentHtml === '';
           </article>
         <?php endforeach; ?>
       </div>
+
+      <?php $copyBlocks = is_array($plannedContent['copy_blocks'] ?? null) ? $plannedContent['copy_blocks'] : []; ?>
+      <?php if ($copyBlocks !== []): ?>
+        <div class="mt-8 space-y-4">
+          <div>
+            <p class="font-orbitron text-xs font-black uppercase tracking-[0.28em] text-cyan-300/70">Modelos copiaveis</p>
+            <h3 class="mt-2 font-orbitron text-xl font-black text-white">Copiar para usar em outra IA</h3>
+          </div>
+
+          <?php foreach ($copyBlocks as $index => $block): ?>
+            <?php
+              $copyId = 'knowledge-copy-block-' . $index;
+              $copyContent = (string) ($block['content'] ?? '');
+            ?>
+            <article class="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+              <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h4 class="font-orbitron text-base font-black text-white"><?= htmlspecialchars((string) ($block['title'] ?? 'Modelo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h4>
+                  <?php if ((string) ($block['description'] ?? '') !== ''): ?>
+                    <p class="mt-2 text-sm font-semibold leading-6 text-slate-400"><?= htmlspecialchars((string) $block['description'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+                  <?php endif; ?>
+                </div>
+                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-cyan-100 transition hover:border-cyan-300 hover:bg-cyan-400/20" data-knowledge-copy-target="<?= htmlspecialchars($copyId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                  <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                  <span data-knowledge-copy-label>Copiar</span>
+                </button>
+              </div>
+              <textarea id="<?= htmlspecialchars($copyId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-4 min-h-52 w-full resize-y rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 font-mono text-xs leading-6 text-slate-200 outline-none focus:border-cyan-400/50" readonly><?= htmlspecialchars($copyContent, ENT_NOQUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></textarea>
+            </article>
+          <?php endforeach; ?>
+        </div>
+
+        <script>
+          document.querySelectorAll('[data-knowledge-copy-target]').forEach(function (button) {
+            button.addEventListener('click', async function () {
+              var target = document.getElementById(button.getAttribute('data-knowledge-copy-target') || '');
+              var label = button.querySelector('[data-knowledge-copy-label]');
+              if (!target) return;
+
+              target.select();
+              target.setSelectionRange(0, target.value.length);
+
+              try {
+                if (navigator.clipboard && window.isSecureContext) {
+                  await navigator.clipboard.writeText(target.value);
+                } else {
+                  document.execCommand('copy');
+                }
+                if (label) label.textContent = 'Copiado';
+                setTimeout(function () {
+                  if (label) label.textContent = 'Copiar';
+                }, 1600);
+              } catch (error) {
+                if (label) label.textContent = 'Selecione';
+              }
+            });
+          });
+        </script>
+      <?php endif; ?>
     </section>
   <?php else: ?>
     <section class="rounded-3xl border border-slate-800 bg-slate-900/80 p-4">

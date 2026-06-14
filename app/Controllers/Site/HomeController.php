@@ -28,6 +28,17 @@ final class HomeController
         View::render('site/home-hero-preview', $viewModel);
     }
 
+    public function conversionPreview(): void
+    {
+        $viewModel = $this->service()->getViewModel();
+        $viewModel['title'] = 'Preview Home Editorial | Estrategia Nerd';
+        $viewModel['canonical_url'] = url('/home-preview');
+        $viewModel['meta_robots'] = 'noindex,nofollow';
+        $viewModel['structured_data'] = [];
+
+        View::render('site/home-conversion-preview', $viewModel);
+    }
+
     private function service(): HomeService
     {
         /** @var \PDO $pdo */

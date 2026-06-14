@@ -64,6 +64,13 @@ final class TechnicalCenterController
                 'status' => 'Disponível',
                 'tone' => 'success',
             ],
+            'estruturas-posts' => [
+                'label' => 'Estruturas de Posts',
+                'href' => url('/admin/central-tecnica/base-conhecimento/estruturas-posts'),
+                'icon' => 'fa-solid fa-file-code',
+                'status' => 'Disponivel',
+                'tone' => 'success',
+            ],
             'faq' => [
                 'label' => 'FAQ / Dúvidas Frequentes',
                 'href' => url('/admin/central-tecnica/base-conhecimento/faq'),
@@ -122,6 +129,11 @@ final class TechnicalCenterController
     public function padroes(): void
     {
         $this->renderKnowledgeSection('padroes');
+    }
+
+    public function estruturasPosts(): void
+    {
+        $this->renderKnowledgeSection('estruturas-posts');
     }
 
     public function faq(): void
@@ -202,6 +214,199 @@ final class TechnicalCenterController
                         'items' => ['Smoke tests', 'Conferência visual', 'Registro em mudanças'],
                     ],
                 ],
+                'copy_blocks' => [
+                    [
+                        'title' => 'Prompt mestre para criar post',
+                        'description' => 'Use este bloco em outra IA antes de pedir o artigo.',
+                        'content' => <<<'TEXT'
+Voce e um redator do portal Estrategia Nerd.
+Crie um post em portugues do Brasil, com tom editorial claro, nerd, util e sem exagero promocional.
+
+Regras:
+- Entregue o corpo em HTML pronto para colar no editor do site.
+- Use apenas estruturas simples: h2, h3, p, ul, ol, li, strong, em, table, thead, tbody, tr, th, td, blockquote.
+- Nao use CSS inline, scripts, iframes, divs complexas ou classes novas.
+- Use paragrafos curtos.
+- Inclua um resumo inicial.
+- Inclua pelo menos uma secao de pontos principais.
+- Inclua FAQ quando fizer sentido.
+- Preserve uma opiniao editorial honesta.
+- Quando citar produto, jogo, app, servico ou ferramenta, explique para quem serve e para quem nao serve.
+- Nao invente dados, precos, datas, especificacoes ou fontes. Se faltar informacao, marque como "verificar antes de publicar".
+
+Tema do post:
+[COLE AQUI O TEMA]
+
+Objetivo do post:
+[INFORMAR: noticia, review, guia, comparativo, lista, opiniao ou afiliado futuro]
+
+Publico:
+[INFORMAR: iniciante, intermediario, gamer, leitor casual, criador, comprador etc.]
+TEXT,
+                    ],
+                    [
+                        'title' => 'Modelo de noticia',
+                        'description' => 'Para novidades, anuncios e atualizacoes.',
+                        'content' => <<<'TEXT'
+<p><strong>Resumo rapido:</strong> [explique a novidade em 2 ou 3 linhas, sem enrolar].</p>
+
+<h2>O que aconteceu</h2>
+<p>[conte o fato principal com contexto].</p>
+
+<h2>Por que isso importa</h2>
+<ul>
+  <li><strong>[Ponto 1]:</strong> [impacto para o publico].</li>
+  <li><strong>[Ponto 2]:</strong> [impacto tecnico, cultural ou pratico].</li>
+  <li><strong>[Ponto 3]:</strong> [o que muda daqui para frente].</li>
+</ul>
+
+<h2>O que ainda precisa ser confirmado</h2>
+<p>[liste datas, precos, disponibilidade, plataformas ou detalhes que precisam de verificacao].</p>
+
+<h2>Leitura editorial</h2>
+<p>[opinião curta do Estrategia Nerd, com cuidado para nao prometer demais].</p>
+TEXT,
+                    ],
+                    [
+                        'title' => 'Modelo de review',
+                        'description' => 'Para jogos, apps, produtos, cursos ou ferramentas.',
+                        'content' => <<<'TEXT'
+<p><strong>Resumo rapido:</strong> [diga se vale a pena, para quem e por que].</p>
+
+<h2>Visao geral</h2>
+<p>[apresente o item avaliado e o contexto de uso].</p>
+
+<h2>Pontos principais</h2>
+<ul>
+  <li><strong>Melhor ponto:</strong> [explique].</li>
+  <li><strong>Ponto de atencao:</strong> [explique].</li>
+  <li><strong>Para quem faz sentido:</strong> [explique].</li>
+</ul>
+
+<h2>Pros e contras</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Pros</th>
+      <th>Contras</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>[beneficio real]</td>
+      <td>[limitacao real]</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Veredito</h2>
+<p>[feche com recomendacao honesta e objetiva].</p>
+TEXT,
+                    ],
+                    [
+                        'title' => 'Modelo de guia',
+                        'description' => 'Para tutoriais e conteudos educativos.',
+                        'content' => <<<'TEXT'
+<p><strong>Resumo rapido:</strong> [explique o que o leitor vai aprender].</p>
+
+<h2>Antes de comecar</h2>
+<ul>
+  <li><strong>Nivel:</strong> [iniciante, intermediario ou avancado].</li>
+  <li><strong>Tempo estimado:</strong> [tempo].</li>
+  <li><strong>O que voce precisa:</strong> [lista de requisitos].</li>
+</ul>
+
+<h2>Passo a passo</h2>
+<ol>
+  <li><strong>[Passo 1]:</strong> [explique com clareza].</li>
+  <li><strong>[Passo 2]:</strong> [explique com clareza].</li>
+  <li><strong>[Passo 3]:</strong> [explique com clareza].</li>
+</ol>
+
+<h2>Erros comuns</h2>
+<ul>
+  <li>[erro comum e como evitar].</li>
+  <li>[erro comum e como evitar].</li>
+</ul>
+
+<h2>Conclusao</h2>
+<p>[resuma o ganho pratico do leitor].</p>
+TEXT,
+                    ],
+                    [
+                        'title' => 'Modelo de comparativo',
+                        'description' => 'Para escolher entre produtos, servicos, jogos ou ferramentas.',
+                        'content' => <<<'TEXT'
+<p><strong>Resumo rapido:</strong> [diga qual opcao vence em cada caso].</p>
+
+<h2>Comparativo rapido</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Opcao</th>
+      <th>Melhor para</th>
+      <th>Ponto forte</th>
+      <th>Ponto fraco</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>[Opcao A]</td>
+      <td>[perfil]</td>
+      <td>[forca]</td>
+      <td>[limitacao]</td>
+    </tr>
+    <tr>
+      <td>[Opcao B]</td>
+      <td>[perfil]</td>
+      <td>[forca]</td>
+      <td>[limitacao]</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Qual escolher?</h2>
+<ul>
+  <li><strong>Escolha [Opcao A] se:</strong> [criterio].</li>
+  <li><strong>Escolha [Opcao B] se:</strong> [criterio].</li>
+</ul>
+
+<h2>Veredito editorial</h2>
+<p>[recomendacao final com ressalvas].</p>
+TEXT,
+                    ],
+                    [
+                        'title' => 'Modelo afiliado futuro',
+                        'description' => 'Para posts com potencial comercial, sem perder autoridade editorial.',
+                        'content' => <<<'TEXT'
+<p><strong>Resumo rapido:</strong> [explique o produto/servico e para quem ele faz sentido].</p>
+
+<h2>Para quem vale a pena</h2>
+<ul>
+  <li>[perfil de leitor que se beneficia].</li>
+  <li>[situacao de uso real].</li>
+</ul>
+
+<h2>Para quem nao vale</h2>
+<ul>
+  <li>[perfil que deve evitar].</li>
+  <li>[limitacao, custo, complexidade ou alternativa melhor].</li>
+</ul>
+
+<h2>Pontos antes de comprar</h2>
+<ul>
+  <li><strong>Preco:</strong> verificar antes de publicar.</li>
+  <li><strong>Disponibilidade:</strong> verificar antes de publicar.</li>
+  <li><strong>Compatibilidade:</strong> verificar antes de publicar.</li>
+</ul>
+
+<h2>Conclusao editorial</h2>
+<p>[recomendacao honesta, sem promessa exagerada].</p>
+
+<p><em>Nota editorial:</em> se houver link de afiliado, informar de forma transparente conforme a politica do site.</p>
+TEXT,
+                    ],
+                ],
             ],
             'padroes' => [
                 'title' => 'Padrões e Boas Práticas',
@@ -230,6 +435,60 @@ final class TechnicalCenterController
                         'status' => 'Ativo',
                         'tone' => 'success',
                         'items' => ['Registrar após commit validado', 'Manter vínculo com commit', 'Não documentar dado falso'],
+                    ],
+                ],
+            ],
+            'estruturas-posts' => [
+                'title' => 'Estruturas de Posts',
+                'summary' => 'Referencia rapida para criar posts no editor mantendo o padrao visual e editorial do site.',
+                'cards' => [
+                    [
+                        'title' => 'Texto base',
+                        'status' => 'Ativo',
+                        'tone' => 'success',
+                        'items' => ['H2 e H3 para hierarquia', 'Paragrafos curtos', 'Listas quando ajudam a leitura'],
+                    ],
+                    [
+                        'title' => 'Blocos editoriais',
+                        'status' => 'Ativo',
+                        'tone' => 'success',
+                        'items' => ['Destaque', 'Nota', 'Ponto positivo', 'Atencao', 'CTA'],
+                    ],
+                    [
+                        'title' => 'Comparativos',
+                        'status' => 'Ativo',
+                        'tone' => 'success',
+                        'items' => ['Tabela', 'Pros e contras', 'Resumo rapido', 'FAQ'],
+                    ],
+                    [
+                        'title' => 'Reviews',
+                        'status' => 'Referencia',
+                        'tone' => 'info',
+                        'items' => ['Visao geral', 'Pontos principais', 'Pros e contras', 'Veredito'],
+                    ],
+                    [
+                        'title' => 'Guias',
+                        'status' => 'Referencia',
+                        'tone' => 'info',
+                        'items' => ['Nivel', 'O que vai aprender', 'Passo a passo', 'Dicas finais'],
+                    ],
+                    [
+                        'title' => 'Midias suportadas',
+                        'status' => 'Ativo',
+                        'tone' => 'success',
+                        'items' => ['Imagem com legenda', 'Video incorporado', 'Audio editorial', 'Tabela normalizada'],
+                    ],
+                    [
+                        'title' => 'O que evitar',
+                        'status' => 'Regra',
+                        'tone' => 'warning',
+                        'items' => ['CSS inline sem necessidade', 'Classes novas fora do padrao', 'Wrappers manuais sem documentacao'],
+                    ],
+                    [
+                        'title' => 'Referencia completa',
+                        'status' => 'Local',
+                        'tone' => 'neutral',
+                        'items' => ['docs/blog-estruturas-de-conteudo.html', '/local/blog-estruturas'],
                     ],
                 ],
             ],
@@ -373,6 +632,13 @@ final class TechnicalCenterController
                     'tone' => 'success',
                     'description' => 'Padrões visuais, técnicos e editoriais.',
                     'href' => $this->sections()['padroes']['href'],
+                ],
+                [
+                    'label' => 'Estruturas de Posts',
+                    'status' => 'Disponivel',
+                    'tone' => 'success',
+                    'description' => 'Modelos oficiais para corpo de artigo, blocos editoriais, midias e comparativos.',
+                    'href' => $this->sections()['estruturas-posts']['href'],
                 ],
                 [
                     'label' => 'FAQ / Dúvidas Frequentes',

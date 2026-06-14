@@ -168,6 +168,7 @@ $rawItems = [
         sidebar_item('/admin/central-tecnica/base-conhecimento/mudancas', 'fa-solid fa-clock-rotate-left', 'Historico de Mudancas', 'docs'),
         sidebar_item('/admin/central-tecnica/base-conhecimento/procedimentos', 'fa-solid fa-clipboard-list', 'Procedimentos', 'docs'),
         sidebar_item('/admin/central-tecnica/base-conhecimento/padroes', 'fa-solid fa-compass-drafting', 'Padroes e Boas Praticas', 'docs'),
+        sidebar_item('/admin/central-tecnica/base-conhecimento/estruturas-posts', 'fa-solid fa-file-code', 'Estruturas de Posts', 'docs'),
         sidebar_item('/admin/central-tecnica/base-conhecimento/faq', 'fa-solid fa-circle-question', 'FAQ', 'docs'),
     ], 'docs'),
 ];
