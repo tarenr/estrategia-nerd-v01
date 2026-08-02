@@ -289,62 +289,17 @@ if (is_array($series) && $bucketSize > 1) {
 
 $chartRows = array_values($series);
 $hasChart = count($chartRows) >= 2;
-$w = 920;
-$h = 260;
-$padX = 52;
-$padY = 18;
-$plotW = $w - ($padX * 2);
-$plotH = $h - ($padY * 2);
-$n = max(2, count($chartRows));
-$stepX = $plotW / ($n - 1);
 
 $viewsArr = $hasChart ? array_map(static fn($row) => (int) ($row['views'] ?? 0), $chartRows) : [0, 0];
 $postsArr = $hasChart ? array_map(static fn($row) => (int) ($row['posts_novos'] ?? 0), $chartRows) : [0, 0];
 $inscArr = $hasChart ? array_map(static fn($row) => (int) ($row['inscricoes'] ?? 0), $chartRows) : [0, 0];
 $ma7Arr = $hasChart ? array_map(static fn($row) => $row['views_ma7'] ?? null, $chartRows) : [null, null];
 
-$viewsMax = max(1, ...$viewsArr);
-$postsMax = max(1, ...$postsArr);
-$inscMax = max(1, ...$inscArr);
-
-$points = [];
-for ($index = 0; $index < $n; $index++) {
-    $x = $padX + ($index * $stepX);
-    $value = $viewsArr[$index] ?? 0;
-    $y = $padY + ($plotH - (($value / $viewsMax) * $plotH));
-    $points[] = ['x' => $x, 'y' => $y];
-}
-$poly = implode(' ', array_map(static fn($point) => round($point['x'], 2) . ',' . round($point['y'], 2), $points));
-$area = $poly . ' ' . ($w - $padX) . ',' . ($h - $padY) . ' ' . $padX . ',' . ($h - $padY);
-
-$maPoints = [];
-foreach ($ma7Arr as $index => $ma7Value) {
-    if ($ma7Value === null) {
-        continue;
-    }
-
-    $x = $padX + ($index * $stepX);
-    $y = $padY + ($plotH - (((float) $ma7Value / $viewsMax) * $plotH));
-    $maPoints[] = round($x, 2) . ',' . round($y, 2);
-}
-$maPoly = implode(' ', $maPoints);
-
 $peakViewsIndex = $hasChart ? array_search(max($viewsArr), $viewsArr, true) : null;
 $peakPostsIndex = $hasChart ? array_search(max($postsArr), $postsArr, true) : null;
 $peakSubsIndex = $hasChart ? array_search(max($inscArr), $inscArr, true) : null;
-$latestIndex = $hasChart ? ($n - 1) : null;
-$previousIndex = $hasChart && $n > 1 ? ($n - 2) : null;
-
-$mainViewIdx = [];
-if ($hasChart) {
-    $minIndex = array_search(min($viewsArr), $viewsArr, true);
-
-    foreach ([$peakViewsIndex, $minIndex, $latestIndex] as $index) {
-        if (is_int($index) && $index >= 0 && $index < $n) {
-            $mainViewIdx[$index] = true;
-        }
-    }
-}
+$latestIndex = $hasChart ? (count($chartRows) - 1) : null;
+$previousIndex = $hasChart && count($chartRows) > 1 ? (count($chartRows) - 2) : null;
 
 $activityInsights = [];
 if ($hasChart && is_int($peakViewsIndex)) {
@@ -449,9 +404,59 @@ $todayCards = [
     ['label' => 'Inscritos', 'value' => fmt($inscritosHoje), 'tone' => 'subs'],
     ['label' => 'Comentarios', 'value' => fmt($comentariosHoje), 'tone' => 'comments'],
 ];
+
+$sectionClicks = is_array($link_section_clicks ?? null) ? $link_section_clicks : [];
+$sectionTotal = max(1, array_sum(array_map(static fn(array $row): int => (int) ($row['total_clicks'] ?? 0), $sectionClicks)));
+$linkClicksSeries = is_array($link_clicks_series ?? null) ? array_values($link_clicks_series) : [];
+$topCategoriasViews = is_array($top_categorias_views ?? null) ? array_values($top_categorias_views) : [];
+
+$activityChartData = [
+    'labels' => array_map(
+        static fn(array $row): string => day_label_range((string) ($row['range_start'] ?? ($row['data'] ?? '')), (string) ($row['range_end'] ?? ($row['data'] ?? ''))),
+        $chartRows
+    ),
+    'views' => $viewsArr,
+    'posts' => $postsArr,
+    'subscriptions' => $inscArr,
+    'movingAverage' => array_map(static fn($value): ?int => $value === null ? null : (int) $value, $ma7Arr),
+    'bucketMode' => $bucketModeLabel,
+];
+$todayChartData = [
+    'labels' => ['Posts', 'Views', 'Inscritos', 'Comentarios'],
+    'values' => [$postsHoje, $viewsHoje, $inscritosHoje, $comentariosHoje],
+];
+$sectionChartData = [
+    'labels' => array_map(static fn(array $row): string => (string) ($row['secao'] ?? 'Secao'), $sectionClicks),
+    'values' => array_map(static fn(array $row): int => (int) ($row['total_clicks'] ?? 0), $sectionClicks),
+];
+$linkClicksChartData = [
+    'labels' => array_map(static fn(array $row): string => day_label_range((string) ($row['data'] ?? ''), (string) ($row['data'] ?? '')), $linkClicksSeries),
+    'clicks' => array_map(static fn(array $row): int => (int) ($row['total_clicks'] ?? 0), $linkClicksSeries),
+    'unique' => array_map(static fn(array $row): int => (int) ($row['unique_sessions'] ?? 0), $linkClicksSeries),
+];
+$editorialChartData = [
+    'labels' => ['Mais visto', 'Mais curtido', 'Mais comentado'],
+    'values' => [
+        (int) ($topViews['views'] ?? 0),
+        (int) ($topLikes['curtidas'] ?? 0),
+        (int) ($topComments['comentarios_count'] ?? 0),
+    ],
+    'titles' => [
+        admin_clean_post_title((string) ($topViews['titulo'] ?? '')),
+        admin_clean_post_title((string) ($topLikes['titulo'] ?? '')),
+        admin_clean_post_title((string) ($topComments['titulo'] ?? '')),
+    ],
+    'units' => ['views', 'curtidas', 'comentarios'],
+];
+$categoryChartData = [
+    'labels' => array_map(static fn(array $row): string => (string) ($row['nome'] ?? 'Sem categoria'), $topCategoriasViews),
+    'views' => array_map(static fn(array $row): int => (int) ($row['total_views'] ?? 0), $topCategoriasViews),
+    'posts' => array_map(static fn(array $row): int => (int) ($row['total_posts'] ?? 0), $topCategoriasViews),
+    'colors' => array_map(static fn(array $row): string => (string) ($row['cor'] ?? '#22d3ee'), $topCategoriasViews),
+];
 ?>
 
-<div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+<div id="adminDashboardRoot" class="max-w-7xl mx-auto px-4 py-6 space-y-6">
   <div class="admin-page-header">
     <div class="admin-page-heading">
       <h1 class="admin-page-title">Dashboard</h1>
@@ -474,7 +479,7 @@ $todayCards = [
         <?= e($startLabel) ?> a <?= e($endLabel) ?>
       </div>
 
-      <form id="js-date-range-form" action="<?= e(url('/admin')) ?>" method="get" class="flex flex-wrap items-center gap-2">
+      <form id="js-date-range-form" action="<?= e(url('/admin')) ?>" method="get" data-dashboard-endpoint="<?= e(url('/admin/api/dashboard')) ?>" class="flex flex-wrap items-center gap-2">
         <input type="date" id="js-start-date" name="start" value="<?= e($startIn) ?>" class="nerd-input px-3 py-2 rounded-xl text-xs font-black" aria-label="Data inicial">
         <input type="date" id="js-end-date" name="end" value="<?= e($endIn) ?>" class="nerd-input px-3 py-2 rounded-xl text-xs font-black" aria-label="Data final">
         <button type="submit" id="js-apply-range" class="admin-btn admin-btn-primary">
@@ -616,63 +621,11 @@ $todayCards = [
       </div>
     <?php endif; ?>
 
-    <div class="relative bg-slate-800/20 p-4 rounded-xl border border-slate-800/70">
-      <svg id="activitySvg" viewBox="0 0 <?= (int) $w ?> <?= (int) $h ?>" class="w-full h-72">
-        <?php for ($grid = 0; $grid <= 4; $grid++): $gridY = $padY + ($grid * ($plotH / 4)); $gridValue = (int) round($viewsMax - ($grid * ($viewsMax / 4))); ?>
-          <line x1="<?= (int) $padX ?>" y1="<?= (float) $gridY ?>" x2="<?= (int) ($w - $padX) ?>" y2="<?= (float) $gridY ?>" stroke="rgba(148,163,184,0.12)" stroke-width="1" />
-          <text x="<?= (int) ($padX - 10) ?>" y="<?= (float) ($gridY + 4) ?>" fill="rgba(148,163,184,0.5)" font-size="11" text-anchor="end"><?= e(fmt($gridValue)) ?></text>
-        <?php endfor; ?>
-
-        <?php if ($hasChart): ?>
-          <?php $barMaxH = $plotH * 0.35; $barW = min(26, max(10, (int) round($stepX * 0.35))); foreach ($chartRows as $index => $row): $postCount = (int) ($postsArr[$index] ?? 0); $x = $padX + ($index * $stepX); $barHeight = $postCount > 0 ? (($postCount / $postsMax) * $barMaxH) : 0; $barX = $x - ($barW / 2); $barY = $padY + ($plotH - $barHeight); $rangeStart = (string) ($row['range_start'] ?? ($row['data'] ?? '')); $rangeEnd = (string) ($row['range_end'] ?? ($row['data'] ?? '')); $label = day_label_range($rangeStart, $rangeEnd); $views = (int) ($viewsArr[$index] ?? 0); $insc = (int) ($inscArr[$index] ?? 0); $ma7 = $ma7Arr[$index] ?? null; $tip = $label . ' | ' . fmt($views) . ' views | ' . fmt($postCount) . ' posts | ' . fmt($insc) . ' inscricoes'; if ($ma7 !== null) { $tip .= ' | MA7 ' . number_format((float) $ma7, 0, ',', '.'); } ?>
-            <rect x="<?= (float) $barX ?>" y="<?= (float) $barY ?>" width="<?= (float) $barW ?>" height="<?= (float) $barHeight ?>" rx="6" fill="rgba(217,70,239,0.35)" stroke="rgba(217,70,239,0.25)" stroke-width="1" data-tip="<?= e($tip) ?>" class="cursor-pointer" />
-          <?php endforeach; ?>
-        <?php endif; ?>
-
-        <polygon points="<?= e($area) ?>" fill="rgba(34,211,238,0.10)"></polygon>
-        <polyline points="<?= e($poly) ?>" fill="none" stroke="rgba(34,211,238,0.95)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
-        <?php if ($hasChart && $maPoly !== ''): ?><polyline points="<?= e($maPoly) ?>" fill="none" stroke="rgba(226,232,240,0.55)" stroke-width="2" stroke-dasharray="6 6" stroke-linecap="round" stroke-linejoin="round"></polyline><?php endif; ?>
-
-        <?php if ($hasChart): ?>
-          <?php foreach (array_keys($mainViewIdx) as $index): $row = $chartRows[$index] ?? []; $rangeStart = (string) ($row['range_start'] ?? ($row['data'] ?? '')); $rangeEnd = (string) ($row['range_end'] ?? ($row['data'] ?? '')); $label = day_label_range($rangeStart, $rangeEnd); $views = (int) ($viewsArr[$index] ?? 0); $postCount = (int) ($postsArr[$index] ?? 0); $insc = (int) ($inscArr[$index] ?? 0); $tag = 'Views'; if ($index === array_search(max($viewsArr), $viewsArr, true)) { $tag = 'Pico de views'; } if ($index === array_search(min($viewsArr), $viewsArr, true)) { $tag = 'Vale de views'; } if ($index === ($n - 1)) { $tag = 'Ultimo dia'; } $tip = $tag . ' | ' . $label . ' | ' . fmt($views) . ' views | ' . fmt($postCount) . ' posts | ' . fmt($insc) . ' inscricoes'; $cx = (float) ($points[$index]['x'] ?? 0); $cy = (float) ($points[$index]['y'] ?? 0); ?>
-            <circle cx="<?= $cx ?>" cy="<?= $cy ?>" r="7" fill="rgba(34,211,238,0.35)" stroke="rgba(34,211,238,0.95)" stroke-width="2" data-tip="<?= e($tip) ?>" class="cursor-pointer" />
-          <?php endforeach; ?>
-
-          <?php foreach ($chartRows as $index => $row): $insc = (int) ($inscArr[$index] ?? 0); $x = $padX + ($index * $stepX); $y = $padY + ($plotH - (($insc / $inscMax) * $plotH)); $rangeStart = (string) ($row['range_start'] ?? ($row['data'] ?? '')); $rangeEnd = (string) ($row['range_end'] ?? ($row['data'] ?? '')); $label = day_label_range($rangeStart, $rangeEnd); $views = (int) ($viewsArr[$index] ?? 0); $postCount = (int) ($postsArr[$index] ?? 0); $ma7 = $ma7Arr[$index] ?? null; $tip = $label . ' | ' . fmt($views) . ' views | ' . fmt($postCount) . ' posts | ' . fmt($insc) . ' inscricoes'; if ($ma7 !== null) { $tip .= ' | MA7 ' . number_format((float) $ma7, 0, ',', '.'); } ?>
-            <circle cx="<?= (float) $x ?>" cy="<?= (float) $y ?>" r="5" fill="rgba(16,185,129,0.95)" stroke="rgba(16,185,129,0.35)" stroke-width="2" data-tip="<?= e($tip) ?>" class="cursor-pointer" />
-          <?php endforeach; ?>
-        <?php endif; ?>
-      </svg>
-
+    <div class="dashboard-chart-shell">
       <?php if ($hasChart): ?>
-        <div class="mt-2 grid" style="grid-template-columns: repeat(<?= (int) count($chartRows) ?>, minmax(0, 1fr));">
-          <?php foreach ($chartRows as $row): ?><div class="text-center text-xs text-gray-500"><?= e(day_label_range((string) ($row['range_start'] ?? ($row['data'] ?? '')), (string) ($row['range_end'] ?? ($row['data'] ?? '')))) ?></div><?php endforeach; ?>
-        </div>
-        <div id="chartTip" class="pointer-events-none hidden absolute z-10 px-3 py-2 rounded-xl bg-slate-950/90 border border-cyan-500/20 text-xs text-slate-200 shadow-xl"></div>
-        <script>
-          (function () {
-            const svg = document.getElementById('activitySvg');
-            const tip = document.getElementById('chartTip');
-            if (!svg || !tip) return;
-            svg.addEventListener('mousemove', (event) => {
-              const target = event.target;
-              const message = target && target.getAttribute && target.getAttribute('data-tip');
-              if (!message) {
-                tip.classList.add('hidden');
-                return;
-              }
-              const box = svg.getBoundingClientRect();
-              const x = event.clientX - box.left + 12;
-              const y = event.clientY - box.top - 36;
-              const maxX = box.width - 240;
-              tip.textContent = message;
-              tip.classList.remove('hidden');
-              tip.style.left = Math.max(8, Math.min(x, maxX)) + 'px';
-              tip.style.top = Math.max(8, y) + 'px';
-            });
-            svg.addEventListener('mouseleave', () => tip.classList.add('hidden'));
-          })();
-        </script>
+        <canvas id="dashboardActivityChart" data-chart='<?= e(json_encode($activityChartData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '{}') ?>' aria-label="Grafico de atividade do periodo" role="img"></canvas>
+      <?php else: ?>
+        <div class="dashboard-chart-empty">Ainda nao ha dados suficientes para desenhar a atividade deste periodo.</div>
       <?php endif; ?>
     </div>
   </section>
@@ -714,6 +667,12 @@ $todayCards = [
         <?php endforeach; ?>
       </div>
 
+      <?php if (array_sum($editorialChartData['values']) > 0): ?>
+        <div class="dashboard-editorial-chart">
+          <canvas id="dashboardEditorialChart" data-chart='<?= e(json_encode($editorialChartData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '{}') ?>' aria-label="Comparativo dos destaques editoriais" role="img"></canvas>
+        </div>
+      <?php endif; ?>
+
       <?php if ($categoriaPopular): ?>
         <div class="dashboard-editorial-traction mt-6">
           <div class="dashboard-editorial-traction-copy">
@@ -728,6 +687,16 @@ $todayCards = [
             <strong><?= fmt_k((int) ($categoriaPopular['total_views'] ?? 0)) ?></strong>
             <span>views acumuladas</span>
           </div>
+        </div>
+      <?php endif; ?>
+
+      <?php if ($topCategoriasViews !== []): ?>
+        <div class="dashboard-category-chart">
+          <div class="dashboard-mini-chart-head">
+            <div class="dashboard-mini-chart-title">Top categorias por views</div>
+            <div class="dashboard-mini-chart-meta">Categorias com maior alcance acumulado.</div>
+          </div>
+          <canvas id="dashboardCategoriesChart" data-chart='<?= e(json_encode($categoryChartData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '{}') ?>' aria-label="Top categorias por views" role="img"></canvas>
         </div>
       <?php endif; ?>
     </div>
@@ -746,6 +715,10 @@ $todayCards = [
             <strong class="dashboard-today-card-value"><?= e((string) ($todayCard['value'] ?? '0')) ?></strong>
           </div>
         <?php endforeach; ?>
+      </div>
+
+      <div class="dashboard-today-chart">
+        <canvas id="dashboardTodayChart" data-chart='<?= e(json_encode($todayChartData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '{}') ?>' aria-label="Resumo visual das metricas de hoje" role="img"></canvas>
       </div>
 
       <div class="dashboard-today-pending mt-4">
@@ -807,6 +780,16 @@ $todayCards = [
         </div>
       </div>
 
+      <?php if ($linkClicksSeries !== []): ?>
+        <div class="dashboard-link-timeline-chart">
+          <div class="dashboard-mini-chart-head">
+            <div class="dashboard-mini-chart-title">Cliques por dia</div>
+            <div class="dashboard-mini-chart-meta">Evolucao dos cliques totais e unicos no periodo.</div>
+          </div>
+          <canvas id="dashboardLinkTimelineChart" data-chart='<?= e(json_encode($linkClicksChartData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '{}') ?>' aria-label="Cliques por dia na Central Nerd" role="img"></canvas>
+        </div>
+      <?php endif; ?>
+
       <div class="dashboard-link-list">
         <div class="dashboard-link-list-head">
           <div class="dashboard-link-list-title">Links com melhor tracao</div>
@@ -860,11 +843,12 @@ $todayCards = [
         </div>
       </div>
 
-      <?php $sectionClicks = is_array($link_section_clicks ?? null) ? $link_section_clicks : []; ?>
-      <?php $sectionTotal = max(1, array_sum(array_map(static fn(array $row): int => (int) ($row['total_clicks'] ?? 0), $sectionClicks))); ?>
       <?php if ($sectionClicks === []): ?>
         <div class="dashboard-link-empty">Assim que os links receberem cliques, esta area vai mostrar quais secoes puxam mais resultado.</div>
       <?php else: ?>
+        <div class="dashboard-link-section-chart">
+          <canvas id="dashboardLinkSectionsChart" data-chart='<?= e(json_encode($sectionChartData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '{}') ?>' aria-label="Distribuicao de cliques por secao" role="img"></canvas>
+        </div>
         <div class="dashboard-link-section-stack">
           <?php foreach ($sectionClicks as $sectionRow): ?>
             <?php $sectionCount = (int) ($sectionRow['total_clicks'] ?? 0); $sectionPct = (int) round(($sectionCount / $sectionTotal) * 100); ?>

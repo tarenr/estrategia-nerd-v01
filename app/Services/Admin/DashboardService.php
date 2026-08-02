@@ -157,6 +157,17 @@ final class DashboardService
         $linkClicksHoje = (int) $this->linkClicks->countToday();
         $topLinksClicks = $this->linkClicks->topLinksByRange($start, $end, 5);
         $linkSectionClicks = $this->linkClicks->sectionBreakdownByRange($start, $end);
+        $linkClicksSeries = $this->linkClicksSeriesByRange($start, $end);
+        $topCategoriasViews = $this->categorias->listWithAggregates();
+        usort($topCategoriasViews, static function (array $a, array $b): int {
+            $viewsCompare = (int) ($b['total_views'] ?? 0) <=> (int) ($a['total_views'] ?? 0);
+            if ($viewsCompare !== 0) {
+                return $viewsCompare;
+            }
+
+            return (int) ($b['total_posts'] ?? 0) <=> (int) ($a['total_posts'] ?? 0);
+        });
+        $topCategoriasViews = array_slice($topCategoriasViews, 0, 5);
 
         return [
             'days' => $days,
@@ -198,6 +209,8 @@ final class DashboardService
             'link_clicks_hoje' => $linkClicksHoje,
             'top_links_clicks' => $topLinksClicks,
             'link_section_clicks' => $linkSectionClicks,
+            'link_clicks_series' => $linkClicksSeries,
+            'top_categorias_views' => $topCategoriasViews,
 
             'chart' => [
                 'series' => $seriesWithMa7,
@@ -255,6 +268,51 @@ final class DashboardService
         }
 
         return $series;
+    }
+
+    /**
+     * @return array<int, array{data:string,total_clicks:int,unique_sessions:int}>
+     */
+    private function linkClicksSeriesByRange(string $start, string $end): array
+    {
+        $rows = $this->linkClicks->seriesByRange($start, $end);
+        $totalByDate = [];
+        $uniqueByDate = [];
+
+        foreach ($rows as $row) {
+            $key = (string) ($row['data'] ?? '');
+            if ($key === '') {
+                continue;
+            }
+
+            $totalByDate[$key] = (int) ($row['total_clicks'] ?? 0);
+            $uniqueByDate[$key] = (int) ($row['unique_sessions'] ?? 0);
+        }
+
+        $out = [];
+        try {
+            $startDate = new DateTimeImmutable($start);
+            $endDate = new DateTimeImmutable($end);
+        } catch (Throwable) {
+            return [];
+        }
+
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        $cursor = $startDate;
+        while ($cursor <= $endDate) {
+            $key = $cursor->format('Y-m-d');
+            $out[] = [
+                'data' => $key,
+                'total_clicks' => (int) ($totalByDate[$key] ?? 0),
+                'unique_sessions' => (int) ($uniqueByDate[$key] ?? 0),
+            ];
+            $cursor = $cursor->modify('+1 day');
+        }
+
+        return $out;
     }
 
     private function safePercent(int $num, int $den): float

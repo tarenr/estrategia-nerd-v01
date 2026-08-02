@@ -133,6 +133,25 @@ final class LinkClickRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function seriesByRange(string $start, string $end): array
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT DATE(clicked_at) AS data,
+                   COUNT(*) AS total_clicks,
+                   COUNT(DISTINCT session_hash) AS unique_sessions
+            FROM link_clicks
+            WHERE clicked_at BETWEEN :start_at AND :end_at
+            GROUP BY DATE(clicked_at)
+            ORDER BY DATE(clicked_at) ASC
+        ');
+        $stmt->execute([
+            'start_at' => $start . ' 00:00:00',
+            'end_at' => $end . ' 23:59:59',
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function sectionBreakdownByRange(string $start, string $end): array
     {
         $stmt = $this->pdo->prepare('

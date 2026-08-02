@@ -52,6 +52,7 @@ final class DashboardController
             [
                 'ok' => true,
                 'data' => $payload,
+                'html' => View::fragment('admin/dashboard', $payload),
                 'generated_at' => date('c'),
             ],
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
@@ -145,6 +146,8 @@ final class DashboardController
             'posts_recentes' => [],
             'top_links_clicks' => [],
             'link_section_clicks' => [],
+            'link_clicks_series' => [],
+            'top_categorias_views' => [],
             'target_environment' => $targetEnvironment,
             'target_environment_label' => environment_label($targetEnvironment),
             'target_public_base_url' => '',

@@ -285,6 +285,7 @@ $adminFavicon = $adminFavicon !== ''
 
       <script src="<?= url('/assets/js/admin-layout.js?v=' . $adminLayoutJsVersion) ?>" defer></script>
       <?php if ($isAdminDashboard): ?>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
         <script src="<?= url('/assets/js/admin-dashboard.js?v=' . $adminDashboardJsVersion) ?>" defer></script>
       <?php endif; ?>
       <script>

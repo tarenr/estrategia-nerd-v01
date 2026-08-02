@@ -87,6 +87,17 @@ body {
     color: #94a3b8;
 }
 
+#adminDashboardRoot {
+    transition: opacity 0.18s ease, filter 0.18s ease;
+    outline: none;
+}
+
+#adminDashboardRoot.dashboard-ajax-loading {
+    opacity: 0.68;
+    filter: saturate(0.86);
+    cursor: wait;
+}
+
 .admin-chip {
     display: inline-flex;
     align-items: center;
@@ -2184,6 +2195,35 @@ select.nerd-input {
     color: #94a3b8;
 }
 
+.dashboard-chart-shell {
+    position: relative;
+    height: 22rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(51, 65, 85, 0.72);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.66), rgba(30, 41, 59, 0.32));
+    overflow: hidden;
+}
+
+.dashboard-chart-shell canvas {
+    width: 100%;
+    height: 100%;
+    max-height: 20rem;
+    display: block;
+}
+
+.dashboard-chart-empty {
+    min-height: 20rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.85rem;
+    border: 1px dashed rgba(51, 65, 85, 0.78);
+    color: #94a3b8;
+    font-size: 0.82rem;
+    text-align: center;
+}
+
 .activity-summary-grid {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -2371,6 +2411,44 @@ select.nerd-input {
     color: #64748b;
 }
 
+.dashboard-mini-chart-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.dashboard-mini-chart-title {
+    color: #f8fafc;
+    font-size: 0.92rem;
+    font-weight: 900;
+}
+
+.dashboard-mini-chart-meta {
+    color: #64748b;
+    font-size: 0.72rem;
+}
+
+.dashboard-link-timeline-chart {
+    position: relative;
+    height: 16rem;
+    margin-top: 1rem;
+    padding: 0.85rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(51, 65, 85, 0.72);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.62), rgba(30, 41, 59, 0.34));
+    overflow: hidden;
+}
+
+.dashboard-link-timeline-chart canvas {
+    width: 100%;
+    height: calc(100% - 2.6rem);
+    max-height: 12.3rem;
+    display: block;
+}
+
 .dashboard-link-list {
     margin-top: 1.1rem;
     border-top: 1px solid rgba(51, 65, 85, 0.6);
@@ -2473,6 +2551,23 @@ select.nerd-input {
     color: #f8fafc;
     font-size: 1.05rem;
     font-weight: 900;
+}
+
+.dashboard-link-section-chart {
+    position: relative;
+    height: 10.5rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.95rem;
+    border: 1px solid rgba(51, 65, 85, 0.72);
+    background: rgba(15, 23, 42, 0.48);
+    overflow: hidden;
+}
+
+.dashboard-link-section-chart canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .dashboard-link-section-stack {
@@ -2657,6 +2752,23 @@ select.nerd-input {
     color: #fde047;
 }
 
+.dashboard-editorial-chart {
+    position: relative;
+    height: 11.5rem;
+    margin-top: 1rem;
+    padding: 0.9rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.62), rgba(30, 41, 59, 0.42));
+    overflow: hidden;
+}
+
+.dashboard-editorial-chart canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
 .dashboard-editorial-unit,
 .dashboard-editorial-empty {
     margin-top: 0.35rem;
@@ -2721,6 +2833,24 @@ select.nerd-input {
     color: #64748b;
 }
 
+.dashboard-category-chart {
+    position: relative;
+    height: 13rem;
+    margin-top: 1rem;
+    padding: 0.85rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.62), rgba(30, 41, 59, 0.38));
+    overflow: hidden;
+}
+
+.dashboard-category-chart canvas {
+    width: 100%;
+    height: calc(100% - 2.6rem);
+    max-height: 9.8rem;
+    display: block;
+}
+
 .dashboard-today-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2764,6 +2894,22 @@ select.nerd-input {
 
 .dashboard-today-card-comments .dashboard-today-card-value {
     color: #c084fc;
+}
+
+.dashboard-today-chart {
+    position: relative;
+    height: 10.75rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.95rem;
+    border: 1px solid rgba(100, 116, 139, 0.24);
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.58), rgba(15, 23, 42, 0.82));
+}
+
+.dashboard-today-chart canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .dashboard-today-pending {
