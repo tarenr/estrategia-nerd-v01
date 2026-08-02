@@ -1,4 +1,73 @@
 (function () {
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const animeApi = window.anime || window.animejs || window.AnimeJS || null;
+  const animate = animeApi && typeof animeApi.animate === 'function' ? animeApi.animate : null;
+  const heroItems = Array.from(document.querySelectorAll('[data-hero-animate]'));
+
+  if (heroItems.length > 0 && !reduceMotion && animate) {
+    const prepare = (item, y = 44, scale = 0.96, blur = 12) => {
+      if (!item) return;
+      item.style.opacity = '0';
+      item.style.transform = `translateY(${y}px) scale(${scale})`;
+      item.style.willChange = 'opacity, transform, filter';
+      item.style.filter = `blur(${blur}px)`;
+    };
+
+    const reveal = (target, delay, options = {}) => {
+      const nodes = Array.from(document.querySelectorAll(target));
+      nodes.forEach((node, index) => {
+        window.setTimeout(() => {
+          animate(node, {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            filter: 'blur(0px)',
+            duration: options.duration || 1050,
+            ease: options.ease || 'outExpo',
+            onComplete: () => {
+              node.style.willChange = '';
+            },
+          });
+        }, delay + (options.stagger ? index * options.stagger : 0));
+      });
+    };
+
+    prepare(document.querySelector('[data-hero-animate="eyebrow"]'), 28, 0.94, 10);
+    prepare(document.querySelector('[data-hero-animate="title-main"]'), 78, 0.92, 16);
+    prepare(document.querySelector('[data-hero-animate="title-accent"]'), 58, 0.94, 16);
+    prepare(document.querySelector('[data-hero-animate="descriptor"]'), 42, 0.97, 12);
+    prepare(document.querySelector('[data-hero-animate="copy"]'), 38, 0.98, 10);
+    document.querySelectorAll('[data-hero-animate="support"]').forEach((item) => prepare(item, 30, 0.9, 9));
+    prepare(document.querySelector('[data-hero-animate="actions"]'), 34, 0.96, 10);
+    prepare(document.querySelector('[data-hero-animate="recent-link"]'), 20, 0.98, 8);
+
+    reveal('[data-hero-animate="eyebrow"]', 180);
+    reveal('[data-hero-animate="title-main"]', 360, { duration: 1250 });
+    reveal('[data-hero-animate="title-accent"]', 560, { duration: 1180 });
+    reveal('[data-hero-animate="descriptor"]', 760);
+    reveal('[data-hero-animate="copy"]', 940);
+    reveal('[data-hero-animate="support"]', 1120, { duration: 820, stagger: 130 });
+    reveal('[data-hero-animate="actions"]', 1380, { duration: 900 });
+    reveal('[data-hero-animate="recent-link"]', 1580, { duration: 780 });
+
+    document.querySelectorAll('[data-hero-button]').forEach((button) => {
+      button.addEventListener('mouseenter', () => {
+        animate(button, { y: -5, scale: 1.035, duration: 280, ease: 'outCubic' });
+      });
+      button.addEventListener('mouseleave', () => {
+        animate(button, { y: 0, scale: 1, duration: 360, ease: 'outCubic' });
+      });
+    });
+  } else {
+    heroItems.forEach((item) => {
+      item.style.opacity = '';
+      item.style.transform = '';
+      item.style.filter = '';
+    });
+  }
+}());
+
+(function () {
   const canvas = document.getElementById('siteHeroPreviewCanvas');
   if (!canvas) return;
 

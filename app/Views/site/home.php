@@ -117,4 +117,5 @@ $homeEnhancementJsVersion = is_file($homeEnhancementJsPath) ? ((string) filemtim
   ]) ?>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/animejs@4.5.0/dist/bundles/anime.umd.min.js" defer></script>
 <script src="<?= url('/assets/js/site-hero-preview.js?v=' . $homeEnhancementJsVersion) ?>" defer></script>
