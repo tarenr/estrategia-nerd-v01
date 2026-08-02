@@ -156,6 +156,7 @@ $rawItems = [
         sidebar_item('/admin/central-operacional-v2/backup-editorial', 'fa-solid fa-newspaper', 'Backup Editorial', 'operations'),
         sidebar_item('/admin/central-operacional-v2/backup-em-nuvem', 'fa-solid fa-cloud-arrow-up', 'Backup em Nuvem', 'operations'),
         sidebar_item('/admin/central-operacional-v2/observabilidade', 'fa-solid fa-chart-simple', 'Observabilidade', 'operations'),
+        sidebar_item('/admin/central-operacional-v2/hostinger-api', 'fa-solid fa-plug-circle-bolt', 'Hostinger API', 'operations'),
         sidebar_item('/admin/central-operacional-v2/seo-tecnico', 'fa-solid fa-magnifying-glass-chart', 'SEO Tecnico', 'operations'),
     ], 'operations'),
     sidebar_item('/admin/testes', 'fa-solid fa-vial-circle-check', 'Testes', 'operations'),

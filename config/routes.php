@@ -108,6 +108,7 @@ return [
     ['GET',  '/admin/central-operacional-v2/backup-em-nuvem', [\App\Controllers\Admin\OperationsV2Controller::class, 'backupEmNuvem'], ['auth', 'capability:operations']],
     ['POST', '/admin/central-operacional-v2/backup-em-nuvem', [\App\Controllers\Admin\OperationsV2Controller::class, 'backupEmNuvem'], ['auth', 'capability:operations']],
     ['GET',  '/admin/central-operacional-v2/observabilidade', [\App\Controllers\Admin\OperationsV2Controller::class, 'observabilidade'], ['auth', 'capability:operations']],
+    ['GET',  '/admin/central-operacional-v2/hostinger-api', [\App\Controllers\Admin\HostingerApiController::class, 'index'], ['auth', 'capability:operations']],
     ['GET',  '/admin/central-operacional-v2/seo-tecnico/{monitor_secao}', [\App\Controllers\Admin\OperationsV2Controller::class, 'seoTecnico'], ['auth', 'capability:operations']],
     ['GET',  '/admin/central-operacional-v2/seo-tecnico', [\App\Controllers\Admin\OperationsV2Controller::class, 'seoTecnico'], ['auth', 'capability:operations']],
     ['POST', '/admin/central-operacional/sincronizar-conteudo', [\App\Controllers\Admin\ContentSyncController::class, 'syncProductionToStage'], ['auth', 'capability:content_sync']],
