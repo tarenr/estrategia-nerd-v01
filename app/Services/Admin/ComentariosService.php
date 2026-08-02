@@ -18,12 +18,15 @@ final class ComentariosService
         $perPage = $this->clampInt((int) ($query['per_page'] ?? 10), 5, 50);
         [$sort, $dir] = $this->normalizeSortDir((string) ($query['sort'] ?? 'data'), (string) ($query['dir'] ?? 'desc'));
 
+        $summary = $this->decorateSummary($this->comentarios->summaryFiltered($filters));
+
         return [
             'title' => 'Comentarios',
             'filters' => $filters,
             'sort' => $sort,
             'dir' => $dir,
-            'summary' => $this->decorateSummary($this->comentarios->summaryFiltered($filters)),
+            'summary' => $summary,
+            'charts' => $this->buildIndexCharts($summary),
             'pagination' => $this->comentarios->paginateAdmin($filters, $page, $perPage, $sort, $dir),
             'posts' => $this->comentarios->listPostsForFilter(),
         ];
@@ -222,6 +225,36 @@ final class ComentariosService
         $summary['cobertura_resposta'] = $comentariosRaiz > 0 ? ($threadsRespondidas / $comentariosRaiz) * 100 : 0.0;
 
         return $summary;
+    }
+
+    /**
+     * @param array<string,mixed> $summary
+     * @return array<string, array<string,mixed>>
+     */
+    private function buildIndexCharts(array $summary): array
+    {
+        return [
+            'status' => [
+                'labels' => ['Pendentes', 'Aprovados', 'Reprovados', 'Spam'],
+                'values' => [
+                    max(0, (int) ($summary['pendentes'] ?? 0)),
+                    max(0, (int) ($summary['aprovados'] ?? 0)),
+                    max(0, (int) ($summary['reprovados'] ?? 0)),
+                    max(0, (int) ($summary['spam'] ?? 0)),
+                ],
+                'colors' => ['#facc15', '#34d399', '#fb7185', '#a78bfa'],
+            ],
+            'threads' => [
+                'labels' => ['Sem resposta', 'Respondidos', 'Respostas'],
+                'values' => [
+                    max(0, (int) ($summary['sem_resposta'] ?? 0)),
+                    max(0, (int) ($summary['respondidos'] ?? 0)),
+                    max(0, (int) ($summary['respostas'] ?? 0)),
+                ],
+                'colors' => ['#f97316', '#22d3ee', '#60a5fa'],
+                'label' => 'Comentarios',
+            ],
+        ];
     }
 
     private function normalizeFilters(array $query): array

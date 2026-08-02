@@ -25,6 +25,10 @@ $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_pag
 $posts = $posts ?? [];
 $sort = (string) ($sort ?? 'data');
 $dir = (string) ($dir ?? 'desc');
+$charts = is_array($charts ?? null) ? $charts : [];
+$encodeChart = static function (array $payload): string {
+    return htmlspecialchars((string) json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+};
 $moderated = isset($_GET['moderated']) && (string) $_GET['moderated'] === '1';
 $mode = (string) ($_GET['mode'] ?? '');
 $deleted = isset($_GET['deleted']) && (string) $_GET['deleted'] === '1';
@@ -63,10 +67,40 @@ $moderationMessage = match ($mode) {
 
     <?php View::component('admin/comments/summary-cards', ['summary' => $summary]); ?>
 
+    <section class="admin-module-charts-grid" aria-label="Graficos dos comentarios">
+      <article class="admin-module-chart-card">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Status de moderacao</h2>
+            <p>Fila, aprovados, reprovados e spam.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell admin-module-chart-shell-sm">
+          <canvas data-admin-module-chart data-type="doughnut" data-chart="<?= $encodeChart(is_array($charts['status'] ?? null) ? $charts['status'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem comentarios neste recorte.</div>
+        </div>
+      </article>
+
+      <article class="admin-module-chart-card">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Conversas e respostas</h2>
+            <p>Threads respondidas e pendencias abertas.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell admin-module-chart-shell-sm">
+          <canvas data-admin-module-chart data-type="bar" data-chart="<?= $encodeChart(is_array($charts['threads'] ?? null) ? $charts['threads'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem threads para comparar.</div>
+        </div>
+      </article>
+    </section>
+
     <?php View::component('admin/comments/filters', ['filters' => $filters, 'posts' => $posts, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/comments/table', ['items' => $pagination['items'] ?? [], 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/comments/pagination', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
   </div>
 </div>
 
+<?php if (!isset($_GET['_partial']) || (string) $_GET['_partial'] !== '1'): ?>
 <script src="<?= url('/assets/js/admin-comments.js') . '?v=' . @filemtime(base_path('public/assets/js/admin-comments.js')) ?>" defer></script>
+<?php endif; ?>

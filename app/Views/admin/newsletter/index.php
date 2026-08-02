@@ -9,6 +9,10 @@ $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_pag
 $filters = $filters ?? ['busca' => '', 'status' => ''];
 $sort = (string) ($sort ?? 'data_cadastro');
 $dir = (string) ($dir ?? 'desc');
+$charts = is_array($charts ?? null) ? $charts : [];
+$encodeChart = static function (array $payload): string {
+    return htmlspecialchars((string) json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+};
 $updated = isset($_GET['updated']) && (string) $_GET['updated'] === '1';
 $deleted = isset($_GET['deleted']) && (string) $_GET['deleted'] === '1';
 $mode = (string) ($_GET['mode'] ?? '');
@@ -43,9 +47,40 @@ $mode = (string) ($_GET['mode'] ?? '');
     <?php endif; ?>
 
     <?php View::component('admin/newsletter/summary-cards', ['summary' => $summary]); ?>
+
+    <section class="admin-module-charts-grid" aria-label="Graficos da newsletter">
+      <article class="admin-module-chart-card">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Status da base</h2>
+            <p>Ativos, inativos e desinscritos no filtro atual.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell admin-module-chart-shell-sm">
+          <canvas data-admin-module-chart data-type="doughnut" data-chart="<?= $encodeChart(is_array($charts['status'] ?? null) ? $charts['status'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem inscritos neste recorte.</div>
+        </div>
+      </article>
+
+      <article class="admin-module-chart-card">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Cadastros nos ultimos 7 dias</h2>
+            <p>Volume total e novos ativos por dia.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell admin-module-chart-shell-sm">
+          <canvas data-admin-module-chart data-type="grouped-bar" data-chart="<?= $encodeChart(is_array($charts['daily'] ?? null) ? $charts['daily'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem cadastros recentes neste recorte.</div>
+        </div>
+      </article>
+    </section>
+
     <?php View::component('admin/newsletter/filters', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/newsletter/table', ['items' => $items, 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
   </div>
 </div>
 
-<script src="<?= url('/assets/js/admin-newsletter.js') . '?v=' . @filemtime(dirname(__DIR__, 3) . '/public/assets/js/admin-newsletter.js') ?>" defer></script>
+<?php if (!isset($_GET['_partial']) || (string) $_GET['_partial'] !== '1'): ?>
+<script src="<?= url('/assets/js/admin-newsletter.js') . '?v=' . @filemtime(base_path('public/assets/js/admin-newsletter.js')) ?>" defer></script>
+<?php endif; ?>

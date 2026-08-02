@@ -2224,6 +2224,96 @@ select.nerd-input {
     text-align: center;
 }
 
+.admin-module-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.admin-module-chart-card {
+    min-width: 0;
+    border-radius: 1rem;
+    border: 1px solid rgba(51, 65, 85, 0.78);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.72), rgba(30, 41, 59, 0.34));
+    padding: 1rem;
+    box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.05);
+}
+
+.admin-module-chart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+}
+
+.admin-module-chart-header h2 {
+    font-family: 'Orbitron', ui-sans-serif, system-ui;
+    font-size: 0.92rem;
+    font-weight: 900;
+    color: #f8fafc;
+    line-height: 1.25;
+}
+
+.admin-module-chart-header p {
+    margin-top: 0.18rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.admin-module-chart-shell {
+    position: relative;
+    height: 19rem;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.admin-module-chart-shell-sm {
+    height: 16.5rem;
+}
+
+.admin-module-chart-shell canvas {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    display: block;
+}
+
+.admin-module-chart-empty {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.85rem;
+    border: 1px dashed rgba(51, 65, 85, 0.75);
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 1rem;
+}
+
+.admin-module-chart-shell.is-empty canvas {
+    display: none;
+}
+
+.admin-module-chart-shell.is-empty .admin-module-chart-empty {
+    display: flex;
+}
+
+@media (min-width: 1024px) {
+    .admin-module-charts-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-module-chart-card-wide {
+        grid-column: 1 / -1;
+    }
+}
+
 .activity-summary-grid {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));

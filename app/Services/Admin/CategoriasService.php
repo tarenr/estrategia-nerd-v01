@@ -47,6 +47,7 @@ final class CategoriasService
             'dir' => $dir,
             'pagination' => $pagination,
             'summary' => $this->buildIndexSummary($filteredItems),
+            'charts' => $this->buildIndexCharts($filteredItems),
         ];
     }
 
@@ -202,6 +203,72 @@ final class CategoriasService
             'cobertura_editorial' => $total > 0 ? ($comPosts / $total) * 100 : 0.0,
             'media_posts_por_categoria' => $comPosts > 0 ? ($totalPosts / $comPosts) : 0.0,
             'media_views_por_categoria' => $comPosts > 0 ? ($totalViews / $comPosts) : 0.0,
+        ];
+    }
+
+    /**
+     * @param array<int, array<string,mixed>> $items
+     * @return array<string, array<string,mixed>>
+     */
+    private function buildIndexCharts(array $items): array
+    {
+        $ativas = 0;
+        $inativas = 0;
+        $indexaveis = 0;
+        $noindex = 0;
+        $top = [];
+
+        foreach ($items as $item) {
+            if ((int) ($item['ativo'] ?? 0) === 1) {
+                $ativas++;
+            } else {
+                $inativas++;
+            }
+
+            if ((int) ($item['indexar'] ?? 1) === 1) {
+                $indexaveis++;
+            } else {
+                $noindex++;
+            }
+
+            $posts = (int) ($item['total_posts'] ?? 0);
+            $views = (int) ($item['total_views'] ?? 0);
+            if ($posts > 0 || $views > 0) {
+                $top[] = [
+                    'label' => (string) ($item['nome'] ?? 'Categoria'),
+                    'posts' => $posts,
+                    'views' => $views,
+                    'color' => (string) ($item['cor'] ?? '#22d3ee'),
+                ];
+            }
+        }
+
+        usort($top, static fn (array $left, array $right): int => ((int) ($right['views'] ?? 0) <=> (int) ($left['views'] ?? 0)) ?: ((int) ($right['posts'] ?? 0) <=> (int) ($left['posts'] ?? 0)));
+        $top = array_slice($top, 0, 7);
+
+        return [
+            'status' => [
+                'labels' => ['Ativas', 'Inativas', 'Indexaveis', 'Noindex'],
+                'values' => [$ativas, $inativas, $indexaveis, $noindex],
+                'colors' => ['#34d399', '#64748b', '#22d3ee', '#f97316'],
+            ],
+            'performance' => [
+                'labels' => array_map(static fn (array $item): string => (string) ($item['label'] ?? ''), $top),
+                'datasets' => [
+                    [
+                        'label' => 'Views',
+                        'values' => array_map(static fn (array $item): int => (int) ($item['views'] ?? 0), $top),
+                        'backgroundColor' => 'rgba(34, 211, 238, 0.44)',
+                        'borderColor' => 'rgba(34, 211, 238, 0.92)',
+                    ],
+                    [
+                        'label' => 'Posts',
+                        'values' => array_map(static fn (array $item): int => (int) ($item['posts'] ?? 0), $top),
+                        'backgroundColor' => 'rgba(148, 163, 184, 0.22)',
+                        'borderColor' => 'rgba(203, 213, 225, 0.5)',
+                    ],
+                ],
+            ],
         ];
     }
 

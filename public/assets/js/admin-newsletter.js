@@ -60,7 +60,11 @@
         throw new Error("Bloco da newsletter nao encontrado na resposta.");
       }
 
+      if (window.adminModuleCharts && typeof window.adminModuleCharts.destroyIn === "function") {
+        window.adminModuleCharts.destroyIn(root);
+      }
       root.replaceWith(nextRoot);
+      document.dispatchEvent(new CustomEvent("admin:module-charts:init", { detail: { root: nextRoot } }));
 
       if (pushState) {
         const browserUrl = new URL(url, window.location.origin);
@@ -129,7 +133,11 @@
         return;
       }
 
+      if (window.adminModuleCharts && typeof window.adminModuleCharts.destroyIn === "function") {
+        window.adminModuleCharts.destroyIn(root);
+      }
       root.replaceWith(nextRoot);
+      document.dispatchEvent(new CustomEvent("admin:module-charts:init", { detail: { root: nextRoot } }));
 
       const browserUrl = new URL(response.url || window.location.href, window.location.origin);
       browserUrl.searchParams.delete("_partial");

@@ -87,6 +87,7 @@ final class LinksService
                 'links_com_clique' => $linksComClique,
                 'click_avg' => $avgClicks,
             ],
+            'charts' => $this->buildIndexCharts($filteredItemsWithMetrics),
         ];
     }
 
@@ -250,6 +251,69 @@ final class LinksService
         }
 
         return $items;
+    }
+
+    /**
+     * @param array<int, array<string,mixed>> $items
+     * @return array<string, array<string, mixed>>
+     */
+    private function buildIndexCharts(array $items): array
+    {
+        $statusLabels = [
+            'ativo' => 'Ativos',
+            'oculto' => 'Ocultos',
+            'quebrado' => 'Revisar',
+            'expirado' => 'Expirados',
+        ];
+        $typeLabels = [
+            'produto' => 'Produtos',
+            'cupom' => 'Cupons',
+            'conteudo' => 'Conteudo',
+            'rede_social' => 'Redes',
+            'servico' => 'Servicos',
+        ];
+
+        $statusCounts = array_fill_keys(array_keys($statusLabels), 0);
+        $typeCounts = array_fill_keys(array_keys($typeLabels), 0);
+        $topClicks = [];
+
+        foreach ($items as $item) {
+            $status = (string) ($item['status'] ?? '');
+            if (isset($statusCounts[$status])) {
+                $statusCounts[$status]++;
+            }
+
+            $type = (string) ($item['tipo'] ?? '');
+            if (isset($typeCounts[$type])) {
+                $typeCounts[$type]++;
+            }
+
+            $clicks = (int) ($item['click_total'] ?? 0);
+            if ($clicks > 0) {
+                $topClicks[] = [
+                    'label' => (string) ($item['titulo'] ?? 'Link #' . (string) ($item['id'] ?? '')),
+                    'value' => $clicks,
+                ];
+            }
+        }
+
+        usort($topClicks, static fn (array $left, array $right): int => (int) ($right['value'] ?? 0) <=> (int) ($left['value'] ?? 0));
+        $topClicks = array_slice($topClicks, 0, 7);
+
+        return [
+            'status' => [
+                'labels' => array_values($statusLabels),
+                'values' => array_values($statusCounts),
+            ],
+            'types' => [
+                'labels' => array_values($typeLabels),
+                'values' => array_values($typeCounts),
+            ],
+            'top_clicks' => [
+                'labels' => array_map(static fn (array $item): string => (string) ($item['label'] ?? ''), $topClicks),
+                'values' => array_map(static fn (array $item): int => (int) ($item['value'] ?? 0), $topClicks),
+            ],
+        ];
     }
 
 

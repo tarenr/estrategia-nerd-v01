@@ -2,6 +2,14 @@
   const rootSelector = "[data-admin-links-root]";
   const searchDelay = 300;
   let searchTimer = null;
+  const chartInstances = [];
+  const maxChartInitAttempts = 25;
+  let chartInitTimer = null;
+  const numberFormatter = new Intl.NumberFormat("pt-BR");
+  const compactFormatter = new Intl.NumberFormat("pt-BR", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
 
   const getRoot = () => document.querySelector(rootSelector);
 
@@ -17,6 +25,192 @@
       .replace(/>/g, "&gt;")
       .replace(/\"/g, "&quot;")
       .replace(/'/g, "&#039;");
+
+  const formatMetric = (value) => {
+    const number = Number(value || 0);
+    return Math.abs(number) >= 1000 ? compactFormatter.format(number) : numberFormatter.format(number);
+  };
+
+  const compactLabel = (value, maxLength = 22) => {
+    const label = String(value || "");
+    return label.length <= maxLength ? label : `${label.slice(0, Math.max(1, maxLength - 1))}...`;
+  };
+
+  const parseChartPayload = (canvas) => {
+    if (!canvas) return null;
+    try {
+      return JSON.parse(canvas.dataset.chart || "{}");
+    } catch (error) {
+      console.warn("Links chart payload invalid", error);
+      return null;
+    }
+  };
+
+  const chartHasValues = (payload, key = "values") =>
+    !!payload && Array.isArray(payload[key]) && payload[key].some((value) => Number(value || 0) > 0);
+
+  const setChartEmpty = (canvas, isEmpty) => {
+    const shell = canvas ? canvas.closest(".admin-module-chart-shell") : null;
+    if (shell) shell.classList.toggle("is-empty", isEmpty);
+  };
+
+  const configureCharts = () => {
+    if (!window.Chart) return;
+    window.Chart.defaults.color = "rgba(203, 213, 225, 0.82)";
+    window.Chart.defaults.font.family = "'Rajdhani', ui-sans-serif, system-ui";
+    window.Chart.defaults.plugins.tooltip.backgroundColor = "rgba(2, 6, 23, 0.94)";
+    window.Chart.defaults.plugins.tooltip.borderColor = "rgba(34, 211, 238, 0.24)";
+    window.Chart.defaults.plugins.tooltip.borderWidth = 1;
+    window.Chart.defaults.plugins.tooltip.padding = 12;
+    window.Chart.defaults.plugins.tooltip.titleColor = "#f8fafc";
+    window.Chart.defaults.plugins.tooltip.bodyColor = "#cbd5e1";
+  };
+
+  const rememberChart = (chart) => {
+    chartInstances.push(chart);
+    return chart;
+  };
+
+  const destroyCharts = () => {
+    while (chartInstances.length > 0) {
+      const chart = chartInstances.pop();
+      if (chart && typeof chart.destroy === "function") chart.destroy();
+    }
+  };
+
+  const renderDoughnutChart = (root, selector, colors) => {
+    const canvas = root.querySelector(selector);
+    const payload = parseChartPayload(canvas);
+    if (!canvas) return;
+    if (!window.Chart || !chartHasValues(payload)) {
+      setChartEmpty(canvas, true);
+      return;
+    }
+
+    setChartEmpty(canvas, false);
+    rememberChart(new window.Chart(canvas, {
+      type: "doughnut",
+      data: {
+        labels: payload.labels || [],
+        datasets: [{
+          data: payload.values || [],
+          backgroundColor: colors,
+          borderColor: "rgba(15, 23, 42, 0.92)",
+          borderWidth: 3,
+          hoverOffset: 5,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "64%",
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { boxHeight: 8, boxWidth: 18, padding: 10, useBorderRadius: true },
+          },
+          tooltip: {
+            callbacks: {
+              label(context) {
+                const total = context.dataset.data.reduce((sum, value) => sum + Number(value || 0), 0);
+                const value = Number(context.parsed || 0);
+                const percent = total > 0 ? ` (${Math.round((value / total) * 100)}%)` : "";
+                return `${context.label}: ${formatMetric(value)}${percent}`;
+              },
+            },
+          },
+        },
+      },
+    }));
+  };
+
+  const renderHorizontalBarChart = (root, selector, label, colors) => {
+    const canvas = root.querySelector(selector);
+    const payload = parseChartPayload(canvas);
+    if (!canvas) return;
+    if (!window.Chart || !chartHasValues(payload)) {
+      setChartEmpty(canvas, true);
+      return;
+    }
+
+    setChartEmpty(canvas, false);
+    rememberChart(new window.Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: (payload.labels || []).map((item) => compactLabel(item)),
+        datasets: [{
+          label,
+          data: payload.values || [],
+          backgroundColor: colors.background,
+          borderColor: colors.border,
+          borderWidth: 1,
+          borderRadius: 7,
+          barThickness: 13,
+        }],
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title(items) {
+                const index = items && items[0] ? items[0].dataIndex : -1;
+                return index >= 0 && Array.isArray(payload.labels) ? payload.labels[index] : "";
+              },
+              label(context) {
+                return `${label}: ${formatMetric(context.parsed.x)}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: "rgba(51, 65, 85, 0.24)" },
+            ticks: { precision: 0, callback: formatMetric },
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 11 } },
+          },
+        },
+      },
+    }));
+  };
+
+  const initLinksCharts = (root = getRoot(), attempt = 0) => {
+    if (!root) return;
+    if (!window.Chart) {
+      if (attempt >= maxChartInitAttempts) {
+        root.querySelectorAll(".admin-module-chart-shell").forEach((shell) => shell.classList.add("is-empty"));
+        return;
+      }
+      if (chartInitTimer !== null) {
+        window.clearTimeout(chartInitTimer);
+      }
+      chartInitTimer = window.setTimeout(() => initLinksCharts(getRoot(), attempt + 1), 120);
+      return;
+    }
+
+    configureCharts();
+    renderDoughnutChart(root, "#linksStatusChart", [
+      "rgba(52, 211, 153, 0.78)",
+      "rgba(148, 163, 184, 0.58)",
+      "rgba(248, 113, 113, 0.76)",
+      "rgba(250, 204, 21, 0.72)",
+    ]);
+    renderHorizontalBarChart(root, "#linksTypesChart", "Links", {
+      background: "rgba(34, 211, 238, 0.48)",
+      border: "rgba(34, 211, 238, 0.9)",
+    });
+    renderHorizontalBarChart(root, "#linksTopClicksChart", "Cliques", {
+      background: "rgba(250, 204, 21, 0.44)",
+      border: "rgba(250, 204, 21, 0.88)",
+    });
+  };
 
   const openInlineConfirmModal = ({ title, message, submitLabel, cancelLabel }) =>
     new Promise((resolve) => {
@@ -175,7 +369,9 @@
         throw new Error("Bloco de links nao encontrado na resposta.");
       }
 
+      destroyCharts();
       root.replaceWith(nextRoot);
+      initLinksCharts(nextRoot);
       restoreViewState(viewState);
 
       if (pushState) {
@@ -234,7 +430,9 @@
         throw new Error("Bloco de links nao encontrado apos reordenar.");
       }
 
+      destroyCharts();
       root.replaceWith(nextRoot);
+      initLinksCharts(nextRoot);
       restoreViewState(viewState);
     } catch (error) {
       console.error(error);
@@ -295,7 +493,9 @@
         return;
       }
 
+      destroyCharts();
       root.replaceWith(nextRoot);
+      initLinksCharts(nextRoot);
       restoreViewState(viewState);
 
       const browserUrl = new URL(response.url || window.location.href, window.location.origin);
@@ -479,4 +679,6 @@
 
     row.draggable = true;
   });
+
+  initLinksCharts();
 })();

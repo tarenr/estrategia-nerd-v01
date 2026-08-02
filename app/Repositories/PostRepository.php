@@ -495,6 +495,30 @@ final class PostRepository
         ];
     }
 
+    public function categoryMetricsFiltered(array $filters, int $limit = 7): array
+    {
+        $limit = max(1, min(12, $limit));
+        [$whereSql, $params] = $this->buildAdminWhere($filters);
+        $sql = "SELECT COALESCE(cp.nome, 'Sem categoria') AS categoria_nome,
+                       COALESCE(cp.cor, '#22d3ee') AS categoria_cor,
+                       COUNT(*) AS total_posts,
+                       COALESCE(SUM(p.views), 0) AS total_views,
+                       COALESCE(SUM(p.curtidas), 0) AS total_curtidas,
+                       COALESCE(SUM(p.comentarios_count), 0) AS total_comentarios
+                FROM posts p
+                LEFT JOIN categoria_post cp ON cp.id = p.categoria_post_id
+                {$whereSql}
+                GROUP BY cp.id, cp.nome, cp.cor
+                ORDER BY total_views DESC, total_posts DESC, categoria_nome ASC
+                LIMIT :limit";
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $key => $value) { $stmt->bindValue($key, $value); }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function paginateAdmin(array $filters, int $page, int $perPage, string $sort, string $dir): array
     {
         $page = max(1, $page);

@@ -25,6 +25,10 @@ $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_pag
 $filters = $filters ?? ['busca' => '', 'status' => ''];
 $sort = (string) ($sort ?? 'ordem');
 $dir = (string) ($dir ?? 'asc');
+$charts = is_array($charts ?? null) ? $charts : [];
+$encodeChart = static function (array $payload): string {
+    return htmlspecialchars((string) json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+};
 $created = isset($_GET['created']) && (string) $_GET['created'] === '1';
 $updated = isset($_GET['updated']) && (string) $_GET['updated'] === '1';
 $deleted = isset($_GET['deleted']) && (string) $_GET['deleted'] === '1';
@@ -63,9 +67,39 @@ $deactivated = isset($_GET['deactivated']) && (string) $_GET['deactivated'] === 
 
     <?php View::component('admin/categories/summary-cards', ['summary' => $summary]); ?>
 
+    <section class="admin-module-charts-grid" aria-label="Graficos das categorias">
+      <article class="admin-module-chart-card">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Configuracao editorial</h2>
+            <p>Status, indexacao e disponibilidade no filtro atual.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell admin-module-chart-shell-sm">
+          <canvas data-admin-module-chart data-type="bar" data-chart="<?= $encodeChart(is_array($charts['status'] ?? null) ? $charts['status'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem categorias neste recorte.</div>
+        </div>
+      </article>
+
+      <article class="admin-module-chart-card">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Desempenho por categoria</h2>
+            <p>Views e posts vinculados nas principais categorias.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell admin-module-chart-shell-sm">
+          <canvas data-admin-module-chart data-type="grouped-bar" data-chart="<?= $encodeChart(is_array($charts['performance'] ?? null) ? $charts['performance'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem posts vinculados neste recorte.</div>
+        </div>
+      </article>
+    </section>
+
     <?php View::component('admin/categories/filters', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/categories/table', ['items' => $items, 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
   </div>
 </div>
 
-<script src="<?= url('/assets/js/admin-categories.js') . '?v=' . @filemtime(dirname(__DIR__, 3) . '/public/assets/js/admin-categories.js') ?>" defer></script>
+<?php if (!isset($_GET['_partial']) || (string) $_GET['_partial'] !== '1'): ?>
+<script src="<?= url('/assets/js/admin-categories.js') . '?v=' . @filemtime(base_path('public/assets/js/admin-categories.js')) ?>" defer></script>
+<?php endif; ?>

@@ -9,6 +9,10 @@ $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_pag
 $categorias = $categorias ?? [];
 $sort = (string)($sort ?? 'data');
 $dir = (string)($dir ?? 'desc');
+$charts = is_array($charts ?? null) ? $charts : [];
+$encodeChart = static function (array $payload): string {
+    return htmlspecialchars((string) json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+};
 $created = isset($_GET['created']) && (string)$_GET['created'] === '1';
 $updated = isset($_GET['updated']) && (string)$_GET['updated'] === '1';
 $deleted = isset($_GET['deleted']) && (string)$_GET['deleted'] === '1';
@@ -54,10 +58,54 @@ $deleted = isset($_GET['deleted']) && (string)$_GET['deleted'] === '1';
     <?php endif; ?>
 
     <?php View::component('admin/posts/summary-cards', ['summary' => $summary]); ?>
+
+    <section class="admin-module-charts-grid" aria-label="Graficos dos posts">
+      <article class="admin-module-chart-card">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Status editorial</h2>
+            <p>Publicados, rascunhos e agendados no filtro atual.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell admin-module-chart-shell-sm">
+          <canvas id="postsStatusChart" data-chart="<?= $encodeChart(is_array($charts['status'] ?? null) ? $charts['status'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem posts neste recorte.</div>
+        </div>
+      </article>
+
+      <article class="admin-module-chart-card">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Engajamento acumulado</h2>
+            <p>Views, curtidas e comentarios da base filtrada.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell admin-module-chart-shell-sm">
+          <canvas id="postsEngagementChart" data-chart="<?= $encodeChart(is_array($charts['engagement'] ?? null) ? $charts['engagement'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem interacoes registradas.</div>
+        </div>
+      </article>
+
+      <article class="admin-module-chart-card admin-module-chart-card-wide">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Categorias por desempenho</h2>
+            <p>Views e volume editorial por categoria.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell">
+          <canvas id="postsCategoriesChart" data-chart="<?= $encodeChart(is_array($charts['categories'] ?? null) ? $charts['categories'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem categorias no filtro atual.</div>
+        </div>
+      </article>
+    </section>
+
     <?php View::component('admin/posts/filters', ['filters' => $filters,'categorias' => $categorias,'sort' => $sort,'dir' => $dir,'pagination' => $pagination]); ?>
     <?php View::component('admin/posts/table', ['items' => $pagination['items'] ?? [],'sort' => $sort,'dir' => $dir,'filters' => $filters,'pagination' => $pagination]); ?>
     <?php View::component('admin/posts/pagination', ['filters' => $filters,'sort' => $sort,'dir' => $dir,'pagination' => $pagination]); ?>
   </div>
 </div>
 
-<script src="<?= url('/assets/js/admin-posts.js') ?>" defer></script>
+<?php if (!isset($_GET['_partial']) || (string) $_GET['_partial'] !== '1'): ?>
+<script src="<?= url('/assets/js/admin-posts.js') . '?v=' . @filemtime(base_path('public/assets/js/admin-posts.js')) ?>" defer></script>
+<?php endif; ?>

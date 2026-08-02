@@ -44,6 +44,7 @@ final class MidiaService
             'sort' => $sort,
             'dir' => $dir,
             'summary' => $this->buildSummary($allItems),
+            'charts' => $this->buildIndexCharts($allItems),
             'pagination' => $this->paginate($sortedItems, $page, $perPage),
             'errors' => $errors,
             'upload' => $this->buildUploadConfig($query),
@@ -643,6 +644,51 @@ final class MidiaService
             'size_label' => $this->formatBytes($size),
             'average_size_bytes' => $averageSize,
             'average_size_label' => $this->formatBytes($averageSize),
+        ];
+    }
+
+    /**
+     * @param array<int, array<string,mixed>> $items
+     * @return array<string, array<string,mixed>>
+     */
+    private function buildIndexCharts(array $items): array
+    {
+        $types = ['image' => 0, 'audio' => 0, 'video' => 0, 'other' => 0];
+        $usage = ['in_use' => 0, 'available' => 0, 'orphan' => 0, 'protected' => 0];
+        $sizeByType = ['image' => 0, 'audio' => 0, 'video' => 0, 'other' => 0];
+
+        foreach ($items as $item) {
+            $type = (string) ($item['media_type'] ?? 'other');
+            if (!isset($types[$type])) {
+                $type = 'other';
+            }
+            $types[$type]++;
+            $sizeByType[$type] += (int) ($item['size'] ?? 0);
+
+            $state = (string) ($item['usage_state'] ?? 'available');
+            if (!isset($usage[$state])) {
+                $state = 'available';
+            }
+            $usage[$state]++;
+        }
+
+        return [
+            'types' => [
+                'labels' => ['Imagens', 'Audio', 'Video', 'Outros'],
+                'values' => [$types['image'], $types['audio'], $types['video'], $types['other']],
+                'colors' => ['#22d3ee', '#a78bfa', '#f472b6', '#64748b'],
+            ],
+            'usage' => [
+                'labels' => ['Em uso', 'Disponiveis', 'Orfas', 'Protegidas'],
+                'values' => [$usage['in_use'], $usage['available'], $usage['orphan'], $usage['protected']],
+                'colors' => ['#34d399', '#60a5fa', '#fb7185', '#facc15'],
+            ],
+            'size' => [
+                'labels' => ['Imagens', 'Audio', 'Video', 'Outros'],
+                'values' => [$sizeByType['image'], $sizeByType['audio'], $sizeByType['video'], $sizeByType['other']],
+                'colors' => ['#22d3ee', '#a78bfa', '#f472b6', '#64748b'],
+                'label' => 'Bytes',
+            ],
         ];
     }
 

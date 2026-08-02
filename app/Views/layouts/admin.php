@@ -23,16 +23,19 @@ $projectRoot = dirname(__DIR__, 3);
 $adminCssPath = $projectRoot . '/public/assets/css/admin.css';
 $adminLayoutJsPath = $projectRoot . '/public/assets/js/admin-layout.js';
 $adminDashboardJsPath = $projectRoot . '/public/assets/js/admin-dashboard.js';
+$adminModuleChartsJsPath = $projectRoot . '/public/assets/js/admin-module-charts.js';
 
 $adminCssVersion = is_file($adminCssPath) ? (string) filemtime($adminCssPath) : '1';
 $adminLayoutJsVersion = is_file($adminLayoutJsPath) ? (string) filemtime($adminLayoutJsPath) : '1';
 $adminDashboardJsVersion = is_file($adminDashboardJsPath) ? (string) filemtime($adminDashboardJsPath) : '1';
-$adminBuildVersion = max((int) $adminCssVersion, (int) $adminLayoutJsVersion, (int) $adminDashboardJsVersion);
+$adminModuleChartsJsVersion = is_file($adminModuleChartsJsPath) ? (string) filemtime($adminModuleChartsJsPath) : '1';
+$adminBuildVersion = max((int) $adminCssVersion, (int) $adminLayoutJsVersion, (int) $adminDashboardJsVersion, (int) $adminModuleChartsJsVersion);
 
 $rawPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $rawPath = rtrim($rawPath, '/') ?: '/';
 
 $isAdminDashboard = (bool) preg_match('#/admin$#', $rawPath);
+$usesAdminCharts = $isAdminDashboard || (bool) preg_match('#/admin/(links|posts|comentarios|newsletter|midia|categorias)$#', $rawPath);
 $environmentSwitcherPaths = [
     '#/admin$#',
     '#/admin/home-e-menus$#',
@@ -121,6 +124,10 @@ $adminFavicon = $adminFavicon !== ''
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <?php if ($usesAdminCharts): ?>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
+    <script src="<?= url('/assets/js/admin-module-charts.js?v=' . $adminModuleChartsJsVersion) ?>" defer></script>
+  <?php endif; ?>
   <script>
     tailwind.config = {
       theme: {
@@ -285,7 +292,6 @@ $adminFavicon = $adminFavicon !== ''
 
       <script src="<?= url('/assets/js/admin-layout.js?v=' . $adminLayoutJsVersion) ?>" defer></script>
       <?php if ($isAdminDashboard): ?>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
         <script src="<?= url('/assets/js/admin-dashboard.js?v=' . $adminDashboardJsVersion) ?>" defer></script>
       <?php endif; ?>
       <script>

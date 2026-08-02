@@ -60,7 +60,11 @@
         throw new Error("Bloco de categorias nao encontrado na resposta.");
       }
 
+      if (window.adminModuleCharts && typeof window.adminModuleCharts.destroyIn === "function") {
+        window.adminModuleCharts.destroyIn(root);
+      }
       root.replaceWith(nextRoot);
+      document.dispatchEvent(new CustomEvent("admin:module-charts:init", { detail: { root: nextRoot } }));
 
       if (pushState) {
         const browserUrl = new URL(url, window.location.origin);

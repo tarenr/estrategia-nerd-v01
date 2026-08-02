@@ -10,6 +10,10 @@ $filters = $filters ?? ['busca' => '', 'tipo' => '', 'promocao' => '', 'status' 
 $currentFeatured = is_array($current_featured ?? null) ? $current_featured : null;
 $sort = (string) ($sort ?? 'posicao');
 $dir = (string) ($dir ?? 'asc');
+$charts = is_array($charts ?? null) ? $charts : [];
+$encodeChart = static function (array $payload): string {
+    return htmlspecialchars((string) json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+};
 $created = isset($_GET['created']) && (string) $_GET['created'] === '1';
 $updated = isset($_GET['updated']) && (string) $_GET['updated'] === '1';
 $deleted = isset($_GET['deleted']) && (string) $_GET['deleted'] === '1';
@@ -118,6 +122,47 @@ $mode = (string) ($_GET['mode'] ?? '');
 
     <?php View::component('admin/links/summary-cards', ['summary' => $summary]); ?>
 
+    <section class="admin-module-charts-grid" aria-label="Graficos dos links">
+      <article class="admin-module-chart-card">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Status dos links</h2>
+            <p>Distribuicao operacional da base filtrada.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell admin-module-chart-shell-sm">
+          <canvas id="linksStatusChart" data-chart="<?= $encodeChart(is_array($charts['status'] ?? null) ? $charts['status'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem dados para este filtro.</div>
+        </div>
+      </article>
+
+      <article class="admin-module-chart-card">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Tipos de link</h2>
+            <p>Produtos, cupons, canais e servicos.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell admin-module-chart-shell-sm">
+          <canvas id="linksTypesChart" data-chart="<?= $encodeChart(is_array($charts['types'] ?? null) ? $charts['types'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Sem dados para este filtro.</div>
+        </div>
+      </article>
+
+      <article class="admin-module-chart-card admin-module-chart-card-wide">
+        <div class="admin-module-chart-header">
+          <div>
+            <h2>Links com mais cliques</h2>
+            <p>Ranking dos destinos com melhor desempenho.</p>
+          </div>
+        </div>
+        <div class="admin-module-chart-shell">
+          <canvas id="linksTopClicksChart" data-chart="<?= $encodeChart(is_array($charts['top_clicks'] ?? null) ? $charts['top_clicks'] : []) ?>"></canvas>
+          <div class="admin-module-chart-empty">Ainda nao ha cliques rastreados neste recorte.</div>
+        </div>
+      </article>
+    </section>
+
     <?php View::component('admin/links/filters', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
     <?php View::component('admin/links/table', ['items' => $items, 'filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination, 'current_featured' => $currentFeatured]); ?>
     <?php View::component('admin/links/pagination', ['filters' => $filters, 'sort' => $sort, 'dir' => $dir, 'pagination' => $pagination]); ?>
@@ -125,5 +170,5 @@ $mode = (string) ($_GET['mode'] ?? '');
 </div>
 
 <?php if (!isset($_GET['_partial']) || (string) $_GET['_partial'] !== '1'): ?>
-<script src="<?= url('/assets/js/admin-links.js') . '?v=' . @filemtime(dirname(__DIR__, 3) . '/public/assets/js/admin-links.js') ?>" defer></script>
+<script src="<?= url('/assets/js/admin-links.js') . '?v=' . @filemtime(base_path('public/assets/js/admin-links.js')) ?>" defer></script>
 <?php endif; ?>

@@ -44,6 +44,7 @@ final class PostsService
             'sort' => $sort,
             'dir' => $dir,
             'summary' => $summary,
+            'charts' => $this->buildIndexCharts($summary, $this->posts->categoryMetricsFiltered($filters)),
             'pagination' => $this->posts->paginateAdmin($filters, $page, $perPage, $sort, $dir),
             'categorias' => $this->categorias->listForSelect(),
         ];
@@ -682,6 +683,39 @@ final class PostsService
                 ? round(($totalInteracoes / $totalViews) * 100, 1)
                 : 0.0,
         ]);
+    }
+
+    /**
+     * @param array<string,mixed> $summary
+     * @param array<int, array<string,mixed>> $categories
+     * @return array<string, array<string, mixed>>
+     */
+    private function buildIndexCharts(array $summary, array $categories): array
+    {
+        return [
+            'status' => [
+                'labels' => ['Publicados', 'Rascunhos', 'Agendados'],
+                'values' => [
+                    max(0, (int) ($summary['publicados'] ?? 0)),
+                    max(0, (int) ($summary['rascunhos'] ?? 0)),
+                    max(0, (int) ($summary['agendados'] ?? 0)),
+                ],
+            ],
+            'engagement' => [
+                'labels' => ['Views', 'Curtidas', 'Comentarios'],
+                'values' => [
+                    max(0, (int) ($summary['total_views'] ?? 0)),
+                    max(0, (int) ($summary['total_curtidas'] ?? 0)),
+                    max(0, (int) ($summary['total_comentarios'] ?? 0)),
+                ],
+            ],
+            'categories' => [
+                'labels' => array_map(static fn (array $item): string => (string) ($item['categoria_nome'] ?? 'Sem categoria'), $categories),
+                'posts' => array_map(static fn (array $item): int => (int) ($item['total_posts'] ?? 0), $categories),
+                'views' => array_map(static fn (array $item): int => (int) ($item['total_views'] ?? 0), $categories),
+                'colors' => array_map(static fn (array $item): string => (string) ($item['categoria_cor'] ?? '#22d3ee'), $categories),
+            ],
+        ];
     }
 
     private function migratePostMediaForSlugChange(array &$form, array $existingPost, string $newSlug, array &$errors): void

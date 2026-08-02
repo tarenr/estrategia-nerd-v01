@@ -49,6 +49,14 @@ final class NewsletterService
                 'desinscritos_rate' => $total > 0 ? round(($desinscritos / $total) * 100, 1) : 0.0,
                 'daily_avg_7' => $last7 > 0 ? round($last7 / 7, 1) : 0.0,
             ],
+            'charts' => $this->buildIndexCharts($filteredItems, [
+                'ativos' => $ativos,
+                'inativos' => $inativos,
+                'desinscritos' => $desinscritos,
+                'hoje' => $today,
+                'last7' => $last7,
+                'active_last7' => $activeLast7,
+            ]),
         ];
     }
 
@@ -126,6 +134,68 @@ final class NewsletterService
         }
 
         return $timestamp >= $start && $timestamp <= $end;
+    }
+
+    /**
+     * @param array<int, array<string,mixed>> $items
+     * @param array<string,int> $summary
+     * @return array<string, array<string,mixed>>
+     */
+    private function buildIndexCharts(array $items, array $summary): array
+    {
+        $today = strtotime('today 00:00:00') ?: time();
+        $daily = [];
+        for ($index = 6; $index >= 0; $index--) {
+            $timestamp = strtotime('-' . $index . ' days', $today) ?: $today;
+            $key = date('Y-m-d', $timestamp);
+            $daily[$key] = ['label' => date('d/m', $timestamp), 'total' => 0, 'ativos' => 0];
+        }
+
+        foreach ($items as $item) {
+            $timestamp = strtotime((string) ($item['data_cadastro'] ?? ''));
+            if ($timestamp === false) {
+                continue;
+            }
+
+            $key = date('Y-m-d', $timestamp);
+            if (!isset($daily[$key])) {
+                continue;
+            }
+
+            $daily[$key]['total']++;
+            if ((string) ($item['status'] ?? '') === 'ativo') {
+                $daily[$key]['ativos']++;
+            }
+        }
+
+        return [
+            'status' => [
+                'labels' => ['Ativos', 'Inativos', 'Desinscritos'],
+                'values' => [
+                    max(0, (int) ($summary['ativos'] ?? 0)),
+                    max(0, (int) ($summary['inativos'] ?? 0)),
+                    max(0, (int) ($summary['desinscritos'] ?? 0)),
+                ],
+                'colors' => ['#34d399', '#60a5fa', '#fb7185'],
+            ],
+            'daily' => [
+                'labels' => array_map(static fn (array $item): string => (string) $item['label'], $daily),
+                'datasets' => [
+                    [
+                        'label' => 'Cadastros',
+                        'values' => array_map(static fn (array $item): int => (int) $item['total'], $daily),
+                        'backgroundColor' => 'rgba(34, 211, 238, 0.42)',
+                        'borderColor' => 'rgba(34, 211, 238, 0.9)',
+                    ],
+                    [
+                        'label' => 'Ativos',
+                        'values' => array_map(static fn (array $item): int => (int) $item['ativos'], $daily),
+                        'backgroundColor' => 'rgba(52, 211, 153, 0.32)',
+                        'borderColor' => 'rgba(52, 211, 153, 0.86)',
+                    ],
+                ],
+            ],
+        ];
     }
 
     private function clampInt(int $value, int $min, int $max): int
