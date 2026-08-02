@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Repositories\UsuarioRepository;
+use App\Support\SystemActivityLogger;
+use PDOException;
 
 final class AuthService
 {
@@ -34,7 +36,17 @@ final class AuthService
             return ['ok' => false, 'error' => 'Informe usuário e senha.'];
         }
 
-        $user = $this->usuarios->findByUsuario($usuario);
+        try {
+            $user = $this->usuarios->findByUsuario($usuario);
+        } catch (PDOException $exception) {
+            SystemActivityLogger::write('auth', 'login_database_error', [
+                'stage' => 'find_user',
+                'code' => (string) $exception->getCode(),
+                'message' => $exception->getMessage(),
+            ]);
+
+            return ['ok' => false, 'error' => 'Banco de dados temporariamente indisponivel. Reinicie o MySQL/XAMPP ou tente novamente em instantes.'];
+        }
 
         if (!$user) {
             return ['ok' => false, 'error' => 'Credenciais inválidas.'];
@@ -54,7 +66,16 @@ final class AuthService
         }
 
         $agora = date('Y-m-d H:i:s');
-        $this->usuarios->touchLastAccess((int) ($user['id'] ?? 0), $agora);
+        try {
+            $this->usuarios->touchLastAccess((int) ($user['id'] ?? 0), $agora);
+        } catch (PDOException $exception) {
+            SystemActivityLogger::write('auth', 'login_last_access_error', [
+                'stage' => 'touch_last_access',
+                'user_id' => (int) ($user['id'] ?? 0),
+                'code' => (string) $exception->getCode(),
+                'message' => $exception->getMessage(),
+            ]);
+        }
         $user['ultimo_acesso'] = $agora;
 
         unset($user['senha']);
