@@ -519,14 +519,9 @@ final class HostingerApiService
             ];
         }
 
-        foreach ($subscriptions as $subscription) {
-            if (($subscription['auto_renewed'] ?? '') === 'Inativa') {
-                $alerts[] = [
-                    'label' => 'Auto-renovacao inativa',
-                    'text' => (string) ($subscription['name'] ?? 'Assinatura') . ' esta com renovacao automatica inativa.',
-                    'tone' => 'warning',
-                ];
-            }
+        $autoRenewalAlert = $this->autoRenewalAlert($subscriptions);
+        if ($autoRenewalAlert !== []) {
+            $alerts[] = $autoRenewalAlert;
         }
 
         foreach (($dnsGroups['TXT'] ?? []) as $record) {
@@ -561,6 +556,44 @@ final class HostingerApiService
             'text' => 'A leitura basica nao encontrou alertas operacionais importantes.',
             'tone' => 'success',
         ]];
+    }
+
+    /**
+     * @param array<int, array<string, string>> $subscriptions
+     * @return array<string, string>
+     */
+    private function autoRenewalAlert(array $subscriptions): array
+    {
+        $inactive = [];
+
+        foreach ($subscriptions as $subscription) {
+            if (($subscription['auto_renewed'] ?? '') !== 'Inativa') {
+                continue;
+            }
+
+            $name = trim((string) ($subscription['name'] ?? 'Assinatura'));
+            $name = $name !== '' ? $name : 'Assinatura';
+            $inactive[$name] = ($inactive[$name] ?? 0) + 1;
+        }
+
+        if ($inactive === []) {
+            return [];
+        }
+
+        ksort($inactive);
+
+        $items = [];
+        foreach ($inactive as $name => $count) {
+            $items[] = $count > 1 ? ($count . 'x ' . $name) : $name;
+        }
+
+        $total = array_sum($inactive);
+
+        return [
+            'label' => 'Auto-renovacao informativa',
+            'text' => 'Renovacao automatica inativa em ' . $total . ' ' . ($total === 1 ? 'assinatura' : 'assinaturas') . ': ' . implode('; ', $items) . '. Use como controle financeiro, nao como alerta critico.',
+            'tone' => 'info',
+        ];
     }
 
     private function formatDate(mixed $value): string
