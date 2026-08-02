@@ -651,7 +651,7 @@ final class SearchConsoleService
         $items = [];
 
         foreach (array_slice($this->fetchPublicSitemapPostEntries($base), 0, self::NON_INDEXED_POSTS_LIMIT) as $post) {
-            $url = trim((string) ($post['url'] ?? ''));
+            $url = $this->normalizeInspectionUrl(trim((string) ($post['url'] ?? '')), $base);
             if ($url === '') {
                 continue;
             }
@@ -705,6 +705,27 @@ final class SearchConsoleService
         }
 
         return $entries;
+    }
+
+    private function normalizeInspectionUrl(string $url, string $siteUrl): string
+    {
+        $url = trim($url);
+        $base = rtrim(trim($siteUrl), '/');
+        if ($url === '' || $base === '') {
+            return '';
+        }
+
+        $path = parse_url($url, PHP_URL_PATH);
+        if (!is_string($path) || $path === '') {
+            return $url;
+        }
+
+        if (preg_match('~^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?(?:/estrategia-nerd)?(?:/public)?(?=/|$)~i', $url) === 1) {
+            $query = parse_url($url, PHP_URL_QUERY);
+            return $base . $path . (is_string($query) && $query !== '' ? '?' . $query : '');
+        }
+
+        return $url;
     }
 
     /**

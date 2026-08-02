@@ -48,7 +48,8 @@ $sectionUrl = static function (string $section, array $extra = []) use ($monitor
             continue;
         }
 
-        $url .= '&' . rawurlencode((string) $key) . '=' . rawurlencode((string) $value);
+        $separator = str_contains($url, '?') ? '&' : '?';
+        $url .= $separator . rawurlencode((string) $key) . '=' . rawurlencode((string) $value);
     }
 
     return $url;
@@ -412,10 +413,12 @@ $inspectionLabel = static function (string $field, mixed $value): string {
             <tbody class="divide-y divide-slate-800">
               <?php foreach ($nonIndexedPosts as $item): ?>
                 <?php $result = is_array($item['result'] ?? null) ? $item['result'] : []; ?>
+                <?php $publicInspectionUrl = (string) ($item['url'] ?? ''); ?>
                 <tr class="align-top">
                   <td class="px-4 py-4">
                     <div class="font-semibold text-slate-100"><?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                    <div class="mt-1 break-all text-xs text-slate-400"><?= htmlspecialchars((string) ($item['url'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                    <div class="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">URL publica inspecionada</div>
+                    <div class="mt-1 break-all text-xs text-slate-400"><?= htmlspecialchars($publicInspectionUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                     <?php if (trim((string) ($item['lastmod'] ?? '')) !== ''): ?>
                       <div class="mt-1 text-xs text-slate-500">Ultima alteracao: <?= htmlspecialchars((string) $item['lastmod'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                     <?php endif; ?>
@@ -432,7 +435,7 @@ $inspectionLabel = static function (string $field, mixed $value): string {
                   </td>
                   <td class="px-4 py-4 text-slate-300"><?= htmlspecialchars($inspectionLabel('last_crawl_time', $result['last_crawl_time'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
                   <td class="px-4 py-4">
-                    <a href="<?= htmlspecialchars($sectionUrl('inspecao', ['inspection_url' => (string) ($item['url'] ?? '')]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Inspecionar</a>
+                    <a href="<?= htmlspecialchars($sectionUrl('inspecao', ['inspection_url' => $publicInspectionUrl]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Inspecionar URL publica: <?= htmlspecialchars($publicInspectionUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Inspecionar</a>
                   </td>
                 </tr>
               <?php endforeach; ?>
