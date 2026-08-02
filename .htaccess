@@ -1,4 +1,4 @@
-DirectoryIndex public/index.php
+DirectoryIndex index.html public/index.php
 
 # -----------------------------------------------------------------------------
 # @file        .htaccess
@@ -16,6 +16,9 @@ RewriteRule ^(?:bootstrap\.php|composer\.(json|lock)|package(?:-lock)?\.json|\.e
 
 # Compatibilidade com URLs antigas que ainda apontam para /public.
 RewriteRule ^public/ - [L]
+
+# Trilha Cloud Journey servida como HTML estatico.
+RewriteRule ^cloud-journey(?:/.*)?$ - [L]
 
 # Assets e uploads continuam servidos pela pasta publica.
 RewriteRule ^(assets|uploads)/(.*)$ public/$1/$2 [L]
