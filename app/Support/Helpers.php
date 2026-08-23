@@ -141,6 +141,13 @@ if (!function_exists('base_path')) {
 if (!function_exists('app_url')) {
     function app_url(): string
     {
+        $host = strtolower(trim((string) ($_SERVER['HTTP_HOST'] ?? '')));
+        $host = preg_replace('/:\d+$/', '', $host) ?? $host;
+
+        if ($host === 'nerd.tfr-info.com.br') {
+            return 'https://nerd.tfr-info.com.br';
+        }
+
         $url = trim((string) env('APP_URL', ''));
         if ($url !== '') {
             return rtrim($url, '/');
