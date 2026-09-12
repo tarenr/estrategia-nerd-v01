@@ -114,7 +114,7 @@ $generatedAt = trim((string) ($generated_at ?? date('Y-m-d H:i:s')));
 
         <section id="pastas" class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
           <h2 class="font-orbitron text-xl font-bold text-cyan-200">3) Mapa de pastas essenciais</h2>
-          <pre class="mt-4 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/80 p-4 text-xs leading-6 text-slate-300"><code>C:\xampp\htdocs\estrategia-nerd
+          <pre class="mt-4 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/80 p-4 text-xs leading-6 text-slate-300"><code>C:\Users\WINDOWS\Projects\estrategia-nerd
 |- app
 |  |- Controllers
 |  |- Services
