@@ -152,6 +152,8 @@ $rawItems = [
     sidebar_item('/admin/auditoria-geral', 'fa-solid fa-shield-heart', 'Auditoria Geral', 'audit'),
     sidebar_submenu('fa-solid fa-arrows-spin', 'Central Operacional', [
         sidebar_item('/admin/central-operacional-v2', 'fa-solid fa-gauge-high', 'Visão Geral', 'operations'),
+        sidebar_item('/admin/central-operacional-v2/backup-sistemico', 'fa-solid fa-server', 'Backup Sistêmico', 'operations'),
+        sidebar_item('/admin/central-operacional-v2/backup-editorial', 'fa-solid fa-newspaper', 'Backup Editorial', 'operations'),
         sidebar_item('/admin/central-operacional-v2/backup-em-nuvem', 'fa-solid fa-cloud-arrow-up', 'Backup em Nuvem', 'operations'),
         sidebar_item('/admin/central-operacional-v2/observabilidade', 'fa-solid fa-chart-simple', 'Observabilidade', 'operations'),
         sidebar_item('/admin/central-operacional-v2/hostinger-api', 'fa-solid fa-plug-circle-bolt', 'Hostinger API', 'operations'),

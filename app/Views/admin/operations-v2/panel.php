@@ -9,12 +9,49 @@ $facts = is_array($overview['facts'] ?? null) ? $overview['facts'] : [];
 $environments = is_array($overview['environments'] ?? null) ? $overview['environments'] : [];
 $observabilityEnvironments = is_array($overview['observability_environments'] ?? null) ? $overview['observability_environments'] : [];
 
+$systemOk = 0;
+$editorialOk = 0;
+$editorialUploads = 0;
+foreach ($environments as $environment) {
+    $system = is_array($environment['system'] ?? null) ? $environment['system'] : [];
+    $editorial = is_array($environment['editorial'] ?? null) ? $environment['editorial'] : [];
+    if (($system['status'] ?? '') === 'OK') {
+        $systemOk++;
+    }
+    if (($editorial['status'] ?? '') === 'OK') {
+        $editorialOk++;
+    }
+
+    $uploads = (string) ($editorial['uploads'] ?? '');
+    if (preg_match('/^(\d+)/', $uploads, $match)) {
+        $editorialUploads += (int) $match[1];
+    }
+}
+
 $eventTotal = 0;
 foreach ($observabilityEnvironments as $environment) {
     $eventTotal += (int) ($environment['events'] ?? 0);
 }
 
 $modules = [
+    [
+        'label' => 'Backup Sistemico',
+        'description' => 'Banco, sistema, restore e historico tecnico.',
+        'href' => url('/admin/central-operacional-v2/backup-sistemico/resumo'),
+        'icon' => 'fa-solid fa-database',
+        'metric' => $systemOk . ' / 3',
+        'metric_label' => 'ambientes com leitura',
+        'tone' => $systemOk >= 3 ? 'success' : 'neutral',
+    ],
+    [
+        'label' => 'Backup Editorial',
+        'description' => 'Pacotes editoriais, conteudo, restore e historico.',
+        'href' => url('/admin/central-operacional-v2/backup-editorial/resumo'),
+        'icon' => 'fa-solid fa-newspaper',
+        'metric' => $editorialOk . ' / 3',
+        'metric_label' => 'ambientes com pacote',
+        'tone' => $editorialOk >= 3 ? 'success' : 'neutral',
+    ],
     [
         'label' => 'Backup em Nuvem',
         'description' => 'Dropbox, automacao e historico de envios.',
