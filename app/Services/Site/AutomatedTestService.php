@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace App\Services\Site;
 
+use App\Support\EnvironmentGuard;
+
 final class AutomatedTestService
 {
     private const ROUTINE_SAFE = 'safe';
@@ -40,6 +42,9 @@ final class AutomatedTestService
     {
         $level = $this->operations->normalizeLevel($level);
         $environment = $this->operations->normalizeEnvironment($environment);
+        if ($environment !== 'local') {
+            EnvironmentGuard::requireLocal();
+        }
         $startedAt = microtime(true);
 
         $selectedRoutines = $level === OperationalTestService::LEVEL_ROUTINE

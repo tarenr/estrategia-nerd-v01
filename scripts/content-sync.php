@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/backup/EnvLoader.php';
 require_once __DIR__ . '/content-sync/ContentSyncManager.php';
+require_once dirname(__DIR__) . '/app/Support/Helpers.php';
+require_once dirname(__DIR__) . '/app/Support/EnvironmentManager.php';
+require_once dirname(__DIR__) . '/app/Support/EnvironmentGuard.php';
 
+use App\Support\EnvironmentGuard;
 use Scripts\Backup\EnvLoader;
 use Scripts\ContentSync\ContentSyncManager;
 
 EnvLoader::load(dirname(__DIR__) . '/.env');
+EnvironmentGuard::requireLocal();
 
 $config = require dirname(__DIR__) . '/config/content-sync.php';
 $manager = new ContentSyncManager($config);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Controllers\Site\BackupToolsController;
-use App\Controllers\Site\ContentSyncToolsController;
 use App\Controllers\Site\SearchConsoleMonitorController;
 use App\Services\Admin\Presenters\OperationsV2Presenter;
 use App\Services\Site\DropboxBackupService;
@@ -21,8 +20,6 @@ final class OperationsV2Controller
         if (isset($_GET['painel'])) {
             $legacyPanel = strtolower(trim((string) $_GET['painel']));
             $legacyRedirects = [
-                'backup-sistemico' => url('/admin/central-operacional-v2/backup-sistemico/resumo'),
-                'backup-editorial' => url('/admin/central-operacional-v2/backup-editorial/resumo'),
                 'backup-nuvem' => url('/admin/central-operacional-v2/backup-em-nuvem/resumo'),
                 'observabilidade' => url('/admin/central-operacional-v2/observabilidade'),
                 'seo-tecnico' => url('/admin/central-operacional-v2/seo-tecnico/resumo'),
@@ -46,78 +43,6 @@ final class OperationsV2Controller
             'title' => 'Central Operacional | Estrategia Nerd',
             'planned_modules' => $this->modules(),
             'overview' => $overview,
-        ]);
-    }
-
-    public function backupSistemico(?string $backupSecao = null): void
-    {
-        $module = $this->modules()['backup-sistemico'];
-        $section = is_string($backupSecao) && $backupSecao !== ''
-            ? $backupSecao
-            : (is_string($_GET['backup_secao'] ?? null) ? (string) $_GET['backup_secao'] : 'resumo');
-        if ($section === 'nuvem') {
-            $this->redirect(url('/admin/central-operacional-v2/backup-em-nuvem'));
-            return;
-        }
-
-        $backupTools = (new BackupToolsController())->viewData(
-            true,
-            $section,
-            url('/admin/central-operacional-v2/backup-sistemico')
-        );
-        if (is_array($backupTools['backup_sections'] ?? null)) {
-            unset($backupTools['backup_sections']['nuvem']);
-        }
-
-        if ((string) ($_GET['backup_fragment'] ?? '0') === '1') {
-            header('Content-Type: text/html; charset=UTF-8');
-            echo View::fragment('site/partials/backup-tools-content', $backupTools);
-            return;
-        }
-
-        View::render('admin/operations-v2/backup-sistemico', [
-            'title' => ($module['label'] ?? 'Backup Sistêmico e Restore') . ' | Estrategia Nerd',
-            'module' => $module,
-            'backup_tools' => $backupTools,
-        ]);
-    }
-
-    public function backupEditorial(?string $editorialSecao = null): void
-    {
-        $module = $this->modules()['backup-editorial'];
-        $section = is_string($editorialSecao) && $editorialSecao !== ''
-            ? $editorialSecao
-            : (is_string($_GET['editorial_secao'] ?? null) ? (string) $_GET['editorial_secao'] : 'resumo');
-        $allowedSections = ['resumo', 'acoes', 'restore', 'historico'];
-        if (!in_array($section, $allowedSections, true)) {
-            $section = 'resumo';
-        }
-
-        $contentTools = (new ContentSyncToolsController())->viewData(
-            true,
-            'editorial',
-            url('/admin/central-operacional-v2/backup-editorial')
-        );
-        $contentTools['editorial_section'] = $section;
-        $contentTools['editorial_sections'] = [
-            'resumo' => ['label' => 'Resumo'],
-            'acoes' => ['label' => 'Acoes'],
-            'restore' => ['label' => 'Restore'],
-            'historico' => ['label' => 'Historico'],
-        ];
-        $contentTools['editorial_base_url'] = url('/admin/central-operacional-v2/backup-editorial');
-        $contentTools['module'] = $module;
-
-        if ((string) ($_GET['editorial_fragment'] ?? '0') === '1') {
-            header('Content-Type: text/html; charset=UTF-8');
-            echo View::fragment('admin/operations-v2/partials/backup-editorial-content', $contentTools);
-            return;
-        }
-
-        View::render('admin/operations-v2/backup-editorial', [
-            'title' => ($module['label'] ?? 'Backup Editorial e Restore') . ' | Estrategia Nerd',
-            'module' => $module,
-            'content_tools' => $contentTools,
         ]);
     }
 
@@ -192,18 +117,6 @@ final class OperationsV2Controller
                 'label' => 'Visão Geral',
                 'description' => 'Entrada executiva da Central Operacional.',
                 'status' => 'em-leitura',
-            ],
-            'backup-sistemico' => [
-                'label' => 'Backup Sistêmico e Restore',
-                'description' => 'Leitura organizada para a rotina sistêmica atual.',
-                'status' => 'planejado',
-                'href' => url('/admin/central-operacional-v2/backup-sistemico'),
-            ],
-            'backup-editorial' => [
-                'label' => 'Backup Editorial e Restore',
-                'description' => 'Leitura organizada para pacotes e sincronização editorial atual.',
-                'status' => 'planejado',
-                'href' => url('/admin/central-operacional-v2/backup-editorial'),
             ],
             'backup-nuvem' => [
                 'label' => 'Backup em Nuvem',

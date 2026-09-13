@@ -27,7 +27,6 @@ require_once $appRoot . '/bootstrap.php';
 
 use App\Support\Auth;
 use App\Support\EnvironmentGuard;
-use App\Support\LocalOnlyAccess;
 use App\Support\View;
 
 $pdo = $GLOBALS['pdo'] ?? null;
@@ -54,7 +53,7 @@ $path = $path === '' ? '/' : $path;
 $path = rtrim($path, '/') ?: '/';
 
 if (preg_match('#^/(local|dev)(/|$)#', $path) === 1) {
-    LocalOnlyAccess::enforce();
+    EnvironmentGuard::requireLocal();
 }
 
 $routesFile = realpath($appRoot . '/config/routes.php') ?: ($appRoot . '/config/routes.php');

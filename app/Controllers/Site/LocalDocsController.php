@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers\Site;
 
-use App\Support\LocalOnlyAccess;
+use App\Support\EnvironmentGuard;
 use App\Support\View;
 use Scripts\Operations\OperationLogger;
 
@@ -207,7 +207,7 @@ final class LocalDocsController
 
     private function ensureLocalOnly(): void
     {
-        LocalOnlyAccess::enforce();
+        EnvironmentGuard::requireLocal();
     }
 
     private function embedMode(): bool

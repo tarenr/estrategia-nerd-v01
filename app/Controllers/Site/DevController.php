@@ -16,14 +16,14 @@ declare(strict_types=1);
 
 namespace App\Controllers\Site;
 
-use App\Support\LocalOnlyAccess;
+use App\Support\EnvironmentGuard;
 use App\Support\View;
 
 final class DevController
 {
     public function index(): void
     {
-        LocalOnlyAccess::enforce();
+        EnvironmentGuard::requireLocal();
 
         View::render('site/dev', [
             'title' => 'Dev — Estratégia Nerd',

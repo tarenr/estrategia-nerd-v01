@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/backup/EnvLoader.php';
 require_once __DIR__ . '/backup/BackupManager.php';
+require_once dirname(__DIR__) . '/app/Support/Helpers.php';
+require_once dirname(__DIR__) . '/app/Support/EnvironmentManager.php';
+require_once dirname(__DIR__) . '/app/Support/EnvironmentGuard.php';
 
+use App\Support\EnvironmentGuard;
 use Scripts\Backup\BackupManager;
 use Scripts\Backup\EnvLoader;
 
 EnvLoader::load(dirname(__DIR__) . '/.env');
+EnvironmentGuard::requireLocal();
 
 $config = require dirname(__DIR__) . '/config/backup.php';
 $manager = new BackupManager($config);

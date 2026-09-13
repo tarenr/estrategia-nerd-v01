@@ -15,7 +15,7 @@
 
 return [
     'name' => $_ENV['APP_NAME'] ?? 'Estrategia Nerd',
-    'env' => $_ENV['APP_ENV'] ?? 'development',
+    'env' => $_ENV['APP_ENV'] ?? 'production',
     'debug' => filter_var($_ENV['APP_DEBUG'] ?? true, FILTER_VALIDATE_BOOL),
     'url' => rtrim((string) ($_ENV['APP_URL'] ?? ''), '/'),
     'timezone' => $_ENV['APP_TIMEZONE'] ?? 'America/Sao_Paulo',

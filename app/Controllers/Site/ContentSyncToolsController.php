@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Site;
 
 use App\Support\Csrf;
-use App\Support\LocalOnlyAccess;
+use App\Support\EnvironmentGuard;
 use App\Support\Session;
 use App\Support\View;
 use Scripts\Deploy\DeployManager;
@@ -35,6 +35,7 @@ final class ContentSyncToolsController
      */
     public function viewData(bool $adminEmbed = false, ?string $section = null, ?string $baseUrl = null): array
     {
+        $this->ensureLocalOnly();
         $manager = $this->manager();
         $deployManager = $this->deployManager();
         $status = $manager->status();
@@ -184,7 +185,7 @@ final class ContentSyncToolsController
 
     private function ensureLocalOnly(): void
     {
-        LocalOnlyAccess::enforce();
+        EnvironmentGuard::requireLocal();
     }
 
     private function embedMode(): bool

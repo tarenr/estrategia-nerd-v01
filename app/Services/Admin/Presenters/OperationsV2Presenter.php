@@ -266,7 +266,7 @@ final class OperationsV2Presenter
                 'hint' => 'Resumo dos backups sistêmico e editorial deste ambiente.',
                 'icon' => $icons[$key] ?? 'fa-solid fa-server',
                 'tone' => (string) ($environment['tone'] ?? 'neutral'),
-                'href' => url('/admin/central-operacional-v2/backup-sistemico'),
+                'href' => url('/admin/central-operacional-v2'),
                 'support' => [
                     ['label' => 'Sistêmico', 'value' => (string) ($system['id'] ?? 'Leitura pendente')],
                     ['label' => 'Data', 'value' => (string) ($system['date'] ?? 'Leitura pendente')],

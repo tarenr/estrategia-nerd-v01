@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Site;
 
 use App\Services\Site\SearchConsoleService;
-use App\Support\LocalOnlyAccess;
+use App\Support\EnvironmentGuard;
 use App\Support\View;
 
 final class SearchConsoleMonitorController
@@ -27,6 +27,7 @@ final class SearchConsoleMonitorController
      */
     public function viewData(bool $adminEmbed = false, ?string $section = null, ?string $baseUrl = null): array
     {
+        $this->ensureLocalOnly();
         $activeSection = $this->normalizeSection($section);
         $inspectionUrl = trim((string) ($_GET['inspection_url'] ?? ''));
         $forceRefresh = (string) ($_GET['search_console_refresh'] ?? '0') === '1';
@@ -92,7 +93,7 @@ final class SearchConsoleMonitorController
 
     private function ensureLocalOnly(): void
     {
-        LocalOnlyAccess::enforce();
+        EnvironmentGuard::requireLocal();
     }
 
     private function embedMode(): bool

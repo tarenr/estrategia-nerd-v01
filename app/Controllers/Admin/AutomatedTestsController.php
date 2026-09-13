@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Services\Site\AutomatedTestService;
 use App\Services\Site\SmokeTestService;
 use App\Support\Csrf;
+use App\Support\EnvironmentGuard;
 use App\Support\Session;
 use App\Support\View;
 
@@ -31,6 +32,13 @@ final class AutomatedTestsController
             Csrf::validate($_POST['_csrf_token'] ?? null);
             $level = strtolower(trim((string) ($_POST['level'] ?? 'safe')));
             $environment = strtolower(trim((string) ($_POST['environment'] ?? 'local')));
+            $allowedEnvironments = ['local', 'stage', 'production'];
+            if (!in_array($environment, $allowedEnvironments, true)) {
+                throw new \RuntimeException('Ambiente invalido para execucao de testes: ' . $environment);
+            }
+            if ($environment !== 'local') {
+                EnvironmentGuard::requireLocal();
+            }
             $routines = array_values(array_filter(array_map('strval', (array) ($_POST['routines'] ?? []))));
 
             $service = new AutomatedTestService(require base_path('config/automated-tests.php'));

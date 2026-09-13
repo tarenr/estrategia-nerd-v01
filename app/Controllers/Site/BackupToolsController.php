@@ -7,7 +7,7 @@ namespace App\Controllers\Site;
 use App\Services\Site\BackupService;
 use App\Services\Site\DropboxBackupService;
 use App\Support\Csrf;
-use App\Support\LocalOnlyAccess;
+use App\Support\EnvironmentGuard;
 use App\Support\Session;
 use App\Support\View;
 use Scripts\Backup\BackupManager;
@@ -36,6 +36,7 @@ final class BackupToolsController
      */
     public function viewData(bool $adminEmbed = false, ?string $section = null, ?string $baseUrl = null): array
     {
+        $this->ensureLocalOnly();
         $flash = Session::pull('backup_tools_flash');
         $lastVerification = Session::pull('backup_tools_verification');
         $activeSection = $this->normalizeSection($section);
@@ -299,7 +300,7 @@ final class BackupToolsController
 
     private function ensureLocalOnly(): void
     {
-        LocalOnlyAccess::enforce();
+        EnvironmentGuard::requireLocal();
     }
 
     private function embedMode(): bool

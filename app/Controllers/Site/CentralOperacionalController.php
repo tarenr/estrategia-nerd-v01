@@ -8,7 +8,7 @@ use App\Services\Site\BackupService;
 use App\Services\Site\CentralOperacionalService;
 use App\Services\Site\SmokeTestService;
 use App\Support\Csrf;
-use App\Support\LocalOnlyAccess;
+use App\Support\EnvironmentGuard;
 use App\Support\Session;
 use App\Support\View;
 use Scripts\Backup\BackupManager;
@@ -35,6 +35,7 @@ final class CentralOperacionalController
      */
     public function viewData(bool $adminEmbed = false, ?string $overviewSection = null, ?string $overviewBaseUrl = null): array
     {
+        $this->ensureLocalOnly();
         $flash = Session::pull('operations_flash');
         $section = $this->normalizeOverviewSection($overviewSection);
         $baseUrl = $overviewBaseUrl ?? ($adminEmbed ? url('/admin/central-operacional?aba=visao-geral') : url('/local/operacoes'));
@@ -250,7 +251,7 @@ final class CentralOperacionalController
 
     private function ensureLocalOnly(): void
     {
-        LocalOnlyAccess::enforce();
+        EnvironmentGuard::requireLocal();
     }
 
     private function embedMode(): bool
