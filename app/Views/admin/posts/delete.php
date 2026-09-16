@@ -32,6 +32,10 @@ if ($imagem !== '') {
         ? $imagem
         : url('/' . ltrim($imagem, '/'));
 }
+$requiresProductionConfirmation = (bool) ($requires_production_confirmation ?? false);
+$isRemoteTarget = (bool) ($is_remote_target ?? false);
+$targetEnvironmentLabel = (string) ($target_environment_label ?? '');
+$errors = is_array($errors ?? null) ? $errors : [];
 ?>
 
 <div class="max-w-5xl mx-auto px-4 py-6">
@@ -42,6 +46,9 @@ if ($imagem !== '') {
     </div>
 
     <div class="admin-page-actions">
+      <?php if ($isRemoteTarget): ?>
+        <div class="admin-chip border-cyan-500/30 text-cyan-200">Ambiente alvo: <?= htmlspecialchars($targetEnvironmentLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+      <?php endif; ?>
       <a href="<?= url('/admin/posts') ?>" class="admin-btn admin-btn-secondary">Voltar para posts</a>
     </div>
   </div>
@@ -94,9 +101,22 @@ if ($imagem !== '') {
           </ul>
         </div>
 
+        <?php if ($requiresProductionConfirmation): ?>
+          <div class="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 space-y-2">
+            <div class="text-sm font-bold text-amber-200">Confirmacao obrigatoria para producao</div>
+            <div class="text-sm text-slate-300">Digite <strong>PRODUCAO</strong> para confirmar esta exclusao no ambiente de producao.</div>
+            <?php if (!empty($errors['production_confirmation'])): ?>
+              <div class="text-xs text-rose-300"><?= htmlspecialchars((string) $errors['production_confirmation'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+            <?php endif; ?>
+          </div>
+        <?php endif; ?>
+
         <form id="deletePostForm" method="POST" action="<?= url('/admin/excluir-post?id=' . $postId) ?>" class="flex flex-wrap gap-3">
           <?= Csrf::field() ?>
           <input type="hidden" name="id" value="<?= $postId ?>">
+          <?php if ($requiresProductionConfirmation): ?>
+            <input type="text" name="production_confirmation" value="" class="nerd-input px-4 py-3 rounded-xl" placeholder="Digite PRODUCAO" autocomplete="off">
+          <?php endif; ?>
 
           <button type="submit" class="admin-btn admin-btn-primary" style="background:rgba(244,63,94,.18); border-color:rgba(244,63,94,.35); color:#fecdd3;">
             Excluir e mover para lixeira

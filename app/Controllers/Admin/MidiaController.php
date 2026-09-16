@@ -5,6 +5,8 @@ namespace App\Controllers\Admin;
 
 use App\Services\Admin\MidiaService;
 use App\Support\Csrf;
+use App\Support\ProductionChangeGuard;
+use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
 
 final class MidiaController
@@ -22,7 +24,12 @@ final class MidiaController
             return;
         }
 
-        $result = $this->service()->upload($_FILES['arquivo'] ?? null, $_GET + $_POST);
+        $targetEnvironment = target_environment();
+        $service = $this->service();
+        $result = $service->upload($_FILES['arquivo'] ?? null, $_GET + $_POST);
+        if (($result['ok'] ?? false) === true) {
+            $service->pushToTargetEnvironment($targetEnvironment, (string) ($result['path'] ?? ''));
+        }
         if (($result['ok'] ?? false) !== true) {
             http_response_code(422);
             if ($this->wantsJson()) {
@@ -76,7 +83,7 @@ final class MidiaController
             return;
         }
 
-        View::render('admin/media/delete', $viewModel);
+        View::render('admin/media/delete', $this->withEnvironmentContext($viewModel));
     }
 
     public function destroy(): void
@@ -88,15 +95,52 @@ final class MidiaController
         }
 
         $path = (string) ($_GET['path'] ?? $_POST['path'] ?? '');
-        $result = $this->service()->delete($path);
+        $targetEnvironment = target_environment();
+
+        if (ProductionChangeGuard::requiresConfirmation($targetEnvironment)
+            && !ProductionChangeGuard::isValidPhrase($_POST['production_confirmation'] ?? null)) {
+            $viewModel = $this->service()->getDeleteViewModel($path);
+            if ($viewModel === null) {
+                http_response_code(404);
+                echo 'Arquivo nao encontrado.';
+                return;
+            }
+
+            http_response_code(422);
+            $viewModel = $this->withEnvironmentContext($viewModel);
+            $viewModel['errors'] = ['production_confirmation' => 'Digite PRODUCAO para confirmar a exclusao no ambiente de producao.'];
+            View::render('admin/media/delete', $viewModel);
+            return;
+        }
+
+        $service = $this->service();
+        $result = $service->delete($path);
         if (($result['not_found'] ?? false) === true) {
             http_response_code(404);
             echo 'Arquivo nao encontrado.';
             return;
         }
 
+        $service->deleteFromTargetEnvironment($targetEnvironment, $path);
+
         header('Location: ' . url('/admin/midia?deleted=1'));
         exit;
+    }
+
+    /**
+     * @param array<string,mixed> $viewModel
+     * @return array<string,mixed>
+     */
+    private function withEnvironmentContext(array $viewModel): array
+    {
+        $targetEnvironment = target_environment();
+
+        return array_merge($viewModel, [
+            'target_environment' => $targetEnvironment,
+            'target_environment_label' => environment_label($targetEnvironment),
+            'is_remote_target' => $targetEnvironment !== current_environment(),
+            'requires_production_confirmation' => ProductionChangeGuard::requiresConfirmation($targetEnvironment),
+        ]);
     }
 
 

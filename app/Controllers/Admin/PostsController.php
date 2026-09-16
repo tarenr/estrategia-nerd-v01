@@ -18,6 +18,8 @@ use App\Services\Admin\PostsService;
 use App\Services\Site\SitemapCacheService;
 use App\Support\Auth;
 use App\Support\Csrf;
+use App\Support\ProductionChangeGuard;
+use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
 
 final class PostsController
@@ -201,7 +203,7 @@ final class PostsController
             return;
         }
 
-        View::render('admin/posts/delete', $viewModel);
+        View::render('admin/posts/delete', $this->withEnvironmentContext($viewModel));
     }
 
     public function destroy(): void
@@ -210,6 +212,22 @@ final class PostsController
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             http_response_code(419);
             echo 'Token CSRF invalido.';
+            return;
+        }
+
+        if (ProductionChangeGuard::requiresConfirmation(target_environment())
+            && !ProductionChangeGuard::isValidPhrase($_POST['production_confirmation'] ?? null)) {
+            $viewModel = $this->service()->getDeleteViewModel($id);
+            if ($viewModel === null) {
+                http_response_code(404);
+                echo 'Post nao encontrado.';
+                return;
+            }
+
+            http_response_code(422);
+            $viewModel = $this->withEnvironmentContext($viewModel);
+            $viewModel['errors'] = ['production_confirmation' => 'Digite PRODUCAO para confirmar a exclusao no ambiente de producao.'];
+            View::render('admin/posts/delete', $viewModel);
             return;
         }
 
@@ -224,16 +242,35 @@ final class PostsController
         exit;
     }
 
+    /**
+     * @param array<string,mixed> $viewModel
+     * @return array<string,mixed>
+     */
+    private function withEnvironmentContext(array $viewModel): array
+    {
+        $targetEnvironment = target_environment();
+
+        return array_merge($viewModel, [
+            'target_environment' => $targetEnvironment,
+            'target_environment_label' => environment_label($targetEnvironment),
+            'is_remote_target' => $targetEnvironment !== current_environment(),
+            'requires_production_confirmation' => ProductionChangeGuard::requiresConfirmation($targetEnvironment),
+        ]);
+    }
+
     private function service(): PostsService
     {
-        /** @var \PDO $pdo */
-        $pdo = $GLOBALS['pdo'];
+        $targetEnvironment = target_environment();
+        $pdo = TargetEnvironmentDatabase::pdo($targetEnvironment);
+        /** @var \PDO $localPdo */
+        $localPdo = $GLOBALS['pdo'];
 
         return new PostsService(
             new PostRepository($pdo),
             new CategoriaPostRepository($pdo),
-            new MidiaService(),
+            new MidiaService($localPdo),
             SitemapCacheService::fromGlobals(),
+            $targetEnvironment,
         );
     }
 }

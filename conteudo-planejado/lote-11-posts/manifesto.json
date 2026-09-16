@@ -1,0 +1,263 @@
+{
+  "versao": 1,
+  "lote": "lote-11-posts",
+  "criado_em": "2026-09-13",
+  "finalidade": "Planejamento e preparação local dos posts e imagens para revisão e posterior importação/publicação aprovada.",
+  "caminhos_relativos_a": "Pasta deste manifesto",
+  "dimensoes_previstas": {
+    "capa": [
+      1600,
+      900
+    ],
+    "thumb": [
+      640,
+      360
+    ]
+  },
+  "integracao": {
+    "importador_existente": "scripts/en-blog-draft.php",
+    "entrada": "Um post.json por execução; o manifesto não é consumido pelo importador existente.",
+    "capa": "Preencher cover_image_path no post.json com caminho absoluto do arquivo existente.",
+    "thumbnail": "O importador existente usa a capa também em imagem_thumb; thumb.webp fica preparada para uso posterior.",
+    "status_do_post": "rascunho",
+    "observacao": "Pastas não acionam importação automática. Importação, banco e publicação não executados nesta etapa."
+  },
+  "posts": [
+    {
+      "ordem": 1,
+      "titulo": "RTX 5060 vs RX 9060 XT: qual placa compensa em 1080p",
+      "slug": "rtx-5060-vs-rx-9060-xt-1080p",
+      "categoria_proposta": "hardware",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "rtx-5060-vs-rx-9060-xt-1080p/post.json",
+        "capa": "rtx-5060-vs-rx-9060-xt-1080p/capa.webp",
+        "thumb": "rtx-5060-vs-rx-9060-xt-1080p/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json"
+      ],
+      "capa_piloto": "rtx-5060-vs-rx-9060-xt-1080p/capa-piloto-v1.png",
+      "revisao_visual": "aguardando_usuario"
+    },
+    {
+      "ordem": 2,
+      "titulo": "AM4 ou AM5 em 2026: qual plataforma escolher",
+      "slug": "am4-ou-am5-em-2026",
+      "categoria_proposta": "hardware",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "am4-ou-am5-em-2026/post.json",
+        "capa": "am4-ou-am5-em-2026/capa.webp",
+        "thumb": "am4-ou-am5-em-2026/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json"
+      ],
+      "capa_piloto": "am4-ou-am5-em-2026/capa-piloto-v1.png",
+      "revisao_visual": "aguardando_usuario"
+    },
+    {
+      "ordem": 3,
+      "titulo": "10 filmes nerds essenciais que todo geek deveria ver",
+      "slug": "10-filmes-nerds-essenciais",
+      "categoria_proposta": "cultura",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "10-filmes-nerds-essenciais/post.json",
+        "capa": "10-filmes-nerds-essenciais/capa.webp",
+        "thumb": "10-filmes-nerds-essenciais/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json",
+        "Definir obras da lista antes de fechar elementos da capa"
+      ],
+      "capa_piloto": "10-filmes-nerds-essenciais/capa-piloto-v1.png",
+      "revisao_visual": "aguardando_usuario"
+    },
+    {
+      "ordem": 4,
+      "titulo": "Como verificar a saúde do SSD e do HD antes de perder arquivos",
+      "slug": "como-verificar-saude-ssd-hd",
+      "categoria_proposta": "dicas",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "como-verificar-saude-ssd-hd/post.json",
+        "capa": "como-verificar-saude-ssd-hd/capa.webp",
+        "thumb": "como-verificar-saude-ssd-hd/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json"
+      ],
+      "capa_piloto": "como-verificar-saude-ssd-hd/capa-piloto-v1.png",
+      "revisao_visual": "estilo_aprovado_pelo_usuario"
+    },
+    {
+      "ordem": 5,
+      "titulo": "12 jogos leves para PC fraco ou modesto",
+      "slug": "12-jogos-leves-pc-fraco-ou-modesto",
+      "categoria_proposta": "games",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "12-jogos-leves-pc-fraco-ou-modesto/post.json",
+        "capa": "12-jogos-leves-pc-fraco-ou-modesto/capa.webp",
+        "thumb": "12-jogos-leves-pc-fraco-ou-modesto/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json",
+        "Definir obras da lista antes de fechar elementos da capa"
+      ],
+      "capa_piloto": "12-jogos-leves-pc-fraco-ou-modesto/capa-piloto-v1.png",
+      "revisao_visual": "aguardando_usuario"
+    },
+    {
+      "ordem": 6,
+      "titulo": "Animes essenciais pra quem nunca assistiu nenhum",
+      "slug": "animes-essenciais-para-iniciantes",
+      "categoria_proposta": "cultura",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "animes-essenciais-para-iniciantes/post.json",
+        "capa": "animes-essenciais-para-iniciantes/capa.webp",
+        "thumb": "animes-essenciais-para-iniciantes/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json",
+        "Definir obras da lista antes de fechar elementos da capa"
+      ],
+      "capa_piloto": "animes-essenciais-para-iniciantes/capa-piloto-v1.png",
+      "revisao_visual": "aguardando_usuario"
+    },
+    {
+      "ordem": 7,
+      "titulo": "Windows 11 24H2: fim das atualizações em outubro",
+      "slug": "windows-11-24h2-fim-atualizacoes-outubro",
+      "categoria_proposta": "dicas",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "windows-11-24h2-fim-atualizacoes-outubro/post.json",
+        "capa": "windows-11-24h2-fim-atualizacoes-outubro/capa.webp",
+        "thumb": "windows-11-24h2-fim-atualizacoes-outubro/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json",
+        "Conferir edições afetadas e prazo informado: publicar antes de 13/10/2026"
+      ],
+      "capa_piloto": "windows-11-24h2-fim-atualizacoes-outubro/capa-piloto-v1.png",
+      "revisao_visual": "aguardando_usuario"
+    },
+    {
+      "ordem": 8,
+      "titulo": "Como escolher uma fonte para PC sem cair em marketing",
+      "slug": "como-escolher-fonte-para-pc",
+      "categoria_proposta": "hardware",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "como-escolher-fonte-para-pc/post.json",
+        "capa": "como-escolher-fonte-para-pc/capa.webp",
+        "thumb": "como-escolher-fonte-para-pc/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json"
+      ],
+      "capa_piloto": "como-escolher-fonte-para-pc/capa-piloto-v1.png",
+      "revisao_visual": "aguardando_usuario"
+    },
+    {
+      "ordem": 9,
+      "titulo": "Desenhos dos anos 90/2000 que envelheceram bem",
+      "slug": "desenhos-anos-90-2000-que-envelheceram-bem",
+      "categoria_proposta": "cultura",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "desenhos-anos-90-2000-que-envelheceram-bem/post.json",
+        "capa": "desenhos-anos-90-2000-que-envelheceram-bem/capa.webp",
+        "thumb": "desenhos-anos-90-2000-que-envelheceram-bem/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json",
+        "Definir obras da lista antes de fechar elementos da capa"
+      ],
+      "capa_piloto": "desenhos-anos-90-2000-que-envelheceram-bem/capa-piloto-v1.png",
+      "revisao_visual": "aguardando_usuario"
+    },
+    {
+      "ordem": 10,
+      "titulo": "Temperatura de CPU e GPU: quando se preocupar",
+      "slug": "temperatura-cpu-gpu-quando-se-preocupar",
+      "categoria_proposta": "dicas",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "temperatura-cpu-gpu-quando-se-preocupar/post.json",
+        "capa": "temperatura-cpu-gpu-quando-se-preocupar/capa.webp",
+        "thumb": "temperatura-cpu-gpu-quando-se-preocupar/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json"
+      ],
+      "capa_piloto": "temperatura-cpu-gpu-quando-se-preocupar/capa-piloto-v1.png",
+      "revisao_visual": "aguardando_usuario"
+    },
+    {
+      "ordem": 11,
+      "titulo": "A história do Counter-Strike: por que ainda é gigante",
+      "slug": "historia-counter-strike",
+      "categoria_proposta": "cultura/games",
+      "categoria_confirmada_no_banco": false,
+      "estado": "capa_piloto_gerada",
+      "pronto_para_importar": false,
+      "arquivos_previstos": {
+        "post": "historia-counter-strike/post.json",
+        "capa": "historia-counter-strike/capa.webp",
+        "thumb": "historia-counter-strike/thumb.webp"
+      },
+      "pendencias": [
+        "Produzir e revisar capa e thumbnail",
+        "Redigir e revisar conteúdo e SEO",
+        "Confirmar categoria e preencher post.json"
+      ],
+      "capa_piloto": "historia-counter-strike/capa-piloto-v1.png",
+      "revisao_visual": "aguardando_usuario"
+    }
+  ]
+}

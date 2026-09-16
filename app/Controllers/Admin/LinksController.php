@@ -8,6 +8,8 @@ use App\Repositories\LinkRepository;
 use App\Services\Admin\LinksService;
 use App\Services\Admin\MidiaService;
 use App\Support\Csrf;
+use App\Support\ProductionChangeGuard;
+use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
 
 final class LinksController
@@ -90,7 +92,7 @@ final class LinksController
             return;
         }
 
-        View::render('admin/links/delete', $viewModel);
+        View::render('admin/links/delete', $this->withEnvironmentContext($viewModel));
     }
 
     public function quickAction(): void
@@ -172,6 +174,22 @@ final class LinksController
             return;
         }
 
+        if (ProductionChangeGuard::requiresConfirmation(target_environment())
+            && !ProductionChangeGuard::isValidPhrase($_POST['production_confirmation'] ?? null)) {
+            $viewModel = $this->service()->getDeleteViewModel($id);
+            if ($viewModel === null) {
+                http_response_code(404);
+                echo 'Link nao encontrado.';
+                return;
+            }
+
+            http_response_code(422);
+            $viewModel = $this->withEnvironmentContext($viewModel);
+            $viewModel['errors'] = ['production_confirmation' => 'Digite PRODUCAO para confirmar a exclusao no ambiente de producao.'];
+            View::render('admin/links/delete', $viewModel);
+            return;
+        }
+
         $result = $this->service()->deleteLink($id);
         if (($result['not_found'] ?? false) === true) {
             http_response_code(404);
@@ -183,15 +201,34 @@ final class LinksController
         exit;
     }
 
+    /**
+     * @param array<string,mixed> $viewModel
+     * @return array<string,mixed>
+     */
+    private function withEnvironmentContext(array $viewModel): array
+    {
+        $targetEnvironment = target_environment();
+
+        return array_merge($viewModel, [
+            'target_environment' => $targetEnvironment,
+            'target_environment_label' => environment_label($targetEnvironment),
+            'is_remote_target' => $targetEnvironment !== current_environment(),
+            'requires_production_confirmation' => ProductionChangeGuard::requiresConfirmation($targetEnvironment),
+        ]);
+    }
+
     private function service(): LinksService
     {
-        /** @var \PDO $pdo */
-        $pdo = $GLOBALS['pdo'];
+        $targetEnvironment = target_environment();
+        $pdo = TargetEnvironmentDatabase::pdo($targetEnvironment);
+        /** @var \PDO $localPdo */
+        $localPdo = $GLOBALS['pdo'];
 
         return new LinksService(
             new LinkRepository($pdo),
             new LinkClickRepository($pdo),
-            new MidiaService(),
+            new MidiaService($localPdo),
+            $targetEnvironment,
         );
     }
 

@@ -9,6 +9,16 @@ $currentStatus = (string) ($form['status'] ?? 'rascunho');
 $currentTempo = (int) ($form['tempo_leitura'] ?? 5);
 $currentNextStep = max(0, (int) ($form['proximo_post_id'] ?? 0));
 $isDestaque = (int) ($form['destaque'] ?? 0) === 1;
+$currentTipoPost = trim((string) ($form['tipo_post'] ?? ''));
+$supportsTipoPost = (bool) ($supports_tipo_post ?? true);
+$tipoPostOptions = [
+    'comparativo' => 'Comparativo',
+    'review' => 'Review',
+    'ficha_tecnica' => 'Ficha técnica',
+    'guia' => 'Guia',
+    'noticia' => 'Notícia/lançamento',
+    'lista' => 'Lista ranqueada',
+];
 $statusMeta = [
     'rascunho' => ['label' => 'Rascunho', 'hint' => 'Ainda nao aparece no publico.'],
     'publicado' => ['label' => 'Publicado', 'hint' => 'Ja pode entrar nas listagens e no post.'],
@@ -46,6 +56,27 @@ $tempoHint = $currentTempo <= 4
       </div>
       <input id="tempo_leitura" name="tempo_leitura" type="number" min="1" max="120" value="<?= $currentTempo ?>" class="nerd-input w-full px-4 py-3 rounded-xl">
     </div>
+  </div>
+
+  <div class="post-publication-field">
+    <div class="post-side-field-head">
+      <label for="tipo_post" class="block text-sm font-bold text-slate-200">Tipo de post</label>
+      <span class="post-side-field-meta">
+        <?= $supportsTipoPost
+          ? 'Uso interno do admin - ajuda a organizar e filtrar por formato de conteudo.'
+          : 'Indisponivel neste banco: execute a migracao da coluna tipo_post para habilitar.' ?>
+      </span>
+    </div>
+    <select id="tipo_post" name="tipo_post" class="nerd-input w-full px-4 py-3 rounded-xl" <?= $supportsTipoPost ? '' : 'disabled' ?>>
+      <option value="">Sem tipo definido</option>
+      <?php foreach ($tipoPostOptions as $value => $label): ?>
+        <option value="<?= $value ?>" <?= $currentTipoPost === $value ? 'selected' : '' ?>><?= $label ?></option>
+      <?php endforeach; ?>
+    </select>
+    <?php if (!$supportsTipoPost): ?>
+      <input type="hidden" name="tipo_post" value="">
+    <?php endif; ?>
+    <?php if ($fieldError('tipo_post') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('tipo_post'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
   </div>
 
   <div class="post-publication-field">

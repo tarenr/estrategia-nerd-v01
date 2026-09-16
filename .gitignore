@@ -4,6 +4,9 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Claude Code (config pessoal, nao versionar)
+.claude/settings.local.json
+
 # Composer
 /vendor/
 
@@ -23,3 +26,12 @@ public/storage/
 # Node (se tiver)
 node_modules/
 dist/
+
+# CodeGraph (índice local, não versionar)
+.codegraph/
+
+# Importação Notion (fora do escopo do índice/repo)
+notion-import/
+
+# AppFlowy Cloud (produto externo, repo próprio — fora do índice/repo)
+AppFlowy-Cloud/

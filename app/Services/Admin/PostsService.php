@@ -21,12 +21,14 @@ use Throwable;
 final class PostsService
 {
     private const POST_TRASH_RETENTION_DAYS = 15;
+    private const TIPO_POST_OPTIONS = ['comparativo', 'review', 'ficha_tecnica', 'guia', 'noticia', 'lista'];
 
     public function __construct(
         private PostRepository $posts,
         private CategoriaPostRepository $categorias,
         private MidiaService $midia,
         private SitemapCacheService $sitemapCache,
+        private string $targetEnvironment = 'local',
     ) {
     }
 
@@ -89,6 +91,9 @@ final class PostsService
             ];
         }
 
+        $this->midia->pushToTargetEnvironment($this->targetEnvironment, (string) ($form['imagem_capa'] ?? ''));
+        $this->midia->pushToTargetEnvironment($this->targetEnvironment, (string) ($form['imagem_thumb'] ?? ''));
+
         $categoriaSelecionada = $categoriasById[(int) $form['categoria_post_id']] ?? null;
 
         $postId = $this->posts->insertAdmin([
@@ -110,6 +115,7 @@ final class PostsService
             'status' => (string) $form['status'],
             'destaque' => (int) $form['destaque'],
             'proximo_post_id' => (int) ($form['proximo_post_id'] ?? 0),
+            'tipo_post' => (string) ($form['tipo_post'] ?? ''),
         ]);
 
         $this->sitemapCache->refreshQuietly();
@@ -148,6 +154,9 @@ final class PostsService
             ];
         }
 
+        $this->midia->pushToTargetEnvironment($this->targetEnvironment, (string) ($form['imagem_capa'] ?? ''));
+        $this->midia->pushToTargetEnvironment($this->targetEnvironment, (string) ($form['imagem_thumb'] ?? ''));
+
         $categoriaSelecionada = $categoriasById[(int) $form['categoria_post_id']] ?? null;
         $oldSlug = trim((string) ($post['slug'] ?? ''));
 
@@ -170,6 +179,7 @@ final class PostsService
             'status' => (string) $form['status'],
             'destaque' => (int) $form['destaque'],
             'proximo_post_id' => (int) ($form['proximo_post_id'] ?? 0),
+            'tipo_post' => (string) ($form['tipo_post'] ?? ''),
         ]);
 
         if ($oldSlug !== '' && $oldSlug !== $slug) {
@@ -198,6 +208,8 @@ final class PostsService
             return ['ok' => false, 'error' => 'Nenhuma imagem foi enviada.'];
         }
 
+        $this->midia->pushToTargetEnvironment($this->targetEnvironment, $path);
+
         return ['ok' => true, 'path' => $path, 'url' => url('/' . ltrim($path, '/'))];
     }
 
@@ -222,6 +234,8 @@ final class PostsService
         if ($path === '') {
             return ['ok' => false, 'error' => 'Nao foi possivel preparar a copia da imagem selecionada.'];
         }
+
+        $this->midia->pushToTargetEnvironment($this->targetEnvironment, $path);
 
         return [
             'ok' => true,
@@ -285,6 +299,8 @@ final class PostsService
             ]);
             return ['ok' => false, 'error' => 'Nao foi possivel preparar a copia da midia selecionada.'];
         }
+
+        $this->midia->pushToTargetEnvironment($this->targetEnvironment, $path);
 
         return [
             'ok' => true,
@@ -969,6 +985,7 @@ final class PostsService
             'errors' => $errors,
             'categorias' => $availableCategorias,
             'supports_next_step' => $supportsNextStep,
+            'supports_tipo_post' => $this->posts->supportsTipoPost(),
             'next_step_options' => $nextStepOptions,
             'media_items' => $this->midia->recentMedia(24),
             'image_media_items' => $this->midia->recentMedia(48, 'image'),
@@ -1188,6 +1205,7 @@ final class PostsService
             'proximo_post_id' => max(0, (int) ($post['proximo_post_id'] ?? 0)),
             'data_publicacao' => $this->formatDateTimeForInput((string) ($post['data_publicacao'] ?? '')),
             'tempo_leitura' => max(1, (int) ($post['tempo_leitura'] ?? 5)),
+            'tipo_post' => trim((string) ($post['tipo_post'] ?? '')),
         ];
     }
 
@@ -1272,6 +1290,7 @@ final class PostsService
             'proximo_post_id' => max(0, (int) ($input['proximo_post_id'] ?? 0)),
             'data_publicacao' => trim((string) ($input['data_publicacao'] ?? $agora->format('Y-m-d\TH:i'))),
             'tempo_leitura' => max(1, (int) ($input['tempo_leitura'] ?? 5)),
+            'tipo_post' => trim((string) ($input['tipo_post'] ?? '')),
         ];
     }
 
@@ -1314,6 +1333,11 @@ final class PostsService
 
         if (mb_strlen((string) $form['seo_description']) > 300) {
             $errors['seo_description'] = 'A SEO description deve ter no maximo 300 caracteres.';
+        }
+
+        $tipoPost = trim((string) ($form['tipo_post'] ?? ''));
+        if ($tipoPost !== '' && !in_array($tipoPost, self::TIPO_POST_OPTIONS, true)) {
+            $errors['tipo_post'] = 'Selecione um tipo de post valido.';
         }
 
         $nextStepId = max(0, (int) ($form['proximo_post_id'] ?? 0));

@@ -7,6 +7,8 @@ use App\Repositories\CategoriaPostRepository;
 use App\Services\Admin\CategoriasService;
 use App\Services\Site\SitemapCacheService;
 use App\Support\Csrf;
+use App\Support\ProductionChangeGuard;
+use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
 
 final class CategoriasController
@@ -89,7 +91,7 @@ final class CategoriasController
             return;
         }
 
-        View::render('admin/categories/delete', $viewModel);
+        View::render('admin/categories/delete', $this->withEnvironmentContext($viewModel));
     }
 
     public function destroy(): void
@@ -98,6 +100,22 @@ final class CategoriasController
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             http_response_code(419);
             echo 'Token CSRF invalido.';
+            return;
+        }
+
+        if (ProductionChangeGuard::requiresConfirmation(target_environment())
+            && !ProductionChangeGuard::isValidPhrase($_POST['production_confirmation'] ?? null)) {
+            $viewModel = $this->service()->getDeleteViewModel($id);
+            if ($viewModel === null) {
+                http_response_code(404);
+                echo 'Categoria nao encontrada.';
+                return;
+            }
+
+            http_response_code(422);
+            $viewModel = $this->withEnvironmentContext($viewModel);
+            $viewModel['errors'] = ['production_confirmation' => 'Digite PRODUCAO para confirmar a exclusao no ambiente de producao.'];
+            View::render('admin/categories/delete', $viewModel);
             return;
         }
 
@@ -113,10 +131,26 @@ final class CategoriasController
         exit;
     }
 
+    /**
+     * @param array<string,mixed> $viewModel
+     * @return array<string,mixed>
+     */
+    private function withEnvironmentContext(array $viewModel): array
+    {
+        $targetEnvironment = target_environment();
+
+        return array_merge($viewModel, [
+            'target_environment' => $targetEnvironment,
+            'target_environment_label' => environment_label($targetEnvironment),
+            'is_remote_target' => $targetEnvironment !== current_environment(),
+            'requires_production_confirmation' => ProductionChangeGuard::requiresConfirmation($targetEnvironment),
+        ]);
+    }
+
     private function service(): CategoriasService
     {
-        /** @var \PDO $pdo */
-        $pdo = $GLOBALS['pdo'];
+        $targetEnvironment = target_environment();
+        $pdo = TargetEnvironmentDatabase::pdo($targetEnvironment);
 
         return new CategoriasService(
             new CategoriaPostRepository($pdo),

@@ -6,6 +6,8 @@ namespace App\Controllers\Admin;
 use App\Repositories\NewsletterRepository;
 use App\Services\Admin\NewsletterService;
 use App\Support\Csrf;
+use App\Support\ProductionChangeGuard;
+use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
 
 final class NewsletterController
@@ -55,7 +57,7 @@ final class NewsletterController
             return;
         }
 
-        View::render('admin/newsletter/delete', $viewModel);
+        View::render('admin/newsletter/delete', $this->withEnvironmentContext($viewModel));
     }
 
     public function destroy(): void
@@ -68,6 +70,23 @@ final class NewsletterController
 
         $id = (int) ($_POST['id'] ?? $_GET['id'] ?? 0);
         $returnTo = $this->sanitizeReturnUrl((string) ($_POST['return_to'] ?? $_GET['return_to'] ?? ''));
+
+        if (ProductionChangeGuard::requiresConfirmation(target_environment())
+            && !ProductionChangeGuard::isValidPhrase($_POST['production_confirmation'] ?? null)) {
+            $viewModel = $this->service()->getDeleteViewModel($id, $returnTo);
+            if ($viewModel === null) {
+                http_response_code(404);
+                echo 'Inscrito nao encontrado.';
+                return;
+            }
+
+            http_response_code(422);
+            $viewModel = $this->withEnvironmentContext($viewModel);
+            $viewModel['errors'] = ['production_confirmation' => 'Digite PRODUCAO para confirmar a exclusao no ambiente de producao.'];
+            View::render('admin/newsletter/delete', $viewModel);
+            return;
+        }
+
         $result = $this->service()->deleteSubscriber($id);
 
         if (($result['not_found'] ?? false) === true) {
@@ -80,10 +99,26 @@ final class NewsletterController
         exit;
     }
 
+    /**
+     * @param array<string,mixed> $viewModel
+     * @return array<string,mixed>
+     */
+    private function withEnvironmentContext(array $viewModel): array
+    {
+        $targetEnvironment = target_environment();
+
+        return array_merge($viewModel, [
+            'target_environment' => $targetEnvironment,
+            'target_environment_label' => environment_label($targetEnvironment),
+            'is_remote_target' => $targetEnvironment !== current_environment(),
+            'requires_production_confirmation' => ProductionChangeGuard::requiresConfirmation($targetEnvironment),
+        ]);
+    }
+
     private function service(): NewsletterService
     {
-        /** @var \PDO $pdo */
-        $pdo = $GLOBALS['pdo'];
+        $targetEnvironment = target_environment();
+        $pdo = TargetEnvironmentDatabase::pdo($targetEnvironment);
 
         return new NewsletterService(new NewsletterRepository($pdo));
     }

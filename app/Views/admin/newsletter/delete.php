@@ -11,6 +11,10 @@ $statusClass = match ($status) {
     'inativo' => 'border-amber-500/30 text-amber-300 bg-amber-500/10',
     default => 'border-rose-500/30 text-rose-300 bg-rose-500/10',
 };
+$requiresProductionConfirmation = (bool) ($requires_production_confirmation ?? false);
+$isRemoteTarget = (bool) ($is_remote_target ?? false);
+$targetEnvironmentLabel = (string) ($target_environment_label ?? '');
+$errors = is_array($errors ?? null) ? $errors : [];
 ?>
 
 <div class="max-w-4xl mx-auto px-4 py-6">
@@ -21,6 +25,9 @@ $statusClass = match ($status) {
     </div>
 
     <div class="admin-page-actions">
+      <?php if ($isRemoteTarget): ?>
+        <div class="admin-chip border-cyan-500/30 text-cyan-200">Ambiente alvo: <?= htmlspecialchars($targetEnvironmentLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+      <?php endif; ?>
       <a href="<?= htmlspecialchars($returnTo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary">Voltar</a>
     </div>
   </div>
@@ -54,10 +61,23 @@ $statusClass = match ($status) {
       </aside>
     </div>
 
+    <?php if ($requiresProductionConfirmation): ?>
+      <div class="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 space-y-2">
+        <div class="text-sm font-bold text-amber-200">Confirmacao obrigatoria para producao</div>
+        <div class="text-sm text-slate-300">Digite <strong>PRODUCAO</strong> para confirmar esta exclusao no ambiente de producao.</div>
+        <?php if (!empty($errors['production_confirmation'])): ?>
+          <div class="text-xs text-rose-300"><?= htmlspecialchars((string) $errors['production_confirmation'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+
     <form method="POST" action="<?= url('/admin/excluir-inscrito') ?>" class="flex flex-wrap items-center justify-end gap-3">
       <?= Csrf::field() ?>
       <input type="hidden" name="id" value="<?= (int) ($subscriber['id'] ?? 0) ?>">
       <input type="hidden" name="return_to" value="<?= htmlspecialchars($returnTo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+      <?php if ($requiresProductionConfirmation): ?>
+        <input type="text" name="production_confirmation" value="" class="nerd-input px-4 py-3 rounded-xl" placeholder="Digite PRODUCAO" autocomplete="off">
+      <?php endif; ?>
       <a href="<?= htmlspecialchars($returnTo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-btn admin-btn-secondary">Cancelar</a>
       <button type="submit" class="admin-btn admin-btn-primary" style="background:linear-gradient(135deg,#ef4444,#dc2626);border-color:rgba(248,113,113,.35);box-shadow:none;">Excluir permanentemente</button>
     </form>

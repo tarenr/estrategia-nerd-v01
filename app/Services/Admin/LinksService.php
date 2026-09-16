@@ -13,6 +13,7 @@ final class LinksService
         private LinkRepository $links,
         private LinkClickRepository $linkClicks,
         private MidiaService $midia,
+        private string $targetEnvironment = 'local',
     )
     {
     }
@@ -139,6 +140,8 @@ final class LinksService
             return ['ok' => false, 'viewModel' => $this->buildFormViewModel('create', $form, $errors)];
         }
 
+        $this->midia->pushToTargetEnvironment($this->targetEnvironment, (string) ($form['imagem'] ?? ''));
+
         $id = $this->links->insertAdmin($this->payloadFromForm($form, $slug));
         $this->enforceSingleFeaturedProduct($form, $id);
 
@@ -167,6 +170,8 @@ final class LinksService
         if ($errors !== []) {
             return ['ok' => false, 'viewModel' => $this->buildFormViewModel('edit', $form, $errors, $link)];
         }
+
+        $this->midia->pushToTargetEnvironment($this->targetEnvironment, (string) ($form['imagem'] ?? ''));
 
         $this->links->updateAdmin($id, $this->payloadFromForm($form, $slug));
         $this->enforceSingleFeaturedProduct($form, $id);

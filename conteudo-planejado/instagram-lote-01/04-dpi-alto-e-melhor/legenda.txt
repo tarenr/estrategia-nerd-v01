@@ -1,0 +1,9 @@
+🖱️ DPI gigante na caixa não escolhe sua sensibilidade por você.
+
+DPI, ajuste dentro do jogo e espaço no mousepad precisam funcionar juntos. Já o polling rate, medido em Hz, descreve a frequência de envio de informações ao PC.
+
+Em vez de copiar uma configuração sem testar, mude uma variável por vez e observe controle e conforto. 🎯
+
+Referência técnica: Logitech. Qual DPI você usa e em qual jogo? 👇
+
+#EstratégiaNerd #MouseGamer #DPI #Hardware #SetupGamer

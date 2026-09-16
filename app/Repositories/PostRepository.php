@@ -16,6 +16,7 @@ use PDO;
 final class PostRepository
 {
     private ?bool $supportsNextStepColumn = null;
+    private ?bool $supportsTipoPostColumn = null;
 
     public function __construct(private PDO $pdo)
     {
@@ -569,7 +570,8 @@ final class PostRepository
     public function findAdminById(int $id): ?array
     {
         $nextStepSelect = $this->supportsNextStepColumn() ? 'proximo_post_id' : 'NULL AS proximo_post_id';
-        $stmt = $this->pdo->prepare("SELECT id, titulo, slug, resumo, conteudo, categoria, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque, {$nextStepSelect} FROM posts WHERE id = :id LIMIT 1");
+        $tipoPostSelect = $this->supportsTipoPostColumn() ? 'tipo_post' : 'NULL AS tipo_post';
+        $stmt = $this->pdo->prepare("SELECT id, titulo, slug, resumo, conteudo, categoria, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque, {$nextStepSelect}, {$tipoPostSelect} FROM posts WHERE id = :id LIMIT 1");
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -616,11 +618,16 @@ final class PostRepository
     public function insertAdmin(array $data): int
     {
         $supportsNextStep = $this->supportsNextStepColumn();
+        $supportsTipoPost = $this->supportsTipoPostColumn();
         $columns = 'titulo, slug, resumo, conteudo, categoria, categoria_post_id, imagem_capa, imagem_thumb, autor_id, data_publicacao, tempo_leitura, seo_title, seo_description, seo_keywords, tags, status, destaque';
         $values = ':titulo, :slug, :resumo, :conteudo, :categoria, :categoria_post_id, :imagem_capa, :imagem_thumb, :autor_id, :data_publicacao, :tempo_leitura, :seo_title, :seo_description, :seo_keywords, :tags, :status, :destaque';
         if ($supportsNextStep) {
             $columns .= ', proximo_post_id';
             $values .= ', :proximo_post_id';
+        }
+        if ($supportsTipoPost) {
+            $columns .= ', tipo_post';
+            $values .= ', :tipo_post';
         }
         $sql = "INSERT INTO posts ({$columns}, views, curtidas, comentarios_count, likes_count) VALUES ({$values}, 0, 0, 0, 0)";
         $stmt = $this->pdo->prepare($sql);
@@ -649,6 +656,14 @@ final class PostRepository
                 $stmt->bindValue(':proximo_post_id', null, PDO::PARAM_NULL);
             }
         }
+        if ($supportsTipoPost) {
+            $tipoPost = trim((string) ($data['tipo_post'] ?? ''));
+            if ($tipoPost !== '') {
+                $stmt->bindValue(':tipo_post', $tipoPost, PDO::PARAM_STR);
+            } else {
+                $stmt->bindValue(':tipo_post', null, PDO::PARAM_NULL);
+            }
+        }
         $stmt->execute();
         return (int) $this->pdo->lastInsertId();
     }
@@ -656,9 +671,13 @@ final class PostRepository
     public function updateAdmin(int $id, array $data): void
     {
         $supportsNextStep = $this->supportsNextStepColumn();
+        $supportsTipoPost = $this->supportsTipoPostColumn();
         $assignments = 'titulo = :titulo, slug = :slug, resumo = :resumo, conteudo = :conteudo, categoria = :categoria, categoria_post_id = :categoria_post_id, imagem_capa = :imagem_capa, imagem_thumb = :imagem_thumb, autor_id = :autor_id, data_publicacao = :data_publicacao, tempo_leitura = :tempo_leitura, seo_title = :seo_title, seo_description = :seo_description, seo_keywords = :seo_keywords, tags = :tags, status = :status, destaque = :destaque';
         if ($supportsNextStep) {
             $assignments .= ', proximo_post_id = :proximo_post_id';
+        }
+        if ($supportsTipoPost) {
+            $assignments .= ', tipo_post = :tipo_post';
         }
         $sql = "UPDATE posts SET {$assignments} WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
@@ -686,6 +705,14 @@ final class PostRepository
                 $stmt->bindValue(':proximo_post_id', $nextStepId, PDO::PARAM_INT);
             } else {
                 $stmt->bindValue(':proximo_post_id', null, PDO::PARAM_NULL);
+            }
+        }
+        if ($supportsTipoPost) {
+            $tipoPost = trim((string) ($data['tipo_post'] ?? ''));
+            if ($tipoPost !== '') {
+                $stmt->bindValue(':tipo_post', $tipoPost, PDO::PARAM_STR);
+            } else {
+                $stmt->bindValue(':tipo_post', null, PDO::PARAM_NULL);
             }
         }
         $stmt->execute();
@@ -783,5 +810,28 @@ final class PostRepository
     public function supportsNextStep(): bool
     {
         return $this->supportsNextStepColumn();
+    }
+
+    private function supportsTipoPostColumn(): bool
+    {
+        if ($this->supportsTipoPostColumn !== null) {
+            return $this->supportsTipoPostColumn;
+        }
+
+        $stmt = $this->pdo->prepare("SELECT 1
+                                     FROM information_schema.COLUMNS
+                                     WHERE TABLE_SCHEMA = DATABASE()
+                                       AND TABLE_NAME = 'posts'
+                                       AND COLUMN_NAME = 'tipo_post'
+                                     LIMIT 1");
+        $stmt->execute();
+        $this->supportsTipoPostColumn = $stmt->fetchColumn() !== false;
+
+        return $this->supportsTipoPostColumn;
+    }
+
+    public function supportsTipoPost(): bool
+    {
+        return $this->supportsTipoPostColumn();
     }
 }

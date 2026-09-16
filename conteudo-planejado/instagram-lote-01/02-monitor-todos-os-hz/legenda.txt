@@ -1,0 +1,9 @@
+🖥️ Seu monitor está usando a taxa que você esperava?
+
+No Windows 11, confira em Configurações → Sistema → Tela → Tela avançada. Se houver mais de uma tela, escolha a correta antes de ajustar.
+
+As taxas disponíveis dependem do monitor e da configuração. Um ajuste de Hz não faz o jogo gerar mais FPS por si só.
+
+Fonte técnica: Microsoft Support. Salva o passo a passo e conta: estava tudo certo no seu? 👇
+
+#EstratégiaNerd #Monitor #SetupGamer #DicasPC

@@ -24,6 +24,44 @@ final class MidiaService
     ) {
     }
 
+    /**
+     * Resolve o caminho absoluto local de um caminho relativo (ex.: "uploads/posts/x/images/capa.jpg").
+     */
+    public function absolutePathForRelative(string $relativePath): string
+    {
+        return $this->publicRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($relativePath, '/\\'));
+    }
+
+    /**
+     * Envia um arquivo ja salvo localmente pro ambiente-alvo (via FTP), quando o
+     * alvo for remoto. Nao faz nada quando o alvo e o proprio ambiente local.
+     */
+    public function pushToTargetEnvironment(string $targetEnvironment, string $relativePath): void
+    {
+        if ($relativePath === '' || !\App\Support\TargetEnvironmentUploads::isRemote($targetEnvironment)) {
+            return;
+        }
+
+        $absolute = $this->absolutePathForRelative($relativePath);
+        if (!is_file($absolute)) {
+            return;
+        }
+
+        \App\Support\TargetEnvironmentUploads::putFile($targetEnvironment, $absolute, $relativePath);
+    }
+
+    /**
+     * Remove um arquivo no ambiente-alvo (via FTP), quando o alvo for remoto.
+     */
+    public function deleteFromTargetEnvironment(string $targetEnvironment, string $relativePath): void
+    {
+        if ($relativePath === '' || !\App\Support\TargetEnvironmentUploads::isRemote($targetEnvironment)) {
+            return;
+        }
+
+        \App\Support\TargetEnvironmentUploads::deleteFile($targetEnvironment, $relativePath);
+    }
+
     public function getIndexViewModel(array $query = [], array $errors = []): array
     {
         $this->ensureDirectories();

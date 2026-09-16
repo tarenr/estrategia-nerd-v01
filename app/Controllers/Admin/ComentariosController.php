@@ -7,6 +7,8 @@ use App\Repositories\ComentarioRepository;
 use App\Services\Admin\ComentariosService;
 use App\Support\Auth;
 use App\Support\Csrf;
+use App\Support\ProductionChangeGuard;
+use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
 
 final class ComentariosController
@@ -97,7 +99,7 @@ final class ComentariosController
             return;
         }
 
-        View::render('admin/comments/delete', $viewModel);
+        View::render('admin/comments/delete', $this->withEnvironmentContext($viewModel));
     }
 
     public function destroy(): void
@@ -110,6 +112,23 @@ final class ComentariosController
 
         $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
         $returnTo = $this->sanitizeReturnUrl((string) ($_POST['return_to'] ?? $_GET['return_to'] ?? ''));
+
+        if (ProductionChangeGuard::requiresConfirmation(target_environment())
+            && !ProductionChangeGuard::isValidPhrase($_POST['production_confirmation'] ?? null)) {
+            $viewModel = $this->service()->getDeleteViewModel($id, $returnTo);
+            if ($viewModel === null) {
+                http_response_code(404);
+                echo 'Comentario nao encontrado.';
+                return;
+            }
+
+            http_response_code(422);
+            $viewModel = $this->withEnvironmentContext($viewModel);
+            $viewModel['errors'] = ['production_confirmation' => 'Digite PRODUCAO para confirmar a exclusao no ambiente de producao.'];
+            View::render('admin/comments/delete', $viewModel);
+            return;
+        }
+
         $result = $this->service()->deleteComment($id);
 
         if (($result['not_found'] ?? false) === true) {
@@ -122,10 +141,26 @@ final class ComentariosController
         exit;
     }
 
+    /**
+     * @param array<string,mixed> $viewModel
+     * @return array<string,mixed>
+     */
+    private function withEnvironmentContext(array $viewModel): array
+    {
+        $targetEnvironment = target_environment();
+
+        return array_merge($viewModel, [
+            'target_environment' => $targetEnvironment,
+            'target_environment_label' => environment_label($targetEnvironment),
+            'is_remote_target' => $targetEnvironment !== current_environment(),
+            'requires_production_confirmation' => ProductionChangeGuard::requiresConfirmation($targetEnvironment),
+        ]);
+    }
+
     private function service(): ComentariosService
     {
-        /** @var \PDO $pdo */
-        $pdo = $GLOBALS['pdo'];
+        $targetEnvironment = target_environment();
+        $pdo = TargetEnvironmentDatabase::pdo($targetEnvironment);
 
         return new ComentariosService(new ComentarioRepository($pdo));
     }

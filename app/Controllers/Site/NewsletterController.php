@@ -21,7 +21,7 @@ final class NewsletterController
         }
 
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
-            http_response_code(419);
+            http_response_code(403);
             echo json_encode(['ok' => false, 'message' => 'Sessão expirada. Atualize a página e tente novamente.'], JSON_UNESCAPED_UNICODE);
             return;
         }

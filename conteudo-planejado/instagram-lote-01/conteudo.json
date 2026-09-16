@@ -1,0 +1,752 @@
+[
+  {
+    "slug": "01-jogo-que-fez-virar-a-noite",
+    "title": "Qual jogo te fez virar a noite?",
+    "cat": "MEMÓRIA GAMER",
+    "color": "#36dcff",
+    "slides": [
+      {
+        "title": "SÓ MAIS\nUMA PARTIDA",
+        "body": "Qual jogo fez você perder a noção do tempo?",
+        "tag": "MEMÓRIA DESBLOQUEADA"
+      },
+      {
+        "title": "O RELÓGIO\nSUMIU",
+        "body": "Você entrou para jogar um pouquinho.\nQuando percebeu, a casa já estava em silêncio.",
+        "tag": "CENA 01",
+        "big": "23:59"
+      },
+      {
+        "title": "O SAVE\nFICOU PRA DEPOIS",
+        "body": "Faltava uma missão. Um chefe. Uma tentativa.\nE aquela frase: “agora vai”.",
+        "tag": "CENA 02",
+        "big": "+1"
+      },
+      {
+        "title": "O QUE FICOU\nNA MEMÓRIA?",
+        "body": "A vitória impossível?\nA conversa com a turma?\nOu o susto ao ver o sol nascer?",
+        "tag": "CENA 03"
+      },
+      {
+        "title": "CONTA\nESSA HISTÓRIA",
+        "body": "Comenta o nome do jogo + a plataforma.\nVale marcar quem estava naquela sessão.",
+        "tag": "SUA VEZ",
+        "big": "🎮"
+      }
+    ],
+    "caption": "🎮 SÓ MAIS UMA PARTIDA… quem nunca caiu nessa? 😅\n\nÀs vezes a lembrança nem é da vitória. É da call, da tentativa que finalmente deu certo ou daquela missão que parecia não acabar.\n\nNostalgia boa rende história — e hoje queremos a sua. Qual jogo fez você perder a noção do tempo, e em qual plataforma? 👇\n\n#EstratégiaNerd #NostalgiaGamer #GamerLife #Games",
+    "hooks": [
+      "🎮 Só mais uma partida… e o relógio sumiu.",
+      "Qual jogo fez você esquecer da hora?",
+      "Uma missão. Mais uma tentativa. Uma história pra contar."
+    ],
+    "sources": [],
+    "art": "Nostalgic cinematic photograph of a single wired game controller large on a worn wooden desk, warm desk lamp, soft blue dawn through curtains, blurred CRT monitor seen from behind, early 2000s bedroom, tangible cozy nostalgia, no person, no text."
+  },
+  {
+    "slug": "02-monitor-todos-os-hz",
+    "title": "Seu monitor está entregando todos os Hz?",
+    "cat": "DICAS • MONITOR",
+    "color": "#38ddff",
+    "slides": [
+      {
+        "title": "CADÊ\nOS HZ?",
+        "body": "Seu monitor pode oferecer uma taxa maior do que a selecionada no Windows.",
+        "tag": "CONFIRA EM MINUTOS"
+      },
+      {
+        "title": "HZ NÃO\nÉ FPS",
+        "body": "Hz: atualizações da tela por segundo.\nFPS: quadros produzidos pelo jogo.\nSão medidas diferentes.",
+        "tag": "ENTENDA PRIMEIRO",
+        "big": "Hz ≠ FPS"
+      },
+      {
+        "title": "ABRA AS\nCONFIGURAÇÕES",
+        "body": "No Windows 11:\nConfigurações → Sistema → Tela → Tela avançada.",
+        "tag": "PASSO 01",
+        "steps": [
+          "Configurações",
+          "Sistema → Tela",
+          "Tela avançada"
+        ]
+      },
+      {
+        "title": "ESCOLHA\nO MONITOR",
+        "body": "Usa mais de uma tela? Selecione a certa.\nDepois, procure a opção de taxa de atualização.",
+        "tag": "PASSO 02",
+        "big": "1 / 2"
+      },
+      {
+        "title": "SELECIONE\nA TAXA",
+        "body": "Escolha a taxa desejada entre as disponíveis.\nConfira se a resolução continua adequada.",
+        "tag": "PASSO 03",
+        "big": "60 → 144",
+        "note": "Exemplo ilustrativo. As opções dependem do seu monitor."
+      },
+      {
+        "title": "NÃO APARECEU?",
+        "body": "Confira monitor, porta, cabo e adaptadores.\nVeja os modos suportados no manual e o driver de vídeo.",
+        "tag": "CHECKLIST",
+        "steps": [
+          "Monitor e resolução",
+          "Conexão e cabo",
+          "Driver de vídeo"
+        ]
+      },
+      {
+        "title": "E AÍ,\nESTAVA CERTO?",
+        "body": "Salva para conferir no seu PC.\nQual taxa estava selecionada e qual você passou a usar?",
+        "tag": "SUA VEZ"
+      }
+    ],
+    "caption": "🖥️ Seu monitor está usando a taxa que você esperava?\n\nNo Windows 11, confira em Configurações → Sistema → Tela → Tela avançada. Se houver mais de uma tela, escolha a correta antes de ajustar.\n\nAs taxas disponíveis dependem do monitor e da configuração. Um ajuste de Hz não faz o jogo gerar mais FPS por si só.\n\nFonte técnica: Microsoft Support. Salva o passo a passo e conta: estava tudo certo no seu? 👇\n\n#EstratégiaNerd #Monitor #SetupGamer #DicasPC",
+    "hooks": [
+      "🖥️ Seu monitor pode estar entregando menos Hz do que você imagina.",
+      "Você já conferiu os Hz selecionados no Windows?",
+      "3 passos para conferir a taxa do seu monitor."
+    ],
+    "sources": [
+      {
+        "title": "Microsoft — taxa de atualização",
+        "url": "https://support.microsoft.com/en-us/windows/hardware/display-graphics/change-the-refresh-rate-on-your-monitor-in-windows",
+        "note": "Caminho no Windows, seleção de monitor e taxas disponíveis."
+      }
+    ],
+    "art": "Premium gaming monitor on uncluttered desk, abstract cyan motion trails on screen without UI or text, dark navy studio, realistic elegant hardware, strong cyan rim light, monitor large centered upper half."
+  },
+  {
+    "slug": "03-viloes-que-roubaram-a-cena",
+    "title": "Vilões que roubaram a cena",
+    "cat": "CULTURA • OPINIÃO",
+    "color": "#b394ff",
+    "slides": [
+      {
+        "title": "A CENA\nÉ DELES",
+        "body": "4 vilões que, na nossa seleção, deixam qualquer entrada memorável.",
+        "tag": "SEM SPOILERS IMPORTANTES"
+      },
+      {
+        "title": "DARTH\nVADER",
+        "body": "A silhueta. A respiração. A presença.\nNossa escolha para quem domina a cena antes de falar.",
+        "tag": "STAR WARS",
+        "big": "01"
+      },
+      {
+        "title": "CORINGA",
+        "body": "Imprevisibilidade é a assinatura.\nCada versão muda o tom, mas o confronto com Batman segue no centro.",
+        "tag": "DC",
+        "big": "02"
+      },
+      {
+        "title": "LOKI",
+        "body": "Trapaça, carisma e alianças instáveis.\nA trajetória também vai além do papel de vilão.",
+        "tag": "MARVEL",
+        "big": "03"
+      },
+      {
+        "title": "PALPATINE",
+        "body": "Enquanto os outros disputam a cena,\nele parece estar escrevendo o tabuleiro inteiro.",
+        "tag": "STAR WARS",
+        "big": "04"
+      },
+      {
+        "title": "QUAL É\nO INGREDIENTE?",
+        "body": "Visual marcante + conflito forte + personalidade.\nÉ a nossa leitura: seu favorito pode ter outra fórmula.",
+        "tag": "NOSSA LEITURA"
+      },
+      {
+        "title": "QUEM\nFICOU DE FORA?",
+        "body": "Escolha um vilão e defenda sua indicação.\nVale filme, série, anime ou jogo.",
+        "tag": "SUA VEZ"
+      }
+    ],
+    "caption": "🎭 Tem vilão que entra em cena e muda o clima inteiro.\n\nDarth Vader, Coringa, Loki e Palpatine são as nossas escolhas desta rodada. É uma seleção editorial, sem ranking definitivo — e Loki merece a observação: sua trajetória vai além do antagonismo. 👀\n\nVisual, presença e personalidade pesam tanto quanto o plano mirabolante.\n\nQuem faltou aqui? Comenta um nome e o motivo da sua escolha. 👇\n\n#EstratégiaNerd #CulturaGeek #Vilões #StarWars #Marvel #DC",
+    "hooks": [
+      "🎭 Quando o vilão vira o centro das atenções.",
+      "Qual vilão merecia um carrossel só dele?",
+      "4 vilões, 4 jeitos de dominar a cena."
+    ],
+    "sources": [
+      {
+        "title": "Star Wars — Darth Vader",
+        "url": "https://www.starwars.com/databank/darth-vader",
+        "note": "Identidade e universo."
+      },
+      {
+        "title": "DC — Who is the Joker?",
+        "url": "https://www.dc.com/blog/2024/02/09/who-is-the-joker",
+        "note": "Personagem e relação com Batman."
+      },
+      {
+        "title": "D23 — personagens de Loki",
+        "url": "https://d23.com/meet-the-characters-of-loki/",
+        "note": "Loki e sua trajetória."
+      },
+      {
+        "title": "Star Wars — Palpatine",
+        "url": "https://www.starwars.com/databank/emperor-palpatine-darth-sidious",
+        "note": "Identidade e universo."
+      }
+    ],
+    "art": "Cinematic still life of a glossy black angular sci-fi helmet on pedestal, a theatrical playing card with no letters, curved golden horn crown, sinister dark violet fog, editorial villain atmosphere, no faces, no text, crisp purple rim light."
+  },
+  {
+    "slug": "04-dpi-alto-e-melhor",
+    "title": "DPI alto é realmente melhor?",
+    "cat": "HARDWARE • MOUSE",
+    "color": "#39e0cf",
+    "slides": [
+      {
+        "title": "DPI ALTO\nÉ MELHOR?",
+        "body": "O maior número da caixa não responde tudo.",
+        "tag": "ENTENDA SEU MOUSE"
+      },
+      {
+        "title": "O QUE\nMUDA?",
+        "body": "Com a mesma sensibilidade no jogo, aumentar o DPI faz a mira se deslocar mais para o mesmo movimento da mão.",
+        "tag": "SENSIBILIDADE",
+        "big": "DPI"
+      },
+      {
+        "title": "DUAS\nREGULAGENS",
+        "body": "DPI do mouse e sensibilidade do jogo atuam juntos.\nAjuste um de cada vez para perceber a diferença.",
+        "tag": "NO SEU CONTROLE",
+        "steps": [
+          "DPI no software do mouse",
+          "Sensibilidade dentro do jogo"
+        ]
+      },
+      {
+        "title": "HZ É\nOUTRA COISA",
+        "body": "Polling rate é a frequência com que o mouse envia informações ao PC.\nDPI e polling rate não são sinônimos.",
+        "tag": "NÃO CONFUNDA",
+        "big": "DPI ≠ Hz"
+      },
+      {
+        "title": "TESTE\nCOM MÉTODO",
+        "body": "Use o mesmo jogo e a mesma tarefa.\nCompare conforto, espaço de movimento e controle.\nMude uma variável por vez.",
+        "tag": "NA PRÁTICA"
+      },
+      {
+        "title": "QUAL É\nO SEU AJUSTE?",
+        "body": "Comenta seu DPI + jogo favorito.\nO melhor ponto de partida é entender o que funciona para você.",
+        "tag": "SUA VEZ"
+      }
+    ],
+    "caption": "🖱️ DPI gigante na caixa não escolhe sua sensibilidade por você.\n\nDPI, ajuste dentro do jogo e espaço no mousepad precisam funcionar juntos. Já o polling rate, medido em Hz, descreve a frequência de envio de informações ao PC.\n\nEm vez de copiar uma configuração sem testar, mude uma variável por vez e observe controle e conforto. 🎯\n\nReferência técnica: Logitech. Qual DPI você usa e em qual jogo? 👇\n\n#EstratégiaNerd #MouseGamer #DPI #Hardware #SetupGamer",
+    "hooks": [
+      "🖱️ Mais DPI não responde tudo.",
+      "Você escolheu seu DPI ou só deixou no padrão?",
+      "DPI e Hz: duas regulagens diferentes."
+    ],
+    "sources": [
+      {
+        "title": "Logitech — polling rate",
+        "url": "https://www.logitech.com/en-us/discover/a/polling-rate-on-a-mouse",
+        "note": "Diferença entre DPI e frequência de envio."
+      },
+      {
+        "title": "Logitech — guia de mouse",
+        "url": "https://www.logitech.com/en-au/discover/a/gaming-mouse-guide",
+        "note": "DPI e critérios além da especificação máxima."
+      }
+    ],
+    "art": "Macro realistic unbranded gaming mouse on dark desk, elegant mint cyan sensor light, one strong subject, premium soft rim light, subtle abstract motion line, no numbers or text."
+  },
+  {
+    "slug": "05-escolha-um-poder",
+    "title": "Qual poder você escolheria?",
+    "cat": "CULTURA • ESCOLHAS",
+    "color": "#b194ff",
+    "slides": [
+      {
+        "title": "ESCOLHA\nUM PODER",
+        "body": "Mas leia a desvantagem antes de decidir.",
+        "tag": "REGRAS INVENTADAS PARA O JOGO"
+      },
+      {
+        "title": "TELEPORTE",
+        "body": "Você chega instantaneamente.\nSó funciona em lugares que já visitou.",
+        "tag": "OPÇÃO A",
+        "big": "A → B"
+      },
+      {
+        "title": "INVISIBILIDADE",
+        "body": "Você desaparece por 10 minutos.\nTudo que carrega continua visível.",
+        "tag": "OPÇÃO B",
+        "big": "10 MIN"
+      },
+      {
+        "title": "LER\nMENTES",
+        "body": "Você ouve pensamentos por perto.\nNão consegue escolher de quem.",
+        "tag": "OPÇÃO C",
+        "big": "?!"
+      },
+      {
+        "title": "PARAR\nO TEMPO",
+        "body": "Você ganha 30 segundos extras.\nPrecisa esperar uma hora para usar de novo.",
+        "tag": "OPÇÃO D",
+        "big": "30 S"
+      },
+      {
+        "title": "CURA\nACELERADA",
+        "body": "Seus ferimentos se recuperam rápido.\nDepois, você precisa de um longo descanso.",
+        "tag": "OPÇÃO E",
+        "big": "+ HP"
+      },
+      {
+        "title": "FECHOU\nEM QUAL?",
+        "body": "A, B, C, D ou E?\nComenta a escolha e como usaria no dia a dia.",
+        "tag": "SUA VEZ",
+        "note": "Brincadeira de ficção. As regras não pertencem a uma franquia."
+      }
+    ],
+    "caption": "⚡ Você pode escolher UM poder. Só que tem condição. 😅\n\nCriamos cinco opções com limitações próprias para esta brincadeira. Não são regras oficiais de personagens ou franquias.\n\nTeleporte com endereço conhecido? Invisibilidade que não esconde a mochila? Agora a decisão ficou menos fácil.\n\nQual letra você escolhe e qual seria seu primeiro uso? 👇\n\n#EstratégiaNerd #CulturaGeek #Superpoderes #EscolhasGeek",
+    "hooks": [
+      "⚡ Escolha um poder. Agora leia a desvantagem.",
+      "Você ainda escolheria invisibilidade com essa condição?",
+      "5 poderes. Uma escolha. Nenhuma opção perfeita."
+    ],
+    "sources": [],
+    "art": "One human hand with five elegant floating magical energy orbs, violet and cyan, cinematic fantasy key art, dark navy background, dramatic depth, no text, no characters from existing franchises."
+  },
+  {
+    "slug": "06-detalhes-escondidos-nos-jogos",
+    "title": "Detalhes escondidos nos jogos",
+    "cat": "GAMES • CURIOSIDADES",
+    "color": "#a5e46b",
+    "slides": [
+      {
+        "title": "VOCÊ\nPERCEBEU?",
+        "body": "Referências e curiosidades que merecem um segundo olhar.",
+        "tag": "OLHE ALÉM DA MISSÃO"
+      },
+      {
+        "title": "UM PORCO\nVIROU CREEPER",
+        "body": "O formato do Creeper nasceu de um erro nas proporções de um modelo que seria um porco.",
+        "tag": "MINECRAFT",
+        "big": "? → !"
+      },
+      {
+        "title": "UM MUSEU\nJOGÁVEL",
+        "body": "Em Astro’s Playroom, consoles, controles e acessórios coletados vão para o PlayStation Labo.",
+        "tag": "ASTRO’S PLAYROOM",
+        "big": "LABO"
+      },
+      {
+        "title": "REFERÊNCIAS\nPELO CAMINHO",
+        "body": "Astro’s Playroom espalha homenagens ao universo PlayStation.\nObserve os bots e o cenário entre os desafios.",
+        "tag": "ASTRO’S PLAYROOM"
+      },
+      {
+        "title": "BOTS\nESPECIAIS",
+        "body": "Atualizações de Astro’s Playroom esconderam Special Bots.\nUm motivo para revisitar áreas conhecidas.",
+        "tag": "UMA NOVA VISITA"
+      },
+      {
+        "title": "INVESTIGUE\nSEM PRESSA",
+        "body": "Observe cenários, objetos e animações.\nDepois, confira a descoberta em uma fonte confiável.",
+        "tag": "DICA DE EXPLORAÇÃO",
+        "steps": [
+          "Olhe com calma",
+          "Registre a descoberta",
+          "Confira a explicação"
+        ]
+      },
+      {
+        "title": "QUAL SEGREDO\nVOCÊ ACHOU?",
+        "body": "Conta o jogo e o detalhe.\nSe revelar história, avise que tem spoiler.",
+        "tag": "SUA VEZ"
+      }
+    ],
+    "caption": "🔎 Às vezes a melhor descoberta está fora do caminho principal.\n\nO Creeper tem uma origem inesperada. Astro’s Playroom transforma a história do PlayStation em referências e itens colecionáveis — e recebeu bots especiais escondidos em atualizações.\n\nAs curiosidades desta seleção foram conferidas em Minecraft.net e nos canais oficiais PlayStation. 🎮\n\nQual detalhe você encontrou sem ajuda? Conta o jogo e avisa se tiver spoiler. 👇\n\n#EstratégiaNerd #CuriosidadesGames #Minecraft #AstrosPlayroom #Games",
+    "hooks": [
+      "🔎 Você joga olhando só para a missão?",
+      "Qual referência passou batida na sua primeira partida?",
+      "Um Creeper, um museu e motivos para olhar de novo."
+    ],
+    "sources": [
+      {
+        "title": "Minecraft — Meet the Creeper",
+        "url": "https://www.minecraft.net/de-de/article/meet-creeper",
+        "note": "Origem do formato do Creeper."
+      },
+      {
+        "title": "PlayStation — Astro’s Playroom",
+        "url": "https://www.playstation.com/en-ca/games/astros-playroom/",
+        "note": "Referências escondidas e artefatos."
+      },
+      {
+        "title": "PlayStation Blog — DualSense e Labo",
+        "url": "https://blog.playstation.com/?p=343436",
+        "note": "Consoles, controles e acessórios no Labo."
+      },
+      {
+        "title": "PlayStation Blog — Special Bot",
+        "url": "https://blog.playstation.com/2024/07/08/astros-playroom-second-update-is-now-available-hiding-a-new-special-bot-in-game/",
+        "note": "Bots adicionados por atualização."
+      }
+    ],
+    "art": "A luminous magnifying glass hovering above an original miniature game world with green voxel cubes and a tiny white blue robot, cinematic macro concept art, dark background, curious playful mood, green and cyan accent, no text."
+  },
+  {
+    "slug": "07-upgrade-ou-organizacao",
+    "title": "Upgrade ou organização no setup?",
+    "cat": "SETUP • NA PRÁTICA",
+    "color": "#4bddca",
+    "slides": [
+      {
+        "title": "UPGRADE\nOU ORGANIZAÇÃO?",
+        "body": "Antes da próxima compra, olhe para o que já está na sua mesa.",
+        "tag": "COMECE PELO INCÔMODO"
+      },
+      {
+        "title": "DÊ NOME\nAO PROBLEMA",
+        "body": "Falta espaço para o mouse?\nVocê vive procurando um cabo?\nOu o jogo realmente está travando?",
+        "tag": "PASSO 01"
+      },
+      {
+        "title": "LIBERE\nA MESA",
+        "body": "Guarde o que não usa todo dia.\nDeixe teclado, mouse e controles ao alcance.",
+        "tag": "ESPAÇO ÚTIL",
+        "steps": [
+          "Tire o excesso",
+          "Separe por uso",
+          "Teste a nova posição"
+        ]
+      },
+      {
+        "title": "DOMINE\nOS CABOS",
+        "body": "Agrupe por destino e identifique as pontas.\nDeixe folga nas conexões e acesso fácil ao que precisa desconectar.",
+        "tag": "MENOS EMBARAÇO"
+      },
+      {
+        "title": "UMA COISA\nDE CADA VEZ",
+        "body": "Se a queixa é desempenho, repita a mesma tarefa e observe o problema.\nOrganização não substitui diagnóstico.",
+        "tag": "SEPARE AS CAUSAS",
+        "big": "1"
+      },
+      {
+        "title": "AGORA\nDECIDA",
+        "body": "Incômodo resolvido? Aproveite o setup.\nPersistiu? Defina o requisito antes de escolher o upgrade.",
+        "tag": "COMPRA COM OBJETIVO"
+      },
+      {
+        "title": "QUAL É\nO SEU PERRENGUE?",
+        "body": "Espaço, cabos ou desempenho?\nConta o que mais atrapalha seu setup hoje.",
+        "tag": "SUA VEZ"
+      }
+    ],
+    "caption": "🛠️ Antes de colocar outra peça no carrinho: o que está incomodando de verdade?\n\nUma mesa mais livre pode resolver falta de espaço. Cabos identificados facilitam a rotina. Já travamentos pedem diagnóstico — arrumação não cria FPS. 😅\n\nA ideia é simples: entender o problema primeiro e comprar com um objetivo claro depois.\n\nQual é o maior perrengue do seu setup: espaço, cabos ou desempenho? 👇\n\n#EstratégiaNerd #SetupGamer #Organização #DicasPC",
+    "hooks": [
+      "🛠️ Seu próximo upgrade pode começar pela mesa.",
+      "Qual problema você quer resolver com a próxima compra?",
+      "3 incômodos para separar antes de gastar."
+    ],
+    "sources": [],
+    "art": "Realistic carefully organized gamer desk with dark monitor facing away, neatly coiled cable and clean keyboard, warm teal practical lighting, pleasing restrained composition, no logos or text."
+  },
+  {
+    "slug": "08-coop-teste-de-amizade",
+    "title": "Cooperativos que testam amizades",
+    "cat": "GAMES • CO-OP",
+    "color": "#ffbb68",
+    "slides": [
+      {
+        "title": "AMIZADE\nEM TESTE",
+        "body": "5 jogos em que combinar o plano faz parte da diversão.",
+        "tag": "CHAMA A DUPLA"
+      },
+      {
+        "title": "OVERCOOKED! 2",
+        "body": "Preparar, servir e lavar.\nDividir as tarefas é melhor que todo mundo tentar fazer tudo.",
+        "tag": "CAOS NA COZINHA",
+        "big": "01"
+      },
+      {
+        "title": "IT TAKES TWO",
+        "body": "Dois personagens, habilidades que se completam.\nOuvir a outra pessoa faz parte do desafio.",
+        "tag": "PARCERIA EM DUPLA",
+        "big": "02"
+      },
+      {
+        "title": "MOVING OUT 2",
+        "body": "Transportar móveis parece simples.\nAté vocês precisarem combinar para qual lado virar.",
+        "tag": "MUDANÇA EM EQUIPE",
+        "big": "03"
+      },
+      {
+        "title": "PORTAL 2",
+        "body": "Uma campanha cooperativa própria.\nResolver a sala pede raciocínio e comunicação.",
+        "tag": "DUAS CABEÇAS",
+        "big": "04"
+      },
+      {
+        "title": "A WAY OUT",
+        "body": "Uma aventura feita para dois jogadores.\nA cooperação faz parte da história e das ações.",
+        "tag": "FUGA EM DUPLA",
+        "big": "05"
+      },
+      {
+        "title": "QUEM É\nSEU PLAYER 2?",
+        "body": "Marca quem topa o desafio.\nAntes de comprar, confira plataforma e modos compatíveis.",
+        "tag": "SUA VEZ"
+      }
+    ],
+    "caption": "🎮 Co-op é sobre amizade… e explicar pela quinta vez qual é a sua esquerda. 😂\n\n🔥 Overcooked! 2: divisão de tarefas na cozinha.\n⚡ It Takes Two: habilidades que se completam.\n📦 Moving Out 2: coordenar até a mudança.\n🧠 Portal 2: resolver juntos.\n🎬 A Way Out: uma história para dois.\n\nSeleção editorial. Confira plataforma, número de jogadores e modos da versão desejada antes de comprar; não presuma crossplay entre todas elas.\n\nQual desses você jogaria com seu player 2? 👇\n\n#EstratégiaNerd #Coop #Player2 #Games #GamerLife",
+    "hooks": [
+      "🎮 Sua dupla sobrevive a esses cooperativos?",
+      "Quem é o player 2 que resolve — ou aumenta — o caos?",
+      "5 jogos para combinar o plano antes de apertar start."
+    ],
+    "sources": [
+      {
+        "title": "Team17 — Overcooked! 2",
+        "url": "https://www.team17.com/games/overcooked-2",
+        "note": "Premissa cooperativa."
+      },
+      {
+        "title": "EA — It Takes Two",
+        "url": "https://www.ea.com/en/games/it-takes-two/it-takes-two",
+        "note": "Experiência para dois e habilidades complementares."
+      },
+      {
+        "title": "Team17 — Moving Out 2",
+        "url": "https://www.team17.com/games/moving-out-2",
+        "note": "Cooperativo de mudanças."
+      },
+      {
+        "title": "Valve — Portal 2",
+        "url": "https://store.steampowered.com/app/620/Portal_2/",
+        "note": "Campanha cooperativa."
+      },
+      {
+        "title": "EA — A Way Out",
+        "url": "https://www.ea.com/games/a-way-out/a-way-out",
+        "note": "Experiência para dois."
+      }
+    ],
+    "art": "Two large game controllers side by side on couch, one cyan one warm orange light, soft whimsical kitchen and cardboard box motifs in far background, cinematic realistic editorial photograph, no text, no brands."
+  },
+  {
+    "slug": "09-tipos-de-switch",
+    "title": "O que muda entre os switches?",
+    "cat": "HARDWARE • TECLADO",
+    "color": "#7bcaff",
+    "slides": [
+      {
+        "title": "QUAL\nSWITCH?",
+        "body": "Linear, tátil ou clicky: entenda a diferença no toque.",
+        "tag": "TECLADO MECÂNICO"
+      },
+      {
+        "title": "LINEAR",
+        "body": "O movimento não tem um ressalto tátil intencional.\nA sensação é de um curso contínuo.",
+        "tag": "TIPO 01",
+        "big": "SUAVE"
+      },
+      {
+        "title": "TÁTIL",
+        "body": "Um ressalto perceptível dá retorno durante o acionamento.\nVocê sente esse ponto no dedo.",
+        "tag": "TIPO 02",
+        "big": "RESSALTO"
+      },
+      {
+        "title": "CLICKY",
+        "body": "Combina retorno tátil com um clique audível do mecanismo.\nO som faz parte da proposta.",
+        "tag": "TIPO 03",
+        "big": "CLIQUE"
+      },
+      {
+        "title": "COR NÃO\nÉ REGRA UNIVERSAL",
+        "body": "Red, Brown e Blue são referências conhecidas da linha Cherry MX.\nConfira a ficha do modelo de cada fabricante.",
+        "tag": "LEIA O MODELO"
+      },
+      {
+        "title": "ESCOLHA\nPELO CONJUNTO",
+        "body": "Sensação, força de acionamento e som importam.\nTeclado, keycaps e ambiente também influenciam a experiência.",
+        "tag": "TESTE SE PUDER",
+        "steps": [
+          "Sensação no toque",
+          "Esforço para acionar",
+          "Som no ambiente"
+        ]
+      },
+      {
+        "title": "QUAL É\nSEU TIPO?",
+        "body": "Linear, tátil ou clicky?\nConta o que você usa e o que gosta nele.",
+        "tag": "SUA VEZ"
+      }
+    ],
+    "caption": "⌨️ O switch muda a sensação de cada tecla — mas não existe uma escolha única para todo mundo.\n\nLinear tem curso sem ressalto tátil intencional. Tátil entrega esse retorno no dedo. Clicky acrescenta um clique audível do mecanismo.\n\nA cor sozinha não resolve a escolha entre fabricantes. Compare o modelo, a força, a sensação e o som do conjunto. Se puder, experimente antes. 🎯\n\nReferência: CHERRY. Você é do time linear, tátil ou clicky? 👇\n\n#EstratégiaNerd #TecladoMecânico #Switches #Hardware #SetupGamer",
+    "hooks": [
+      "⌨️ O que seu dedo sente em cada switch?",
+      "Linear, tátil ou clicky: qual combina com você?",
+      "3 tipos de switch para entender antes de escolher."
+    ],
+    "sources": [
+      {
+        "title": "CHERRY — visão geral MX",
+        "url": "https://www.cherry.de/en-us/company/news/cherry-blog/article/how-to-diy-keyboard-part-3-cherry-mx-original",
+        "note": "Linear, tátil e clicky; exemplos de modelos."
+      },
+      {
+        "title": "CHERRY — switches",
+        "url": "https://www.cherry.de/en-us/products/switches",
+        "note": "Categorias e variedade de tecnologias."
+      }
+    ],
+    "art": "Macro product style photograph of three mechanical keyboard switches red brown and blue stems in a precise row on dark surface, cyan rim light, realistic translucent housings, no labels or text, clean premium engineering aesthetic."
+  },
+  {
+    "slug": "10-quiz-silhuetas",
+    "title": "Reconhece só pela silhueta?",
+    "cat": "CULTURA • QUIZ",
+    "color": "#e6b8ff",
+    "slides": [
+      {
+        "title": "QUEM\nÉ ESSE?",
+        "body": "3 silhuetas. Responda antes de deslizar.\nCada desafio tem a resposta no slide seguinte.",
+        "tag": "QUIZ GEEK"
+      },
+      {
+        "title": "DESAFIO 1",
+        "body": "Qual personagem é este?\nVale só o contorno.",
+        "tag": "NÃO DESLIZE AINDA",
+        "art": "quiz-1.png",
+        "quiz": true
+      },
+      {
+        "title": "É O\nPIKACHU!",
+        "body": "As orelhas e a cauda em raio entregam.\nUm ponto se você acertou.",
+        "tag": "RESPOSTA 1",
+        "art": "quiz-1.png",
+        "answer": true
+      },
+      {
+        "title": "DESAFIO 2",
+        "body": "Reconhece esse boné e esse bigode?\nDiga seu palpite antes de continuar.",
+        "tag": "NÃO DESLIZE AINDA",
+        "art": "quiz-2.png",
+        "quiz": true
+      },
+      {
+        "title": "É O\nMARIO!",
+        "body": "Boné, bigode e macacão.\nUm contorno que atravessa gerações.",
+        "tag": "RESPOSTA 2",
+        "art": "quiz-2.png",
+        "answer": true
+      },
+      {
+        "title": "DESAFIO 3",
+        "body": "Orelhas pontudas. Capa.\nQuem aparece nessa sombra?",
+        "tag": "NÃO DESLIZE AINDA",
+        "art": "quiz-3.png",
+        "quiz": true
+      },
+      {
+        "title": "É O\nBATMAN!",
+        "body": "A capa e o capuz fazem a assinatura.\nFechou os três desafios?",
+        "tag": "RESPOSTA 3",
+        "art": "quiz-3.png",
+        "answer": true
+      },
+      {
+        "title": "QUAL FOI\nSEU PLACAR?",
+        "body": "0, 1, 2 ou 3?\nComenta e desafia alguém para a próxima rodada.",
+        "tag": "SUA VEZ",
+        "big": "__/3"
+      }
+    ],
+    "caption": "👤 Sem cor, sem nome: você reconhece só pelo contorno?\n\nSão três desafios, cada um seguido da resposta. Pare no slide da silhueta, diga seu palpite e só então continue. Nada de espiar! 😅\n\nAs silhuetas são ilustrações produzidas para o quiz.\n\nQuantas você acertou: 0, 1, 2 ou 3? Marca alguém para comparar o placar. 👇\n\n#EstratégiaNerd #QuizGeek #CulturaGeek #Games #DesafioGeek",
+    "hooks": [
+      "👤 Seu repertório geek passa no teste da silhueta?",
+      "Você reconhece esses personagens sem ver as cores?",
+      "3 silhuetas. Quantas você acerta?"
+    ],
+    "sources": [
+      {
+        "title": "Pokémon — Pikachu",
+        "url": "https://www.pokemon.com/us/pokedex/pikachu",
+        "note": "Referência de identidade; página sem texto extraível na consulta."
+      },
+      {
+        "title": "Nintendo — personagens",
+        "url": "https://mario.nintendo.com/characters/",
+        "note": "Mario e identidade visual."
+      },
+      {
+        "title": "DC — Batman",
+        "url": "https://www.dc.com/characters/batman",
+        "note": "Batman e identidade visual."
+      }
+    ],
+    "art": "Three mysterious silhouette busts on dark navy background with cyan and lilac backlight, one pointed ears small creature, one cap wearing figure, one caped hero, graphic playful guessing game composition, no words no question mark no text."
+  },
+  {
+    "slug": "11-tecnologias-dos-filmes",
+    "title": "Tecnologias dos filmes que gostaríamos de ter",
+    "cat": "CULTURA • FICÇÃO",
+    "color": "#63ddff",
+    "slides": [
+      {
+        "title": "EU QUERO\nESSA TECNOLOGIA",
+        "body": "Se pudesse trazer uma ideia do cinema para sua rotina, qual seria?",
+        "tag": "EXERCÍCIO DE IMAGINAÇÃO"
+      },
+      {
+        "title": "HOVERBOARD",
+        "body": "Um passeio flutuando, no clima de De Volta para o Futuro II.\nQual seria seu primeiro trajeto?",
+        "tag": "OPÇÃO 01",
+        "big": "FLUTUAR"
+      },
+      {
+        "title": "HOLOGRAMA",
+        "body": "Conversar com uma projeção no estilo Star Wars.\nReunião de trabalho ou chamada com a família?",
+        "tag": "OPÇÃO 02",
+        "big": "PRESENÇA"
+      },
+      {
+        "title": "ASSISTENTE\nDE NAVE",
+        "body": "Uma IA de ficção que ajuda a organizar tudo.\nVocê daria acesso total ou colocaria limites?",
+        "tag": "OPÇÃO 03",
+        "big": "IA"
+      },
+      {
+        "title": "TRADUTOR\nUNIVERSAL",
+        "body": "Entender qualquer conversa alienígena.\nSeria mais útil numa viagem ou num primeiro contato?",
+        "tag": "OPÇÃO 04",
+        "big": "OLÁ!"
+      },
+      {
+        "title": "O DETALHE\nQUE FALTA",
+        "body": "Escolher a função é fácil.\nE bateria, privacidade, manutenção e quem pode usar?",
+        "tag": "PENSE NO DIA A DIA"
+      },
+      {
+        "title": "QUAL VEM\nPARA SUA CASA?",
+        "body": "Hoverboard, holograma, assistente ou tradutor?\nVale sugerir outra tecnologia de ficção.",
+        "tag": "SUA VEZ"
+      }
+    ],
+    "caption": "🛸 Tem tecnologia de cinema que dá vontade de colocar na lista de desejos.\n\nO hoverboard de De Volta para o Futuro II e os hologramas de Star Wars abrem a conversa. Completamos a brincadeira com dois conceitos recorrentes da ficção: assistentes de nave e tradutores universais.\n\nAqui vale imaginar a experiência como aparece na ficção, sem prometer que exista desse jeito fora da tela. E vale perguntar: quem cuida da bateria e da privacidade? 😅\n\nQual dessas ideias você traria para sua rotina? 👇\n\n#EstratégiaNerd #FicçãoCientífica #CulturaGeek #StarWars #Tecnologia",
+    "hooks": [
+      "🛸 Qual tecnologia do cinema você levaria para casa?",
+      "Você escolheria um hoverboard ou um holograma?",
+      "4 ideias de ficção para repensar sua lista de desejos."
+    ],
+    "sources": [
+      {
+        "title": "Back to the Future — FAQ",
+        "url": "https://www.backtothefuture.com/movies/faq",
+        "note": "Hoverboard e ficção do filme."
+      },
+      {
+        "title": "Star Wars — hologramas",
+        "url": "https://www.starwars.com/news/6-ways-holograms-play-an-important-role-in-star-wars",
+        "note": "Uso de hologramas na franquia."
+      }
+    ],
+    "art": "One elegant futuristic palm-sized hologram projector displaying a floating blue luminous abstract planet, cinematic science fiction still life, tiny hovering board in distant background, dark navy laboratory, cyan highlights, no text no interface labels."
+  }
+]

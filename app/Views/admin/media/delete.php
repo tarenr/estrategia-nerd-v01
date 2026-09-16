@@ -4,6 +4,10 @@ declare(strict_types=1);
 $item = $item ?? [];
 $path = (string) ($item['relative_path'] ?? '');
 $url = (string) ($item['public_url'] ?? '#');
+$requiresProductionConfirmation = (bool) ($requires_production_confirmation ?? false);
+$isRemoteTarget = (bool) ($is_remote_target ?? false);
+$targetEnvironmentLabel = (string) ($target_environment_label ?? '');
+$errors = is_array($errors ?? null) ? $errors : [];
 ?>
 
 <div class="max-w-4xl mx-auto px-4 py-6">
@@ -13,6 +17,9 @@ $url = (string) ($item['public_url'] ?? '#');
       <div class="admin-page-subtitle">Confirme a exclusao do arquivo selecionado. Esta acao nao pode ser desfeita.</div>
     </div>
     <div class="admin-page-actions">
+      <?php if ($isRemoteTarget): ?>
+        <div class="admin-chip border-cyan-500/30 text-cyan-200">Ambiente alvo: <?= htmlspecialchars($targetEnvironmentLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+      <?php endif; ?>
       <a href="<?= url('/admin/midia') ?>" class="admin-btn admin-btn-secondary">Voltar para a biblioteca</a>
     </div>
   </div>
@@ -31,9 +38,22 @@ $url = (string) ($item['public_url'] ?? '#');
         </ul>
       </div>
 
+      <?php if ($requiresProductionConfirmation): ?>
+        <div class="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-4 space-y-2">
+          <div class="text-sm font-bold text-amber-200">Confirmacao obrigatoria para producao</div>
+          <div class="text-sm text-slate-300">Digite <strong>PRODUCAO</strong> para confirmar esta exclusao no ambiente de producao.</div>
+          <?php if (!empty($errors['production_confirmation'])): ?>
+            <div class="text-xs text-rose-300"><?= htmlspecialchars((string) $errors['production_confirmation'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+          <?php endif; ?>
+        </div>
+      <?php endif; ?>
+
       <form method="POST" action="<?= url('/admin/excluir-midia?path=' . rawurlencode($path)) ?>" class="mt-6">
         <?= \App\Support\Csrf::field() ?>
         <input type="hidden" name="path" value="<?= htmlspecialchars($path, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+        <?php if ($requiresProductionConfirmation): ?>
+          <input type="text" name="production_confirmation" value="" class="nerd-input px-4 py-3 rounded-xl mb-3" placeholder="Digite PRODUCAO" autocomplete="off">
+        <?php endif; ?>
         <button type="submit" class="admin-btn admin-btn-danger">Excluir permanentemente</button>
       </form>
     </section>
