@@ -29,7 +29,10 @@ return [
     ['GET',  '/termos-de-uso', [\App\Controllers\Site\PagesController::class, 'terms'], null],
     ['POST', '/newsletter', [\App\Controllers\Site\NewsletterController::class, 'subscribe'], null],
 
-    ['GET',  '/login',  [\App\Controllers\Site\AuthController::class, 'showLogin'], null],
+    // Somente leitura, protegida por token compartilhado (nao usa sessao/login) - ver NerdOpsStatsController.
+    ['GET',  '/api/nerdops/content-stats', [\App\Controllers\Api\NerdOpsStatsController::class, 'contentStats'], null],
+
+    ['GET',  '/login', [\App\Controllers\Site\AuthController::class, 'showLogin'], null],
     ['POST', '/login',  [\App\Controllers\Site\AuthController::class, 'login'], null],
     ['POST', '/logout', [\App\Controllers\Site\AuthController::class, 'logout'], null],
 

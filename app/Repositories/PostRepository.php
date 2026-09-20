@@ -553,6 +553,27 @@ final class PostRepository
         return $row ? ['titulo' => (string) ($row['titulo'] ?? ''), 'slug' => (string) ($row['slug'] ?? ''), 'views' => (int) ($row['views'] ?? 0)] : null;
     }
 
+    /**
+     * @return array<int, array{titulo:string, slug:string, views:int}>
+     */
+    public function topPostsByViews(int $limit = 5): array
+    {
+        $limit = max(1, min(20, $limit));
+        $stmt = $this->pdo->prepare("SELECT titulo, slug, views FROM posts ORDER BY views DESC, id DESC LIMIT :limit");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        return array_map(static function (array $r): array {
+            return [
+                'titulo' => (string) ($r['titulo'] ?? ''),
+                'slug' => (string) ($r['slug'] ?? ''),
+                'views' => (int) ($r['views'] ?? 0),
+            ];
+        }, $rows);
+    }
+
     public function topByLikes(): ?array
     {
         $stmt = $this->pdo->query("SELECT titulo, slug, curtidas FROM posts ORDER BY curtidas DESC, id DESC LIMIT 1");
