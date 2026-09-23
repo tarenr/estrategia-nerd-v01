@@ -142,14 +142,16 @@ $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
 
         <nav class="flex items-center gap-4 text-sm">
           <a href="<?= url('/') ?>" class="hover:text-cyan-300 transition">Home</a>
-          <a href="<?= url('/admin') ?>" class="hover:text-cyan-300 transition">Admin</a>
-          <?php if (!Auth::check()): ?>
-            <a href="<?= url('/login') ?>" class="hover:text-cyan-300 transition">Login</a>
-          <?php else: ?>
-            <form method="POST" action="<?= url('/logout') ?>" class="inline">
-              <?= Csrf::field() ?>
-              <button type="submit" class="hover:text-cyan-300 transition">Sair</button>
-            </form>
+          <?php if (\App\Support\EnvironmentManager::isLocal()): ?>
+            <a href="<?= url('/admin') ?>" class="hover:text-cyan-300 transition">Admin</a>
+            <?php if (!Auth::check()): ?>
+              <a href="<?= url('/login') ?>" class="hover:text-cyan-300 transition">Login</a>
+            <?php else: ?>
+              <form method="POST" action="<?= url('/logout') ?>" class="inline">
+                <?= Csrf::field() ?>
+                <button type="submit" class="hover:text-cyan-300 transition">Sair</button>
+              </form>
+            <?php endif; ?>
           <?php endif; ?>
         </nav>
       </div>
