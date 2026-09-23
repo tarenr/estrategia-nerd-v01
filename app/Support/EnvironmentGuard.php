@@ -47,37 +47,80 @@ final class EnvironmentGuard
 
     private static function isLocalOrigin(): bool
     {
+        // 1. Acesso local direto no PC (localhost / 127.0.0.1 sem cabeçalhos Cloudflare)
+        if (self::isDirectLocalAccess()) {
+            return true;
+        }
+
+        // 2. Acesso remoto (celular / externo) com JWT do Cloudflare Access válido
+        if (CloudflareAccessValidator::validate()) {
+            return true;
+        }
+
+        // 3. Acesso via LAN privada (apenas se opt-in explícito via ALLOW_LAN_ACCESS=true)
+        if (self::isLanAccessAllowed()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static function isDirectLocalAccess(): bool
+    {
+        if (self::hasCloudflareHeaders()) {
+            return false;
+        }
+
         $hostRaw = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
         $host = strtolower(trim((string) preg_replace('/:\d+$/', '', $hostRaw)));
         $host = trim($host, '[]');
 
-        if (in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
-            return true;
+        if (!in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
+            return false;
         }
 
-        // Mantido por compatibilidade com o acesso atual (ex.: outro dispositivo
-        // na mesma rede local acessando o XAMPP). Nao e loopback puro — um IP
-        // privado pode ser outra maquina da LAN, nao necessariamente "local".
         $remoteAddr = trim((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
-        return $remoteAddr !== '' && self::isPrivateOrLoopbackIp($remoteAddr);
+        return $remoteAddr === '127.0.0.1' || $remoteAddr === '::1';
     }
 
-    private static function isPrivateOrLoopbackIp(string $ip): bool
+    private static function hasCloudflareHeaders(): bool
+    {
+        return !empty($_SERVER['HTTP_CF_RAY'])
+            || !empty($_SERVER['HTTP_CF_CONNECTING_IP'])
+            || !empty($_SERVER['HTTP_CF_VISITOR'])
+            || !empty($_SERVER['HTTP_CF_ACCESS_JWT_ASSERTION']);
+    }
+
+    private static function isLanAccessAllowed(): bool
+    {
+        $allowLan = filter_var($_ENV['ALLOW_LAN_ACCESS'] ?? getenv('ALLOW_LAN_ACCESS') ?? false, FILTER_VALIDATE_BOOLEAN);
+        if (!$allowLan) {
+            return false;
+        }
+
+        if (self::hasCloudflareHeaders()) {
+            return false;
+        }
+
+        $remoteAddr = trim((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+        return $remoteAddr !== '' && self::isPrivateIp($remoteAddr);
+    }
+
+    private static function isPrivateIp(string $ip): bool
     {
         $ip = strtolower(trim($ip));
-        if ($ip === '' || $ip === '::1') {
-            return $ip === '::1';
+        if ($ip === '' || $ip === '127.0.0.1' || $ip === '::1') {
+            return false;
         }
 
         if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            return preg_match('/^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/', $ip) === 1;
+            return preg_match('/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/', $ip) === 1;
         }
 
         if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
             return str_starts_with($ip, 'fc')
                 || str_starts_with($ip, 'fd')
-                || str_starts_with($ip, 'fe80:')
-                || $ip === '::1';
+                || str_starts_with($ip, 'fe80:');
         }
 
         return false;
