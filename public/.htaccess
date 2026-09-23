@@ -9,6 +9,10 @@ DirectoryIndex index.php
 Options -Indexes
 RewriteEngine On
 
+# Bloqueio de rotas administrativas e login exclusivamente em producao e stage
+RewriteCond %{HTTP_HOST} (^|\.)estrategianerd\.com\.br$ [NC]
+RewriteRule ^(admin|login|logout)(/|$) - [R=404,L]
+
 # Se o arquivo/pasta existir, nao reescreve
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d

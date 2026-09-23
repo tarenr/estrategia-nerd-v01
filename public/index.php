@@ -52,7 +52,7 @@ if (is_string($appBasePath) && $appBasePath !== '' && $appBasePath !== '/') {
 $path = $path === '' ? '/' : $path;
 $path = rtrim($path, '/') ?: '/';
 
-if (preg_match('#^/(local|dev)(/|$)#', $path) === 1) {
+if (preg_match('#^/(local|dev|admin|login|logout)(/|$)#', $path) === 1) {
     EnvironmentGuard::requireLocal();
 }
 

@@ -15,10 +15,20 @@ final class EnvironmentGuard
      */
     public static function requireLocal(): void
     {
+        $currentEnv = EnvironmentManager::current();
+        if (in_array($currentEnv, ['production', 'stage'], true)) {
+            self::denyNotFound();
+        }
+
         if (self::isAllowedLocalContext()) {
             return;
         }
 
+        self::denyNotFound();
+    }
+
+    private static function denyNotFound(): void
+    {
         if (PHP_SAPI === 'cli' || PHP_SAPI === 'phpdbg') {
             fwrite(STDERR, 'Esta operacao so pode ser executada no ambiente local.' . PHP_EOL);
             exit(1);
