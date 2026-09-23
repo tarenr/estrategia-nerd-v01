@@ -63,6 +63,9 @@ $brandFavicon = (string) portal_config('favicon_url', '');
 $brandLogo = $brandLogo !== '' ? (preg_match('~^https?://~i', $brandLogo) ? $brandLogo : url('/' . ltrim($brandLogo, '/'))) : url('/assets/brand/logo-main.png');
 $brandSymbol = $brandSymbol !== '' ? (preg_match('~^https?://~i', $brandSymbol) ? $brandSymbol : url('/' . ltrim($brandSymbol, '/'))) : url('/assets/brand/logo-symbol.png');
 $brandFavicon = $brandFavicon !== '' ? (preg_match('~^https?://~i', $brandFavicon) ? $brandFavicon : url('/' . ltrim($brandFavicon, '/'))) : url('/assets/brand/favicon.ico');
+if ($brandFavicon === url('/assets/brand/favicon.ico')) {
+    $brandFavicon .= '?v=befdfc4d';
+}
 $metaImage = trim((string) ($meta_image ?? ''));
 $metaImage = $metaImage !== '' ? $metaImage : $brandLogo;
 $metaUrl = $canonicalUrl !== '' ? $canonicalUrl : url($rawPath === '/' ? '/' : $rawPath);

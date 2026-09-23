@@ -125,6 +125,9 @@ $adminFavicon = (string) portal_config('favicon_url', '');
 $adminFavicon = $adminFavicon !== ''
     ? (preg_match('~^https?://~i', $adminFavicon) ? $adminFavicon : url('/' . ltrim($adminFavicon, '/')))
     : url('/assets/brand/favicon.ico');
+if ($adminFavicon === url('/assets/brand/favicon.ico')) {
+    $adminFavicon .= '?v=befdfc4d';
+}
 ?>
 <!doctype html>
 <html lang="pt-br">
