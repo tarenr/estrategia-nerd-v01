@@ -2406,7 +2406,7 @@ final class ContentSyncManager
      */
     private function collectCodePackageFiles(?string $compareProfile = 'production'): array
     {
-        $baseCommit = $this->resolveBaseCommit();
+        $baseCommit = $this->resolveBaseCommit($compareProfile);
         $gitCandidates = $this->collectGitCandidatePaths($baseCommit);
 
         $eligibleFiles = [];
@@ -2469,11 +2469,26 @@ final class ContentSyncManager
         ];
     }
 
-    private function resolveBaseCommit(): ?string
+    private function resolveBaseCommit(?string $targetProfile = null): ?string
     {
         $packages = $this->allCodePackages();
 
-        // 1. Procurar o pacote mais recente que tenha sido aplicado com sucesso
+        // 1. Procurar o pacote mais recente aplicado ao perfil alvo
+        if ($targetProfile !== null && $targetProfile !== '') {
+            foreach ($packages as $pkg) {
+                if (!empty($pkg['applied_targets']) && !empty($pkg['commit'])) {
+                    $targets = array_column((array) $pkg['applied_targets'], 'target_profile');
+                    if (in_array($targetProfile, $targets, true)) {
+                        $commit = trim((string) $pkg['commit']);
+                        if ($this->isGitCommitValid($commit)) {
+                            return $commit;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Procurar o pacote mais recente que tenha sido aplicado com sucesso a qualquer ambiente
         foreach ($packages as $pkg) {
             if (!empty($pkg['applied_targets']) && !empty($pkg['commit'])) {
                 $commit = trim((string) $pkg['commit']);
@@ -2483,7 +2498,7 @@ final class ContentSyncManager
             }
         }
 
-        // 2. Se nenhum pacote tiver targets aplicados, usar o commit do pacote mais recente
+        // 3. Se nenhum pacote tiver targets aplicados, usar o commit do pacote mais recente
         foreach ($packages as $pkg) {
             if (!empty($pkg['commit'])) {
                 $commit = trim((string) $pkg['commit']);
