@@ -119,6 +119,17 @@ try {
             echo 'Destino: ' . ($result['target_profile'] ?? '-') . PHP_EOL;
             break;
 
+        case 'apply-code':
+            $packageId = $argv[2] ?? 'latest';
+            $targetProfile = (string) ($argv[3] ?? 'stage');
+            $force = in_array('--force', $argv, true);
+            $result = $manager->applyCode(is_string($packageId) ? $packageId : 'latest', $targetProfile, $force);
+            echo 'Deploy tecnico concluido.' . PHP_EOL;
+            echo 'ID: ' . ($result['package_id'] ?? '-') . PHP_EOL;
+            echo 'Destino: ' . ($result['target_profile'] ?? '-') . PHP_EOL;
+            echo 'Arquivos aplicados: ' . (int) ($result['result']['files_applied'] ?? 0) . PHP_EOL;
+            break;
+
         default:
             echo 'Uso:' . PHP_EOL;
             echo '  php scripts/content-sync.php export [local|production]' . PHP_EOL;
@@ -127,6 +138,7 @@ try {
             echo '  php scripts/content-sync.php parity' . PHP_EOL;
             echo '  php scripts/content-sync.php verify [package_id|latest]' . PHP_EOL;
             echo '  php scripts/content-sync.php apply [package_id|latest] [local|production] --force' . PHP_EOL;
+            echo '  php scripts/content-sync.php apply-code [package_id|latest] [stage|production] --force' . PHP_EOL;
             exit(0);
     }
 } catch (Throwable $exception) {
