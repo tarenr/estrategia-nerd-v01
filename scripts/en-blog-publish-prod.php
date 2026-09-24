@@ -16,6 +16,9 @@
 
 declare(strict_types=1);
 
+if (PHP_SAPI !== 'cli') { exit(1); }
+
+
 $sessionPath = dirname(__DIR__) . '/storage/sessions';
 if (!is_dir($sessionPath)) {
     mkdir($sessionPath, 0777, true);

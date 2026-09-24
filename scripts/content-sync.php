@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+if (PHP_SAPI !== 'cli') { exit(1); }
+
+
 require_once __DIR__ . '/backup/EnvLoader.php';
 require_once __DIR__ . '/content-sync/ContentSyncManager.php';
 require_once dirname(__DIR__) . '/app/Support/Helpers.php';

@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+if (PHP_SAPI !== 'cli') { exit(1); }
+
+
 $roots = [
     __DIR__ . '/../app/Views',
     __DIR__ . '/../app/Services',
