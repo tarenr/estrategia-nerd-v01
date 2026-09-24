@@ -118,7 +118,7 @@ $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
 
   <?php if ($isLogin): ?>
     <link rel="stylesheet" href="<?= url('/assets/css/login.css') ?>">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="<?= url('/assets/vendor/fontawesome/css/all.min.css') ?>">
   <?php else: ?>
     <link rel="stylesheet" href="<?= url('/assets/css/site.css?v=' . $siteCssVersion) ?>">
   <?php endif; ?>

@@ -144,11 +144,11 @@ if ($adminFavicon === url('/assets/brand/favicon.ico')) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="<?= url('/assets/vendor/fontawesome/css/all.min.css') ?>">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <?php if ($usesAdminCharts): ?>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
+    <script src="<?= url('/assets/vendor/chartjs/chart.umd.min.js') ?>" defer></script>
     <script src="<?= url('/assets/js/admin-module-charts.js?v=' . $adminModuleChartsJsVersion) ?>" defer></script>
   <?php endif; ?>
   <script>

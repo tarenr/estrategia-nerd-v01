@@ -1,0 +1,38 @@
+name: Lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  php-lint:
+    name: PHP syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: php -l em todos os arquivos PHP
+        run: |
+          set -e
+          find . -type d \( -name node_modules -o -name .git -o -name vendor \) -prune -o -name "*.php" -print0 \
+            | xargs -0 -n1 -P4 php -l
+
+  js-check:
+    name: JS syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: node --check em todos os arquivos JS
+        run: |
+          set -e
+          find . -type d \( -name node_modules -o -name .git \) -prune -o -name "*.js" -print0 \
+            | xargs -0 -n1 node --check
