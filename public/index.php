@@ -4,7 +4,7 @@
  * @file        public/index.php
  * @project     Estrategia Nerd
  * @author      Taren Felipe Ribeiro
- * @version     1.0.5
+ * @version     1.0.6
  * @purpose     Front controller
  * @description Resolve rotas via config/routes.php e despacha para controllers.
  * @usage       Local usa /estrategia-nerd/public; producao pode ser raiz.
@@ -52,7 +52,7 @@ if (is_string($appBasePath) && $appBasePath !== '' && $appBasePath !== '/') {
 $path = $path === '' ? '/' : $path;
 $path = rtrim($path, '/') ?: '/';
 
-if (preg_match('#^/(local|dev|admin|login|logout)(/|$)#', $path) === 1) {
+if (preg_match('#^/(local|dev|admin|login|logout|home-preview|api/nerdops)(/|$)#', $path) === 1) {
     EnvironmentGuard::requireLocal();
 }
 
