@@ -220,7 +220,7 @@ final class ContentSyncManager
         ];
     }
 
-    public function exportCode(?string $notes = null, ?string $progressId = null): array
+    public function exportCode(?string $notes = null, ?string $progressId = null, ?string $compareProfile = 'stage'): array
     {
         $this->allowLongRunningProcess();
         $root = $this->codePackageRoot();
@@ -245,11 +245,14 @@ final class ContentSyncManager
         $manifest = [
             'package_id' => $packageId,
             'commit' => $this->currentHeadCommit(),
+            'base_commit' => null,
+            'compare_remote' => null,
             'created_at' => date('c'),
             'files_count' => 0,
             'notes' => trim((string) $notes),
             'files' => [],
             'ignored_files' => [],
+            'identical_remote_files' => [],
             'applied_targets' => [],
             'zip_path' => '',
             'manifest_path' => $packageDir . DIRECTORY_SEPARATOR . 'manifest.json',
@@ -257,12 +260,15 @@ final class ContentSyncManager
 
         try {
             $this->updateProgress($progressId, 'Selecionando arquivos', 'Separando apenas os arquivos tecnicos elegiveis para o pacote atual.', 18);
-            $selection = $this->collectCodePackageFiles();
+            $selection = $this->collectCodePackageFiles($compareProfile);
             $files = (array) ($selection['files'] ?? []);
             $ignored = (array) ($selection['ignored'] ?? []);
+            $manifest['base_commit'] = $selection['base_commit'] ?? null;
+            $manifest['compare_remote'] = $selection['compare_remote'] ?? null;
+            $manifest['identical_remote_files'] = array_values((array) ($selection['identical_remote_files'] ?? []));
 
             if ($files === []) {
-                throw new RuntimeException('Nenhum arquivo tecnico elegivel foi encontrado nas alteracoes atuais.');
+                throw new RuntimeException('Nenhum arquivo tecnico elegivel foi encontrado nas alteracoes atuais (ou todos ja estao sincronizados com o remoto).');
             }
 
             $this->updateProgress($progressId, 'Copiando arquivos', sprintf('Copiando %d arquivos para a estrutura do pacote tecnico.', count($files)), 44);
@@ -2360,7 +2366,7 @@ final class ContentSyncManager
         $items = [];
         foreach ($zipPaths as $zipPath) {
             $basename = basename($zipPath, '.zip');
-            $packageDir = $root . DIRECTORY_SEPARATOR . $basename;
+            $packageDir = dirname($zipPath) . DIRECTORY_SEPARATOR . $basename;
             $manifestPath = $packageDir . DIRECTORY_SEPARATOR . 'manifest.json';
             $manifest = $this->readJsonFile($manifestPath) ?? $this->readCodeManifestFromZip($zipPath) ?? [];
             $filesCount = (int) ($manifest['files_count'] ?? 0);
@@ -2390,33 +2396,28 @@ final class ContentSyncManager
     }
 
     /**
-     * @return array{files: array<int, string>, ignored: array<int, string>}
+     * @return array{
+     *     files: array<int, string>,
+     *     ignored: array<int, string>,
+     *     base_commit: ?string,
+     *     compare_remote: ?string,
+     *     identical_remote_files: array<int, string>
+     * }
      */
-    private function collectCodePackageFiles(): array
+    private function collectCodePackageFiles(?string $compareProfile = 'stage'): array
     {
-        $output = [];
-        $exitCode = 0;
-        $command = sprintf(
-            'git -C %s status --short --untracked-files=all 2>&1',
-            escapeshellarg($this->projectRoot())
-        );
+        $baseCommit = $this->resolveBaseCommit();
+        $gitCandidates = $this->collectGitCandidatePaths($baseCommit);
 
-        exec($command, $output, $exitCode);
-        if ($exitCode !== 0) {
-            throw new RuntimeException('Nao foi possivel ler o estado atual do git para montar o pacote tecnico.');
-        }
-
-        $files = [];
+        $eligibleFiles = [];
         $ignored = [];
 
-        foreach ($output as $line) {
-            $line = rtrim((string) $line);
-            if ($line === '') {
-                continue;
-            }
+        foreach ($gitCandidates['deleted'] as $deletedPath) {
+            $ignored[] = str_replace('\\', '/', $deletedPath) . ' [delete]';
+        }
 
-            $status = substr($line, 0, 2);
-            $rawPath = trim(substr($line, 3));
+        foreach ($gitCandidates['candidates'] as $rawPath) {
+            $rawPath = trim((string) $rawPath);
             if ($rawPath === '') {
                 continue;
             }
@@ -2426,14 +2427,8 @@ final class ContentSyncManager
                 $rawPath = (string) end($parts);
             }
 
-            $relativePath = str_replace('/', DIRECTORY_SEPARATOR, $rawPath);
-            $relativePath = ltrim($relativePath, '\\/');
+            $relativePath = str_replace('\\', '/', ltrim($rawPath, '\\/'));
             if ($relativePath === '') {
-                continue;
-            }
-
-            if (str_contains($status, 'D')) {
-                $ignored[] = $relativePath . ' [delete]';
                 continue;
             }
 
@@ -2442,23 +2437,278 @@ final class ContentSyncManager
                 continue;
             }
 
-            $absolutePath = $this->projectRoot() . DIRECTORY_SEPARATOR . $relativePath;
+            $absolutePath = $this->projectRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
             if (!is_file($absolutePath)) {
                 $ignored[] = $relativePath . ' [missing]';
                 continue;
             }
 
-            $files[] = str_replace('\\', '/', $relativePath);
+            $eligibleFiles[] = $relativePath;
         }
 
-        $files = array_values(array_unique($files));
-        sort($files);
+        $eligibleFiles = array_values(array_unique($eligibleFiles));
+        sort($eligibleFiles);
+
+        $comparison = $this->filterFilesByRemoteComparison($eligibleFiles, $compareProfile);
+        $files = $comparison['files'];
+        $identical = $comparison['identical'];
+
+        foreach ($identical as $identicalFile) {
+            $ignored[] = $identicalFile . ' [identical-remote]';
+        }
+
         $ignored = array_values(array_unique($ignored));
         sort($ignored);
 
         return [
             'files' => $files,
             'ignored' => $ignored,
+            'base_commit' => $baseCommit,
+            'compare_remote' => $comparison['profile'],
+            'identical_remote_files' => $identical,
+        ];
+    }
+
+    private function resolveBaseCommit(): ?string
+    {
+        $packages = $this->allCodePackages();
+
+        // 1. Procurar o pacote mais recente que tenha sido aplicado com sucesso
+        foreach ($packages as $pkg) {
+            if (!empty($pkg['applied_targets']) && !empty($pkg['commit'])) {
+                $commit = trim((string) $pkg['commit']);
+                if ($this->isGitCommitValid($commit)) {
+                    return $commit;
+                }
+            }
+        }
+
+        // 2. Se nenhum pacote tiver targets aplicados, usar o commit do pacote mais recente
+        foreach ($packages as $pkg) {
+            if (!empty($pkg['commit'])) {
+                $commit = trim((string) $pkg['commit']);
+                if ($this->isGitCommitValid($commit)) {
+                    return $commit;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function isGitCommitValid(string $commit): bool
+    {
+        if ($commit === '' || !preg_match('/^[0-9a-f]{7,40}$/i', $commit)) {
+            return false;
+        }
+
+        $output = [];
+        $exitCode = 0;
+        $command = sprintf(
+            'git -C %s rev-parse --verify %s 2>&1',
+            escapeshellarg($this->projectRoot()),
+            escapeshellarg($commit . '^{commit}')
+        );
+
+        exec($command, $output, $exitCode);
+        return $exitCode === 0;
+    }
+
+    /**
+     * @return array{candidates: array<int, string>, deleted: array<int, string>}
+     */
+    private function collectGitCandidatePaths(?string $baseCommit): array
+    {
+        $candidates = [];
+        $deleted = [];
+
+        if ($baseCommit !== null && $this->isGitCommitValid($baseCommit)) {
+            $output = [];
+            $exitCode = 0;
+            $command = sprintf(
+                'git -C %s diff --name-status %s 2>&1',
+                escapeshellarg($this->projectRoot()),
+                escapeshellarg($baseCommit . '..HEAD')
+            );
+
+            exec($command, $output, $exitCode);
+            if ($exitCode === 0) {
+                foreach ($output as $line) {
+                    $line = trim((string) $line);
+                    if ($line === '') {
+                        continue;
+                    }
+
+                    $parts = preg_split('/\s+/', $line, 3);
+                    $status = (string) ($parts[0] ?? '');
+                    if (str_starts_with($status, 'D')) {
+                        $deleted[] = (string) ($parts[1] ?? '');
+                        continue;
+                    }
+
+                    if (str_starts_with($status, 'R')) {
+                        $candidates[] = (string) ($parts[2] ?? $parts[1] ?? '');
+                    } else {
+                        $candidates[] = (string) ($parts[1] ?? '');
+                    }
+                }
+            }
+        }
+
+        $statusOutput = [];
+        $statusExitCode = 0;
+        $statusCommand = sprintf(
+            'git -C %s status --short --untracked-files=all 2>&1',
+            escapeshellarg($this->projectRoot())
+        );
+
+        exec($statusCommand, $statusOutput, $statusExitCode);
+        if ($statusExitCode === 0) {
+            foreach ($statusOutput as $line) {
+                $line = rtrim((string) $line);
+                if ($line === '') {
+                    continue;
+                }
+
+                $status = substr($line, 0, 2);
+                $rawPath = trim(substr($line, 3));
+                if ($rawPath === '') {
+                    continue;
+                }
+
+                if (str_contains($rawPath, ' -> ')) {
+                    $parts = explode(' -> ', $rawPath);
+                    $rawPath = (string) end($parts);
+                }
+
+                if (str_contains($status, 'D')) {
+                    $deleted[] = $rawPath;
+                    continue;
+                }
+
+                $candidates[] = $rawPath;
+            }
+        }
+
+        return [
+            'candidates' => array_values(array_unique(array_filter($candidates))),
+            'deleted' => array_values(array_unique(array_filter($deleted))),
+        ];
+    }
+
+    /**
+     * @param array<int, string> $eligibleFiles
+     * @return array{files: array<int, string>, identical: array<int, string>, profile: ?string}
+     */
+    private function filterFilesByRemoteComparison(array $eligibleFiles, ?string $profileName): array
+    {
+        $resolvedProfile = strtolower(trim((string) ($profileName ?: 'stage')));
+        if (!$this->profileReady($resolvedProfile)) {
+            return [
+                'files' => $eligibleFiles,
+                'identical' => [],
+                'profile' => null,
+            ];
+        }
+
+        try {
+            $deployConfig = $this->codeDeployConfig($resolvedProfile);
+        } catch (\Throwable) {
+            return [
+                'files' => $eligibleFiles,
+                'identical' => [],
+                'profile' => null,
+            ];
+        }
+
+        $mode = (string) ($deployConfig['mode'] ?? 'ftp');
+        if ($mode !== 'ftp') {
+            return [
+                'files' => $eligibleFiles,
+                'identical' => [],
+                'profile' => null,
+            ];
+        }
+
+        $ftp = @ftp_connect((string) $deployConfig['host'], (int) ($deployConfig['port'] ?? 21), 15);
+        if ($ftp === false) {
+            return [
+                'files' => $eligibleFiles,
+                'identical' => [],
+                'profile' => null,
+            ];
+        }
+
+        $files = [];
+        $identical = [];
+
+        try {
+            if (!@ftp_login($ftp, (string) $deployConfig['username'], (string) $deployConfig['password'])) {
+                return [
+                    'files' => $eligibleFiles,
+                    'identical' => [],
+                    'profile' => null,
+                ];
+            }
+
+            ftp_pasv($ftp, (bool) ($deployConfig['passive'] ?? true));
+            $remoteRoot = $this->resolveCodeDeployRoot($ftp, (string) ($deployConfig['root'] ?? ''));
+
+            foreach ($eligibleFiles as $relativePath) {
+                $localPath = $this->projectRoot() . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+                if (!is_file($localPath)) {
+                    continue;
+                }
+
+                $remotePath = $this->resolveCodeDeployPath($remoteRoot, $relativePath);
+                $remoteSize = @ftp_size($ftp, $remotePath);
+
+                if ($remoteSize < 0) {
+                    $files[] = $relativePath;
+                    continue;
+                }
+
+                $localSize = (int) filesize($localPath);
+                if ($remoteSize !== $localSize) {
+                    $files[] = $relativePath;
+                    continue;
+                }
+
+                $tmpFile = tempnam(sys_get_temp_dir(), 'en-cmp-');
+                $downloaded = false;
+                if ($tmpFile !== false && is_string($tmpFile)) {
+                    $downloaded = @ftp_get($ftp, $tmpFile, $remotePath, FTP_BINARY);
+                }
+
+                if ($downloaded && is_file($tmpFile)) {
+                    $remoteHash = hash_file('sha256', $tmpFile);
+                    $localHash = hash_file('sha256', $localPath);
+                    @unlink($tmpFile);
+
+                    if ($remoteHash !== false && $localHash !== false && hash_equals($remoteHash, $localHash)) {
+                        $identical[] = $relativePath;
+                        continue;
+                    }
+                } elseif ($tmpFile !== false && is_string($tmpFile) && is_file($tmpFile)) {
+                    @unlink($tmpFile);
+                }
+
+                $files[] = $relativePath;
+            }
+        } catch (\Throwable) {
+            return [
+                'files' => $eligibleFiles,
+                'identical' => [],
+                'profile' => null,
+            ];
+        } finally {
+            @ftp_close($ftp);
+        }
+
+        return [
+            'files' => array_values(array_unique($files)),
+            'identical' => array_values(array_unique($identical)),
+            'profile' => $resolvedProfile,
         ];
     }
 
@@ -2469,11 +2719,43 @@ final class ContentSyncManager
             return false;
         }
 
-        if ($normalized === '.env' || $normalized === '.env.example') {
+        if ($normalized === '.env' || $normalized === '.env.example' || str_starts_with($normalized, '.env.')) {
             return false;
         }
 
         if (str_starts_with($normalized, 'storage/') || str_starts_with($normalized, 'public/uploads/')) {
+            return false;
+        }
+
+        // Exclusões explícitas de preview e ferramentas de desenvolvimento locais
+        $excludedPaths = [
+            'app/Controllers/Api/NerdOpsStatsController.php',
+            'app/Views/site/home-conversion-preview.php',
+            'app/Views/site/home-hero-preview.php',
+            'app/Views/site/local-docs.php',
+            'app/Views/site/local-docs-v2.php',
+            'app/Views/site/search-console-monitor.php',
+            'app/Views/site/partials/search-console-monitor-content.php',
+            'public/assets/css/home-preview.css',
+            'public/assets/css/site-hero-preview.css',
+            'public/assets/js/site-hero-preview.js',
+            'app/Views/components/admin/posts/form-preview.php',
+            'app/Views/components/site/home/about-preview.php',
+            'app/Views/components/site/home/blog-highlight-carousel-preview.php',
+            'app/Views/components/site/home/header-hero-preview.php',
+            'app/Views/components/site/home/posts-preview.php',
+        ];
+
+        if (in_array($normalized, $excludedPaths, true)) {
+            return false;
+        }
+
+        if (
+            str_contains($normalized, '-preview.')
+            || str_ends_with($normalized, '-preview.php')
+            || str_ends_with($normalized, '-preview.css')
+            || str_ends_with($normalized, '-preview.js')
+        ) {
             return false;
         }
 

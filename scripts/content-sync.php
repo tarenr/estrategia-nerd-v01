@@ -37,11 +37,15 @@ try {
 
         case 'export-code':
             $notes = trim((string) ($argv[2] ?? ''));
-            $manifest = $manager->exportCode($notes !== '' ? $notes : null);
+            $compareProfile = isset($argv[3]) ? trim((string) $argv[3]) : 'stage';
+            $manifest = $manager->exportCode($notes !== '' ? $notes : null, null, $compareProfile !== '' ? $compareProfile : 'stage');
             echo 'Pacote tecnico gerado com sucesso.' . PHP_EOL;
             echo 'ID: ' . ($manifest['package_id'] ?? '-') . PHP_EOL;
-            echo 'Commit base: ' . (($manifest['commit'] ?? '') ?: '-') . PHP_EOL;
-            echo 'Arquivos: ' . (int) ($manifest['files_count'] ?? 0) . PHP_EOL;
+            echo 'Commit HEAD: ' . (($manifest['commit'] ?? '') ?: '-') . PHP_EOL;
+            echo 'Commit base: ' . (($manifest['base_commit'] ?? '') ?: '-') . PHP_EOL;
+            echo 'Comparacao remota: ' . (($manifest['compare_remote'] ?? '') ?: 'nenhuma') . PHP_EOL;
+            echo 'Arquivos incluidos: ' . (int) ($manifest['files_count'] ?? 0) . PHP_EOL;
+            echo 'Arquivos identicos (remoto): ' . count((array) ($manifest['identical_remote_files'] ?? [])) . PHP_EOL;
             echo 'ZIP: ' . ($manifest['zip_path'] ?? '-') . PHP_EOL;
             break;
 
