@@ -37,8 +37,8 @@ try {
 
         case 'export-code':
             $notes = trim((string) ($argv[2] ?? ''));
-            $compareProfile = isset($argv[3]) ? trim((string) $argv[3]) : 'stage';
-            $manifest = $manager->exportCode($notes !== '' ? $notes : null, null, $compareProfile !== '' ? $compareProfile : 'stage');
+            $compareProfile = isset($argv[3]) ? trim((string) $argv[3]) : 'production';
+            $manifest = $manager->exportCode($notes !== '' ? $notes : null, null, $compareProfile !== '' ? $compareProfile : 'production');
             echo 'Pacote tecnico gerado com sucesso.' . PHP_EOL;
             echo 'ID: ' . ($manifest['package_id'] ?? '-') . PHP_EOL;
             echo 'Commit HEAD: ' . (($manifest['commit'] ?? '') ?: '-') . PHP_EOL;
@@ -122,7 +122,7 @@ try {
         default:
             echo 'Uso:' . PHP_EOL;
             echo '  php scripts/content-sync.php export [local|production]' . PHP_EOL;
-            echo '  php scripts/content-sync.php export-code [notas-opcionais]' . PHP_EOL;
+            echo '  php scripts/content-sync.php export-code [notas-opcionais] [production|stage|none]' . PHP_EOL;
             echo '  php scripts/content-sync.php status' . PHP_EOL;
             echo '  php scripts/content-sync.php parity' . PHP_EOL;
             echo '  php scripts/content-sync.php verify [package_id|latest]' . PHP_EOL;

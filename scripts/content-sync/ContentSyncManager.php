@@ -220,7 +220,7 @@ final class ContentSyncManager
         ];
     }
 
-    public function exportCode(?string $notes = null, ?string $progressId = null, ?string $compareProfile = 'stage'): array
+    public function exportCode(?string $notes = null, ?string $progressId = null, ?string $compareProfile = 'production'): array
     {
         $this->allowLongRunningProcess();
         $root = $this->codePackageRoot();
@@ -2404,7 +2404,7 @@ final class ContentSyncManager
      *     identical_remote_files: array<int, string>
      * }
      */
-    private function collectCodePackageFiles(?string $compareProfile = 'stage'): array
+    private function collectCodePackageFiles(?string $compareProfile = 'production'): array
     {
         $baseCommit = $this->resolveBaseCommit();
         $gitCandidates = $this->collectGitCandidatePaths($baseCommit);
@@ -2602,8 +2602,8 @@ final class ContentSyncManager
      */
     private function filterFilesByRemoteComparison(array $eligibleFiles, ?string $profileName): array
     {
-        $resolvedProfile = strtolower(trim((string) ($profileName ?: 'stage')));
-        if (!$this->profileReady($resolvedProfile)) {
+        $resolvedProfile = strtolower(trim((string) ($profileName ?: 'production')));
+        if ($resolvedProfile === 'none' || !$this->profileReady($resolvedProfile)) {
             return [
                 'files' => $eligibleFiles,
                 'identical' => [],
