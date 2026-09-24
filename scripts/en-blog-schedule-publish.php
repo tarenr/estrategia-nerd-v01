@@ -53,7 +53,10 @@ const SCHEDULE = [
 // Resolucao do ambiente e conexao com banco local do ambiente
 $currentEnv = EnvironmentManager::current();
 $isRemoteFlag = in_array('--remote-production', $argv, true);
-$targetEnv = ($currentEnv === 'local' && $isRemoteFlag) ? 'production' : $currentEnv;
+$isStageFlag = in_array('--stage', $argv, true);
+$targetEnv = ($currentEnv === 'local' && $isRemoteFlag)
+    ? 'production'
+    : (($currentEnv === 'local' && $isStageFlag) ? 'stage' : $currentEnv);
 
 try {
     $pdo = TargetEnvironmentDatabase::pdo($targetEnv);
