@@ -21,21 +21,20 @@ if (!in_array($cloudEnvironment, ['', 'local', 'stage', 'production'], true)) {
 if (!in_array($cloudStatus, ['', 'enviado', 'pendente'], true)) {
     $cloudStatus = '';
 }
-$backupTools = is_array($backup_tools ?? null) ? $backup_tools : [];
-$backupStatus = is_array($backupTools['backup_status'] ?? null) ? $backupTools['backup_status'] : [];
-$systemItems = is_array($backupStatus['items'] ?? null) ? $backupStatus['items'] : [];
-$backupCloud = is_array($backupTools['backup_cloud'] ?? null) ? $backupTools['backup_cloud'] : [];
-$cloudSpaceUsage = is_array($backupCloud['space_usage'] ?? null) ? $backupCloud['space_usage'] : [];
-$editorialCloud = is_array($editorial_cloud ?? null) ? $editorial_cloud : [];
-$editorialItems = is_array($editorialCloud['items'] ?? null) ? $editorialCloud['items'] : [];
+$gdriveCloud = is_array($editorial_cloud_gdrive ?? null) ? $editorial_cloud_gdrive : [];
+$gdriveItems = is_array($gdriveCloud['items'] ?? null) ? $gdriveCloud['items'] : [];
+$gdriveSpaceUsage = is_array($gdriveCloud['space_usage'] ?? null) ? $gdriveCloud['space_usage'] : [];
+$gdriveConnected = (bool) ($gdriveCloud['connected'] ?? false);
+$gdriveAutoEnabled = (bool) ($gdriveCloud['auto_upload_enabled'] ?? false);
+$gdrivePending = is_array($gdriveCloud['pending'] ?? null) ? $gdriveCloud['pending'] : [];
+// "Editorial" na pagina inteira (cards, tabela, historico) agora reflete o Google
+// Drive - o Dropbox nao cobre mais conteudo editorial, so backup sistemico.
+$editorialCloud = $gdriveCloud;
+$editorialItems = $gdriveItems;
 $cloudFlash = is_array($cloud_flash ?? null) ? $cloud_flash : null;
 
-$spacePercent = max(0, min(100, (float) ($cloudSpaceUsage['percent_used'] ?? 0)));
-$systemAutoEnabled = (bool) ($backupCloud['auto_upload_enabled'] ?? false);
 $editorialAutoEnabled = (bool) ($editorialCloud['auto_upload_enabled'] ?? false);
-$systemUploaded = array_values(array_filter($systemItems, static fn (array $item): bool => ($item['cloud_uploaded'] ?? false) === true));
 $editorialUploaded = array_values(array_filter($editorialItems, static fn (array $item): bool => ($item['cloud_uploaded'] ?? false) === true));
-$systemLastUpload = is_array($backupCloud['last_upload'] ?? null) ? $backupCloud['last_upload'] : null;
 $editorialLastUpload = is_array($editorialCloud['last_upload'] ?? null) ? $editorialCloud['last_upload'] : null;
 
 $formatDate = static function (?string $value): string {
@@ -91,27 +90,6 @@ $latestForProfile = static function (array $items, string $profile, array $field
     return $latest;
 };
 
-$latestSync = null;
-$latestSyncType = '';
-if ($systemLastUpload !== null) {
-    $latestSync = [
-        'id' => (string) ($systemLastUpload['backup_id'] ?? ''),
-        'uploaded_at' => (string) ($systemLastUpload['uploaded_at'] ?? $systemLastUpload['cloud_uploaded_at'] ?? ''),
-    ];
-    $latestSyncType = 'Sistema';
-}
-if ($editorialLastUpload !== null) {
-    $editorialTimestamp = $lastTimestamp($editorialLastUpload, ['uploaded_at', 'cloud_uploaded_at']);
-    $systemTimestamp = $lastTimestamp($latestSync, ['uploaded_at', 'cloud_uploaded_at']);
-    if ($latestSync === null || $editorialTimestamp >= $systemTimestamp) {
-        $latestSync = [
-            'id' => (string) ($editorialLastUpload['package_id'] ?? ''),
-            'uploaded_at' => (string) ($editorialLastUpload['uploaded_at'] ?? $editorialLastUpload['cloud_uploaded_at'] ?? ''),
-        ];
-        $latestSyncType = 'Editorial';
-    }
-}
-
 $environments = [
     'local' => 'Local',
     'stage' => 'Stage',
@@ -124,13 +102,10 @@ $profileLabels = [
 ];
 
 $alerts = [];
-if (!($backupCloud['connected'] ?? false)) {
-    $alerts[] = ['tone' => 'neutral', 'label' => 'Dropbox pendente', 'text' => 'Conta ainda n&atilde;o conectada.'];
+if (!$gdriveConnected) {
+    $alerts[] = ['tone' => 'neutral', 'label' => 'Google Drive pendente', 'text' => 'Conta ainda n&atilde;o conectada.'];
 }
-if (($cloudSpaceUsage['available'] ?? false) && $spacePercent >= 80) {
-    $alerts[] = ['tone' => 'warning', 'label' => 'Espa&ccedil;o alto', 'text' => 'Uso do Dropbox acima de 80%.'];
-}
-if ($systemLastUpload === null && $editorialLastUpload === null) {
+if ($editorialLastUpload === null) {
     $alerts[] = ['tone' => 'neutral', 'label' => 'Leitura pendente', 'text' => 'Nenhuma sincroniza&ccedil;&atilde;o registrada no estado local.'];
 }
 if ($alerts === []) {
@@ -138,32 +113,6 @@ if ($alerts === []) {
 }
 
 $historyRows = [];
-foreach ($systemItems as $item) {
-    if (!is_array($item)) {
-        continue;
-    }
-
-    $profile = strtolower((string) ($item['profile'] ?? ''));
-    $timestamp = $lastTimestamp($item, ['cloud_uploaded_at', 'created_at', 'generated_at']);
-    $historyRows[] = [
-        'timestamp' => $timestamp,
-        'date' => $formatDate((string) ($item['cloud_uploaded_at'] ?? $item['created_at'] ?? $item['generated_at'] ?? '')),
-        'created_at' => (string) ($item['created_at'] ?? $item['generated_at'] ?? ''),
-        'type' => 'Sistema',
-        'type_key' => 'system',
-        'profile_key' => $profile,
-        'profile' => $profileLabels[$profile] ?? ucfirst($profile ?: 'Local'),
-        'id' => (string) ($item['backup_id'] ?? '-'),
-        'content' => 'Banco, uploads e sistema',
-        'size_bytes' => (int) ($item['cloud_uploaded_size_bytes'] ?? $item['total_size_bytes'] ?? 0),
-        'size' => (string) ($item['cloud_uploaded_size'] ?? $item['total_size'] ?? '-'),
-        'status' => (bool) ($item['cloud_uploaded'] ?? false) ? 'Enviado' : 'Pendente',
-        'tone' => (bool) ($item['cloud_uploaded'] ?? false) ? 'success' : 'neutral',
-        'destination' => (string) ($item['cloud_destination'] ?? '-'),
-        'files' => (string) ($item['cloud_uploaded_files_count'] ?? '-'),
-    ];
-}
-
 foreach ($editorialItems as $item) {
     if (!is_array($item)) {
         continue;
@@ -431,124 +380,71 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
   </div>
 
   <div class="space-y-6<?= $initialCloudTab === 'overview' ? '' : ' hidden' ?>" data-cloud-tab-panel="overview">
+
   <section class="rounded-[1.6rem] border border-slate-800 bg-slate-900/85 p-5 shadow-[0_0_34px_rgba(2,6,23,0.18)]">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 class="font-orbitron text-sm font-black uppercase tracking-[0.16em] text-cyan-300/75">Dropbox</h2>
+      <h2 class="font-orbitron text-sm font-black uppercase tracking-[0.16em] text-cyan-300/75">Google Drive (Conteudo)</h2>
       <?php View::component('admin/v2/status-badge', [
-          'label' => ($backupCloud['connected'] ?? false) ? 'Conectado' : 'Pendente',
-          'tone' => ($backupCloud['connected'] ?? false) ? 'success' : 'neutral',
+          'label' => $gdriveConnected ? 'Conectado' : 'Desconectado',
+          'tone' => $gdriveConnected ? 'success' : 'neutral',
       ]); ?>
     </div>
+    <p class="mt-2 text-xs font-semibold leading-5 text-slate-400">So conteudo editorial (midia/uploads) - banco e sistema ficam com a rotina local do The Forge.</p>
 
-    <div class="mt-5 grid gap-4 xl:grid-cols-4">
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Conta</div>
-        <div class="mt-2 text-lg font-black text-white"><?= htmlspecialchars((string) ($backupCloud['account_name'] ?? 'Aguardando conexao'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-        <div class="mt-1 text-xs text-slate-400"><?= htmlspecialchars((string) ($backupCloud['account_email'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-      </div>
-
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Automacao</div>
-        <div class="mt-2 text-lg font-black text-white"><?= $systemAutoEnabled || $editorialAutoEnabled ? 'Ativa' : 'Manual' ?></div>
-        <div class="mt-1 text-xs text-slate-400">Sistema: <?= $systemAutoEnabled ? 'ativa' : 'manual' ?> | Editorial: <?= $editorialAutoEnabled ? 'ativa' : 'manual' ?></div>
-      </div>
-
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Ultima Sync</div>
-        <div class="mt-2 text-lg font-black text-white"><?= $latestSync !== null ? htmlspecialchars($latestSyncType, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : 'Leitura pendente' ?></div>
-        <div class="mt-1 text-xs text-slate-400"><?= htmlspecialchars($formatDate($latestSync['uploaded_at'] ?? null), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-      </div>
-
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Armazenamento</div>
-        <div class="mt-2 text-lg font-black text-white"><?= count($systemUploaded) + count($editorialUploaded) ?> enviados</div>
-        <div class="mt-1 text-xs text-slate-400">Sistema: <?= count($systemUploaded) ?> | Editorial: <?= count($editorialUploaded) ?></div>
-      </div>
-    </div>
-
-    <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Espa&ccedil;o Dropbox</div>
-          <div class="mt-3 text-2xl font-black text-white"><?= htmlspecialchars((string) ($cloudSpaceUsage['free'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> livres</div>
-        </div>
-        <span class="inline-flex items-center rounded-full border border-cyan-400/35 bg-cyan-500/10 px-3 py-1 text-[10px] font-black text-cyan-100">
-          <?= htmlspecialchars((string) round($spacePercent), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>% usando
-        </span>
-      </div>
-      <div class="mt-5 h-2 overflow-hidden rounded-full bg-slate-800">
-        <div class="h-full rounded-full bg-cyan-400" style="width: <?= htmlspecialchars((string) $spacePercent, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>%"></div>
-      </div>
-      <div class="mt-4 grid gap-3 text-xs md:grid-cols-3">
-        <div>
-          <div class="text-slate-500">Usado</div>
-          <div class="mt-1 font-black text-white"><?= htmlspecialchars((string) ($cloudSpaceUsage['used'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-        </div>
-        <div>
-          <div class="text-slate-500">Total</div>
-          <div class="mt-1 font-black text-white"><?= htmlspecialchars((string) ($cloudSpaceUsage['allocated'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-        </div>
-        <div>
-          <div class="text-slate-500">Livre</div>
-          <div class="mt-1 font-black text-white"><?= htmlspecialchars((string) ($cloudSpaceUsage['free'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-4 grid gap-3 md:grid-cols-2">
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Raiz Sistemica</div>
-        <div class="mt-2 break-all text-sm font-semibold text-slate-200"><?= htmlspecialchars((string) ($backupCloud['remote_root'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-      </div>
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Raiz Editorial</div>
-        <div class="mt-2 break-all text-sm font-semibold text-slate-200"><?= htmlspecialchars((string) ($editorialCloud['remote_root'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-      </div>
-    </div>
-
-    <?php if ($backupCloud['connected'] ?? false): ?>
+    <?php if ($gdriveConnected): ?>
       <div class="mt-4 grid gap-3 md:grid-cols-3">
-        <form method="POST" action="<?= htmlspecialchars(url('/local/backup'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Atualizando automacao sistemica" data-progress-message="Salvando a politica de envio automatico dos backups sistemicos." data-progress-stage="Automacao Dropbox">
+        <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Conta</div>
+          <div class="mt-2 break-all text-sm font-semibold text-slate-200"><?= htmlspecialchars((string) ($gdriveCloud['account_email'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Espaco livre</div>
+          <div class="mt-2 text-sm font-semibold text-slate-200"><?= htmlspecialchars((string) ($gdriveSpaceUsage['free'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Pasta raiz</div>
+          <div class="mt-2 break-all text-sm font-semibold text-slate-200"><?= htmlspecialchars((string) ($gdriveCloud['root_folder_name'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3 md:grid-cols-3">
+        <form method="POST" action="<?= htmlspecialchars(url('/admin/central-operacional-v2/backup-em-nuvem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Atualizando automacao Google Drive" data-progress-message="Salvando a politica de envio automatico dos pacotes editoriais." data-progress-stage="Automacao Google Drive">
           <?= Csrf::field() ?>
-          <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudOverviewReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-          <input type="hidden" name="action" value="dropbox_auto_upload">
-          <input type="hidden" name="enabled" value="<?= $systemAutoEnabled ? '0' : '1' ?>">
-          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300/80">Envio Automatico - Sistema</div>
-          <p class="mt-2 text-xs font-semibold leading-5 text-slate-400"><?= $systemAutoEnabled ? 'Controle manual para backups sistemicos.' : 'Automacao para backups sistemicos.' ?></p>
+          <input type="hidden" name="action" value="google_drive_editorial_auto_upload">
+          <input type="hidden" name="enabled" value="<?= $gdriveAutoEnabled ? '0' : '1' ?>">
+          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300/80">Envio Automatico</div>
+          <p class="mt-2 text-xs font-semibold leading-5 text-slate-400"><?= $gdriveAutoEnabled ? 'Controle manual para pacotes editoriais.' : 'Automacao para pacotes editoriais.' ?></p>
           <div class="mt-auto pt-4">
-            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-xs font-black text-emerald-200 transition hover:border-emerald-300 hover:bg-emerald-500/20"><?= $systemAutoEnabled ? 'Desativar automacao' : 'Ativar automacao' ?></button>
+            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-xl border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-xs font-black text-sky-200 transition hover:border-sky-300 hover:bg-sky-500/20"><?= $gdriveAutoEnabled ? 'Desativar automacao' : 'Ativar automacao' ?></button>
           </div>
         </form>
 
-        <form method="POST" action="<?= htmlspecialchars(url('/admin/central-operacional-v2/backup-em-nuvem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Atualizando automacao editorial" data-progress-message="Salvando a politica de envio automatico dos pacotes editoriais." data-progress-stage="Automacao Dropbox">
+        <form method="POST" action="<?= htmlspecialchars(url('/admin/central-operacional-v2/backup-em-nuvem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Enviando pacote editorial" data-progress-message="Enviando o pacote editorial mais recente para o Google Drive." data-progress-stage="Google Drive">
           <?= Csrf::field() ?>
-          <input type="hidden" name="action" value="dropbox_editorial_auto_upload">
-          <input type="hidden" name="enabled" value="<?= $editorialAutoEnabled ? '0' : '1' ?>">
-          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300/80">Envio Automatico - Editorial</div>
-          <p class="mt-2 text-xs font-semibold leading-5 text-slate-400"><?= $editorialAutoEnabled ? 'Controle manual para pacotes editoriais.' : 'Automacao para pacotes editoriais.' ?></p>
+          <input type="hidden" name="action" value="google_drive_upload_editorial_latest">
+          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300/80">Enviar mais recente</div>
+          <p class="mt-2 text-xs font-semibold leading-5 text-slate-400"><?= count($gdrivePending) ?> pacote(s) pendente(s) de envio.</p>
           <div class="mt-auto pt-4">
-            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-xl border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-xs font-black text-sky-200 transition hover:border-sky-300 hover:bg-sky-500/20"><?= $editorialAutoEnabled ? 'Desativar automacao' : 'Ativar automacao' ?></button>
+            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-xs font-black text-emerald-200 transition hover:border-emerald-300 hover:bg-emerald-500/20">Enviar agora</button>
           </div>
         </form>
 
-        <form method="POST" action="<?= htmlspecialchars(url('/local/backup'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Desconectando Dropbox" data-progress-message="Removendo a vinculacao local com a conta do Dropbox." data-progress-stage="Dropbox">
+        <form method="POST" action="<?= htmlspecialchars(url('/admin/central-operacional-v2/backup-em-nuvem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Desconectando Google Drive" data-progress-message="Removendo a vinculacao local com a conta do Google Drive." data-progress-stage="Google Drive">
           <?= Csrf::field() ?>
-          <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudOverviewReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-          <input type="hidden" name="action" value="dropbox_disconnect">
+          <input type="hidden" name="action" value="google_drive_disconnect">
           <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-rose-300/80">Desconectar</div>
-          <p class="mt-2 text-xs font-semibold leading-5 text-slate-400">Remove tokens locais sem apagar backups ja enviados.</p>
+          <p class="mt-2 text-xs font-semibold leading-5 text-slate-400">Remove tokens locais sem apagar arquivos ja enviados.</p>
           <div class="mt-auto pt-4">
             <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-2 text-xs font-black text-rose-200 transition hover:border-rose-300 hover:bg-rose-500/20">Desconectar</button>
           </div>
         </form>
       </div>
     <?php else: ?>
-      <form method="POST" action="<?= htmlspecialchars(url('/local/backup'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form mt-4 rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4" data-progress-title="Conectando Dropbox" data-progress-message="Abrindo a autorizacao segura do Dropbox para vincular a conta." data-progress-stage="Dropbox OAuth">
+      <form method="POST" action="<?= htmlspecialchars(url('/admin/central-operacional-v2/backup-em-nuvem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="cloud-action-form mt-4 rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4" data-progress-title="Conectando Google Drive" data-progress-message="Abrindo a autorizacao segura do Google para vincular a conta." data-progress-stage="Google Drive OAuth">
         <?= Csrf::field() ?>
-        <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudOverviewReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-        <input type="hidden" name="action" value="dropbox_connect">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Conectar Dropbox</div>
-        <p class="mt-2 text-xs font-semibold leading-5 text-cyan-100/80">Vincula a conta para consultar espaco e registrar envios em nuvem.</p>
+        <input type="hidden" name="action" value="google_drive_connect">
+        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">Conectar Google Drive</div>
+        <p class="mt-2 text-xs font-semibold leading-5 text-cyan-100/80">Vincula a conta para enviar o conteudo editorial (midia/uploads) ao Google Drive.</p>
         <button type="submit" class="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-300/40 bg-cyan-400/10 px-4 py-2 text-xs font-black text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-400/20">Conectar</button>
       </form>
     <?php endif; ?>
@@ -558,7 +454,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
     <div class="flex flex-wrap items-center justify-between gap-3">
       <h2 class="font-orbitron text-sm font-black uppercase tracking-[0.16em] text-cyan-300/75">Backups por Ambiente</h2>
       <?php View::component('admin/v2/status-badge', [
-          'label' => 'Sistema + Editorial',
+          'label' => 'Google Drive',
           'tone' => 'neutral',
       ]); ?>
     </div>
@@ -566,34 +462,19 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
     <div class="mt-5 grid gap-4 xl:grid-cols-3">
       <?php foreach ($environments as $profile => $label): ?>
         <?php
-          $system = $latestForProfile($systemItems, $profile, ['cloud_uploaded_at', 'created_at', 'generated_at']);
           $editorial = $latestForProfile($editorialItems, $profile, ['cloud_uploaded_at', 'created_at']);
-          $systemUploadedForProfile = (bool) ($system['cloud_uploaded'] ?? false);
           $editorialUploadedForProfile = (bool) ($editorial['cloud_uploaded'] ?? false);
         ?>
         <article class="rounded-2xl border <?= $profile === 'production' ? 'border-amber-400/35 bg-amber-500/[0.04]' : 'border-slate-800 bg-slate-950/70' ?> p-5">
           <div class="flex items-center justify-between gap-3">
             <h3 class="font-orbitron text-sm font-black uppercase tracking-[0.14em] text-white"><?= $label ?></h3>
             <?php View::component('admin/v2/status-badge', [
-                'label' => ($systemUploadedForProfile || $editorialUploadedForProfile) ? 'Com leitura' : 'Pendente',
-                'tone' => ($systemUploadedForProfile || $editorialUploadedForProfile) ? 'success' : 'neutral',
+                'label' => $editorialUploadedForProfile ? 'Com leitura' : 'Pendente',
+                'tone' => $editorialUploadedForProfile ? 'success' : 'neutral',
             ]); ?>
           </div>
 
           <div class="mt-4 grid gap-3">
-            <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
-              <div class="flex items-center justify-between gap-3">
-                <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300/70">Sistema</div>
-                <?php View::component('admin/v2/status-badge', [
-                    'label' => $systemUploadedForProfile ? 'Enviado' : 'Pendente',
-                    'tone' => $systemUploadedForProfile ? 'success' : 'neutral',
-                ]); ?>
-              </div>
-              <div class="mt-3 text-sm font-black text-white"><?= htmlspecialchars((string) ($system['backup_id'] ?? 'Leitura pendente'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-              <div class="mt-1 text-xs text-slate-400"><?= htmlspecialchars($formatDate($system['cloud_uploaded_at'] ?? $system['created_at'] ?? null), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-              <div class="mt-2 text-xs text-slate-500">Tamanho: <?= htmlspecialchars((string) ($system['total_size'] ?? $system['cloud_uploaded_size'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-            </div>
-
             <div class="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
               <div class="flex items-center justify-between gap-3">
                 <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-cyan-300/70">Editorial</div>
@@ -615,18 +496,14 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
   <section class="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
     <div class="rounded-[1.6rem] border border-slate-800 bg-slate-900/85 p-5 shadow-[0_0_34px_rgba(2,6,23,0.18)]">
       <h2 class="font-orbitron text-sm font-black uppercase tracking-[0.16em] text-cyan-300/75">Armazenamento</h2>
-      <div class="mt-5 grid gap-3 md:grid-cols-3">
-        <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-          <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Sistemicos</div>
-          <div class="mt-2 text-xl font-black text-white"><?= count($systemUploaded) ?></div>
-        </div>
+      <div class="mt-5 grid gap-3 md:grid-cols-2">
         <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
           <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Editoriais</div>
           <div class="mt-2 text-xl font-black text-white"><?= count($editorialUploaded) ?></div>
         </div>
         <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
           <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Total</div>
-          <div class="mt-2 text-xl font-black text-white"><?= count($systemUploaded) + count($editorialUploaded) ?></div>
+          <div class="mt-2 text-xl font-black text-white"><?= count($editorialUploaded) ?></div>
         </div>
       </div>
       <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
@@ -790,19 +667,19 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
                           <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-xs font-black text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-500/20">Verificar</button>
                         </form>
                         <?php if (($row['status'] ?? '') === 'Enviado'): ?>
-                          <form method="POST" action="<?= url('/admin/central-operacional-v2/backup-em-nuvem') ?>" class="cloud-action-form rounded-xl border border-rose-400/25 bg-rose-500/5 p-2" data-progress-title="Excluindo pacote da nuvem" data-progress-message="Solicitando remocao segura do pacote editorial no Dropbox." data-progress-stage="Exclusao Dropbox">
+                          <form method="POST" action="<?= url('/admin/central-operacional-v2/backup-em-nuvem') ?>" class="cloud-action-form rounded-xl border border-rose-400/25 bg-rose-500/5 p-2" data-progress-title="Excluindo pacote da nuvem" data-progress-message="Solicitando remocao segura do pacote editorial no Google Drive." data-progress-stage="Exclusao Google Drive">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudHistoryReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                            <input type="hidden" name="action" value="dropbox_delete_editorial_package">
+                            <input type="hidden" name="action" value="google_drive_delete_editorial_package">
                             <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($row['id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                             <input type="text" name="delete_confirmation" placeholder="Confirmar ID para excluir" class="w-full rounded-lg border border-slate-700 bg-slate-950/80 px-2 py-2 text-xs text-white outline-none focus:border-rose-400">
                             <button type="submit" class="mt-2 inline-flex w-full items-center justify-center rounded-lg border border-rose-400/30 bg-transparent px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/10">Excluir da nuvem</button>
                           </form>
                         <?php else: ?>
-                          <form method="POST" action="<?= url('/admin/central-operacional-v2/backup-em-nuvem') ?>" class="cloud-action-form inline-flex" data-progress-title="Enviando pacote editorial" data-progress-message="Validando conexao Dropbox e preparando o pacote editorial para envio." data-progress-stage="Envio para nuvem">
+                          <form method="POST" action="<?= url('/admin/central-operacional-v2/backup-em-nuvem') ?>" class="cloud-action-form inline-flex" data-progress-title="Enviando pacote editorial" data-progress-message="Validando conexao Google Drive e preparando o pacote editorial para envio." data-progress-stage="Envio para nuvem">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudHistoryReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                            <input type="hidden" name="action" value="dropbox_upload_editorial_package">
+                            <input type="hidden" name="action" value="google_drive_upload_editorial_package">
                             <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($row['id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                             <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-sky-400/35 bg-sky-500/10 px-3 py-2 text-xs font-black text-sky-100 transition hover:border-sky-300 hover:bg-sky-500/20">Enviar nuvem</button>
                           </form>
@@ -1031,7 +908,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
       }
 
       var actionName = String((form.querySelector('input[name="action"]') || {}).value || '');
-      if (actionName === 'dropbox_connect') {
+      if (actionName === 'dropbox_connect' || actionName === 'google_drive_connect') {
         showModal(form);
         return;
       }
@@ -1187,14 +1064,14 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
           stage: 'Verificacao editorial'
         });
         html += sent
-          ? deleteForm(cloudActionUrl, { action: 'dropbox_delete_editorial_package', package_id: id }, 'Excluir da nuvem', {
+          ? deleteForm(cloudActionUrl, { action: 'google_drive_delete_editorial_package', package_id: id }, 'Excluir da nuvem', {
             title: 'Excluindo pacote da nuvem',
-            message: 'Solicitando remocao segura do pacote editorial no Dropbox.',
-            stage: 'Exclusao Dropbox'
+            message: 'Solicitando remocao segura do pacote editorial no Google Drive.',
+            stage: 'Exclusao Google Drive'
           })
-          : postForm(cloudActionUrl, { action: 'dropbox_upload_editorial_package', package_id: id }, actionButton('Enviar nuvem', 'upload'), null, {
+          : postForm(cloudActionUrl, { action: 'google_drive_upload_editorial_package', package_id: id }, actionButton('Enviar nuvem', 'upload'), null, {
             title: 'Enviando pacote editorial',
-            message: 'Validando conexao Dropbox e preparando o pacote editorial para envio.',
+            message: 'Validando conexao Google Drive e preparando o pacote editorial para envio.',
             stage: 'Envio para nuvem'
           });
       }

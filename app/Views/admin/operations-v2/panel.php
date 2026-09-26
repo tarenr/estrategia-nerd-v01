@@ -35,33 +35,6 @@ foreach ($observabilityEnvironments as $environment) {
 
 $modules = [
     [
-        'label' => 'Backup Sistemico',
-        'description' => 'Banco, sistema, restore e historico tecnico.',
-        'href' => url('/admin/central-operacional-v2/backup-sistemico/resumo'),
-        'icon' => 'fa-solid fa-database',
-        'metric' => $systemOk . ' / 3',
-        'metric_label' => 'ambientes com leitura',
-        'tone' => $systemOk >= 3 ? 'success' : 'neutral',
-    ],
-    [
-        'label' => 'Backup Editorial',
-        'description' => 'Pacotes editoriais, conteudo, restore e historico.',
-        'href' => url('/admin/central-operacional-v2/backup-editorial/resumo'),
-        'icon' => 'fa-solid fa-newspaper',
-        'metric' => $editorialOk . ' / 3',
-        'metric_label' => 'ambientes com pacote',
-        'tone' => $editorialOk >= 3 ? 'success' : 'neutral',
-    ],
-    [
-        'label' => 'Backup em Nuvem',
-        'description' => 'Dropbox, automacao e historico de envios.',
-        'href' => url('/admin/central-operacional-v2/backup-em-nuvem/resumo'),
-        'icon' => 'fa-solid fa-cloud-arrow-up',
-        'metric' => 'Dropbox',
-        'metric_label' => 'sincronizacao',
-        'tone' => 'info',
-    ],
-    [
         'label' => 'Observabilidade',
         'description' => 'Logs, smoke tests e sinais operacionais.',
         'href' => url('/admin/central-operacional-v2/observabilidade'),

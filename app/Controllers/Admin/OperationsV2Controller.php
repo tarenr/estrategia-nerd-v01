@@ -9,6 +9,7 @@ use App\Controllers\Site\ContentSyncToolsController;
 use App\Controllers\Site\SearchConsoleMonitorController;
 use App\Services\Admin\Presenters\OperationsV2Presenter;
 use App\Services\Site\DropboxBackupService;
+use App\Services\Site\GoogleDriveBackupService;
 use App\Support\Csrf;
 use App\Support\Session;
 use App\Support\View;
@@ -133,19 +134,50 @@ final class OperationsV2Controller
         }
 
         $module = $this->modules()['backup-nuvem'];
-        $backupTools = (new BackupToolsController())->viewData(
-            true,
-            'nuvem',
-            url('/admin/central-operacional-v2/backup-em-nuvem')
-        );
 
         View::render('admin/operations-v2/backup-nuvem', [
             'title' => ($module['label'] ?? 'Backup em Nuvem') . ' | Estrategia Nerd',
             'module' => $module,
-            'backup_tools' => $backupTools,
-            'editorial_cloud' => $this->cloudService()->getEditorialPanelData($this->contentManager()),
+            'editorial_cloud_gdrive' => $this->googleDriveCloudService()->getEditorialPanelData($this->contentManager()),
             'cloud_flash' => Session::pull('operations_v2_cloud_flash'),
         ]);
+    }
+
+    public function googleDriveCallback(): void
+    {
+        $redirectTarget = (string) Session::pull('operations_v2_gdrive_oauth_redirect', url('/admin/central-operacional-v2/backup-em-nuvem'));
+        $expectedState = (string) Session::pull('operations_v2_gdrive_oauth_state', '');
+        $incomingState = trim((string) ($_GET['state'] ?? ''));
+        $error = trim((string) ($_GET['error'] ?? ''));
+
+        if ($error !== '') {
+            $this->cloudFlash('error', 'Google Drive recusou a autorizacao: ' . $error);
+            $this->redirect($redirectTarget);
+            return;
+        }
+
+        if ($expectedState === '' || $incomingState === '' || !hash_equals($expectedState, $incomingState)) {
+            $this->cloudFlash('error', 'Falha ao validar o retorno OAuth do Google Drive.');
+            $this->redirect($redirectTarget);
+            return;
+        }
+
+        $code = trim((string) ($_GET['code'] ?? ''));
+        if ($code === '') {
+            $this->cloudFlash('error', 'Google Drive nao retornou um codigo de autorizacao.');
+            $this->redirect($redirectTarget);
+            return;
+        }
+
+        try {
+            $account = $this->googleDriveCloudService()->completeAuthorization($code);
+            $accountName = (string) ($account['account_name'] ?? 'Conta Google Drive');
+            $this->cloudFlash('success', sprintf('Google Drive conectado com sucesso: %s.', $accountName));
+        } catch (\Throwable $exception) {
+            $this->cloudFlash('error', $exception->getMessage());
+        }
+
+        $this->redirect($redirectTarget);
     }
 
     public function observabilidade(): void
@@ -265,6 +297,81 @@ final class OperationsV2Controller
         $action = strtolower(trim((string) ($_POST['action'] ?? '')));
 
         try {
+            if ($action === 'google_drive_connect') {
+                $oauthState = bin2hex(random_bytes(24));
+                Session::put('operations_v2_gdrive_oauth_state', $oauthState);
+                Session::put('operations_v2_gdrive_oauth_redirect', $redirect);
+                header('Location: ' . $this->googleDriveCloudService()->authorizationUrl($oauthState));
+                exit;
+            }
+
+            if ($action === 'google_drive_disconnect') {
+                $this->googleDriveCloudService()->disconnect();
+                $this->cloudFlash('success', 'Conexao com Google Drive removida.');
+                if ($respondJson) {
+                    $this->json(['ok' => true, 'redirect_url' => $redirect, 'message' => 'Conexao com Google Drive removida.']);
+                    return;
+                }
+                $this->redirect($redirect);
+                return;
+            }
+
+            if ($action === 'google_drive_editorial_auto_upload') {
+                $enabled = in_array(strtolower(trim((string) ($_POST['enabled'] ?? '0'))), ['1', 'true', 'on', 'yes'], true);
+                $this->googleDriveCloudService()->setEditorialAutoUpload($enabled);
+                $message = $enabled ? 'Envio automatico para o Google Drive ativado.' : 'Envio automatico para o Google Drive desativado.';
+                $this->cloudFlash('success', $message);
+                if ($respondJson) {
+                    $this->json(['ok' => true, 'redirect_url' => $redirect, 'message' => $message]);
+                    return;
+                }
+                $this->redirect($redirect);
+                return;
+            }
+
+            if ($action === 'google_drive_upload_editorial_latest') {
+                $result = $this->googleDriveCloudService()->uploadLatestEditorial($this->contentManager(), $this->normalizeProgressId($_POST['progress_id'] ?? null));
+                $this->cloudFlash('success', sprintf('Pacote editorial %s enviado ao Google Drive em %s.', (string) ($result['package_id'] ?? ''), (string) ($result['destination'] ?? '/')));
+                if ($respondJson) {
+                    $this->json(['ok' => true, 'redirect_url' => $redirect, 'message' => 'Rotina de nuvem concluida.']);
+                    return;
+                }
+                $this->redirect($redirect);
+                return;
+            }
+
+            if ($action === 'google_drive_upload_editorial_package') {
+                $packageId = trim((string) ($_POST['package_id'] ?? ''));
+                if ($packageId === '') {
+                    throw new \RuntimeException('Selecione um pacote editorial para enviar ao Google Drive.');
+                }
+
+                $result = $this->googleDriveCloudService()->uploadEditorialPackage($this->contentManager(), $packageId, $this->normalizeProgressId($_POST['progress_id'] ?? null));
+                $this->cloudFlash('success', sprintf('Pacote editorial %s enviado ao Google Drive em %s.', (string) ($result['package_id'] ?? ''), (string) ($result['destination'] ?? '/')));
+                if ($respondJson) {
+                    $this->json(['ok' => true, 'redirect_url' => $redirect, 'message' => 'Rotina de nuvem concluida.']);
+                    return;
+                }
+                $this->redirect($redirect);
+                return;
+            }
+
+            if ($action === 'google_drive_delete_editorial_package') {
+                $packageId = trim((string) ($_POST['package_id'] ?? ''));
+                if ($packageId === '') {
+                    throw new \RuntimeException('Selecione um pacote editorial para remover do Google Drive.');
+                }
+
+                $result = $this->googleDriveCloudService()->deleteEditorialPackage($this->contentManager(), $packageId, (string) ($_POST['delete_confirmation'] ?? ''));
+                $this->cloudFlash('success', sprintf('Pacote editorial %s removido do Google Drive em %s.', (string) ($result['package_id'] ?? ''), (string) ($result['destination'] ?? '/')));
+                if ($respondJson) {
+                    $this->json(['ok' => true, 'redirect_url' => $redirect, 'message' => 'Rotina de nuvem concluida.']);
+                    return;
+                }
+                $this->redirect($redirect);
+                return;
+            }
+
             if ($action === 'dropbox_editorial_auto_upload') {
                 $enabled = in_array(strtolower(trim((string) ($_POST['enabled'] ?? '0'))), ['1', 'true', 'on', 'yes'], true);
                 $this->cloudService()->setEditorialAutoUpload($enabled);
@@ -359,6 +466,11 @@ final class OperationsV2Controller
     private function cloudService(): DropboxBackupService
     {
         return new DropboxBackupService(require base_path('config/backup-cloud.php'));
+    }
+
+    private function googleDriveCloudService(): GoogleDriveBackupService
+    {
+        return new GoogleDriveBackupService(require base_path('config/backup-cloud.php'));
     }
 
     private function contentManager(): ContentSyncManager

@@ -10,7 +10,9 @@ require_once __DIR__ . '/backup/BackupManager.php';
 require_once dirname(__DIR__) . '/app/Support/Helpers.php';
 require_once dirname(__DIR__) . '/app/Support/EnvironmentManager.php';
 require_once dirname(__DIR__) . '/app/Support/EnvironmentGuard.php';
+require_once dirname(__DIR__) . '/app/Services/Site/GoogleDriveBackupService.php';
 
+use App\Services\Site\GoogleDriveBackupService;
 use App\Support\EnvironmentGuard;
 use Scripts\Backup\BackupManager;
 use Scripts\Backup\EnvLoader;
@@ -114,6 +116,18 @@ try {
             echo 'Pasta: ' . ($result['directory'] ?? '-') . PHP_EOL;
             break;
 
+        case 'upload-cloud':
+            $backupId = $argv[2] ?? null;
+            $cloudConfig = require dirname(__DIR__) . '/config/backup-cloud.php';
+            $cloud = new GoogleDriveBackupService($cloudConfig);
+            $result = is_string($backupId) && strtolower($backupId) !== 'latest'
+                ? $cloud->uploadBackup($manager, $backupId)
+                : $cloud->uploadLatest($manager);
+            echo 'Backup enviado ao Google Drive.' . PHP_EOL;
+            echo 'Destino: ' . ($result['destination'] ?? '-') . PHP_EOL;
+            echo 'Arquivos: ' . ($result['uploaded_files_count'] ?? 0) . PHP_EOL;
+            break;
+
         default:
             echo 'Uso:' . PHP_EOL;
             echo '  php scripts/backup.php run [local|stage|production] [--no-uploads]' . PHP_EOL;
@@ -122,6 +136,7 @@ try {
             echo '  php scripts/backup.php mark-uploaded [backup_id|latest]' . PHP_EOL;
             echo '  php scripts/backup.php delete-local [backup_id] [confirmacao_id]' . PHP_EOL;
             echo '  php scripts/backup.php restore [backup_id|latest] [local|stage|production] [all|database|uploads|system_files] --force' . PHP_EOL;
+            echo '  php scripts/backup.php upload-cloud [backup_id|latest]' . PHP_EOL;
             exit(0);
     }
 } catch (Throwable $exception) {

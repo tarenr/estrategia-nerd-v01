@@ -10,7 +10,9 @@ require_once __DIR__ . '/content-sync/ContentSyncManager.php';
 require_once dirname(__DIR__) . '/app/Support/Helpers.php';
 require_once dirname(__DIR__) . '/app/Support/EnvironmentManager.php';
 require_once dirname(__DIR__) . '/app/Support/EnvironmentGuard.php';
+require_once dirname(__DIR__) . '/app/Services/Site/GoogleDriveBackupService.php';
 
+use App\Services\Site\GoogleDriveBackupService;
 use App\Support\EnvironmentGuard;
 use Scripts\Backup\EnvLoader;
 use Scripts\ContentSync\ContentSyncManager;
@@ -130,6 +132,18 @@ try {
             echo 'Arquivos aplicados: ' . (int) ($result['result']['files_applied'] ?? 0) . PHP_EOL;
             break;
 
+        case 'upload-cloud':
+            $packageId = $argv[2] ?? null;
+            $cloudConfig = require dirname(__DIR__) . '/config/backup-cloud.php';
+            $cloud = new GoogleDriveBackupService($cloudConfig);
+            $result = is_string($packageId) && strtolower($packageId) !== 'latest'
+                ? $cloud->uploadEditorialPackage($manager, $packageId)
+                : $cloud->uploadLatestEditorial($manager);
+            echo 'Pacote editorial enviado ao Google Drive.' . PHP_EOL;
+            echo 'Destino: ' . ($result['destination'] ?? '-') . PHP_EOL;
+            echo 'Arquivos: ' . ($result['uploaded_files_count'] ?? 0) . PHP_EOL;
+            break;
+
         default:
             echo 'Uso:' . PHP_EOL;
             echo '  php scripts/content-sync.php export [local|production]' . PHP_EOL;
@@ -139,6 +153,7 @@ try {
             echo '  php scripts/content-sync.php verify [package_id|latest]' . PHP_EOL;
             echo '  php scripts/content-sync.php apply [package_id|latest] [local|production] --force' . PHP_EOL;
             echo '  php scripts/content-sync.php apply-code [package_id|latest] [stage|production] --force' . PHP_EOL;
+            echo '  php scripts/content-sync.php upload-cloud [package_id|latest]' . PHP_EOL;
             exit(0);
     }
 } catch (Throwable $exception) {
