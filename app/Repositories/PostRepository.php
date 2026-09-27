@@ -546,6 +546,37 @@ final class PostRepository
         return ['items' => $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [], 'total' => $total, 'page' => $page, 'per_page' => $perPage, 'pages' => $pages];
     }
 
+    public function findDueScheduled(string $now): array
+    {
+        $stmt = $this->pdo->prepare("SELECT id, titulo, slug, data_publicacao FROM posts WHERE status = 'agendado' AND data_publicacao <= :now ORDER BY data_publicacao ASC");
+        $stmt->bindValue(':now', $now);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function markPublished(int $id): void
+    {
+        $now = date('Y-m-d H:i:s');
+        $stmt = $this->pdo->prepare("UPDATE posts SET status = 'publicado' WHERE id = :id AND status = 'agendado' AND data_publicacao <= :now");
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->bindValue(':now', $now);
+        $stmt->execute();
+    }
+
+    public function listForSchedule(int $year, int $month): array
+    {
+        $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $end = date('Y-m-d H:i:s', mktime(23, 59, 59, $month + 1, 0, $year));
+
+        $stmt = $this->pdo->prepare('SELECT id, titulo, slug, status, data_publicacao FROM posts WHERE data_publicacao BETWEEN :start AND :end ORDER BY data_publicacao ASC');
+        $stmt->bindValue(':start', $start);
+        $stmt->bindValue(':end', $end);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function topByViews(): ?array
     {
         $stmt = $this->pdo->query("SELECT titulo, slug, views FROM posts ORDER BY views DESC, id DESC LIMIT 1");
