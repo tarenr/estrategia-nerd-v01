@@ -1,0 +1,22 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    phpVersion: 80200
+
+    paths:
+        - app/Controllers
+        - app/Repositories
+        - app/Services
+        - app/Support
+        - config
+        - bootstrap.php
+        - public/index.php
+
+    scanDirectories:
+        - scripts
+
+    tmpDir: tmp/phpstan
+
+    reportUnmatchedIgnoredErrors: true

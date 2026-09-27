@@ -1,0 +1,691 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Offset ''errors'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Admin/ConfiguracoesController.php
+
+		-
+			message: '#^Offset ''ok'' on array\{ok\: bool, errors\?\: array\<string, string\>, old\?\: array\<string, string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Admin/ConfiguracoesController.php
+
+		-
+			message: '#^Offset ''old'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Admin/ConfiguracoesController.php
+
+		-
+			message: '#^Offset ''errors'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Admin/HomeMenusController.php
+
+		-
+			message: '#^Offset ''ok'' on array\{ok\: bool, errors\?\: array\<string, string\>, old\?\: array\<string, array\<string, mixed\>\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Admin/HomeMenusController.php
+
+		-
+			message: '#^Offset ''old'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Admin/HomeMenusController.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<int\|string, array\<mixed\>\|string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Controllers/Admin/LinksController.php
+
+		-
+			message: '#^Offset ''label'' on array\{label\: ''Backup e Restore''\|''Conteudo''\|''Monitoramento''\|''Visao Geral''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Admin/OperationsHubController.php
+
+		-
+			message: '#^Method App\\Controllers\\Admin\\OperationsV2Controller\:\:showModule\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Controllers/Admin/OperationsV2Controller.php
+
+		-
+			message: '#^Offset ''error'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Site/AuthController.php
+
+		-
+			message: '#^Offset ''ok'' on array\{ok\: bool, user\?\: array, error\?\: string, blocked\?\: bool\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Site/AuthController.php
+
+		-
+			message: '#^Offset ''applied_at'' on array\{kind\: string, package_id\: string, source_profile\: string, source_profile_label\: string, target_profile\: string, target_profile_label\: string, applied_at\: string, result\: array\<mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Controllers/Site/ContentSyncToolsController.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Controllers/Site/ContentSyncToolsController.php
+
+		-
+			message: '#^Offset ''ok'' on non\-empty\-array on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Controllers/Site/PostController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between true and true will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Controllers/Site/PostController.php
+
+		-
+			message: '#^Method App\\Controllers\\Site\\SeoController\:\:sitemapService\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Controllers/Site/SeoController.php
+
+		-
+			message: '#^Offset 1 on array\{list\<string\>, list\<non\-empty\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/Admin/AuditService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<non\-empty\-string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Services/Admin/AuditService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/Admin/AuditService.php
+
+		-
+			message: '#^Offset ''label'' on array\{label\: string, posts\: int, views\: int, color\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/CategoriasService.php
+
+		-
+			message: '#^Offset ''posts'' on array\{label\: string, posts\: int, views\: int, color\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: app/Services/Admin/CategoriasService.php
+
+		-
+			message: '#^Offset ''views'' on array\{label\: string, posts\: int, views\: int, color\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: app/Services/Admin/CategoriasService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Admin/ContentSyncAdminService.php
+
+		-
+			message: '#^Offset ''is_valid'' on non\-empty\-array on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/ContentSyncAdminService.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Services/Admin/DashboardService.php
+
+		-
+			message: '#^Property App\\Services\\Admin\\DashboardService\:\:\$estatisticas is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Services/Admin/DashboardService.php
+
+		-
+			message: '#^Offset ''clicks_today'' on array\{total_clicks\: int, clicks_today\: int, last_click_at\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/LinksService.php
+
+		-
+			message: '#^Offset ''items'' on non\-empty\-array on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/LinksService.php
+
+		-
+			message: '#^Offset ''label'' on array\{label\: string, value\: int\<1, max\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/LinksService.php
+
+		-
+			message: '#^Offset ''last_click_at'' on array\{total_clicks\: int, clicks_today\: int, last_click_at\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/LinksService.php
+
+		-
+			message: '#^Offset ''total_clicks'' on array\{total_clicks\: int, clicks_today\: int, last_click_at\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/LinksService.php
+
+		-
+			message: '#^Offset ''value'' on array\{label\: string, value\: int\<1, max\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: app/Services/Admin/LinksService.php
+
+		-
+			message: '#^Variable \$_FILES on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 2
+			path: app/Services/Admin/LinksService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<non\-falsy\-string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Offset ''count'' on array\{type\: non\-empty\-string, label\: string, count\: int\<1, max\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Offset ''error'' on non\-empty\-array\<mixed, mixed\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Offset ''label'' on array\{relative\: ''assets/brand'', label\: ''Institucional''\}\|array\{relative\: ''uploads'', label\: ''Upload''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Offset ''label'' on array\{type\: non\-empty\-string, label\: string, count\: int\<1, max\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Offset ''relative'' on array\{relative\: ''assets/brand'', label\: ''Institucional''\}\|array\{relative\: ''uploads'', label\: ''Upload''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Offset 0 on array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Offset 0 on array\{list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Offset 1 on array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Offset 1 on array\{list\<string\>, list\<non\-falsy\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between int\|non\-empty\-string and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/Admin/MidiaService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between int\<1, max\> and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/Admin/NewsletterService.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 1
+			path: app/Services/Admin/NewsletterService.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<non\-empty\-string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Admin/PostsService.php
+
+		-
+			message: '#^Offset ''name'' on array\{name\: string, relative_path\: non\-falsy\-string, public_url\: string, size_label\: string, modified_label\: non\-falsy\-string, is_image\: bool\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/Admin/PostsService.php
+
+		-
+			message: '#^Offset 0 on array\{list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/Admin/PostsService.php
+
+		-
+			message: '#^Offset 1 on array\{list\<string\>, list\<non\-empty\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 4
+			path: app/Services/Admin/PostsService.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/PostsService.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Admin/PostsService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<non\-empty\-string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Services/Admin/PostsService.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Services/Admin/PostsService.php
+
+		-
+			message: '#^Method App\\Services\\Admin\\Presenters\\OperationsV2Presenter\:\:backupHint\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Services/Admin/Presenters/OperationsV2Presenter.php
+
+		-
+			message: '#^Method App\\Services\\Admin\\Presenters\\OperationsV2Presenter\:\:dateHint\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Services/Admin/Presenters/OperationsV2Presenter.php
+
+		-
+			message: '#^Method App\\Services\\Admin\\Presenters\\OperationsV2Presenter\:\:environmentCards\(\) should return array\<int, array\<string, string\>\> but returns list\<array\<string, list\<array\<string, string\>\>\|string\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Admin/Presenters/OperationsV2Presenter.php
+
+		-
+			message: '#^Method App\\Services\\Admin\\Presenters\\OperationsV2Presenter\:\:systemBackupHint\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Services/Admin/Presenters/OperationsV2Presenter.php
+
+		-
+			message: '#^Ternary operator condition is always true\.$#'
+			identifier: ternary.alwaysTrue
+			count: 2
+			path: app/Services/Admin/UsuariosService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string\|null and 0 will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/AuthService.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Services/AuthService.php
+
+		-
+			message: '#^Offset ''admin_body'' on array\{cookie_jar\: string, tests\: list\<array\<string, mixed\>\>, admin_body\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/AutomatedTestService.php
+
+		-
+			message: '#^Offset ''cookie_jar'' on array\{cookie_jar\: string, tests\: list\<array\<string, mixed\>\>, admin_body\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/AutomatedTestService.php
+
+		-
+			message: '#^Offset ''tests'' on array\{cookie_jar\: string, tests\: list\<array\<string, mixed\>\>, admin_body\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/AutomatedTestService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/Services/Site/CentralOperacionalService.php
+
+		-
+			message: '#^Offset ''cloud_uploaded'' on array\{package_id\: string, source_profile\: string, source_profile_label\: string, created_at\: string, is_valid\: bool, cloud_uploaded\: bool, cloud_uploaded_at\: string, cloud_destination\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/Site/DropboxBackupService.php
+
+		-
+			message: '#^Offset ''id'' on array\{name\: ''manifest\.json'', path\: non\-falsy\-string, id\: string, rev\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/DropboxBackupService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\) to function array_values is empty, call has no effect\.$#'
+			identifier: arrayValues.empty
+			count: 1
+			path: app/Services/Site/DropboxBackupService.php
+
+		-
+			message: '#^Offset ''cloud_uploaded'' on array\{package_id\: string, source_profile\: string, source_profile_label\: string, created_at\: string, is_valid\: bool, cloud_uploaded\: bool, cloud_uploaded_at\: string, cloud_destination\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/Site/GoogleDriveBackupService.php
+
+		-
+			message: '#^Offset ''id'' on array\{name\: ''manifest\.json'', id\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/GoogleDriveBackupService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\) to function array_values is empty, call has no effect\.$#'
+			identifier: arrayValues.empty
+			count: 1
+			path: app/Services/Site/GoogleDriveBackupService.php
+
+		-
+			message: '#^Offset 1 on array\{list\<string\>, list\<non\-falsy\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/OperationalTestService.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$fragments$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Services/Site/OperationalTestService.php
+
+		-
+			message: '#^Instanceof between DOMElement and DOMElement will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 3
+			path: app/Services/Site/PostService.php
+
+		-
+			message: '#^Offset ''parent_id'' on array\{id\: int, nome\: string, email\: string, parent_id\: int, is_admin\: bool, admin_user_id\: int, admin_avatar_type\: string, admin_avatar_icon\: string, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/PostService.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-falsy\-string, non\-empty\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/PostService.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, string, string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/PostService.php
+
+		-
+			message: '#^Offset 2 on array\{non\-falsy\-string, non\-empty\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/PostService.php
+
+		-
+			message: '#^Offset 2 on array\{non\-falsy\-string, non\-falsy\-string, non\-empty\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/PostService.php
+
+		-
+			message: '#^Offset 2 on array\{non\-falsy\-string, string, string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/PostService.php
+
+		-
+			message: '#^Offset 3 on array\{non\-falsy\-string, non\-falsy\-string, non\-empty\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/PostService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\{id\: int, nome\: string, email\: string, parent_id\: int, is_admin\: bool, admin_user_id\: int, admin_avatar_type\: string, admin_avatar_icon\: string, \.\.\.\}\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Services/Site/PostService.php
+
+		-
+			message: '#^Variable \$publishedLabel in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 1
+			path: app/Services/Site/PostService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/Services/Site/SearchConsoleService.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Site/SearchConsoleService.php
+
+		-
+			message: '#^Offset ''label'' on array\{label\: string, url\: string, lastmod\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/SearchConsoleService.php
+
+		-
+			message: '#^Offset ''lastmod'' on array\{label\: string, url\: string, lastmod\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/SearchConsoleService.php
+
+		-
+			message: '#^Offset ''url'' on array\{label\: string, url\: string, lastmod\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/SearchConsoleService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between null and null will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 1
+			path: app/Services/Site/SearchConsoleService.php
+
+		-
+			message: '#^Offset ''changefreq'' on array\{loc\: string, lastmod\: string, changefreq\: string, priority\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/SitemapService.php
+
+		-
+			message: '#^Offset ''lastmod'' on array\{loc\: string, lastmod\: string, changefreq\: string, priority\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/SitemapService.php
+
+		-
+			message: '#^Offset ''loc'' on array\{loc\: string, lastmod\: string, changefreq\: string, priority\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/SitemapService.php
+
+		-
+			message: '#^Offset ''priority'' on array\{loc\: string, lastmod\: string, changefreq\: string, priority\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/SitemapService.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Site/SmokeTestService.php
+
+		-
+			message: '#^Offset 1 on array\{list\<string\>, list\<non\-falsy\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Site/SmokeTestService.php
+
+		-
+			message: '#^Variable \$http_response_header on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Services/Site/SmokeTestService.php
+
+		-
+			message: '#^Call to function is_bool\(\) with bool will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Site/UnitTestService.php
+
+		-
+			message: '#^Cannot unset offset ''password'' on array\{id\: int\|string\}\.$#'
+			identifier: unset.offset
+			count: 1
+			path: app/Support/Auth.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Support/EnvironmentGuard.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/Support/Helpers.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Support/Helpers.php
+
+		-
+			message: '#^Offset ''domain'' on array\{lifetime\: int\<0, max\>, path\: non\-falsy\-string, domain\: string, secure\: bool, httponly\: bool, samesite\: ''Lax''\|''lax''\|''None''\|''none''\|''Strict''\|''strict''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Support/Session.php
+
+		-
+			message: '#^Offset ''httponly'' on array\{lifetime\: int\<0, max\>, path\: non\-falsy\-string, domain\: string, secure\: bool, httponly\: bool, samesite\: ''Lax''\|''lax''\|''None''\|''none''\|''Strict''\|''strict''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Support/Session.php
+
+		-
+			message: '#^Offset ''path'' on array\{lifetime\: int\<0, max\>, path\: non\-falsy\-string, domain\: string, secure\: bool, httponly\: bool, samesite\: ''Lax''\|''lax''\|''None''\|''none''\|''Strict''\|''strict''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Support/Session.php
+
+		-
+			message: '#^Offset ''secure'' on array\{lifetime\: int\<0, max\>, path\: non\-falsy\-string, domain\: string, secure\: bool, httponly\: bool, samesite\: ''Lax''\|''lax''\|''None''\|''none''\|''Strict''\|''strict''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Support/Session.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-string and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Support/SystemActivityLogger.php
+
+		-
+			message: '#^Method App\\Support\\TargetEnvironmentUploads\:\:connect\(\) should return resource but returns FTP\\Connection\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Support/TargetEnvironmentUploads.php
+
+		-
+			message: '#^Parameter \#1 \$ftp of function ftp_chdir expects FTP\\Connection, resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Support/TargetEnvironmentUploads.php
+
+		-
+			message: '#^Parameter \#1 \$ftp of function ftp_close expects FTP\\Connection, resource given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Support/TargetEnvironmentUploads.php
+
+		-
+			message: '#^Parameter \#1 \$ftp of function ftp_delete expects FTP\\Connection, resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Support/TargetEnvironmentUploads.php
+
+		-
+			message: '#^Parameter \#1 \$ftp of function ftp_mkdir expects FTP\\Connection, resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Support/TargetEnvironmentUploads.php
+
+		-
+			message: '#^Parameter \#1 \$ftp of function ftp_put expects FTP\\Connection, resource given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Support/TargetEnvironmentUploads.php
