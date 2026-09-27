@@ -137,6 +137,7 @@ $rawItems = [
     sidebar_item('/', 'fa-solid fa-globe', 'Ver Site'),
     sidebar_section('Conteudo'),
     sidebar_item('/admin/posts', 'fa-solid fa-newspaper', 'Posts'),
+    sidebar_item('/admin/agendamento-posts', 'fa-solid fa-calendar-days', 'Agendamento'),
     sidebar_item('/admin/categorias', 'fa-solid fa-tags', 'Categoria'),
     sidebar_item('/admin/comentarios', 'fa-solid fa-comments', 'Comentarios'),
     sidebar_item('/admin/midia', 'fa-solid fa-photo-film', 'Midia'),

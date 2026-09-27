@@ -44,7 +44,10 @@ $form = $form ?? [];
         <div class="post-main-field-head">
           <label for="data_publicacao" class="admin-filter-label mb-0">Data de publicacao</label>
         </div>
-        <input id="data_publicacao" name="data_publicacao" type="datetime-local" value="<?= htmlspecialchars((string) ($form['data_publicacao'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input admin-filter-control post-main-field-control">
+        <div class="post-slug-shell">
+          <input id="data_publicacao" name="data_publicacao" type="datetime-local" value="<?= htmlspecialchars((string) ($form['data_publicacao'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="nerd-input admin-filter-control post-main-field-control">
+          <button type="button" class="admin-btn admin-btn-secondary" onclick="var el=document.getElementById('data_publicacao'); if (el.showPicker) { el.showPicker(); } else { el.focus(); }">Escolher</button>
+        </div>
         <div class="post-main-field-footer">Defina quando o conteudo deve entrar no ar.</div>
         <?php if ($fieldError('data_publicacao') !== ''): ?><div class="mt-2 text-xs text-rose-300"><?= htmlspecialchars($fieldError('data_publicacao'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
       </div>

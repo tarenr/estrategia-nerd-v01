@@ -29,6 +29,11 @@ final class PostsController
         View::render('admin/posts/index', $this->service()->getIndexViewModel($_GET));
     }
 
+    public function schedule(): void
+    {
+        View::render('admin/posts/agendamento', $this->service()->getScheduleViewModel($_GET));
+    }
+
     public function create(): void
     {
         View::render('admin/posts/create', $this->service()->getCreateViewModel());

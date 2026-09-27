@@ -52,6 +52,69 @@ final class PostsService
         ];
     }
 
+    public function getScheduleViewModel(array $query): array
+    {
+        $year = (int) ($query['ano'] ?? date('Y'));
+        $month = (int) ($query['mes'] ?? date('n'));
+        if ($month < 1 || $month > 12) {
+            $month = (int) date('n');
+        }
+        if ($year < 2000 || $year > 2100) {
+            $year = (int) date('Y');
+        }
+
+        $view = ((string) ($query['view'] ?? 'grade')) === 'lista' ? 'lista' : 'grade';
+        $posts = $this->posts->listForSchedule($year, $month);
+
+        $postsByDay = [];
+        foreach ($posts as $post) {
+            $timestamp = strtotime((string) ($post['data_publicacao'] ?? ''));
+            if ($timestamp === false) {
+                continue;
+            }
+            $day = (int) date('j', $timestamp);
+            $postsByDay[$day][] = $post;
+        }
+
+        $firstDayOfMonth = mktime(0, 0, 0, $month, 1, $year);
+        $daysInMonth = (int) date('t', $firstDayOfMonth);
+        $startWeekday = (int) date('w', $firstDayOfMonth);
+
+        $prevMonth = $month === 1 ? 12 : $month - 1;
+        $prevYear = $month === 1 ? $year - 1 : $year;
+        $nextMonth = $month === 12 ? 1 : $month + 1;
+        $nextYear = $month === 12 ? $year + 1 : $year;
+
+        $now = new DateTimeImmutable('now');
+
+        return [
+            'title' => 'Agendamento',
+            'view' => $view,
+            'year' => $year,
+            'month' => $month,
+            'month_label' => $this->monthLabel($month) . ' de ' . $year,
+            'days_in_month' => $daysInMonth,
+            'start_weekday' => $startWeekday,
+            'posts_by_day' => $postsByDay,
+            'posts' => $posts,
+            'prev' => ['ano' => $prevYear, 'mes' => $prevMonth],
+            'next' => ['ano' => $nextYear, 'mes' => $nextMonth],
+            'today' => (int) $now->format('j'),
+            'is_current_month' => $now->format('Y-n') === $year . '-' . $month,
+        ];
+    }
+
+    private function monthLabel(int $month): string
+    {
+        $labels = [
+            1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Marco', 4 => 'Abril',
+            5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+            9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro',
+        ];
+
+        return $labels[$month] ?? '';
+    }
+
     public function getCreateViewModel(array $old = [], array $errors = []): array
     {
         return $this->buildFormViewModel('create', $this->normalizeForm($old), $errors);

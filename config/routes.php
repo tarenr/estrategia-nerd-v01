@@ -41,6 +41,7 @@ return [
     ['POST', '/admin/ambiente-alvo', [\App\Controllers\Admin\EnvironmentController::class, 'updateTarget'], 'auth'],
 
     ['GET',  '/admin/posts',         [\App\Controllers\Admin\PostsController::class, 'index'], 'auth'],
+    ['GET',  '/admin/agendamento-posts', [\App\Controllers\Admin\PostsController::class, 'schedule'], 'auth'],
     ['GET',  '/admin/criar-post',    [\App\Controllers\Admin\PostsController::class, 'create'], 'auth'],
     ['POST', '/admin/criar-post',    [\App\Controllers\Admin\PostsController::class, 'store'], 'auth'],
     ['GET',  '/admin/editar-post',   [\App\Controllers\Admin\PostsController::class, 'edit'], 'auth'],
