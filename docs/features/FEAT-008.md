@@ -26,12 +26,14 @@ O post do Windows 11 (prazo externo: precisa estar no ar antes de 13/10/2026,
 fim do suporte do Windows 11 24H2) foi publicado manualmente pelo usuário
 antes da data planejada.
 
-## Observação sobre mídia pendente
-`12 jogos leves`, `10 desenhos dos anos 90/2000` e `10 animes essenciais`
-ainda têm itens sem trailer/abertura confirmado (ver FEAT-005.md /
-histórico da skill post-blog) — o usuário vai levantar esses links
-separadamente antes das respectivas datas de publicação.
+## Observação sobre mídia pendente (Concluída em 27/09/2026)
+Todos os 32 trailers e aberturas pendentes dos posts `12 jogos leves` (post 36, 12 vídeos YouTube),
+`10 animes essenciais` (post 39, 9 vídeos YouTube + 1 autohospedado em `uploads/posts/animes-essenciais-para-iniciantes/video/fullmetal-alchemist-brotherhood.mp4`)
+e `10 desenhos dos anos 90/2000` (post 40, 10 vídeos YouTube) foram incorporados com sucesso aos
+rascunhos no banco de produção. Nenhuma pendência de mídia restante nesses posts.
 
 ## Automação
-Ver FEAT-009 para o script que automatiza a virada rascunho → publicado
-nessas datas.
+Script `scripts/en-blog-schedule-publish.php`. Roda via Cron Job na
+Hostinger (conta u576397693), diariamente às 12:00 UTC (09:00
+Brasília), direto em produção. Confirmado funcionando em 27/09/2026
+(posts 31 e 32 publicados nas datas certas).
