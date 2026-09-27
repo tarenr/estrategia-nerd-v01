@@ -144,6 +144,7 @@ $rawItems = [
     sidebar_section('Crescimento'),
     sidebar_item('/admin/newsletter', 'fa-solid fa-envelope-open-text', 'Newsletter'),
     sidebar_item('/admin/links', 'fa-solid fa-link', 'Links'),
+    sidebar_item('/admin/instagram', 'fa-brands fa-instagram', 'Instagram'),
     sidebar_section('Sistema'),
     sidebar_item('/admin/home-e-menus', 'fa-solid fa-diagram-project', 'Home e Menus', 'multi_env_menus'),
     sidebar_item('/admin/usuarios', 'fa-solid fa-user', 'Usuarios', 'multi_env_users'),

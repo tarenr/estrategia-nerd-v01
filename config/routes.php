@@ -127,6 +127,16 @@ return [
     ['GET',  '/admin/excluir-link',        [\App\Controllers\Admin\LinksController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-link',        [\App\Controllers\Admin\LinksController::class, 'destroy'], 'auth'],
 
+    // ── Instagram (FEAT-010) ──────────────────────────────────────────────────
+    ['GET',  '/admin/instagram',                         [\App\Controllers\Admin\InstagramController::class, 'index'],       'auth'],
+    ['POST', '/admin/instagram/sincronizar',             [\App\Controllers\Admin\InstagramController::class, 'sync'],        'auth'],
+    ['GET',  '/admin/instagram/posts/criar',             [\App\Controllers\Admin\InstagramController::class, 'create'],      'auth'],
+    ['POST', '/admin/instagram/posts/criar',             [\App\Controllers\Admin\InstagramController::class, 'store'],       'auth'],
+    ['GET',  '/admin/instagram/posts/{id}/editar',       [\App\Controllers\Admin\InstagramController::class, 'edit'],        'auth'],
+    ['POST', '/admin/instagram/posts/{id}/editar',       [\App\Controllers\Admin\InstagramController::class, 'update'],      'auth'],
+    ['GET',  '/admin/instagram/posts/{id}',              [\App\Controllers\Admin\InstagramController::class, 'show'],        'auth'],
+    ['GET',  '/admin/instagram/api/blog-post',           [\App\Controllers\Admin\InstagramController::class, 'blogPostData'], 'auth'],
+
     ['GET',  '/admin/comentarios',         [\App\Controllers\Admin\ComentariosController::class, 'index'], 'auth'],
     ['GET',  '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'reply'], 'auth'],
     ['POST', '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'storeReply'], 'auth'],
