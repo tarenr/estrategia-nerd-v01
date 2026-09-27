@@ -370,6 +370,9 @@
         newsletterForm.reset();
         celebrateNewsletter();
         showToast(result.message || 'Cadastro realizado com sucesso.', 'success');
+        if (window._paq) {
+          window._paq.push(['trackEvent', 'Newsletter', 'Subscribe']);
+        }
       } catch (error) {
         showToast(error instanceof Error ? error.message : 'Erro ao enviar a newsletter.', 'error');
       } finally {

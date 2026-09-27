@@ -130,6 +130,28 @@ $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
       <?php endif; ?>
     <?php endforeach; ?>
   <?php endif; ?>
+
+  <?php
+    $matomoUrl = trim((string) env('MATOMO_URL', ''));
+    $matomoSiteId = trim((string) env('MATOMO_SITE_ID', ''));
+  ?>
+  <?php if ($matomoUrl !== '' && $matomoSiteId !== '' && !$isLogin): ?>
+  <script>
+    var _paq = window._paq = window._paq || [];
+    _paq.push(["disableCookies"]);
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+      var u = "<?= htmlspecialchars(rtrim($matomoUrl, '/') . '/', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>";
+      _paq.push(['setTrackerUrl', u + 'matomo.php']);
+      _paq.push(['setSiteId', '<?= htmlspecialchars($matomoSiteId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>']);
+      var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+      g.async = true;
+      g.src = u + 'matomo.js';
+      s.parentNode.insertBefore(g, s);
+    })();
+  </script>
+  <?php endif; ?>
 </head>
 
 <body class="bg-slate-950 text-slate-100 <?= htmlspecialchars($bodyClass, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
