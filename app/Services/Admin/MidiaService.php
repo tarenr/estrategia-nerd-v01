@@ -782,6 +782,10 @@ final class MidiaService
             return ['ok' => false, 'error' => 'Nao foi possivel mover o arquivo enviado.'];
         }
 
+        if ($type === 'image') {
+            $this->optimizeImageInPlace($target, $extension);
+        }
+
         return [
             'ok' => true,
             'skipped' => false,
@@ -789,6 +793,59 @@ final class MidiaService
             'type' => $type,
             'mime' => (string) ($validation['mime'] ?? ''),
         ];
+    }
+
+    /**
+     * Reduz dimensao (max 2000px no lado maior) e recomprime a imagem no proprio
+     * arquivo. gif e svg nao passam por aqui (gif perderia animacao, svg e vetor).
+     * Falha silenciosamente (mantem o arquivo original) se a imagem nao puder
+     * ser lida - upload ja validado antes, isso e so uma otimizacao extra.
+     */
+    private function optimizeImageInPlace(string $path, string $extension): void
+    {
+        if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+            return;
+        }
+
+        $info = @getimagesize($path);
+        if ($info === false) {
+            return;
+        }
+
+        [$width, $height, $imageType] = $info;
+        $source = match ($imageType) {
+            IMAGETYPE_JPEG => @imagecreatefromjpeg($path),
+            IMAGETYPE_PNG => @imagecreatefrompng($path),
+            IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
+            default => false,
+        };
+        if (!$source) {
+            return;
+        }
+
+        $maxDimension = 2000;
+        if ($width > $maxDimension || $height > $maxDimension) {
+            $scale = $maxDimension / max($width, $height);
+            $newWidth = max(1, (int) round($width * $scale));
+            $newHeight = max(1, (int) round($height * $scale));
+            $resized = imagecreatetruecolor($newWidth, $newHeight);
+            if ($imageType === IMAGETYPE_PNG || $imageType === IMAGETYPE_WEBP) {
+                imagealphablending($resized, false);
+                imagesavealpha($resized, true);
+            }
+            imagecopyresampled($resized, $source, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            imagedestroy($source);
+            $source = $resized;
+        }
+
+        match ($imageType) {
+            IMAGETYPE_JPEG => imagejpeg($source, $path, 82),
+            IMAGETYPE_PNG => imagepng($source, $path, 7),
+            IMAGETYPE_WEBP => function_exists('imagewebp') ? imagewebp($source, $path, 82) : null,
+            default => null,
+        };
+
+        imagedestroy($source);
     }
 
     private function buildUploadConfig(array $input = []): array

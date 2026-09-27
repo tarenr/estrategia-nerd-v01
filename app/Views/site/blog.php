@@ -270,7 +270,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $i
                 <div class="relative h-48 overflow-hidden">
                   <div class="absolute inset-0 site-blog-post-card-fallback"></div>
                   <?php if ((string) ($post['imagem'] ?? '') !== ''): ?>
-                    <img src="<?= htmlspecialchars((string) $post['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
+                    <img src="<?= htmlspecialchars((string) $post['imagem'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars(public_title((string) ($post['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" loading="lazy" class="absolute inset-0 h-full w-full object-cover opacity-80">
                     <div class="absolute inset-0 bg-slate-950/20"></div>
                   <?php else: ?>
                     <div class="absolute inset-0 flex items-center justify-center">

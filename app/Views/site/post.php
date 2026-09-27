@@ -346,7 +346,7 @@ $renderHighlightedTitle = static function (string $value): string {
             <a href="<?= htmlspecialchars((string) ($item['url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="related-card bg-slate-800/50 rounded-2xl overflow-hidden group">
               <div class="h-48 bg-gradient-to-br <?= $tone ?> flex items-center justify-center relative overflow-hidden">
                 <?php if ((string) ($item['imagem'] ?? '') !== ''): ?>
-                  <img src="<?= htmlspecialchars((string) ($item['imagem'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($stripHighlightedTitle((string) ($item['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="absolute inset-0 h-full w-full object-cover opacity-80">
+                  <img src="<?= htmlspecialchars((string) ($item['imagem'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($stripHighlightedTitle((string) ($item['titulo'] ?? '')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" loading="lazy" class="absolute inset-0 h-full w-full object-cover opacity-80">
                   <div class="absolute inset-0 bg-slate-950/20"></div>
                 <?php else: ?>
                   <svg class="w-16 h-16 text-white/30 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
