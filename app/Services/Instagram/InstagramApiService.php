@@ -75,53 +75,158 @@ final class InstagramApiService
     // ── Insights ──────────────────────────────────────────────────────────────
 
     /**
-     * Retorna insights da conta para o período informado ('7d' ou '30d').
-     * Tenta o helper local primeiro; em caso de falha usa a Graph API.
+     * Retorna insights da conta para o período ou datas informadas.
+     * Suporta atalhos ('7d', '14d', '30d', '90d') ou timestamps $since e $until.
      *
+     * @param string|int $since Atalho ('7d', '30d', etc.) ou timestamp inicial
+     * @param int|null   $until Timestamp final (padrão agora)
      * @return array<string,mixed>
      */
-    public function getInsights(string $period = '7d'): array
+    public function getInsights(string|int $since = '7d', ?int $until = null): array
     {
-        $helperData = $this->fetchHelper('/insights?period=' . urlencode($period));
-        if ($helperData !== null) {
-            $reach = isset($helperData['reach7d']) ? (int) $helperData['reach7d'] : 0;
-            $profileViews = isset($helperData['profileViews7d']) ? (int) $helperData['profileViews7d'] : 0;
-            return [
-                'data' => [
-                    ['name' => 'reach', 'values' => [['value' => $reach]]],
-                    ['name' => 'impressions', 'values' => [['value' => null]]],
-                    ['name' => 'profile_views', 'values' => [['value' => $profileViews]]],
-                    ['name' => 'total_interactions', 'values' => [['value' => null]]],
-                ],
-                '_source' => 'helper',
-            ];
+        $now = time();
+        $minSince = strtotime('-90 days', $now); // Limite da Meta Graph API
+
+        if (is_string($since) && preg_match('/^(\d+)d$/', $since, $m)) {
+            $days = min(90, max(1, (int) $m[1]));
+            $sinceTs = strtotime("-{$days} days", $now);
+            $untilTs = $now;
+        } elseif (is_numeric($since)) {
+            $sinceTs = (int) $since;
+            $untilTs = $until !== null ? (int) $until : $now;
+        } else {
+            $parsed = strtotime((string) $since);
+            $sinceTs = $parsed !== false ? $parsed : strtotime('-7 days', $now);
+            $untilTs = $until !== null ? (int) $until : $now;
         }
 
-        $days  = $period === '30d' ? 30 : 7;
-        $since = date('Y-m-d', strtotime("-{$days} days"));
-        $until = date('Y-m-d');
+        // Clamping estrito contra limites da Meta
+        if ($sinceTs < $minSince) {
+            $sinceTs = $minSince;
+        }
+        if ($untilTs > $now) {
+            $untilTs = $now;
+        }
+        if ($sinceTs > $untilTs) {
+            [$sinceTs, $untilTs] = [$untilTs, $sinceTs];
+        }
 
-        return $this->graphGet("/{$this->igUserId}/insights", [
-            'metric'    => 'reach,impressions,profile_views,total_interactions',
-            'period'    => 'day',
-            'since'     => $since,
-            'until'     => $until,
+        // A Meta não permite mais de 30 dias (2592000s) entre since e until em uma única consulta
+        $maxWindow = 30 * 86400;
+        if (($untilTs - $sinceTs) > $maxWindow) {
+            $sinceTs = $untilTs - $maxWindow;
+        }
+
+        // Se for exatamente 7d e helper local responder, usa o helper como cache rápido
+        $isExactly7d = ($since === '7d' || (abs($untilTs - $sinceTs) >= 6 * 86400 && abs($untilTs - $sinceTs) <= 8 * 86400));
+        if ($isExactly7d) {
+            $helperData = $this->fetchHelper('/insights?period=7d');
+            if ($helperData !== null) {
+                $reach = isset($helperData['reach7d']) ? (int) $helperData['reach7d'] : 0;
+                $profileViews = isset($helperData['profileViews7d']) ? (int) $helperData['profileViews7d'] : 0;
+                return [
+                    'data' => [
+                        ['name' => 'reach', 'total_value' => ['value' => $reach]],
+                        ['name' => 'views', 'total_value' => ['value' => 0]],
+                        ['name' => 'profile_views', 'total_value' => ['value' => $profileViews]],
+                        ['name' => 'total_interactions', 'total_value' => ['value' => 0]],
+                    ],
+                    '_source' => 'helper',
+                    'since' => $sinceTs,
+                    'until' => $untilTs,
+                ];
+            }
+        }
+
+        // Meta Graph API v21.0: exige views e metric_type=total_value
+        $res = $this->graphGet("/{$this->igUserId}/insights", [
+            'metric'      => 'reach,views,profile_views,total_interactions',
+            'metric_type' => 'total_value',
+            'period'      => 'day',
+            'since'       => (string) $sinceTs,
+            'until'       => (string) $untilTs,
         ]);
+
+        $res['since'] = $sinceTs;
+        $res['until'] = $untilTs;
+
+        return $res;
     }
 
     // ── Mídia ─────────────────────────────────────────────────────────────────
 
     /**
-     * Retorna as mídias mais recentes da conta.
+     * Retorna mídias da conta com suporte a paginação para recuperar todo o feed.
      *
-     * @return array<string,mixed>
+     * @param int $limit Limite máximo de mídias (0 = todas as mídias disponíveis)
+     * @return array{data: list<array<string,mixed>>, total: int, is_partial: bool}
      */
-    public function getMediaFeed(int $limit = 12): array
+    public function getMediaFeed(int $limit = 0): array
     {
-        return $this->graphGet("/{$this->igUserId}/media", [
-            'fields' => 'id,media_type,media_url,thumbnail_url,permalink,caption,timestamp,like_count,comments_count',
-            'limit'  => (string) $limit,
-        ]);
+        $allData = [];
+        $fields  = 'id,media_type,media_url,thumbnail_url,permalink,caption,timestamp,like_count,comments_count';
+        $pageSize = ($limit > 0 && $limit < 100) ? $limit : 100;
+        $params  = [
+            'fields' => $fields,
+            'limit'  => (string) $pageSize,
+        ];
+
+        $page = $this->graphGet("/{$this->igUserId}/media", $params);
+        $items = (array) ($page['data'] ?? []);
+        $seenIds = [];
+
+        foreach ($items as $item) {
+            if (is_array($item) && isset($item['id'])) {
+                $id = (string) $item['id'];
+                if (!isset($seenIds[$id])) {
+                    $seenIds[$id] = true;
+                    $allData[] = $item;
+                }
+            }
+        }
+
+        $pageCount = 1;
+        $maxPages = 50; // Proteção contra loops infinitos (até 5000 posts)
+        $isPartial = false;
+
+        while ((!empty($page['paging']['next'])) && ($limit === 0 || count($allData) < $limit) && $pageCount < $maxPages) {
+            $nextUrl = (string) $page['paging']['next'];
+            $parsed = parse_url($nextUrl);
+            if (!isset($parsed['host']) || !str_ends_with($parsed['host'], 'facebook.com')) {
+                break;
+            }
+
+            try {
+                $page = $this->httpGet($nextUrl, self::API_TIMEOUT);
+                $items = (array) ($page['data'] ?? []);
+                if (empty($items)) {
+                    break;
+                }
+
+                $pageCount++;
+                foreach ($items as $item) {
+                    if (is_array($item) && isset($item['id'])) {
+                        $id = (string) $item['id'];
+                        if (!isset($seenIds[$id])) {
+                            $seenIds[$id] = true;
+                            $allData[] = $item;
+                            if ($limit > 0 && count($allData) >= $limit) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (RuntimeException) {
+                $isPartial = true;
+                break;
+            }
+        }
+
+        return [
+            'data'       => $allData,
+            'total'      => count($allData),
+            'is_partial' => $isPartial,
+        ];
     }
 
     /**
@@ -402,24 +507,26 @@ final class InstagramApiService
         $curlErr  = curl_error($ch);
         curl_close($ch);
 
+        $safeUrl = $this->sanitizeUrl($url);
+
         if ($body === false || $curlErr !== '') {
-            throw new RuntimeException("cURL GET falhou [{$url}]: {$curlErr}");
+            throw new RuntimeException("cURL GET falhou [{$safeUrl}]: {$curlErr}");
         }
 
         /** @var array<string,mixed>|null $decoded */
         $decoded = json_decode((string) $body, true);
 
         if (!is_array($decoded)) {
-            throw new RuntimeException("Resposta inválida da API [{$url}]: {$body}");
+            throw new RuntimeException("Resposta inválida da API [{$safeUrl}]: {$body}");
         }
 
         if (isset($decoded['error']) && is_array($decoded['error'])) {
             $msg = (string) ($decoded['error']['message'] ?? 'Erro desconhecido da Meta API');
-            throw new RuntimeException("Meta API error [{$url}]: {$msg}");
+            throw new RuntimeException("Meta API error [{$safeUrl}]: {$msg}");
         }
 
         if ($httpCode >= 400) {
-            throw new RuntimeException("HTTP {$httpCode} em [{$url}]");
+            throw new RuntimeException("HTTP {$httpCode} em [{$safeUrl}]");
         }
 
         return $decoded;
@@ -454,26 +561,36 @@ final class InstagramApiService
         $curlErr  = curl_error($ch);
         curl_close($ch);
 
+        $safeUrl = $this->sanitizeUrl($url);
+
         if ($body === false || $curlErr !== '') {
-            throw new RuntimeException("cURL POST falhou [{$url}]: {$curlErr}");
+            throw new RuntimeException("cURL POST falhou [{$safeUrl}]: {$curlErr}");
         }
 
         /** @var array<string,mixed>|null $decoded */
         $decoded = json_decode((string) $body, true);
 
         if (!is_array($decoded)) {
-            throw new RuntimeException("Resposta inválida da API POST [{$url}]: {$body}");
+            throw new RuntimeException("Resposta inválida da API POST [{$safeUrl}]: {$body}");
         }
 
         if (isset($decoded['error']) && is_array($decoded['error'])) {
             $msg = (string) ($decoded['error']['message'] ?? 'Erro desconhecido da Meta API');
-            throw new RuntimeException("Meta API POST error [{$url}]: {$msg}");
+            throw new RuntimeException("Meta API POST error [{$safeUrl}]: {$msg}");
         }
 
         if ($httpCode >= 400) {
-            throw new RuntimeException("HTTP {$httpCode} em POST [{$url}]");
+            throw new RuntimeException("HTTP {$httpCode} em POST [{$safeUrl}]");
         }
 
         return $decoded;
+    }
+
+    /**
+     * Remove tokens de acesso de URLs para evitar vazamento em logs e mensagens de erro.
+     */
+    private function sanitizeUrl(string $url): string
+    {
+        return (string) preg_replace('/([?&]access_token=)[^&]+/i', '$1[REDACTED]', $url);
     }
 }

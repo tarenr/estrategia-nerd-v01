@@ -362,27 +362,84 @@ final class InstagramPostRepository
      */
     public function upsertFromFeed(array $data): void
     {
-        $stmt = $this->pdo->prepare(
-            "INSERT INTO instagram_posts
-               (account_id, status, tipo, legenda, hashtags_count,
-                ig_media_id, permalink, publicado_em, origin)
-             VALUES
-               (:account_id, 'publicado', :tipo, :legenda, :hashtags_count,
-                :ig_media_id, :permalink, :publicado_em, 'instagram')
-             ON DUPLICATE KEY UPDATE
-               legenda        = VALUES(legenda),
-               permalink      = VALUES(permalink),
-               atualizado_em  = NOW()"
-        );
-        $stmt->execute([
-            ':account_id'     => (int) ($data['account_id'] ?? 0),
-            ':tipo'           => (string) ($data['tipo'] ?? 'imagem'),
-            ':legenda'        => $data['legenda'] ?? null,
-            ':hashtags_count' => (int) ($data['hashtags_count'] ?? 0),
-            ':ig_media_id'    => (string) ($data['ig_media_id'] ?? ''),
-            ':permalink'      => $data['permalink'] ?? null,
-            ':publicado_em'   => $data['publicado_em'] ?? null,
-        ]);
+        $igMediaId = trim((string) ($data['ig_media_id'] ?? ''));
+        if ($igMediaId === '') {
+            return;
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare(
+                "INSERT INTO instagram_posts
+                   (account_id, status, tipo, legenda, hashtags_count, curtidas, comentarios_count,
+                    ig_media_id, permalink, publicado_em, origin)
+                 VALUES
+                   (:account_id, 'publicado', :tipo, :legenda, :hashtags_count, :curtidas, :comentarios_count,
+                    :ig_media_id, :permalink, :publicado_em, 'instagram')
+                 ON DUPLICATE KEY UPDATE
+                   tipo              = VALUES(tipo),
+                   legenda           = VALUES(legenda),
+                   hashtags_count    = VALUES(hashtags_count),
+                   curtidas          = VALUES(curtidas),
+                   comentarios_count = VALUES(comentarios_count),
+                   permalink         = VALUES(permalink),
+                   publicado_em      = VALUES(publicado_em),
+                   atualizado_em     = NOW()"
+            );
+            $stmt->execute([
+                ':account_id'        => (int) ($data['account_id'] ?? 0),
+                ':tipo'              => (string) ($data['tipo'] ?? 'imagem'),
+                ':legenda'           => $data['legenda'] ?? null,
+                ':hashtags_count'    => (int) ($data['hashtags_count'] ?? 0),
+                ':curtidas'          => (int) ($data['curtidas'] ?? 0),
+                ':comentarios_count' => (int) ($data['comentarios_count'] ?? 0),
+                ':ig_media_id'       => $igMediaId,
+                ':permalink'         => $data['permalink'] ?? null,
+                ':publicado_em'      => $data['publicado_em'] ?? null,
+            ]);
+
+            $stmtId = $this->pdo->prepare("SELECT id FROM instagram_posts WHERE ig_media_id = :ig_media_id LIMIT 1");
+            $stmtId->execute([':ig_media_id' => $igMediaId]);
+            $postId = (int) $stmtId->fetchColumn();
+
+            if ($postId > 0) {
+                $mediaUrl = trim((string) ($data['media_url'] ?? $data['thumbnail_url'] ?? ''));
+                if ($mediaUrl !== '') {
+                    $tipoArquivo = ($data['tipo'] ?? '') === 'reels' ? 'video' : 'imagem';
+                    $stmtMedia = $this->pdo->prepare("SELECT id FROM instagram_post_media WHERE post_id = :post_id AND ordem = 1 LIMIT 1");
+                    $stmtMedia->execute([':post_id' => $postId]);
+                    $mediaId = (int) $stmtMedia->fetchColumn();
+
+                    if ($mediaId > 0) {
+                        $updMedia = $this->pdo->prepare("UPDATE instagram_post_media SET caminho = :caminho, url_publica = :url_publica, tipo_arquivo = :tipo WHERE id = :id");
+                        $updMedia->execute([
+                            ':caminho'     => $mediaUrl,
+                            ':url_publica' => $mediaUrl,
+                            ':tipo'        => $tipoArquivo,
+                            ':id'          => $mediaId,
+                        ]);
+                    } else {
+                        $insMedia = $this->pdo->prepare(
+                            "INSERT INTO instagram_post_media (post_id, ordem, tipo_arquivo, caminho, url_publica)
+                             VALUES (:post_id, 1, :tipo, :caminho, :url_publica)"
+                        );
+                        $insMedia->execute([
+                            ':post_id'     => $postId,
+                            ':tipo'        => $tipoArquivo,
+                            ':caminho'     => $mediaUrl,
+                            ':url_publica' => $mediaUrl,
+                        ]);
+                    }
+                }
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 
     // ── Cache de Insights ─────────────────────────────────────────────────────
@@ -396,25 +453,29 @@ final class InstagramPostRepository
     {
         $stmt = $this->pdo->prepare(
             "INSERT INTO instagram_insights_cache
-               (account_id, periodo, data_referencia, alcance, impressoes,
+               (account_id, periodo, data_inicio, data_fim, data_referencia, alcance, visualizacoes, impressoes,
                 visitas_perfil, interacoes, seguidores, variacao_seguidores, payload_raw)
              VALUES
-               (:account_id, :periodo, :data_referencia, :alcance, :impressoes,
+               (:account_id, :periodo, :data_inicio, :data_fim, :data_referencia, :alcance, :visualizacoes, :impressoes,
                 :visitas_perfil, :interacoes, :seguidores, :variacao_seguidores, :payload_raw)
              ON DUPLICATE KEY UPDATE
-               alcance            = VALUES(alcance),
-               impressoes         = VALUES(impressoes),
-               visitas_perfil     = VALUES(visitas_perfil),
-               interacoes         = VALUES(interacoes),
-               seguidores         = VALUES(seguidores),
+               alcance             = VALUES(alcance),
+               visualizacoes       = VALUES(visualizacoes),
+               impressoes          = VALUES(impressoes),
+               visitas_perfil      = VALUES(visitas_perfil),
+               interacoes          = VALUES(interacoes),
+               seguidores          = VALUES(seguidores),
                variacao_seguidores = VALUES(variacao_seguidores),
-               payload_raw        = VALUES(payload_raw)"
+               payload_raw         = VALUES(payload_raw)"
         );
         $stmt->execute([
             ':account_id'          => (int) ($data['account_id'] ?? 0),
             ':periodo'             => (string) ($data['periodo'] ?? '7d'),
+            ':data_inicio'         => $data['data_inicio'] ?? null,
+            ':data_fim'            => $data['data_fim'] ?? null,
             ':data_referencia'     => (string) ($data['data_referencia'] ?? date('Y-m-d')),
             ':alcance'             => (int) ($data['alcance'] ?? 0),
+            ':visualizacoes'       => (int) ($data['visualizacoes'] ?? $data['views'] ?? 0),
             ':impressoes'          => (int) ($data['impressoes'] ?? 0),
             ':visitas_perfil'      => (int) ($data['visitas_perfil'] ?? 0),
             ':interacoes'          => (int) ($data['interacoes'] ?? 0),
@@ -425,12 +486,30 @@ final class InstagramPostRepository
     }
 
     /**
-     * Retorna o último snapshot de insights para o período informado.
+     * Retorna o último snapshot de insights para o período ou intervalo informado.
      *
      * @return array<string,mixed>|null
      */
-    public function getLatestInsights(int $accountId, string $period = '7d'): ?array
+    public function getLatestInsights(int $accountId, string $period = '7d', ?string $startDate = null, ?string $endDate = null): ?array
     {
+        if ($startDate !== null && $endDate !== null) {
+            $stmt = $this->pdo->prepare(
+                "SELECT * FROM instagram_insights_cache
+                  WHERE account_id = :account_id AND data_inicio = :start_date AND data_fim = :end_date
+                  ORDER BY data_referencia DESC
+                  LIMIT 1"
+            );
+            $stmt->execute([
+                ':account_id' => $accountId,
+                ':start_date' => $startDate,
+                ':end_date'   => $endDate,
+            ]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (is_array($row)) {
+                return $row;
+            }
+        }
+
         $stmt = $this->pdo->prepare(
             "SELECT * FROM instagram_insights_cache
               WHERE account_id = :account_id AND periodo = :periodo
@@ -464,6 +543,102 @@ final class InstagramPostRepository
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Lista posts com paginação, filtros e ordenação para a tabela do painel admin.
+     *
+     * @param int                 $accountId
+     * @param array<string,mixed> $filters
+     * @param string              $sort
+     * @param string              $dir
+     * @param int                 $page
+     * @param int                 $perPage
+     * @return array{items: list<array<string,mixed>>, total: int, page: int, per_page: int, pages: int}
+     */
+    public function listPostsPaged(
+        int $accountId,
+        array $filters = [],
+        string $sort = 'publicado_em',
+        string $dir = 'desc',
+        int $page = 1,
+        int $perPage = 10
+    ): array {
+        $allowedSort = [
+            'data'              => 'p.publicado_em',
+            'publicado_em'      => 'p.publicado_em',
+            'curtidas'          => 'p.curtidas',
+            'comentarios'       => 'p.comentarios_count',
+            'comentarios_count' => 'p.comentarios_count',
+            'tipo'              => 'p.tipo',
+            'status'            => 'p.status',
+            'id'                => 'p.id',
+        ];
+
+        $sortCol = $allowedSort[$sort] ?? 'p.publicado_em';
+        $direction = strtolower($dir) === 'asc' ? 'ASC' : 'DESC';
+
+        $where = ['p.account_id = :account_id'];
+        $params = [':account_id' => $accountId];
+
+        $busca = trim((string) ($filters['busca'] ?? ''));
+        if ($busca !== '') {
+            $where[] = 'p.legenda LIKE :busca';
+            $params[':busca'] = '%' . $busca . '%';
+        }
+
+        $tipo = trim((string) ($filters['tipo'] ?? ''));
+        if ($tipo !== '' && in_array($tipo, ['imagem', 'carrossel', 'reels', 'story'], true)) {
+            $where[] = 'p.tipo = :tipo';
+            $params[':tipo'] = $tipo;
+        }
+
+        $status = trim((string) ($filters['status'] ?? ''));
+        if ($status !== '' && in_array($status, ['publicado', 'agendado', 'rascunho', 'publicando', 'erro'], true)) {
+            $where[] = 'p.status = :status';
+            $params[':status'] = $status;
+        }
+
+        $whereSql = implode(' AND ', $where);
+
+        $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM instagram_posts p WHERE {$whereSql}");
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetchColumn();
+
+        $page = max(1, $page);
+        $perPage = in_array($perPage, [10, 20, 50], true) ? $perPage : 10;
+        $pages = max(1, (int) ceil($total / $perPage));
+        if ($page > $pages && $total > 0) {
+            $page = $pages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        $sql = "SELECT p.*, GROUP_CONCAT(m.caminho ORDER BY m.ordem SEPARATOR '|') AS medias
+                  FROM instagram_posts p
+                  LEFT JOIN instagram_post_media m ON m.post_id = p.id
+                 WHERE {$whereSql}
+                 GROUP BY p.id
+                 ORDER BY {$sortCol} {$direction}, p.id DESC
+                 LIMIT :offset, :per_page";
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindValue(':per_page', $perPage, PDO::PARAM_INT);
+        $stmt->execute();
+
+        /** @var list<array<string,mixed>> $items */
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'items'    => $items,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'pages'    => $pages,
+        ];
     }
 
     /**

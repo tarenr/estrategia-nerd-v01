@@ -37,31 +37,92 @@ final class InstagramController
         }
 
         $accountId = (int) $account['id'];
-        $scheduled = $repo->listScheduled($accountId, 10);
-        $drafts    = $repo->listDrafts($accountId, 10);
-        $published = $repo->listPublished($accountId, 12);
-        $insights7 = $repo->getLatestInsights($accountId, '7d');
-        $insights30 = $repo->getLatestInsights($accountId, '30d');
+        $scheduled = $repo->listScheduled($accountId, 20);
+        $drafts    = $repo->listDrafts($accountId, 20);
 
-        // Feed ao vivo via API (best-effort)
-        $feed = [];
-        try {
-            $api = $this->api($account);
-            $result = $api->getMediaFeed(12);
-            $feed = $result['data'] ?? [];
-        } catch (RuntimeException) {
-            // Continua sem feed ao vivo — usa publicados locais
+        // ── Filtro de Datas e Intervalo de Insights ─────────────────────────────
+        $todayYmd   = date('Y-m-d');
+        $minAllowed = date('Y-m-d', strtotime('-90 days'));
+
+        $period = trim((string) ($_GET['period'] ?? ''));
+        if (!in_array($period, ['7d', '14d', '21d', '30d', 'custom'], true)) {
+            $period = '7d';
         }
 
+        $startIn = trim((string) ($_GET['start'] ?? ''));
+        $endIn   = trim((string) ($_GET['end'] ?? ''));
+
+        if ($startIn !== '' && $endIn !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startIn) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $endIn)) {
+            $period = 'custom';
+        } else {
+            $days = match ($period) {
+                '14d'   => 14,
+                '21d'   => 21,
+                '30d'   => 30,
+                default => 7,
+            };
+            $startIn = date('Y-m-d', strtotime("-{$days} days"));
+            $endIn   = $todayYmd;
+        }
+
+        // Clamping estrito contra os limites da Meta (máx 30 dias de janela, até 90 dias atrás)
+        if ($startIn < $minAllowed) {
+            $startIn = $minAllowed;
+        }
+        if ($endIn > $todayYmd) {
+            $endIn = $todayYmd;
+        }
+        if ($startIn > $endIn) {
+            [$startIn, $endIn] = [$endIn, $startIn];
+        }
+        $windowDays = (int) ((strtotime($endIn) - strtotime($startIn)) / 86400);
+        if ($windowDays > 30) {
+            $startIn = date('Y-m-d', strtotime('-30 days', strtotime($endIn)));
+        }
+
+        // Buscar insights no cache
+        $insights = $repo->getLatestInsights($accountId, $period, $startIn, $endIn);
+
+        // Se não houver no cache, tenta buscar ao vivo na API
+        if ($insights === null) {
+            try {
+                $api = $this->api($account);
+                $apiRes = $api->getInsights(strtotime($startIn . ' 00:00:00'), strtotime($endIn . ' 23:59:59'));
+                $followers = (int) ($account['followers_count'] ?? 0);
+                $this->persistInsights($repo, $accountId, $period, $apiRes, $followers, $startIn, $endIn);
+                $insights = $repo->getLatestInsights($accountId, $period, $startIn, $endIn);
+            } catch (RuntimeException) {
+                // Continua sem snapshot
+            }
+        }
+
+        // ── Filtros, Ordenação e Paginação da Lista de Posts ───────────────────
+        $filters = [
+            'busca'  => trim((string) ($_GET['busca'] ?? '')),
+            'tipo'   => trim((string) ($_GET['tipo'] ?? '')),
+            'status' => trim((string) ($_GET['status'] ?? '')),
+        ];
+
+        $sort    = trim((string) ($_GET['sort'] ?? 'publicado_em'));
+        $dir     = strtolower(trim((string) ($_GET['dir'] ?? 'desc'))) === 'asc' ? 'asc' : 'desc';
+        $page    = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = in_array((int) ($_GET['per_page'] ?? 10), [10, 20, 50], true) ? (int) $_GET['per_page'] : 10;
+
+        $postsPaged = $repo->listPostsPaged($accountId, $filters, $sort, $dir, $page, $perPage);
+
         View::render('admin/instagram/index', [
-            'title'      => 'Instagram',
-            'account'    => $account,
-            'scheduled'  => $scheduled,
-            'drafts'     => $drafts,
-            'published'  => $published,
-            'feed'       => $feed,
-            'insights7'  => $insights7,
-            'insights30' => $insights30,
+            'title'       => 'Instagram',
+            'account'     => $account,
+            'scheduled'   => $scheduled,
+            'drafts'      => $drafts,
+            'posts_paged' => $postsPaged,
+            'filters'     => $filters,
+            'sort'        => $sort,
+            'dir'         => $dir,
+            'period'      => $period,
+            'start'       => $startIn,
+            'end'         => $endIn,
+            'insights'    => $insights,
         ]);
     }
 
@@ -93,18 +154,63 @@ final class InstagramController
 
             $followers = (int) ($profile['followers_count'] ?? $account['followers_count'] ?? 0);
 
-            // Salvar insights 7d
-            $insights7 = $api->getInsights('7d');
-            $this->persistInsights($repo, (int) $account['id'], '7d', $insights7, $followers);
+            // Sincronizar períodos padrão de insights
+            foreach (['7d', '14d', '21d', '30d'] as $p) {
+                try {
+                    $ins = $api->getInsights($p);
+                    $days = (int) str_replace('d', '', $p);
+                    $sDate = date('Y-m-d', strtotime("-{$days} days"));
+                    $eDate = date('Y-m-d');
+                    $this->persistInsights($repo, (int) $account['id'], $p, $ins, $followers, $sDate, $eDate);
+                } catch (RuntimeException) {
+                    // Falha em período individual não interrompe os outros
+                }
+            }
 
-            // Salvar insights 30d
-            $insights30 = $api->getInsights('30d');
-            $this->persistInsights($repo, (int) $account['id'], '30d', $insights30, $followers);
+            // Sincronizar todos os posts do feed (0 = todos)
+            $feedRes = $api->getMediaFeed(0);
+            $postsSynced = 0;
+            foreach ($feedRes['data'] as $item) {
+                $tipo = match ((string) ($item['media_type'] ?? '')) {
+                    'VIDEO'          => 'reels',
+                    'CAROUSEL_ALBUM' => 'carrossel',
+                    default          => 'imagem',
+                };
+                $caption = (string) ($item['caption'] ?? '');
+                preg_match_all('/#\w+/u', $caption, $matches);
+                $hashtagsCount = count($matches[0]);
 
-            echo json_encode(['ok' => true, 'synced_at' => date('d/m/Y H:i')], JSON_UNESCAPED_UNICODE);
+                $publishedAt = null;
+                if (!empty($item['timestamp'])) {
+                    $publishedAt = date('Y-m-d H:i:s', strtotime((string) $item['timestamp']) ?: time());
+                }
+
+                $repo->upsertFromFeed([
+                    'account_id'        => (int) $account['id'],
+                    'tipo'              => $tipo,
+                    'legenda'           => $caption,
+                    'hashtags_count'    => $hashtagsCount,
+                    'curtidas'          => (int) ($item['like_count'] ?? 0),
+                    'comentarios_count' => (int) ($item['comments_count'] ?? 0),
+                    'ig_media_id'       => (string) ($item['id'] ?? ''),
+                    'permalink'         => (string) ($item['permalink'] ?? ''),
+                    'publicado_em'      => $publishedAt,
+                    'media_url'         => (string) ($item['media_url'] ?? ''),
+                    'thumbnail_url'     => (string) ($item['thumbnail_url'] ?? ''),
+                ]);
+                $postsSynced++;
+            }
+
+            echo json_encode([
+                'ok'           => true,
+                'synced_at'    => date('d/m/Y H:i'),
+                'posts_synced' => $postsSynced,
+                'is_partial'   => (bool) $feedRes['is_partial'],
+            ], JSON_UNESCAPED_UNICODE);
         } catch (RuntimeException $e) {
             http_response_code(502);
-            echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            $safeError = (string) preg_replace('/([?&]access_token=)[^&]+/i', '$1[REDACTED]', $e->getMessage());
+            echo json_encode(['ok' => false, 'error' => $safeError], JSON_UNESCAPED_UNICODE);
         }
     }
 
@@ -739,24 +845,33 @@ final class InstagramController
         string $period,
         array $apiResponse,
         int $currentFollowers = 0,
+        ?string $startDate = null,
+        ?string $endDate = null,
     ): void {
         $data   = $apiResponse['data'] ?? [];
-        $totals = ['reach' => 0, 'impressions' => 0, 'profile_views' => 0, 'total_interactions' => 0];
+        $totals = ['reach' => 0, 'views' => 0, 'impressions' => 0, 'profile_views' => 0, 'total_interactions' => 0];
 
         if (is_array($data)) {
             foreach ($data as $metric) {
-                $name   = (string) ($metric['name'] ?? '');
-                $values = (array) ($metric['values'] ?? []);
-                $sum    = 0;
-                foreach ($values as $v) {
-                    if (isset($v['value'])) {
-                        $sum += (int) $v['value'];
+                $name = (string) ($metric['name'] ?? '');
+                $val  = 0;
+                if (isset($metric['total_value']['value'])) {
+                    $val = (int) $metric['total_value']['value'];
+                } elseif (isset($metric['values']) && is_array($metric['values'])) {
+                    foreach ($metric['values'] as $v) {
+                        if (isset($v['value'])) {
+                            $val += (int) $v['value'];
+                        }
                     }
                 }
                 if (array_key_exists($name, $totals)) {
-                    $totals[$name] = $sum;
+                    $totals[$name] = $val;
                 }
             }
+        }
+
+        if ($totals['impressions'] === 0 && $totals['views'] > 0) {
+            $totals['impressions'] = $totals['views'];
         }
 
         $today = date('Y-m-d');
@@ -769,8 +884,11 @@ final class InstagramController
         $repo->upsertInsightsCache([
             'account_id'          => $accountId,
             'periodo'             => $period,
+            'data_inicio'         => $startDate,
+            'data_fim'            => $endDate,
             'data_referencia'     => $today,
             'alcance'             => $totals['reach'],
+            'visualizacoes'       => $totals['views'],
             'impressoes'          => $totals['impressions'],
             'visitas_perfil'      => $totals['profile_views'],
             'interacoes'          => $totals['total_interactions'],

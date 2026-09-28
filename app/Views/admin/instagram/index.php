@@ -9,25 +9,43 @@
  * @var array<string,mixed>|null      $account      Conta ativa ou null se não configurada
  * @var array<int,array<string,mixed>> $scheduled    Posts agendados
  * @var array<int,array<string,mixed>> $drafts       Rascunhos
- * @var array<int,array<string,mixed>> $published    Publicados locais
- * @var array<int,array<string,mixed>> $feed         Feed ao vivo da Meta API
- * @var array<string,mixed>|null      $insights7     Insights 7d (cache)
- * @var array<string,mixed>|null      $insights30    Insights 30d (cache)
+ * @var array<string,mixed>           $posts_paged  Posts paginados (items, total, page, per_page, pages)
+ * @var array<string,string>          $filters      Filtros ativos (busca, tipo, status)
+ * @var string                        $sort         Coluna de ordenação
+ * @var string                        $dir          Direção da ordenação (asc/desc)
+ * @var string                        $period       Período ativo (7d, 14d, 30d, 90d, custom)
+ * @var string                        $start        Data inicial YYYY-MM-DD
+ * @var string                        $end          Data final YYYY-MM-DD
+ * @var array<string,mixed>|null      $insights     Snapshot de insights
  */
 
 declare(strict_types=1);
 
-$account    = $account ?? null;
-$scheduled  = $scheduled ?? [];
-$drafts     = $drafts ?? [];
-$published  = $published ?? [];
-$feed       = $feed ?? [];
-$insights7  = $insights7 ?? null;
-$insights30 = $insights30 ?? null;
+$account     = $account ?? null;
+$scheduled   = $scheduled ?? [];
+$drafts      = $drafts ?? [];
+$postsPaged  = $posts_paged ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 10, 'pages' => 1];
+$items       = (array) ($postsPaged['items'] ?? []);
+$totalPosts  = (int) ($postsPaged['total'] ?? 0);
+$page        = max(1, (int) ($postsPaged['page'] ?? 1));
+$perPage     = max(5, (int) ($postsPaged['per_page'] ?? 10));
+$pages       = max(1, (int) ($postsPaged['pages'] ?? 1));
+
+$filters     = $filters ?? ['busca' => '', 'tipo' => '', 'status' => ''];
+$busca       = (string) ($filters['busca'] ?? '');
+$tipo        = (string) ($filters['tipo'] ?? '');
+$status      = (string) ($filters['status'] ?? '');
+
+$sort        = (string) ($sort ?? 'publicado_em');
+$dir         = (string) ($dir ?? 'desc');
+$period      = (string) ($period ?? '7d');
+$start       = (string) ($start ?? date('Y-m-d', strtotime('-7 days')));
+$end         = (string) ($end ?? date('Y-m-d'));
+$insights    = $insights ?? null;
 
 $fmt = static fn (int $v): string => number_format($v, 0, ',', '.');
 $esc = static fn (?string $v): string => htmlspecialchars((string) $v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-$excerpt = static function (?string $v, int $len = 60): string {
+$excerpt = static function (?string $v, int $len = 65): string {
     $v = trim((string) $v);
     if ($v === '') {
         return '—';
@@ -35,45 +53,92 @@ $excerpt = static function (?string $v, int $len = 60): string {
     return mb_strlen($v) > $len ? mb_substr($v, 0, $len) . '…' : $v;
 };
 
+$formatDate = static function (?string $value): string {
+    if (!$value) {
+        return '—';
+    }
+    try {
+        return (new DateTimeImmutable((string) $value))->format('d/m/Y H:i');
+    } catch (Throwable) {
+        return (string) $value;
+    }
+};
+
+$statusClasses = static function (string $st): string {
+    return match ($st) {
+        'publicado'  => 'status-badge status-publicado',
+        'agendado'   => 'status-badge status-agendado',
+        'rascunho'   => 'status-badge status-rascunho',
+        'publicando' => 'status-badge border-amber-500/30 text-amber-200 bg-amber-500/10',
+        'erro'       => 'status-badge border-rose-500/30 text-rose-300 bg-rose-500/10',
+        default      => 'status-badge',
+    };
+};
+
+$tipoBadge = static function (string $tp): string {
+    return match ($tp) {
+        'reels'     => 'border-purple-500/30 text-purple-200 bg-purple-500/10',
+        'carrossel' => 'border-cyan-500/30 text-cyan-200 bg-cyan-500/10',
+        'story'     => 'border-pink-500/30 text-pink-200 bg-pink-500/10',
+        default     => 'border-slate-500/30 text-slate-300 bg-slate-500/10',
+    };
+};
+
+$tipoLabel = ['imagem' => 'Imagem', 'carrossel' => 'Carrossel', 'reels' => 'Reels', 'story' => 'Story'];
+
+$baseUrl = function_exists('url') ? url('/admin/instagram') : '/admin/instagram';
+$buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $sort, $dir, $page, $perPage, $period, $start, $end): string {
+    $query = [
+        'busca'    => (string) ($filters['busca'] ?? ''),
+        'tipo'     => (string) ($filters['tipo'] ?? ''),
+        'status'   => (string) ($filters['status'] ?? ''),
+        'period'   => $period,
+        'start'    => $start,
+        'end'      => $end,
+        'sort'     => $sort,
+        'dir'      => $dir,
+        'page'     => $page,
+        'per_page' => $perPage,
+    ];
+
+    foreach ($overrides as $k => $v) {
+        $query[$k] = $v;
+    }
+
+    $query = array_filter($query, static fn ($v): bool => !($v === '' || $v === null));
+    $qs = http_build_query($query);
+
+    return $qs !== '' ? $baseUrl . '?' . $qs : $baseUrl;
+};
+
+$sortLink = static function (string $column) use ($sort, $dir, $buildUrl): string {
+    $nextDir = ($sort === $column && $dir === 'asc') ? 'desc' : 'asc';
+    return $buildUrl(['sort' => $column, 'dir' => $nextDir, 'page' => 1]);
+};
+
+$sortIcon = static function (string $column) use ($sort, $dir): string {
+    if ($sort !== $column) {
+        return '<span class="text-slate-600">&harr;</span>';
+    }
+    return $dir === 'asc' ? '<span class="text-cyan-300">&uarr;</span>' : '<span class="text-cyan-300">&darr;</span>';
+};
+
 $csrfToken = \App\Support\Csrf::token();
-
-$statusLabels = ['rascunho' => 'Rascunho', 'agendado' => 'Agendado', 'publicando' => 'Publicando', 'publicado' => 'Publicado', 'erro' => 'Erro'];
-$tipoLabels   = ['imagem' => 'Imagem', 'carrossel' => 'Carrossel', 'reels' => 'Reels', 'story' => 'Story'];
-
-$totalPosts = count($scheduled) + count($drafts) + count($published);
-
 $saved = isset($_GET['saved']) && (string) $_GET['saved'] === '1';
 $publishedFlag = isset($_GET['published']) && (string) $_GET['published'] === '1';
 
-// Normaliza o feed: prioriza a API ao vivo; se vazia, usa os publicados locais (formato diferente).
-$feedItems = [];
-if (!empty($feed)) {
-    foreach ($feed as $m) {
-        $feedItems[] = [
-            'thumb'     => (string) ($m['thumbnail_url'] ?? $m['media_url'] ?? ''),
-            'caption'   => (string) ($m['caption'] ?? ''),
-            'likes'     => isset($m['like_count']) ? (int) $m['like_count'] : null,
-            'comments'  => isset($m['comments_count']) ? (int) $m['comments_count'] : null,
-            'permalink' => (string) ($m['permalink'] ?? ''),
-        ];
-    }
-} else {
-    foreach ($published as $p) {
-        $paths     = array_values(array_filter(explode('|', (string) ($p['medias'] ?? ''))));
-        $firstPath = $paths[0] ?? '';
-        $thumb     = $firstPath === '' ? '' : (str_starts_with($firstPath, 'http') ? $firstPath : url('/' . ltrim($firstPath, '/')));
-        $feedItems[] = [
-            'thumb'     => $thumb,
-            'caption'   => (string) ($p['legenda'] ?? ''),
-            'likes'     => null,
-            'comments'  => null,
-            'permalink' => (string) ($p['permalink'] ?? ''),
-        ];
-    }
+$firstItem = $totalPosts > 0 ? (($page - 1) * $perPage) + 1 : 0;
+$lastItem = $totalPosts > 0 ? min($totalPosts, $page * $perPage) : 0;
+$startRange = max(1, $page - 2);
+$endRange = min($pages, $page + 2);
+if (($endRange - $startRange) < 4) {
+    $startRange = max(1, $endRange - 4);
+    $endRange = min($pages, $startRange + 4);
 }
 ?>
 
-<div class="max-w-7xl mx-auto" data-instagram-index-root>
+<div class="max-w-7xl mx-auto px-4 py-6 space-y-6" data-admin-instagram-root>
+  <!-- Cabeçalho Principal -->
   <div class="admin-page-header">
     <div class="admin-page-heading">
       <h1 class="admin-page-title"><i class="fa-brands fa-instagram text-pink-400" aria-hidden="true"></i> Instagram</h1>
@@ -81,227 +146,585 @@ if (!empty($feed)) {
     </div>
 
     <div class="admin-page-actions">
-      <div class="admin-chip">Total de posts: <?= $fmt($totalPosts) ?></div>
+      <div class="admin-chip">
+        Total de posts: <?= $fmt((int) ($account['media_count'] ?? $totalPosts)) ?>
+      </div>
       <a href="<?= url('/admin/instagram/posts/criar') ?>" class="admin-btn admin-btn-primary">
         <i class="fa-solid fa-plus" aria-hidden="true"></i> Novo Post
       </a>
     </div>
   </div>
 
-  <div class="space-y-6 mt-6">
-    <?php if ($saved): ?>
-      <section class="admin-panel border border-emerald-500/30"><div class="text-sm font-bold text-emerald-300">Post salvo com sucesso.</div></section>
-    <?php endif; ?>
-    <?php if ($publishedFlag): ?>
-      <section class="admin-panel border border-emerald-500/30"><div class="text-sm font-bold text-emerald-300">Post enviado para publicação. Acompanhe o status na lista abaixo.</div></section>
-    <?php endif; ?>
+  <?php if ($saved): ?>
+    <section class="admin-panel border border-emerald-500/30">
+      <div class="text-sm font-bold text-emerald-300">Post salvo com sucesso.</div>
+    </section>
+  <?php endif; ?>
+  <?php if ($publishedFlag): ?>
+    <section class="admin-panel border border-emerald-500/30">
+      <div class="text-sm font-bold text-emerald-300">Post enviado para publicação com sucesso.</div>
+    </section>
+  <?php endif; ?>
 
-    <?php if ($account === null): ?>
-      <section class="admin-panel border border-amber-500/30">
-        <div class="admin-panel-title"><i class="fa-solid fa-triangle-exclamation text-amber-300" aria-hidden="true"></i><span>Nenhuma conta Instagram configurada</span></div>
-        <div class="admin-panel-subtitle mt-2">
-          Insira a conta diretamente no banco de dados para ativar o módulo:
+  <?php if ($account === null): ?>
+    <section class="admin-panel border border-amber-500/30">
+      <div class="admin-panel-title">
+        <i class="fa-solid fa-triangle-exclamation text-amber-300" aria-hidden="true"></i>
+        <span>Nenhuma conta Instagram configurada</span>
+      </div>
+      <div class="admin-panel-subtitle mt-2">
+        Insira as credenciais da conta na tabela <code>instagram_accounts</code> para ativar o módulo.
+      </div>
+    </section>
+  <?php else: ?>
+
+    <!-- Status da Conexão & Botão de Sincronização -->
+    <section class="admin-panel">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <?php $synced = trim((string) ($account['synced_at'] ?? '')); ?>
+          <span class="admin-chip <?= $synced !== '' ? 'border-emerald-500/40 text-emerald-200' : 'border-slate-600 text-slate-300' ?>">
+            <i class="fa-solid fa-circle <?= $synced !== '' ? 'text-emerald-400' : 'text-slate-500' ?> text-[8px]" aria-hidden="true"></i>
+            <?= $synced !== '' ? 'Conectado' : 'Nunca sincronizado' ?>
+          </span>
+          <span class="text-xs text-slate-400" data-ig-synced-label>
+            <?= $synced !== '' ? 'Última sincronização: ' . $esc(date('d/m/Y H:i', strtotime($synced) ?: time())) : 'Sincronize para puxar o perfil, métricas e todos os posts da Meta.' ?>
+          </span>
         </div>
-        <pre class="mt-3 rounded-xl border border-slate-800 bg-slate-950/70 p-4 text-xs text-slate-300 overflow-x-auto">INSERT INTO instagram_accounts (ig_user_id, username, access_token, ativo)
-VALUES ('SEU_IG_USER_ID', 'estrategia_nerd', 'SEU_ACCESS_TOKEN_PERMANENTE', 1);</pre>
-        <div class="mt-3 text-xs text-slate-400">O token precisa ser um Long-Lived Token da Graph API. Detalhes em <code>docs/features/FEAT-010.md</code>.</div>
-      </section>
-    <?php else: ?>
+        <button type="button" class="admin-btn admin-btn-secondary" data-ig-sync-btn data-csrf="<?= $esc($csrfToken) ?>">
+          <i class="fa-solid fa-rotate" aria-hidden="true"></i> <span data-ig-sync-label>Sincronizar Agora</span>
+        </button>
+      </div>
+      <div class="mt-2 text-xs" data-ig-sync-feedback></div>
+    </section>
 
-      <!-- Status da conexão + Sincronizar -->
-      <section class="admin-panel">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <?php $synced = trim((string) ($account['synced_at'] ?? '')); ?>
-            <span class="admin-chip <?= $synced !== '' ? 'border-emerald-500/40 text-emerald-200' : 'border-slate-600 text-slate-300' ?>">
-              <i class="fa-solid fa-circle <?= $synced !== '' ? 'text-emerald-400' : 'text-slate-500' ?> text-[8px]" aria-hidden="true"></i>
-              <?= $synced !== '' ? 'Conectado' : 'Nunca sincronizado' ?>
-            </span>
-            <span class="text-xs text-slate-400" data-ig-synced-label>
-              <?= $synced !== '' ? 'Última sincronização: ' . $esc(date('d/m/Y H:i', strtotime($synced) ?: time())) : 'Sincronize para trazer os dados mais recentes da Meta.' ?>
-            </span>
-          </div>
-          <button type="button" class="admin-btn admin-btn-secondary" data-ig-sync-btn data-csrf="<?= $esc($csrfToken) ?>">
-            <i class="fa-solid fa-rotate" aria-hidden="true"></i> <span data-ig-sync-label>Sincronizar Agora</span>
-          </button>
+    <!-- Header do Perfil -->
+    <section class="admin-panel">
+      <div class="flex flex-wrap items-center gap-5">
+        <div class="h-16 w-16 shrink-0 rounded-full overflow-hidden border border-slate-700 bg-slate-800 flex items-center justify-center">
+          <?php $pic = trim((string) ($account['profile_picture'] ?? '')); ?>
+          <?php if ($pic !== ''): ?>
+            <img src="<?= $esc($pic) ?>" alt="Foto de perfil" class="h-full w-full object-cover">
+          <?php else: ?>
+            <i class="fa-brands fa-instagram text-2xl text-slate-500" aria-hidden="true"></i>
+          <?php endif; ?>
         </div>
-        <div class="mt-2 text-xs" data-ig-sync-feedback></div>
-      </section>
-
-      <!-- Header do perfil -->
-      <section class="admin-panel">
-        <div class="flex flex-wrap items-center gap-5">
-          <div class="h-16 w-16 shrink-0 rounded-full overflow-hidden border border-slate-700 bg-slate-800 flex items-center justify-center">
-            <?php $pic = trim((string) ($account['profile_picture'] ?? '')); ?>
-            <?php if ($pic !== ''): ?>
-              <img src="<?= $esc($pic) ?>" alt="Foto de perfil" class="h-full w-full object-cover">
-            <?php else: ?>
-              <i class="fa-brands fa-instagram text-2xl text-slate-500" aria-hidden="true"></i>
-            <?php endif; ?>
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="text-lg font-black text-white">@<?= $esc((string) ($account['username'] ?? '')) ?></div>
-            <?php $bio = trim((string) ($account['bio'] ?? '')); ?>
-            <?php if ($bio !== ''): ?>
-              <div class="text-sm text-slate-300 mt-1"><?= $esc($excerpt($bio, 140)) ?></div>
-            <?php endif; ?>
-          </div>
-          <div class="flex items-center gap-5 text-center">
-            <div>
-              <div class="flex items-center justify-center gap-1.5">
-                <span class="text-lg font-black text-white"><?= $fmt((int) ($account['followers_count'] ?? 0)) ?></span>
-                <?php
-                $delta7 = (int) ($insights7['variacao_seguidores'] ?? 0);
-                if ($delta7 > 0): ?>
-                  <span class="text-xs font-bold text-emerald-400" title="Variação recente">+<?= $fmt($delta7) ?></span>
-                <?php elseif ($delta7 < 0): ?>
-                  <span class="text-xs font-bold text-rose-400" title="Variação recente"><?= $fmt($delta7) ?></span>
-                <?php endif; ?>
-              </div>
-              <div class="text-[11px] uppercase tracking-wide text-slate-400">Seguidores</div>
+        <div class="min-w-0 flex-1">
+          <div class="text-lg font-black text-white">@<?= $esc((string) ($account['username'] ?? '')) ?></div>
+          <?php $bio = trim((string) ($account['bio'] ?? '')); ?>
+          <?php if ($bio !== ''): ?>
+            <div class="text-sm text-slate-300 mt-1"><?= $esc($excerpt($bio, 140)) ?></div>
+          <?php endif; ?>
+        </div>
+        <div class="flex items-center gap-6 text-center">
+          <div>
+            <div class="flex items-center justify-center gap-1.5">
+              <span class="text-lg font-black text-white"><?= $fmt((int) ($account['followers_count'] ?? 0)) ?></span>
+              <?php
+              $delta = (int) ($insights['variacao_seguidores'] ?? 0);
+              if ($delta > 0): ?>
+                <span class="text-xs font-bold text-emerald-400" title="Variação recente">+<?= $fmt($delta) ?></span>
+              <?php elseif ($delta < 0): ?>
+                <span class="text-xs font-bold text-rose-400" title="Variação recente"><?= $fmt($delta) ?></span>
+              <?php endif; ?>
             </div>
-            <div>
-              <div class="text-lg font-black text-white"><?= $fmt((int) ($account['follows_count'] ?? 0)) ?></div>
-              <div class="text-[11px] uppercase tracking-wide text-slate-400">Seguindo</div>
-            </div>
-            <div>
-              <div class="text-lg font-black text-white"><?= $fmt((int) ($account['media_count'] ?? 0)) ?></div>
-              <div class="text-[11px] uppercase tracking-wide text-slate-400">Mídias</div>
-            </div>
+            <div class="text-[11px] uppercase tracking-wide text-slate-400">Seguidores</div>
+          </div>
+          <div>
+            <div class="text-lg font-black text-white"><?= $fmt((int) ($account['follows_count'] ?? 0)) ?></div>
+            <div class="text-[11px] uppercase tracking-wide text-slate-400">Seguindo</div>
+          </div>
+          <div>
+            <div class="text-lg font-black text-white"><?= $fmt((int) ($account['media_count'] ?? $totalPosts)) ?></div>
+            <div class="text-[11px] uppercase tracking-wide text-slate-400">Mídias</div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- Métricas -->
-      <section class="admin-panel">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="admin-panel-title"><i class="fa-solid fa-chart-simple text-cyan-300" aria-hidden="true"></i><span>Métricas</span></div>
-          <div class="inline-flex rounded-xl border border-slate-700 overflow-hidden text-xs font-bold" data-ig-period-toggle>
-            <button type="button" class="px-3 py-1.5 bg-cyan-500/20 text-cyan-200" data-ig-period="7" aria-pressed="true">7 dias</button>
-            <button type="button" class="px-3 py-1.5 text-slate-400" data-ig-period="30" aria-pressed="false">30 dias</button>
+    <!-- Métricas com Filtro de Data e Atalhos -->
+    <section class="admin-panel">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div class="admin-panel-title">
+            <i class="fa-solid fa-chart-simple text-cyan-300" aria-hidden="true"></i>
+            <span>Métricas</span>
           </div>
+          <div class="text-xs text-slate-400 mt-1">Desempenho da conta no período selecionado</div>
         </div>
 
-        <?php
-        $metricsMap = [
-            '7'  => $insights7,
-            '30' => $insights30,
-        ];
-        ?>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-          <?php foreach (['alcance' => ['Alcance', 'fa-eye', '#00d4ff'], 'impressoes' => ['Impressões', 'fa-chart-column', '#facc15'], 'visitas_perfil' => ['Visitas ao perfil', 'fa-user-check', '#34d399'], 'interacoes' => ['Interações', 'fa-heart', '#f472b6']] as $metricKey => [$metricLabel, $metricIcon, $metricColor]): ?>
-            <div class="stat-card stat-card-compact admin-summary-card" data-ig-metric-card="<?= $esc($metricKey) ?>">
-              <div class="stat-icon" style="background: <?= $esc($metricColor) ?>22; color: <?= $esc($metricColor) ?>;">
-                <i class="fa-solid <?= $esc($metricIcon) ?>" aria-hidden="true"></i>
-              </div>
-              <div class="stat-value neon-text" style="color: <?= $esc($metricColor) ?>;" data-ig-metric-value="7">
-                <?= $fmt((int) ($metricsMap['7'][$metricKey] ?? 0)) ?>
-              </div>
-              <div class="stat-value neon-text hidden" style="color: <?= $esc($metricColor) ?>;" data-ig-metric-value="30">
-                <?= $fmt((int) ($metricsMap['30'][$metricKey] ?? 0)) ?>
-              </div>
-              <div class="stat-label"><?= $esc($metricLabel) ?></div>
-            </div>
-          <?php endforeach; ?>
-        </div>
-        <?php if ($insights7 === null && $insights30 === null): ?>
-          <div class="mt-3 text-xs text-slate-400">Sem dados de métricas ainda — sincronize a conta para trazer o primeiro snapshot.</div>
-        <?php endif; ?>
-      </section>
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Chip com o intervalo ativo -->
+          <div class="admin-chip">
+            <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+            <?= $esc(date('d/m/Y', strtotime($start))) ?> a <?= $esc(date('d/m/Y', strtotime($end))) ?>
+          </div>
 
-      <!-- Feed visual -->
-      <section class="admin-panel">
-        <div class="admin-panel-title"><i class="fa-solid fa-images text-violet-300" aria-hidden="true"></i><span>Feed recente</span></div>
-        <?php if ($feedItems === []): ?>
-          <div class="mt-3 text-sm text-slate-400">Nenhuma mídia encontrada ainda.</div>
-        <?php else: ?>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
-            <?php foreach ($feedItems as $item): ?>
-              <a href="<?= $item['permalink'] !== '' ? $esc($item['permalink']) : '#' ?>" target="_blank" rel="noopener noreferrer" class="block rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden hover:border-cyan-500/40 transition">
-                <div class="aspect-square bg-slate-800 flex items-center justify-center overflow-hidden">
-                  <?php if ($item['thumb'] !== ''): ?>
-                    <img src="<?= $esc($item['thumb']) ?>" alt="" class="h-full w-full object-cover" loading="lazy">
-                  <?php else: ?>
-                    <i class="fa-brands fa-instagram text-3xl text-slate-600" aria-hidden="true"></i>
-                  <?php endif; ?>
-                </div>
-                <div class="p-2.5">
-                  <div class="text-xs text-slate-300 leading-4"><?= $esc($excerpt($item['caption'], 50)) ?></div>
-                  <?php if ($item['likes'] !== null || $item['comments'] !== null): ?>
-                    <div class="mt-1.5 flex items-center gap-3 text-[11px] text-slate-500">
-                      <?php if ($item['likes'] !== null): ?><span><i class="fa-solid fa-heart" aria-hidden="true"></i> <?= $fmt($item['likes']) ?></span><?php endif; ?>
-                      <?php if ($item['comments'] !== null): ?><span><i class="fa-solid fa-comment" aria-hidden="true"></i> <?= $fmt($item['comments']) ?></span><?php endif; ?>
-                    </div>
-                  <?php endif; ?>
-                </div>
+          <!-- Atalhos rápidos de intervalo -->
+          <div class="inline-flex rounded-xl border border-slate-700 overflow-hidden text-xs font-bold">
+            <?php foreach (['7d' => '7 dias', '14d' => '14 dias', '21d' => '21 dias', '30d' => '30 dias'] as $pKey => $pLabel): ?>
+              <?php $activeP = ($period === $pKey); ?>
+              <a
+                href="<?= htmlspecialchars($buildUrl(['period' => $pKey, 'start' => '', 'end' => '', 'page' => 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                class="px-3 py-1.5 transition <?= $activeP ? 'bg-cyan-500/20 text-cyan-200' : 'text-slate-400 hover:text-white' ?>"
+              >
+                <?= $pLabel ?>
               </a>
             <?php endforeach; ?>
           </div>
-        <?php endif; ?>
-      </section>
 
-      <!-- Agendados -->
-      <section class="admin-panel">
-        <div class="admin-panel-title"><i class="fa-solid fa-clock text-amber-300" aria-hidden="true"></i><span>Agendados</span></div>
-        <?php if ($scheduled === []): ?>
-          <div class="mt-3 text-sm text-slate-400">Nenhum post agendado.</div>
-        <?php else: ?>
-          <div class="overflow-x-auto mt-3">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-800">
-                  <th class="py-2 pr-4">Data/hora</th>
-                  <th class="py-2 pr-4">Tipo</th>
-                  <th class="py-2 pr-4">Legenda</th>
-                  <th class="py-2 pr-4">Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($scheduled as $p): ?>
-                  <tr class="border-b border-slate-800/60">
-                    <td class="py-2 pr-4 text-slate-300 whitespace-nowrap"><?= $esc(($p['agendado_para'] ?? null) !== null ? date('d/m/Y H:i', strtotime((string) $p['agendado_para']) ?: time()) : '—') ?></td>
-                    <td class="py-2 pr-4 text-slate-300"><?= $esc($tipoLabels[(string) ($p['tipo'] ?? '')] ?? (string) ($p['tipo'] ?? '')) ?></td>
-                    <td class="py-2 pr-4 text-slate-400"><?= $esc($excerpt((string) ($p['legenda'] ?? ''), 60)) ?></td>
-                    <td class="py-2 pr-4"><a href="<?= url('/admin/instagram/posts/' . (int) ($p['id'] ?? 0) . '/editar') ?>" class="admin-btn admin-btn-secondary !px-3 !py-1.5 text-xs">Editar</a></td>
-                  </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+          <!-- Formulário de intervalo livre de datas -->
+          <form method="GET" action="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="period" value="custom">
+            <input type="hidden" name="busca" value="<?= $esc($busca) ?>">
+            <input type="hidden" name="tipo" value="<?= $esc($tipo) ?>">
+            <input type="hidden" name="status" value="<?= $esc($status) ?>">
+            <input type="hidden" name="sort" value="<?= $esc($sort) ?>">
+            <input type="hidden" name="dir" value="<?= $esc($dir) ?>">
+            <input type="hidden" name="per_page" value="<?= (int) $perPage ?>">
+            <input
+              type="date"
+              name="start"
+              value="<?= $esc($start) ?>"
+              class="nerd-input px-3 py-1.5 rounded-xl text-xs font-black"
+              aria-label="Data inicial"
+            >
+            <input
+              type="date"
+              name="end"
+              value="<?= $esc($end) ?>"
+              class="nerd-input px-3 py-1.5 rounded-xl text-xs font-black"
+              aria-label="Data final"
+            >
+            <button type="submit" class="admin-btn admin-btn-primary !px-3 !py-1.5 text-xs">
+              <i class="fa-solid fa-filter" aria-hidden="true"></i> Aplicar
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Cards de Métricas -->
+      <?php
+      $alcanceVal      = (int) ($insights['alcance'] ?? 0);
+      $viewsVal        = (int) ($insights['visualizacoes'] ?? $insights['impressoes'] ?? 0);
+      $visitasVal      = (int) ($insights['visitas_perfil'] ?? 0);
+      $interacoesVal   = (int) ($insights['interacoes'] ?? 0);
+      ?>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
+        <div class="stat-card stat-card-compact admin-summary-card">
+          <div class="stat-icon" style="background: #00d4ff22; color: #00d4ff;">
+            <i class="fa-solid fa-eye" aria-hidden="true"></i>
           </div>
-        <?php endif; ?>
-      </section>
-
-      <!-- Rascunhos -->
-      <section class="admin-panel">
-        <div class="admin-panel-title"><i class="fa-solid fa-pen-to-square text-slate-300" aria-hidden="true"></i><span>Rascunhos</span></div>
-        <?php if ($drafts === []): ?>
-          <div class="mt-3 text-sm text-slate-400">Nenhum rascunho.</div>
-        <?php else: ?>
-          <div class="overflow-x-auto mt-3">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-800">
-                  <th class="py-2 pr-4">Tipo</th>
-                  <th class="py-2 pr-4">Legenda</th>
-                  <th class="py-2 pr-4">Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($drafts as $p): ?>
-                  <tr class="border-b border-slate-800/60">
-                    <td class="py-2 pr-4 text-slate-300"><?= $esc($tipoLabels[(string) ($p['tipo'] ?? '')] ?? (string) ($p['tipo'] ?? '')) ?></td>
-                    <td class="py-2 pr-4 text-slate-400"><?= $esc($excerpt((string) ($p['legenda'] ?? ''), 60)) ?></td>
-                    <td class="py-2 pr-4"><a href="<?= url('/admin/instagram/posts/' . (int) ($p['id'] ?? 0) . '/editar') ?>" class="admin-btn admin-btn-secondary !px-3 !py-1.5 text-xs">Editar</a></td>
-                  </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+          <div class="stat-value neon-text" style="color: #00d4ff;">
+            <?= $fmt($alcanceVal) ?>
           </div>
-        <?php endif; ?>
-      </section>
+          <div class="stat-label">Alcance</div>
+          <div class="admin-summary-card__hint">Contas únicas que visualizaram publicações.</div>
+        </div>
 
+        <div class="stat-card stat-card-compact admin-summary-card">
+          <div class="stat-icon" style="background: #facc1522; color: #facc15;">
+            <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
+          </div>
+          <div class="stat-value neon-text" style="color: #facc15;">
+            <?= $fmt($viewsVal) ?>
+          </div>
+          <div class="stat-label">Visualizações</div>
+          <div class="admin-summary-card__hint">Total de exibições e reproduções no período.</div>
+        </div>
+
+        <div class="stat-card stat-card-compact admin-summary-card">
+          <div class="stat-icon" style="background: #34d39922; color: #34d399;">
+            <i class="fa-solid fa-user-check" aria-hidden="true"></i>
+          </div>
+          <div class="stat-value neon-text" style="color: #34d399;">
+            <?= $fmt($visitasVal) ?>
+          </div>
+          <div class="stat-label">Visitas ao perfil</div>
+          <div class="admin-summary-card__hint">Usuários que acessaram a página do perfil.</div>
+        </div>
+
+        <div class="stat-card stat-card-compact admin-summary-card">
+          <div class="stat-icon" style="background: #f472b622; color: #f472b6;">
+            <i class="fa-solid fa-heart" aria-hidden="true"></i>
+          </div>
+          <div class="stat-value neon-text" style="color: #f472b6;">
+            <?= $fmt($interacoesVal) ?>
+          </div>
+          <div class="stat-label">Interações</div>
+          <div class="admin-summary-card__hint">Curtidas, comentários, salvamentos e envios.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Fila Editorial: Agendados & Rascunhos -->
+    <?php if ($scheduled !== [] || $drafts !== []): ?>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Agendados -->
+        <section class="admin-panel posts-table-panel">
+          <div class="posts-table-head">
+            <div>
+              <h3 class="font-orbitron text-base font-black text-white"><i class="fa-solid fa-clock text-amber-300 mr-1.5" aria-hidden="true"></i> Agendados</h3>
+              <div class="text-xs text-slate-400 mt-1"><?= count($scheduled) ?> publicação(ões) na fila</div>
+            </div>
+          </div>
+          <?php if ($scheduled === []): ?>
+            <div class="text-center py-8 border-2 border-dashed border-gray-700 rounded-xl">
+              <div class="text-xs text-slate-400">Nenhum post agendado no momento.</div>
+            </div>
+          <?php else: ?>
+            <div class="posts-table-wrap">
+              <table class="posts-table">
+                <thead class="posts-table-thead">
+                  <tr>
+                    <th class="posts-table-th posts-table-th-left">Data/Hora</th>
+                    <th class="posts-table-th posts-table-th-center">Tipo</th>
+                    <th class="posts-table-th posts-table-th-left">Legenda</th>
+                    <th class="posts-table-th posts-table-th-center">Ação</th>
+                  </tr>
+                </thead>
+                <tbody class="posts-table-body">
+                  <?php foreach ($scheduled as $s): ?>
+                    <tr class="posts-table-row">
+                      <td class="posts-table-td text-xs text-slate-300 whitespace-nowrap">
+                        <?= $esc($formatDate((string) ($s['agendado_para'] ?? ''))) ?>
+                      </td>
+                      <td class="posts-table-td posts-table-td-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge((string) ($s['tipo'] ?? '')) ?>">
+                          <?= $esc($tipoLabel[(string) ($s['tipo'] ?? '')] ?? (string) ($s['tipo'] ?? '')) ?>
+                        </span>
+                      </td>
+                      <td class="posts-table-td text-xs text-slate-400">
+                        <?= $esc($excerpt((string) ($s['legenda'] ?? ''), 45)) ?>
+                      </td>
+                      <td class="posts-table-td posts-table-td-center">
+                        <a href="<?= url('/admin/instagram/posts/' . (int) ($s['id'] ?? 0) . '/editar') ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs">
+                          Editar
+                        </a>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php endif; ?>
+        </section>
+
+        <!-- Rascunhos -->
+        <section class="admin-panel posts-table-panel">
+          <div class="posts-table-head">
+            <div>
+              <h3 class="font-orbitron text-base font-black text-white"><i class="fa-solid fa-pen-to-square text-cyan-300 mr-1.5" aria-hidden="true"></i> Rascunhos</h3>
+              <div class="text-xs text-slate-400 mt-1"><?= count($drafts) ?> rascunho(s) salvo(s)</div>
+            </div>
+          </div>
+          <?php if ($drafts === []): ?>
+            <div class="text-center py-8 border-2 border-dashed border-gray-700 rounded-xl">
+              <div class="text-xs text-slate-400">Nenhum rascunho em aberto.</div>
+            </div>
+          <?php else: ?>
+            <div class="posts-table-wrap">
+              <table class="posts-table">
+                <thead class="posts-table-thead">
+                  <tr>
+                    <th class="posts-table-th posts-table-th-center">Tipo</th>
+                    <th class="posts-table-th posts-table-th-left">Legenda</th>
+                    <th class="posts-table-th posts-table-th-center">Ação</th>
+                  </tr>
+                </thead>
+                <tbody class="posts-table-body">
+                  <?php foreach ($drafts as $d): ?>
+                    <tr class="posts-table-row">
+                      <td class="posts-table-td posts-table-td-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge((string) ($d['tipo'] ?? '')) ?>">
+                          <?= $esc($tipoLabel[(string) ($d['tipo'] ?? '')] ?? (string) ($d['tipo'] ?? '')) ?>
+                        </span>
+                      </td>
+                      <td class="posts-table-td text-xs text-slate-400">
+                        <?= $esc($excerpt((string) ($d['legenda'] ?? ''), 55)) ?>
+                      </td>
+                      <td class="posts-table-td posts-table-td-center">
+                        <a href="<?= url('/admin/instagram/posts/' . (int) ($d['id'] ?? 0) . '/editar') ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs">
+                          Editar
+                        </a>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php endif; ?>
+        </section>
+      </div>
     <?php endif; ?>
-  </div>
+
+    <!-- Painel de Filtros da Lista de Posts (Padrão Central de Posts) -->
+    <form method="GET" action="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-panel admin-filter-panel" data-admin-instagram-filters>
+      <div class="admin-filter-head">
+        <div>
+          <h3 class="font-orbitron text-xl font-black text-white">Filtros</h3>
+          <div class="text-xs text-slate-400 mt-1">Refine a listagem mantendo a navegação fluida</div>
+        </div>
+        <div class="text-xs text-slate-400">
+          Página atual <span class="text-cyan-300 font-bold"><?= $page ?></span> - <span class="text-slate-200 font-bold"><?= $perPage ?></span> por página
+        </div>
+      </div>
+
+      <div class="admin-filter-grid">
+        <div class="admin-filter-field admin-filter-field-search">
+          <label class="admin-filter-label" for="posts-busca">Buscar</label>
+          <input
+            id="posts-busca"
+            name="busca"
+            value="<?= $esc($busca) ?>"
+            placeholder="Buscar por legenda..."
+            class="nerd-input admin-filter-control"
+          />
+        </div>
+
+        <div class="admin-filter-field">
+          <label class="admin-filter-label" for="posts-tipo">Tipo</label>
+          <select id="posts-tipo" name="tipo" class="nerd-input admin-filter-control">
+            <option value="" <?= $tipo === '' ? 'selected' : '' ?>>Todos</option>
+            <option value="imagem" <?= $tipo === 'imagem' ? 'selected' : '' ?>>Imagem</option>
+            <option value="carrossel" <?= $tipo === 'carrossel' ? 'selected' : '' ?>>Carrossel</option>
+            <option value="reels" <?= $tipo === 'reels' ? 'selected' : '' ?>>Reels</option>
+            <option value="story" <?= $tipo === 'story' ? 'selected' : '' ?>>Story</option>
+          </select>
+        </div>
+
+        <div class="admin-filter-field">
+          <label class="admin-filter-label" for="posts-status">Status</label>
+          <select id="posts-status" name="status" class="nerd-input admin-filter-control">
+            <option value="" <?= $status === '' ? 'selected' : '' ?>>Todos</option>
+            <option value="publicado" <?= $status === 'publicado' ? 'selected' : '' ?>>Publicado</option>
+            <option value="agendado" <?= $status === 'agendado' ? 'selected' : '' ?>>Agendado</option>
+            <option value="rascunho" <?= $status === 'rascunho' ? 'selected' : '' ?>>Rascunho</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="admin-filter-actions">
+        <input type="hidden" name="period" value="<?= $esc($period) ?>">
+        <input type="hidden" name="start" value="<?= $esc($start) ?>">
+        <input type="hidden" name="end" value="<?= $esc($end) ?>">
+        <input type="hidden" name="sort" value="<?= $esc($sort) ?>">
+        <input type="hidden" name="dir" value="<?= $esc($dir) ?>">
+        <input type="hidden" name="page" value="1">
+        <input type="hidden" name="per_page" value="<?= (int) $perPage ?>">
+        <button class="admin-btn admin-btn-primary admin-filter-button" type="submit">Filtrar</button>
+        <a class="admin-btn admin-btn-secondary admin-filter-button" href="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Limpar</a>
+      </div>
+    </form>
+
+    <!-- Lista de Posts (Tabela Oficial Estratégia Nerd) -->
+    <section class="admin-panel posts-table-panel">
+      <div class="posts-table-head">
+        <div>
+          <h3 class="font-orbitron text-xl font-black text-white">Lista de Posts</h3>
+          <div class="text-xs text-slate-400 mt-1"><?= number_format($totalPosts, 0, ',', '.') ?> resultado(s) encontrado(s)</div>
+        </div>
+        <span class="posts-table-order"><?= strtoupper($esc($sort)) ?> / <?= strtoupper($esc($dir)) ?></span>
+      </div>
+
+      <?php if ($items === []): ?>
+        <div class="text-center py-12 border-2 border-dashed border-gray-700 rounded-xl">
+          <div class="text-3xl mb-4 font-orbitron font-black text-cyan-300">SEM</div>
+          <h4 class="text-xl font-bold text-white mb-2">Nenhum post encontrado</h4>
+          <div class="text-slate-400 text-sm">Ajuste os filtros ou clique em "Sincronizar Agora" para carregar as publicações do Instagram.</div>
+        </div>
+      <?php else: ?>
+        <div class="posts-table-wrap">
+          <table class="posts-table">
+            <thead class="posts-table-thead">
+              <tr>
+                <th class="posts-table-th posts-table-th-center" style="width: 60px;">Mídia</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 100px;">Tipo</th>
+                <th class="posts-table-th posts-table-th-left">
+                  <a class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('legenda'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    Legenda <?= $sortIcon('legenda') ?>
+                  </a>
+                </th>
+                <th class="posts-table-th posts-table-th-center" style="width: 110px;">
+                  <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    Status <?= $sortIcon('status') ?>
+                  </a>
+                </th>
+                <th class="posts-table-th posts-table-th-center" style="width: 140px;">
+                  <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('publicado_em'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    Publicação <?= $sortIcon('publicado_em') ?>
+                  </a>
+                </th>
+                <th class="posts-table-th posts-table-th-center" style="width: 90px;">
+                  <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('curtidas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    Curtidas <?= $sortIcon('curtidas') ?>
+                  </a>
+                </th>
+                <th class="posts-table-th posts-table-th-center" style="width: 110px;">
+                  <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('comentarios'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    Comentários <?= $sortIcon('comentarios') ?>
+                  </a>
+                </th>
+                <th class="posts-table-th posts-table-th-center" style="width: 90px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody class="posts-table-body">
+              <?php foreach ($items as $item): ?>
+                <?php
+                  $pId         = (int) ($item['id'] ?? 0);
+                  $pStatus     = (string) ($item['status'] ?? 'publicado');
+                  $pTipo       = (string) ($item['tipo'] ?? 'imagem');
+                  $pLegenda    = (string) ($item['legenda'] ?? '');
+                  $pPermalink  = (string) ($item['permalink'] ?? '');
+                  $pCurtidas   = (int) ($item['curtidas'] ?? 0);
+                  $pComents    = (int) ($item['comentarios_count'] ?? 0);
+                  $pDataPub    = $item['publicado_em'] ?? null;
+                  $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
+                  $thumbUrl    = $medias[0] ?? '';
+                  $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
+                ?>
+                <tr class="posts-table-row">
+                  <!-- Thumbnail -->
+                  <td class="posts-table-td posts-table-td-center">
+                    <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex items-center justify-center shrink-0">
+                      <?php if ($thumbUrl !== ''): ?>
+                        <img src="<?= $esc($thumbUrl) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy">
+                      <?php else: ?>
+                        <i class="fa-brands fa-instagram text-slate-500 text-sm" aria-hidden="true"></i>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+
+                  <!-- Tipo -->
+                  <td class="posts-table-td posts-table-td-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge($pTipo) ?>">
+                      <?= $esc($tipoLabel[$pTipo] ?? $pTipo) ?>
+                    </span>
+                  </td>
+
+                  <!-- Legenda -->
+                  <td class="posts-table-td posts-table-title-cell">
+                    <div class="posts-table-title-top">
+                      <a class="posts-table-title-link" href="<?= $pPermalink !== '' ? $esc($pPermalink) : $esc($editUrl) ?>" target="<?= $pPermalink !== '' ? '_blank' : '_self' ?>" rel="noopener noreferrer">
+                        <?= $esc($excerpt($pLegenda, 75)) ?>
+                      </a>
+                    </div>
+                    <div class="posts-table-subline">
+                      #<?= $pId ?><?php if (!empty($item['ig_media_id'])): ?> <span class="posts-table-subline-dot">•</span> ID Meta: <?= $esc((string) $item['ig_media_id']) ?><?php endif; ?>
+                    </div>
+                  </td>
+
+                  <!-- Status -->
+                  <td class="posts-table-td posts-table-td-center">
+                    <span class="<?= htmlspecialchars($statusClasses($pStatus), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <?= $esc($pStatus) ?>
+                    </span>
+                  </td>
+
+                  <!-- Data de Publicação -->
+                  <td class="posts-table-td posts-table-td-center">
+                    <div class="posts-table-date whitespace-nowrap">
+                      <?= $esc($formatDate((string) $pDataPub)) ?>
+                    </div>
+                  </td>
+
+                  <!-- Curtidas -->
+                  <td class="posts-table-td posts-table-td-center">
+                    <span class="posts-table-metric<?= $pCurtidas === 0 ? ' is-zero' : '' ?>">
+                      <?= $fmt($pCurtidas) ?>
+                    </span>
+                  </td>
+
+                  <!-- Comentários -->
+                  <td class="posts-table-td posts-table-td-center">
+                    <span class="posts-table-metric<?= $pComents === 0 ? ' is-zero' : '' ?>">
+                      <?= $fmt($pComents) ?>
+                    </span>
+                  </td>
+
+                  <!-- Ações -->
+                  <td class="posts-table-td">
+                    <div class="posts-table-actions">
+                      <?php if ($pPermalink !== ''): ?>
+                        <a
+                          class="posts-table-action posts-table-action-view"
+                          href="<?= $esc($pPermalink) ?>"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Ver no Instagram"
+                          title="Ver no Instagram"
+                        >
+                          <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                        </a>
+                      <?php endif; ?>
+                      <a
+                        class="posts-table-action posts-table-action-view"
+                        href="<?= $esc($editUrl) ?>"
+                        aria-label="Editar post"
+                        title="Editar post"
+                      >
+                        <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </section>
+
+    <!-- Paginação Oficial Estratégia Nerd -->
+    <section class="admin-panel posts-pagination-panel">
+      <div class="posts-pagination-shell">
+        <div class="posts-pagination-summary">
+          <?php if ($totalPosts > 0): ?>
+            Exibindo <span><?= number_format($firstItem, 0, ',', '.') ?></span> até <span><?= number_format($lastItem, 0, ',', '.') ?></span> de <span><?= number_format($totalPosts, 0, ',', '.') ?></span> posts
+          <?php else: ?>
+            Nenhum post para paginar no momento.
+          <?php endif; ?>
+        </div>
+
+        <div class="posts-pagination-controls">
+          <div class="posts-pagination-per-page">
+            <span class="posts-pagination-kicker">Por página</span>
+            <div class="posts-pagination-chip-group">
+              <?php foreach ([10, 20, 50] as $opt): ?>
+                <?php $activeChip = ($perPage === $opt); ?>
+                <a
+                  class="posts-pagination-chip<?= $activeChip ? ' is-active' : '' ?>"
+                  href="<?= htmlspecialchars($buildUrl(['per_page' => $opt, 'page' => 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                >
+                  <?= $opt ?>
+                </a>
+              <?php endforeach; ?>
+            </div>
+          </div>
+
+          <nav class="posts-pagination-nav" aria-label="Paginação dos posts do Instagram">
+            <a
+              class="posts-pagination-link posts-pagination-link-wide<?= $totalPosts === 0 || $page <= 1 ? ' is-disabled' : '' ?>"
+              href="<?= htmlspecialchars($buildUrl(['page' => $page - 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            >Anterior</a>
+
+            <?php for ($curr = $startRange; $curr <= $endRange; $curr++): ?>
+              <a
+                class="posts-pagination-link<?= $curr === $page ? ' is-active' : '' ?>"
+                href="<?= htmlspecialchars($buildUrl(['page' => $curr]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+              ><?= $curr ?></a>
+            <?php endfor; ?>
+
+            <a
+              class="posts-pagination-link posts-pagination-link-wide<?= $totalPosts === 0 || $page >= $pages ? ' is-disabled' : '' ?>"
+              href="<?= htmlspecialchars($buildUrl(['page' => $page + 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+            >Próxima</a>
+          </nav>
+        </div>
+      </div>
+    </section>
+
+  <?php endif; ?>
 </div>
 
 <?php if ($account !== null): ?>
@@ -315,8 +738,8 @@ VALUES ('SEU_IG_USER_ID', 'estrategia_nerd', 'SEU_ACCESS_TOKEN_PERMANENTE', 1);<
       var originalLabel = label ? label.textContent : 'Sincronizar Agora';
 
       syncBtn.disabled = true;
-      if (label) { label.textContent = 'Sincronizando...'; }
-      if (feedback) { feedback.textContent = ''; feedback.className = 'mt-2 text-xs'; }
+      if (label) { label.textContent = 'Sincronizando todos os posts...'; }
+      if (feedback) { feedback.textContent = 'Buscando perfil, métricas e histórico da Meta Graph API...'; feedback.className = 'mt-2 text-xs text-cyan-300'; }
 
       var body = new URLSearchParams();
       body.set('_csrf_token', syncBtn.getAttribute('data-csrf') || '');
@@ -329,15 +752,21 @@ VALUES ('SEU_IG_USER_ID', 'estrategia_nerd', 'SEU_ACCESS_TOKEN_PERMANENTE', 1);<
         .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
         .then(function (result) {
           if (result.ok && result.data && result.data.ok) {
+            var postsCount = result.data.posts_synced || 0;
             if (feedback) {
-              feedback.textContent = 'Sincronizado com sucesso em ' + (result.data.synced_at || '') + '. Atualize a página para ver os dados novos.';
-              feedback.className = 'mt-2 text-xs text-emerald-300';
+              feedback.textContent = 'Sincronização concluída com sucesso! ' + postsCount + ' publicações carregadas. Recarregando a página...';
+              feedback.className = 'mt-2 text-xs text-emerald-300 font-bold';
             }
+            setTimeout(function () {
+              window.location.reload();
+            }, 1200);
           } else {
             if (feedback) {
               feedback.textContent = 'Falha ao sincronizar: ' + ((result.data && result.data.error) || 'erro desconhecido.');
               feedback.className = 'mt-2 text-xs text-rose-300';
             }
+            syncBtn.disabled = false;
+            if (label) { label.textContent = originalLabel; }
           }
         })
         .catch(function () {
@@ -345,32 +774,9 @@ VALUES ('SEU_IG_USER_ID', 'estrategia_nerd', 'SEU_ACCESS_TOKEN_PERMANENTE', 1);<
             feedback.textContent = 'Falha de rede ao tentar sincronizar.';
             feedback.className = 'mt-2 text-xs text-rose-300';
           }
-        })
-        .finally(function () {
           syncBtn.disabled = false;
           if (label) { label.textContent = originalLabel; }
         });
-    });
-  }
-
-  var toggleWrap = document.querySelector('[data-ig-period-toggle]');
-  if (toggleWrap) {
-    toggleWrap.addEventListener('click', function (event) {
-      var btn = event.target.closest('[data-ig-period]');
-      if (!btn) { return; }
-      var period = btn.getAttribute('data-ig-period');
-
-      toggleWrap.querySelectorAll('[data-ig-period]').forEach(function (b) {
-        var active = b === btn;
-        b.setAttribute('aria-pressed', active ? 'true' : 'false');
-        b.classList.toggle('bg-cyan-500/20', active);
-        b.classList.toggle('text-cyan-200', active);
-        b.classList.toggle('text-slate-400', !active);
-      });
-
-      document.querySelectorAll('[data-ig-metric-value]').forEach(function (el) {
-        el.classList.toggle('hidden', el.getAttribute('data-ig-metric-value') !== period);
-      });
     });
   }
 })();

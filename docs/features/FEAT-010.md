@@ -353,10 +353,13 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 
 ---
 
+---
+
 ## Histórico de Alterações
 
 | Data | Versão | Descrição |
 |---|---|---|
 | 2026-09-27 | 1.0.0 | Criação do módulo: migration, service, repository, controller, rotas, sidebar, CLI e views |
 | 2026-09-27 | 1.1.0 | Correção das 5 limitações: Reels/Stories reais no controller e CLI, remoção individual de mídia, cálculo de variação de seguidores, normalização do helper local e validação de upload com MIME real |
+| 2026-09-27 | 1.2.0 | Sincronização completa de feed com paginação cursor (92 posts reais), suporte a Graph API v21.0 (`views`, `reach`, `total_interactions`, `metric_type=total_value`), sanitização de tokens em logs de URL, filtro de datas flexível (atalhos 7d/14d/21d/30d e seleção livre `start`/`end`), e reconstrução visual completa no padrão oficial do Estratégia Nerd (`posts-table`, `admin-filter-panel`, `posts-pagination-panel`). |
 
