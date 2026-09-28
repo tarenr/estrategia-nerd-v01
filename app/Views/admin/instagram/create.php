@@ -57,13 +57,13 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? '');
     <?php endif; ?>
 
     <form id="igPostForm" method="POST" action="<?= url('/admin/instagram/posts/criar') ?>" enctype="multipart/form-data" class="flex flex-col lg:flex-row items-start gap-6 mt-4" novalidate>
+      <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
+      <input type="hidden" name="tipo" id="igTipoInput" value="<?= $esc($oldTipo) ?>">
+      <input type="hidden" name="post_blog_id" id="igPostBlogId" value="<?= $esc($oldBlogId) ?>">
+      <div id="igMediaUrlsWrap" class="hidden"></div>
+
       <!-- Coluna da Esquerda: Configuração e Campos do Post (62%) -->
       <div class="w-full lg:w-[62%] space-y-6">
-        <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
-        <input type="hidden" name="tipo" id="igTipoInput" value="<?= $esc($oldTipo) ?>">
-        <input type="hidden" name="post_blog_id" id="igPostBlogId" value="<?= $esc($oldBlogId) ?>">
-        <div id="igMediaUrlsWrap" class="hidden"></div>
-
         <!-- Seletor de tipo -->
         <section class="admin-panel">
           <div class="admin-panel-title"><i class="fa-solid fa-layer-group text-cyan-300" aria-hidden="true"></i><span>Tipo de post</span></div>

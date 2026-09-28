@@ -82,12 +82,12 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
       <?php endif; ?>
 
       <form id="igPostForm" method="POST" action="<?= url('/admin/instagram/posts/' . $postId . '/editar') ?>" enctype="multipart/form-data" class="flex flex-col lg:flex-row items-start gap-6 mt-4" novalidate>
-        <div class="w-full lg:w-[62%] space-y-6">
-          <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
-          <input type="hidden" name="id" value="<?= $postId ?>">
-          <input type="hidden" name="tipo" id="igTipoInput" value="<?= $esc($oldTipo) ?>">
-          <input type="hidden" name="post_blog_id" id="igPostBlogId" value="<?= $esc($oldBlogId) ?>">
+        <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
+        <input type="hidden" name="id" value="<?= $postId ?>">
+        <input type="hidden" name="tipo" id="igTipoInput" value="<?= $esc($oldTipo) ?>">
+        <input type="hidden" name="post_blog_id" id="igPostBlogId" value="<?= $esc($oldBlogId) ?>">
 
+        <div class="w-full lg:w-[62%] space-y-6">
           <!-- Seletor de tipo -->
           <section class="admin-panel">
             <div class="admin-panel-title"><i class="fa-solid fa-layer-group text-cyan-300" aria-hidden="true"></i><span>Tipo de post</span></div>
@@ -153,13 +153,9 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
                     <?php else: ?>
                       <i class="fa-solid fa-image text-slate-500" aria-hidden="true"></i>
                     <?php endif; ?>
-                    <form method="POST" action="<?= url('/admin/instagram/media/' . ((int) ($m['id'] ?? 0)) . '/delete') ?>" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity" onsubmit="return confirm('Remover esta mídia do post?');">
-                      <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
-                      <input type="hidden" name="post_id" value="<?= $postId ?>">
-                      <button type="submit" class="h-7 w-7 rounded-md bg-rose-600/90 hover:bg-rose-600 text-white text-xs flex items-center justify-center shadow transition-colors" title="Remover esta mídia">
-                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                      </button>
-                    </form>
+                    <button type="button" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 rounded-md bg-rose-600/90 hover:bg-rose-600 text-white text-xs flex items-center justify-center shadow" title="Remover esta mídia" onclick="if(confirm('Remover esta mídia do post?')) { var f = document.getElementById('igDeleteMediaForm'); f.action = '<?= url('/admin/instagram/media/' . ((int) ($m['id'] ?? 0)) . '/delete') ?>'; f.submit(); }">
+                      <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                    </button>
                   </div>
                 <?php endforeach; ?>
               </div>
@@ -212,12 +208,12 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
 
         <!-- Preview interativo -->
         <div class="w-full lg:w-[38%] sticky top-6 self-start space-y-4">
-          <section class="admin-panel">
-            <div class="admin-panel-title"><i class="fa-solid fa-mobile-screen text-violet-300" aria-hidden="true"></i><span>Preview</span></div>
-            <div class="mt-4 mx-auto w-full max-w-[280px] rounded-2xl border border-slate-700 bg-black overflow-hidden">
+          <section class="admin-panel shadow-2xl">
+            <div class="admin-panel-title"><i class="fa-solid fa-mobile-screen text-violet-300" aria-hidden="true"></i><span>Preview em Tempo Real</span></div>
+            <div class="mt-4 mx-auto w-full max-w-[310px] rounded-2xl border border-slate-700 bg-black overflow-hidden shadow-2xl">
               <div class="flex items-center gap-2 p-2.5 border-b border-slate-800">
                 <div class="h-6 w-6 rounded-full bg-gradient-to-br from-pink-500 to-orange-400"></div>
-                <div class="text-xs font-bold text-white">@sua_conta</div>
+                <div class="text-xs font-bold text-white">@<?= $esc((string) ($account['username'] ?? 'sua_conta')) ?></div>
                 <div class="ml-auto text-[10px] rounded-full bg-slate-800 px-2 py-0.5 text-slate-300" data-ig-preview-tipo>Imagem</div>
               </div>
               <div class="aspect-square bg-slate-900 flex items-center justify-center overflow-hidden" data-ig-preview-media>
@@ -241,17 +237,23 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
                   <i class="fa-solid fa-image text-3xl text-slate-700" aria-hidden="true"></i>
                 <?php endif; ?>
               </div>
-              <div class="p-2.5">
-                <div class="flex items-center gap-3 text-slate-300 mb-1.5">
+              <div class="p-3">
+                <div class="flex items-center gap-3 text-slate-300 mb-2">
                   <i class="fa-regular fa-heart" aria-hidden="true"></i>
                   <i class="fa-regular fa-comment" aria-hidden="true"></i>
                   <i class="fa-regular fa-paper-plane" aria-hidden="true"></i>
                 </div>
-                <div class="text-xs text-slate-200 leading-4"><span class="font-bold">@sua_conta</span> <span data-ig-preview-caption class="text-slate-400"><?= $esc($oldLegenda !== '' ? $oldLegenda : 'Sua legenda aparece aqui…') ?></span></div>
+                <div class="text-xs text-slate-200 leading-4"><span class="font-bold">@<?= $esc((string) ($account['username'] ?? 'sua_conta')) ?></span> <span data-ig-preview-caption class="text-slate-400"><?= $esc($oldLegenda !== '' ? $oldLegenda : 'Sua legenda aparece aqui…') ?></span></div>
               </div>
             </div>
           </section>
         </div>
+      </form>
+
+      <!-- Formulário oculto seguro para exclusão de mídias (fora do form principal para evitar aninhamento inválido) -->
+      <form id="igDeleteMediaForm" method="POST" action="" class="hidden">
+        <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
+        <input type="hidden" name="post_id" value="<?= $postId ?>">
       </form>
     <?php endif; ?>
   </div>
