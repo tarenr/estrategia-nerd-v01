@@ -258,9 +258,14 @@ if (($endRange - $startRange) < 4) {
             <?= $synced !== '' ? 'Última sincronização: ' . $esc(date('d/m/Y H:i', strtotime($synced) ?: time())) : 'Sincronize para puxar o perfil, métricas e todos os posts da Meta.' ?>
           </span>
         </div>
-        <button type="button" class="admin-btn admin-btn-secondary" data-ig-sync-btn data-csrf="<?= $esc($csrfToken) ?>">
-          <i class="fa-solid fa-rotate" aria-hidden="true"></i> <span data-ig-sync-label>Sincronizar Agora</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" class="admin-btn admin-btn-secondary" onclick="openIgRulesModal()" title="Ver regras de alteração e permissões da Meta API">
+            <i class="fa-solid fa-circle-info text-cyan-400" aria-hidden="true"></i> <span>Regras da Conta & API</span>
+          </button>
+          <button type="button" class="admin-btn admin-btn-secondary" data-ig-sync-btn data-csrf="<?= $esc($csrfToken) ?>">
+            <i class="fa-solid fa-rotate" aria-hidden="true"></i> <span data-ig-sync-label>Sincronizar Agora</span>
+          </button>
+        </div>
       </div>
       <div class="mt-2 text-xs" data-ig-sync-feedback></div>
     </section>
@@ -277,10 +282,24 @@ if (($endRange - $startRange) < 4) {
           <?php endif; ?>
         </div>
         <div class="min-w-0 flex-1">
-          <div class="text-lg font-black text-white">@<?= $esc((string) ($account['username'] ?? '')) ?></div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-lg font-black text-white">@<?= $esc((string) ($account['username'] ?? '')) ?></span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-950/60 text-cyan-400 border border-cyan-800/40">
+              <i class="fa-brands fa-instagram text-[10px]"></i> Perfil Comercial
+            </span>
+          </div>
           <?php $bio = trim((string) ($account['bio'] ?? '')); ?>
           <?php if ($bio !== ''): ?>
-            <div class="text-sm text-slate-300 mt-1"><?= $esc($excerpt($bio, 140)) ?></div>
+            <div class="text-sm text-slate-300 mt-1.5 leading-relaxed whitespace-pre-line"><?= nl2br($esc($bio)) ?></div>
+          <?php endif; ?>
+          <?php $website = trim((string) ($account['website'] ?? '')); ?>
+          <?php if ($website !== ''): ?>
+            <div class="mt-2 flex items-center gap-1.5 text-xs">
+              <i class="fa-solid fa-link text-cyan-400" aria-hidden="true"></i>
+              <a href="<?= $esc($website) ?>" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 hover:underline font-medium break-all transition-colors">
+                <?= $esc($website) ?>
+              </a>
+            </div>
           <?php endif; ?>
         </div>
         <div class="flex items-center gap-6 text-center">
@@ -1185,6 +1204,26 @@ if (($endRange - $startRange) < 4) {
     modal.classList.remove('flex');
     document.body.classList.remove('overflow-hidden');
   };
+
+  // Modal Popup Informativo de Regras da Conta e Meta API
+  window.openIgRulesModal = function () {
+    var modal = document.getElementById('igRulesModal');
+    if (!modal) return;
+    if (modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+  };
+
+  window.closeIgRulesModal = function () {
+    var modal = document.getElementById('igRulesModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.classList.remove('overflow-hidden');
+  };
 })();
 </script>
 
@@ -1211,6 +1250,141 @@ if (($endRange - $startRange) < 4) {
           <i class="fa-solid fa-trash mr-1.5" aria-hidden="true"></i> Sim, Excluir Post
         </button>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Popup de Regras da Conta & Meta Graph API -->
+<div id="igRulesModal" class="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div class="admin-panel border border-cyan-500/40 bg-slate-900/95 max-w-2xl w-full p-6 shadow-2xl rounded-2xl animate-in fade-in duration-200 max-h-[90vh] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="igRulesModalTitle">
+    <!-- Topo -->
+    <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xl flex-shrink-0">
+          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+        </div>
+        <div>
+          <h3 id="igRulesModalTitle" class="text-base font-bold text-white">Regras de Edição & Permissões da Meta API</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Entenda o que a Graph API oficial do Instagram permite gerenciar externamente.</p>
+        </div>
+      </div>
+      <button type="button" class="text-slate-400 hover:text-white p-1 rounded-lg transition-colors" onclick="closeIgRulesModal()" title="Fechar">
+        <i class="fa-solid fa-xmark text-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <!-- Conteúdo com Scroll -->
+    <div class="overflow-y-auto pr-1 my-4 space-y-4 text-xs text-slate-300">
+      <div class="p-3 rounded-lg bg-cyan-950/40 border border-cyan-800/40 text-cyan-200 flex items-start gap-2.5">
+        <i class="fa-solid fa-circle-info text-cyan-400 text-sm mt-0.5 shrink-0" aria-hidden="true"></i>
+        <div class="leading-relaxed">
+          <strong>Por que a Meta não permite editar dados cadastrais via API?</strong><br>
+          A Meta bloqueia a alteração de biografia, @username, foto e links por APIs de terceiros como medida de segurança global contra roubo de contas, invasões automatizadas e falsidade ideológica.
+        </div>
+      </div>
+
+      <div class="overflow-hidden rounded-xl border border-slate-800 bg-slate-950/60">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-800/60 text-slate-300 border-b border-slate-700/60">
+              <th class="p-2.5 font-bold">Informação / Recurso</th>
+              <th class="p-2.5 font-bold">Acesso via API</th>
+              <th class="p-2.5 font-bold">Como Alterar</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60">
+            <tr>
+              <td class="p-2.5 font-medium text-white flex items-center gap-2">
+                <i class="fa-solid fa-align-left text-slate-400"></i> Biografia (Bio)
+              </td>
+              <td class="p-2.5">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <i class="fa-solid fa-eye text-[9px]"></i> Somente Leitura
+                </span>
+              </td>
+              <td class="p-2.5 text-slate-400">No app do Instagram ou no Meta Business Suite.</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-medium text-white flex items-center gap-2">
+                <i class="fa-solid fa-at text-slate-400"></i> Nome de Usuário (@)
+              </td>
+              <td class="p-2.5">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <i class="fa-solid fa-lock text-[9px]"></i> Bloqueado
+                </span>
+              </td>
+              <td class="p-2.5 text-slate-400">Exclusivamente no app oficial do Instagram.</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-medium text-white flex items-center gap-2">
+                <i class="fa-solid fa-id-card text-slate-400"></i> Nome de Exibição
+              </td>
+              <td class="p-2.5">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <i class="fa-solid fa-eye text-[9px]"></i> Somente Leitura
+                </span>
+              </td>
+              <td class="p-2.5 text-slate-400">No app do Instagram ou na Central de Contas Meta.</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-medium text-white flex items-center gap-2">
+                <i class="fa-regular fa-image text-slate-400"></i> Foto de Perfil (Avatar)
+              </td>
+              <td class="p-2.5">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <i class="fa-solid fa-eye text-[9px]"></i> Somente Leitura
+                </span>
+              </td>
+              <td class="p-2.5 text-slate-400">No app do Instagram (sem upload via API externa).</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-medium text-white flex items-center gap-2">
+                <i class="fa-solid fa-link text-slate-400"></i> Links da Bio (Website)
+              </td>
+              <td class="p-2.5">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <i class="fa-solid fa-eye text-[9px]"></i> Somente Leitura
+                </span>
+              </td>
+              <td class="p-2.5 text-slate-400">No perfil do Instagram pelo celular.</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-medium text-white flex items-center gap-2">
+                <i class="fa-solid fa-key text-slate-400"></i> E-mail / Senha / Celular
+              </td>
+              <td class="p-2.5">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <i class="fa-solid fa-ban text-[9px]"></i> Inacessível
+                </span>
+              </td>
+              <td class="p-2.5 text-slate-400">Restrito pela Meta por confidencialidade e segurança.</td>
+            </tr>
+            <tr class="bg-cyan-950/20">
+              <td class="p-2.5 font-bold text-cyan-300 flex items-center gap-2">
+                <i class="fa-solid fa-share-nodes text-cyan-400"></i> Publicações, Reels & Stories
+              </td>
+              <td class="p-2.5">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <i class="fa-solid fa-check text-[9px]"></i> Total (Ler e Publicar)
+                </span>
+              </td>
+              <td class="p-2.5 text-emerald-300 font-medium">Totalmente gerenciável pelo Estratégia Nerd!</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="p-3 rounded-lg bg-slate-800/50 border border-slate-700/60 text-slate-300 flex items-center gap-2.5">
+        <i class="fa-solid fa-rotate text-cyan-400" aria-hidden="true"></i>
+        <span><strong>Dica:</strong> Após alterar sua biografia, foto ou links no aplicativo do Instagram, basta clicar no botão <strong>«Sincronizar Agora»</strong> acima para atualizar instantaneamente as informações no seu painel.</span>
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <div class="pt-4 border-t border-slate-800 flex justify-end">
+      <button type="button" class="admin-btn admin-btn-secondary" onclick="closeIgRulesModal()">
+        Entendi, Fechar
+      </button>
     </div>
   </div>
 </div>
