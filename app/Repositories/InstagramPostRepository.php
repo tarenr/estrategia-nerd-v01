@@ -606,8 +606,9 @@ final class InstagramPostRepository
         $total = (int) $countStmt->fetchColumn();
 
         $page = max(1, $page);
-        $perPage = in_array($perPage, [10, 20, 50], true) ? $perPage : 10;
-        $pages = max(1, (int) ceil($total / $perPage));
+        $isAll = $perPage >= 9999;
+        $perPage = in_array($perPage, [8, 16, 24, 48], true) ? $perPage : ($isAll ? 9999 : 8);
+        $pages = $isAll ? 1 : max(1, (int) ceil($total / $perPage));
         if ($page > $pages && $total > 0) {
             $page = $pages;
         }

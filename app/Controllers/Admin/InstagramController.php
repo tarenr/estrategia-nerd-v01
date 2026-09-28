@@ -106,7 +106,13 @@ final class InstagramController
         $sort    = trim((string) ($_GET['sort'] ?? 'publicado_em'));
         $dir     = strtolower(trim((string) ($_GET['dir'] ?? 'desc'))) === 'asc' ? 'asc' : 'desc';
         $page    = max(1, (int) ($_GET['page'] ?? 1));
-        $perPage = in_array((int) ($_GET['per_page'] ?? 10), [10, 20, 50], true) ? (int) $_GET['per_page'] : 10;
+        $rawPerPage = strtolower(trim((string) ($_GET['per_page'] ?? '8')));
+        if ($rawPerPage === 'todos' || $rawPerPage === 'all') {
+            $perPage = 9999;
+        } else {
+            $perPageInt = (int) $rawPerPage;
+            $perPage = in_array($perPageInt, [8, 16, 24, 48], true) ? $perPageInt : 8;
+        }
 
         $postsPaged = $repo->listPostsPaged($accountId, $filters, $sort, $dir, $page, $perPage);
 

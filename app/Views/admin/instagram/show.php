@@ -76,7 +76,10 @@ if ($firstMedia !== null) {
         <?php if ($firstIsVideo): ?>
           <i class="fa-solid fa-video text-4xl text-slate-500" aria-hidden="true"></i>
         <?php elseif ($firstMediaUrl !== ''): ?>
-          <img src="<?= $esc($firstMediaUrl) ?>" alt="" class="h-full w-full object-cover">
+          <img src="<?= $esc($firstMediaUrl) ?>" alt="" class="h-full w-full object-cover" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+          <div class="hidden h-full w-full flex items-center justify-center bg-slate-900 text-slate-600">
+            <i class="fa-brands fa-instagram text-4xl" aria-hidden="true"></i>
+          </div>
         <?php else: ?>
           <i class="fa-brands fa-instagram text-4xl text-slate-600" aria-hidden="true"></i>
         <?php endif; ?>
@@ -96,7 +99,12 @@ if ($firstMedia !== null) {
               <?php if ($mVideo): ?>
                 <i class="fa-solid fa-video text-slate-400 text-sm" aria-hidden="true"></i>
               <?php elseif ($mUrl !== ''): ?>
-                <img src="<?= $esc($mUrl) ?>" alt="" class="h-full w-full object-cover">
+                <img src="<?= $esc($mUrl) ?>" alt="" class="h-full w-full object-cover" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                <div class="hidden h-full w-full flex items-center justify-center bg-slate-800 text-slate-500">
+                  <i class="fa-solid fa-image text-sm" aria-hidden="true"></i>
+                </div>
+              <?php else: ?>
+                <i class="fa-solid fa-image text-slate-500 text-sm" aria-hidden="true"></i>
               <?php endif; ?>
             </div>
           <?php endforeach; ?>

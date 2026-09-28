@@ -39,7 +39,7 @@ $oldAgendadoRaw = (string) ($old['agendado_para'] ?? $post['agendado_para'] ?? '
 $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
 ?>
 
-<div class="max-w-6xl mx-auto" data-instagram-form-root>
+<div class="max-w-7xl mx-auto px-4 py-6" data-instagram-form-root>
   <div class="admin-page-header">
     <div class="admin-page-heading">
       <h1 class="admin-page-title"><i class="fa-brands fa-instagram text-pink-400" aria-hidden="true"></i> Editar Post — Instagram</h1>
@@ -81,13 +81,13 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
         </section>
       <?php endif; ?>
 
-      <form id="igPostForm" method="POST" action="<?= url('/admin/instagram/posts/' . $postId . '/editar') ?>" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6" novalidate>
-        <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
-        <input type="hidden" name="id" value="<?= $postId ?>">
-        <input type="hidden" name="tipo" id="igTipoInput" value="<?= $esc($oldTipo) ?>">
-        <input type="hidden" name="post_blog_id" id="igPostBlogId" value="<?= $esc($oldBlogId) ?>">
+      <form id="igPostForm" method="POST" action="<?= url('/admin/instagram/posts/' . $postId . '/editar') ?>" enctype="multipart/form-data" class="flex flex-col lg:flex-row items-start gap-6 mt-4" novalidate>
+        <div class="w-full lg:w-[62%] space-y-6">
+          <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
+          <input type="hidden" name="id" value="<?= $postId ?>">
+          <input type="hidden" name="tipo" id="igTipoInput" value="<?= $esc($oldTipo) ?>">
+          <input type="hidden" name="post_blog_id" id="igPostBlogId" value="<?= $esc($oldBlogId) ?>">
 
-        <div class="space-y-6">
           <!-- Seletor de tipo -->
           <section class="admin-panel">
             <div class="admin-panel-title"><i class="fa-solid fa-layer-group text-cyan-300" aria-hidden="true"></i><span>Tipo de post</span></div>
@@ -114,7 +114,10 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
               </select>
               <div class="mt-3 hidden" data-ig-blog-preview>
                 <div class="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/60 p-3">
-                  <img data-ig-blog-preview-img class="h-14 w-14 rounded-lg object-cover bg-slate-800" alt="">
+                  <img data-ig-blog-preview-img class="h-14 w-14 rounded-lg object-cover bg-slate-800" alt="" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                  <div class="hidden h-14 w-14 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 text-xs">
+                    <i class="fa-solid fa-image" aria-hidden="true"></i>
+                  </div>
                   <div class="min-w-0 flex-1">
                     <div class="text-sm font-bold text-white truncate" data-ig-blog-preview-title></div>
                     <div class="text-xs text-slate-400 truncate" data-ig-blog-preview-resumo></div>
@@ -143,7 +146,10 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
                     <?php if ($isVideo): ?>
                       <i class="fa-solid fa-video text-slate-400" aria-hidden="true"></i>
                     <?php elseif ($mUrl !== ''): ?>
-                      <img src="<?= $esc($mUrl) ?>" alt="" class="h-full w-full object-cover">
+                      <img src="<?= $esc($mUrl) ?>" alt="" class="h-full w-full object-cover" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                      <div class="hidden h-full w-full flex items-center justify-center bg-slate-800 text-slate-500">
+                        <i class="fa-solid fa-image text-lg" aria-hidden="true"></i>
+                      </div>
                     <?php else: ?>
                       <i class="fa-solid fa-image text-slate-500" aria-hidden="true"></i>
                     <?php endif; ?>
@@ -205,8 +211,8 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
         </div>
 
         <!-- Preview interativo -->
-        <div class="space-y-4">
-          <section class="admin-panel sticky top-4">
+        <div class="w-full lg:w-[38%] sticky top-6 self-start space-y-4">
+          <section class="admin-panel">
             <div class="admin-panel-title"><i class="fa-solid fa-mobile-screen text-violet-300" aria-hidden="true"></i><span>Preview</span></div>
             <div class="mt-4 mx-auto w-full max-w-[280px] rounded-2xl border border-slate-700 bg-black overflow-hidden">
               <div class="flex items-center gap-2 p-2.5 border-b border-slate-800">
@@ -227,7 +233,10 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
                 }
                 ?>
                 <?php if ($firstMediaUrl !== ''): ?>
-                  <img src="<?= $esc($firstMediaUrl) ?>" class="h-full w-full object-cover">
+                  <img src="<?= $esc($firstMediaUrl) ?>" class="h-full w-full object-cover" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                  <div class="hidden h-full w-full flex items-center justify-center bg-slate-900 text-slate-600">
+                    <i class="fa-solid fa-image text-3xl" aria-hidden="true"></i>
+                  </div>
                 <?php else: ?>
                   <i class="fa-solid fa-image text-3xl text-slate-700" aria-hidden="true"></i>
                 <?php endif; ?>

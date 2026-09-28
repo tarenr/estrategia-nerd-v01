@@ -24,11 +24,11 @@ declare(strict_types=1);
 $account     = $account ?? null;
 $scheduled   = $scheduled ?? [];
 $drafts      = $drafts ?? [];
-$postsPaged  = $posts_paged ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 10, 'pages' => 1];
+$postsPaged  = $posts_paged ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 8, 'pages' => 1];
 $items       = (array) ($postsPaged['items'] ?? []);
 $totalPosts  = (int) ($postsPaged['total'] ?? 0);
 $page        = max(1, (int) ($postsPaged['page'] ?? 1));
-$perPage     = max(5, (int) ($postsPaged['per_page'] ?? 10));
+$perPage     = max(1, (int) ($postsPaged['per_page'] ?? 8));
 $pages       = max(1, (int) ($postsPaged['pages'] ?? 1));
 
 $filters     = $filters ?? ['busca' => '', 'tipo' => '', 'status' => ''];
@@ -145,8 +145,13 @@ $buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $so
     if (!empty($current['page']) && (int) $current['page'] > 1) {
         $clean['page'] = (int) $current['page'];
     }
-    if (!empty($current['per_page']) && (int) $current['per_page'] !== 10) {
-        $clean['per_page'] = (int) $current['per_page'];
+    if (!empty($current['per_page'])) {
+        $pVal = (string) $current['per_page'];
+        if ($pVal === 'todos' || (int) $pVal >= 9999) {
+            $clean['per_page'] = 'todos';
+        } elseif ((int) $pVal !== 8) {
+            $clean['per_page'] = (int) $pVal;
+        }
     }
     if (!empty($current['view']) && (string) $current['view'] !== 'table') {
         $clean['view'] = (string) $current['view'];
@@ -457,7 +462,7 @@ if (($endRange - $startRange) < 4) {
         <?php endif; ?>
         <?php if ($sort !== 'publicado_em'): ?><input type="hidden" name="sort" value="<?= $esc($sort) ?>"><?php endif; ?>
         <?php if ($dir !== 'desc'): ?><input type="hidden" name="dir" value="<?= $esc($dir) ?>"><?php endif; ?>
-        <?php if ($perPage !== 10): ?><input type="hidden" name="per_page" value="<?= (int) $perPage ?>"><?php endif; ?>
+        <?php if ($perPage !== 8): ?><input type="hidden" name="per_page" value="<?= $perPage >= 9999 ? 'todos' : (int) $perPage ?>"><?php endif; ?>
         <?php if ($viewMode !== 'table'): ?><input type="hidden" name="view" value="<?= $esc($viewMode) ?>"><?php endif; ?>
         <button class="admin-btn admin-btn-primary admin-filter-button" type="submit">Filtrar</button>
         <a class="admin-btn admin-btn-secondary admin-filter-button" href="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Limpar</a>
@@ -560,7 +565,10 @@ if (($endRange - $startRange) < 4) {
                     <td class="posts-table-td posts-table-td-center">
                       <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex items-center justify-center shrink-0">
                         <?php if ($thumbUrl !== ''): ?>
-                          <img src="<?= $esc($thumbUrl) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy">
+                          <img src="<?= $esc($thumbUrl) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                          <div class="hidden h-full w-full flex items-center justify-center bg-slate-800 text-slate-500">
+                            <i class="fa-brands fa-instagram text-sm" aria-hidden="true"></i>
+                          </div>
                         <?php else: ?>
                           <i class="fa-brands fa-instagram text-slate-500 text-sm" aria-hidden="true"></i>
                         <?php endif; ?>
@@ -667,7 +675,10 @@ if (($endRange - $startRange) < 4) {
                 <!-- Thumbnail Quadrada 1:1 -->
                 <div class="aspect-square bg-slate-800 relative overflow-hidden flex items-center justify-center">
                   <?php if ($thumbUrl !== ''): ?>
-                    <img src="<?= $esc($thumbUrl) ?>" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy">
+                    <img src="<?= $esc($thumbUrl) ?>" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                    <div class="hidden absolute inset-0 flex items-center justify-center bg-slate-800 text-slate-500">
+                      <i class="fa-brands fa-instagram text-4xl text-slate-600" aria-hidden="true"></i>
+                    </div>
                   <?php else: ?>
                     <i class="fa-brands fa-instagram text-4xl text-slate-600" aria-hidden="true"></i>
                   <?php endif; ?>
@@ -736,36 +747,38 @@ if (($endRange - $startRange) < 4) {
           <div class="posts-pagination-per-page">
             <span class="posts-pagination-kicker">Por página</span>
             <div class="posts-pagination-chip-group">
-              <?php foreach ([10, 20, 50] as $opt): ?>
-                <?php $activeChip = ($perPage === $opt); ?>
+              <?php foreach ([8 => '8', 16 => '16', 24 => '24', 'todos' => 'Todos'] as $optVal => $optLabel): ?>
+                <?php $activeChip = ($optVal === 'todos' ? $perPage >= 9999 : $perPage === (int) $optVal); ?>
                 <a
                   class="posts-pagination-chip<?= $activeChip ? ' is-active' : '' ?>"
-                  href="<?= htmlspecialchars($buildUrl(['per_page' => $opt, 'page' => 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                  href="<?= htmlspecialchars($buildUrl(['per_page' => $optVal, 'page' => 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
                 >
-                  <?= $opt ?>
+                  <?= $optLabel ?>
                 </a>
               <?php endforeach; ?>
             </div>
           </div>
 
-          <nav class="posts-pagination-nav" aria-label="Paginação dos posts do Instagram">
-            <a
-              class="posts-pagination-link posts-pagination-link-wide<?= $totalPosts === 0 || $page <= 1 ? ' is-disabled' : '' ?>"
-              href="<?= htmlspecialchars($buildUrl(['page' => $page - 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
-            >Anterior</a>
-
-            <?php for ($curr = $startRange; $curr <= $endRange; $curr++): ?>
+          <?php if ($perPage < 9999 && $pages > 1): ?>
+            <nav class="posts-pagination-nav" aria-label="Paginação dos posts do Instagram">
               <a
-                class="posts-pagination-link<?= $curr === $page ? ' is-active' : '' ?>"
-                href="<?= htmlspecialchars($buildUrl(['page' => $curr]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
-              ><?= $curr ?></a>
-            <?php endfor; ?>
+                class="posts-pagination-link posts-pagination-link-wide<?= $totalPosts === 0 || $page <= 1 ? ' is-disabled' : '' ?>"
+                href="<?= htmlspecialchars($buildUrl(['page' => $page - 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+              >Anterior</a>
 
-            <a
-              class="posts-pagination-link posts-pagination-link-wide<?= $totalPosts === 0 || $page >= $pages ? ' is-disabled' : '' ?>"
-              href="<?= htmlspecialchars($buildUrl(['page' => $page + 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
-            >Próxima</a>
-          </nav>
+              <?php for ($curr = $startRange; $curr <= $endRange; $curr++): ?>
+                <a
+                  class="posts-pagination-link<?= $curr === $page ? ' is-active' : '' ?>"
+                  href="<?= htmlspecialchars($buildUrl(['page' => $curr]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                ><?= $curr ?></a>
+              <?php endfor; ?>
+
+              <a
+                class="posts-pagination-link posts-pagination-link-wide<?= $totalPosts === 0 || $page >= $pages ? ' is-disabled' : '' ?>"
+                href="<?= htmlspecialchars($buildUrl(['page' => $page + 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+              >Próxima</a>
+            </nav>
+          <?php endif; ?>
         </div>
       </div>
     </section>
@@ -832,7 +845,10 @@ if (($endRange - $startRange) < 4) {
                   <td class="posts-table-td posts-table-td-center">
                     <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex items-center justify-center shrink-0">
                       <?php if ($sThumb !== ''): ?>
-                        <img src="<?= $esc($sThumb) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy">
+                        <img src="<?= $esc($sThumb) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                        <div class="hidden h-full w-full flex items-center justify-center bg-slate-800 text-slate-500">
+                          <i class="fa-brands fa-instagram text-sm" aria-hidden="true"></i>
+                        </div>
                       <?php else: ?>
                         <i class="fa-brands fa-instagram text-slate-500 text-sm" aria-hidden="true"></i>
                       <?php endif; ?>
@@ -934,7 +950,10 @@ if (($endRange - $startRange) < 4) {
                   <td class="posts-table-td posts-table-td-center">
                     <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex items-center justify-center shrink-0">
                       <?php if ($dThumb !== ''): ?>
-                        <img src="<?= $esc($dThumb) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy">
+                        <img src="<?= $esc($dThumb) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                        <div class="hidden h-full w-full flex items-center justify-center bg-slate-800 text-slate-500">
+                          <i class="fa-brands fa-instagram text-sm" aria-hidden="true"></i>
+                        </div>
                       <?php else: ?>
                         <i class="fa-brands fa-instagram text-slate-500 text-sm" aria-hidden="true"></i>
                       <?php endif; ?>
