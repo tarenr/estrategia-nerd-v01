@@ -369,6 +369,9 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-28 | 1.5.1 | Correção do contexto de empilhamento do popup de exclusão (teleporte do modal para `document.body.appendChild` e `z-[10000]`), garantindo que o modal apareça rigorosamente centralizado na viewport visível do usuário, mesmo após rolagem profunda em páginas extensas. |
 | 2026-09-28 | 1.6.0 | Exibição completa da biografia do perfil (sem truncamento, com quebras de linha `nl2br`) e link clicável da bio (`website`) no dashboard, acompanhados de botão de ação e modal popup explicativo com a matriz detalhada de regras, permissões e limitações da Meta Graph API (segurança contra sequestro de contas e guia de sincronização). |
 | 2026-09-28 | 1.6.1 | Correção de precedência em `InstagramApiService::getProfile()`: priorização estrita da Meta Graph API v21.0 oficial como fonte autoritativa (garantindo captura integral de biografia com quebras de linha/emojis e website oficial), relegando o helper local da porta 58772 apenas como contingência offline, e sincronização dos dados no banco local. |
+| 2026-09-28 | 1.6.2 | Redimensionamento proporcional dobrado da foto de perfil no card do Dashboard de 64px para 144-160px (`h-36 w-36 sm:h-40 sm:w-40`) com moldura estilizada em ciano (`border-2 border-cyan-500/40 shadow-xl`), alinhamento responsivo pixel-perfect com a altura da biografia completa, agrupamento do bloco numérico de métricas e badge indicativo de link principal do perfil. |
+
+
 
 
 

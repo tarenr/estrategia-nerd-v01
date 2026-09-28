@@ -272,37 +272,42 @@ if (($endRange - $startRange) < 4) {
 
     <!-- Header do Perfil -->
     <section class="admin-panel">
-      <div class="flex flex-wrap items-center gap-5">
-        <div class="h-16 w-16 shrink-0 rounded-full overflow-hidden border border-slate-700 bg-slate-800 flex items-center justify-center">
+      <div class="flex flex-wrap items-start md:items-center gap-7">
+        <div class="h-36 w-36 sm:h-40 sm:w-40 shrink-0 rounded-3xl overflow-hidden border-2 border-cyan-500/40 bg-slate-800 flex items-center justify-center shadow-xl shadow-cyan-950/50 p-1">
           <?php $pic = trim((string) ($account['profile_picture'] ?? '')); ?>
           <?php if ($pic !== ''): ?>
-            <img src="<?= $esc($pic) ?>" alt="Foto de perfil" class="h-full w-full object-cover">
+            <img src="<?= $esc($pic) ?>" alt="Foto de perfil" class="h-full w-full object-cover rounded-[20px]">
           <?php else: ?>
-            <i class="fa-brands fa-instagram text-2xl text-slate-500" aria-hidden="true"></i>
+            <i class="fa-brands fa-instagram text-5xl text-slate-500" aria-hidden="true"></i>
           <?php endif; ?>
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-lg font-black text-white">@<?= $esc((string) ($account['username'] ?? '')) ?></span>
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-950/60 text-cyan-400 border border-cyan-800/40">
+            <span class="text-xl font-black text-white">@<?= $esc((string) ($account['username'] ?? '')) ?></span>
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-cyan-950/70 text-cyan-300 border border-cyan-700/50">
               <i class="fa-brands fa-instagram text-[10px]"></i> Perfil Comercial
             </span>
           </div>
           <?php $bio = trim((string) ($account['bio'] ?? '')); ?>
           <?php if ($bio !== ''): ?>
-            <div class="text-sm text-slate-300 mt-1.5 leading-relaxed whitespace-pre-line"><?= nl2br($esc($bio)) ?></div>
+            <div class="text-sm text-slate-300 mt-2 leading-relaxed whitespace-pre-line"><?= nl2br($esc($bio)) ?></div>
           <?php endif; ?>
           <?php $website = trim((string) ($account['website'] ?? '')); ?>
           <?php if ($website !== ''): ?>
-            <div class="mt-2 flex items-center gap-1.5 text-xs">
-              <i class="fa-solid fa-link text-cyan-400" aria-hidden="true"></i>
-              <a href="<?= $esc($website) ?>" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 hover:underline font-medium break-all transition-colors">
-                <?= $esc($website) ?>
-              </a>
+            <div class="mt-2.5 flex items-center gap-2 flex-wrap text-xs">
+              <span class="inline-flex items-center gap-1.5 text-cyan-400 font-medium">
+                <i class="fa-solid fa-link" aria-hidden="true"></i>
+                <a href="<?= $esc($website) ?>" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-300 hover:underline break-all transition-colors">
+                  <?= $esc($website) ?>
+                </a>
+              </span>
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] text-slate-400 bg-slate-800/70 border border-slate-700/50" title="Link principal retornado pela Meta API (+ 4 links cadastrados no aplicativo móvel)">
+                Link principal (+4 no app)
+              </span>
             </div>
           <?php endif; ?>
         </div>
-        <div class="flex items-center gap-6 text-center">
+        <div class="flex items-center gap-6 text-center self-center md:self-auto shrink-0 bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
           <div>
             <div class="flex items-center justify-center gap-1.5">
               <span class="text-lg font-black text-white"><?= $fmt((int) ($account['followers_count'] ?? 0)) ?></span>
