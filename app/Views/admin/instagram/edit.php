@@ -545,10 +545,14 @@ if (isset($old['hashtags'])) {
     var form = document.getElementById('igDeleteModalForm');
     var titleEl = document.getElementById('igDeleteModalItemTitle');
     if (!modal || !form) return;
+    if (modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+    }
     form.action = actionUrl;
     if (titleEl) titleEl.textContent = itemTitle ? '«' + itemTitle + '»' : 'este post';
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    document.body.classList.add('overflow-hidden');
   };
 
   window.closeIgDeleteModal = function () {
@@ -556,12 +560,13 @@ if (isset($old['hashtags'])) {
     if (!modal) return;
     modal.classList.add('hidden');
     modal.classList.remove('flex');
+    document.body.classList.remove('overflow-hidden');
   };
 })();
 </script>
 
 <!-- Modal Popup de Confirmação de Exclusão -->
-<div id="igDeleteModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+<div id="igDeleteModal" class="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
   <div class="admin-panel border border-rose-500/40 bg-slate-900/95 max-w-md w-full p-6 shadow-2xl rounded-2xl animate-in fade-in duration-200" role="dialog" aria-modal="true">
     <div class="flex items-center gap-4">
       <div class="h-12 w-12 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-2xl flex-shrink-0">
