@@ -33,10 +33,23 @@ $statusColors = ['rascunho' => 'border-slate-600 text-slate-300', 'agendado' => 
 
 $isLocked = in_array($status, ['publicado', 'publicando'], true);
 
-$oldTipo     = (string) ($old['tipo'] ?? $post['tipo'] ?? 'imagem');
-$oldLegenda  = (string) ($old['legenda'] ?? $post['legenda'] ?? '');
+$oldTipo        = (string) ($old['tipo'] ?? $post['tipo'] ?? 'imagem');
+$rawLegenda     = (string) ($old['legenda'] ?? $post['legenda'] ?? '');
 $oldAgendadoRaw = (string) ($old['agendado_para'] ?? $post['agendado_para'] ?? '');
-$oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
+$oldBlogId      = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
+
+if (isset($old['hashtags'])) {
+    $oldHashtags    = (string) $old['hashtags'];
+    $oldLegendaText = (string) ($old['legenda_texto'] ?? $old['legenda'] ?? '');
+} else {
+    if (preg_match('/^(.*?)(?:\r?\n\s*)*((?:#[^\s#]+\s*)+)$/s', $rawLegenda, $matches)) {
+        $oldLegendaText = trim($matches[1]);
+        $oldHashtags    = trim($matches[2]);
+    } else {
+        $oldLegendaText = $rawLegenda;
+        $oldHashtags    = '';
+    }
+}
 ?>
 
 <div class="max-w-7xl mx-auto px-4 py-6" data-instagram-form-root>
@@ -48,6 +61,11 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
       </div>
     </div>
     <div class="admin-page-actions">
+      <?php if (!$isLocked): ?>
+        <button type="button" class="admin-btn !border-rose-500/40 text-rose-300 hover:!bg-rose-500/20" onclick="openIgDeleteModal('<?= url('/admin/instagram/posts/' . $postId . '/delete') ?>', '<?= $esc(addslashes($oldLegendaText !== '' ? substr($oldLegendaText, 0, 35) : ('Post #' . $postId))) ?>')">
+          <i class="fa-solid fa-trash mr-1.5" aria-hidden="true"></i> Excluir Post
+        </button>
+      <?php endif; ?>
       <a href="<?= url('/admin/instagram/posts/' . $postId) ?>" class="admin-btn admin-btn-secondary"><i class="fa-solid fa-eye" aria-hidden="true"></i> Ver detalhes</a>
       <a href="<?= url('/admin/instagram') ?>" class="admin-btn admin-btn-secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Voltar</a>
     </div>
@@ -177,17 +195,29 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
             <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4" data-ig-media-preview></div>
           </section>
 
-          <!-- Legenda -->
+          <!-- Legenda e Hashtags -->
           <section class="admin-panel">
             <div class="flex items-center justify-between">
-              <label for="igLegenda" class="admin-filter-label mb-0">Legenda</label>
+              <label for="igLegenda" class="admin-filter-label mb-0">Texto da Legenda</label>
               <div class="flex items-center gap-3 text-xs">
                 <span data-ig-char-count>0</span><span class="text-slate-500">/2.200 caracteres</span>
-                <span class="text-slate-600">•</span>
-                <span data-ig-hashtag-count>0</span><span class="text-slate-500">/30 hashtags</span>
               </div>
             </div>
-            <textarea id="igLegenda" name="legenda" rows="6" maxlength="2200" class="nerd-input admin-filter-control w-full mt-2" placeholder="Escreva a legenda... use #hashtags para engajamento"><?= $esc($oldLegenda) ?></textarea>
+            <textarea id="igLegenda" name="legenda" rows="5" maxlength="2200" class="nerd-input admin-filter-control w-full mt-2" placeholder="Escreva o texto principal do post aqui..."><?= $esc($oldLegendaText) ?></textarea>
+
+            <div class="mt-4 pt-4 border-t border-slate-800">
+              <div class="flex items-center justify-between">
+                <label for="igHashtags" class="admin-filter-label mb-0 flex items-center gap-1.5">
+                  <i class="fa-solid fa-hashtag text-cyan-400" aria-hidden="true"></i>
+                  <span>Hashtags do Post</span>
+                </label>
+                <div class="flex items-center gap-2 text-xs">
+                  <span data-ig-hashtag-count>0</span><span class="text-slate-500">/30 hashtags</span>
+                </div>
+              </div>
+              <input type="text" id="igHashtags" name="hashtags" value="<?= $esc($oldHashtags) ?>" class="nerd-input admin-filter-control w-full mt-2" placeholder="Ex: #games #rpg #nerd #dicas (digite com ou sem #)">
+              <div class="mt-1.5 text-[11px] text-slate-500">As hashtags serão anexadas ao final da publicação automaticamente.</div>
+            </div>
           </section>
 
           <!-- Ações -->
@@ -316,34 +346,81 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
   }
 
   var legenda = document.getElementById('igLegenda');
+  var hashtagsInput = document.getElementById('igHashtags');
   var charCount = form.querySelector('[data-ig-char-count]');
   var hashtagCount = form.querySelector('[data-ig-hashtag-count]');
   var previewCaption = form.querySelector('[data-ig-preview-caption]');
 
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   function updateLegendaCounters() {
-    var value = legenda.value || '';
-    var len = value.length;
-    var tags = value.match(/#[^\s#]+/g);
+    var textVal = legenda ? (legenda.value || '') : '';
+    var hashVal = hashtagsInput ? (hashtagsInput.value || '') : '';
+
+    var tags = [];
+    if (hashVal.trim() !== '') {
+      var parts = hashVal.trim().split(/[\s,]+/);
+      parts.forEach(function (p) {
+        var clean = p.replace(/^#+/, '');
+        if (clean.length > 0) { tags.push(clean.toLowerCase()); }
+      });
+    }
+    var textTags = textVal.match(/#[^\s#]+/g);
+    if (textTags) {
+      textTags.forEach(function (t) {
+        var clean = t.replace(/^#+/, '');
+        if (clean.length > 0) { tags.push(clean.toLowerCase()); }
+      });
+    }
+    var uniqueTags = Array.from(new Set(tags));
+
+    var totalChars = textVal.length + (hashVal.trim() !== '' ? (textVal ? 2 : 0) + hashVal.length : 0);
 
     if (charCount) {
-      charCount.textContent = String(len);
-      charCount.classList.toggle('text-rose-400', len > 2200);
-      charCount.classList.toggle('font-bold', len > 2200);
+      charCount.textContent = String(totalChars);
+      charCount.classList.toggle('text-rose-400', totalChars > 2200);
+      charCount.classList.toggle('font-bold', totalChars > 2200);
     }
     if (hashtagCount) {
-      var tagCount = tags ? tags.length : 0;
+      var tagCount = uniqueTags.length;
       hashtagCount.textContent = String(tagCount);
       hashtagCount.classList.toggle('text-rose-400', tagCount > 30);
       hashtagCount.classList.toggle('font-bold', tagCount > 30);
     }
     if (previewCaption) {
-      previewCaption.textContent = value.trim() !== '' ? value : 'Sua legenda aparece aqui…';
+      var displayCaption = textVal.trim();
+      var formattedHashtags = '';
+      if (hashVal.trim() !== '') {
+        formattedHashtags = hashVal.trim().split(/[\s,]+/).filter(function (w) { return w.length > 0; }).map(function (w) {
+          return w.startsWith('#') ? w : '#' + w;
+        }).join(' ');
+      }
+
+      if (displayCaption !== '' && formattedHashtags !== '') {
+        previewCaption.innerHTML = escapeHtml(displayCaption).replace(/\n/g, '<br>') + '<br><br><span class="text-cyan-400">' + escapeHtml(formattedHashtags) + '</span>';
+      } else if (displayCaption !== '') {
+        previewCaption.innerHTML = escapeHtml(displayCaption).replace(/\n/g, '<br>');
+      } else if (formattedHashtags !== '') {
+        previewCaption.innerHTML = '<span class="text-cyan-400">' + escapeHtml(formattedHashtags) + '</span>';
+      } else {
+        previewCaption.textContent = 'Sua legenda aparece aqui…';
+      }
     }
   }
   if (legenda) {
     legenda.addEventListener('input', updateLegendaCounters);
-    updateLegendaCounters();
   }
+  if (hashtagsInput) {
+    hashtagsInput.addEventListener('input', updateLegendaCounters);
+  }
+  updateLegendaCounters();
 
   var dropzone = form.querySelector('[data-ig-dropzone]');
   var mediaInput = document.getElementById('igMediaInput');
@@ -461,6 +538,52 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
         : '';
     }
   });
+
+  // Modal Popup de Confirmação de Exclusão de Post
+  window.openIgDeleteModal = function (actionUrl, itemTitle) {
+    var modal = document.getElementById('igDeleteModal');
+    var form = document.getElementById('igDeleteModalForm');
+    var titleEl = document.getElementById('igDeleteModalItemTitle');
+    if (!modal || !form) return;
+    form.action = actionUrl;
+    if (titleEl) titleEl.textContent = itemTitle ? '«' + itemTitle + '»' : 'este post';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  };
+
+  window.closeIgDeleteModal = function () {
+    var modal = document.getElementById('igDeleteModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  };
 })();
 </script>
+
+<!-- Modal Popup de Confirmação de Exclusão -->
+<div id="igDeleteModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div class="admin-panel border border-rose-500/40 bg-slate-900/95 max-w-md w-full p-6 shadow-2xl rounded-2xl animate-in fade-in duration-200" role="dialog" aria-modal="true">
+    <div class="flex items-center gap-4">
+      <div class="h-12 w-12 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-2xl flex-shrink-0">
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-white">Confirmar Exclusão</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Esta ação não pode ser desfeita.</p>
+      </div>
+    </div>
+    <div class="mt-4 text-sm text-slate-300">
+      Tem certeza de que deseja excluir <span id="igDeleteModalItemTitle" class="font-bold text-white">este post</span>? O rascunho ou agendamento e todas as suas mídias serão removidos permanentemente do sistema.
+    </div>
+    <div class="mt-6 flex items-center justify-end gap-3">
+      <button type="button" class="admin-btn admin-btn-secondary" onclick="closeIgDeleteModal()">Cancelar</button>
+      <form id="igDeleteModalForm" method="POST" action="">
+        <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
+        <button type="submit" class="admin-btn !bg-rose-600 hover:!bg-rose-500 text-white font-bold">
+          <i class="fa-solid fa-trash mr-1.5" aria-hidden="true"></i> Sim, Excluir Post
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
 <?php endif; ?>

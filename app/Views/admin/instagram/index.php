@@ -216,6 +216,22 @@ if (($endRange - $startRange) < 4) {
       <div class="text-sm font-bold text-emerald-300">Post enviado para publicação com sucesso.</div>
     </section>
   <?php endif; ?>
+  <?php if (isset($_GET['deleted']) && (string) $_GET['deleted'] === '1'): ?>
+    <section class="admin-panel border border-emerald-500/30">
+      <div class="text-sm font-bold text-emerald-300 flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-emerald-400" aria-hidden="true"></i>
+        <span>Post excluído com sucesso.</span>
+      </div>
+    </section>
+  <?php endif; ?>
+  <?php if (isset($_GET['error']) && (string) $_GET['error'] !== ''): ?>
+    <section class="admin-panel border border-rose-500/30">
+      <div class="text-sm font-bold text-rose-300 flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-rose-400" aria-hidden="true"></i>
+        <span><?= $esc((string) $_GET['error']) ?></span>
+      </div>
+    </section>
+  <?php endif; ?>
 
   <?php if ($account === null): ?>
     <section class="admin-panel border border-amber-500/30">
@@ -827,7 +843,7 @@ if (($endRange - $startRange) < 4) {
                 <th class="posts-table-th posts-table-th-left">Legenda</th>
                 <th class="posts-table-th posts-table-th-center" style="width: 160px;">Data/Hora Agendada</th>
                 <th class="posts-table-th posts-table-th-center" style="width: 110px;">Status</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 90px;">Ação</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 140px;">Ações</th>
               </tr>
             </thead>
             <tbody class="posts-table-body">
@@ -876,9 +892,14 @@ if (($endRange - $startRange) < 4) {
                     <span class="status-badge status-agendado">Agendado</span>
                   </td>
                   <td class="posts-table-td posts-table-td-center">
-                    <a href="<?= $esc($sEdit) ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs" title="Editar agendamento">
-                      <i class="fa-solid fa-pen mr-1" aria-hidden="true"></i> Editar
-                    </a>
+                    <div class="flex items-center justify-center gap-1.5">
+                      <a href="<?= $esc($sEdit) ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs" title="Editar agendamento">
+                        <i class="fa-solid fa-pen mr-1" aria-hidden="true"></i> Editar
+                      </a>
+                      <button type="button" class="admin-btn !px-2.5 !py-1 text-xs !border-rose-500/40 text-rose-300 hover:!bg-rose-500/20" title="Excluir post agendado" onclick="openIgDeleteModal('<?= url('/admin/instagram/posts/' . $sId . '/delete') ?>', '<?= $esc(addslashes($sLegenda !== '' ? $excerpt($sLegenda, 35) : ('Agendamento #' . $sId))) ?>')">
+                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -932,7 +953,7 @@ if (($endRange - $startRange) < 4) {
                 <th class="posts-table-th posts-table-th-left">Legenda</th>
                 <th class="posts-table-th posts-table-th-center" style="width: 160px;">Data de Criação</th>
                 <th class="posts-table-th posts-table-th-center" style="width: 110px;">Status</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 90px;">Ação</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 140px;">Ações</th>
               </tr>
             </thead>
             <tbody class="posts-table-body">
@@ -981,9 +1002,14 @@ if (($endRange - $startRange) < 4) {
                     <span class="status-badge status-rascunho">Rascunho</span>
                   </td>
                   <td class="posts-table-td posts-table-td-center">
-                    <a href="<?= $esc($dEdit) ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs" title="Editar rascunho">
-                      <i class="fa-solid fa-pen mr-1" aria-hidden="true"></i> Editar
-                    </a>
+                    <div class="flex items-center justify-center gap-1.5">
+                      <a href="<?= $esc($dEdit) ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs" title="Editar rascunho">
+                        <i class="fa-solid fa-pen mr-1" aria-hidden="true"></i> Editar
+                      </a>
+                      <button type="button" class="admin-btn !px-2.5 !py-1 text-xs !border-rose-500/40 text-rose-300 hover:!bg-rose-500/20" title="Excluir rascunho" onclick="openIgDeleteModal('<?= url('/admin/instagram/posts/' . $dId . '/delete') ?>', '<?= $esc(addslashes($dLegenda !== '' ? $excerpt($dLegenda, 35) : ('Rascunho #' . $dId))) ?>')">
+                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               <?php endforeach; ?>
@@ -1135,6 +1161,52 @@ if (($endRange - $startRange) < 4) {
       });
     });
   }
+
+  // Modal Popup de Confirmação de Exclusão de Post
+  window.openIgDeleteModal = function (actionUrl, itemTitle) {
+    var modal = document.getElementById('igDeleteModal');
+    var form = document.getElementById('igDeleteModalForm');
+    var titleEl = document.getElementById('igDeleteModalItemTitle');
+    if (!modal || !form) return;
+    form.action = actionUrl;
+    if (titleEl) titleEl.textContent = itemTitle ? '«' + itemTitle + '»' : 'este post';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  };
+
+  window.closeIgDeleteModal = function () {
+    var modal = document.getElementById('igDeleteModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  };
 })();
 </script>
+
+<!-- Modal Popup de Confirmação de Exclusão -->
+<div id="igDeleteModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+  <div class="admin-panel border border-rose-500/40 bg-slate-900/95 max-w-md w-full p-6 shadow-2xl rounded-2xl animate-in fade-in duration-200" role="dialog" aria-modal="true">
+    <div class="flex items-center gap-4">
+      <div class="h-12 w-12 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-2xl flex-shrink-0">
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-white">Confirmar Exclusão</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Esta ação não pode ser desfeita.</p>
+      </div>
+    </div>
+    <div class="mt-4 text-sm text-slate-300">
+      Tem certeza de que deseja excluir <span id="igDeleteModalItemTitle" class="font-bold text-white">este post</span>? O rascunho ou agendamento e todas as suas mídias serão removidos permanentemente.
+    </div>
+    <div class="mt-6 flex items-center justify-end gap-3">
+      <button type="button" class="admin-btn admin-btn-secondary" onclick="closeIgDeleteModal()">Cancelar</button>
+      <form id="igDeleteModalForm" method="POST" action="">
+        <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
+        <button type="submit" class="admin-btn !bg-rose-600 hover:!bg-rose-500 text-white font-bold">
+          <i class="fa-solid fa-trash mr-1.5" aria-hidden="true"></i> Sim, Excluir Post
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
 <?php endif; ?>

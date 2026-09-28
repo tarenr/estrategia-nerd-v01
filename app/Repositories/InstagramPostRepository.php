@@ -355,6 +355,28 @@ final class InstagramPostRepository
     }
 
     /**
+     * Exclui um post e todos os seus vínculos de mídias em transação.
+     */
+    public function deletePost(int $id): bool
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare("DELETE FROM instagram_post_media WHERE post_id = :post_id");
+            $stmt->execute([':post_id' => $id]);
+
+            $stmt2 = $this->pdo->prepare("DELETE FROM instagram_posts WHERE id = :id");
+            $stmt2->execute([':id' => $id]);
+
+            $this->pdo->commit();
+
+            return $stmt2->rowCount() > 0;
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            return false;
+        }
+    }
+
+    /**
      * Upsert de um post vindo do feed do Instagram (origin = 'instagram').
      * Atualiza se ig_media_id já existir, insere caso contrário.
      *

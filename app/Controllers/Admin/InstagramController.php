@@ -256,7 +256,7 @@ final class InstagramController
         }
 
         $api     = $this->api($account);
-        $legenda = (string) ($_POST['legenda'] ?? '');
+        $legenda = $this->buildCaption((string) ($_POST['legenda'] ?? ''), (string) ($_POST['hashtags'] ?? ''));
         $tipo    = (string) ($_POST['tipo'] ?? 'imagem');
         $acao    = (string) ($_POST['acao'] ?? 'rascunho');
 
@@ -377,7 +377,7 @@ final class InstagramController
         }
 
         $api      = $this->api($account);
-        $legenda  = (string) ($_POST['legenda'] ?? '');
+        $legenda  = $this->buildCaption((string) ($_POST['legenda'] ?? ''), (string) ($_POST['hashtags'] ?? ''));
         $tipo     = (string) ($_POST['tipo'] ?? 'imagem');
         $acao     = (string) ($_POST['acao'] ?? 'rascunho');
         $status   = 'rascunho';
@@ -491,6 +491,85 @@ final class InstagramController
 
         header('Location: ' . url('/admin/instagram/posts/' . $postId . '/editar?media_deleted=1'));
         exit;
+    }
+
+    // ── Excluir Post (Rascunho, Agendado ou Erro) ─────────────────────────────
+
+    public function deletePost(string $id = '0'): void
+    {
+        $postId = (int) $id;
+
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo 'Token CSRF inválido.';
+            return;
+        }
+
+        $repo = $this->repo();
+        $post = $repo->findById($postId);
+
+        if ($post === null) {
+            http_response_code(404);
+            echo 'Post não encontrado.';
+            return;
+        }
+
+        // Não permite excluir posts publicados ou que estejam em processo de publicação
+        $status = (string) ($post['status'] ?? '');
+        if (in_array($status, ['publicado', 'publicando'], true)) {
+            header('Location: ' . url('/admin/instagram?error=' . urlencode('Não é possível excluir um post que já foi publicado ou está em processo de publicação.')));
+            exit;
+        }
+
+        // Remove os arquivos físicos das mídias associadas
+        $medias = $repo->findMediaByPostId($postId);
+        $baseDir = realpath(__DIR__ . '/../../../public/uploads/instagram');
+
+        foreach ($medias as $media) {
+            $caminho = (string) ($media['caminho'] ?? '');
+            if ($caminho !== '' && str_starts_with($caminho, 'uploads/instagram/')) {
+                $fullPath = realpath(__DIR__ . '/../../../public/' . $caminho);
+                if ($baseDir && $fullPath && str_starts_with($fullPath, $baseDir) && is_file($fullPath)) {
+                    @unlink($fullPath);
+                }
+            }
+        }
+
+        $repo->deletePost($postId);
+
+        header('Location: ' . url('/admin/instagram?deleted=1'));
+        exit;
+    }
+
+    /**
+     * Mescla o texto da legenda e as hashtags separadas em uma única legenda formatada.
+     */
+    private function buildCaption(string $texto, string $hashtags): string
+    {
+        $texto = trim($texto);
+        $hashtags = trim($hashtags);
+
+        if ($hashtags === '') {
+            return $texto;
+        }
+
+        $tags = preg_split('/[\s,]+/', $hashtags, -1, PREG_SPLIT_NO_EMPTY);
+        $formatted = [];
+        if (is_array($tags)) {
+            foreach ($tags as $tag) {
+                $tag = ltrim($tag, '#');
+                if ($tag !== '') {
+                    $formatted[] = '#' . $tag;
+                }
+            }
+        }
+
+        $tagsString = implode(' ', $formatted);
+        if ($tagsString === '') {
+            return $texto;
+        }
+
+        return $texto !== '' ? $texto . "\n\n" . $tagsString : $tagsString;
     }
 
     // ── Detalhes da Mídia ─────────────────────────────────────────────────────

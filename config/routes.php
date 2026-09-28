@@ -136,6 +136,7 @@ return [
     ['POST', '/admin/instagram/posts/{id}/editar',       [\App\Controllers\Admin\InstagramController::class, 'update'],      'auth'],
     ['GET',  '/admin/instagram/posts/{id}',              [\App\Controllers\Admin\InstagramController::class, 'show'],        'auth'],
     ['POST', '/admin/instagram/media/{id}/delete',       [\App\Controllers\Admin\InstagramController::class, 'deleteMedia'], 'auth'],
+    ['POST', '/admin/instagram/posts/{id}/delete',       [\App\Controllers\Admin\InstagramController::class, 'deletePost'],  'auth'],
     ['GET',  '/admin/instagram/api/blog-post',           [\App\Controllers\Admin\InstagramController::class, 'blogPostData'], 'auth'],
 
     ['GET',  '/admin/comentarios',         [\App\Controllers\Admin\ComentariosController::class, 'index'], 'auth'],
