@@ -305,17 +305,41 @@ VALUES ('SEU_IG_USER_ID', 'estrategia_nerd', 'SEU_ACCESS_TOKEN_PERMANENTE', 1);
 
 ---
 
-## Views (Frontend — Claude Code)
+## Views (Frontend)
 
-As views são responsabilidade do Claude Code e estão como placeholder em:
+As 4 views estão implementadas em:
 
-- [`app/Views/admin/instagram/index.php`](../app/Views/admin/instagram/index.php)
-- [`app/Views/admin/instagram/create.php`](../app/Views/admin/instagram/create.php)
-- [`app/Views/admin/instagram/edit.php`](../app/Views/admin/instagram/edit.php)
-- [`app/Views/admin/instagram/show.php`](../app/Views/admin/instagram/show.php)
+- [`app/Views/admin/instagram/index.php`](../../app/Views/admin/instagram/index.php) — dashboard: status da conexão, header do perfil com métricas e badge de variação, métricas 7d/30d, feed recente, agendados e rascunhos
+- [`app/Views/admin/instagram/create.php`](../../app/Views/admin/instagram/create.php) — criação de post com seletor de tipo (imagem, carrossel, reels, story), upload/preview, importar do blog e preview interativo
+- [`app/Views/admin/instagram/edit.php`](../../app/Views/admin/instagram/edit.php) — edição com gerenciamento e remoção individual de mídias (bloqueada em modo somente leitura quando o post já está `publicado`/`publicando`)
+- [`app/Views/admin/instagram/show.php`](../../app/Views/admin/instagram/show.php) — detalhes, insights e comentários
 
-Cada view contém comentários `// TODO (Claude Code)` com a especificação completa
-dos elementos visuais a implementar.
+---
+
+## Limitações Anteriores Resolvidas
+
+1. **Reels e Stories com publicação real**:
+   - `createVideoContainer()` adicionado em `InstagramApiService` (`media_type=REELS` ou `STORIES`, omitindo legenda para Stories conforme a especificação da Graph API).
+   - Suporte a Story tanto em imagem quanto em vídeo.
+   - Fluxo de publicação ramificado por tipo e centralizado em `InstagramController::publishNow()` e no agendador CLI `scripts/en-instagram-publish-scheduled.php`.
+   - Polling adaptativo para processamento de vídeo (até 12 ciclos de 5s no CLI e 15 ciclos de 2s no web, com fail-fast caso a Meta retorne `ERROR` ou `EXPIRED`).
+
+2. **Remoção individual de mídia**:
+   - Método `deleteMedia(int $mediaId, int $postId): bool` em `InstagramPostRepository` condicionado por `id` e `post_id`.
+   - Rota `POST /admin/instagram/media/{id}/delete` com validação de token CSRF, bloqueio de remoção em posts já publicados ou em publicação, e exclusão segura do arquivo físico em `uploads/instagram/`.
+   - Botão de exclusão (lixeira) em cada card de mídia na view `edit.php`.
+
+3. **Cálculo da variação de seguidores**:
+   - `persistInsights()` agora obtém a contagem de seguidores de `getProfile()`, consulta o snapshot de data anterior via `getPreviousInsights()` e calcula o delta real em relação à base prévia.
+   - O dashboard (`index.php`) exibe o badge de variação (+ / -) ao lado da contagem de seguidores.
+
+4. **Normalização do contrato do helper local**:
+   - Respostas do helper local em `InstagramApiService::getProfile()` e `getInsights()` são normalizadas para a estrutura da Graph API (`followers` → `followers_count`, `profilePic` → `profile_picture_url`, `reach7d`, etc.).
+   - *Nota técnica sobre o helper local:* o helper atua como fallback rápido de desenvolvimento, mas não fornece métricas de impressões/interações e não diferencia períodos (7d vs 30d). Ao conectar a Graph API com token permanente, as métricas completas passam a ser coletadas nativamente.
+
+5. **Validação robusta de upload e nomes seguros**:
+   - `saveUploadedMedia()` valida arquivos com `finfo_file` (MIME real), whitelist de extensões permitidas (`jpg, jpeg, png, webp, mp4, mov`), limites de tamanho (8MB para imagens, 100MB para vídeos) e validação de `is_uploaded_file`.
+   - Geração de nomes aleatórios seguros via `bin2hex(random_bytes(16))` eliminando qualquer risco de colisão concorrente ou path traversal.
 
 ---
 
@@ -324,11 +348,7 @@ dos elementos visuais a implementar.
 Todos os arquivos backend do módulo passam no **PHPStan Level 5** com 0 erros:
 
 ```bash
-C:\xampp\php\php.exe vendor/bin/phpstan analyse \
-  app/Controllers/Admin/InstagramController.php \
-  app/Services/Instagram/InstagramApiService.php \
-  app/Repositories/InstagramPostRepository.php \
-  --level=5 --no-progress
+C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 ```
 
 ---
@@ -337,4 +357,6 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse \
 
 | Data | Versão | Descrição |
 |---|---|---|
-| 2026-09-27 | 1.0.0 | Criação do módulo: migration, service, repository, controller, rotas, sidebar, CLI |
+| 2026-09-27 | 1.0.0 | Criação do módulo: migration, service, repository, controller, rotas, sidebar, CLI e views |
+| 2026-09-27 | 1.1.0 | Correção das 5 limitações: Reels/Stories reais no controller e CLI, remoção individual de mídia, cálculo de variação de seguidores, normalização do helper local e validação de upload com MIME real |
+

@@ -124,20 +124,44 @@ foreach ($duePosts as $post) {
             throw new RuntimeException('Legenda inválida: ' . implode(' ', $validation['errors']));
         }
 
-        // Cria containers e publica
-        if ((string) ($post['tipo'] ?? '') === 'carrossel' && count($medias) >= 2) {
+        // Cria containers e publica conforme o tipo
+        $tipo    = (string) ($post['tipo'] ?? 'imagem');
+        $isVideo = false;
+
+        if ($tipo === 'carrossel' && count($medias) >= 2) {
             $childIds = [];
             foreach ($medias as $m) {
-                $childIds[] = $api->createImageContainer(
-                    (string) ($m['url_publica'] ?? ''),
-                    null,
-                    ['is_carousel_item' => 'true'],
-                );
+                $mTipo    = (string) ($m['tipo_arquivo'] ?? 'imagem');
+                $mediaUrl = (string) ($m['url_publica'] ?? '');
+                if ($mTipo === 'video') {
+                    $isVideo    = true;
+                    $childIds[] = $api->createVideoContainer($mediaUrl, null, ['is_carousel_item' => 'true']);
+                } else {
+                    $childIds[] = $api->createImageContainer($mediaUrl, null, ['is_carousel_item' => 'true']);
+                }
                 usleep(500_000); // 0.5s entre containers
             }
             $creationId = $api->createCarouselContainer($childIds, $legenda);
+        } elseif ($tipo === 'reels') {
+            $first      = $medias[0];
+            $isVideo    = true;
+            $creationId = $api->createVideoContainer(
+                (string) ($first['url_publica'] ?? ''),
+                $legenda,
+                ['media_type' => 'REELS'],
+            );
+        } elseif ($tipo === 'story') {
+            $first    = $medias[0];
+            $mTipo    = (string) ($first['tipo_arquivo'] ?? 'imagem');
+            $mediaUrl = (string) ($first['url_publica'] ?? '');
+            if ($mTipo === 'video') {
+                $isVideo    = true;
+                $creationId = $api->createVideoContainer($mediaUrl, null, ['media_type' => 'STORIES']);
+            } else {
+                $creationId = $api->createImageContainer($mediaUrl, null, ['media_type' => 'STORIES']);
+            }
         } else {
-            $first = $medias[0];
+            $first      = $medias[0];
             $creationId = $api->createImageContainer(
                 (string) ($first['url_publica'] ?? ''),
                 $legenda,
@@ -145,16 +169,20 @@ foreach ($duePosts as $post) {
         }
 
         $repo->saveCreationId($postId, $creationId);
-        ig_log('info', "Post #{$postId} — container criado: {$creationId}");
+        ig_log('info', "Post #{$postId} — container criado: {$creationId} (tipo: {$tipo})");
 
-        // Polling do status do container (max 30s / 6 tentativas)
+        // Polling do status do container (vídeos têm tempo limite maior: até 60s)
+        $maxTries = $isVideo ? 12 : 6;
         $containerStatus = 'IN_PROGRESS';
         $tries = 0;
-        while ($containerStatus !== 'FINISHED' && $tries < 6) {
+        while ($containerStatus !== 'FINISHED' && $tries < $maxTries) {
             sleep(5);
             $containerStatus = $api->checkContainerStatus($creationId);
-            ig_log('info', "Post #{$postId} — status container: {$containerStatus} (tentativa " . ($tries + 1) . ')');
+            ig_log('info', "Post #{$postId} — status container: {$containerStatus} (tentativa " . ($tries + 1) . "/{$maxTries})");
             $tries++;
+            if ($containerStatus === 'ERROR' || $containerStatus === 'EXPIRED') {
+                throw new RuntimeException("Falha no container Meta (status: {$containerStatus}).");
+            }
         }
 
         if ($containerStatus !== 'FINISHED') {

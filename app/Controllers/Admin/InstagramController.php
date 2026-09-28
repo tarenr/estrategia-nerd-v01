@@ -91,13 +91,15 @@ final class InstagramController
             $profile = $api->getProfile();
             $repo->syncAccount((int) $account['id'], $profile);
 
+            $followers = (int) ($profile['followers_count'] ?? $account['followers_count'] ?? 0);
+
             // Salvar insights 7d
             $insights7 = $api->getInsights('7d');
-            $this->persistInsights($repo, (int) $account['id'], '7d', $insights7);
+            $this->persistInsights($repo, (int) $account['id'], '7d', $insights7, $followers);
 
             // Salvar insights 30d
             $insights30 = $api->getInsights('30d');
-            $this->persistInsights($repo, (int) $account['id'], '30d', $insights30);
+            $this->persistInsights($repo, (int) $account['id'], '30d', $insights30, $followers);
 
             echo json_encode(['ok' => true, 'synced_at' => date('d/m/Y H:i')], JSON_UNESCAPED_UNICODE);
         } catch (RuntimeException $e) {
@@ -187,7 +189,19 @@ final class InstagramController
         ]);
 
         // Salvar mídias enviadas
-        $this->saveUploadedMedia($repo, $postId, $_FILES, $_POST);
+        $uploadErrors = $this->saveUploadedMedia($repo, $postId, $_FILES, $_POST);
+        if (!empty($uploadErrors)) {
+            $errors = implode(' ', $uploadErrors);
+            View::render('admin/instagram/create', [
+                'title'      => 'Novo Post — Instagram',
+                'account'    => $account,
+                'blog_posts' => $this->blogPosts(),
+                'csrf_token' => Csrf::generate(),
+                'error'      => $errors,
+                'old'        => $_POST,
+            ]);
+            return;
+        }
 
         if ($acao === 'publicar') {
             $this->publishNow($repo, $api, $postId, $account);
@@ -201,9 +215,9 @@ final class InstagramController
 
     // ── Editar Post ───────────────────────────────────────────────────────────
 
-    public function edit(): void
+    public function edit(string $id = '0'): void
     {
-        $id   = (int) ($_GET['id'] ?? 0);
+        $id   = (int) $id;
         $repo = $this->repo();
         $post = $repo->findById($id);
 
@@ -224,9 +238,9 @@ final class InstagramController
         ]);
     }
 
-    public function update(): void
+    public function update(string $id = '0'): void
     {
-        $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+        $id = (int) $id;
 
         if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
             http_response_code(419);
@@ -242,6 +256,12 @@ final class InstagramController
             http_response_code(404);
             echo 'Post não encontrado.';
             return;
+        }
+
+        // Não permite editar posts já publicados ou em publicação
+        if (in_array((string) ($post['status'] ?? ''), ['publicado', 'publicando'], true)) {
+            header('Location: ' . url('/admin/instagram/posts/' . $id . '?error=' . urlencode('Post publicado não pode ser editado.')));
+            exit;
         }
 
         $api      = $this->api($account);
@@ -281,10 +301,23 @@ final class InstagramController
             'post_blog_id'    => ($_POST['post_blog_id'] ?? '') !== '' ? (int) $_POST['post_blog_id'] : null,
         ]);
 
-        // Substituir mídias se novas foram enviadas
+        // Adicionar novas mídias se foram enviadas
         if (!empty($_FILES['medias']['name'][0])) {
-            $repo->deleteMediaByPostId($id);
-            $this->saveUploadedMedia($repo, $id, $_FILES, $_POST);
+            $existingMedias = $repo->findMediaByPostId($id);
+            $uploadErrors   = $this->saveUploadedMedia($repo, $id, $_FILES, $_POST, count($existingMedias));
+            if (!empty($uploadErrors)) {
+                $medias = $repo->findMediaByPostId($id);
+                View::render('admin/instagram/edit', [
+                    'title'      => 'Editar Post — Instagram',
+                    'post'       => $post,
+                    'medias'     => $medias,
+                    'blog_posts' => $this->blogPosts(),
+                    'csrf_token' => Csrf::generate(),
+                    'error'      => implode(' ', $uploadErrors),
+                    'old'        => $_POST,
+                ]);
+                return;
+            }
         }
 
         if ($acao === 'publicar') {
@@ -297,11 +330,62 @@ final class InstagramController
         exit;
     }
 
+    // ── Remover Mídia Individual ──────────────────────────────────────────────
+
+    public function deleteMedia(string $id = '0'): void
+    {
+        $mediaId = (int) $id;
+        $postId  = (int) ($_POST['post_id'] ?? 0);
+
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo 'Token CSRF inválido.';
+            return;
+        }
+
+        $repo = $this->repo();
+        $post = $repo->findById($postId);
+
+        if ($post === null) {
+            http_response_code(404);
+            echo 'Post não encontrado.';
+            return;
+        }
+
+        // Não permite remover mídia de posts já publicados ou em processo de publicação
+        if (in_array((string) ($post['status'] ?? ''), ['publicado', 'publicando'], true)) {
+            header('Location: ' . url('/admin/instagram/posts/' . $postId . '/editar?error=' . urlencode('Não é possível remover mídia de um post já publicado ou em publicação.')));
+            exit;
+        }
+
+        $media = $repo->findMediaById($mediaId);
+        if ($media === null || (int) ($media['post_id'] ?? 0) !== $postId) {
+            http_response_code(404);
+            echo 'Mídia não encontrada para este post.';
+            return;
+        }
+
+        $repo->deleteMedia($mediaId, $postId);
+
+        // Se for upload local do Instagram, remove o arquivo físico com segurança
+        $caminho = (string) ($media['caminho'] ?? '');
+        if ($caminho !== '' && str_starts_with($caminho, 'uploads/instagram/')) {
+            $baseDir  = realpath(__DIR__ . '/../../../public/uploads/instagram');
+            $fullPath = realpath(__DIR__ . '/../../../public/' . $caminho);
+            if ($baseDir && $fullPath && str_starts_with($fullPath, $baseDir) && is_file($fullPath)) {
+                @unlink($fullPath);
+            }
+        }
+
+        header('Location: ' . url('/admin/instagram/posts/' . $postId . '/editar?media_deleted=1'));
+        exit;
+    }
+
     // ── Detalhes da Mídia ─────────────────────────────────────────────────────
 
-    public function show(): void
+    public function show(string $id = '0'): void
     {
-        $id   = (int) ($_GET['id'] ?? 0);
+        $id   = (int) $id;
         $repo = $this->repo();
         $post = $repo->findById($id);
 
@@ -353,7 +437,7 @@ final class InstagramController
         /** @var \PDO $pdo */
         $pdo  = $GLOBALS['pdo'];
         $stmt = $pdo->prepare(
-            "SELECT id, titulo, capa, resumo FROM posts WHERE id = :id AND status = 'publicado' LIMIT 1"
+            "SELECT id, titulo, imagem_capa AS capa, resumo FROM posts WHERE id = :id AND status = 'publicado' LIMIT 1"
         );
         $stmt->execute([':id' => $id]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -396,7 +480,7 @@ final class InstagramController
         /** @var \PDO $pdo */
         $pdo  = $GLOBALS['pdo'];
         $stmt = $pdo->query(
-            "SELECT id, titulo, capa, resumo FROM posts WHERE status = 'publicado' ORDER BY criado_em DESC LIMIT 100"
+            "SELECT id, titulo, imagem_capa AS capa, resumo FROM posts WHERE status = 'publicado' ORDER BY data_publicacao DESC LIMIT 100"
         );
 
         if ($stmt === false) {
@@ -427,20 +511,44 @@ final class InstagramController
                 return;
             }
 
+            $tipo    = (string) ($post['tipo'] ?? 'imagem');
             $legenda = $post['legenda'] ?? null;
+            $isVideo = false;
 
-            if ((string) ($post['tipo'] ?? '') === 'carrossel' && count($medias) >= 2) {
+            if ($tipo === 'carrossel' && count($medias) >= 2) {
                 $childIds = [];
                 foreach ($medias as $m) {
-                    $childIds[] = $api->createImageContainer(
-                        (string) ($m['url_publica'] ?? ''),
-                        null,
-                        ['is_carousel_item' => 'true'],
-                    );
+                    $mediaUrl = (string) ($m['url_publica'] ?? '');
+                    $mTipo    = (string) ($m['tipo_arquivo'] ?? 'imagem');
+                    if ($mTipo === 'video') {
+                        $isVideo    = true;
+                        $childIds[] = $api->createVideoContainer($mediaUrl, null, ['is_carousel_item' => 'true']);
+                    } else {
+                        $childIds[] = $api->createImageContainer($mediaUrl, null, ['is_carousel_item' => 'true']);
+                    }
+                    usleep(500_000);
                 }
                 $creationId = $api->createCarouselContainer($childIds, $legenda);
+            } elseif ($tipo === 'reels') {
+                $first      = $medias[0];
+                $isVideo    = true;
+                $creationId = $api->createVideoContainer(
+                    (string) ($first['url_publica'] ?? ''),
+                    $legenda,
+                    ['media_type' => 'REELS'],
+                );
+            } elseif ($tipo === 'story') {
+                $first    = $medias[0];
+                $mTipo    = (string) ($first['tipo_arquivo'] ?? 'imagem');
+                $mediaUrl = (string) ($first['url_publica'] ?? '');
+                if ($mTipo === 'video') {
+                    $isVideo    = true;
+                    $creationId = $api->createVideoContainer($mediaUrl, null, ['media_type' => 'STORIES']);
+                } else {
+                    $creationId = $api->createImageContainer($mediaUrl, null, ['media_type' => 'STORIES']);
+                }
             } else {
-                $first = $medias[0];
+                $first      = $medias[0];
                 $creationId = $api->createImageContainer(
                     (string) ($first['url_publica'] ?? ''),
                     $legenda,
@@ -449,13 +557,21 @@ final class InstagramController
 
             $repo->saveCreationId($postId, $creationId);
 
-            // Aguarda o container estar pronto (max 10s)
-            $tries = 0;
+            // Aguarda o container estar pronto (vídeos demandam mais tempo de transcodificação)
+            $maxTries = $isVideo ? 15 : 6;
+            $tries    = 0;
             do {
                 usleep(2_000_000);
                 $containerStatus = $api->checkContainerStatus($creationId);
                 $tries++;
-            } while ($containerStatus !== 'FINISHED' && $tries < 5);
+                if ($containerStatus === 'ERROR' || $containerStatus === 'EXPIRED') {
+                    throw new RuntimeException("Falha no processamento do container Meta (status: {$containerStatus}).");
+                }
+            } while ($containerStatus !== 'FINISHED' && $tries < $maxTries);
+
+            if ($containerStatus !== 'FINISHED') {
+                throw new RuntimeException("Container não ficou pronto a tempo na Meta (status: {$containerStatus}).");
+            }
 
             $igMediaId = $api->publishMedia($creationId);
             $detail    = $api->getMediaDetails($igMediaId);
@@ -468,70 +584,136 @@ final class InstagramController
     }
 
     /**
-     * Salva arquivos $_FILES['medias'] no repositório de mídias.
+     * Salva arquivos $_FILES['medias'] ou URLs da biblioteca no repositório de mídias com validação robusta.
      *
      * @param array<string,mixed> $files   $_FILES
      * @param array<string,mixed> $post    $_POST
+     * @return list<string> Lista de erros encontrados
      */
     private function saveUploadedMedia(
         InstagramPostRepository $repo,
         int $postId,
         array $files,
         array $post,
-    ): void {
+        int $startOrder = 0,
+    ): array {
         $appUrl   = rtrim((string) config('app.url', ''), '/');
+        $errors   = [];
         $uploaded = $files['medias'] ?? [];
 
-        if (!is_array($uploaded) || empty($uploaded['name'])) {
-            // Tenta usar URLs já fornecidas em $_POST (biblioteca)
-            $libraryUrls = $post['media_urls'] ?? [];
-            if (is_array($libraryUrls)) {
-                foreach ($libraryUrls as $ordem => $url) {
-                    $repo->addMedia($postId, [
-                        'ordem'       => (int) $ordem,
-                        'tipo_arquivo' => 'imagem',
-                        'caminho'     => (string) $url,
-                        'url_publica' => (str_starts_with((string) $url, 'http') ? (string) $url : $appUrl . '/' . ltrim((string) $url, '/')),
-                    ]);
+        // Validação e inclusão de URLs enviadas da biblioteca interna
+        $libraryUrls = $post['media_urls'] ?? [];
+        if (is_array($libraryUrls) && !empty($libraryUrls)) {
+            $ordem = $startOrder;
+            foreach ($libraryUrls as $rawUrl) {
+                $url = trim((string) $rawUrl);
+                if ($url === '') {
+                    continue;
                 }
+                $ext = strtolower((string) pathinfo(parse_url($url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
+                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mov'], true)) {
+                    $errors[] = "A URL selecionada possui formato '{$ext}' incompatível com o Instagram.";
+                    continue;
+                }
+                $tipoArq    = in_array($ext, ['mp4', 'mov'], true) ? 'video' : 'imagem';
+                $urlPublica = str_starts_with($url, 'http') ? $url : $appUrl . '/' . ltrim($url, '/');
+
+                $repo->addMedia($postId, [
+                    'ordem'        => $ordem++,
+                    'tipo_arquivo' => $tipoArq,
+                    'caminho'      => $url,
+                    'url_publica'  => $urlPublica,
+                ]);
             }
-            return;
+        }
+
+        if (!is_array($uploaded) || empty($uploaded['name']) || empty($uploaded['name'][0])) {
+            return $errors;
         }
 
         $names    = (array) $uploaded['name'];
         $tmpNames = (array) $uploaded['tmp_name'];
-        $errors   = (array) ($uploaded['error'] ?? []);
+        $errCodes = (array) ($uploaded['error'] ?? []);
+        $sizes    = (array) ($uploaded['size'] ?? []);
 
         $uploadsDir = __DIR__ . '/../../../public/uploads/instagram/';
         if (!is_dir($uploadsDir)) {
             mkdir($uploadsDir, 0755, true);
         }
 
-        foreach ($names as $i => $name) {
-            $tmpName = (string) ($tmpNames[$i] ?? '');
-            $err     = (int) ($errors[$i] ?? UPLOAD_ERR_NO_FILE);
+        $allowedImageMimes = ['image/jpeg', 'image/png', 'image/webp'];
+        $allowedVideoMimes = ['video/mp4', 'video/quicktime'];
+        $maxImageBytes     = 8 * 1024 * 1024;    // 8MB
+        $maxVideoBytes     = 100 * 1024 * 1024;  // 100MB
 
-            if ($err !== UPLOAD_ERR_OK || $tmpName === '') {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+
+        foreach ($names as $i => $name) {
+            $nameStr = (string) $name;
+            $tmpName = (string) ($tmpNames[$i] ?? '');
+            $errCode = (int) ($errCodes[$i] ?? UPLOAD_ERR_NO_FILE);
+            $size    = (int) ($sizes[$i] ?? 0);
+
+            if ($errCode === UPLOAD_ERR_NO_FILE || $nameStr === '') {
                 continue;
             }
 
-            $ext      = strtolower((string) pathinfo((string) $name, PATHINFO_EXTENSION));
-            $filename = date('Ymd-His') . '-' . $i . '.' . $ext;
+            if ($errCode !== UPLOAD_ERR_OK || $tmpName === '' || !is_uploaded_file($tmpName)) {
+                $errors[] = "Falha no upload do arquivo '{$nameStr}'.";
+                continue;
+            }
+
+            $ext = strtolower((string) pathinfo($nameStr, PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mov'], true)) {
+                $errors[] = "Extensão '.{$ext}' não permitida para '{$nameStr}'. Envie JPG, PNG, WEBP, MP4 ou MOV.";
+                continue;
+            }
+
+            $detectedMime = $finfo !== false ? (string) finfo_file($finfo, $tmpName) : (string) mime_content_type($tmpName);
+
+            $isVideo = in_array($detectedMime, $allowedVideoMimes, true);
+            $isImage = in_array($detectedMime, $allowedImageMimes, true);
+
+            if (!$isVideo && !$isImage) {
+                $errors[] = "Tipo MIME real ('{$detectedMime}') não permitido para '{$nameStr}'.";
+                continue;
+            }
+
+            if ($isImage && $size > $maxImageBytes) {
+                $errors[] = "A imagem '{$nameStr}' excede o limite máximo permitido de 8MB.";
+                continue;
+            }
+
+            if ($isVideo && $size > $maxVideoBytes) {
+                $errors[] = "O vídeo '{$nameStr}' excede o limite máximo permitido de 100MB.";
+                continue;
+            }
+
+            // Nome de arquivo aleatório seguro (evita colisão e sobrescrita)
+            $filename = bin2hex(random_bytes(16)) . '.' . $ext;
             $dest     = $uploadsDir . $filename;
 
             if (move_uploaded_file($tmpName, $dest)) {
                 $relative  = 'uploads/instagram/' . $filename;
-                $tipoArq   = in_array($ext, ['mp4', 'mov', 'avi'], true) ? 'video' : 'imagem';
+                $tipoArq   = $isVideo ? 'video' : 'imagem';
                 $urlPublic = $appUrl . '/' . $relative;
 
                 $repo->addMedia($postId, [
-                    'ordem'        => $i,
+                    'ordem'        => $startOrder + $i,
                     'tipo_arquivo' => $tipoArq,
                     'caminho'      => $relative,
                     'url_publica'  => $urlPublic,
                 ]);
+            } else {
+                $errors[] = "Falha ao gravar o arquivo '{$nameStr}' no disco.";
             }
         }
+
+        if ($finfo !== false) {
+            finfo_close($finfo);
+        }
+
+        return $errors;
     }
 
     /**
@@ -547,7 +729,7 @@ final class InstagramController
     }
 
     /**
-     * Persiste o payload de insights em formato padronizado.
+     * Persiste o payload de insights em formato padronizado calculando delta de seguidores.
      *
      * @param array<string,mixed> $apiResponse
      */
@@ -556,6 +738,7 @@ final class InstagramController
         int $accountId,
         string $period,
         array $apiResponse,
+        int $currentFollowers = 0,
     ): void {
         $data   = $apiResponse['data'] ?? [];
         $totals = ['reach' => 0, 'impressions' => 0, 'profile_views' => 0, 'total_interactions' => 0];
@@ -566,7 +749,9 @@ final class InstagramController
                 $values = (array) ($metric['values'] ?? []);
                 $sum    = 0;
                 foreach ($values as $v) {
-                    $sum += (int) ($v['value'] ?? 0);
+                    if (isset($v['value'])) {
+                        $sum += (int) $v['value'];
+                    }
                 }
                 if (array_key_exists($name, $totals)) {
                     $totals[$name] = $sum;
@@ -574,15 +759,24 @@ final class InstagramController
             }
         }
 
+        $today = date('Y-m-d');
+        $prev  = $repo->getPreviousInsights($accountId, $period, $today);
+        $variacao = 0;
+        if ($prev !== null && isset($prev['seguidores']) && (int) $prev['seguidores'] > 0 && $currentFollowers > 0) {
+            $variacao = $currentFollowers - (int) $prev['seguidores'];
+        }
+
         $repo->upsertInsightsCache([
-            'account_id'      => $accountId,
-            'periodo'         => $period,
-            'data_referencia' => date('Y-m-d'),
-            'alcance'         => $totals['reach'],
-            'impressoes'      => $totals['impressions'],
-            'visitas_perfil'  => $totals['profile_views'],
-            'interacoes'      => $totals['total_interactions'],
-            'payload_raw'     => $apiResponse,
+            'account_id'          => $accountId,
+            'periodo'             => $period,
+            'data_referencia'     => $today,
+            'alcance'             => $totals['reach'],
+            'impressoes'          => $totals['impressions'],
+            'visitas_perfil'      => $totals['profile_views'],
+            'interacoes'          => $totals['total_interactions'],
+            'seguidores'          => $currentFollowers,
+            'variacao_seguidores' => $variacao,
+            'payload_raw'         => $apiResponse,
         ]);
     }
 }

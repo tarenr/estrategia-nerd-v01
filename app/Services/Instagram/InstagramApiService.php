@@ -54,7 +54,17 @@ final class InstagramApiService
     {
         $helperData = $this->fetchHelper('/profile');
         if ($helperData !== null) {
-            return $helperData;
+            return [
+                'id'                  => (string) ($helperData['id'] ?? $this->igUserId),
+                'username'            => (string) ($helperData['username'] ?? ''),
+                'name'                => (string) ($helperData['name'] ?? ''),
+                'biography'           => (string) ($helperData['biography'] ?? ''),
+                'website'             => (string) ($helperData['website'] ?? ''),
+                'followers_count'     => (int) ($helperData['followers'] ?? $helperData['followers_count'] ?? 0),
+                'follows_count'       => (int) ($helperData['follows'] ?? $helperData['follows_count'] ?? 0),
+                'media_count'         => (int) ($helperData['media'] ?? $helperData['media_count'] ?? 0),
+                'profile_picture_url' => (string) ($helperData['profilePic'] ?? $helperData['profile_picture_url'] ?? ''),
+            ];
         }
 
         return $this->graphGet("/{$this->igUserId}", [
@@ -74,7 +84,17 @@ final class InstagramApiService
     {
         $helperData = $this->fetchHelper('/insights?period=' . urlencode($period));
         if ($helperData !== null) {
-            return $helperData;
+            $reach = isset($helperData['reach7d']) ? (int) $helperData['reach7d'] : 0;
+            $profileViews = isset($helperData['profileViews7d']) ? (int) $helperData['profileViews7d'] : 0;
+            return [
+                'data' => [
+                    ['name' => 'reach', 'values' => [['value' => $reach]]],
+                    ['name' => 'impressions', 'values' => [['value' => null]]],
+                    ['name' => 'profile_views', 'values' => [['value' => $profileViews]]],
+                    ['name' => 'total_interactions', 'values' => [['value' => null]]],
+                ],
+                '_source' => 'helper',
+            ];
         }
 
         $days  = $period === '30d' ? 30 : 7;
@@ -162,17 +182,44 @@ final class InstagramApiService
     }
 
     /**
-     * Cria um container de imagem única ou Story.
+     * Cria um container de imagem única ou Story (imagem).
      *
-     * @param array<string,mixed> $extra Parâmetros adicionais (ex: is_carousel_item)
+     * @param array<string,mixed> $extra Parâmetros adicionais (ex: is_carousel_item, media_type)
      * @return string creation_id
      */
     public function createImageContainer(string $imageUrl, ?string $caption, array $extra = []): string
     {
         $params = array_merge([
             'image_url' => $imageUrl,
-            'caption'   => $caption,
         ], $extra);
+
+        if (($params['media_type'] ?? '') !== 'STORIES' && $caption !== null && $caption !== '') {
+            $params['caption'] = $caption;
+        }
+
+        return $this->createMediaContainer($params);
+    }
+
+    /**
+     * Cria um container de vídeo (Reels ou Stories em vídeo) na Meta.
+     *
+     * @param array<string,mixed> $extra Parâmetros adicionais (ex: media_type => 'REELS' ou 'STORIES')
+     * @return string creation_id retornado pela Meta
+     */
+    public function createVideoContainer(string $videoUrl, ?string $caption = null, array $extra = []): string
+    {
+        $mediaType = (string) ($extra['media_type'] ?? 'REELS');
+        $params = array_merge([
+            'media_type' => $mediaType,
+            'video_url'  => $videoUrl,
+        ], $extra);
+
+        // Story não aceita legenda na Meta Graph API
+        if ($mediaType === 'STORIES') {
+            unset($params['caption']);
+        } elseif ($caption !== null && $caption !== '') {
+            $params['caption'] = $caption;
+        }
 
         return $this->createMediaContainer($params);
     }

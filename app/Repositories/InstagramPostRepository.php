@@ -314,6 +314,35 @@ final class InstagramPostRepository
     }
 
     /**
+     * Busca uma mídia específica por seu ID.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function findMediaById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM instagram_post_media WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Remove uma mídia individual de um post específico.
+     */
+    public function deleteMedia(int $mediaId, int $postId): bool
+    {
+        $stmt = $this->pdo->prepare(
+            "DELETE FROM instagram_post_media WHERE id = :id AND post_id = :post_id"
+        );
+
+        return $stmt->execute([
+            ':id'      => $mediaId,
+            ':post_id' => $postId,
+        ]);
+    }
+
+    /**
      * Remove todas as mídias de um post (usado ao reeditar).
      */
     public function deleteMediaByPostId(int $postId): bool
@@ -409,6 +438,29 @@ final class InstagramPostRepository
               LIMIT 1"
         );
         $stmt->execute([':account_id' => $accountId, ':periodo' => $period]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Retorna o snapshot anterior a uma data de referência (ex: anterior a hoje).
+     *
+     * @return array<string,mixed>|null
+     */
+    public function getPreviousInsights(int $accountId, string $period, string $beforeDate): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM instagram_insights_cache
+              WHERE account_id = :account_id AND periodo = :periodo AND data_referencia < :before_date
+              ORDER BY data_referencia DESC
+              LIMIT 1"
+        );
+        $stmt->execute([
+            ':account_id'  => $accountId,
+            ':periodo'     => $period,
+            ':before_date' => $beforeDate,
+        ]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return is_array($row) ? $row : null;
