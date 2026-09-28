@@ -42,6 +42,7 @@ $period      = (string) ($period ?? '7d');
 $start       = (string) ($start ?? date('Y-m-d', strtotime('-7 days')));
 $end         = (string) ($end ?? date('Y-m-d'));
 $insights    = $insights ?? null;
+$viewMode    = isset($_GET['view']) && in_array((string) $_GET['view'], ['grid', 'table'], true) ? (string) $_GET['view'] : 'table';
 
 $fmt = static fn (int $v): string => number_format($v, 0, ',', '.');
 $esc = static fn (?string $v): string => htmlspecialchars((string) $v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -75,6 +76,14 @@ $statusClasses = static function (string $st): string {
     };
 };
 
+$statusLabel = [
+    'publicado'  => 'Publicado',
+    'agendado'   => 'Agendado',
+    'rascunho'   => 'Rascunho',
+    'publicando' => 'Publicando',
+    'erro'       => 'Erro',
+];
+
 $tipoBadge = static function (string $tp): string {
     return match ($tp) {
         'reels'     => 'border-purple-500/30 text-purple-200 bg-purple-500/10',
@@ -87,8 +96,8 @@ $tipoBadge = static function (string $tp): string {
 $tipoLabel = ['imagem' => 'Imagem', 'carrossel' => 'Carrossel', 'reels' => 'Reels', 'story' => 'Story'];
 
 $baseUrl = function_exists('url') ? url('/admin/instagram') : '/admin/instagram';
-$buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $sort, $dir, $page, $perPage, $period, $start, $end): string {
-    $query = [
+$buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $sort, $dir, $page, $perPage, $period, $start, $end, $viewMode): string {
+    $current = [
         'busca'    => (string) ($filters['busca'] ?? ''),
         'tipo'     => (string) ($filters['tipo'] ?? ''),
         'status'   => (string) ($filters['status'] ?? ''),
@@ -99,14 +108,51 @@ $buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $so
         'dir'      => $dir,
         'page'     => $page,
         'per_page' => $perPage,
+        'view'     => $viewMode,
     ];
 
     foreach ($overrides as $k => $v) {
-        $query[$k] = $v;
+        $current[$k] = $v;
     }
 
-    $query = array_filter($query, static fn ($v): bool => !($v === '' || $v === null));
-    $qs = http_build_query($query);
+    $clean = [];
+    if (!empty($current['busca'])) {
+        $clean['busca'] = (string) $current['busca'];
+    }
+    if (!empty($current['tipo'])) {
+        $clean['tipo'] = (string) $current['tipo'];
+    }
+    if (!empty($current['status'])) {
+        $clean['status'] = (string) $current['status'];
+    }
+    if (!empty($current['period']) && (string) $current['period'] !== '7d') {
+        $clean['period'] = (string) $current['period'];
+        if ((string) $current['period'] === 'custom') {
+            if (!empty($current['start'])) {
+                $clean['start'] = (string) $current['start'];
+            }
+            if (!empty($current['end'])) {
+                $clean['end'] = (string) $current['end'];
+            }
+        }
+    }
+    if (!empty($current['sort']) && (string) $current['sort'] !== 'publicado_em') {
+        $clean['sort'] = (string) $current['sort'];
+    }
+    if (!empty($current['dir']) && (string) $current['dir'] !== 'desc') {
+        $clean['dir'] = (string) $current['dir'];
+    }
+    if (!empty($current['page']) && (int) $current['page'] > 1) {
+        $clean['page'] = (int) $current['page'];
+    }
+    if (!empty($current['per_page']) && (int) $current['per_page'] !== 10) {
+        $clean['per_page'] = (int) $current['per_page'];
+    }
+    if (!empty($current['view']) && (string) $current['view'] !== 'table') {
+        $clean['view'] = (string) $current['view'];
+    }
+
+    $qs = http_build_query($clean);
 
     return $qs !== '' ? $baseUrl . '?' . $qs : $baseUrl;
 };
@@ -357,107 +403,6 @@ if (($endRange - $startRange) < 4) {
       </div>
     </section>
 
-    <!-- Fila Editorial: Agendados & Rascunhos -->
-    <?php if ($scheduled !== [] || $drafts !== []): ?>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Agendados -->
-        <section class="admin-panel posts-table-panel">
-          <div class="posts-table-head">
-            <div>
-              <h3 class="font-orbitron text-base font-black text-white"><i class="fa-solid fa-clock text-amber-300 mr-1.5" aria-hidden="true"></i> Agendados</h3>
-              <div class="text-xs text-slate-400 mt-1"><?= count($scheduled) ?> publicação(ões) na fila</div>
-            </div>
-          </div>
-          <?php if ($scheduled === []): ?>
-            <div class="text-center py-8 border-2 border-dashed border-gray-700 rounded-xl">
-              <div class="text-xs text-slate-400">Nenhum post agendado no momento.</div>
-            </div>
-          <?php else: ?>
-            <div class="posts-table-wrap">
-              <table class="posts-table">
-                <thead class="posts-table-thead">
-                  <tr>
-                    <th class="posts-table-th posts-table-th-left">Data/Hora</th>
-                    <th class="posts-table-th posts-table-th-center">Tipo</th>
-                    <th class="posts-table-th posts-table-th-left">Legenda</th>
-                    <th class="posts-table-th posts-table-th-center">Ação</th>
-                  </tr>
-                </thead>
-                <tbody class="posts-table-body">
-                  <?php foreach ($scheduled as $s): ?>
-                    <tr class="posts-table-row">
-                      <td class="posts-table-td text-xs text-slate-300 whitespace-nowrap">
-                        <?= $esc($formatDate((string) ($s['agendado_para'] ?? ''))) ?>
-                      </td>
-                      <td class="posts-table-td posts-table-td-center">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge((string) ($s['tipo'] ?? '')) ?>">
-                          <?= $esc($tipoLabel[(string) ($s['tipo'] ?? '')] ?? (string) ($s['tipo'] ?? '')) ?>
-                        </span>
-                      </td>
-                      <td class="posts-table-td text-xs text-slate-400">
-                        <?= $esc($excerpt((string) ($s['legenda'] ?? ''), 45)) ?>
-                      </td>
-                      <td class="posts-table-td posts-table-td-center">
-                        <a href="<?= url('/admin/instagram/posts/' . (int) ($s['id'] ?? 0) . '/editar') ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs">
-                          Editar
-                        </a>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
-            </div>
-          <?php endif; ?>
-        </section>
-
-        <!-- Rascunhos -->
-        <section class="admin-panel posts-table-panel">
-          <div class="posts-table-head">
-            <div>
-              <h3 class="font-orbitron text-base font-black text-white"><i class="fa-solid fa-pen-to-square text-cyan-300 mr-1.5" aria-hidden="true"></i> Rascunhos</h3>
-              <div class="text-xs text-slate-400 mt-1"><?= count($drafts) ?> rascunho(s) salvo(s)</div>
-            </div>
-          </div>
-          <?php if ($drafts === []): ?>
-            <div class="text-center py-8 border-2 border-dashed border-gray-700 rounded-xl">
-              <div class="text-xs text-slate-400">Nenhum rascunho em aberto.</div>
-            </div>
-          <?php else: ?>
-            <div class="posts-table-wrap">
-              <table class="posts-table">
-                <thead class="posts-table-thead">
-                  <tr>
-                    <th class="posts-table-th posts-table-th-center">Tipo</th>
-                    <th class="posts-table-th posts-table-th-left">Legenda</th>
-                    <th class="posts-table-th posts-table-th-center">Ação</th>
-                  </tr>
-                </thead>
-                <tbody class="posts-table-body">
-                  <?php foreach ($drafts as $d): ?>
-                    <tr class="posts-table-row">
-                      <td class="posts-table-td posts-table-td-center">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge((string) ($d['tipo'] ?? '')) ?>">
-                          <?= $esc($tipoLabel[(string) ($d['tipo'] ?? '')] ?? (string) ($d['tipo'] ?? '')) ?>
-                        </span>
-                      </td>
-                      <td class="posts-table-td text-xs text-slate-400">
-                        <?= $esc($excerpt((string) ($d['legenda'] ?? ''), 55)) ?>
-                      </td>
-                      <td class="posts-table-td posts-table-td-center">
-                        <a href="<?= url('/admin/instagram/posts/' . (int) ($d['id'] ?? 0) . '/editar') ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs">
-                          Editar
-                        </a>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
-            </div>
-          <?php endif; ?>
-        </section>
-      </div>
-    <?php endif; ?>
-
     <!-- Painel de Filtros da Lista de Posts (Padrão Central de Posts) -->
     <form method="GET" action="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-panel admin-filter-panel" data-admin-instagram-filters>
       <div class="admin-filter-head">
@@ -470,7 +415,7 @@ if (($endRange - $startRange) < 4) {
         </div>
       </div>
 
-      <div class="admin-filter-grid">
+      <div class="admin-filter-grid admin-filter-grid-instagram">
         <div class="admin-filter-field admin-filter-field-search">
           <label class="admin-filter-label" for="posts-busca">Buscar</label>
           <input
@@ -505,26 +450,51 @@ if (($endRange - $startRange) < 4) {
       </div>
 
       <div class="admin-filter-actions">
-        <input type="hidden" name="period" value="<?= $esc($period) ?>">
-        <input type="hidden" name="start" value="<?= $esc($start) ?>">
-        <input type="hidden" name="end" value="<?= $esc($end) ?>">
-        <input type="hidden" name="sort" value="<?= $esc($sort) ?>">
-        <input type="hidden" name="dir" value="<?= $esc($dir) ?>">
-        <input type="hidden" name="page" value="1">
-        <input type="hidden" name="per_page" value="<?= (int) $perPage ?>">
+        <?php if ($period !== '7d'): ?><input type="hidden" name="period" value="<?= $esc($period) ?>"><?php endif; ?>
+        <?php if ($period === 'custom'): ?>
+          <input type="hidden" name="start" value="<?= $esc($start) ?>">
+          <input type="hidden" name="end" value="<?= $esc($end) ?>">
+        <?php endif; ?>
+        <?php if ($sort !== 'publicado_em'): ?><input type="hidden" name="sort" value="<?= $esc($sort) ?>"><?php endif; ?>
+        <?php if ($dir !== 'desc'): ?><input type="hidden" name="dir" value="<?= $esc($dir) ?>"><?php endif; ?>
+        <?php if ($perPage !== 10): ?><input type="hidden" name="per_page" value="<?= (int) $perPage ?>"><?php endif; ?>
+        <?php if ($viewMode !== 'table'): ?><input type="hidden" name="view" value="<?= $esc($viewMode) ?>"><?php endif; ?>
         <button class="admin-btn admin-btn-primary admin-filter-button" type="submit">Filtrar</button>
         <a class="admin-btn admin-btn-secondary admin-filter-button" href="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Limpar</a>
       </div>
     </form>
 
-    <!-- Lista de Posts (Tabela Oficial Estratégia Nerd) -->
+    <!-- Lista de Posts (Tabela / Cards Oficial Estratégia Nerd) -->
     <section class="admin-panel posts-table-panel">
       <div class="posts-table-head">
         <div>
           <h3 class="font-orbitron text-xl font-black text-white">Lista de Posts</h3>
           <div class="text-xs text-slate-400 mt-1"><?= number_format($totalPosts, 0, ',', '.') ?> resultado(s) encontrado(s)</div>
         </div>
-        <span class="posts-table-order"><?= strtoupper($esc($sort)) ?> / <?= strtoupper($esc($dir)) ?></span>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Alternador Planilha / Cards -->
+          <div class="inline-flex rounded-xl border border-slate-700 bg-slate-900/60 p-0.5 text-xs font-bold" data-posts-view-toggle>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-lg transition <?= $viewMode === 'table' ? 'bg-cyan-500/20 text-cyan-200 shadow' : 'text-slate-400 hover:text-white' ?>"
+              data-view-btn="table"
+              title="Exibir como Planilha"
+            >
+              <i class="fa-solid fa-table-list mr-1.5" aria-hidden="true"></i> Planilha
+            </button>
+            <button
+              type="button"
+              class="px-3 py-1.5 rounded-lg transition <?= $viewMode === 'grid' ? 'bg-cyan-500/20 text-cyan-200 shadow' : 'text-slate-400 hover:text-white' ?>"
+              data-view-btn="grid"
+              title="Exibir como Cards"
+            >
+              <i class="fa-solid fa-grip mr-1.5" aria-hidden="true"></i> Cards
+            </button>
+          </div>
+
+          <span class="posts-table-order"><?= strtoupper($esc($sort)) ?> / <?= strtoupper($esc($dir)) ?></span>
+        </div>
       </div>
 
       <?php if ($items === []): ?>
@@ -534,143 +504,219 @@ if (($endRange - $startRange) < 4) {
           <div class="text-slate-400 text-sm">Ajuste os filtros ou clique em "Sincronizar Agora" para carregar as publicações do Instagram.</div>
         </div>
       <?php else: ?>
-        <div class="posts-table-wrap">
-          <table class="posts-table">
-            <thead class="posts-table-thead">
-              <tr>
-                <th class="posts-table-th posts-table-th-center" style="width: 60px;">Mídia</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 100px;">Tipo</th>
-                <th class="posts-table-th posts-table-th-left">
-                  <a class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('legenda'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                    Legenda <?= $sortIcon('legenda') ?>
-                  </a>
-                </th>
-                <th class="posts-table-th posts-table-th-center" style="width: 110px;">
-                  <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                    Status <?= $sortIcon('status') ?>
-                  </a>
-                </th>
-                <th class="posts-table-th posts-table-th-center" style="width: 140px;">
-                  <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('publicado_em'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                    Publicação <?= $sortIcon('publicado_em') ?>
-                  </a>
-                </th>
-                <th class="posts-table-th posts-table-th-center" style="width: 90px;">
-                  <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('curtidas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                    Curtidas <?= $sortIcon('curtidas') ?>
-                  </a>
-                </th>
-                <th class="posts-table-th posts-table-th-center" style="width: 110px;">
-                  <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('comentarios'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                    Comentários <?= $sortIcon('comentarios') ?>
-                  </a>
-                </th>
-                <th class="posts-table-th posts-table-th-center" style="width: 90px;">Ações</th>
-              </tr>
-            </thead>
-            <tbody class="posts-table-body">
-              <?php foreach ($items as $item): ?>
-                <?php
-                  $pId         = (int) ($item['id'] ?? 0);
-                  $pStatus     = (string) ($item['status'] ?? 'publicado');
-                  $pTipo       = (string) ($item['tipo'] ?? 'imagem');
-                  $pLegenda    = (string) ($item['legenda'] ?? '');
-                  $pPermalink  = (string) ($item['permalink'] ?? '');
-                  $pCurtidas   = (int) ($item['curtidas'] ?? 0);
-                  $pComents    = (int) ($item['comentarios_count'] ?? 0);
-                  $pDataPub    = $item['publicado_em'] ?? null;
-                  $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
-                  $thumbUrl    = $medias[0] ?? '';
-                  $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
-                ?>
-                <tr class="posts-table-row">
-                  <!-- Thumbnail -->
-                  <td class="posts-table-td posts-table-td-center">
-                    <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex items-center justify-center shrink-0">
-                      <?php if ($thumbUrl !== ''): ?>
-                        <img src="<?= $esc($thumbUrl) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy">
-                      <?php else: ?>
-                        <i class="fa-brands fa-instagram text-slate-500 text-sm" aria-hidden="true"></i>
-                      <?php endif; ?>
-                    </div>
-                  </td>
+        <!-- Modo 1: Tabela (Planilha) -->
+        <div data-posts-view-container="table" class="<?= $viewMode === 'table' ? '' : 'hidden' ?>">
+          <div class="posts-table-wrap">
+            <table class="posts-table">
+              <thead class="posts-table-thead">
+                <tr>
+                  <th class="posts-table-th posts-table-th-center" style="width: 60px;">Mídia</th>
+                  <th class="posts-table-th posts-table-th-center" style="width: 100px;">Tipo</th>
+                  <th class="posts-table-th posts-table-th-left">
+                    <a class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('legenda'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      Legenda <?= $sortIcon('legenda') ?>
+                    </a>
+                  </th>
+                  <th class="posts-table-th posts-table-th-center" style="width: 110px;">
+                    <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      Status <?= $sortIcon('status') ?>
+                    </a>
+                  </th>
+                  <th class="posts-table-th posts-table-th-center" style="width: 140px;">
+                    <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('publicado_em'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      Publicação <?= $sortIcon('publicado_em') ?>
+                    </a>
+                  </th>
+                  <th class="posts-table-th posts-table-th-center" style="width: 90px;">
+                    <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('curtidas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      Curtidas <?= $sortIcon('curtidas') ?>
+                    </a>
+                  </th>
+                  <th class="posts-table-th posts-table-th-center" style="width: 110px;">
+                    <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('comentarios'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      Comentários <?= $sortIcon('comentarios') ?>
+                    </a>
+                  </th>
+                  <th class="posts-table-th posts-table-th-center" style="width: 90px;">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="posts-table-body">
+                <?php foreach ($items as $item): ?>
+                  <?php
+                    $pId         = (int) ($item['id'] ?? 0);
+                    $pStatus     = (string) ($item['status'] ?? 'publicado');
+                    $pTipo       = (string) ($item['tipo'] ?? 'imagem');
+                    $pLegenda    = (string) ($item['legenda'] ?? '');
+                    $pPermalink  = (string) ($item['permalink'] ?? '');
+                    $pCurtidas   = (int) ($item['curtidas'] ?? 0);
+                    $pComents    = (int) ($item['comentarios_count'] ?? 0);
+                    $pDataPub    = $item['publicado_em'] ?? null;
+                    $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
+                    $thumbUrl    = $medias[0] ?? '';
+                    $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
+                  ?>
+                  <tr class="posts-table-row">
+                    <!-- Thumbnail -->
+                    <td class="posts-table-td posts-table-td-center">
+                      <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex items-center justify-center shrink-0">
+                        <?php if ($thumbUrl !== ''): ?>
+                          <img src="<?= $esc($thumbUrl) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy">
+                        <?php else: ?>
+                          <i class="fa-brands fa-instagram text-slate-500 text-sm" aria-hidden="true"></i>
+                        <?php endif; ?>
+                      </div>
+                    </td>
 
-                  <!-- Tipo -->
-                  <td class="posts-table-td posts-table-td-center">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge($pTipo) ?>">
-                      <?= $esc($tipoLabel[$pTipo] ?? $pTipo) ?>
-                    </span>
-                  </td>
+                    <!-- Tipo -->
+                    <td class="posts-table-td posts-table-td-center">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge($pTipo) ?>">
+                        <?= $esc($tipoLabel[$pTipo] ?? $pTipo) ?>
+                      </span>
+                    </td>
 
-                  <!-- Legenda -->
-                  <td class="posts-table-td posts-table-title-cell">
-                    <div class="posts-table-title-top">
-                      <a class="posts-table-title-link" href="<?= $pPermalink !== '' ? $esc($pPermalink) : $esc($editUrl) ?>" target="<?= $pPermalink !== '' ? '_blank' : '_self' ?>" rel="noopener noreferrer">
-                        <?= $esc($excerpt($pLegenda, 75)) ?>
-                      </a>
-                    </div>
-                    <div class="posts-table-subline">
-                      #<?= $pId ?><?php if (!empty($item['ig_media_id'])): ?> <span class="posts-table-subline-dot">•</span> ID Meta: <?= $esc((string) $item['ig_media_id']) ?><?php endif; ?>
-                    </div>
-                  </td>
+                    <!-- Legenda -->
+                    <td class="posts-table-td posts-table-title-cell">
+                      <div class="posts-table-title-top">
+                        <a class="posts-table-title-link" href="<?= $pPermalink !== '' ? $esc($pPermalink) : $esc($editUrl) ?>" target="<?= $pPermalink !== '' ? '_blank' : '_self' ?>" rel="noopener noreferrer">
+                          <?= $esc($excerpt($pLegenda, 75)) ?>
+                        </a>
+                      </div>
+                      <div class="posts-table-subline">
+                        #<?= $pId ?><?php if (!empty($item['ig_media_id'])): ?> <span class="posts-table-subline-dot">•</span> ID Meta: <?= $esc((string) $item['ig_media_id']) ?><?php endif; ?>
+                      </div>
+                    </td>
 
-                  <!-- Status -->
-                  <td class="posts-table-td posts-table-td-center">
-                    <span class="<?= htmlspecialchars($statusClasses($pStatus), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                      <?= $esc($pStatus) ?>
-                    </span>
-                  </td>
+                    <!-- Status -->
+                    <td class="posts-table-td posts-table-td-center">
+                      <span class="<?= htmlspecialchars($statusClasses($pStatus), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                        <?= $esc($statusLabel[$pStatus] ?? $pStatus) ?>
+                      </span>
+                    </td>
 
-                  <!-- Data de Publicação -->
-                  <td class="posts-table-td posts-table-td-center">
-                    <div class="posts-table-date whitespace-nowrap">
-                      <?= $esc($formatDate((string) $pDataPub)) ?>
-                    </div>
-                  </td>
+                    <!-- Data de Publicação -->
+                    <td class="posts-table-td posts-table-td-center">
+                      <div class="posts-table-date whitespace-nowrap">
+                        <?= $esc($formatDate((string) $pDataPub)) ?>
+                      </div>
+                    </td>
 
-                  <!-- Curtidas -->
-                  <td class="posts-table-td posts-table-td-center">
-                    <span class="posts-table-metric<?= $pCurtidas === 0 ? ' is-zero' : '' ?>">
-                      <?= $fmt($pCurtidas) ?>
-                    </span>
-                  </td>
+                    <!-- Curtidas -->
+                    <td class="posts-table-td posts-table-td-center">
+                      <span class="posts-table-metric<?= $pCurtidas === 0 ? ' is-zero' : '' ?>">
+                        <?= $fmt($pCurtidas) ?>
+                      </span>
+                    </td>
 
-                  <!-- Comentários -->
-                  <td class="posts-table-td posts-table-td-center">
-                    <span class="posts-table-metric<?= $pComents === 0 ? ' is-zero' : '' ?>">
-                      <?= $fmt($pComents) ?>
-                    </span>
-                  </td>
+                    <!-- Comentários -->
+                    <td class="posts-table-td posts-table-td-center">
+                      <span class="posts-table-metric<?= $pComents === 0 ? ' is-zero' : '' ?>">
+                        <?= $fmt($pComents) ?>
+                      </span>
+                    </td>
 
-                  <!-- Ações -->
-                  <td class="posts-table-td">
-                    <div class="posts-table-actions">
-                      <?php if ($pPermalink !== ''): ?>
+                    <!-- Ações -->
+                    <td class="posts-table-td">
+                      <div class="posts-table-actions">
+                        <?php if ($pPermalink !== ''): ?>
+                          <a
+                            class="posts-table-action posts-table-action-view"
+                            href="<?= $esc($pPermalink) ?>"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Ver no Instagram"
+                            title="Ver no Instagram"
+                          >
+                            <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                          </a>
+                        <?php endif; ?>
                         <a
                           class="posts-table-action posts-table-action-view"
-                          href="<?= $esc($pPermalink) ?>"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label="Ver no Instagram"
-                          title="Ver no Instagram"
+                          href="<?= $esc($editUrl) ?>"
+                          aria-label="Editar post"
+                          title="Editar post"
                         >
-                          <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                          <i class="fa-solid fa-pen" aria-hidden="true"></i>
                         </a>
-                      <?php endif; ?>
-                      <a
-                        class="posts-table-action posts-table-action-view"
-                        href="<?= $esc($editUrl) ?>"
-                        aria-label="Editar post"
-                        title="Editar post"
-                      >
-                        <i class="fa-solid fa-pen" aria-hidden="true"></i>
-                      </a>
+                      </div>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Modo 2: Cards (Grade Visual como estava) -->
+        <div data-posts-view-container="grid" class="<?= $viewMode === 'grid' ? '' : 'hidden' ?>">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <?php foreach ($items as $item): ?>
+              <?php
+                $pId         = (int) ($item['id'] ?? 0);
+                $pStatus     = (string) ($item['status'] ?? 'publicado');
+                $pTipo       = (string) ($item['tipo'] ?? 'imagem');
+                $pLegenda    = (string) ($item['legenda'] ?? '');
+                $pPermalink  = (string) ($item['permalink'] ?? '');
+                $pCurtidas   = (int) ($item['curtidas'] ?? 0);
+                $pComents    = (int) ($item['comentarios_count'] ?? 0);
+                $pDataPub    = $item['publicado_em'] ?? null;
+                $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
+                $thumbUrl    = $medias[0] ?? '';
+                $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
+              ?>
+              <div class="rounded-2xl border border-slate-800/80 bg-slate-900/60 overflow-hidden hover:border-cyan-500/40 transition-all flex flex-col group shadow-lg">
+                <!-- Thumbnail Quadrada 1:1 -->
+                <div class="aspect-square bg-slate-800 relative overflow-hidden flex items-center justify-center">
+                  <?php if ($thumbUrl !== ''): ?>
+                    <img src="<?= $esc($thumbUrl) ?>" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy">
+                  <?php else: ?>
+                    <i class="fa-brands fa-instagram text-4xl text-slate-600" aria-hidden="true"></i>
+                  <?php endif; ?>
+
+                  <!-- Badges flutuantes -->
+                  <div class="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider backdrop-blur-md <?= $tipoBadge($pTipo) ?>">
+                      <?= $esc($tipoLabel[$pTipo] ?? $pTipo) ?>
+                    </span>
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider backdrop-blur-md <?= htmlspecialchars($statusClasses($pStatus), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                      <?= $esc($statusLabel[$pStatus] ?? $pStatus) ?>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Conteúdo do Card -->
+                <div class="p-3.5 flex-1 flex flex-col justify-between space-y-3">
+                  <div class="text-xs text-slate-300 leading-relaxed font-medium line-clamp-3">
+                    <?= $esc($excerpt($pLegenda, 90)) ?>
+                  </div>
+
+                  <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                    <div class="flex items-center gap-3">
+                      <span class="text-pink-400 font-bold" title="Curtidas">
+                        <i class="fa-solid fa-heart mr-1" aria-hidden="true"></i> <?= $fmt($pCurtidas) ?>
+                      </span>
+                      <span class="text-cyan-400 font-bold" title="Comentários">
+                        <i class="fa-solid fa-comment mr-1" aria-hidden="true"></i> <?= $fmt($pComents) ?>
+                      </span>
                     </div>
-                  </td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
+                    <span class="text-[11px] text-slate-500">
+                      <?= $esc($formatDate((string) $pDataPub)) ?>
+                    </span>
+                  </div>
+
+                  <div class="flex items-center gap-2 pt-1">
+                    <?php if ($pPermalink !== ''): ?>
+                      <a href="<?= $esc($pPermalink) ?>" target="_blank" rel="noopener noreferrer" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs flex-1 text-center" title="Ver no Instagram">
+                        <i class="fa-solid fa-arrow-up-right-from-square mr-1" aria-hidden="true"></i> Ver
+                      </a>
+                    <?php endif; ?>
+                    <a href="<?= $esc($editUrl) ?>" class="admin-btn admin-btn-primary !px-2.5 !py-1 text-xs flex-1 text-center" title="Editar post">
+                      <i class="fa-solid fa-pen mr-1" aria-hidden="true"></i> Editar
+                    </a>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
         </div>
       <?php endif; ?>
     </section>
@@ -724,12 +770,217 @@ if (($endRange - $startRange) < 4) {
       </div>
     </section>
 
+    <!-- Fila Editorial 1: Agendados (Por último, largura total, tabela padrão) -->
+    <section class="admin-panel posts-table-panel" id="secao-agendados">
+      <div class="posts-table-head">
+        <div>
+          <h3 class="font-orbitron text-xl font-black text-white flex items-center gap-2">
+            <i class="fa-solid fa-clock text-amber-300" aria-hidden="true"></i>
+            <span>Agendados</span>
+          </h3>
+          <div class="text-xs text-slate-400 mt-1"><?= count($scheduled) ?> publicação(ões) programada(s) para o Instagram</div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <?php if ($scheduled !== []): ?>
+            <div class="relative">
+              <input
+                type="text"
+                placeholder="Filtrar agendados..."
+                class="nerd-input !py-1 !px-3 text-xs w-48 rounded-xl"
+                data-filter-table="agendados"
+                aria-label="Filtrar agendados"
+              />
+            </div>
+          <?php endif; ?>
+          <a href="<?= url('/admin/instagram/posts/criar') ?>" class="admin-btn admin-btn-secondary !px-3 !py-1 text-xs">
+            <i class="fa-solid fa-plus mr-1" aria-hidden="true"></i> Novo Agendamento
+          </a>
+        </div>
+      </div>
+
+      <?php if ($scheduled === []): ?>
+        <div class="text-center py-10 border-2 border-dashed border-gray-700/80 rounded-xl">
+          <div class="text-slate-400 text-sm font-medium">Nenhum post agendado no momento.</div>
+          <div class="text-slate-500 text-xs mt-1">Crie um post e selecione uma data de publicação futura.</div>
+        </div>
+      <?php else: ?>
+        <div class="posts-table-wrap">
+          <table class="posts-table" data-table-id="agendados">
+            <thead class="posts-table-thead">
+              <tr>
+                <th class="posts-table-th posts-table-th-center" style="width: 60px;">Mídia</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 100px;">Tipo</th>
+                <th class="posts-table-th posts-table-th-left">Legenda</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 160px;">Data/Hora Agendada</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 110px;">Status</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 90px;">Ação</th>
+              </tr>
+            </thead>
+            <tbody class="posts-table-body">
+              <?php foreach ($scheduled as $s): ?>
+                <?php
+                  $sId      = (int) ($s['id'] ?? 0);
+                  $sTipo    = (string) ($s['tipo'] ?? 'imagem');
+                  $sLegenda = (string) ($s['legenda'] ?? '');
+                  $sData    = (string) ($s['agendado_para'] ?? '');
+                  $sMedias  = array_values(array_filter(explode('|', (string) ($s['medias'] ?? ''))));
+                  $sThumb   = $sMedias[0] ?? '';
+                  $sEdit    = url('/admin/instagram/posts/' . $sId . '/editar');
+                ?>
+                <tr class="posts-table-row" data-row-search="<?= $esc(mb_strtolower($sLegenda . ' ' . $sTipo)) ?>">
+                  <td class="posts-table-td posts-table-td-center">
+                    <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex items-center justify-center shrink-0">
+                      <?php if ($sThumb !== ''): ?>
+                        <img src="<?= $esc($sThumb) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy">
+                      <?php else: ?>
+                        <i class="fa-brands fa-instagram text-slate-500 text-sm" aria-hidden="true"></i>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+                  <td class="posts-table-td posts-table-td-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge($sTipo) ?>">
+                      <?= $esc($tipoLabel[$sTipo] ?? $sTipo) ?>
+                    </span>
+                  </td>
+                  <td class="posts-table-td posts-table-title-cell">
+                    <div class="posts-table-title-top">
+                      <a class="posts-table-title-link" href="<?= $esc($sEdit) ?>">
+                        <?= $esc($excerpt($sLegenda, 80)) ?>
+                      </a>
+                    </div>
+                    <div class="posts-table-subline">#<?= $sId ?></div>
+                  </td>
+                  <td class="posts-table-td posts-table-td-center">
+                    <div class="posts-table-date font-bold text-amber-300 whitespace-nowrap">
+                      <i class="fa-regular fa-clock mr-1" aria-hidden="true"></i> <?= $esc($formatDate($sData)) ?>
+                    </div>
+                  </td>
+                  <td class="posts-table-td posts-table-td-center">
+                    <span class="status-badge status-agendado">Agendado</span>
+                  </td>
+                  <td class="posts-table-td posts-table-td-center">
+                    <a href="<?= $esc($sEdit) ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs" title="Editar agendamento">
+                      <i class="fa-solid fa-pen mr-1" aria-hidden="true"></i> Editar
+                    </a>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </section>
+
+    <!-- Fila Editorial 2: Rascunhos (Por último, largura total, tabela padrão) -->
+    <section class="admin-panel posts-table-panel" id="secao-rascunhos">
+      <div class="posts-table-head">
+        <div>
+          <h3 class="font-orbitron text-xl font-black text-white flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square text-cyan-300" aria-hidden="true"></i>
+            <span>Rascunhos</span>
+          </h3>
+          <div class="text-xs text-slate-400 mt-1"><?= count($drafts) ?> rascunho(s) salvo(s) aguardando finalização</div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <?php if ($drafts !== []): ?>
+            <div class="relative">
+              <input
+                type="text"
+                placeholder="Filtrar rascunhos..."
+                class="nerd-input !py-1 !px-3 text-xs w-48 rounded-xl"
+                data-filter-table="rascunhos"
+                aria-label="Filtrar rascunhos"
+              />
+            </div>
+          <?php endif; ?>
+          <a href="<?= url('/admin/instagram/posts/criar') ?>" class="admin-btn admin-btn-secondary !px-3 !py-1 text-xs">
+            <i class="fa-solid fa-plus mr-1" aria-hidden="true"></i> Novo Rascunho
+          </a>
+        </div>
+      </div>
+
+      <?php if ($drafts === []): ?>
+        <div class="text-center py-10 border-2 border-dashed border-gray-700/80 rounded-xl">
+          <div class="text-slate-400 text-sm font-medium">Nenhum rascunho em aberto.</div>
+          <div class="text-slate-500 text-xs mt-1">Posts iniciados e salvos sem agendar ficam catalogados aqui.</div>
+        </div>
+      <?php else: ?>
+        <div class="posts-table-wrap">
+          <table class="posts-table" data-table-id="rascunhos">
+            <thead class="posts-table-thead">
+              <tr>
+                <th class="posts-table-th posts-table-th-center" style="width: 60px;">Mídia</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 100px;">Tipo</th>
+                <th class="posts-table-th posts-table-th-left">Legenda</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 160px;">Data de Criação</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 110px;">Status</th>
+                <th class="posts-table-th posts-table-th-center" style="width: 90px;">Ação</th>
+              </tr>
+            </thead>
+            <tbody class="posts-table-body">
+              <?php foreach ($drafts as $d): ?>
+                <?php
+                  $dId      = (int) ($d['id'] ?? 0);
+                  $dTipo    = (string) ($d['tipo'] ?? 'imagem');
+                  $dLegenda = (string) ($d['legenda'] ?? '');
+                  $dData    = (string) ($d['criado_em'] ?? '');
+                  $dMedias  = array_values(array_filter(explode('|', (string) ($d['medias'] ?? ''))));
+                  $dThumb   = $dMedias[0] ?? '';
+                  $dEdit    = url('/admin/instagram/posts/' . $dId . '/editar');
+                ?>
+                <tr class="posts-table-row" data-row-search="<?= $esc(mb_strtolower($dLegenda . ' ' . $dTipo)) ?>">
+                  <td class="posts-table-td posts-table-td-center">
+                    <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex items-center justify-center shrink-0">
+                      <?php if ($dThumb !== ''): ?>
+                        <img src="<?= $esc($dThumb) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy">
+                      <?php else: ?>
+                        <i class="fa-brands fa-instagram text-slate-500 text-sm" aria-hidden="true"></i>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+                  <td class="posts-table-td posts-table-td-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge($dTipo) ?>">
+                      <?= $esc($tipoLabel[$dTipo] ?? $dTipo) ?>
+                    </span>
+                  </td>
+                  <td class="posts-table-td posts-table-title-cell">
+                    <div class="posts-table-title-top">
+                      <a class="posts-table-title-link" href="<?= $esc($dEdit) ?>">
+                        <?= $esc($excerpt($dLegenda, 80)) ?>
+                      </a>
+                    </div>
+                    <div class="posts-table-subline">#<?= $dId ?></div>
+                  </td>
+                  <td class="posts-table-td posts-table-td-center">
+                    <div class="posts-table-date whitespace-nowrap">
+                      <?= $esc($formatDate($dData)) ?>
+                    </div>
+                  </td>
+                  <td class="posts-table-td posts-table-td-center">
+                    <span class="status-badge status-rascunho">Rascunho</span>
+                  </td>
+                  <td class="posts-table-td posts-table-td-center">
+                    <a href="<?= $esc($dEdit) ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs" title="Editar rascunho">
+                      <i class="fa-solid fa-pen mr-1" aria-hidden="true"></i> Editar
+                    </a>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </section>
+
   <?php endif; ?>
 </div>
 
 <?php if ($account !== null): ?>
 <script>
 (function () {
+  // Sincronização ao vivo com a API da Meta
   var syncBtn = document.querySelector('[data-ig-sync-btn]');
   if (syncBtn) {
     syncBtn.addEventListener('click', function () {
@@ -777,6 +1028,92 @@ if (($endRange - $startRange) < 4) {
           syncBtn.disabled = false;
           if (label) { label.textContent = originalLabel; }
         });
+    });
+  }
+
+  // Alternador de Visualização: Planilha vs. Cards com persistência
+  var viewToggle = document.querySelector('[data-posts-view-toggle]');
+  if (viewToggle) {
+    var tableContainer = document.querySelector('[data-posts-view-container="table"]');
+    var gridContainer = document.querySelector('[data-posts-view-container="grid"]');
+
+    function applyViewMode(mode) {
+      if (!tableContainer || !gridContainer) return;
+      var isTable = mode === 'table';
+      tableContainer.classList.toggle('hidden', !isTable);
+      gridContainer.classList.toggle('hidden', isTable);
+
+      viewToggle.querySelectorAll('[data-view-btn]').forEach(function (btn) {
+        var active = btn.getAttribute('data-view-btn') === mode;
+        btn.classList.toggle('bg-cyan-500/20', active);
+        btn.classList.toggle('text-cyan-200', active);
+        btn.classList.toggle('shadow', active);
+        btn.classList.toggle('text-slate-400', !active);
+      });
+
+      try {
+        localStorage.setItem('ig_posts_view_preference', mode);
+      } catch (e) {}
+
+      // Atualiza o hidden field do formulário de filtros se existir
+      var filterViewInput = document.querySelector('input[name="view"]');
+      if (filterViewInput) {
+        filterViewInput.value = mode;
+      }
+    }
+
+    // Se houver preferência salva e a URL não especificar explicitamente view=
+    var urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams.has('view')) {
+      try {
+        var savedPreference = localStorage.getItem('ig_posts_view_preference');
+        if (savedPreference && (savedPreference === 'table' || savedPreference === 'grid')) {
+          applyViewMode(savedPreference);
+        }
+      } catch (e) {}
+    }
+
+    viewToggle.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-view-btn]');
+      if (!btn) return;
+      var targetMode = btn.getAttribute('data-view-btn');
+      applyViewMode(targetMode);
+    });
+  }
+
+  // Filtros rápidos em tempo real para as tabelas de Agendados e Rascunhos
+  document.querySelectorAll('[data-filter-table]').forEach(function (input) {
+    var targetId = input.getAttribute('data-filter-table');
+    var table = document.querySelector('table[data-table-id="' + targetId + '"]');
+    if (!table) return;
+
+    input.addEventListener('input', function () {
+      var term = input.value.trim().toLowerCase();
+      var rows = table.querySelectorAll('tbody tr');
+      rows.forEach(function (row) {
+        var searchData = row.getAttribute('data-row-search') || '';
+        if (term === '' || searchData.indexOf(term) !== -1) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // URLs amigáveis: desabilita inputs vazios no formulário de filtros antes de enviar
+  var filterForm = document.querySelector('[data-admin-instagram-filters]');
+  if (filterForm) {
+    filterForm.addEventListener('submit', function () {
+      Array.from(filterForm.elements).forEach(function (el) {
+        if (!el.name) return;
+        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'hidden') && el.value.trim() === '') {
+          el.disabled = true;
+        }
+        if (el.tagName === 'SELECT' && el.value === '') {
+          el.disabled = true;
+        }
+      });
     });
   }
 })();

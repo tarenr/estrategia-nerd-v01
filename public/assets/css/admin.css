@@ -381,7 +381,8 @@ body {
 }
 
 .admin-filter-grid-posts,
-.admin-filter-grid-categories {
+.admin-filter-grid-categories,
+.admin-filter-grid-instagram {
     grid-template-columns: 1fr;
 }
 
@@ -436,8 +437,26 @@ textarea.admin-filter-control {
         grid-column: 1 / -1;
     }
 
+    .admin-filter-grid-instagram {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-filter-grid-instagram .admin-filter-field-search {
+        grid-column: 1 / -1;
+    }
+
     .admin-filter-grid-categories {
         grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .admin-filter-grid-instagram {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .admin-filter-grid-instagram .admin-filter-field-search {
+        grid-column: auto;
     }
 }
 
