@@ -46,12 +46,23 @@ final class InstagramApiService
 
     /**
      * Retorna dados do perfil da conta Instagram.
-     * Tenta o helper local primeiro; em caso de falha usa a Graph API.
+     * Prioriza a Meta Graph API v21.0 oficial (dados autoritativos com bio e website);
+     * recorre ao helper local apenas como contingência se a Graph API falhar.
      *
      * @return array<string,mixed>
      */
     public function getProfile(): array
     {
+        if ($this->accessToken !== '' && $this->igUserId !== '') {
+            try {
+                return $this->graphGet("/{$this->igUserId}", [
+                    'fields' => 'id,username,name,biography,website,followers_count,follows_count,media_count,profile_picture_url',
+                ]);
+            } catch (RuntimeException $e) {
+                // Tenta o helper local abaixo caso a chamada oficial falhe
+            }
+        }
+
         $helperData = $this->fetchHelper('/profile');
         if ($helperData !== null) {
             return [
@@ -67,9 +78,7 @@ final class InstagramApiService
             ];
         }
 
-        return $this->graphGet("/{$this->igUserId}", [
-            'fields' => 'id,username,name,biography,website,followers_count,follows_count,media_count,profile_picture_url',
-        ]);
+        throw new RuntimeException('Não foi possível obter os dados do perfil nem via Graph API nem via helper local.');
     }
 
     // ── Insights ──────────────────────────────────────────────────────────────
