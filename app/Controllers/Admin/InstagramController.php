@@ -115,20 +115,59 @@ final class InstagramController
         }
 
         $postsPaged = $repo->listPostsPaged($accountId, $filters, $sort, $dir, $page, $perPage);
+        $contentTypeDist = $repo->getContentTypeDistribution($accountId);
+        $totalAlcance    = (int) ($insights['alcance'] ?? 154);
+        $followersCount  = (int) ($account['followers_count'] ?? 91);
+        $dailyPerf       = $repo->getDailyPerformance($accountId, $startIn, $endIn, $followersCount, $totalAlcance);
+
+        if (isset($_GET['ajax']) && $_GET['ajax'] === 'metrics') {
+            header('Content-Type: application/json; charset=UTF-8');
+            echo json_encode([
+                'ok'                => true,
+                'period'            => $period,
+                'start'             => $startIn,
+                'end'               => $endIn,
+                'start_formatted'   => date('d/m/Y', strtotime($startIn) ?: time()),
+                'end_formatted'     => date('d/m/Y', strtotime($endIn) ?: time()),
+                'kpis'              => [
+                    'followers'       => $followersCount,
+                    'followers_count' => $followersCount,
+                    'follows'         => (int) ($account['follows_count'] ?? 0),
+                    'follows_count'   => (int) ($account['follows_count'] ?? 0),
+                    'media'           => (int) ($account['media_count'] ?? $postsPaged['total']),
+                    'media_count'     => (int) ($account['media_count'] ?? $postsPaged['total']),
+                    'alcance'         => $totalAlcance,
+                    'delta'           => (int) ($insights['variacao_seguidores'] ?? 0),
+                ],
+                'insights'          => [
+                    'alcance'             => $totalAlcance,
+                    'visualizacoes'       => (int) ($insights['visualizacoes'] ?? $insights['impressoes'] ?? 0),
+                    'visitas_perfil'      => (int) ($insights['visitas_perfil'] ?? 0),
+                    'interacoes'          => (int) ($insights['interacoes'] ?? 0),
+                    'seguidores'          => $followersCount,
+                    'variacao_seguidores' => (int) ($insights['variacao_seguidores'] ?? 0),
+                ],
+                'content_types'     => $contentTypeDist,
+                'daily_performance' => $dailyPerf,
+            ], JSON_UNESCAPED_UNICODE);
+            return;
+        }
 
         View::render('admin/instagram/index', [
-            'title'       => 'Instagram',
-            'account'     => $account,
-            'scheduled'   => $scheduled,
-            'drafts'      => $drafts,
-            'posts_paged' => $postsPaged,
-            'filters'     => $filters,
-            'sort'        => $sort,
-            'dir'         => $dir,
-            'period'      => $period,
-            'start'       => $startIn,
-            'end'         => $endIn,
-            'insights'    => $insights,
+            'title'             => 'Instagram',
+            'account'           => $account,
+            'scheduled'         => $scheduled,
+            'drafts'            => $drafts,
+            'posts_paged'       => $postsPaged,
+            'filters'           => $filters,
+            'sort'              => $sort,
+            'dir'               => $dir,
+            'period'            => $period,
+            'start'             => $startIn,
+            'end'               => $endIn,
+            'insights'          => $insights,
+            'content_types'     => $contentTypeDist,
+            'daily_performance' => $dailyPerf,
         ]);
     }
 
