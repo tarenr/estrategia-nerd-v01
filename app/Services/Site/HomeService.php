@@ -67,7 +67,7 @@ final class HomeService
             'latest_posts' => $latestPosts,
             'categories' => $categories,
             'links' => $links,
-            'instagram_feed' => $this->instagramFeed?->getFeed(6),
+            'instagram_feed' => $this->instagramFeed?->getFeed(18),
             'hero' => [
                 'eyebrow' => "Portal geek estrat\u{00E9}gico",
                 'descriptor' => "Tecnologia, games, gadgets e cultura geek para descobrir, comparar e decidir melhor",

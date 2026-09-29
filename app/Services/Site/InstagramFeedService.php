@@ -33,7 +33,7 @@ final class InstagramFeedService
      * @param int $limit
      * @return array<string, mixed>|null
      */
-    public function getFeed(int $limit = 6): ?array
+    public function getFeed(int $limit = 18): ?array
     {
         try {
             // 1. Tentar ler do repositório local caso injetado
