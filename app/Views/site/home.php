@@ -8,6 +8,7 @@ $hero = $hero ?? [];
 $homeIntro = $home_intro ?? [];
 $topicLinks = $topic_links ?? [];
 $postsSection = $posts_section ?? [];
+$instagramFeed = $instagram_feed ?? null;
 
 $siteName = (string) ($siteMeta['name'] ?? 'Estratégia Nerd');
 $siteDescription = (string) ($siteMeta['description'] ?? 'Tecnologia, games, gadgets e cultura geek com reviews, comparativos, dicas e oportunidades que valem o clique.');
@@ -97,6 +98,10 @@ $homeEnhancementJsVersion = is_file($homeEnhancementJsPath) ? ((string) filemtim
       'posts_section' => $postsSection,
     ]) ?>
   </div>
+
+  <?= View::component('site/home/instagram-feed', [
+      'instagram_feed' => $instagramFeed,
+  ]) ?>
 
   <?php if ($showNewsletterHome): ?>
     <?= View::component('site/home/newsletter') ?>

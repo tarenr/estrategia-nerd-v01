@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace App\Controllers\Site;
 
 use App\Repositories\CategoriaPostRepository;
+use App\Repositories\InstagramPostRepository;
 use App\Repositories\LinkRepository;
 use App\Repositories\NewsletterRepository;
 use App\Repositories\PostRepository;
 use App\Services\Site\HomeService;
+use App\Services\Site\InstagramFeedService;
 use App\Support\View;
 
 final class HomeController
@@ -49,6 +51,7 @@ final class HomeController
             new CategoriaPostRepository($pdo),
             new LinkRepository($pdo),
             new NewsletterRepository($pdo),
+            new InstagramFeedService(new InstagramPostRepository($pdo)),
         );
     }
 }

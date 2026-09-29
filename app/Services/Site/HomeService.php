@@ -15,6 +15,7 @@ final class HomeService
         private CategoriaPostRepository $categorias,
         private LinkRepository $links,
         private NewsletterRepository $newsletter,
+        private ?InstagramFeedService $instagramFeed = null,
     ) {
     }
 
@@ -66,6 +67,7 @@ final class HomeService
             'latest_posts' => $latestPosts,
             'categories' => $categories,
             'links' => $links,
+            'instagram_feed' => $this->instagramFeed?->getFeed(6),
             'hero' => [
                 'eyebrow' => "Portal geek estrat\u{00E9}gico",
                 'descriptor' => "Tecnologia, games, gadgets e cultura geek para descobrir, comparar e decidir melhor",

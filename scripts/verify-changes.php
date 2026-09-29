@@ -77,6 +77,10 @@ $criticalFiles = [
     'app/Services/Instagram/InstagramApiService.php',
     'app/Views/admin/dashboard.php',
     'config/automated-tests.php',
+    'app/Services/Site/InstagramFeedService.php',
+    'app/Services/Site/HomeService.php',
+    'app/Controllers/Site/HomeController.php',
+    'app/Views/components/site/home/instagram-feed.php',
 ];
 
 foreach ($criticalFiles as $file) {
@@ -186,7 +190,44 @@ if (str_contains($igStdout, 'STATUS:OK')) {
 
 recordResult("Dashboard Instagram (/admin/instagram)", $igOk, $igDetail);
 
-// ── 5. Resumo Final ──────────────────────────────────────────────────────────
+// ── 5. Renderização do Portal Público (Home com Feed do Instagram) ────────────
+echo "\n5. Renderização do Portal Público (Home com Feed do Instagram):\n";
+
+$homeScript = <<<PHP
+require 'bootstrap.php';
+try {
+    \$_GET = [];
+    ob_start();
+    @(new \App\Controllers\Site\HomeController())->index();
+    \$html = ob_get_clean();
+    \$bytes = strlen(\$html);
+    \$hasFeed = str_contains(\$html, 'instagram-feed') ? 1 : 0;
+    \$hasPosts = str_contains(\$html, 'Direto do') ? 1 : 0;
+    echo "STATUS:OK|BYTES:{\$bytes}|FEED:{\$hasFeed}|POSTS:{\$hasPosts}\n";
+} catch (\Throwable \$e) {
+    echo "STATUS:ERROR|MSG:" . \$e->getMessage() . "\n";
+}
+PHP;
+
+[$homeCode, $homeStdout, $homeStderr] = runIsolatedPhp($phpBinary, $root, $homeScript);
+
+$homeOk = false;
+$homeDetail = '';
+
+if (str_contains($homeStdout, 'STATUS:OK')) {
+    preg_match('/BYTES:(\d+)\|FEED:(\d+)\|POSTS:(\d+)/', $homeStdout, $matches);
+    $bytes = (int)($matches[1] ?? 0);
+    $feedPresent = (int)($matches[2] ?? 0) === 1;
+
+    $homeOk = ($bytes > 20000) && $feedPresent;
+    $homeDetail = sprintf("%d KB | Widget Feed: %s", (int)($bytes / 1024), $feedPresent ? 'Renderizado' : 'Oculto');
+} else {
+    $homeDetail = $homeStderr !== '' ? trim($homeStderr) : trim($homeStdout);
+}
+
+recordResult("Home Pública (/) com Feed Instagram", $homeOk, $homeDetail);
+
+// ── 6. Resumo Final ──────────────────────────────────────────────────────────
 echo "\n-------------------------------------------------------\n";
 echo sprintf(
     "Resumo: \033[32m%d OK\033[0m | \033[31m%d FALHAS\033[0m | Total: %d testes\n",
