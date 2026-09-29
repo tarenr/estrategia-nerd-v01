@@ -20,6 +20,7 @@ namespace App\Services\Admin;
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\ComentarioRepository;
 use App\Repositories\EstatisticaRepository;
+use App\Repositories\InstagramPostRepository;
 use App\Repositories\LinkClickRepository;
 use App\Repositories\LinkRepository;
 use App\Repositories\NewsletterRepository;
@@ -40,6 +41,7 @@ final class DashboardService
         private LinkRepository $links,
         private LinkClickRepository $linkClicks,
         private string $targetEnvironment = 'local',
+        private ?InstagramPostRepository $instagramPosts = null,
     ) {
     }
 
@@ -241,6 +243,49 @@ final class DashboardService
             'target_environment' => $this->targetEnvironment,
             'target_environment_label' => environment_label($this->targetEnvironment),
             'is_remote_target' => $this->targetEnvironment !== current_environment(),
+            'instagram' => $this->buildInstagramData($todayYmd, $start, $end),
+        ];
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    private function buildInstagramData(string $todayYmd, string $start, string $end): ?array
+    {
+        if ($this->instagramPosts === null) {
+            return null;
+        }
+
+        $igAccount = $this->instagramPosts->findActiveAccount();
+        if ($igAccount === null) {
+            return null;
+        }
+
+        $igAccountId = (int) ($igAccount['id'] ?? 0);
+        $igInsights = $this->instagramPosts->getLatestInsights($igAccountId, 'custom', $start, $end)
+            ?? $this->instagramPosts->getLatestInsights($igAccountId, '30d')
+            ?? $this->instagramPosts->getLatestInsights($igAccountId, '7d')
+            ?? [];
+
+        $igRecent = $this->instagramPosts->listPublished($igAccountId, 4);
+        $igScheduled = $this->instagramPosts->listScheduled($igAccountId, 50);
+        $igDrafts = $this->instagramPosts->listDrafts($igAccountId, 50);
+
+        $igTodayScheduled = 0;
+        foreach ($igScheduled as $sp) {
+            if (str_starts_with((string) ($sp['agendado_para'] ?? ''), $todayYmd)) {
+                $igTodayScheduled++;
+            }
+        }
+
+        return [
+            'account' => $igAccount,
+            'insights' => $igInsights,
+            'recent_posts' => $igRecent,
+            'total_posts' => (int) ($igAccount['media_count'] ?? count($igRecent)),
+            'scheduled_count' => count($igScheduled),
+            'draft_count' => count($igDrafts),
+            'today_scheduled' => $igTodayScheduled,
         ];
     }
 

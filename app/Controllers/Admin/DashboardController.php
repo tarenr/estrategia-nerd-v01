@@ -19,6 +19,7 @@ namespace App\Controllers\Admin;
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\ComentarioRepository;
 use App\Repositories\EstatisticaRepository;
+use App\Repositories\InstagramPostRepository;
 use App\Repositories\LinkClickRepository;
 use App\Repositories\LinkRepository;
 use App\Repositories\NewsletterRepository;
@@ -87,6 +88,7 @@ final class DashboardController
         $categorias = new CategoriaPostRepository($pdo);
         $links = new LinkRepository($pdo);
         $linkClicks = new LinkClickRepository($pdo);
+        $instagramPosts = new InstagramPostRepository($pdo);
 
         $service = new DashboardService(
             $pdo,
@@ -98,6 +100,7 @@ final class DashboardController
             $links,
             $linkClicks,
             $targetEnvironment,
+            $instagramPosts,
         );
 
         $payload = $service->getDashboardData($start, $end);

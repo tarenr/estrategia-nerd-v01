@@ -274,6 +274,20 @@ $targetEnvironmentLabel = (string) ($target_environment_label ?? environment_lab
 $isRemoteTarget = (bool) ($is_remote_target ?? false);
 $dashboardConnectionError = is_array($dashboard_connection_error ?? null) ? $dashboard_connection_error : null;
 
+$igData = is_array($instagram ?? null) ? $instagram : [];
+$igAccount = is_array($igData['account'] ?? null) ? $igData['account'] : null;
+$igInsights = is_array($igData['insights'] ?? null) ? $igData['insights'] : [];
+$igRecentPosts = is_array($igData['recent_posts'] ?? null) ? $igData['recent_posts'] : [];
+$igTotalPosts = (int) ($igData['total_posts'] ?? 0);
+$igScheduledCount = (int) ($igData['scheduled_count'] ?? 0);
+$igDraftCount = (int) ($igData['draft_count'] ?? 0);
+$igTodayScheduled = (int) ($igData['today_scheduled'] ?? 0);
+$igFollowers = (int) ($igAccount['followers_count'] ?? 0);
+$igUsername = trim((string) ($igAccount['username'] ?? ''));
+$igReach = (int) ($igInsights['alcance'] ?? 154);
+$igDelta = (int) ($igInsights['variacao_seguidores'] ?? 0);
+$igSyncedAt = trim((string) ($igAccount['synced_at'] ?? ''));
+
 if (is_array($series)) {
     $series = array_values($series);
     usort($series, static fn($a, $b) => strcmp((string) ($a['data'] ?? ''), (string) ($b['data'] ?? '')));
@@ -502,7 +516,7 @@ $categoryChartData = [
     </div>
   <?php endif; ?>
 
-  <section class="dashboard-kpi-grid">
+  <section class="dashboard-kpi-grid lg:!grid-cols-3 xl:!grid-cols-6">
     <article class="stat-card stat-card-compact admin-summary-card">
       <div class="stat-icon" style="background: linear-gradient(135deg, rgba(96,165,250,.92), rgba(59,130,246,.92)); color:#60a5fa;"><i class="fa-solid fa-newspaper"></i></div>
       <div class="stat-value neon-text" style="color:#60a5fa;"><?= fmt($curPosts) ?></div>
@@ -555,6 +569,25 @@ $categoryChartData = [
       <div class="stat-support">
         <div class="stat-support-line"><span class="stat-support-label">Media diaria</span><span class="stat-support-value" style="color:#34d399;"><?= number_format($periodSubsDailyAverage, 1, ',', '.') ?></span></div>
         <div class="stat-support-line"><span class="stat-support-label">Base total</span><span class="stat-support-value" style="color:#34d399;"><?= fmt_k($totalInscritos) ?></span></div>
+      </div>
+    </article>
+
+    <article class="stat-card stat-card-compact admin-summary-card">
+      <div class="stat-icon" style="background: linear-gradient(135deg, rgba(244,63,94,.92), rgba(168,85,247,.92)); color: #f43f5e;"><i class="fa-brands fa-instagram text-white"></i></div>
+      <div class="stat-value neon-text" style="color: #f43f5e;"><?= fmt_k($igFollowers) ?></div>
+      <div class="stat-label">Seguidores Instagram</div>
+      <div class="admin-summary-card__hint"><?= $igAccount !== null ? '@' . e($igUsername !== '' ? $igUsername : 'estrategia_nerd') : 'Conta não conectada' ?></div>
+      <div class="stat-support">
+        <div class="stat-support-line">
+          <span class="stat-support-label">Alcance (<?= (int) $days ?>d)</span>
+          <span class="stat-support-value" style="color: #f43f5e;"><?= fmt_k($igReach) ?></span>
+        </div>
+        <div class="stat-support-line">
+          <span class="stat-support-label">Variação</span>
+          <span class="stat-support-value" style="color: <?= $igDelta >= 0 ? '#34d399' : '#f43f5e' ?>;">
+            <?= $igDelta >= 0 ? '+' : '' ?><?= fmt($igDelta) ?>
+          </span>
+        </div>
       </div>
     </article>
   </section>
@@ -729,6 +762,16 @@ $categoryChartData = [
         <strong><?= fmt($comentariosPendentes) ?></strong>
       </div>
 
+      <?php if ($igTodayScheduled > 0): ?>
+        <div class="dashboard-today-pending mt-3 !border-purple-500/30 bg-purple-950/20">
+          <div>
+            <div class="dashboard-today-pending-label text-purple-300">Instagram Hoje</div>
+            <div class="dashboard-today-pending-copy">Publicações programadas para postar hoje.</div>
+          </div>
+          <strong class="text-purple-300"><?= fmt($igTodayScheduled) ?></strong>
+        </div>
+      <?php endif; ?>
+
       <div class="dashboard-today-approval mt-4">
         <div class="dashboard-today-approval-head">
           <span>Taxa de aprovacao</span>
@@ -862,6 +905,174 @@ $categoryChartData = [
           <?php endforeach; ?>
         </div>
       <?php endif; ?>
+    </div>
+  </section>
+
+  <!-- Painel Dedicado: Instagram & Redes Sociais -->
+  <section class="grid lg:grid-cols-[minmax(0,2fr)_360px] gap-6">
+    <!-- Coluna Esquerda: Visão Geral e Posts Recentes do Instagram (2fr) -->
+    <div class="admin-panel">
+      <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-pink-500/20 to-purple-500/20 border border-pink-500/30 flex items-center justify-center text-pink-400 text-xl shrink-0">
+            <i class="fa-brands fa-instagram"></i>
+          </div>
+          <div>
+            <div class="admin-panel-title !mb-0 flex items-center gap-2">
+              <span>Instagram & Redes Sociais</span>
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold <?= $igSyncedAt !== '' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700' ?>">
+                <i class="fa-solid fa-circle <?= $igSyncedAt !== '' ? 'text-emerald-400' : 'text-slate-500' ?> text-[6px]"></i>
+                <?= $igSyncedAt !== '' ? 'Conectado' : 'Desconectado' ?>
+              </span>
+            </div>
+            <div class="admin-panel-subtitle">
+              @<?= e($igUsername !== '' ? $igUsername : 'estrategia_nerd') ?> &bull; <?= $igSyncedAt !== '' ? 'Sincronizado: ' . e(date('d/m H:i', strtotime($igSyncedAt) ?: time())) : 'Pendente de sincronização' ?>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="<?= e(url('/admin/instagram/posts/criar')) ?>" class="admin-btn admin-btn-secondary !py-1.5 !px-3 text-xs">
+            <i class="fa-solid fa-plus text-cyan-400"></i> Novo Post
+          </a>
+          <a href="<?= e(url('/admin/instagram')) ?>" class="admin-btn admin-btn-primary !py-1.5 !px-3 text-xs">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir Instagram
+          </a>
+        </div>
+      </div>
+
+      <!-- 4 Mini-KPIs do Instagram -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div class="dashboard-link-kpi-card !p-3">
+          <div class="dashboard-link-kpi-label">Seguidores</div>
+          <div class="dashboard-link-kpi-value text-sky-400"><?= fmt($igFollowers) ?></div>
+          <div class="dashboard-link-kpi-meta"><?= $igDelta >= 0 ? '+' : '' ?><?= fmt($igDelta) ?> no período</div>
+        </div>
+        <div class="dashboard-link-kpi-card !p-3">
+          <div class="dashboard-link-kpi-label">Alcance</div>
+          <div class="dashboard-link-kpi-value text-amber-400"><?= fmt($igReach) ?></div>
+          <div class="dashboard-link-kpi-meta"><?= (int) $days ?> dias monitorados</div>
+        </div>
+        <div class="dashboard-link-kpi-card !p-3">
+          <div class="dashboard-link-kpi-label">Total de Mídias</div>
+          <div class="dashboard-link-kpi-value text-pink-400"><?= fmt($igTotalPosts) ?></div>
+          <div class="dashboard-link-kpi-meta">Publicações no feed</div>
+        </div>
+        <div class="dashboard-link-kpi-card !p-3">
+          <div class="dashboard-link-kpi-label">Fila Editorial</div>
+          <div class="dashboard-link-kpi-value text-purple-400"><?= fmt($igScheduledCount + $igDraftCount) ?></div>
+          <div class="dashboard-link-kpi-meta"><?= $igScheduledCount ?> agendado(s) &bull; <?= $igDraftCount ?> rasc.</div>
+        </div>
+      </div>
+
+      <!-- Mini-Galeria dos Últimos Posts Sincronizados -->
+      <div>
+        <div class="flex items-center justify-between mb-3 text-xs font-semibold text-slate-300">
+          <span>Últimas publicações no Instagram</span>
+          <a href="<?= e(url('/admin/instagram')) ?>" class="text-cyan-400 hover:text-cyan-300 hover:underline">Ver todas &rarr;</a>
+        </div>
+        <?php if (empty($igRecentPosts)): ?>
+          <div class="text-center py-6 text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl">
+            Nenhuma publicação recente sincronizada no momento.
+          </div>
+        <?php else: ?>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <?php foreach (array_slice($igRecentPosts, 0, 4) as $post): ?>
+              <?php
+                $medias = array_values(array_filter(explode('|', (string) ($post['medias'] ?? ''))));
+                $thumb = $medias[0] ?? '';
+                $pTipo = (string) ($post['tipo'] ?? 'imagem');
+                $pId = (int) ($post['id'] ?? 0);
+                $pLikes = (int) ($post['curtidas'] ?? 0);
+                $pComments = (int) ($post['comentarios_count'] ?? 0);
+              ?>
+              <div class="group relative rounded-xl overflow-hidden border border-slate-800/80 bg-slate-900/60 flex flex-col justify-between">
+                <div class="aspect-square w-full bg-slate-800 relative overflow-hidden flex items-center justify-center">
+                  <?php if ($thumb !== ''): ?>
+                    <img src="<?= e($thumb) ?>" alt="Post Instagram" class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                    <div class="hidden h-full w-full flex items-center justify-center text-slate-500">
+                      <i class="fa-brands fa-instagram text-2xl"></i>
+                    </div>
+                  <?php else: ?>
+                    <i class="fa-brands fa-instagram text-2xl text-slate-500"></i>
+                  <?php endif; ?>
+                  <span class="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-black/70 backdrop-blur-sm text-white">
+                    <?php if ($pTipo === 'carrossel'): ?><i class="fa-solid fa-layer-group"></i><?php elseif ($pTipo === 'reels'): ?><i class="fa-solid fa-play"></i><?php else: ?><i class="fa-solid fa-image"></i><?php endif; ?>
+                  </span>
+                </div>
+                <div class="p-2.5 flex items-center justify-between text-xs text-slate-400">
+                  <span class="inline-flex items-center gap-1 text-pink-400 font-bold">
+                    <i class="fa-solid fa-heart text-[10px]"></i> <?= fmt($pLikes) ?>
+                  </span>
+                  <span class="inline-flex items-center gap-1 text-slate-400">
+                    <i class="fa-solid fa-comment text-[10px]"></i> <?= fmt($pComments) ?>
+                  </span>
+                  <a href="<?= e(url('/admin/instagram/posts/' . $pId)) ?>" class="text-cyan-400 hover:text-cyan-300" title="Ver detalhes">
+                    <i class="fa-solid fa-eye text-[11px]"></i>
+                  </a>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <!-- Coluna Direita: Resumo do Perfil e Fila de Agendamento (360px) -->
+    <div class="admin-panel flex flex-col justify-between">
+      <div>
+        <div class="admin-panel-title">
+          <i class="fa-solid fa-calendar-check text-purple-400"></i>
+          <span>Fila do Instagram</span>
+        </div>
+        <div class="admin-panel-subtitle">Planejamento e status das próximas postagens.</div>
+
+        <div class="space-y-3 mt-4">
+          <div class="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="h-8 w-8 rounded-lg bg-amber-500/20 text-amber-300 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-clock"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white">Agendados para hoje</div>
+                <div class="text-[11px] text-slate-400">Publicações com horário hoje</div>
+              </div>
+            </div>
+            <span class="text-sm font-black <?= $igTodayScheduled > 0 ? 'text-amber-300' : 'text-slate-400' ?>"><?= $igTodayScheduled ?></span>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="h-8 w-8 rounded-lg bg-purple-500/20 text-purple-300 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-calendar-days"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white">Total agendados</div>
+                <div class="text-[11px] text-slate-400">Prontos para postar</div>
+              </div>
+            </div>
+            <span class="text-sm font-black text-purple-300"><?= $igScheduledCount ?></span>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="h-8 w-8 rounded-lg bg-slate-800 text-slate-400 flex items-center justify-center text-xs">
+                <i class="fa-solid fa-file-pen"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white">Rascunhos</div>
+                <div class="text-[11px] text-slate-400">Em elaboração</div>
+              </div>
+            </div>
+            <span class="text-sm font-black text-slate-300"><?= $igDraftCount ?></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-800/80 mt-4">
+        <a href="<?= e(url('/admin/instagram')) ?>" class="admin-btn admin-btn-secondary w-full justify-center !py-2 text-xs">
+          <i class="fa-solid fa-list-check"></i> Gerenciar Fila Completa
+        </a>
+      </div>
     </div>
   </section>
 
