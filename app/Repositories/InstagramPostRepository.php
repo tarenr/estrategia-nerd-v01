@@ -142,12 +142,12 @@ final class InstagramPostRepository
      */
     public function findDueScheduled(): array
     {
+        // Sem FOR UPDATE SKIP LOCKED (MariaDB 10.4): concorrencia garantida pelo flock do script e por lockForPublishing().
         $stmt = $this->pdo->query(
             "SELECT * FROM instagram_posts
               WHERE status = 'agendado'
                 AND agendado_para <= NOW()
-              ORDER BY agendado_para ASC
-              FOR UPDATE SKIP LOCKED"
+              ORDER BY agendado_para ASC"
         );
 
         if ($stmt === false) {

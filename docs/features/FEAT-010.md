@@ -186,7 +186,7 @@ listScheduled(int $accountId, int $limit = 50): array
 listPublished(int $accountId, int $limit = 30): array
 findById(int $id): ?array
 findMediaByPostId(int $postId): array
-findDueScheduled(): array        // posts prontos para publicar (WITH SELECT FOR UPDATE SKIP LOCKED)
+findDueScheduled(): array        // posts prontos para publicar (SELECT simples; concorrencia via flock + lockForPublishing)
 
 // Escrita
 create(array $data): int
@@ -248,7 +248,7 @@ Start in: C:\Users\WINDOWS\Projects\estrategia-nerd
 1. Verificar SAPI = CLI (bloqueia execução via browser)
 2. Adquirir lock de processo global (flock) → previne execução paralela
 3. Buscar conta ativa
-4. SELECT posts com status='agendado' AND agendado_para <= NOW() (FOR UPDATE SKIP LOCKED)
+4. SELECT posts com status='agendado' AND agendado_para <= NOW() (sem FOR UPDATE SKIP LOCKED, que nao existe no MariaDB 10.4 local; a exclusao mutua vem do flock do passo 2 e do UPDATE atomico do passo 5a)
 5. Para cada post:
    a. UPDATE status='publicando' WHERE id=X AND status='agendado' (lock atômico)
    b. Criar container(s) na Meta API
@@ -432,6 +432,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-29 | 2.3.0 | Paginação de 3 Páginas de 6 Posts & Navegação no Menu: Implementação da paginação interativa no feed com exatamente 3 páginas de 6 cards (18 posts no total), badge de status ("Página X de 3") e controle via JavaScript nativo nos botões `<` e `>` com bloqueio/opacidade nos limites; inclusão da seção 'instagram' em `SiteSections` apontando para `#instagram-feed`, adicionando o item 'Instagram' automaticamente no menu principal desktop/mobile e no rodapé ('Explore o portal'). |
 | 2026-09-29 | 2.4.0 | Resiliência e Persistência Local de Mídias de Reels: Correção em `InstagramPostRepository::upsertFromFeed` priorizando estritamente a URL de capa estática (`thumbnail_url`) sobre o arquivo de vídeo `.mp4` para publicações do tipo Reels/Vídeo (eliminando falhas em tags `<img>` e o fallback para o ícone cinza de câmera tanto no painel admin quanto no site público); criação do diretório versionado `public/assets/instagram-feed/` com download de 18 imagens de capa oficiais persistidas localmente; atualização de `InstagramFeedService` e da view admin para priorizar os assets locais; adição de fallback resiliente com alternância suave no componente do feed; e sincronização completa dos dados da Meta Graph API. |
 | 2026-09-29 | 2.5.0 | Cross-post Blog → Instagram (Task #328): opção "Criar rascunho no Instagram" no criar/editar post do blog com prévia estilo Instagram, Smart Canvas 1080x1080 sem cortes (`SmartCanvasRenderer`), legenda via Google Gemini com modelo reserva e alternativa sem IA (`GeminiCaptionService`), gravação idempotente por UUID v5 e token de prévia (`BlogCrosspostService`), endpoint `crosspost-preview` e card do post vinculado na edição. |
+| 2026-09-29 | 2.5.1 | Correção do agendador (`scripts/en-instagram-publish-scheduled.php`): `findDueScheduled()` usava `FOR UPDATE SKIP LOCKED`, inexistente no MariaDB 10.4.32 local (erro 1064 em toda execução, nenhum agendado era publicado). Passa a usar `SELECT` simples; a exclusão mútua continua garantida pelo `flock` do script e pelo `UPDATE … WHERE status='agendado'` atômico de `lockForPublishing()`. |
 
 
 
