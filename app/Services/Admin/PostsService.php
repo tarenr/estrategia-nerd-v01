@@ -13,6 +13,7 @@ namespace App\Services\Admin;
 
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\PostRepository;
+use App\Services\Instagram\BlogCrosspostService;
 use App\Services\Site\SitemapCacheService;
 use App\Support\SystemActivityLogger;
 use DateTimeImmutable;
@@ -29,6 +30,7 @@ final class PostsService
         private MidiaService $midia,
         private SitemapCacheService $sitemapCache,
         private string $targetEnvironment = 'local',
+        private ?BlogCrosspostService $crosspost = null,
     ) {
     }
 
@@ -139,6 +141,7 @@ final class PostsService
     public function createPost(array $input, array $files, ?int $authorId): array
     {
         $form = $this->normalizeForm($input);
+        $coverHash = $this->captureCrosspostCoverHash($input, $files);
         [$categorias, $categoriasById] = $this->categoriaMaps();
         $errors = $this->validateForm($form, $categoriasById);
         $slug = $this->posts->nextAvailableSlug($this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']));
@@ -183,7 +186,7 @@ final class PostsService
 
         $this->sitemapCache->refreshQuietly();
 
-        return ['ok' => true, 'id' => $postId, 'slug' => $slug];
+        return ['ok' => true, 'id' => $postId, 'slug' => $slug, 'crosspost' => $this->runCrosspost($input, $coverHash, (int) $postId, true, $authorId)];
     }
 
     public function updatePost(int $id, array $input, array $files, ?int $authorId): array
@@ -194,6 +197,7 @@ final class PostsService
         }
 
         $form = $this->normalizeForm($input, $id);
+        $coverHash = $this->captureCrosspostCoverHash($input, $files);
         [$categorias, $categoriasById] = $this->categoriaMaps();
         $errors = $this->validateForm($form, $categoriasById, $id);
         $slug = $this->posts->nextAvailableSlug($this->slugify($form['slug'] !== '' ? $form['slug'] : $form['titulo']), $id);
@@ -251,7 +255,7 @@ final class PostsService
 
         $this->sitemapCache->refreshQuietly();
 
-        return ['ok' => true, 'id' => $id, 'slug' => $slug];
+        return ['ok' => true, 'id' => $id, 'slug' => $slug, 'crosspost' => $this->runCrosspost($input, $coverHash, $id, false, $authorId)];
     }
 
     public function uploadInlineImage(array $input, array $files): array
@@ -482,6 +486,50 @@ final class PostsService
             'trash' => $trash,
             'trash_cleanup' => $cleanup,
         ];
+    }
+
+    /**
+     * @param array<string,mixed> $input
+     * @param array<string,mixed> $files
+     */
+    private function captureCrosspostCoverHash(array $input, array $files): string
+    {
+        if ((string) ($input['ig_crosspost'] ?? '') !== '1' || $this->crosspost === null) {
+            return '';
+        }
+
+        try {
+            return $this->crosspost->captureCoverHash($input, $files);
+        } catch (Throwable $e) {
+            error_log('[PostsService] captureCrosspostCoverHash: ' . $e->getMessage());
+
+            return '';
+        }
+    }
+
+    /**
+     * Integracao com o Instagram roda depois do blog gravado e nunca desfaz o blog.
+     *
+     * @param array<string,mixed> $input
+     * @return array{status:string,message:string,instagram_post_id:int}
+     */
+    private function runCrosspost(array $input, string $coverHash, int $postId, bool $isCreate, ?int $authorId): array
+    {
+        if ((string) ($input['ig_crosspost'] ?? '') !== '1') {
+            return ['status' => BlogCrosspostService::STATUS_SKIPPED, 'message' => '', 'instagram_post_id' => 0];
+        }
+
+        if ($this->crosspost === null) {
+            return ['status' => BlogCrosspostService::STATUS_FAILED, 'message' => 'Modulo do Instagram indisponivel.', 'instagram_post_id' => 0];
+        }
+
+        try {
+            return $this->crosspost->persistAfterSave($input, $coverHash, $postId, $isCreate, $authorId, $this->targetEnvironment);
+        } catch (Throwable $e) {
+            error_log('[PostsService] runCrosspost: ' . $e->getMessage());
+
+            return ['status' => BlogCrosspostService::STATUS_FAILED, 'message' => 'Falha inesperada ao gravar o rascunho do Instagram.', 'instagram_post_id' => 0];
+        }
     }
 
     private function applyMediaUploads(array &$form, array $files, array &$errors, string $slug, ?array $existingPost = null): void
@@ -1354,6 +1402,12 @@ final class PostsService
             'data_publicacao' => trim((string) ($input['data_publicacao'] ?? $agora->format('Y-m-d\TH:i'))),
             'tempo_leitura' => max(1, (int) ($input['tempo_leitura'] ?? 5)),
             'tipo_post' => trim((string) ($input['tipo_post'] ?? '')),
+            'ig_crosspost' => (string) ($input['ig_crosspost'] ?? '') === '1' ? 1 : 0,
+            'ig_crosspost_token' => preg_match('/^[a-f0-9]{32}$/', (string) ($input['ig_crosspost_token'] ?? '')) === 1 ? (string) $input['ig_crosspost_token'] : '',
+            'ig_crosspost_form_uid' => preg_match('/^[A-Za-z0-9]{8,64}$/', (string) ($input['ig_crosspost_form_uid'] ?? '')) === 1 ? (string) $input['ig_crosspost_form_uid'] : '',
+            'ig_crosspost_legenda' => (string) ($input['ig_crosspost_legenda'] ?? ''),
+            'ig_crosspost_hashtags' => trim((string) ($input['ig_crosspost_hashtags'] ?? '')),
+            'ig_crosspost_preview_url' => preg_match('~^uploads/instagram/preview/[a-f0-9]{32}\.jpg$~', (string) ($input['ig_crosspost_preview_url'] ?? '')) === 1 ? (string) $input['ig_crosspost_preview_url'] : '',
         ];
     }
 

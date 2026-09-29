@@ -13,6 +13,7 @@ namespace App\Controllers\Admin;
 
 use App\Repositories\InstagramPostRepository;
 use App\Repositories\PostRepository;
+use App\Services\Instagram\BlogCrosspostService;
 use App\Services\Instagram\InstagramApiService;
 use App\Support\Auth;
 use App\Support\Csrf;
@@ -679,6 +680,32 @@ final class InstagramController
         }
 
         echo json_encode(['ok' => true, 'post' => $row], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    // ── API: Previa do cross-post do blog ──────────────────────────────────────
+
+    public function crosspostPreview(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo json_encode(['ok' => false, 'error' => 'Token CSRF invalido.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $result = BlogCrosspostService::fromGlobals()->preview($_POST, $_FILES, Auth::id(), target_environment());
+        } catch (\Throwable $e) {
+            error_log('[InstagramController] crosspostPreview: ' . $e->getMessage());
+            $result = ['ok' => false, 'error' => 'Nao foi possivel gerar a previa agora.'];
+        }
+
+        if (($result['ok'] ?? false) !== true) {
+            http_response_code(422);
+        }
+
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     // ── Helpers Privados ──────────────────────────────────────────────────────

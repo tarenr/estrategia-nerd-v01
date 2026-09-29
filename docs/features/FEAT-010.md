@@ -224,6 +224,7 @@ getLatestInsights(int $accountId, string $period = '7d'): ?array
 | POST | `/admin/instagram/posts/{id}/editar` | `update()` | `auth` |
 | GET | `/admin/instagram/posts/{id}` | `show()` — Detalhes | `auth` |
 | GET | `/admin/instagram/api/blog-post` | `blogPostData()` — API interna | `auth` |
+| POST | `/admin/instagram/api/crosspost-preview` | `crosspostPreview()` — prévia do cross-post do blog (JSON, CSRF) | `auth` |
 
 ---
 
@@ -343,6 +344,49 @@ As 4 views estão implementadas em:
 
 ---
 
+## Cross-post Blog → Instagram (Task #328)
+
+No criar/editar post do blog (`app/Views/components/admin/posts/form-instagram-crosspost.php`) há a opção **"Criar rascunho no Instagram"**. Nada é publicado automaticamente: o resultado é sempre um **rascunho** no módulo Instagram.
+
+### Fluxo
+
+1. **Ligar a opção** → `POST /admin/instagram/api/crosspost-preview` (auth + CSRF) envia título, resumo, categoria e a imagem: arte dedicada (opcional) > capa pendente (`imagem_capa_upload`) > capa salva (`imagem_capa`).
+2. O servidor gera a imagem em `public/uploads/instagram/preview/<token>.jpg` e a legenda (IA ou alternativa sem IA) e devolve imagem, legenda, hashtags e um **token**.
+3. O card estilo Instagram atualiza ao vivo conforme o autor edita legenda/hashtags (contadores 2.200/30, "Gerar outra legenda").
+4. **Salvar o blog** → depois que o post do blog é gravado, `PostsService` chama `BlogCrosspostService::persistAfterSave()` isolado em `try/catch (\Throwable)`. A IA **não** é chamada de novo: grava-se a legenda como o autor deixou e a mesma imagem da prévia.
+5. Na edição, o card do post do Instagram vinculado mostra status, imagem, legenda e link para o módulo.
+
+### Imagem — `SmartCanvasRenderer`
+
+- Limites antes de abrir no GD: 10 MB, 25 megapixels, MIME real (`finfo`) JPEG/PNG/WebP; orientação EXIF corrigida.
+- Canvas 1080x1080 (largura/altura parametrizáveis — base para o futuro Card Generator, Task #335): imagem original **inteira** centralizada, fundo com a própria imagem desfocada e escurecida (`#0b0f19`), faixas "ESTRATEGIA NERD" e "LEIA O ARTIGO NO BLOG /// LINK NA BIO".
+- Arte dedicada não é composta: é regravada como JPEG (descarta metadados) e precisa ser 1:1 ou 4:5.
+
+### Legenda — `GeminiCaptionService`
+
+- Provedor: Google Gemini, nível gratuito, com a mesma `GEMINI_API_KEY` já usada pelo projeto (a chave vale para todos os modelos; `GEMINI_IMAGE_MODEL` é só o modelo de imagem).
+- Variáveis no `.env`: `GEMINI_TEXT_MODEL` (principal, `gemini-3.8-flash`) e `GEMINI_TEXT_MODEL_FALLBACK` (reserva, `gemini-3.5-flash`).
+- Envia só texto (título, resumo, categoria) e pede JSON (`responseMimeType: application/json`).
+- Tentativas: principal → principal de novo após ~1 s (só em 429/503/erro de rede) → modelo reserva. Modelo inexistente (404) pula direto para o reserva. Teto de ~30 s somando tudo, cada chamada com até 15 s.
+- Qualquer falha → **alternativa sem IA**: título + resumo + "Leia o artigo completo no blog - link na bio." + hashtags padrão (`#EstrategiaNerd #Nerd #Geek #CulturaPop` + categoria). A tela avisa quando a IA não foi usada; "Gerar outra legenda" tenta de novo.
+- No nível gratuito o Google pode usar o conteúdo enviado para melhorar os modelos; só vai conteúdo público do post. Logs registram apenas modelo e status HTTP, nunca a chave nem o corpo do erro.
+- A OpenAI foi avaliada e descartada: a conta não tem saldo e os tokens gratuitos do compartilhamento de dados exigem conta em nível pago. `OPENAI_API_KEY` ficou no `.env` sem uso.
+
+### Regras de gravação — `BlogCrosspostService`
+
+- **Chave idempotente:** `idempotency_key` = UUID v5 de `blog:<ambiente>:<post_id>`. O índice único existente impede rascunho duplicado (inclusive em saves simultâneos) e separa o mesmo `post_id` de ambientes diferentes. Sem migration.
+- **Token** (sessão, 24 h): ligado a autor, ambiente, post (ou `form_uid` na criação), arquivo da prévia e SHA-256 dos bytes da imagem usada. No save, a capa é comparada pelos **bytes originais** recebidos (upload pendente ou arquivo no caminho informado), então mudar o slug não invalida a prévia; trocar a capa sem gerar nova prévia é recusado.
+- **Status:** só `rascunho` e `erro` são atualizados (linha lida com `SELECT … FOR UPDATE`, sem depender de `rowCount`); `agendado`, `publicando` e `publicado` ficam somente leitura. Atualizar um `erro` volta para `rascunho`.
+- **Transação local:** legenda + troca de mídia na mesma transação; em falha, rollback e o arquivo promovido é apagado.
+- **Falha parcial:** o blog sempre fica salvo; o controller mostra "Blog salvo; rascunho do Instagram não foi atualizado: <motivo>". Salvar de novo tenta outra vez sem duplicar.
+- Capa que não existe nos uploads deste servidor (ex.: post editado em outro ambiente) exige arte dedicada.
+
+### Limitação conhecida
+
+Rascunhos criados pela tela do módulo Instagram (`/admin/instagram/posts/criar`, com chave aleatória) **não** aparecem no card do blog nem são reconhecidos pelo cross-post; usar os dois caminhos para o mesmo post do blog pode gerar dois rascunhos.
+
+---
+
 ## Diretriz de Ambientes e Banco de Dados
 
 > **REGRA ARQUITETURAL MANDATÓRIA (Ambiente Único):**
@@ -387,6 +431,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-29 | 2.2.0 | Redesign UI Cyberpunk Estruturado (Mockup): Reconstrução completa de `instagram-feed.php` adotando o paradigma de cards editoriais widescreen 3x2 (imagem 16:9/16:10 + título e subtítulo sempre visíveis + rodapé com data pt-BR, curtidas, comentários e link externo), cabeçalho de seção em 2 colunas com card de perfil expandido contendo 4 editorias em pills vetoriais (Bastidores, Setups, Notícias, Comunidade), sub-cabeçalho com `/// Publicações Recentes` e controles de navegação, e CTA centralizado em pílula gradiente no rodapé da seção. |
 | 2026-09-29 | 2.3.0 | Paginação de 3 Páginas de 6 Posts & Navegação no Menu: Implementação da paginação interativa no feed com exatamente 3 páginas de 6 cards (18 posts no total), badge de status ("Página X de 3") e controle via JavaScript nativo nos botões `<` e `>` com bloqueio/opacidade nos limites; inclusão da seção 'instagram' em `SiteSections` apontando para `#instagram-feed`, adicionando o item 'Instagram' automaticamente no menu principal desktop/mobile e no rodapé ('Explore o portal'). |
 | 2026-09-29 | 2.4.0 | Resiliência e Persistência Local de Mídias de Reels: Correção em `InstagramPostRepository::upsertFromFeed` priorizando estritamente a URL de capa estática (`thumbnail_url`) sobre o arquivo de vídeo `.mp4` para publicações do tipo Reels/Vídeo (eliminando falhas em tags `<img>` e o fallback para o ícone cinza de câmera tanto no painel admin quanto no site público); criação do diretório versionado `public/assets/instagram-feed/` com download de 18 imagens de capa oficiais persistidas localmente; atualização de `InstagramFeedService` e da view admin para priorizar os assets locais; adição de fallback resiliente com alternância suave no componente do feed; e sincronização completa dos dados da Meta Graph API. |
+| 2026-09-29 | 2.5.0 | Cross-post Blog → Instagram (Task #328): opção "Criar rascunho no Instagram" no criar/editar post do blog com prévia estilo Instagram, Smart Canvas 1080x1080 sem cortes (`SmartCanvasRenderer`), legenda via Google Gemini com modelo reserva e alternativa sem IA (`GeminiCaptionService`), gravação idempotente por UUID v5 e token de prévia (`BlogCrosspostService`), endpoint `crosspost-preview` e card do post vinculado na edição. |
 
 
 

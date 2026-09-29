@@ -15,15 +15,19 @@ use App\Repositories\CategoriaPostRepository;
 use App\Repositories\PostRepository;
 use App\Services\Admin\MidiaService;
 use App\Services\Admin\PostsService;
+use App\Services\Instagram\BlogCrosspostService;
 use App\Services\Site\SitemapCacheService;
 use App\Support\Auth;
 use App\Support\Csrf;
 use App\Support\ProductionChangeGuard;
+use App\Support\Session;
 use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
 
 final class PostsController
 {
+    private const CROSSPOST_NOTICE = '_ig_crosspost_notice';
+
     public function index(): void
     {
         View::render('admin/posts/index', $this->service()->getIndexViewModel($_GET));
@@ -54,6 +58,11 @@ final class PostsController
             return;
         }
 
+        if ($this->flashCrosspost($result)) {
+            header('Location: ' . url('/admin/editar-post?id=' . (int) ($result['id'] ?? 0) . '&updated=1'));
+            exit;
+        }
+
         header('Location: ' . url('/admin/posts?created=1'));
         exit;
     }
@@ -68,7 +77,7 @@ final class PostsController
             return;
         }
 
-        View::render('admin/posts/edit', $viewModel);
+        View::render('admin/posts/edit', $this->withCrosspostContext($viewModel, $id, true));
     }
 
     public function update(): void
@@ -89,10 +98,11 @@ final class PostsController
 
         if (($result['ok'] ?? false) !== true) {
             http_response_code(422);
-            View::render('admin/posts/edit', $result['viewModel'] ?? []);
+            View::render('admin/posts/edit', $this->withCrosspostContext($result['viewModel'] ?? [], $id, false));
             return;
         }
 
+        $this->flashCrosspost($result);
         header('Location: ' . url('/admin/editar-post?id=' . $id . '&updated=1'));
         exit;
     }
@@ -263,6 +273,44 @@ final class PostsController
         ]);
     }
 
+    /**
+     * @param array<string,mixed> $result
+     */
+    private function flashCrosspost(array $result): bool
+    {
+        $crosspost = is_array($result['crosspost'] ?? null) ? $result['crosspost'] : [];
+        $status    = (string) ($crosspost['status'] ?? BlogCrosspostService::STATUS_SKIPPED);
+        if ($status === BlogCrosspostService::STATUS_SKIPPED) {
+            return false;
+        }
+
+        Session::put(self::CROSSPOST_NOTICE, ['status' => $status, 'message' => (string) ($crosspost['message'] ?? '')]);
+
+        return true;
+    }
+
+    /**
+     * @param array<string,mixed> $viewModel
+     * @return array<string,mixed>
+     */
+    private function withCrosspostContext(array $viewModel, int $id, bool $consumeNotice): array
+    {
+        $form = is_array($viewModel['form'] ?? null) ? $viewModel['form'] : [];
+
+        try {
+            $form['_ig_linked'] = BlogCrosspostService::fromGlobals()->findLinked(target_environment(), $id);
+        } catch (\Throwable $e) {
+            error_log('[PostsController] crosspost linked: ' . $e->getMessage());
+            $form['_ig_linked'] = null;
+        }
+
+        $notice = $consumeNotice ? Session::pull(self::CROSSPOST_NOTICE) : null;
+        $form['_ig_notice'] = is_array($notice) ? $notice : null;
+        $viewModel['form'] = $form;
+
+        return $viewModel;
+    }
+
     private function service(): PostsService
     {
         $targetEnvironment = target_environment();
@@ -276,6 +324,18 @@ final class PostsController
             new MidiaService($localPdo),
             SitemapCacheService::fromGlobals(),
             $targetEnvironment,
+            $this->crosspostService(),
         );
+    }
+
+    private function crosspostService(): ?BlogCrosspostService
+    {
+        try {
+            return BlogCrosspostService::fromGlobals();
+        } catch (\Throwable $e) {
+            error_log('[PostsController] crosspost indisponivel: ' . $e->getMessage());
+
+            return null;
+        }
     }
 }

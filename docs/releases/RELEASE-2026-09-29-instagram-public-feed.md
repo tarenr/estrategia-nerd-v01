@@ -10,7 +10,7 @@ Entram:
 
 Ficam fora:
 - Mudancas de schema nos bancos remotos (Instagram permanece com regra arquitetural estrita de ambiente unico/local)
-- Cross-posting automatico no formulario de criacao do blog (Task #328 - proxima etapa)
+- Cross-posting automatico no formulario de criacao do blog (Task #328 - implementado localmente em 2026-09-29, fora deste release; ver FEAT-010 v2.5.0)
 - Agendador periodico via Task Scheduler (Task #329)
 
 Origem validada: estrategia-nerd-stage (validada)

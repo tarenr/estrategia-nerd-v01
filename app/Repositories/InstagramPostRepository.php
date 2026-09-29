@@ -221,6 +221,54 @@ final class InstagramPostRepository
     }
 
     /**
+     * @return array<string,mixed>|null
+     */
+    public function findByIdempotencyKey(string $key): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM instagram_posts WHERE idempotency_key = :k LIMIT 1");
+        $stmt->execute([':k' => $key]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Le e trava a linha do cross-post; exige transacao aberta pelo chamador.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function lockByIdempotencyKey(string $key): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM instagram_posts WHERE idempotency_key = :k LIMIT 1 FOR UPDATE");
+        $stmt->execute([':k' => $key]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Atualiza so a legenda de um rascunho criado pelo cross-post do blog.
+     * O status ja deve ter sido conferido sob lock (lockByIdempotencyKey).
+     */
+    public function updateCrosspostDraft(int $id, string $legenda, int $hashtagsCount): void
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE instagram_posts
+                SET status         = 'rascunho',
+                    legenda        = :legenda,
+                    hashtags_count = :hashtags_count,
+                    error_log      = NULL,
+                    atualizado_em  = NOW()
+              WHERE id = :id AND status IN ('rascunho', 'erro')"
+        );
+        $stmt->execute([
+            ':id'             => $id,
+            ':legenda'        => $legenda,
+            ':hashtags_count' => $hashtagsCount,
+        ]);
+    }
+
+    /**
      * Marca um post como "publicando" usando lock atômico.
      * Retorna true somente se a linha foi efetivamente atualizada.
      */
