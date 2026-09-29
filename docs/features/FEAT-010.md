@@ -236,11 +236,24 @@ getLatestInsights(int $accountId, string $period = '7d'): ?array
 # Execução manual
 C:\xampp\php\php.exe scripts/en-instagram-publish-scheduled.php
 
-# Configuração recomendada (Task Scheduler Windows — a cada 5 min)
-Program: C:\xampp\php\php.exe
-Arguments: C:\Users\WINDOWS\Projects\estrategia-nerd\scripts\en-instagram-publish-scheduled.php
-Start in: C:\Users\WINDOWS\Projects\estrategia-nerd
 ```
+
+### Tarefa agendada (Windows Task Scheduler) — Task #329
+
+| Item | Valor |
+|---|---|
+| Nome | `EstrategiaNerd-InstagramPublicarAgendados` |
+| Programa | `C:\xampp\php\php-win.exe` (CLI sem janela de console) |
+| Argumento | `"C:\Users\WINDOWS\Projects\estrategia-nerd\scripts\en-instagram-publish-scheduled.php"` |
+| Iniciar em | `C:\Users\WINDOWS\Projects\estrategia-nerd` |
+| Gatilho | a cada 5 minutos, sem data de fim (conferir `Duration` vazio no XML exportado) |
+| Conta | usuário atual, `LogonType Interactive`, `RunLevel Limited` (sem senha e sem admin) |
+| Configurações | `MultipleInstances IgnoreNew`, `ExecutionTimeLimit` 60 min, `StartWhenAvailable` |
+
+- **Só roda com o usuário logado.** Com o PC desligado ou deslogado, os agendados vencidos saem na próxima execução.
+- `LastTaskResult` segue o exit code do script: `0` = nada a publicar ou tudo publicado; `1` = algum post falhou (ver `error_log` do post e o log mensal).
+- **Risco conhecido:** se o Windows encerrar o processo pelo limite de 60 min no meio de uma publicação, o post fica em `publicando` e o script não o recupera (só busca `agendado`). Conferir posts parados em `publicando` no painel.
+- **Rollback:** `Unregister-ScheduledTask -TaskName EstrategiaNerd-InstagramPublicarAgendados -Confirm:$false`.
 
 ### Fluxo do script
 
@@ -433,6 +446,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-29 | 2.4.0 | Resiliência e Persistência Local de Mídias de Reels: Correção em `InstagramPostRepository::upsertFromFeed` priorizando estritamente a URL de capa estática (`thumbnail_url`) sobre o arquivo de vídeo `.mp4` para publicações do tipo Reels/Vídeo (eliminando falhas em tags `<img>` e o fallback para o ícone cinza de câmera tanto no painel admin quanto no site público); criação do diretório versionado `public/assets/instagram-feed/` com download de 18 imagens de capa oficiais persistidas localmente; atualização de `InstagramFeedService` e da view admin para priorizar os assets locais; adição de fallback resiliente com alternância suave no componente do feed; e sincronização completa dos dados da Meta Graph API. |
 | 2026-09-29 | 2.5.0 | Cross-post Blog → Instagram (Task #328): opção "Criar rascunho no Instagram" no criar/editar post do blog com prévia estilo Instagram, Smart Canvas 1080x1080 sem cortes (`SmartCanvasRenderer`), legenda via Google Gemini com modelo reserva e alternativa sem IA (`GeminiCaptionService`), gravação idempotente por UUID v5 e token de prévia (`BlogCrosspostService`), endpoint `crosspost-preview` e card do post vinculado na edição. |
 | 2026-09-29 | 2.5.1 | Correção do agendador (`scripts/en-instagram-publish-scheduled.php`): `findDueScheduled()` usava `FOR UPDATE SKIP LOCKED`, inexistente no MariaDB 10.4.32 local (erro 1064 em toda execução, nenhum agendado era publicado). Passa a usar `SELECT` simples; a exclusão mútua continua garantida pelo `flock` do script e pelo `UPDATE … WHERE status='agendado'` atômico de `lockForPublishing()`. |
+| 2026-09-29 | 2.5.2 | Agendamento do publicador (Task #329): tarefa `EstrategiaNerd-InstagramPublicarAgendados` no Task Scheduler a cada 5 min com `php-win.exe`, `IgnoreNew`, limite de 60 min e execução só com o usuário logado; documentados exit codes, risco de post preso em `publicando` e rollback. |
 
 
 
