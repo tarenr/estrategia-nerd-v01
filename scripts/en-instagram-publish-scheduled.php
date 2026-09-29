@@ -56,6 +56,17 @@ ig_log('info', '=== Início da execução ===');
 $pdo  = $GLOBALS['pdo'];
 $repo = new InstagramPostRepository($pdo);
 
+// Antes da conta: recuperar presos nao depende da Meta nem de conta ativa.
+// 90 min > limite de 60 min da tarefa agendada; com o flock, nenhuma outra instancia esta publicando.
+try {
+    $stale = $repo->markStalePublishingAsError(90);
+    if ($stale > 0) {
+        ig_log('warn', "Posts presos em 'publicando' marcados como erro: {$stale}.");
+    }
+} catch (Throwable $e) {
+    ig_log('error', 'Falha ao recuperar posts presos em publicando: ' . $e->getMessage());
+}
+
 $account = $repo->findActiveAccount();
 
 if ($account === null) {

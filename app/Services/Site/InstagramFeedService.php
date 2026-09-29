@@ -123,6 +123,11 @@ final class InstagramFeedService
 
         foreach ($targets as $target) {
             try {
+                // config/instagram-feed.json e versionado: so regravar quando o conteudo (sem updated_at) mudar.
+                if ($this->sameContentIgnoringTimestamp($target, $data)) {
+                    continue;
+                }
+
                 $dir = dirname($target);
                 if (!is_dir($dir)) {
                     mkdir($dir, 0755, true);
@@ -132,6 +137,26 @@ final class InstagramFeedService
                 // Silencioso em caso de permissão de escrita
             }
         }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function sameContentIgnoringTimestamp(string $target, array $data): bool
+    {
+        if (!is_file($target)) {
+            return false;
+        }
+
+        $current = json_decode((string) file_get_contents($target), true);
+        if (!is_array($current)) {
+            return false;
+        }
+
+        unset($current['updated_at'], $data['updated_at']);
+
+        return json_encode($current, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            === json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
     /**

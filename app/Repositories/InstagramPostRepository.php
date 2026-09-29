@@ -285,6 +285,27 @@ final class InstagramPostRepository
     }
 
     /**
+     * Libera posts presos em 'publicando' por processo encerrado no meio.
+     * Vai para 'erro' (nao 'agendado') porque o post pode ja ter saido na Meta.
+     */
+    public function markStalePublishingAsError(int $minutes): int
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE instagram_posts
+                SET status        = 'erro',
+                    error_log     = :error_log,
+                    atualizado_em = NOW()
+              WHERE status = 'publicando'
+                AND atualizado_em < NOW() - INTERVAL :minutes MINUTE"
+        );
+        $stmt->bindValue(':error_log', 'Publicação interrompida (processo encerrado no meio). Verifique no Instagram se o post saiu antes de reagendar.');
+        $stmt->bindValue(':minutes', max(1, $minutes), PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->rowCount();
+    }
+
+    /**
      * Marca um post como publicado com ig_media_id e permalink.
      */
     public function markPublished(int $id, string $igMediaId, string $permalink): bool

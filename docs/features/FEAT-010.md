@@ -260,6 +260,7 @@ C:\xampp\php\php.exe scripts/en-instagram-publish-scheduled.php
 ```
 1. Verificar SAPI = CLI (bloqueia execução via browser)
 2. Adquirir lock de processo global (flock) → previne execução paralela
+   2a. Recuperar presos: posts em 'publicando' sem atualização há mais de 90 min viram 'erro' (markStalePublishingAsError) — roda antes de buscar a conta, então funciona mesmo com a conta desativada. Não voltam para 'agendado' porque podem já ter saído na Meta; reagendar é manual, depois de conferir no Instagram.
 3. Buscar conta ativa
 4. SELECT posts com status='agendado' AND agendado_para <= NOW() (sem FOR UPDATE SKIP LOCKED, que nao existe no MariaDB 10.4 local; a exclusao mutua vem do flock do passo 2 e do UPDATE atomico do passo 5a)
 5. Para cada post:
@@ -447,6 +448,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-29 | 2.5.0 | Cross-post Blog → Instagram (Task #328): opção "Criar rascunho no Instagram" no criar/editar post do blog com prévia estilo Instagram, Smart Canvas 1080x1080 sem cortes (`SmartCanvasRenderer`), legenda via Google Gemini com modelo reserva e alternativa sem IA (`GeminiCaptionService`), gravação idempotente por UUID v5 e token de prévia (`BlogCrosspostService`), endpoint `crosspost-preview` e card do post vinculado na edição. |
 | 2026-09-29 | 2.5.1 | Correção do agendador (`scripts/en-instagram-publish-scheduled.php`): `findDueScheduled()` usava `FOR UPDATE SKIP LOCKED`, inexistente no MariaDB 10.4.32 local (erro 1064 em toda execução, nenhum agendado era publicado). Passa a usar `SELECT` simples; a exclusão mútua continua garantida pelo `flock` do script e pelo `UPDATE … WHERE status='agendado'` atômico de `lockForPublishing()`. |
 | 2026-09-29 | 2.5.2 | Agendamento do publicador (Task #329): tarefa `EstrategiaNerd-InstagramPublicarAgendados` no Task Scheduler a cada 5 min com `php-win.exe`, `IgnoreNew`, limite de 60 min e execução só com o usuário logado; documentados exit codes, risco de post preso em `publicando` e rollback. |
+| 2026-09-29 | 2.5.3 | Pendências do agendador e do feed: (1) `markStalePublishingAsError(90)` no início do script libera posts presos em `publicando` como `erro` com mensagem orientando conferir no Instagram antes de reagendar; (2) `InstagramFeedService::saveCache()` só regrava `config/instagram-feed.json` e `storage/cache/instagram_feed.json` quando o conteúdo muda (ignora `updated_at`), eliminando a alteração falsa no git a cada renderização da home. |
 
 
 

@@ -72,3 +72,9 @@ completa de visualizacao no calendario `/admin/agendamento-posts`.
 ## Observacao
 `scripts/en-blog-schedule-publish.php` (FEAT-008) foi descontinuado em favor do novo
 mecanismo generico `scripts/en-blog-publish-scheduled.php`.
+
+Em 29/09/2026 a tarefa local do Windows `EstrategiaNerd-PublicarPostsAgendados` (que
+rodava o script descontinuado e ja estava desativada) foi removida. Backup do XML em
+`C:\Users\WINDOWS\ProjectBackup\scheduled-tasks\EstrategiaNerd-PublicarPostsAgendados-20260929-183416.xml`
+(restaurar com `Register-ScheduledTask -Xml (Get-Content <arquivo> -Raw) -TaskName EstrategiaNerd-PublicarPostsAgendados`).
+A publicacao do blog continua pelo Cron Job da Hostinger descrito em "Automacao".
