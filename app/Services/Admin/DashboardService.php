@@ -256,37 +256,42 @@ final class DashboardService
             return null;
         }
 
-        $igAccount = $this->instagramPosts->findActiveAccount();
-        if ($igAccount === null) {
+        try {
+            $igAccount = $this->instagramPosts->findActiveAccount();
+            if ($igAccount === null) {
+                return null;
+            }
+
+            $igAccountId = (int) ($igAccount['id'] ?? 0);
+            $igInsights = $this->instagramPosts->getLatestInsights($igAccountId, 'custom', $start, $end)
+                ?? $this->instagramPosts->getLatestInsights($igAccountId, '30d')
+                ?? $this->instagramPosts->getLatestInsights($igAccountId, '7d')
+                ?? [];
+
+            $igRecent = $this->instagramPosts->listPublished($igAccountId, 4);
+            $igScheduled = $this->instagramPosts->listScheduled($igAccountId, 50);
+            $igDrafts = $this->instagramPosts->listDrafts($igAccountId, 50);
+
+            $igTodayScheduled = 0;
+            foreach ($igScheduled as $sp) {
+                if (str_starts_with((string) ($sp['agendado_para'] ?? ''), $todayYmd)) {
+                    $igTodayScheduled++;
+                }
+            }
+
+            return [
+                'account' => $igAccount,
+                'insights' => $igInsights,
+                'recent_posts' => $igRecent,
+                'total_posts' => (int) ($igAccount['media_count'] ?? count($igRecent)),
+                'scheduled_count' => count($igScheduled),
+                'draft_count' => count($igDrafts),
+                'today_scheduled' => $igTodayScheduled,
+            ];
+        } catch (\Throwable $e) {
+            error_log('Falha ao carregar dados do Instagram no Dashboard: ' . $e->getMessage());
             return null;
         }
-
-        $igAccountId = (int) ($igAccount['id'] ?? 0);
-        $igInsights = $this->instagramPosts->getLatestInsights($igAccountId, 'custom', $start, $end)
-            ?? $this->instagramPosts->getLatestInsights($igAccountId, '30d')
-            ?? $this->instagramPosts->getLatestInsights($igAccountId, '7d')
-            ?? [];
-
-        $igRecent = $this->instagramPosts->listPublished($igAccountId, 4);
-        $igScheduled = $this->instagramPosts->listScheduled($igAccountId, 50);
-        $igDrafts = $this->instagramPosts->listDrafts($igAccountId, 50);
-
-        $igTodayScheduled = 0;
-        foreach ($igScheduled as $sp) {
-            if (str_starts_with((string) ($sp['agendado_para'] ?? ''), $todayYmd)) {
-                $igTodayScheduled++;
-            }
-        }
-
-        return [
-            'account' => $igAccount,
-            'insights' => $igInsights,
-            'recent_posts' => $igRecent,
-            'total_posts' => (int) ($igAccount['media_count'] ?? count($igRecent)),
-            'scheduled_count' => count($igScheduled),
-            'draft_count' => count($igDrafts),
-            'today_scheduled' => $igTodayScheduled,
-        ];
     }
 
     /**

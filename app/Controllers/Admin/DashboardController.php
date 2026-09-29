@@ -88,7 +88,9 @@ final class DashboardController
         $categorias = new CategoriaPostRepository($pdo);
         $links = new LinkRepository($pdo);
         $linkClicks = new LinkClickRepository($pdo);
-        $instagramPosts = new InstagramPostRepository($pdo);
+        /** @var \PDO $localPdo */
+        $localPdo = $GLOBALS['pdo'];
+        $instagramPosts = new InstagramPostRepository($localPdo);
 
         $service = new DashboardService(
             $pdo,

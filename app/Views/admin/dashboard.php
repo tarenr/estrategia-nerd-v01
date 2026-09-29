@@ -14,96 +14,114 @@ declare(strict_types=1);
 
 $days = (int) ($days ?? 7);
 
-function e(string $value): string { return htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); }
-function fmt(int|string $number): string { return number_format((int) $number, 0, ',', '.'); }
-function fmt_k(int|string $number): string
-{
-    $value = (int) $number;
-    return $value >= 1000 ? (string) round($value / 1000, 1) . 'k' : (string) $value;
+if (!function_exists('e')) {
+    function e(string $value): string { return htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); }
 }
-function dashboard_public_url(string $baseUrl, string $path = ''): string
-{
-    $baseUrl = rtrim(trim($baseUrl), '/');
-    if ($baseUrl === '') {
-        return $path !== '' ? $path : '';
-    }
-
-    if ($path === '' || $path === '/') {
-        return $baseUrl . '/';
-    }
-
-    return $baseUrl . '/' . ltrim($path, '/');
+if (!function_exists('fmt')) {
+    function fmt(int|string $number): string { return number_format((int) $number, 0, ',', '.'); }
 }
-
-function cover_url(?string $imagemCapa, string $publicBaseUrl = ''): string
-{
-    $raw = is_string($imagemCapa) ? trim($imagemCapa) : '';
-    if ($raw === '') {
-        return '';
+if (!function_exists('fmt_k')) {
+    function fmt_k(int|string $number): string
+    {
+        $value = (int) $number;
+        return $value >= 1000 ? (string) round($value / 1000, 1) . 'k' : (string) $value;
     }
-
-    $raw = ltrim($raw, '/');
-
-    if (str_starts_with($raw, 'uploads/')) {
-        return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, $raw) : url('/' . $raw);
-    }
-
-    if (str_contains($raw, '/')) {
-        return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, $raw) : url('/' . $raw);
-    }
-
-    return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, 'uploads/' . basename($raw)) : url('/uploads/' . basename($raw));
 }
-function link_type_label(string $tipo, bool $promocao = false): string
-{
-    if ($tipo === 'produto' && $promocao) {
-        return 'Promocao';
-    }
+if (!function_exists('dashboard_public_url')) {
+    function dashboard_public_url(string $baseUrl, string $path = ''): string
+    {
+        $baseUrl = rtrim(trim($baseUrl), '/');
+        if ($baseUrl === '') {
+            return $path !== '' ? $path : '';
+        }
 
-    return match ($tipo) {
-        'produto' => 'Produto',
-        'cupom' => 'Cupom',
-        'conteudo' => 'Conteudo',
-        'rede_social' => 'Rede Social',
-        'servico' => 'Servicos',
-        default => 'Link',
-    };
+        if ($path === '' || $path === '/') {
+            return $baseUrl . '/';
+        }
+
+        return $baseUrl . '/' . ltrim($path, '/');
+    }
 }
 
-function admin_clean_post_title(?string $value): string
-{
-    $value = trim((string) $value);
-    if ($value === '') {
-        return 'Sem titulo';
+if (!function_exists('cover_url')) {
+    function cover_url(?string $imagemCapa, string $publicBaseUrl = ''): string
+    {
+        $raw = is_string($imagemCapa) ? trim($imagemCapa) : '';
+        if ($raw === '') {
+            return '';
+        }
+
+        $raw = ltrim($raw, '/');
+
+        if (str_starts_with($raw, 'uploads/')) {
+            return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, $raw) : url('/' . $raw);
+        }
+
+        if (str_contains($raw, '/')) {
+            return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, $raw) : url('/' . $raw);
+        }
+
+        return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, 'uploads/' . basename($raw)) : url('/uploads/' . basename($raw));
     }
+}
+if (!function_exists('link_type_label')) {
+    function link_type_label(string $tipo, bool $promocao = false): string
+    {
+        if ($tipo === 'produto' && $promocao) {
+            return 'Promocao';
+        }
 
-    $value = preg_replace('/\[\[(.*?)\]\]/u', '$1', $value) ?? $value;
-    $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
-    $value = trim($value);
-
-    return $value !== '' ? $value : 'Sem titulo';
+        return match ($tipo) {
+            'produto' => 'Produto',
+            'cupom' => 'Cupom',
+            'conteudo' => 'Conteudo',
+            'rede_social' => 'Rede Social',
+            'servico' => 'Servicos',
+            default => 'Link',
+        };
+    }
 }
 
-function dashboard_post_url(?array $post, string $publicBaseUrl = ''): string
-{
-    $slug = trim((string) ($post['slug'] ?? ''));
-    if ($slug === '') {
-        return '';
-    }
+if (!function_exists('admin_clean_post_title')) {
+    function admin_clean_post_title(?string $value): string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return 'Sem titulo';
+        }
 
-    return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, 'post/' . rawurlencode($slug)) : url('/post/' . rawurlencode($slug));
+        $value = preg_replace('/\[\[(.*?)\]\]/u', '$1', $value) ?? $value;
+        $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
+        $value = trim($value);
+
+        return $value !== '' ? $value : 'Sem titulo';
+    }
 }
 
-function status_badge_class(string $status): string
-{
-    $normalized = strtolower(trim($status));
+if (!function_exists('dashboard_post_url')) {
+    function dashboard_post_url(?array $post, string $publicBaseUrl = ''): string
+    {
+        $slug = trim((string) ($post['slug'] ?? ''));
+        if ($slug === '') {
+            return '';
+        }
 
-    return match ($normalized) {
-        'publicado' => 'status-badge status-publicado',
-        'rascunho' => 'status-badge status-rascunho',
-        'agendado' => 'status-badge status-agendado',
-        default => 'status-badge',
-    };
+        return $publicBaseUrl !== '' ? dashboard_public_url($publicBaseUrl, 'post/' . rawurlencode($slug)) : url('/post/' . rawurlencode($slug));
+    }
+}
+
+if (!function_exists('status_badge_class')) {
+    function status_badge_class(string $status): string
+    {
+        $normalized = strtolower(trim($status));
+
+        return match ($normalized) {
+            'publicado' => 'status-badge status-publicado',
+            'rascunho' => 'status-badge status-rascunho',
+            'agendado' => 'status-badge status-agendado',
+            default => 'status-badge',
+        };
+    }
 }
 
 if (!function_exists('day_label_range')) {
@@ -174,38 +192,42 @@ if (!function_exists('bucketize_series')) {
     }
 }
 
-function parse_ymd(?string $value): ?string
-{
-    $normalized = is_string($value) ? trim($value) : '';
-    if ($normalized === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $normalized)) {
-        return null;
+if (!function_exists('parse_ymd')) {
+    function parse_ymd(?string $value): ?string
+    {
+        $normalized = is_string($value) ? trim($value) : '';
+        if ($normalized === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $normalized)) {
+            return null;
+        }
+
+        [$year, $month, $day] = array_map('intval', explode('-', $normalized));
+
+        return checkdate($month, $day, $year) ? sprintf('%04d-%02d-%02d', $year, $month, $day) : null;
     }
-
-    [$year, $month, $day] = array_map('intval', explode('-', $normalized));
-
-    return checkdate($month, $day, $year) ? sprintf('%04d-%02d-%02d', $year, $month, $day) : null;
 }
 
-function clamp_range_90(string $start, string $end): array
-{
-    try {
-        $startDate = new DateTimeImmutable($start);
-        $endDate = new DateTimeImmutable($end);
-    } catch (Throwable) {
-        return [$start, $end];
-    }
+if (!function_exists('clamp_range_90')) {
+    function clamp_range_90(string $start, string $end): array
+    {
+        try {
+            $startDate = new DateTimeImmutable($start);
+            $endDate = new DateTimeImmutable($end);
+        } catch (Throwable) {
+            return [$start, $end];
+        }
 
-    if ($startDate > $endDate) {
-        [$startDate, $endDate] = [$endDate, $startDate];
-    }
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
 
-    $days = (int) $startDate->diff($endDate)->days + 1;
-    if ($days <= 90) {
-        return [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')];
-    }
+        $days = (int) $startDate->diff($endDate)->days + 1;
+        if ($days <= 90) {
+            return [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')];
+        }
 
-    $adjustedStart = $endDate->modify('-89 days');
-    return [$adjustedStart->format('Y-m-d'), $endDate->format('Y-m-d')];
+        $adjustedStart = $endDate->modify('-89 days');
+        return [$adjustedStart->format('Y-m-d'), $endDate->format('Y-m-d')];
+    }
 }
 
 $todayYmd = date('Y-m-d');

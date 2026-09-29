@@ -45,6 +45,7 @@ return [
             ['name' => 'Midia', 'path' => '/admin/midia', 'fragments' => ['Midia']],
             ['name' => 'Newsletter', 'path' => '/admin/newsletter', 'fragments' => ['Newsletter']],
             ['name' => 'Links', 'path' => '/admin/links', 'fragments' => ['Links']],
+            ['name' => 'Instagram', 'path' => '/admin/instagram', 'fragments' => ['Instagram']],
             ['name' => 'Central Operacional', 'path' => '/admin/central-operacional-v2', 'fragments' => ['Central Operacional']],
             ['name' => 'Health Check', 'path' => '/admin/health', 'fragments' => ['Health']],
             ['name' => 'Testes Automatizados', 'path' => '/admin/testes', 'fragments' => ['Testes Automatizados', 'Visao Geral']],

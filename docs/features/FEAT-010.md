@@ -343,6 +343,16 @@ As 4 views estão implementadas em:
 
 ---
 
+## Diretriz de Ambientes e Banco de Dados
+
+> **REGRA ARQUITETURAL MANDATÓRIA (Ambiente Único):**
+> 
+> 1. **Ambiente estritamente LOCAL:** O módulo Instagram opera com base de dados única no banco **local** (`estrategia-nerd` via `$GLOBALS['pdo']`). A conta do Instagram é uma entidade real unificada (`@estrategia_nerd`), e seus tokens de acesso à Graph API, agendamentos, cron CLI e sincronização com a Meta são centralizados na máquina local.
+> 2. **Isolamento de Produção e Stage:** Os bancos remotos da Hostinger (`u576397693_estrategianerd` e `u576397693_en_stage`) **NÃO** possuem nem devem receber as tabelas do Instagram. Quando o usuário alterna o "Ambiente Alvo" no painel administrativo para inspecionar posts, estatísticas e newsletter de produção ou stage, o `DashboardController` e `DashboardService` continuam consultando o Instagram exclusivamente a partir do `$GLOBALS['pdo']` local.
+> 3. **Transição para Multi-Ambiente no Futuro:** O módulo Instagram só passará a ser multi-ambiente quando for implementada a rotina de exibição do feed/posts do Instagram no site público principal (frontend em produção). Até lá, a separação local é estrita.
+
+---
+
 ## PHPStan
 
 Todos os arquivos backend do módulo passam no **PHPStan Level 5** com 0 erros:
@@ -350,8 +360,6 @@ Todos os arquivos backend do módulo passam no **PHPStan Level 5** com 0 erros:
 ```bash
 C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 ```
-
----
 
 ---
 
@@ -373,6 +381,8 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-28 | 1.7.0 | Reestruturação completa do Dashboard inspirada em interface profissional moderna: barra superior enxuta de sincronização, grid de 4 KPIs com sparklines SVG temáticos, divisão central em 2 colunas (Informações da Conta 60% e Ações Rápidas 2x2 40%), navegação em abas persistentes (Métricas, Posts Recentes, Agendados & Rascunhos, Insights) e gráficos vetoriais nativos em SVG (Desempenho temporal com curvas de tendência e Gráfico Donut de Tipos de Conteúdo com total e percentuais reais). |
 | 2026-09-28 | 1.8.0 | Otimização SPA e eliminação de redundâncias de UI: status de conexão e última sincronização integrados diretamente no cabeçalho de "Informações da conta" (eliminando barra superior e botões repetidos), centralização das ações no card "Ações Rápidas", filtros de período (7d, 14d, 30d e customizado) atualizados em tempo real sem recarregamento da página (Fetch API assíncrono via `?ajax=metrics` redesenhando dinamicamente os SVGs do gráfico de desempenho e do donut, além dos KPIs e cards analíticos) e URLs amigáveis e limpas via `window.history.replaceState`. |
 | 2026-09-29 | 1.9.0 | Integração macro no Dashboard Principal (`/admin`): injeção de repositório no `DashboardController` e `DashboardService`, inclusão do 6º card de KPI no grid superior com seguidores e alcance, novo painel dedicado "Instagram & Redes Sociais" com status de conexão, mini-KPIs, fila editorial e mini-galeria dos 4 posts mais recentes, e indicador de publicações agendadas para hoje no painel "Hoje". |
+| 2026-09-29 | 1.9.1 | Correção de isolamento de ambiente no Dashboard Principal: instanciação de `InstagramPostRepository` com `$GLOBALS['pdo']` local (blindando contra consultas indevidas aos bancos remotos de Produção/Stage), inclusão de `try/catch` defensivo em `DashboardService::buildInstagramData()` para degradação graciosa sem erro 500, e formalização da regra arquitetural de ambiente único do Instagram. |
+
 
 
 
