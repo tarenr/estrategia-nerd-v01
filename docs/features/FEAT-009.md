@@ -44,6 +44,32 @@ producao, via Cron Job no painel da Hostinger (conta u576397693),
 1x por dia as 12:00 UTC (09:00 Brasilia) - comando:
 `php /home/u576397693/domains/estrategianerd.com.br/public_html/_app_core/scripts/en-blog-publish-scheduled.php`
 
+## Monitoramento do cron (29/09/2026)
+Motivo: em 29/09/2026 o cron publicou o post do dia, mas nao deixou rastro no servidor
+(saida do hPanel e `_app_core/storage/logs/` vazias). O script gravava o log com erro
+silenciado e, quando o banco falhava, o `bootstrap.php` encerrava o processo com `exit`
+sem codigo de erro - o cron terminava como "sucesso" sem registro nenhum.
+
+Agora toda execucao deixa rastro em `storage/logs/`:
+
+- `cron-publish-scheduled.log`: uma linha por execucao (JSON do resultado ou `ERRO: ...`).
+- `cron-publish-scheduled.last.json` (heartbeat, sobrescrito a cada execucao, gravado de
+  forma atomica): `iniciado_em`, `finalizado_em`, `ambiente`, `dry_run`, `ok`,
+  `publicados` (ids publicados nesta execucao, preservados mesmo se um post seguinte
+  falhar), `seriam_publicados` (so em `--dry-run`) e `erro`.
+- Um `register_shutdown_function` registrado antes do `bootstrap.php` grava `ok=false`
+  e forca **exit code 1** quando o processo e encerrado antes de concluir (falha de banco
+  no bootstrap ou erro fatal). Excecoes no fluxo tambem resultam em `ok=false` e exit 1.
+- Se nao conseguir gravar o log ou o heartbeat, o script avisa em STDERR com o caminho.
+
+Como conferir: abrir o `.last.json` - `ok=true` e `finalizado_em` de hoje apos as 09:00
+indicam execucao bem-sucedida. Recomendado tambem redirecionar a saida do Cron Job da
+Hostinger para um arquivo fora do `public_html` (ex.: `>> .../cron-logs/blog-publish.out 2>&1`),
+para registrar inclusive falhas antes do PHP iniciar.
+
+Status: implementado e testado no ambiente local; **deploy em Stage/Producao pendente**
+(o pacote tecnico atual levaria tambem outros 12 arquivos alterados desde `ec7f946`).
+
 ## Deploy em Producao (27/09/2026)
 - **Diretriz de Arquitetura (Fase 1b / Tarefa 129):** o admin do site e 100% local.
   Portanto, apenas o core funcional necessario para a automacao remota foi publicado
