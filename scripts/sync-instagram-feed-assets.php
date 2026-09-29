@@ -39,7 +39,8 @@ echo "=== 1. Conectando à Meta Graph API v21.0 ===\n";
 $api = new InstagramApiService($accessToken, $igUserId);
 
 try {
-    $feedRes = $api->getMediaFeed(35);
+    // 0 = busca todas as mídias da conta com paginação completa
+    $feedRes = $api->getMediaFeed(0);
     $apiItems = $feedRes['data'] ?? [];
     echo "Sucesso: " . count($apiItems) . " publicacoes obtidas da Meta API.\n\n";
 } catch (\Throwable $e) {
