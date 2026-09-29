@@ -68,16 +68,18 @@ final class InstagramFeedService
     {
         $items = [];
         foreach ($posts as $post) {
+            $postId = (int) ($post['id'] ?? 0);
             $medias = explode('|', (string) ($post['medias'] ?? ''));
             $firstMedia = trim($medias[0]);
             $mediaUrl = '';
 
-            if ($firstMedia !== '') {
-                if (str_starts_with($firstMedia, 'http://') || str_starts_with($firstMedia, 'https://')) {
-                    $mediaUrl = $firstMedia;
-                } else {
-                    $mediaUrl = url('/' . ltrim($firstMedia, '/'));
-                }
+            // Prioriza imagem local persistida em public/assets/instagram-feed/
+            $localRel = '/assets/instagram-feed/post_' . $postId . '.jpg';
+            $localAbs = base_path('public' . $localRel);
+            if ($postId > 0 && is_file($localAbs) && filesize($localAbs) > 100) {
+                $mediaUrl = $localRel;
+            } elseif ($firstMedia !== '') {
+                $mediaUrl = $firstMedia;
             }
 
             $items[] = [

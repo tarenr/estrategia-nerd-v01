@@ -943,6 +943,10 @@ if (($endRange - $startRange) < 4) {
                     $pDataPub    = $item['publicado_em'] ?? null;
                     $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
                     $thumbUrl    = $medias[0] ?? '';
+                    $localAsset  = '/assets/instagram-feed/post_' . $pId . '.jpg';
+                    if (is_file(base_path('public' . $localAsset))) {
+                        $thumbUrl = url($localAsset);
+                    }
                     $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
                   ?>
                   <tr class="posts-table-row">
@@ -1054,6 +1058,10 @@ if (($endRange - $startRange) < 4) {
                 $pDataPub    = $item['publicado_em'] ?? null;
                 $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
                 $thumbUrl    = $medias[0] ?? '';
+                $localAsset  = '/assets/instagram-feed/post_' . $pId . '.jpg';
+                if (is_file(base_path('public' . $localAsset))) {
+                    $thumbUrl = url($localAsset);
+                }
                 $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
               ?>
               <div class="rounded-2xl border border-slate-800/80 bg-slate-900/60 overflow-hidden hover:border-cyan-500/40 transition-all flex flex-col group shadow-lg">

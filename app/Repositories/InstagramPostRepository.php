@@ -425,31 +425,34 @@ final class InstagramPostRepository
             $postId = (int) $stmtId->fetchColumn();
 
             if ($postId > 0) {
-                $mediaUrl = trim((string) ($data['media_url'] ?? $data['thumbnail_url'] ?? ''));
-                if ($mediaUrl !== '') {
-                    $tipoArquivo = ($data['tipo'] ?? '') === 'reels' ? 'video' : 'imagem';
+                $rawThumb = trim((string) ($data['thumbnail_url'] ?? ''));
+                $rawMedia = trim((string) ($data['media_url'] ?? ''));
+                $isReels  = ($data['tipo'] ?? '') === 'reels';
+
+                // Para Reels, a capa visual primária (ordem 1) deve ser a thumbnail_url
+                $coverUrl = ($isReels && $rawThumb !== '') ? $rawThumb : ($rawMedia !== '' ? $rawMedia : $rawThumb);
+
+                if ($coverUrl !== '') {
                     $stmtMedia = $this->pdo->prepare("SELECT id FROM instagram_post_media WHERE post_id = :post_id AND ordem = 1 LIMIT 1");
                     $stmtMedia->execute([':post_id' => $postId]);
                     $mediaId = (int) $stmtMedia->fetchColumn();
 
                     if ($mediaId > 0) {
-                        $updMedia = $this->pdo->prepare("UPDATE instagram_post_media SET caminho = :caminho, url_publica = :url_publica, tipo_arquivo = :tipo WHERE id = :id");
+                        $updMedia = $this->pdo->prepare("UPDATE instagram_post_media SET caminho = :caminho, url_publica = :url_publica, tipo_arquivo = 'imagem' WHERE id = :id");
                         $updMedia->execute([
-                            ':caminho'     => $mediaUrl,
-                            ':url_publica' => $mediaUrl,
-                            ':tipo'        => $tipoArquivo,
+                            ':caminho'     => $coverUrl,
+                            ':url_publica' => $coverUrl,
                             ':id'          => $mediaId,
                         ]);
                     } else {
                         $insMedia = $this->pdo->prepare(
                             "INSERT INTO instagram_post_media (post_id, ordem, tipo_arquivo, caminho, url_publica)
-                             VALUES (:post_id, 1, :tipo, :caminho, :url_publica)"
+                             VALUES (:post_id, 1, 'imagem', :caminho, :url_publica)"
                         );
                         $insMedia->execute([
                             ':post_id'     => $postId,
-                            ':tipo'        => $tipoArquivo,
-                            ':caminho'     => $mediaUrl,
-                            ':url_publica' => $mediaUrl,
+                            ':caminho'     => $coverUrl,
+                            ':url_publica' => $coverUrl,
                         ]);
                     }
                 }
