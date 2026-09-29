@@ -22,7 +22,7 @@ final class InstagramFeedService
         private ?InstagramPostRepository $instagramPosts = null,
         ?string $cachePath = null
     ) {
-        $this->cachePath = $cachePath ?? base_path('storage/cache/instagram_feed.json');
+        $this->cachePath = $cachePath ?? base_path('config/instagram-feed.json');
     }
 
     /**
@@ -108,14 +108,27 @@ final class InstagramFeedService
      */
     private function saveCache(array $data): void
     {
-        try {
-            $dir = dirname($this->cachePath);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
+        $payload = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($payload === false) {
+            return;
+        }
+
+        $targets = array_unique([
+            $this->cachePath,
+            base_path('config/instagram-feed.json'),
+            base_path('storage/cache/instagram_feed.json'),
+        ]);
+
+        foreach ($targets as $target) {
+            try {
+                $dir = dirname($target);
+                if (!is_dir($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+                file_put_contents($target, $payload);
+            } catch (Throwable) {
+                // Silencioso em caso de permissão de escrita
             }
-            file_put_contents($this->cachePath, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        } catch (Throwable) {
-            // Silencioso em caso de permissão de escrita
         }
     }
 
@@ -124,16 +137,24 @@ final class InstagramFeedService
      */
     private function loadCache(): ?array
     {
-        try {
-            if (is_file($this->cachePath)) {
-                $raw = (string) file_get_contents($this->cachePath);
-                $decoded = json_decode($raw, true);
-                if (is_array($decoded) && !empty($decoded['posts'])) {
-                    return $decoded;
+        $sources = array_unique([
+            $this->cachePath,
+            base_path('config/instagram-feed.json'),
+            base_path('storage/cache/instagram_feed.json'),
+        ]);
+
+        foreach ($sources as $source) {
+            try {
+                if (is_file($source)) {
+                    $raw = (string) file_get_contents($source);
+                    $decoded = json_decode($raw, true);
+                    if (is_array($decoded) && !empty($decoded['posts'])) {
+                        return $decoded;
+                    }
                 }
+            } catch (Throwable) {
+                // Silencioso
             }
-        } catch (Throwable) {
-            // Silencioso
         }
 
         return null;
