@@ -24,7 +24,7 @@ Paridade stage -> pacote: validada (hash pacote x local 13/13)
 
 Backup necessario: sim
 Backup usado:
-- (preencher apos o backup de producao)
+- BS-PROD-20260929-221637 (banco: 416,2 KB | uploads: 151.450,5 KB | sistema: 807,5 KB; system-files.zip contem o scripts/en-blog-publish-scheduled.php anterior)
 
 Banco precisa rodar script: nao
 Mudanca de schema: nao
@@ -34,7 +34,7 @@ Rotas criticas verificadas (codigo HTTP igual antes/depois): /, /blog, /post/{sl
 
 Pacotes aplicados:
 - Stage: code_2026-09-29_21-28-04_bed2001 (13 arquivos)
-- Producao: (preencher)
+- Producao: code_2026-09-29_21-28-04_bed2001 (13 arquivos), aplicado em 29/09/2026 22:18 BRT
 
 Commits locais:
 - bed2001 feat(cron): registro verificavel de execucao do cron de publicacao do blog (FEAT-009)
@@ -42,6 +42,7 @@ Commits locais:
 
 Validacoes realizadas:
 - Local: verify-changes.php 17/17; php -l e PHPStan nivel 5 no script do cron (0 erros); dry-run, falha de bootstrap simulada (exit 1 + heartbeat ok=false), gravacao negada (aviso em STDERR)
+- Producao: 9 URLs com o mesmo codigo HTTP de antes; logs 403; 13/13 arquivos remotos identicos ao pacote; log de erros PHP de producao sem nenhum tipo de erro novo apos o deploy
 - Stage: 10 URLs com o mesmo codigo HTTP de antes; logs 403; script executado no servidor via Cron Job temporario (30/09 01:15 UTC): teste de falha exit=1 e ok=false, dry-run exit=0 e ok=true, sem avisos
 
 Rollback associado:
@@ -49,4 +50,6 @@ Rollback associado:
 - Reaplicar pacote anterior nao serve (pacotes sao incrementais).
 
 Status:
-- Em andamento: Stage validada; producao pendente
+- Implantada em Producao em 29/09/2026 22:18 BRT.
+- Cron Job diario ajustado (30/09 01:2x UTC) para gravar a saida em /home/u576397693/blog-publish.out.
+- Pendente: dry-run em producao via Cron Job temporario (30/09 02:10 UTC) e conferencia da primeira execucao real (30/09 09:00 BRT).

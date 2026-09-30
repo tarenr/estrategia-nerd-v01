@@ -67,8 +67,15 @@ indicam execucao bem-sucedida. Recomendado tambem redirecionar a saida do Cron J
 Hostinger para um arquivo fora do `public_html` (ex.: `>> .../cron-logs/blog-publish.out 2>&1`),
 para registrar inclusive falhas antes do PHP iniciar.
 
-Status: implementado e testado no ambiente local; **deploy em Stage/Producao pendente**
-(o pacote tecnico atual levaria tambem outros 12 arquivos alterados desde `ec7f946`).
+Status: em producao desde 29/09/2026 22:18 (BRT) - release `RELEASE-2026-09-29-cron-monitoramento`,
+pacote `code_2026-09-29_21-28-04_bed2001`, backup `BS-PROD-20260929-221637`. Stage testada no servidor
+(falha forcada: exit 1 e ok=false; dry-run: exit 0 e ok=true).
+
+Cron Job da Hostinger (desde 30/09/2026): `php /home/u576397693/domains/estrategianerd.com.br/public_html/_app_core/scripts/en-blog-publish-scheduled.php >> /home/u576397693/blog-publish.out 2>&1` ("0 12 * * *"). A saida vai para `/home/u576397693/blog-publish.out` (fora do public_html; a pasta da conta ja e gravavel pelo cron, sem precisar de pasta nova).
+
+Como conferir sem SSH (hospedagem Single nao tem): por FTP, ler `blog-publish.out` e `_app_core/storage/logs/cron-publish-scheduled.last.json`. Para rodar algo no servidor so existe o Cron Job (criar temporario com pelo menos ~10 min de antecedencia; com menos, pode nao disparar).
+
+Observacao: o script antigo ja registrava as execucoes normais em `cron-publish-scheduled.log` (28/09 e 29/09 conferidos por FTP); a lacuna real era a falha de banco no bootstrap, que terminava com exit 0 e sem registro.
 
 ## Deploy em Producao (27/09/2026)
 - **Diretriz de Arquitetura (Fase 1b / Tarefa 129):** o admin do site e 100% local.
