@@ -52,4 +52,7 @@ Rollback associado:
 Status:
 - Implantada em Producao em 29/09/2026 22:18 BRT.
 - Cron Job diario ajustado (30/09 01:2x UTC) para gravar a saida em /home/u576397693/blog-publish.out.
-- Pendente: dry-run em producao via Cron Job temporario (30/09 02:10 UTC) e conferencia da primeira execucao real (30/09 09:00 BRT).
+- Primeira execucao real conferida por FTP em 30/09/2026 09:00:02 BRT: .last.json com ok=true, ambiente=production, dry_run=false (nenhum post a publicar no dia) e linha nova no cron-publish-scheduled.log.
+- /home/u576397693/blog-publish.out foi criado pelo redirecionamento (comando funciona), mas fica vazio: o PHP do cron da Hostinger nao repassa o STDOUT para o arquivo. O rastro oficial e o .last.json + .log; o .out serve para falhas antes do PHP iniciar.
+- Os dois Cron Jobs temporarios de dry-run em producao (30/09 01:30 e 02:10 UTC) nao dispararam; o diario, recriado com o mesmo formato de comando, funcionou. Provavel atraso do hPanel para ativar Cron Job novo. Temporarios removidos.
+- Status: CONCLUIDA.

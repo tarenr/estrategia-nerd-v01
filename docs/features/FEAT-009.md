@@ -73,6 +73,8 @@ pacote `code_2026-09-29_21-28-04_bed2001`, backup `BS-PROD-20260929-221637`. Sta
 
 Cron Job da Hostinger (desde 30/09/2026): `php /home/u576397693/domains/estrategianerd.com.br/public_html/_app_core/scripts/en-blog-publish-scheduled.php >> /home/u576397693/blog-publish.out 2>&1` ("0 12 * * *"). A saida vai para `/home/u576397693/blog-publish.out` (fora do public_html; a pasta da conta ja e gravavel pelo cron, sem precisar de pasta nova).
 
+Validado em 30/09/2026 09:00:02 (BRT): .last.json ok=true e linha no .log. O `blog-publish.out` e criado mas fica vazio (o STDOUT do PHP nao chega ao arquivo nesse ambiente); ele serve para erros antes do PHP iniciar.
+
 Como conferir sem SSH (hospedagem Single nao tem): por FTP, ler `blog-publish.out` e `_app_core/storage/logs/cron-publish-scheduled.last.json`. Para rodar algo no servidor so existe o Cron Job (criar temporario com pelo menos ~10 min de antecedencia; com menos, pode nao disparar).
 
 Observacao: o script antigo ja registrava as execucoes normais em `cron-publish-scheduled.log` (28/09 e 29/09 conferidos por FTP); a lacuna real era a falha de banco no bootstrap, que terminava com exit 0 e sem registro.
