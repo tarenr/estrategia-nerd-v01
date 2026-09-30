@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Repositories\CategoriaPostRepository;
+use App\Repositories\InstagramPostRepository;
 use App\Repositories\PostRepository;
 use App\Services\Admin\MidiaService;
 use App\Services\Admin\PostsService;
@@ -325,6 +326,7 @@ final class PostsController
             SitemapCacheService::fromGlobals(),
             $targetEnvironment,
             $this->crosspostService(),
+            new InstagramPostRepository($localPdo),
         );
     }
 

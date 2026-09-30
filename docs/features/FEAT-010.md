@@ -395,16 +395,24 @@ No criar/editar post do blog (`app/Views/components/admin/posts/form-instagram-c
 - **Falha parcial:** o blog sempre fica salvo; o controller mostra "Blog salvo; rascunho do Instagram não foi atualizado: <motivo>". Salvar de novo tenta outra vez sem duplicar.
 - Capa que não existe nos uploads deste servidor (ex.: post editado em outro ambiente) exige arte dedicada.
 
-### "Importar do Blog" na tela do Instagram (Task #385)
+### Criar a partir do blog: só pelo post do blog (Tasks #389 a #392)
 
-Desde 30/09/2026 a tela `/admin/instagram/posts/criar` **não copia mais** a capa 16:9 nem o título/resumo. O painel "Importar do Blog":
+Desde 30/09/2026 o painel "Importar do Blog" **foi removido** das telas de criar e editar do Instagram (e o endpoint `GET /admin/instagram/api/blog-post`). Post do Instagram a partir de um post do blog é criado **só** pela opção "Criar rascunho no Instagram" no criar/editar do post do blog. Na edição do Instagram, o campo oculto `post_blog_id` continua, para não apagar vínculos existentes ao salvar.
 
-- lista só posts `publicado` do banco **local** que **ainda não têm post no Instagram** (qualquer status). O vínculo é lido de `instagram_posts.post_blog_id`; vínculos criados com o painel em stage/produção (chave UUID v5 `blog:stage|production:<id>`) são ignorados, para não esconder o post local de mesmo id;
-- ao escolher um post, mostra o botão **"Criar pela rotina do blog"**, que abre `/admin/editar-post?id=X&ig=1`: a opção do Instagram já vem ligada e a prévia (Smart Canvas + legenda com IA) é gerada sozinha. O rascunho criado tem o vínculo idempotente e aparece no card do blog;
-- se o post já tiver vínculo (corrida entre abrir a tela e escolher), mostra o post do Instagram e o status em vez do botão;
-- com o ambiente alvo diferente de **Local**, o botão fica desativado com aviso (a lista vem do banco local).
+**Lista de Posts do blog (`/admin/posts`):**
 
-A tela de **edição** do Instagram manteve o painel antigo (trocar o vínculo de um post existente quebraria a chave). Rascunhos antigos criados pela tela do Instagram (chave aleatória) continuam fora do card do blog, mas o post do blog correspondente já não aparece na lista para ser importado de novo.
+- Coluna com o ícone do Instagram: ponto **verde** = o post já tem post no Instagram (qualquer status; clique abre o post no módulo Instagram), **vermelho** = não tem (clique abre `/admin/editar-post?id=X&ig=1`, com a opção do Instagram ligada e a prévia gerada), **cinza** = o banco do Instagram não respondeu.
+- Títulos "Views", "Curtidas" e "Comentários" viraram ícones (olho, coração, balão), com a legenda acima da tabela.
+- Filtro **Instagram** (Todos / Com post / Sem post), parâmetro `?instagram=com|sem`, mantido em ordenação, paginação e recarga por AJAX. Vale também para os cards de resumo e gráficos. Se o banco do Instagram não responder, o filtro é ignorado com aviso.
+- Regra de vínculo por ambiente (`BlogCrosspostService::linkedBlogPosts($ambiente)`): cross-post conta no ambiente da sua chave UUID v5 (`blog:<ambiente>:<id>`); vínculos manuais antigos (chave aleatória) contam só no ambiente local. Os ids vêm do banco local do Instagram e entram na consulta dos posts como parâmetros (`PostRepository::buildAdminWhere`).
+
+**Agendamento (`/admin/agendamento-posts`):**
+
+- O calendário (grade e lista) mostra os posts do blog do ambiente alvo **e** os do Instagram (banco local): agendados pela data agendada, publicados pela data de publicação, `publicando` e `erro` pela data agendada. Rascunhos ficam de fora.
+- Instagram em rosa com o ícone; `erro` com fundo vermelho; agendado com data passada com borda vermelha e "vencido". Título = primeira linha da legenda. Clique: agendado/erro abre a edição, publicado/publicando abre os detalhes.
+- Botões **Blog** e **Instagram** para mostrar/esconder cada tipo (preferência salva no navegador).
+- Dias com altura mínima de 150px, até 4 itens visíveis e "+N mais" para expandir o dia; título em até 2 linhas.
+- Se o banco do Instagram falhar, o calendário do blog continua com aviso.
 
 ---
 
@@ -477,6 +485,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-29 | 2.5.3 | Pendências do agendador e do feed: (1) `markStalePublishingAsError(90)` no início do script libera posts presos em `publicando` como `erro` com mensagem orientando conferir no Instagram antes de reagendar; (2) `InstagramFeedService::saveCache()` só regrava `config/instagram-feed.json` e `storage/cache/instagram_feed.json` quando o conteúdo muda (ignora `updated_at`), eliminando a alteração falsa no git a cada renderização da home. |
 | 2026-09-30 | 2.5.4 | Arquivos do FEAT-010 alterados desde `ec7f946` (cross-post, agendador, snapshot do feed) foram para Stage e Produção dentro da `RELEASE-2026-09-29-cron-monitoramento`, porque o pacote técnico é incremental. Não executam em produção: `/admin` é bloqueado fora do local e o Instagram segue local-only; o log de erros de produção não mostrou nenhum tipo de erro novo após o deploy. |
 | 2026-09-30 | 2.6.0 | Smart Canvas para qualquer imagem do módulo (`InstagramMediaFitter`, regras por tipo, EXIF, conjunto final, transação e limpeza), opção e avisos nas telas de criar/editar, e "Importar do Blog" da tela de criar levando para a rotina do post do blog (`?ig=1`), listando só posts sem Instagram e com trava de ambiente. |
+| 2026-09-30 | 2.7.0 | "Importar do Blog" removido das telas do Instagram (criação só pelo post do blog); lista de Posts do blog com coluna do Instagram (verde/vermelho/cinza), métricas em ícones com legenda e filtro Instagram com/sem post; Agendamento mostrando também os posts do Instagram (rosa, erro e vencido destacados, botões Blog/Instagram, dias de 150px com "+N mais"). |
 
 
 

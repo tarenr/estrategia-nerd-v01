@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\Repositories\CategoriaPostRepository;
+use App\Repositories\InstagramPostRepository;
 use App\Repositories\PostRepository;
 use App\Services\Instagram\BlogCrosspostService;
 use App\Services\Site\SitemapCacheService;
@@ -31,6 +32,7 @@ final class PostsService
         private SitemapCacheService $sitemapCache,
         private string $targetEnvironment = 'local',
         private ?BlogCrosspostService $crosspost = null,
+        private ?InstagramPostRepository $instagramPosts = null,
     ) {
     }
 
@@ -40,7 +42,21 @@ final class PostsService
         $page = $this->clampInt($this->readInt($query, ['pagina', 'page'], 1), 1, 9999);
         $perPage = $this->clampInt($this->readInt($query, ['por_pagina', 'per_page'], 10), 5, 50);
         [$sort, $dir] = $this->normalizeSortDir((string) ($query['sort'] ?? 'data'), (string) ($query['dir'] ?? 'desc'));
-        $summary = $this->decorateIndexSummary($this->posts->summaryFiltered($filters));
+
+        // Instagram e local-only: se o banco dele falhar, a lista segue sem indicador e sem o filtro.
+        $instagramLinks = $this->instagramLinks();
+        $repoFilters = $filters;
+        $instagramFilterUnavailable = false;
+        if ($filters['instagram'] !== '') {
+            if ($instagramLinks === null) {
+                $instagramFilterUnavailable = true;
+            } else {
+                $repoFilters['instagram_mode'] = $filters['instagram'];
+                $repoFilters['instagram_ids'] = array_keys($instagramLinks);
+            }
+        }
+
+        $summary = $this->decorateIndexSummary($this->posts->summaryFiltered($repoFilters));
 
         return [
             'title' => 'Posts',
@@ -48,10 +64,30 @@ final class PostsService
             'sort' => $sort,
             'dir' => $dir,
             'summary' => $summary,
-            'charts' => $this->buildIndexCharts($summary, $this->posts->categoryMetricsFiltered($filters)),
-            'pagination' => $this->posts->paginateAdmin($filters, $page, $perPage, $sort, $dir),
+            'charts' => $this->buildIndexCharts($summary, $this->posts->categoryMetricsFiltered($repoFilters)),
+            'pagination' => $this->posts->paginateAdmin($repoFilters, $page, $perPage, $sort, $dir),
             'categorias' => $this->categorias->listForSelect(),
+            'instagram_links' => $instagramLinks,
+            'instagram_filter_unavailable' => $instagramFilterUnavailable,
         ];
+    }
+
+    /**
+     * @return array<int,array{id:int,status:string}>|null null quando o banco do Instagram nao responde
+     */
+    private function instagramLinks(): ?array
+    {
+        if ($this->crosspost === null) {
+            return null;
+        }
+
+        try {
+            return $this->crosspost->linkedBlogPosts($this->targetEnvironment);
+        } catch (Throwable $e) {
+            error_log('[PostsService] instagramLinks: ' . $e->getMessage());
+
+            return null;
+        }
     }
 
     public function getScheduleViewModel(array $query): array
@@ -78,6 +114,12 @@ final class PostsService
             $postsByDay[$day][] = $post;
         }
 
+        [$events, $instagramUnavailable] = $this->scheduleEvents($posts, $year, $month);
+        $eventsByDay = [];
+        foreach ($events as $event) {
+            $eventsByDay[(int) date('j', (int) $event['ts'])][] = $event;
+        }
+
         $firstDayOfMonth = mktime(0, 0, 0, $month, 1, $year);
         $daysInMonth = (int) date('t', $firstDayOfMonth);
         $startWeekday = (int) date('w', $firstDayOfMonth);
@@ -99,11 +141,72 @@ final class PostsService
             'start_weekday' => $startWeekday,
             'posts_by_day' => $postsByDay,
             'posts' => $posts,
+            'events_by_day' => $eventsByDay,
+            'events' => $events,
+            'instagram_unavailable' => $instagramUnavailable,
+            'target_environment' => $this->targetEnvironment,
             'prev' => ['ano' => $prevYear, 'mes' => $prevMonth],
             'next' => ['ano' => $nextYear, 'mes' => $nextMonth],
             'today' => (int) $now->format('j'),
             'is_current_month' => $now->format('Y-n') === $year . '-' . $month,
         ];
+    }
+
+    /**
+     * Junta posts do blog (ambiente alvo) e do Instagram (banco local) numa lista unica por horario.
+     *
+     * @param array<int,array<string,mixed>> $posts
+     * @return array{0:list<array<string,mixed>>,1:bool}
+     */
+    private function scheduleEvents(array $posts, int $year, int $month): array
+    {
+        $events = [];
+        foreach ($posts as $post) {
+            $ts = strtotime((string) ($post['data_publicacao'] ?? ''));
+            if ($ts === false) {
+                continue;
+            }
+            $events[] = [
+                'kind'   => 'blog',
+                'id'     => (int) ($post['id'] ?? 0),
+                'titulo' => (string) ($post['titulo'] ?? ''),
+                'status' => (string) ($post['status'] ?? ''),
+                'ts'     => $ts,
+                'url'    => url('/admin/editar-post?id=' . (int) ($post['id'] ?? 0)),
+            ];
+        }
+
+        $instagramUnavailable = false;
+        if ($this->instagramPosts !== null) {
+            try {
+                foreach ($this->instagramPosts->listForCalendar($year, $month) as $ig) {
+                    $ts = strtotime((string) ($ig['data_evento'] ?? ''));
+                    if ($ts === false) {
+                        continue;
+                    }
+                    $status  = (string) ($ig['status'] ?? '');
+                    $legenda = trim((string) strtok(trim((string) ($ig['legenda'] ?? '')), "
+"));
+                    $events[] = [
+                        'kind'   => 'instagram',
+                        'id'     => (int) $ig['id'],
+                        'titulo' => $legenda !== '' ? $legenda : '(sem legenda)',
+                        'status' => $status,
+                        'ts'     => $ts,
+                        'url'    => url('/admin/instagram/posts/' . (int) $ig['id'] . (in_array($status, ['agendado', 'erro'], true) ? '/editar' : '')),
+                    ];
+                }
+            } catch (Throwable $e) {
+                error_log('[PostsService] scheduleEvents instagram: ' . $e->getMessage());
+                $instagramUnavailable = true;
+            }
+        } else {
+            $instagramUnavailable = true;
+        }
+
+        usort($events, static fn (array $a, array $b): int => $a['ts'] <=> $b['ts']);
+
+        return [$events, $instagramUnavailable];
     }
 
     private function monthLabel(int $month): string
@@ -1536,6 +1639,7 @@ final class PostsService
             'categoria' => (int) ($query['categoria'] ?? 0),
             'destaque' => trim((string) ($query['destaque'] ?? '')),
             'busca' => trim((string) ($query['busca'] ?? '')),
+            'instagram' => in_array((string) ($query['instagram'] ?? ''), ['com', 'sem'], true) ? (string) $query['instagram'] : '',
         ];
     }
 

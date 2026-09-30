@@ -268,15 +268,10 @@ final class InstagramController
         $repo    = $this->repo();
         $account = $repo->findActiveAccount();
 
-        // Posts do blog disponíveis para importação
-        $blogPosts = $this->blogPosts();
-
         View::render('admin/instagram/create', [
             'title'           => 'Novo Post — Instagram',
             'account'         => $account,
-            'blog_posts'      => $blogPosts,
             'csrf_token'      => Csrf::generate(),
-            'is_local_target' => target_environment() === 'local',
         ]);
     }
 
@@ -309,7 +304,6 @@ final class InstagramController
             View::render('admin/instagram/create', [
                 'title'      => 'Novo Post — Instagram',
                 'account'    => $account,
-                'blog_posts' => $this->blogPosts(),
                 'csrf_token' => Csrf::generate(),
                 'error'      => $errors,
                 'old'        => $_POST,
@@ -349,7 +343,6 @@ final class InstagramController
             View::render('admin/instagram/create', [
                 'title'      => 'Novo Post — Instagram',
                 'account'    => $account,
-                'blog_posts' => $this->blogPosts(),
                 'csrf_token' => Csrf::generate(),
                 'error'      => $errors,
                 'old'        => $_POST,
@@ -392,7 +385,6 @@ final class InstagramController
             'title'      => 'Editar Post — Instagram',
             'post'       => $post,
             'medias'     => $medias,
-            'blog_posts' => $this->blogPosts(),
             'csrf_token' => Csrf::generate(),
         ]);
     }
@@ -443,7 +435,6 @@ final class InstagramController
                 'title'      => 'Editar Post — Instagram',
                 'post'       => $post,
                 'medias'     => $medias,
-                'blog_posts' => $this->blogPosts(),
                 'csrf_token' => Csrf::generate(),
                 'error'      => $errors,
                 'old'        => $_POST,
@@ -470,7 +461,6 @@ final class InstagramController
                     'title'      => 'Editar Post — Instagram',
                     'post'       => $post,
                     'medias'     => $medias,
-                    'blog_posts' => $this->blogPosts(),
                     'csrf_token' => Csrf::generate(),
                     'error'      => implode(' ', $uploadErrors),
                     'old'        => $_POST,
@@ -664,38 +654,6 @@ final class InstagramController
         ]);
     }
 
-    // ── API: Dados de Post do Blog ─────────────────────────────────────────────
-
-    public function blogPostData(): void
-    {
-        header('Content-Type: application/json; charset=UTF-8');
-        $id = (int) ($_GET['id'] ?? 0);
-
-        if ($id <= 0) {
-            http_response_code(400);
-            echo json_encode(['ok' => false], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        /** @var \PDO $pdo */
-        $pdo  = $GLOBALS['pdo'];
-        $stmt = $pdo->prepare(
-            "SELECT id, titulo, imagem_capa AS capa, resumo FROM posts WHERE id = :id AND status = 'publicado' LIMIT 1"
-        );
-        $stmt->execute([':id' => $id]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-
-        if (!is_array($row)) {
-            http_response_code(404);
-            echo json_encode(['ok' => false], JSON_UNESCAPED_UNICODE);
-            return;
-        }
-
-        $linked = $this->linkedLocalBlogPosts()[(int) $row['id']] ?? null;
-
-        echo json_encode(['ok' => true, 'post' => $row, 'linked' => $linked], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    }
-
     // ── API: Previa do cross-post do blog ──────────────────────────────────────
 
     public function crosspostPreview(): void
@@ -741,62 +699,6 @@ final class InstagramController
             (string) ($account['access_token'] ?? ''),
             (string) ($account['ig_user_id'] ?? ''),
         );
-    }
-
-    /**
-     * @return array<int,array<string,mixed>>
-     */
-    private function blogPosts(): array
-    {
-        /** @var \PDO $pdo */
-        $pdo  = $GLOBALS['pdo'];
-        $stmt = $pdo->query(
-            "SELECT id, titulo, imagem_capa AS capa, resumo FROM posts WHERE status = 'publicado' ORDER BY data_publicacao DESC LIMIT 100"
-        );
-
-        if ($stmt === false) {
-            return [];
-        }
-
-        $linked = $this->linkedLocalBlogPosts();
-
-        return array_values(array_filter(
-            $stmt->fetchAll(\PDO::FETCH_ASSOC),
-            static fn (array $post): bool => !isset($linked[(int) ($post['id'] ?? 0)]),
-        ));
-    }
-
-    /**
-     * Posts do blog LOCAL que ja tem post no Instagram, indexados pelo id do blog.
-     * Cross-post feito em stage/producao grava o id DAQUELE ambiente em post_blog_id;
-     * a chave UUID v5 identifica esses casos para nao esconder o post local de mesmo id.
-     *
-     * @return array<int,array{id:int,status:string}>
-     */
-    private function linkedLocalBlogPosts(): array
-    {
-        try {
-            /** @var \PDO $pdo */
-            $pdo  = $GLOBALS['pdo'];
-            $stmt = $pdo->query('SELECT id, status, post_blog_id, idempotency_key FROM instagram_posts WHERE post_blog_id IS NOT NULL ORDER BY id ASC');
-            $rows = $stmt !== false ? $stmt->fetchAll(\PDO::FETCH_ASSOC) : [];
-        } catch (\Throwable $e) {
-            error_log('[InstagramController] linkedLocalBlogPosts: ' . $e->getMessage());
-
-            return [];
-        }
-
-        $linked = [];
-        foreach ($rows as $row) {
-            $blogId = (int) $row['post_blog_id'];
-            $key    = (string) ($row['idempotency_key'] ?? '');
-            if ($key === BlogCrosspostService::idempotencyKey('stage', $blogId) || $key === BlogCrosspostService::idempotencyKey('production', $blogId)) {
-                continue;
-            }
-            $linked[$blogId] ??= ['id' => (int) $row['id'], 'status' => (string) $row['status']];
-        }
-
-        return $linked;
     }
 
     /**

@@ -100,8 +100,8 @@ $deleted = isset($_GET['deleted']) && (string)$_GET['deleted'] === '1';
       </article>
     </section>
 
-    <?php View::component('admin/posts/filters', ['filters' => $filters,'categorias' => $categorias,'sort' => $sort,'dir' => $dir,'pagination' => $pagination]); ?>
-    <?php View::component('admin/posts/table', ['items' => $pagination['items'] ?? [],'sort' => $sort,'dir' => $dir,'filters' => $filters,'pagination' => $pagination]); ?>
+    <?php View::component('admin/posts/filters', ['filters' => $filters,'instagram_filter_unavailable' => (bool) ($instagram_filter_unavailable ?? false),'categorias' => $categorias,'sort' => $sort,'dir' => $dir,'pagination' => $pagination]); ?>
+    <?php View::component('admin/posts/table', ['instagram_links' => $instagram_links ?? null,'items' => $pagination['items'] ?? [],'sort' => $sort,'dir' => $dir,'filters' => $filters,'pagination' => $pagination]); ?>
     <?php View::component('admin/posts/pagination', ['filters' => $filters,'sort' => $sort,'dir' => $dir,'pagination' => $pagination]); ?>
   </div>
 </div>

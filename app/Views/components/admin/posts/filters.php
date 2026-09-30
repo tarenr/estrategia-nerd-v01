@@ -11,6 +11,8 @@ $status = (string)($filters['status'] ?? '');
 $categoria = (int)($filters['categoria'] ?? 0);
 $destaque = (string)($filters['destaque'] ?? '');
 $busca = (string)($filters['busca'] ?? '');
+$instagram = (string)($filters['instagram'] ?? '');
+$instagramUnavailable = (bool)($instagram_filter_unavailable ?? false);
 $action = function_exists('url') ? url('/admin/posts') : '/admin/posts';
 ?>
 
@@ -23,7 +25,7 @@ $action = function_exists('url') ? url('/admin/posts') : '/admin/posts';
     <div class="text-xs text-slate-400">Pagina atual <span class="text-cyan-300 font-bold"><?= (int)$page ?></span> - <span class="text-slate-200 font-bold"><?= (int)$perPage ?></span> por pagina</div>
   </div>
 
-  <div class="admin-filter-grid admin-filter-grid-posts">
+  <div class="admin-filter-grid admin-filter-grid-posts min-[1200px]:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]">
     <div class="admin-filter-field admin-filter-field-search">
       <label class="admin-filter-label" for="posts-busca">Buscar</label>
       <input id="posts-busca" name="busca" value="<?= htmlspecialchars($busca, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" placeholder="Titulo, resumo ou slug..." class="nerd-input admin-filter-control" />
@@ -57,6 +59,18 @@ $action = function_exists('url') ? url('/admin/posts') : '/admin/posts';
         <option value="1" <?= $destaque === '1' ? 'selected' : '' ?>>Somente destaques</option>
         <option value="0" <?= $destaque === '0' ? 'selected' : '' ?>>Sem destaque</option>
       </select>
+    </div>
+
+    <div class="admin-filter-field">
+      <label class="admin-filter-label" for="posts-instagram"><i class="fa-brands fa-instagram text-pink-400" aria-hidden="true"></i> Instagram</label>
+      <select id="posts-instagram" name="instagram" class="nerd-input admin-filter-control">
+        <option value="" <?= $instagram === '' ? 'selected' : '' ?>>Todos</option>
+        <option value="com" <?= $instagram === 'com' ? 'selected' : '' ?>>Com post no Instagram</option>
+        <option value="sem" <?= $instagram === 'sem' ? 'selected' : '' ?>>Sem post no Instagram</option>
+      </select>
+      <?php if ($instagramUnavailable): ?>
+        <div class="mt-1 text-xs text-amber-200">Filtro do Instagram indisponível no momento.</div>
+      <?php endif; ?>
     </div>
   </div>
 

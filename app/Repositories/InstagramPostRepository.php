@@ -136,6 +136,31 @@ final class InstagramPostRepository
     }
 
     /**
+     * Posts do Instagram com data no mes, para o calendario de Agendamento:
+     * publicados pela data em que sairam; agendado/publicando/erro pela data agendada.
+     * Rascunhos (sem data) ficam de fora.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function listForCalendar(int $year, int $month): array
+    {
+        $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $end   = date('Y-m-d H:i:s', (int) mktime(23, 59, 59, $month + 1, 0, $year));
+
+        $stmt = $this->pdo->prepare(
+            "SELECT id, status, tipo, legenda, agendado_para, publicado_em, origin,
+                    CASE WHEN status = 'publicado' THEN publicado_em ELSE agendado_para END AS data_evento
+               FROM instagram_posts
+              WHERE (status = 'publicado' AND publicado_em BETWEEN :s1 AND :e1)
+                 OR (status IN ('agendado', 'publicando', 'erro') AND agendado_para BETWEEN :s2 AND :e2)
+              ORDER BY data_evento ASC"
+        );
+        $stmt->execute([':s1' => $start, ':e1' => $end, ':s2' => $start, ':e2' => $end]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Busca posts agendados prontos para publicar (agendado_para <= NOW() e sem lock).
      *
      * @return array<int,array<string,mixed>>

@@ -256,6 +256,44 @@ final class BlogCrosspostService
         }
     }
 
+    /**
+     * Posts do blog do ambiente informado que ja tem post no Instagram (qualquer status),
+     * indexados pelo id do blog. O Instagram e local-only, entao o post_blog_id e ambiguo
+     * entre ambientes: a chave UUID v5 diz de qual ambiente veio o cross-post; vinculos
+     * manuais antigos (chave aleatoria) sempre foram do banco local.
+     *
+     * @return array<int,array{id:int,status:string}>
+     */
+    public function linkedBlogPosts(string $environment): array
+    {
+        $stmt = $this->localPdo->query('SELECT id, status, post_blog_id, idempotency_key FROM instagram_posts WHERE post_blog_id IS NOT NULL ORDER BY id ASC');
+        $rows = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+        $others = array_values(array_diff(['local', 'stage', 'production'], [$environment]));
+
+        $linked = [];
+        foreach ($rows as $row) {
+            $blogId = (int) $row['post_blog_id'];
+            $key    = (string) ($row['idempotency_key'] ?? '');
+
+            $belongs = $key === self::idempotencyKey($environment, $blogId);
+            if (!$belongs) {
+                $fromOther = false;
+                foreach ($others as $other) {
+                    if ($key === self::idempotencyKey($other, $blogId)) {
+                        $fromOther = true;
+                    }
+                }
+                $belongs = !$fromOther && $environment === 'local';
+            }
+
+            if ($belongs) {
+                $linked[$blogId] ??= ['id' => (int) $row['id'], 'status' => (string) $row['status']];
+            }
+        }
+
+        return $linked;
+    }
+
     public function composeCaption(string $text, string $hashtags): string
     {
         $text = trim(str_replace(["\r\n", "\r"], "\n", $text));

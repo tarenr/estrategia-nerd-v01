@@ -7,7 +7,6 @@
  * Variáveis disponíveis (injetadas pelo InstagramController::create()):
  * @var string                        $title
  * @var array<string,mixed>|null      $account      Conta ativa
- * @var array<int,array<string,mixed>> $blog_posts   Posts publicados do blog
  * @var string                        $csrf_token
  * @var string|null                   $error        Mensagem de erro de validação
  * @var array<string,mixed>           $old          Valores anteriores do formulário
@@ -16,7 +15,6 @@
 declare(strict_types=1);
 
 $account   = $account ?? null;
-$blogPosts = $blog_posts ?? [];
 $csrfToken = $csrf_token ?? '';
 $error     = $error ?? null;
 $old       = $old ?? [];
@@ -28,8 +26,6 @@ $oldLegenda  = (string) ($old['legenda'] ?? '');
 $oldHashtags = (string) ($old['hashtags'] ?? '');
 $oldAcao     = (string) ($old['acao'] ?? 'rascunho');
 $oldAgendado = (string) ($old['agendado_para'] ?? '');
-$oldBlogId   = (string) ($old['post_blog_id'] ?? '');
-$isLocalTarget = (bool) ($is_local_target ?? true);
 $autoFit     = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1');
 ?>
 
@@ -62,8 +58,6 @@ $autoFit     = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1
     <form id="igPostForm" method="POST" action="<?= url('/admin/instagram/posts/criar') ?>" enctype="multipart/form-data" class="flex flex-col lg:flex-row items-start gap-6 mt-4" novalidate>
       <input type="hidden" name="_csrf_token" value="<?= $esc($csrfToken) ?>">
       <input type="hidden" name="tipo" id="igTipoInput" value="<?= $esc($oldTipo) ?>">
-      <input type="hidden" name="post_blog_id" id="igPostBlogId" value="<?= $esc($oldBlogId) ?>">
-      <div id="igMediaUrlsWrap" class="hidden"></div>
 
       <!-- Coluna da Esquerda: Configuração e Campos do Post (62%) -->
       <div class="w-full lg:w-[62%] space-y-6">
@@ -78,35 +72,6 @@ $autoFit     = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1
               </button>
             <?php endforeach; ?>
           </div>
-        </section>
-
-        <!-- Importar do blog: cria pela rotina do post do blog (Smart Canvas + legenda com IA + vinculo) -->
-        <section class="admin-panel">
-          <div class="admin-panel-title"><i class="fa-solid fa-rss text-orange-300" aria-hidden="true"></i><span>Importar do Blog</span></div>
-          <?php if ($blogPosts === []): ?>
-            <div class="mt-3 text-xs text-slate-400">Todos os posts publicados do blog já têm post no Instagram.</div>
-          <?php else: ?>
-            <label for="igBlogSelect" class="admin-filter-label mt-3 block">Post do blog (só os que ainda não têm post no Instagram)</label>
-            <select id="igBlogSelect" class="nerd-input admin-filter-control w-full mt-2">
-              <option value="">— Selecionar um post publicado —</option>
-              <?php foreach ($blogPosts as $bp): ?>
-                <option value="<?= (int) ($bp['id'] ?? 0) ?>"><?= $esc((string) ($bp['titulo'] ?? '')) ?></option>
-              <?php endforeach; ?>
-            </select>
-            <?php if (!$isLocalTarget): ?>
-              <div class="mt-2 rounded-lg border border-amber-500/40 px-3 py-2 text-xs text-amber-100">O ambiente alvo não é o Local. Troque para <strong>Local</strong> para criar a partir do blog: esta lista vem do banco local.</div>
-            <?php endif; ?>
-            <div class="mt-3 hidden" data-ig-blog-preview>
-              <div class="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/60 p-3">
-                <img data-ig-blog-preview-img class="h-14 w-14 rounded-lg object-cover bg-slate-800" alt="" onerror="this.style.display='none';">
-                <div class="min-w-0 flex-1">
-                  <div class="text-sm font-bold text-white truncate" data-ig-blog-preview-title></div>
-                  <div class="text-xs text-slate-400 truncate" data-ig-blog-preview-resumo></div>
-                </div>
-              </div>
-              <div class="mt-3" data-ig-blog-action></div>
-            </div>
-          <?php endif; ?>
         </section>
 
         <!-- Upload de mídia -->
@@ -393,70 +358,11 @@ $autoFit     = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1
     });
   }
 
-  // Importar do blog: nao copia capa/texto; leva para a rotina do post do blog.
-  var blogSelect = document.getElementById('igBlogSelect');
-  var blogPreview = form.querySelector('[data-ig-blog-preview]');
-  var blogPreviewImg = form.querySelector('[data-ig-blog-preview-img]');
-  var blogPreviewTitle = form.querySelector('[data-ig-blog-preview-title]');
-  var blogPreviewResumo = form.querySelector('[data-ig-blog-preview-resumo]');
-  var blogAction = form.querySelector('[data-ig-blog-action]');
-  var isLocalTarget = <?= json_encode($isLocalTarget) ?>;
-  var blogEditUrl = <?= json_encode(url('/admin/editar-post'), JSON_UNESCAPED_SLASHES) ?>;
-  var igEditBase = <?= json_encode(rtrim(url('/admin/instagram/posts'), '/'), JSON_UNESCAPED_SLASHES) ?>;
-  var blogRequest = 0;
-
   function el(tag, className, text) {
     var node = document.createElement(tag);
     if (className) { node.className = className; }
     if (text) { node.textContent = text; }
     return node;
-  }
-
-  if (blogSelect) {
-    blogSelect.addEventListener('change', function () {
-      var id = blogSelect.value;
-      var mine = ++blogRequest;
-      if (blogAction) { blogAction.innerHTML = ''; }
-      if (!id) { if (blogPreview) { blogPreview.classList.add('hidden'); } return; }
-
-      fetch('<?= url('/admin/instagram/api/blog-post') ?>?id=' + encodeURIComponent(id))
-        .then(function (res) { return res.json(); })
-        .then(function (result) {
-          if (mine !== blogRequest || !blogAction) { return; }
-          blogPreview.classList.remove('hidden');
-          if (!result || !result.ok || !result.post) {
-            blogAction.appendChild(el('div', 'text-xs text-rose-300', 'Não foi possível carregar o post do blog.'));
-            return;
-          }
-          var post = result.post;
-          if (blogPreviewImg) { blogPreviewImg.style.display = ''; blogPreviewImg.src = resolveMediaUrl(post.capa); }
-          if (blogPreviewTitle) { blogPreviewTitle.textContent = post.titulo || ''; }
-          if (blogPreviewResumo) { blogPreviewResumo.textContent = post.resumo || ''; }
-
-          if (result.linked) {
-            blogAction.appendChild(el('div', 'text-xs text-amber-100', 'Este post do blog já tem post no Instagram (#' + result.linked.id + ', ' + result.linked.status + ').'));
-            var open = el('a', 'admin-btn admin-btn-secondary mt-2 inline-flex', 'Abrir post do Instagram');
-            open.href = igEditBase + '/' + encodeURIComponent(result.linked.id) + '/editar';
-            blogAction.appendChild(open);
-            return;
-          }
-          if (!isLocalTarget) {
-            var blocked = el('button', 'admin-btn admin-btn-secondary opacity-50 cursor-not-allowed', 'Criar pela rotina do blog');
-            blocked.type = 'button';
-            blocked.disabled = true;
-            blogAction.appendChild(blocked);
-            blogAction.appendChild(el('div', 'mt-2 text-xs text-amber-100', 'Troque o ambiente alvo para Local para continuar.'));
-            return;
-          }
-          var go = el('a', 'admin-btn admin-btn-primary inline-flex', 'Criar pela rotina do blog');
-          go.href = blogEditUrl + '?id=' + encodeURIComponent(post.id) + '&ig=1';
-          blogAction.appendChild(go);
-          blogAction.appendChild(el('div', 'mt-2 text-xs text-slate-400', 'Abre o post no blog com a opção do Instagram ligada: Smart Canvas, legenda com IA e vínculo, sem risco de duplicar.'));
-        })
-        .catch(function () {
-          if (mine === blogRequest && blogAction) { blogAction.appendChild(el('div', 'text-xs text-rose-300', 'Falha ao consultar o post do blog.')); }
-        });
-    });
   }
 
   // Smart Canvas: mesma regra do InstagramMediaFitter para avisar quais imagens serao ajustadas.

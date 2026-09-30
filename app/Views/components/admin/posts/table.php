@@ -7,6 +7,7 @@ $pagination = $pagination ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_pag
 $sort = (string) ($sort ?? 'data');
 $dir = (string) ($dir ?? 'desc');
 $baseUrl = function_exists('url') ? url('/admin/posts') : '/admin/posts';
+$instagramLinks = is_array($instagram_links ?? null) ? $instagram_links : null;
 
 $buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $pagination, $sort, $dir): string {
     $query = [
@@ -14,6 +15,7 @@ $buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $pa
         'categoria' => (int) ($filters['categoria'] ?? 0),
         'destaque' => (string) ($filters['destaque'] ?? ''),
         'busca' => (string) ($filters['busca'] ?? ''),
+        'instagram' => (string) ($filters['instagram'] ?? ''),
         'sort' => $sort,
         'dir' => $dir,
         'page' => (int) ($pagination['page'] ?? 1),
@@ -85,6 +87,12 @@ $statusClasses = static function (string $status): string {
     <div>
       <h3 class="font-orbitron text-xl font-black text-white">Lista de Posts</h3>
       <div class="text-xs text-slate-400 mt-1"><?= number_format((int) ($pagination['total'] ?? 0), 0, ',', '.') ?> resultado(s) encontrado(s)</div>
+      <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400" aria-label="Legenda da tabela">
+        <span><i class="fa-solid fa-eye" aria-hidden="true"></i> Views</span>
+        <span><i class="fa-solid fa-heart" aria-hidden="true"></i> Curtidas</span>
+        <span><i class="fa-solid fa-comment" aria-hidden="true"></i> Comentários</span>
+        <span><i class="fa-brands fa-instagram text-pink-400" aria-hidden="true"></i> Instagram: <span class="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400 align-middle"></span> tem post <span class="ml-1 inline-block h-2.5 w-2.5 rounded-full bg-rose-500 align-middle"></span> não tem</span>
+      </div>
     </div>
     <span class="posts-table-order"><?= htmlspecialchars($sort, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> / <?= htmlspecialchars($dir, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
   </div>
@@ -106,6 +114,7 @@ $statusClasses = static function (string $status): string {
           <col class="posts-table-col-metric">
           <col class="posts-table-col-metric">
           <col class="posts-table-col-metric">
+          <col class="posts-table-col-metric">
           <col class="posts-table-col-actions">
         </colgroup>
         <thead class="posts-table-thead">
@@ -114,9 +123,10 @@ $statusClasses = static function (string $status): string {
             <th class="posts-table-th posts-table-th-left"><a data-admin-posts-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('categoria'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Categoria <?= $sortIcon('categoria') ?></a></th>
             <th class="posts-table-th posts-table-th-left"><a data-admin-posts-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Status <?= $sortIcon('status') ?></a></th>
             <th class="posts-table-th posts-table-th-left"><a data-admin-posts-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('data'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Publicacao <?= $sortIcon('data') ?></a></th>
-            <th class="posts-table-th posts-table-th-center"><a data-admin-posts-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('views'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Views <?= $sortIcon('views') ?></a></th>
-            <th class="posts-table-th posts-table-th-center"><a data-admin-posts-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('curtidas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Curtidas <?= $sortIcon('curtidas') ?></a></th>
-            <th class="posts-table-th posts-table-th-center"><a data-admin-posts-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('comentarios'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Comentarios <?= $sortIcon('comentarios') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-posts-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('views'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Views" aria-label="Ordenar por views"><i class="fa-solid fa-eye" aria-hidden="true"></i> <?= $sortIcon('views') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-posts-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('curtidas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Curtidas" aria-label="Ordenar por curtidas"><i class="fa-solid fa-heart" aria-hidden="true"></i> <?= $sortIcon('curtidas') ?></a></th>
+            <th class="posts-table-th posts-table-th-center"><a data-admin-posts-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('comentarios'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Comentários" aria-label="Ordenar por comentários"><i class="fa-solid fa-comment" aria-hidden="true"></i> <?= $sortIcon('comentarios') ?></a></th>
+            <th class="posts-table-th posts-table-th-center" title="Post no Instagram"><i class="fa-brands fa-instagram text-pink-400" aria-hidden="true"></i><span class="sr-only">Instagram</span></th>
             <th class="posts-table-th posts-table-th-center">Acoes</th>
           </tr>
         </thead>
@@ -135,6 +145,8 @@ $statusClasses = static function (string $status): string {
               $views = (int) ($item['views'] ?? 0);
               $curtidas = (int) ($item['curtidas'] ?? 0);
               $comentarios = (int) ($item['comentarios_count'] ?? 0);
+              $postId = (int) ($item['id'] ?? 0);
+              $igLink = $instagramLinks[$postId] ?? null;
             ?>
             <tr class="posts-table-row<?= $destaque ? ' is-highlight' : '' ?>">
               <td class="posts-table-td posts-table-title-cell">
@@ -156,6 +168,15 @@ $statusClasses = static function (string $status): string {
               <td class="posts-table-td posts-table-td-center"><span class="posts-table-metric<?= $views === 0 ? ' is-zero' : '' ?>"><?= number_format($views, 0, ',', '.') ?></span></td>
               <td class="posts-table-td posts-table-td-center"><span class="posts-table-metric<?= $curtidas === 0 ? ' is-zero' : '' ?>"><?= number_format($curtidas, 0, ',', '.') ?></span></td>
               <td class="posts-table-td posts-table-td-center"><span class="posts-table-metric<?= $comentarios === 0 ? ' is-zero' : '' ?>"><?= number_format($comentarios, 0, ',', '.') ?></span></td>
+              <td class="posts-table-td posts-table-td-center">
+                <?php if ($instagramLinks === null): ?>
+                  <span class="inline-block h-3 w-3 rounded-full bg-slate-600" title="Não foi possível consultar o Instagram agora"></span>
+                <?php elseif ($igLink !== null): ?>
+                  <a href="<?= htmlspecialchars(url('/admin/instagram/posts/' . (int) $igLink['id'] . ((string) $igLink['status'] === 'publicado' ? '' : '/editar')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-block h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-emerald-400/20 hover:ring-emerald-300" title="<?= htmlspecialchars('Post no Instagram #' . (int) $igLink['id'] . ' (' . (string) $igLink['status'] . ')', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><span class="sr-only">Tem post no Instagram</span></a>
+                <?php else: ?>
+                  <a href="<?= htmlspecialchars(url('/admin/editar-post?id=' . $postId . '&ig=1'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-block h-3 w-3 rounded-full bg-rose-500 ring-2 ring-rose-500/20 hover:ring-rose-400" title="Sem post no Instagram, clique para criar"><span class="sr-only">Sem post no Instagram</span></a>
+                <?php endif; ?>
+              </td>
               <td class="posts-table-td">
                 <div class="posts-table-actions">
                   <a

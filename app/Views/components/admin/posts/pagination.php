@@ -11,7 +11,7 @@ $perPage = max(5, (int)($pagination['per_page'] ?? 10));
 $total = max(0, (int)($pagination['total'] ?? 0));
 $baseUrl = function_exists('url') ? url('/admin/posts') : '/admin/posts';
 $buildUrl = static function (int $targetPage, ?int $targetPerPage = null) use ($baseUrl, $filters, $sort, $dir, $perPage): string {
-    $query = ['status' => (string)($filters['status'] ?? ''),'categoria' => (int)($filters['categoria'] ?? 0),'destaque' => (string)($filters['destaque'] ?? ''),'busca' => (string)($filters['busca'] ?? ''),'sort' => $sort,'dir' => $dir,'page' => max(1, $targetPage),'per_page' => $targetPerPage ?? $perPage];
+    $query = ['status' => (string)($filters['status'] ?? ''),'categoria' => (int)($filters['categoria'] ?? 0),'destaque' => (string)($filters['destaque'] ?? ''),'busca' => (string)($filters['busca'] ?? ''),'instagram' => (string)($filters['instagram'] ?? ''),'sort' => $sort,'dir' => $dir,'page' => max(1, $targetPage),'per_page' => $targetPerPage ?? $perPage];
     $query = array_filter($query, static fn ($value): bool => !($value === '' || $value === null || $value === 0));
     $qs = http_build_query($query);
     return $qs !== '' ? $baseUrl . '?' . $qs : $baseUrl;

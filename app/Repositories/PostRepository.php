@@ -809,6 +809,18 @@ final class PostRepository
             $params[':busca_resumo'] = $searchLike;
             $params[':busca_slug'] = $searchLike;
         }
+        // Filtro "Instagram": os ids vem do banco local do Instagram (outro banco), calculados no service.
+        $instagramMode = (string) ($filters['instagram_mode'] ?? '');
+        if ($instagramMode === 'com' || $instagramMode === 'sem') {
+            $ids = array_values(array_unique(array_map('intval', (array) ($filters['instagram_ids'] ?? []))));
+            if ($ids === []) {
+                if ($instagramMode === 'com') { $where[] = '1 = 0'; }
+            } else {
+                $placeholders = [];
+                foreach ($ids as $i => $id) { $placeholders[] = ':ig_id_' . $i; $params[':ig_id_' . $i] = $id; }
+                $where[] = 'p.id ' . ($instagramMode === 'sem' ? 'NOT IN' : 'IN') . ' (' . implode(', ', $placeholders) . ')';
+            }
+        }
         return [$where ? ('WHERE ' . implode(' AND ', $where)) : '', $params];
     }
 
