@@ -29,6 +29,8 @@ $oldHashtags = (string) ($old['hashtags'] ?? '');
 $oldAcao     = (string) ($old['acao'] ?? 'rascunho');
 $oldAgendado = (string) ($old['agendado_para'] ?? '');
 $oldBlogId   = (string) ($old['post_blog_id'] ?? '');
+$isLocalTarget = (bool) ($is_local_target ?? true);
+$autoFit     = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1');
 ?>
 
 <div class="max-w-7xl mx-auto px-4 py-6" data-instagram-form-root>
@@ -78,17 +80,22 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? '');
           </div>
         </section>
 
-        <!-- Importar do blog -->
-        <?php if ($blogPosts !== []): ?>
-          <section class="admin-panel">
-            <div class="admin-panel-title"><i class="fa-solid fa-rss text-orange-300" aria-hidden="true"></i><span>Importar do Blog</span></div>
-            <label for="igBlogSelect" class="admin-filter-label mt-3 block">Post do blog</label>
+        <!-- Importar do blog: cria pela rotina do post do blog (Smart Canvas + legenda com IA + vinculo) -->
+        <section class="admin-panel">
+          <div class="admin-panel-title"><i class="fa-solid fa-rss text-orange-300" aria-hidden="true"></i><span>Importar do Blog</span></div>
+          <?php if ($blogPosts === []): ?>
+            <div class="mt-3 text-xs text-slate-400">Todos os posts publicados do blog já têm post no Instagram.</div>
+          <?php else: ?>
+            <label for="igBlogSelect" class="admin-filter-label mt-3 block">Post do blog (só os que ainda não têm post no Instagram)</label>
             <select id="igBlogSelect" class="nerd-input admin-filter-control w-full mt-2">
               <option value="">— Selecionar um post publicado —</option>
               <?php foreach ($blogPosts as $bp): ?>
-                <option value="<?= (int) ($bp['id'] ?? 0) ?>" <?= $oldBlogId === (string) ($bp['id'] ?? '') ? 'selected' : '' ?>><?= $esc((string) ($bp['titulo'] ?? '')) ?></option>
+                <option value="<?= (int) ($bp['id'] ?? 0) ?>"><?= $esc((string) ($bp['titulo'] ?? '')) ?></option>
               <?php endforeach; ?>
             </select>
+            <?php if (!$isLocalTarget): ?>
+              <div class="mt-2 rounded-lg border border-amber-500/40 px-3 py-2 text-xs text-amber-100">O ambiente alvo não é o Local. Troque para <strong>Local</strong> para criar a partir do blog: esta lista vem do banco local.</div>
+            <?php endif; ?>
             <div class="mt-3 hidden" data-ig-blog-preview>
               <div class="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/60 p-3">
                 <img data-ig-blog-preview-img class="h-14 w-14 rounded-lg object-cover bg-slate-800" alt="" onerror="this.style.display='none';">
@@ -96,11 +103,11 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? '');
                   <div class="text-sm font-bold text-white truncate" data-ig-blog-preview-title></div>
                   <div class="text-xs text-slate-400 truncate" data-ig-blog-preview-resumo></div>
                 </div>
-                <button type="button" class="admin-btn admin-btn-secondary !px-3 !py-1.5 text-xs" data-ig-blog-clear>Remover</button>
               </div>
+              <div class="mt-3" data-ig-blog-action></div>
             </div>
-          </section>
-        <?php endif; ?>
+          <?php endif; ?>
+        </section>
 
         <!-- Upload de mídia -->
         <section class="admin-panel">
@@ -114,6 +121,10 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? '');
             </div>
           </label>
           <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4" data-ig-media-preview></div>
+          <label class="mt-4 flex items-start gap-2 text-sm text-slate-200 cursor-pointer">
+            <input type="checkbox" name="ig_auto_fit" value="1" id="igAutoFit" class="mt-1 accent-cyan-500"<?= $autoFit ? ' checked' : '' ?>>
+            <span><strong>Ajustar automaticamente imagens fora do padrão (Smart Canvas)</strong><span class="block text-xs text-slate-400">Imagens fora do formato do Instagram viram 4:5, 1:1 ou 9:16 com fundo desfocado, sem cortar nada. Os arquivos originais não são alterados.</span></span>
+          </label>
         </section>
 
         <!-- Legenda e Hashtags -->
@@ -222,6 +233,7 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? '');
       card.classList.toggle('ig-tipo-card-active', card.getAttribute('data-ig-tipo') === tipo);
     });
     if (previewTipoLabel) { previewTipoLabel.textContent = tipoLabels[tipo] || tipo; }
+    refreshFitBadges();
   }
 
   if (tipoSelect) {
@@ -342,13 +354,15 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? '');
       reader.onload = function (event) {
         var isVideo = file.type.indexOf('video') === 0;
         var thumb = document.createElement('div');
-        thumb.className = 'aspect-square rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center';
+        thumb.className = 'relative aspect-square rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center';
+        thumb.setAttribute('data-ig-fit-item', isVideo ? 'video' : 'imagem');
         if (isVideo) {
           thumb.innerHTML = '<i class="fa-solid fa-video text-slate-400"></i>';
         } else {
           var img = document.createElement('img');
           img.src = event.target.result;
           img.className = 'h-full w-full object-cover';
+          img.onload = refreshFitBadges;
           thumb.appendChild(img);
         }
         mediaPreview.appendChild(thumb);
@@ -379,61 +393,123 @@ $oldBlogId   = (string) ($old['post_blog_id'] ?? '');
     });
   }
 
-  // Importar do blog: preenche legenda/capa e usa media_urls[] no lugar do upload.
+  // Importar do blog: nao copia capa/texto; leva para a rotina do post do blog.
   var blogSelect = document.getElementById('igBlogSelect');
   var blogPreview = form.querySelector('[data-ig-blog-preview]');
   var blogPreviewImg = form.querySelector('[data-ig-blog-preview-img]');
   var blogPreviewTitle = form.querySelector('[data-ig-blog-preview-title]');
   var blogPreviewResumo = form.querySelector('[data-ig-blog-preview-resumo]');
-  var blogClearBtn = form.querySelector('[data-ig-blog-clear]');
-  var postBlogIdInput = document.getElementById('igPostBlogId');
-  var mediaUrlsWrap = document.getElementById('igMediaUrlsWrap');
+  var blogAction = form.querySelector('[data-ig-blog-action]');
+  var isLocalTarget = <?= json_encode($isLocalTarget) ?>;
+  var blogEditUrl = <?= json_encode(url('/admin/editar-post'), JSON_UNESCAPED_SLASHES) ?>;
+  var igEditBase = <?= json_encode(rtrim(url('/admin/instagram/posts'), '/'), JSON_UNESCAPED_SLASHES) ?>;
+  var blogRequest = 0;
 
-  function clearBlogImport() {
-    if (postBlogIdInput) { postBlogIdInput.value = ''; }
-    if (mediaUrlsWrap) { mediaUrlsWrap.innerHTML = ''; }
-    if (mediaInput) { mediaInput.disabled = false; }
-    if (dropzone) { dropzone.classList.remove('opacity-50', 'pointer-events-none'); }
-    if (blogPreview) { blogPreview.classList.add('hidden'); }
-    if (blogSelect) { blogSelect.value = ''; }
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) { node.className = className; }
+    if (text) { node.textContent = text; }
+    return node;
   }
 
   if (blogSelect) {
     blogSelect.addEventListener('change', function () {
       var id = blogSelect.value;
-      if (!id) { clearBlogImport(); return; }
+      var mine = ++blogRequest;
+      if (blogAction) { blogAction.innerHTML = ''; }
+      if (!id) { if (blogPreview) { blogPreview.classList.add('hidden'); } return; }
 
       fetch('<?= url('/admin/instagram/api/blog-post') ?>?id=' + encodeURIComponent(id))
         .then(function (res) { return res.json(); })
         .then(function (result) {
-          if (!result || !result.ok || !result.post) { return; }
+          if (mine !== blogRequest || !blogAction) { return; }
+          blogPreview.classList.remove('hidden');
+          if (!result || !result.ok || !result.post) {
+            blogAction.appendChild(el('div', 'text-xs text-rose-300', 'Não foi possível carregar o post do blog.'));
+            return;
+          }
           var post = result.post;
-
-          if (legenda && legenda.value.trim() === '') {
-            legenda.value = (post.titulo || '') + (post.resumo ? '\n\n' + post.resumo : '');
-            updateLegendaCounters();
-          }
-          if (postBlogIdInput) { postBlogIdInput.value = String(post.id || ''); }
-
-          if (mediaUrlsWrap) {
-            var capaUrl = post.capa || '';
-            mediaUrlsWrap.innerHTML = capaUrl ? '<input type="hidden" name="media_urls[0]" value="' + capaUrl.replace(/"/g, '&quot;') + '">' : '';
-          }
-          if (mediaInput) { mediaInput.disabled = true; mediaInput.value = ''; }
-          if (dropzone) { dropzone.classList.add('opacity-50', 'pointer-events-none'); }
-
-          if (blogPreview) { blogPreview.classList.remove('hidden'); }
-          if (blogPreviewImg) { blogPreviewImg.src = resolveMediaUrl(post.capa); }
+          if (blogPreviewImg) { blogPreviewImg.style.display = ''; blogPreviewImg.src = resolveMediaUrl(post.capa); }
           if (blogPreviewTitle) { blogPreviewTitle.textContent = post.titulo || ''; }
           if (blogPreviewResumo) { blogPreviewResumo.textContent = post.resumo || ''; }
-          if (previewMedia && post.capa) { previewMedia.innerHTML = '<img src="' + resolveMediaUrl(post.capa) + '" class="h-full w-full object-cover">'; }
+
+          if (result.linked) {
+            blogAction.appendChild(el('div', 'text-xs text-amber-100', 'Este post do blog já tem post no Instagram (#' + result.linked.id + ', ' + result.linked.status + ').'));
+            var open = el('a', 'admin-btn admin-btn-secondary mt-2 inline-flex', 'Abrir post do Instagram');
+            open.href = igEditBase + '/' + encodeURIComponent(result.linked.id) + '/editar';
+            blogAction.appendChild(open);
+            return;
+          }
+          if (!isLocalTarget) {
+            var blocked = el('button', 'admin-btn admin-btn-secondary opacity-50 cursor-not-allowed', 'Criar pela rotina do blog');
+            blocked.type = 'button';
+            blocked.disabled = true;
+            blogAction.appendChild(blocked);
+            blogAction.appendChild(el('div', 'mt-2 text-xs text-amber-100', 'Troque o ambiente alvo para Local para continuar.'));
+            return;
+          }
+          var go = el('a', 'admin-btn admin-btn-primary inline-flex', 'Criar pela rotina do blog');
+          go.href = blogEditUrl + '?id=' + encodeURIComponent(post.id) + '&ig=1';
+          blogAction.appendChild(go);
+          blogAction.appendChild(el('div', 'mt-2 text-xs text-slate-400', 'Abre o post no blog com a opção do Instagram ligada: Smart Canvas, legenda com IA e vínculo, sem risco de duplicar.'));
         })
-        .catch(function () { /* silencioso: usuario pode preencher manualmente */ });
+        .catch(function () {
+          if (mine === blogRequest && blogAction) { blogAction.appendChild(el('div', 'text-xs text-rose-300', 'Falha ao consultar o post do blog.')); }
+        });
     });
   }
-  if (blogClearBtn) {
-    blogClearBtn.addEventListener('click', clearBlogImport);
+
+  // Smart Canvas: mesma regra do InstagramMediaFitter para avisar quais imagens serao ajustadas.
+  var autoFit = document.getElementById('igAutoFit');
+
+  function fitTargets(tipo, ratios) {
+    var result = ratios.map(function () { return null; });
+    var images = [];
+    ratios.forEach(function (r, i) { if (r) { images.push([i, r]); } });
+    if (tipo === 'reels' || images.length === 0) { return result; }
+    if (tipo === 'story') {
+      images.forEach(function (p) { if (Math.abs(p[1] - 0.5625) > 0.02) { result[p[0]] = '1080x1920'; } });
+      return result;
+    }
+    if (tipo === 'carrossel') {
+      var values = images.map(function (p) { return p[1]; });
+      var outOfRange = values.some(function (r) { return r < 0.8 || r > 1.91; });
+      var mixed = (Math.max.apply(null, values) - Math.min.apply(null, values)) > 0.02;
+      if (outOfRange || mixed) {
+        images.forEach(function (p) { if (Math.abs(p[1] - 1) > 0.02) { result[p[0]] = '1080x1080'; } });
+      }
+      return result;
+    }
+    images.forEach(function (p) {
+      if (p[1] < 0.8) { result[p[0]] = '1080x1350'; } else if (p[1] > 1.91) { result[p[0]] = '1080x1080'; }
+    });
+    return result;
   }
+
+  function refreshFitBadges() {
+    if (!form) { return; }
+    var items = Array.prototype.slice.call(form.querySelectorAll('[data-ig-fit-item]'));
+    var ratios = items.map(function (item) {
+      if (item.getAttribute('data-ig-fit-item') !== 'imagem') { return null; }
+      var img = item.querySelector('img');
+      return img && img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : null;
+    });
+    var enabled = !!(autoFit && autoFit.checked);
+    var targets = fitTargets(tipoInput ? (tipoInput.value || 'imagem') : 'imagem', ratios);
+    items.forEach(function (item, i) {
+      var badge = item.querySelector('[data-ig-fit-badge]');
+      if (!badge) {
+        badge = el('span', 'absolute bottom-1 left-1 right-1 rounded bg-cyan-400/90 px-1 py-0.5 text-center text-[10px] font-bold text-slate-950');
+        badge.setAttribute('data-ig-fit-badge', '');
+        item.appendChild(badge);
+      }
+      var target = enabled ? targets[i] : null;
+      badge.textContent = target ? 'Smart Canvas ' + target : '';
+      badge.classList.toggle('hidden', !target);
+    });
+  }
+
+  if (autoFit) { autoFit.addEventListener('change', refreshFitBadges); }
 
   // Normaliza agendado_para para "Y-m-d H:i:s" (campo hidden) antes do submit e valida quando "Agendar" for usado.
   var agendadoSubmitInput = document.getElementById('igAgendadoParaSubmit');

@@ -395,9 +395,35 @@ No criar/editar post do blog (`app/Views/components/admin/posts/form-instagram-c
 - **Falha parcial:** o blog sempre fica salvo; o controller mostra "Blog salvo; rascunho do Instagram não foi atualizado: <motivo>". Salvar de novo tenta outra vez sem duplicar.
 - Capa que não existe nos uploads deste servidor (ex.: post editado em outro ambiente) exige arte dedicada.
 
-### Limitação conhecida
+### "Importar do Blog" na tela do Instagram (Task #385)
 
-Rascunhos criados pela tela do módulo Instagram (`/admin/instagram/posts/criar`, com chave aleatória) **não** aparecem no card do blog nem são reconhecidos pelo cross-post; usar os dois caminhos para o mesmo post do blog pode gerar dois rascunhos.
+Desde 30/09/2026 a tela `/admin/instagram/posts/criar` **não copia mais** a capa 16:9 nem o título/resumo. O painel "Importar do Blog":
+
+- lista só posts `publicado` do banco **local** que **ainda não têm post no Instagram** (qualquer status). O vínculo é lido de `instagram_posts.post_blog_id`; vínculos criados com o painel em stage/produção (chave UUID v5 `blog:stage|production:<id>`) são ignorados, para não esconder o post local de mesmo id;
+- ao escolher um post, mostra o botão **"Criar pela rotina do blog"**, que abre `/admin/editar-post?id=X&ig=1`: a opção do Instagram já vem ligada e a prévia (Smart Canvas + legenda com IA) é gerada sozinha. O rascunho criado tem o vínculo idempotente e aparece no card do blog;
+- se o post já tiver vínculo (corrida entre abrir a tela e escolher), mostra o post do Instagram e o status em vez do botão;
+- com o ambiente alvo diferente de **Local**, o botão fica desativado com aviso (a lista vem do banco local).
+
+A tela de **edição** do Instagram manteve o painel antigo (trocar o vínculo de um post existente quebraria a chave). Rascunhos antigos criados pela tela do Instagram (chave aleatória) continuam fora do card do blog, mas o post do blog correspondente já não aparece na lista para ser importado de novo.
+
+---
+
+## Smart Canvas para qualquer imagem do Instagram (Task #386)
+
+Ao salvar um post na tela do Instagram (criar ou editar) com a opção **"Ajustar automaticamente imagens fora do padrão (Smart Canvas)"** marcada (padrão), o `InstagramMediaFitter` olha o **conjunto final** de mídias do post (atuais, biblioteca e uploads novos) e gera versões sem cortes, **sem os textos de marca**, com fundo desfocado:
+
+| Tipo | Aceito sem ajuste | Fora disso |
+|---|---|---|
+| Imagem | proporção 4:5 a 1.91:1 | mais alta → 1080x1350; mais larga → 1080x1080 |
+| Carrossel | mesma proporção em todos os itens e dentro da faixa | todos em 1080x1080 (o Instagram corta o carrossel pela proporção do 1º item) |
+| Story | ~9:16 | 1080x1920 |
+| Reels / vídeo | — | não mexe |
+
+- Proporção calculada com a orientação EXIF (fotos de celular giradas); o renderer também corrige as orientações espelhadas (2, 4, 5, 7).
+- Só arquivos locais dentro de `public/uploads/` (caminho resolvido com `realpath`, MIME real, 10 MB, 25 MP). URLs externas (CDN da Meta) ficam como estão. O arquivo original **nunca** é alterado: o ajuste gera um arquivo novo em `uploads/instagram/` e a mídia passa a apontar para ele (com `largura`/`altura`).
+- Gera todos os arquivos primeiro e só então atualiza o banco numa transação; em falha, desfaz, apaga o que gerou, mantém as originais, **não publica** e abre a edição com o aviso `?ajuste=falhou`.
+- Roda depois de salvar as mídias e **antes** do "Publicar agora". Rodar de novo não refaz o que já está no padrão.
+- A tela mostra em cada miniatura quais imagens serão ajustadas e para qual formato (mesma regra, em JavaScript).
 
 ---
 
@@ -450,6 +476,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-29 | 2.5.2 | Agendamento do publicador (Task #329): tarefa `EstrategiaNerd-InstagramPublicarAgendados` no Task Scheduler a cada 5 min com `php-win.exe`, `IgnoreNew`, limite de 60 min e execução só com o usuário logado; documentados exit codes, risco de post preso em `publicando` e rollback. |
 | 2026-09-29 | 2.5.3 | Pendências do agendador e do feed: (1) `markStalePublishingAsError(90)` no início do script libera posts presos em `publicando` como `erro` com mensagem orientando conferir no Instagram antes de reagendar; (2) `InstagramFeedService::saveCache()` só regrava `config/instagram-feed.json` e `storage/cache/instagram_feed.json` quando o conteúdo muda (ignora `updated_at`), eliminando a alteração falsa no git a cada renderização da home. |
 | 2026-09-30 | 2.5.4 | Arquivos do FEAT-010 alterados desde `ec7f946` (cross-post, agendador, snapshot do feed) foram para Stage e Produção dentro da `RELEASE-2026-09-29-cron-monitoramento`, porque o pacote técnico é incremental. Não executam em produção: `/admin` é bloqueado fora do local e o Instagram segue local-only; o log de erros de produção não mostrou nenhum tipo de erro novo após o deploy. |
+| 2026-09-30 | 2.6.0 | Smart Canvas para qualquer imagem do módulo (`InstagramMediaFitter`, regras por tipo, EXIF, conjunto final, transação e limpeza), opção e avisos nas telas de criar/editar, e "Importar do Blog" da tela de criar levando para a rotina do post do blog (`?ig=1`), listando só posts sem Instagram e com trava de ambiente. |
 
 
 

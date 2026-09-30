@@ -72,7 +72,7 @@ final class SmartCanvasRenderer
     /**
      * Gera o canvas (JPEG) com a imagem inteira centralizada sobre fundo desfocado.
      */
-    public function render(string $sourcePath, string $destPath, int $width = 1080, int $height = 1080): string
+    public function render(string $sourcePath, string $destPath, int $width = 1080, int $height = 1080, bool $withLabels = true): string
     {
         $mime   = $this->assertValidSource($sourcePath);
         $source = $this->load($sourcePath, $mime);
@@ -81,8 +81,10 @@ final class SmartCanvasRenderer
             $canvas = $this->newTrueColor($width, $height);
             try {
                 $this->paintBackground($canvas, $source, $width, $height);
-                $this->paintForeground($canvas, $source, $width, $height);
-                $this->paintLabels($canvas, $width, $height);
+                $this->paintForeground($canvas, $source, $width, $height, $withLabels);
+                if ($withLabels) {
+                    $this->paintLabels($canvas, $width, $height);
+                }
 
                 $dir = dirname($destPath);
                 if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
@@ -100,6 +102,33 @@ final class SmartCanvasRenderer
         }
 
         return $destPath;
+    }
+
+    /**
+     * Largura e altura como a imagem sera exibida, ja considerando a orientacao EXIF
+     * (fotos de celular giradas 90/270 graus trocam largura e altura).
+     *
+     * @return array{0:int,1:int}
+     */
+    public function effectiveSize(string $sourcePath): array
+    {
+        $mime = $this->assertValidSource($sourcePath);
+        $size = getimagesize($sourcePath);
+        if ($size === false) {
+            throw new RuntimeException('Nao foi possivel ler as dimensoes da imagem.');
+        }
+
+        $w = (int) $size[0];
+        $h = (int) $size[1];
+        if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
+            $exif = @exif_read_data($sourcePath);
+            $orientation = is_array($exif) ? (int) ($exif['Orientation'] ?? 1) : 1;
+            if (in_array($orientation, [5, 6, 7, 8], true)) {
+                return [$h, $w];
+            }
+        }
+
+        return [$w, $h];
     }
 
     /**
@@ -161,11 +190,15 @@ final class SmartCanvasRenderer
             $exif        = @exif_read_data($path);
             $orientation = is_array($exif) ? (int) ($exif['Orientation'] ?? 1) : 1;
             $angle       = match ($orientation) {
-                3       => 180,
-                6       => -90,
-                8       => 90,
+                3, 4    => 180,
+                5, 6    => -90,
+                7, 8    => 90,
                 default => 0,
             };
+            // Orientacoes 2, 4, 5 e 7 sao as espelhadas.
+            if (in_array($orientation, [2, 4, 5, 7], true)) {
+                imageflip($image, IMG_FLIP_HORIZONTAL);
+            }
             if ($angle !== 0) {
                 $rotated = imagerotate($image, $angle, 0);
                 if ($rotated instanceof GdImage) {
@@ -233,11 +266,12 @@ final class SmartCanvasRenderer
         }
     }
 
-    private function paintForeground(GdImage $canvas, GdImage $source, int $width, int $height): void
+    private function paintForeground(GdImage $canvas, GdImage $source, int $width, int $height, bool $withLabels = true): void
     {
         $srcW = imagesx($source);
         $srcH = imagesy($source);
-        $band = (int) round($height * 0.09);
+        // Sem as faixas de texto, a imagem usa a altura toda (sem reservar espaco para os rotulos).
+        $band = $withLabels ? (int) round($height * 0.09) : 0;
 
         $scale = min($width / $srcW, ($height - 2 * $band) / $srcH);
         $dstW  = (int) max(1, round($srcW * $scale));
@@ -247,7 +281,7 @@ final class SmartCanvasRenderer
 
         imagecopyresampled($canvas, $source, $dstX, $dstY, 0, 0, $dstW, $dstH, $srcW, $srcH);
 
-        $accent = imagecolorallocatealpha($canvas, 34, 211, 238, 50);
+        $accent = $withLabels ? imagecolorallocatealpha($canvas, 34, 211, 238, 50) : false;
         if ($accent !== false) {
             imagefilledrectangle($canvas, $dstX, max(0, $dstY - 3), $dstX + $dstW - 1, max(0, $dstY - 1), $accent);
             imagefilledrectangle($canvas, $dstX, min($height - 1, $dstY + $dstH), $dstX + $dstW - 1, min($height - 1, $dstY + $dstH + 2), $accent);

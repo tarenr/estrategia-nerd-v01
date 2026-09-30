@@ -37,6 +37,8 @@ $oldTipo        = (string) ($old['tipo'] ?? $post['tipo'] ?? 'imagem');
 $rawLegenda     = (string) ($old['legenda'] ?? $post['legenda'] ?? '');
 $oldAgendadoRaw = (string) ($old['agendado_para'] ?? $post['agendado_para'] ?? '');
 $oldBlogId      = (string) ($old['post_blog_id'] ?? $post['post_blog_id'] ?? '');
+$autoFit        = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1');
+$fitFailed      = (string) ($_GET['ajuste'] ?? '') === 'falhou';
 
 if (isset($old['hashtags'])) {
     $oldHashtags    = (string) $old['hashtags'];
@@ -84,6 +86,13 @@ if (isset($old['hashtags'])) {
         <?php endif; ?>
       </section>
     <?php else: ?>
+
+      <?php if ($fitFailed): ?>
+        <section class="admin-panel border border-amber-500/40 mb-4">
+          <div class="text-sm font-bold text-amber-200">O post foi salvo, mas o ajuste automático das imagens (Smart Canvas) falhou.</div>
+          <div class="mt-1 text-xs text-slate-300">As imagens originais foram mantidas e nada foi publicado. Salve de novo para tentar outra vez, ou desmarque a opção de ajuste.</div>
+        </section>
+      <?php endif; ?>
 
       <?php if ($error !== null && $error !== ''): ?>
         <section class="admin-panel border border-rose-500/30 mb-4">
@@ -160,11 +169,11 @@ if (isset($old['hashtags'])) {
                   }
                   $isVideo = (string) ($m['tipo_arquivo'] ?? '') === 'video';
                   ?>
-                  <div class="relative group aspect-square rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center">
+                  <div class="relative group aspect-square rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center" data-ig-fit-item="<?= $isVideo ? 'video' : 'imagem' ?>">
                     <?php if ($isVideo): ?>
                       <i class="fa-solid fa-video text-slate-400" aria-hidden="true"></i>
                     <?php elseif ($mUrl !== ''): ?>
-                      <img src="<?= $esc($mUrl) ?>" alt="" class="h-full w-full object-cover" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                      <img src="<?= $esc($mUrl) ?>" alt="" class="h-full w-full object-cover" onload="window.igRefreshFitBadges && window.igRefreshFitBadges();" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
                       <div class="hidden h-full w-full flex items-center justify-center bg-slate-800 text-slate-500">
                         <i class="fa-solid fa-image text-lg" aria-hidden="true"></i>
                       </div>
@@ -193,6 +202,10 @@ if (isset($old['hashtags'])) {
               </div>
             </label>
             <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4" data-ig-media-preview></div>
+            <label class="mt-4 flex items-start gap-2 text-sm text-slate-200 cursor-pointer">
+              <input type="checkbox" name="ig_auto_fit" value="1" id="igAutoFit" class="mt-1 accent-cyan-500"<?= $autoFit ? ' checked' : '' ?>>
+              <span><strong>Ajustar automaticamente imagens fora do padrão (Smart Canvas)</strong><span class="block text-xs text-slate-400">Vale para todas as mídias do post (atuais e novas). Imagens fora do formato do Instagram viram 4:5, 1:1 ou 9:16 com fundo desfocado, sem cortar nada. Os arquivos originais não são alterados.</span></span>
+            </label>
           </section>
 
           <!-- Legenda e Hashtags -->
@@ -327,6 +340,7 @@ if (isset($old['hashtags'])) {
       card.classList.toggle('ig-tipo-card-active', card.getAttribute('data-ig-tipo') === tipo);
     });
     if (previewTipoLabel) { previewTipoLabel.textContent = tipoLabels[tipo] || tipo; }
+    refreshFitBadges();
   }
 
   if (tipoSelect) {
@@ -440,13 +454,15 @@ if (isset($old['hashtags'])) {
       reader.onload = function (event) {
         var isVideo = file.type.indexOf('video') === 0;
         var thumb = document.createElement('div');
-        thumb.className = 'aspect-square rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center';
+        thumb.className = 'relative aspect-square rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center';
+        thumb.setAttribute('data-ig-fit-item', isVideo ? 'video' : 'imagem');
         if (isVideo) {
           thumb.innerHTML = '<i class="fa-solid fa-video text-slate-400"></i>';
         } else {
           var img = document.createElement('img');
           img.src = event.target.result;
           img.className = 'h-full w-full object-cover';
+          img.onload = refreshFitBadges;
           thumb.appendChild(img);
         }
         mediaPreview.appendChild(thumb);
@@ -476,6 +492,61 @@ if (isset($old['hashtags'])) {
       }
     });
   }
+
+  // Smart Canvas: mesma regra do InstagramMediaFitter para avisar quais imagens serao ajustadas.
+  var autoFit = document.getElementById('igAutoFit');
+
+  function fitTargets(tipo, ratios) {
+    var result = ratios.map(function () { return null; });
+    var images = [];
+    ratios.forEach(function (r, i) { if (r) { images.push([i, r]); } });
+    if (tipo === 'reels' || images.length === 0) { return result; }
+    if (tipo === 'story') {
+      images.forEach(function (p) { if (Math.abs(p[1] - 0.5625) > 0.02) { result[p[0]] = '1080x1920'; } });
+      return result;
+    }
+    if (tipo === 'carrossel') {
+      var values = images.map(function (p) { return p[1]; });
+      var outOfRange = values.some(function (r) { return r < 0.8 || r > 1.91; });
+      var mixed = (Math.max.apply(null, values) - Math.min.apply(null, values)) > 0.02;
+      if (outOfRange || mixed) {
+        images.forEach(function (p) { if (Math.abs(p[1] - 1) > 0.02) { result[p[0]] = '1080x1080'; } });
+      }
+      return result;
+    }
+    images.forEach(function (p) {
+      if (p[1] < 0.8) { result[p[0]] = '1080x1350'; } else if (p[1] > 1.91) { result[p[0]] = '1080x1080'; }
+    });
+    return result;
+  }
+
+  function refreshFitBadges() {
+    var items = Array.prototype.slice.call(document.querySelectorAll('#igPostForm [data-ig-fit-item]'));
+    var ratios = items.map(function (item) {
+      if (item.getAttribute('data-ig-fit-item') !== 'imagem') { return null; }
+      var img = item.querySelector('img');
+      return img && img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : null;
+    });
+    var enabled = !!(autoFit && autoFit.checked);
+    var tipoField = document.getElementById('igTipoInput');
+    var targets = fitTargets(tipoField ? (tipoField.value || 'imagem') : 'imagem', ratios);
+    items.forEach(function (item, i) {
+      var badge = item.querySelector('[data-ig-fit-badge]');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'absolute bottom-1 left-1 right-1 rounded bg-cyan-400/90 px-1 py-0.5 text-center text-[10px] font-bold text-slate-950';
+        badge.setAttribute('data-ig-fit-badge', '');
+        item.appendChild(badge);
+      }
+      var target = enabled ? targets[i] : null;
+      badge.textContent = target ? 'Smart Canvas ' + target : '';
+      badge.classList.toggle('hidden', !target);
+    });
+  }
+
+  window.igRefreshFitBadges = refreshFitBadges;
+  if (autoFit) { autoFit.addEventListener('change', refreshFitBadges); }
+  refreshFitBadges();
 
   var blogSelect = document.getElementById('igBlogSelect');
   var blogPreview = form.querySelector('[data-ig-blog-preview]');

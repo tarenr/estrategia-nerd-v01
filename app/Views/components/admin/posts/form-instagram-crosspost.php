@@ -19,6 +19,11 @@ $previewRel = (string) ($form['ig_crosspost_preview_url'] ?? '');
 $linked     = is_array($form['_ig_linked'] ?? null) ? $form['_ig_linked'] : null;
 $notice     = is_array($form['_ig_notice'] ?? null) ? $form['_ig_notice'] : null;
 $editable   = $linked === null || ($linked['_editable'] ?? false) === true;
+// Vindo do "Importar do Blog" da tela do Instagram (?ig=1): ja abre ligado e gera a previa.
+$autoStart  = $linked === null && (string) ($_GET['ig'] ?? '') === '1' && $token === '';
+if ($autoStart) {
+    $enabled = true;
+}
 
 $statusLabels = [
     'rascunho'   => ['Rascunho', 'text-slate-200 border-slate-500/40'],
@@ -253,6 +258,10 @@ $statusLabels = [
   if ($('igToken').value) coverSignature = currentCoverSignature();
   window.setInterval(checkStale, 1000);
   render();
+  if (<?= $autoStart ? 'true' : 'false' ?> && toggle.checked && !$('igToken').value) {
+    root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    request('completo');
+  }
 })();
 </script>
 <?php endif; ?>

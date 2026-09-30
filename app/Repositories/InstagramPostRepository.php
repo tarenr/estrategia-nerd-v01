@@ -383,6 +383,25 @@ final class InstagramPostRepository
     }
 
     /**
+     * Aponta uma midia para outro arquivo (ex.: versao ajustada pelo Smart Canvas).
+     */
+    public function updateMediaFile(int $mediaId, string $caminho, ?string $urlPublica, int $largura, int $altura): void
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE instagram_post_media
+                SET caminho = :caminho, url_publica = :url_publica, largura = :largura, altura = :altura
+              WHERE id = :id"
+        );
+        $stmt->execute([
+            ':id'          => $mediaId,
+            ':caminho'     => $caminho,
+            ':url_publica' => $urlPublica,
+            ':largura'     => $largura,
+            ':altura'      => $altura,
+        ]);
+    }
+
+    /**
      * Busca uma mídia específica por seu ID.
      *
      * @return array<string,mixed>|null
