@@ -105,6 +105,263 @@ final class SmartCanvasRenderer
     }
 
     /**
+     * Renderiza o formato 9:16 vertical (1080x1920) estilo Card Editorial Gamer/Tech:
+     * - Sem repeticao de titulo (a capa ja o contem).
+     * - Topo com badge de categoria e assinatura oficial Estrategia Nerd.
+     * - Centro com a capa emoldurada em estilo HUD tech com cantoneiras neon ciano.
+     * - Base com chamada de impacto (hook) instigante e botao de CTA para o blog.
+     *
+     * @param array<string, mixed> $meta Dados do post (categoria, resumo, chamada_titulo, chamada_texto, cta_texto)
+     */
+    public function renderVerticalEditorial(string $sourcePath, string $destPath, array $meta = []): string
+    {
+        $mime   = $this->assertValidSource($sourcePath);
+        $source = $this->load($sourcePath, $mime);
+
+        $w = 1080;
+        $h = 1920;
+
+        try {
+            $canvas = $this->newTrueColor($w, $h);
+            try {
+                imagesavealpha($canvas, true);
+
+                // 1. Fundo escuro base #070B14
+                $bg = imagecolorallocate($canvas, 7, 11, 20);
+                if ($bg !== false) {
+                    imagefilledrectangle($canvas, 0, 0, $w, $h, $bg);
+                }
+
+                // 2. Ambient Lighting / Blur suave do cover
+                $this->paintAmbientBackground($canvas, $source, $w, $h);
+
+                // 3. Grid tech pontilhado sutil
+                $gridColor = imagecolorallocatealpha($canvas, 34, 211, 238, 123);
+                if ($gridColor !== false) {
+                    for ($x = 40; $x < $w; $x += 60) {
+                        for ($y = 40; $y < $h; $y += 60) {
+                            imagesetpixel($canvas, $x, $y, $gridColor);
+                        }
+                    }
+                }
+
+                // Paleta de cores
+                $white      = (int) imagecolorallocate($canvas, 255, 255, 255);
+                $cyan       = (int) imagecolorallocate($canvas, 34, 211, 238);   // #22D3EE
+                $cyanDim    = (int) imagecolorallocate($canvas, 56, 189, 248);   // #38BDF8
+                $slateLight = (int) imagecolorallocate($canvas, 226, 232, 240);  // #E2E8F0
+                $slateMuted = (int) imagecolorallocate($canvas, 148, 163, 184);  // #94A3B8
+
+                $fontBold = $this->resolveFont();
+
+                // 4. TOPO: Marca e Badge de Categoria
+                $categoriaRaw = trim((string) ($meta['categoria'] ?? 'HARDWARE'));
+                $catText = strtoupper('// ' . ($categoriaRaw !== '' ? $categoriaRaw : 'HARDWARE') . ' //');
+                $catBg = imagecolorallocatealpha($canvas, 14, 35, 56, 20);
+                $catBorder = imagecolorallocatealpha($canvas, 2, 132, 199, 40);
+                $this->drawRoundedRect($canvas, 60, 110, 240, 160, 8, (int) $catBg, (int) $catBorder);
+                $this->drawWrappedText($canvas, $catText, $fontBold, 13, $cyanDim, 76, 144);
+
+                $brandText = 'ESTRATÉGIA NERD';
+                $this->drawWrappedText($canvas, $brandText, $fontBold, 18, $cyan, $w - 290, 144);
+
+                $lineColor = imagecolorallocatealpha($canvas, 30, 41, 59, 40);
+                if ($lineColor !== false) {
+                    imageline($canvas, 60, 185, $w - 60, 185, $lineColor);
+                }
+
+                // 5. CENTRO: A CAPA REAL COMO PROTAGONISTA
+                $srcW = imagesx($source);
+                $srcH = imagesy($source);
+                $imgW = 1000;
+                $imgH = (int) round($imgW * (9 / 16));
+                $imgX = (int) round(($w - $imgW) / 2);
+                $imgY = 310;
+
+                $shadow = imagecolorallocatealpha($canvas, 0, 0, 0, 45);
+                if ($shadow !== false) {
+                    imagefilledrectangle($canvas, $imgX - 6, $imgY - 6, $imgX + $imgW + 6, $imgY + $imgH + 6, $shadow);
+                }
+
+                imagecopyresampled($canvas, $source, $imgX, $imgY, 0, 0, $imgW, $imgH, $srcW, $srcH);
+
+                $frameBorder = imagecolorallocatealpha($canvas, 34, 211, 238, 50);
+                if ($frameBorder !== false) {
+                    imagerectangle($canvas, $imgX, $imgY, $imgX + $imgW, $imgY + $imgH, $frameBorder);
+                }
+
+                $this->drawHudCorners($canvas, $imgX, $imgY, $imgW, $imgH, 36, 4, $cyan);
+
+                // 6. BASE: APENAS A CHAMADA (HOOK) DE IMPACTO
+                $callBoxY = 960;
+                $callBoxH = 280;
+                $callBg = imagecolorallocatealpha($canvas, 11, 18, 32, 25);
+                $callBorder = imagecolorallocatealpha($canvas, 34, 211, 238, 50);
+                $this->drawRoundedRect($canvas, 60, $callBoxY, $w - 60, $callBoxY + $callBoxH, 12, (int) $callBg, (int) $callBorder);
+
+                imageline($canvas, 80, $callBoxY, 320, $callBoxY, $cyan);
+                imageline($canvas, 80, $callBoxY + 1, 320, $callBoxY + 1, $cyan);
+
+                $hookTitle = trim((string) ($meta['chamada_titulo'] ?? 'TESTAMOS NA PRÁTICA:'));
+                if ($hookTitle === '') {
+                    $hookTitle = 'DESTAQUE EDITORIAL:';
+                }
+                $this->drawWrappedText($canvas, $hookTitle, $fontBold, 18, $cyan, 100, $callBoxY + 70);
+
+                $hookText = trim((string) ($meta['chamada_texto'] ?? ''));
+                if ($hookText === '') {
+                    $resumo = trim((string) ($meta['resumo'] ?? ''));
+                    $hookText = $resumo !== '' ? $resumo : 'Confira a análise completa e todos os detalhes desta publicação no blog.';
+                }
+                $this->drawWrappedText($canvas, $hookText, $fontBold, 24, $slateLight, 100, $callBoxY + 130, 860);
+
+                // 7. RODAPÉ / BOTÃO DE CTA
+                $ctaY = 1380;
+                $btnBg = (int) imagecolorallocate($canvas, 2, 132, 199);
+                $btnBorder = (int) imagecolorallocate($canvas, 56, 189, 248);
+                $this->drawRoundedRect($canvas, 80, $ctaY, $w - 80, $ctaY + 88, 12, $btnBg, $btnBorder);
+
+                $btnText = trim((string) ($meta['cta_texto'] ?? 'VER TESTES E ANÁLISE COMPLETA'));
+                if ($btnText === '') {
+                    $btnText = 'VER ARTIGO COMPLETO NO BLOG';
+                }
+
+                $btnTextW = 500;
+                if ($fontBold !== null) {
+                    $bbox = imagettfbbox(21, 0, $fontBold, $btnText);
+                    if ($bbox !== false) {
+                        $btnTextW = abs($bbox[2] - $bbox[0]);
+                    }
+                }
+                $btnTextX = (int) round(($w - $btnTextW) / 2);
+                $this->drawWrappedText($canvas, $btnText, $fontBold, 21, $white, $btnTextX, $ctaY + 54);
+
+                $subCta = 'Toque no link da bio • @estrategia_nerd • estrategianerd.com.br';
+                $sW = 400;
+                if ($fontBold !== null) {
+                    $sbox = imagettfbbox(14, 0, $fontBold, $subCta);
+                    if ($sbox !== false) {
+                        $sW = abs($sbox[2] - $sbox[0]);
+                    }
+                }
+                $this->drawWrappedText($canvas, $subCta, $fontBold, 14, $slateMuted, (int) round(($w - $sW) / 2), $ctaY + 130);
+
+                $dir = dirname($destPath);
+                if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+                    throw new RuntimeException('Nao foi possivel criar a pasta de destino do canvas editorial.');
+                }
+
+                if (!imagejpeg($canvas, $destPath, 92)) {
+                    throw new RuntimeException('Falha ao gravar o canvas editorial.');
+                }
+            } finally {
+                imagedestroy($canvas);
+            }
+        } finally {
+            imagedestroy($source);
+        }
+
+        return $destPath;
+    }
+
+    private function paintAmbientBackground(\GdImage $canvas, \GdImage $source, int $width, int $height): void
+    {
+        $srcW = imagesx($source);
+        $srcH = imagesy($source);
+        $blurW = 108;
+        $blurH = 192;
+        $ambient = $this->newTrueColor($blurW, $blurH);
+        try {
+            imagecopyresampled($ambient, $source, 0, 0, 0, 0, $blurW, $blurH, $srcW, $srcH);
+            for ($i = 0; $i < 20; $i++) {
+                imagefilter($ambient, IMG_FILTER_GAUSSIAN_BLUR);
+            }
+            imagecopyresampled($canvas, $ambient, 0, 0, 0, 0, $width, $height, $blurW, $blurH);
+        } finally {
+            imagedestroy($ambient);
+        }
+
+        $vignette = imagecolorallocatealpha($canvas, 5, 8, 15, 42);
+        if ($vignette !== false) {
+            imagefilledrectangle($canvas, 0, 0, $width, $height, $vignette);
+        }
+    }
+
+    private function drawHudCorners(\GdImage $canvas, int $x, int $y, int $w, int $h, int $len, int $thick, int $color): void
+    {
+        imagefilledrectangle($canvas, $x, $y, $x + $len, $y + $thick, $color);
+        imagefilledrectangle($canvas, $x, $y, $x + $thick, $y + $len, $color);
+
+        imagefilledrectangle($canvas, $x + $w - $len, $y, $x + $w, $y + $thick, $color);
+        imagefilledrectangle($canvas, $x + $w - $thick, $y, $x + $w, $y + $len, $color);
+
+        imagefilledrectangle($canvas, $x, $y + $h - $thick, $x + $len, $y + $h, $color);
+        imagefilledrectangle($canvas, $x, $y + $h - $len, $x + $thick, $y + $h, $color);
+
+        imagefilledrectangle($canvas, $x + $w - $len, $y + $h - $thick, $x + $w, $y + $h, $color);
+        imagefilledrectangle($canvas, $x + $w - $thick, $y + $h - $len, $x + $w, $y + $h, $color);
+    }
+
+    private function drawRoundedRect(\GdImage $canvas, int $x1, int $y1, int $x2, int $y2, int $radius, int $bg, ?int $border = null): void
+    {
+        imagefilledrectangle($canvas, $x1 + $radius, $y1, $x2 - $radius, $y2, $bg);
+        imagefilledrectangle($canvas, $x1, $y1 + $radius, $x2, $y2 - $radius, $bg);
+        imagefilledellipse($canvas, $x1 + $radius, $y1 + $radius, $radius * 2, $radius * 2, $bg);
+        imagefilledellipse($canvas, $x2 - $radius, $y1 + $radius, $radius * 2, $radius * 2, $bg);
+        imagefilledellipse($canvas, $x1 + $radius, $y2 - $radius, $radius * 2, $radius * 2, $bg);
+        imagefilledellipse($canvas, $x2 - $radius, $y2 - $radius, $radius * 2, $radius * 2, $bg);
+
+        if ($border !== null) {
+            imageline($canvas, $x1 + $radius, $y1, $x2 - $radius, $y1, $border);
+            imageline($canvas, $x1 + $radius, $y2, $x2 - $radius, $y2, $border);
+            imageline($canvas, $x1, $y1 + $radius, $x1, $y2 - $radius, $border);
+            imageline($canvas, $x2, $y1 + $radius, $x2, $y2 - $radius, $border);
+            imagearc($canvas, $x1 + $radius, $y1 + $radius, $radius * 2, $radius * 2, 180, 270, $border);
+            imagearc($canvas, $x2 - $radius, $y1 + $radius, $radius * 2, $radius * 2, 270, 360, $border);
+            imagearc($canvas, $x2 - $radius, $y2 - $radius, $radius * 2, $radius * 2, 0, 90, $border);
+            imagearc($canvas, $x1 + $radius, $y2 - $radius, $radius * 2, $radius * 2, 90, 180, $border);
+        }
+    }
+
+    private function drawWrappedText(\GdImage $canvas, string $text, ?string $font, int $size, int $color, int $x, int $y, int $maxWidth = 0): void
+    {
+        if ($font === null) {
+            $builtin = 5;
+            $textW   = imagefontwidth($builtin) * strlen($text);
+            imagestring($canvas, $builtin, $x, $y - imagefontheight($builtin), $text, $color);
+            return;
+        }
+
+        if ($maxWidth <= 0) {
+            imagettftext($canvas, $size, 0, $x, $y, $color, $font, $text);
+            return;
+        }
+
+        $words = explode(' ', $text);
+        $currentLine = '';
+        $lineHeight = (int) round($size * 1.45);
+        $curY = $y;
+
+        foreach ($words as $word) {
+            $testLine = $currentLine === '' ? $word : $currentLine . ' ' . $word;
+            $bbox = imagettfbbox($size, 0, $font, $testLine);
+            $testW = $bbox !== false ? abs($bbox[2] - $bbox[0]) : 0;
+
+            if ($testW > $maxWidth && $currentLine !== '') {
+                imagettftext($canvas, $size, 0, $x, $curY, $color, $font, $currentLine);
+                $currentLine = $word;
+                $curY += $lineHeight;
+            } else {
+                $currentLine = $testLine;
+            }
+        }
+
+        if ($currentLine !== '') {
+            imagettftext($canvas, $size, 0, $x, $curY, $color, $font, $currentLine);
+        }
+    }
+
+    /**
      * Largura e altura como a imagem sera exibida, ja considerando a orientacao EXIF
      * (fotos de celular giradas 90/270 graus trocam largura e altura).
      *

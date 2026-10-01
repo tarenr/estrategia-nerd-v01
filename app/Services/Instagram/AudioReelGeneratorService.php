@@ -208,6 +208,50 @@ final class AudioReelGeneratorService
         return str_replace('\\', '/', $outputPath);
     }
 
+    /**
+     * Gera um Reel completo a partir da capa horizontal do blog, compondo
+     * primeiro o Smart Canvas vertical 9:16 editorial e em seguida renderizando
+     * o vídeo MP4 com trilha sonora e fade-out.
+     *
+     * @param string $coverPath Caminho da capa do post (relativo ou absoluto)
+     * @param string $audioPath Caminho do áudio
+     * @param array<string, mixed> $meta Metadados (categoria, resumo, chamada_titulo, chamada_texto, cta_texto)
+     * @param int $startSeconds Início do corte
+     * @param int|null $durationSeconds Duração (null = 12s padrão)
+     * @param string|null $outputVideoPath
+     * @return array{video_path: string, canvas_path: string, duration: int}
+     */
+    public function generateEditorialReel(
+        string $coverPath,
+        string $audioPath,
+        array $meta = [],
+        int $startSeconds = 0,
+        ?int $durationSeconds = 12,
+        ?string $outputVideoPath = null
+    ): array {
+        $renderer = new SmartCanvasRenderer();
+        $fullCoverPath = $this->resolvePath($coverPath);
+
+        $canvasRel = 'uploads/instagram/canvas_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.jpg';
+        $fullCanvasPath = $this->publicRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $canvasRel);
+
+        $renderer->renderVerticalEditorial($fullCoverPath, $fullCanvasPath, $meta);
+
+        $videoRel = $this->generateReel(
+            [$fullCanvasPath],
+            $audioPath,
+            $startSeconds,
+            $durationSeconds ?? 12,
+            $outputVideoPath
+        );
+
+        return [
+            'video_path' => $videoRel,
+            'canvas_path' => $canvasRel,
+            'duration' => $durationSeconds ?? 12,
+        ];
+    }
+
     private function resolvePath(string $path): string
     {
         $trimmed = trim($path);

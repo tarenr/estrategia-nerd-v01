@@ -175,6 +175,25 @@ $payload = [
 
 $prodPostId = $prodPosts->insertAdmin($payload);
 
+// Sincroniza e cria automaticamente o rascunho de Reel no Instagram para o post publicado em producao
+$igSyncResult = null;
+try {
+    $phpBin = PHP_BINARY;
+    $syncScript = __DIR__ . '/en-instagram-sync-blog-reels.php';
+    if (is_file($syncScript)) {
+        $syncCmd = sprintf('%s %s --post-id=%d 2>&1', escapeshellarg($phpBin), escapeshellarg($syncScript), $prodPostId);
+        $syncOutput = [];
+        $syncCode = 0;
+        @exec($syncCmd, $syncOutput, $syncCode);
+        $igSyncResult = [
+            'ok' => $syncCode === 0,
+            'summary' => implode(' | ', array_slice($syncOutput, -2)),
+        ];
+    }
+} catch (Throwable $e) {
+    $igSyncResult = ['ok' => false, 'error' => $e->getMessage()];
+}
+
 echo json_encode([
     'ok' => true,
     'local_id' => $postId,
@@ -185,4 +204,5 @@ echo json_encode([
     'tipo_post' => $payload['tipo_post'],
     'proximo_post_id' => $prodNextStepId,
     'media_sent' => $sentFiles,
+    'instagram_reel_sync' => $igSyncResult,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL;
