@@ -519,6 +519,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-30 | 2.6.0 | Smart Canvas para qualquer imagem do módulo (`InstagramMediaFitter`, regras por tipo, EXIF, conjunto final, transação e limpeza), opção e avisos nas telas de criar/editar, e "Importar do Blog" da tela de criar levando para a rotina do post do blog (`?ig=1`), listando só posts sem Instagram e com trava de ambiente. |
 | 2026-09-30 | 2.7.0 | "Importar do Blog" removido das telas do Instagram (criação só pelo post do blog); lista de Posts do blog com coluna do Instagram (verde/vermelho/cinza), métricas em ícones com legenda e filtro Instagram com/sem post; Agendamento mostrando também os posts do Instagram (rosa, erro e vencido destacados, botões Blog/Instagram, dias de 150px com "+N mais"). |
 | 2026-09-30 | 2.8.0 | Travas de tipo x mídias (Tasks #394 a #398): tipos desabilitados com motivo, seleção cumulativa até 10, lixeira (nova remove; salva marca para remoção ao salvar), envio travado em tipos de 1 mídia, preview com carrossel navegável e vídeo; validação no servidor antes de gravar (com desfazer em falha e renumeração da ordem), conferência no "Publicar agora" e no agendador, e bloqueio na rota antiga de remover mídia para posts agendados. |
+| 2026-10-01 | 2.8.1 | Tela de edição: o preview mostra a conta real (`@usuario`) também nas telas de erro do salvamento (antes aparecia "@sua_conta") e deixa de gerar aviso de PHP pela variável inexistente `$oldLegenda` (Tasks #400 a #403). |
 
 
 

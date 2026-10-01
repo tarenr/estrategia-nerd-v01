@@ -406,6 +406,7 @@ final class InstagramController
             'title'      => 'Editar Post — Instagram',
             'post'       => $post,
             'medias'     => $medias,
+            'account'    => $repo->findActiveAccount(),
             'csrf_token' => Csrf::generate(),
         ]);
     }
@@ -456,6 +457,7 @@ final class InstagramController
                 'title'      => 'Editar Post — Instagram',
                 'post'       => $post,
                 'medias'     => $medias,
+                'account'    => $account,
                 'csrf_token' => Csrf::generate(),
                 'error'      => $errors,
                 'old'        => $_POST,
@@ -515,6 +517,7 @@ final class InstagramController
                 'title'      => 'Editar Post — Instagram',
                 'post'       => $post,
                 'medias'     => $existing,
+                'account'    => $account,
                 'csrf_token' => Csrf::generate(),
                 'error'      => $failure,
                 'old'        => $_POST,

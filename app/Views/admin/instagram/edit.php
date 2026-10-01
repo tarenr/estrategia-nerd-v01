@@ -270,7 +270,7 @@ if (isset($old['hashtags'])) {
                   <i class="fa-regular fa-comment" aria-hidden="true"></i>
                   <i class="fa-regular fa-paper-plane" aria-hidden="true"></i>
                 </div>
-                <div class="text-xs text-slate-200 leading-4"><span class="font-bold">@<?= $esc((string) ($account['username'] ?? 'sua_conta')) ?></span> <span data-ig-preview-caption class="text-slate-400"><?= $esc($oldLegenda !== '' ? $oldLegenda : 'Sua legenda aparece aqui…') ?></span></div>
+                <div class="text-xs text-slate-200 leading-4"><span class="font-bold">@<?= $esc((string) ($account['username'] ?? 'sua_conta')) ?></span> <span data-ig-preview-caption class="text-slate-400"><?= $esc($oldLegendaText !== '' ? $oldLegendaText : 'Sua legenda aparece aqui…') ?></span></div>
               </div>
             </div>
           </section>
