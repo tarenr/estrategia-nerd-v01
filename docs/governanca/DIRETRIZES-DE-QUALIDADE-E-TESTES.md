@@ -109,3 +109,23 @@ C:\xampp\php\php.exe scripts/migrate.php --target=production
 2. **Proibição de Comandos Destrutivos:** É estritamente proibido o uso de `DROP TABLE`, `DROP DATABASE` ou `TRUNCATE` em migrations de release/produção sem autorização e plano específico.
 3. **Rastreabilidade:** Cada execução registra o arquivo e o número do lote (batch) na tabela `migrations` do banco alvo.
 
+---
+
+## 7. Padrões de Mídia e Vídeo para Instagram Reels
+
+Para assegurar compatibilidade universal com navegadores (Chromium/Direct3D 11, Safari, Firefox), players móveis e a Graph API do Instagram:
+
+### 7.1. Especificações Técnicas Obrigatórias de Vídeo (FFmpeg)
+- **Container:** MP4 (ISO/IEC 14496-14) com `movflags +faststart` (átomo `moov` no início do arquivo).
+- **Codec de Vídeo:** H.264 (AVC High Profile, Level 4.0), 30 fps progressivo.
+- **Espaço de Cores e Faixa (Mandatório):**
+  - Espaço de cores: Rec.709 (`-colorspace bt709 -color_primaries bt709 -color_trc bt709`)
+  - Faixa dinâmica: TV/Limited Range 16-235 (`-color_range tv`)
+  - Formato de pixel: `pix_fmt yuv420p` (proibido o uso de `yuvj420p` ou full range `pc` em saídas H.264 para web)
+- **Codec de Áudio:** AAC-LC estéreo, 128 kbps, taxa de amostragem 48.000 Hz com fade-out gradual de 1.5s ao final.
+- **Dimensões:** 1080x1920 (proporção 9:16 vertical).
+
+### 7.2. Resolução de URLs e Preview no Painel Administrativo
+- Mídias locais devem sempre ser resolvidas de forma dinâmica utilizando `url('/' . ltrim($caminho, '/'))` nas views e endpoints administrativos para garantir correspondência exata com o domínio/host/porta em que o operador estiver autenticado (localhost, virtualhost ou túnel Cloudflare).
+- Elementos `<video>` nos previews interativos devem possuir atributos `controls`, `playsinline`, `muted` e suporte a renderização nativa imediata no HTML inicial de edição.
+

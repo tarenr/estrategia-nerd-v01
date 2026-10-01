@@ -135,18 +135,22 @@ if (isset($old['hashtags'])) {
                 <?php foreach ($medias as $m): ?>
                   <?php
                   $mId  = (int) ($m['id'] ?? 0);
-                  $mUrl = trim((string) ($m['url_publica'] ?? ''));
-                  if ($mUrl === '') {
-                      $caminho = trim((string) ($m['caminho'] ?? ''));
-                      $mUrl = $caminho !== '' ? (str_starts_with($caminho, 'http') ? $caminho : url('/' . ltrim($caminho, '/'))) : '';
+                  $caminho = trim((string) ($m['caminho'] ?? ''));
+                  if ($caminho !== '' && !str_starts_with($caminho, 'http')) {
+                      $mUrl = url('/' . ltrim($caminho, '/'));
+                  } else {
+                      $mUrl = trim((string) ($m['url_publica'] ?? ''));
+                      if ($mUrl === '' && $caminho !== '') {
+                          $mUrl = $caminho;
+                      }
                   }
                   $isVideo   = (string) ($m['tipo_arquivo'] ?? '') === 'video';
                   $isRemoved = in_array($mId, $removedOld, true);
                   ?>
                   <div class="relative group aspect-square rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center" data-ig-fit-item="<?= $isRemoved ? 'removido' : ($isVideo ? 'video' : 'imagem') ?>" data-ig-saved-media data-id="<?= $mId ?>" data-kind="<?= $isVideo ? 'video' : 'imagem' ?>" data-url="<?= $esc($mUrl) ?>" data-removed="<?= $isRemoved ? '1' : '0' ?>">
                     <?php if ($isVideo && $mUrl !== ''): ?>
-                      <video src="<?= $esc($mUrl) ?>#t=0.1" muted playsinline preload="metadata" class="h-full w-full object-cover"></video>
-                      <span class="absolute top-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white"><i class="fa-solid fa-video" aria-hidden="true"></i> vídeo</span>
+                      <video src="<?= $esc($mUrl) ?>#t=0.1" controls muted playsinline preload="metadata" class="h-full w-full object-cover"></video>
+                      <span class="absolute top-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white pointer-events-none"><i class="fa-solid fa-video" aria-hidden="true"></i> vídeo</span>
                     <?php elseif ($isVideo): ?>
                       <i class="fa-solid fa-video text-slate-400" aria-hidden="true"></i>
                     <?php elseif ($mUrl !== ''): ?>
@@ -252,19 +256,28 @@ if (isset($old['hashtags'])) {
                 <div class="text-xs font-bold text-white">@<?= $esc((string) ($account['username'] ?? 'sua_conta')) ?></div>
                 <div class="ml-auto text-[10px] rounded-full bg-slate-800 px-2 py-0.5 text-slate-300" data-ig-preview-tipo>Imagem</div>
               </div>
-              <div class="aspect-square bg-slate-900 flex items-center justify-center overflow-hidden" data-ig-preview-media>
-                <?php
-                $firstMedia = $medias[0] ?? null;
-                $firstMediaUrl = '';
-                if ($firstMedia !== null && (string) ($firstMedia['tipo_arquivo'] ?? '') !== 'video') {
-                    $firstMediaUrl = trim((string) ($firstMedia['url_publica'] ?? ''));
-                    if ($firstMediaUrl === '') {
-                        $caminho = trim((string) ($firstMedia['caminho'] ?? ''));
-                        $firstMediaUrl = $caminho !== '' ? (str_starts_with($caminho, 'http') ? $caminho : url('/' . ltrim($caminho, '/'))) : '';
-                    }
-                }
-                ?>
-                <?php if ($firstMediaUrl !== ''): ?>
+              <?php
+              $firstMedia = $medias[0] ?? null;
+              $firstMediaUrl = '';
+              $firstMediaIsVideo = false;
+              if ($firstMedia !== null) {
+                  $firstMediaIsVideo = (string) ($firstMedia['tipo_arquivo'] ?? '') === 'video';
+                  $caminho = trim((string) ($firstMedia['caminho'] ?? ''));
+                  if ($caminho !== '' && !str_starts_with($caminho, 'http')) {
+                      $firstMediaUrl = url('/' . ltrim($caminho, '/'));
+                  } else {
+                      $firstMediaUrl = trim((string) ($firstMedia['url_publica'] ?? ''));
+                      if ($firstMediaUrl === '' && $caminho !== '') {
+                          $firstMediaUrl = $caminho;
+                      }
+                  }
+              }
+              $isReelsOrStory = in_array((string) ($post['tipo'] ?? ''), ['reels', 'story'], true);
+              ?>
+              <div class="<?= $isReelsOrStory ? 'relative' : 'aspect-square' ?> bg-slate-900 flex items-center justify-center overflow-hidden" style="<?= $isReelsOrStory ? 'aspect-ratio: 9 / 16;' : '' ?>" data-ig-preview-media>
+                <?php if ($firstMediaUrl !== '' && $firstMediaIsVideo): ?>
+                  <video src="<?= $esc($firstMediaUrl) ?>" controls autoplay loop muted playsinline class="h-full w-full <?= $isReelsOrStory ? 'object-contain' : 'object-cover' ?>"></video>
+                <?php elseif ($firstMediaUrl !== ''): ?>
                   <img src="<?= $esc($firstMediaUrl) ?>" class="h-full w-full object-cover" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
                   <div class="hidden h-full w-full flex items-center justify-center bg-slate-900 text-slate-600">
                     <i class="fa-solid fa-image text-3xl" aria-hidden="true"></i>

@@ -187,7 +187,7 @@ final class AudioReelGeneratorService
         $filterComplex = implode(';', $filterParts);
 
         $cmd = sprintf(
-            '%s -y %s -filter_complex %s -map "[v]" -map "[a]" -c:v libx264 -preset fast -crf 22 -pix_fmt yuv420p -c:a aac -b:a 128k -ar 48000 -movflags +faststart -shortest %s 2>&1',
+            '%s -y %s -filter_complex %s -map "[v]" -map "[a]" -c:v libx264 -preset fast -crf 22 -pix_fmt yuv420p -color_range tv -colorspace bt709 -color_primaries bt709 -color_trc bt709 -c:a aac -b:a 128k -ar 48000 -movflags +faststart -shortest %s 2>&1',
             escapeshellcmd($this->ffmpegBinary),
             implode(' ', $inputArgs),
             escapeshellarg($filterComplex),

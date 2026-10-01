@@ -245,9 +245,23 @@ foreach ($prodPosts as $post) {
 
         // E. Gerar Legenda
         $captionData = $captionService->generate($cleanTitulo, $cleanResumo, $categoria);
-        $legendaFinal = trim((string) ($captionData['legenda'] ?? ''));
-        $rawTags = $captionData['hashtags'] ?? '';
-        $hashtagsFinal = is_array($rawTags) ? implode(' ', $rawTags) : trim((string) $rawTags);
+        $legendaFinal = trim((string) ($captionData['caption'] ?? ($captionData['legenda'] ?? '')));
+        if ($legendaFinal === '') {
+            $legendaFinal = $cleanTitulo . "\n\n" . $cleanResumo;
+        }
+
+        $rawTags = $captionData['hashtags'] ?? [];
+        if (is_array($rawTags)) {
+            $cleanedTags = [];
+            foreach ($rawTags as $tag) {
+                if (is_string($tag) && trim($tag) !== '') {
+                    $cleanedTags[] = str_starts_with(trim($tag), '#') ? trim($tag) : '#' . trim($tag);
+                }
+            }
+            $hashtagsFinal = implode(' ', $cleanedTags);
+        } else {
+            $hashtagsFinal = trim((string) $rawTags);
+        }
 
         $fullCaption = $legendaFinal;
         if ($hashtagsFinal !== '') {
