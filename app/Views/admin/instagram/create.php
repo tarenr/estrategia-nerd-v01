@@ -85,6 +85,8 @@ $autoFit     = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1
               <div class="text-xs text-slate-500 mt-1">Imagem ou vídeo — carrossel aceita de 2 a 10 itens</div>
             </div>
           </label>
+          <div class="hidden mt-2 text-xs text-amber-200" data-ig-dropzone-lock role="status"></div>
+          <div class="hidden mt-2 text-xs font-bold text-rose-300" data-ig-media-notice role="alert"></div>
           <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4" data-ig-media-preview></div>
           <label class="mt-4 flex items-start gap-2 text-sm text-slate-200 cursor-pointer">
             <input type="checkbox" name="ig_auto_fit" value="1" id="igAutoFit" class="mt-1 accent-cyan-500"<?= $autoFit ? ' checked' : '' ?>>
@@ -168,6 +170,8 @@ $autoFit     = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1
 .ig-tipo-card i { font-size:18px; }
 .ig-tipo-card:hover { border-color: rgba(34,211,238,.5); }
 .ig-tipo-card-active { border-color:#22d3ee; color:#e0f7fa; background: rgba(34,211,238,.08); }
+.ig-tipo-card-disabled, .ig-tipo-card-disabled:hover { opacity:.35; cursor:not-allowed; border-color: rgba(100,116,139,.35); }
+.ig-dropzone-locked, .ig-dropzone-locked:hover { opacity:.45; cursor:not-allowed; border-color: rgba(100,116,139,.4); background: transparent; }
 </style>
 
 <script>
@@ -199,16 +203,19 @@ $autoFit     = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1
     });
     if (previewTipoLabel) { previewTipoLabel.textContent = tipoLabels[tipo] || tipo; }
     refreshFitBadges();
+    renderPhonePreview();
   }
 
   if (tipoSelect) {
     tipoSelect.addEventListener('click', function (event) {
       var card = event.target.closest('[data-ig-tipo]');
       if (!card) { return; }
+      if (card.getAttribute('aria-disabled') === 'true') { showNotice(card.title); return; }
+      showNotice('');
       applyTipo(card.getAttribute('data-ig-tipo'));
+      applyLocks();
     });
   }
-  applyTipo(tipoInput.value || 'imagem');
 
   // Agendamento: mostra o campo de data só quando o botao "Agendar" e usado.
   if (acaoAgendarBtn && agendadoWrap) {
@@ -302,61 +309,312 @@ $autoFit     = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1
   }
   updateLegendaCounters();
 
-  // Upload de midia: dropzone + preview + espelha no mockup.
+  // ── Midias: travas de tipo, selecao cumulativa, lixeira e previa ────────────
+  // Mesma regra do servidor: imagem = 1 imagem; reels = 1 video; story = 1 item; carrossel = 2 a 10.
+  var MAX_MEDIA = 10;
+  var SINGLE_TYPES = ['imagem', 'reels', 'story'];
+  var ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/quicktime'];
   var dropzone = form.querySelector('[data-ig-dropzone]');
+  var dropzoneLock = form.querySelector('[data-ig-dropzone-lock]');
+  var mediaNotice = form.querySelector('[data-ig-media-notice]');
   var mediaInput = document.getElementById('igMediaInput');
   var mediaPreview = form.querySelector('[data-ig-media-preview]');
   var previewMedia = form.querySelector('[data-ig-preview-media]');
+  var removeInputs = form.querySelector('[data-ig-remove-inputs]');
+  var newFiles = [];
+  var previewIndex = 0;
+  var dropzoneLocked = false;
+  var saved = Array.prototype.slice.call(form.querySelectorAll('[data-ig-saved-media]')).map(function (node) {
+    return { node: node, id: node.getAttribute('data-id'), kind: node.getAttribute('data-kind'), url: node.getAttribute('data-url'), removed: node.getAttribute('data-removed') === '1' };
+  });
 
-  function renderMediaPreview() {
-    if (!mediaInput || !mediaPreview) { return; }
+  function mk(tag, className, html) {
+    var node = document.createElement(tag);
+    if (className) { node.className = className; }
+    if (html) { node.innerHTML = html; }
+    return node;
+  }
+
+  // Ordem de publicacao: salvas primeiro, depois as novas.
+  function activeItems() {
+    var list = [];
+    saved.forEach(function (s) { if (!s.removed) { list.push({ kind: s.kind, url: s.url }); } });
+    newFiles.forEach(function (n) { list.push({ kind: n.kind, url: n.url }); });
+    return list;
+  }
+
+  function lockInfo() {
+    var items = activeItems();
+    var total = items.length;
+    var videos = items.filter(function (i) { return i.kind === 'video'; }).length;
+    var reasons = {};
+    if (total === 1 && videos === 0) { reasons.reels = 'Reels aceita só vídeo. Remova a imagem para escolher Reels.'; }
+    if (total === 1 && videos === 1) { reasons.imagem = 'Imagem não aceita vídeo. Use Reels, Story ou Carrossel.'; }
+    if (total >= 2) {
+      var msg = 'Com ' + total + ' mídias só o Carrossel é possível. Remova até sobrar 1 para trocar o tipo.';
+      reasons.imagem = msg; reasons.reels = msg; reasons.story = msg;
+    }
+    return { total: total, videos: videos, reasons: reasons };
+  }
+
+  function showNotice(text) {
+    if (!mediaNotice) { return; }
+    mediaNotice.textContent = text || '';
+    mediaNotice.classList.toggle('hidden', !text);
+  }
+
+  function applyLocks() {
+    var info = lockInfo();
+    var tipo = tipoInput.value || 'imagem';
+    var forced = null;
+    if (info.total >= 2) { forced = 'carrossel'; } else if (info.reasons[tipo]) { forced = info.videos === 1 ? 'reels' : 'imagem'; }
+    if (forced && forced !== tipo) { tipo = forced; applyTipo(tipo); }
+
+    tipoSelect.querySelectorAll('[data-ig-tipo]').forEach(function (card) {
+      var reason = info.reasons[card.getAttribute('data-ig-tipo')] || '';
+      card.classList.toggle('ig-tipo-card-disabled', reason !== '');
+      card.setAttribute('aria-disabled', reason !== '' ? 'true' : 'false');
+      card.title = reason;
+    });
+
+    var lockMsg = '';
+    if (SINGLE_TYPES.indexOf(tipo) !== -1 && info.total >= 1) {
+      lockMsg = (tipoLabels[tipo] || tipo) + ' aceita só 1 mídia. Remova a atual para enviar outra, ou escolha Carrossel para adicionar mais.';
+    } else if (info.total >= MAX_MEDIA) {
+      lockMsg = 'Limite de ' + MAX_MEDIA + ' mídias atingido. Remova alguma para adicionar outra.';
+    }
+    dropzoneLocked = lockMsg !== '';
+    if (dropzone) {
+      dropzone.classList.toggle('ig-dropzone-locked', dropzoneLocked);
+      dropzone.setAttribute('aria-disabled', dropzoneLocked ? 'true' : 'false');
+    }
+    if (dropzoneLock) {
+      dropzoneLock.textContent = lockMsg;
+      dropzoneLock.classList.toggle('hidden', !dropzoneLocked);
+    }
+  }
+
+  function syncInput() {
+    if (!mediaInput || typeof DataTransfer === 'undefined') { return; }
+    var dt = new DataTransfer();
+    newFiles.forEach(function (n) { dt.items.add(n.file); });
+    mediaInput.files = dt.files;
+  }
+
+  // Lote inteiro entra ou nada entra: a selecao atual nunca se perde.
+  function addFiles(list) {
+    var batch = Array.prototype.slice.call(list || []);
+    if (batch.length === 0) { return; }
+    var info = lockInfo();
+    var tipo = tipoInput.value || 'imagem';
+    var bad = batch.filter(function (f) { return ACCEPTED_TYPES.indexOf(f.type) === -1; });
+    if (bad.length) {
+      showNotice('Formato não aceito: ' + bad.map(function (f) { return f.name; }).join(', ') + '. Envie JPG, PNG, WEBP, MP4 ou MOV. Nada deste lote foi adicionado.');
+      return;
+    }
+    if (dropzoneLocked || (SINGLE_TYPES.indexOf(tipo) !== -1 && info.total >= 1)) {
+      showNotice((tipoLabels[tipo] || tipo) + ' aceita só 1 mídia. Nada deste lote foi adicionado.');
+      return;
+    }
+    if (info.total + batch.length > MAX_MEDIA) {
+      showNotice('Este lote tem ' + batch.length + ' arquivo(s) e o post já tem ' + info.total + ': passaria do limite de ' + MAX_MEDIA + ' mídias. Nada foi adicionado; a seleção atual foi mantida.');
+      return;
+    }
+    batch.forEach(function (f) {
+      newFiles.push({ file: f, url: URL.createObjectURL(f), kind: f.type.indexOf('video') === 0 ? 'video' : 'imagem' });
+    });
+    showNotice('');
+    syncInput();
+    renderAll();
+  }
+
+  function removeNew(idx) {
+    var item = newFiles[idx];
+    if (!item) { return; }
+    URL.revokeObjectURL(item.url);
+    newFiles.splice(idx, 1);
+    showNotice('');
+    syncInput();
+    renderAll();
+  }
+
+  function trashButton(onClick) {
+    var btn = mk('button', 'absolute top-1 right-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity h-7 w-7 rounded-md bg-rose-600/90 hover:bg-rose-600 text-white text-xs flex items-center justify-center shadow', '<i class="fa-solid fa-trash" aria-hidden="true"></i>');
+    btn.type = 'button';
+    btn.title = 'Remover esta mídia';
+    btn.setAttribute('aria-label', 'Remover esta mídia');
+    btn.addEventListener('click', onClick);
+    return btn;
+  }
+
+  function videoThumb(url) {
+    var v = document.createElement('video');
+    v.src = url;
+    v.muted = true;
+    v.playsInline = true;
+    v.preload = 'metadata';
+    v.className = 'h-full w-full object-cover';
+    // Mostra o primeiro quadro em vez de tela preta.
+    v.addEventListener('loadedmetadata', function () { try { v.currentTime = Math.min(0.1, v.duration || 0.1); } catch (e) { /* sem quadro */ } });
+    return v;
+  }
+
+  function renderNewThumbs() {
+    if (!mediaPreview) { return; }
     mediaPreview.innerHTML = '';
-    if (previewMedia) { previewMedia.innerHTML = '<i class="fa-solid fa-image text-3xl text-slate-700"></i>'; }
-
-    var files = Array.prototype.slice.call(mediaInput.files || []);
-    files.forEach(function (file, index) {
-      var reader = new FileReader();
-      reader.onload = function (event) {
-        var isVideo = file.type.indexOf('video') === 0;
-        var thumb = document.createElement('div');
-        thumb.className = 'relative aspect-square rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center';
-        thumb.setAttribute('data-ig-fit-item', isVideo ? 'video' : 'imagem');
-        if (isVideo) {
-          thumb.innerHTML = '<i class="fa-solid fa-video text-slate-400"></i>';
-        } else {
-          var img = document.createElement('img');
-          img.src = event.target.result;
-          img.className = 'h-full w-full object-cover';
-          img.onload = refreshFitBadges;
-          thumb.appendChild(img);
-        }
-        mediaPreview.appendChild(thumb);
-
-        if (index === 0 && previewMedia && !isVideo) {
-          previewMedia.innerHTML = '<img src="' + event.target.result + '" class="h-full w-full object-cover">';
-        }
-      };
-      reader.readAsDataURL(file);
+    newFiles.forEach(function (n, idx) {
+      var thumb = mk('div', 'relative group aspect-square rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center');
+      thumb.setAttribute('data-ig-fit-item', n.kind);
+      if (n.kind === 'video') {
+        thumb.appendChild(videoThumb(n.url));
+        thumb.appendChild(mk('span', 'absolute top-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white', '<i class="fa-solid fa-video" aria-hidden="true"></i> vídeo'));
+      } else {
+        var img = document.createElement('img');
+        img.src = n.url;
+        img.className = 'h-full w-full object-cover';
+        img.onload = refreshFitBadges;
+        thumb.appendChild(img);
+      }
+      thumb.appendChild(trashButton(function () { removeNew(idx); }));
+      mediaPreview.appendChild(thumb);
     });
   }
 
+  function renderSaved() {
+    if (removeInputs) { removeInputs.innerHTML = ''; }
+    saved.forEach(function (s) {
+      var overlay = s.node.querySelector('[data-ig-removed-overlay]');
+      var trash = s.node.querySelector('[data-ig-saved-trash]');
+      if (overlay) { overlay.classList.toggle('hidden', !s.removed); }
+      if (trash) { trash.classList.toggle('hidden', s.removed); }
+      s.node.setAttribute('data-ig-fit-item', s.removed ? 'removido' : s.kind);
+      if (s.removed && removeInputs) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'remove_media_ids[]';
+        input.value = s.id;
+        removeInputs.appendChild(input);
+      }
+    });
+  }
+
+  saved.forEach(function (s) {
+    var trash = s.node.querySelector('[data-ig-saved-trash]');
+    var undo = s.node.querySelector('[data-ig-undo-remove]');
+    if (trash) { trash.addEventListener('click', function () { s.removed = true; showNotice(''); renderAll(); }); }
+    if (undo) {
+      undo.addEventListener('click', function () {
+        if (lockInfo().total + 1 > MAX_MEDIA) { showNotice('Não dá para desfazer: passaria do limite de ' + MAX_MEDIA + ' mídias.'); return; }
+        s.removed = false;
+        showNotice('');
+        renderAll();
+      });
+    }
+  });
+
+  function renderPhonePreview() {
+    if (!previewMedia) { return; }
+    var items = activeItems();
+    var tipo = tipoInput.value || 'imagem';
+    var tall = tipo === 'reels' || tipo === 'story';
+    previewMedia.classList.remove('aspect-square');
+    previewMedia.classList.add('relative');
+    previewMedia.style.aspectRatio = tall ? '9 / 16' : '1 / 1';
+    previewMedia.innerHTML = '';
+    if (items.length === 0) {
+      previewMedia.innerHTML = '<i class="fa-solid fa-image text-3xl text-slate-700" aria-hidden="true"></i>';
+      return;
+    }
+    previewIndex = Math.max(0, Math.min(previewIndex, items.length - 1));
+    var item = items[previewIndex];
+    var fitClass = tall ? 'object-contain' : 'object-cover';
+    if (item.kind === 'video') {
+      var v = document.createElement('video');
+      v.src = item.url;
+      v.muted = true;
+      v.loop = true;
+      v.controls = true;
+      v.autoplay = true;
+      v.playsInline = true;
+      v.className = 'h-full w-full ' + fitClass;
+      previewMedia.appendChild(v);
+    } else {
+      var img = document.createElement('img');
+      img.src = item.url;
+      img.className = 'h-full w-full ' + fitClass;
+      previewMedia.appendChild(img);
+    }
+    if (items.length > 1) {
+      previewMedia.appendChild(mk('span', 'absolute top-2 right-2 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-bold text-white', String(previewIndex + 1) + '/' + items.length));
+      if (previewIndex > 0) {
+        var prev = mk('button', 'absolute left-1.5 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-white/80 text-slate-900 text-xs flex items-center justify-center shadow', '<i class="fa-solid fa-chevron-left" aria-hidden="true"></i>');
+        prev.type = 'button';
+        prev.setAttribute('aria-label', 'Mídia anterior');
+        prev.addEventListener('click', function () { previewIndex--; renderPhonePreview(); });
+        previewMedia.appendChild(prev);
+      }
+      if (previewIndex < items.length - 1) {
+        var next = mk('button', 'absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-white/80 text-slate-900 text-xs flex items-center justify-center shadow', '<i class="fa-solid fa-chevron-right" aria-hidden="true"></i>');
+        next.type = 'button';
+        next.setAttribute('aria-label', 'Próxima mídia');
+        next.addEventListener('click', function () { previewIndex++; renderPhonePreview(); });
+        previewMedia.appendChild(next);
+      }
+      var dots = mk('div', 'absolute left-0 right-0 flex justify-center gap-1 pointer-events-none ' + (item.kind === 'video' ? 'top-2.5' : 'bottom-2'));
+      items.forEach(function (_, i) {
+        dots.appendChild(mk('span', 'h-1.5 w-1.5 rounded-full ' + (i === previewIndex ? 'bg-cyan-400' : 'bg-white/50')));
+      });
+      previewMedia.appendChild(dots);
+    }
+  }
+
+  function renderAll() {
+    renderSaved();
+    renderNewThumbs();
+    applyLocks();
+    renderPhonePreview();
+    refreshFitBadges();
+  }
+
   if (mediaInput) {
-    mediaInput.addEventListener('change', renderMediaPreview);
+    mediaInput.addEventListener('change', function () {
+      var batch = Array.prototype.slice.call(mediaInput.files || []);
+      syncInput(); // devolve ao input a selecao anterior; addFiles acrescenta o lote se ele couber
+      addFiles(batch);
+    });
   }
   if (dropzone && mediaInput) {
+    dropzone.addEventListener('click', function (e) { if (dropzoneLocked) { e.preventDefault(); } });
     ['dragover', 'dragenter'].forEach(function (evt) {
-      dropzone.addEventListener(evt, function (e) { e.preventDefault(); dropzone.classList.add('is-dragover'); });
+      dropzone.addEventListener(evt, function (e) { e.preventDefault(); if (!dropzoneLocked) { dropzone.classList.add('is-dragover'); } });
     });
     ['dragleave', 'drop'].forEach(function (evt) {
       dropzone.addEventListener(evt, function (e) { e.preventDefault(); dropzone.classList.remove('is-dragover'); });
     });
     dropzone.addEventListener('drop', function (e) {
       if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-        mediaInput.files = e.dataTransfer.files;
-        renderMediaPreview();
+        addFiles(e.dataTransfer.files);
       }
     });
   }
+
+  // Bloqueia o envio que o servidor recusaria, sem perder os arquivos escolhidos.
+  form.addEventListener('submit', function (event) {
+    var acao = event.submitter ? event.submitter.value : '';
+    var info = lockInfo();
+    var msg = '';
+    if ((tipoInput.value || 'imagem') === 'carrossel' && info.total === 1) {
+      msg = 'Carrossel precisa de pelo menos 2 mídias. Adicione mais uma ou troque o tipo.';
+    } else if (info.total === 0 && (acao === 'agendar' || acao === 'publicar')) {
+      msg = 'Adicione a mídia do post antes de agendar ou publicar.';
+    }
+    if (msg !== '') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      showNotice(msg);
+      if (mediaNotice) { mediaNotice.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    }
+  });
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -436,5 +694,9 @@ $autoFit     = $old === [] ? true : ((string) ($old['ig_auto_fit'] ?? '') === '1
         : '';
     }
   });
+
+  // Estado inicial: tipo vindo do servidor + travas conforme as midias ja salvas.
+  applyTipo(tipoInput.value || 'imagem');
+  renderAll();
 })();
 </script>

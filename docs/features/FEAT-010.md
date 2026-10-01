@@ -265,6 +265,7 @@ C:\xampp\php\php.exe scripts/en-instagram-publish-scheduled.php
 4. SELECT posts com status='agendado' AND agendado_para <= NOW() (sem FOR UPDATE SKIP LOCKED, que nao existe no MariaDB 10.4 local; a exclusao mutua vem do flock do passo 2 e do UPDATE atomico do passo 5a)
 5. Para cada post:
    a. UPDATE status='publicando' WHERE id=X AND status='agendado' (lock atômico)
+   a2. Conferir tipo x mídias (InstagramPostRepository::mediaRuleError); combinação inválida (ex.: post antigo, de antes das travas) vai para 'erro' com a mensagem, sem chamar a Meta
    b. Criar container(s) na Meta API
    c. Polling do status do container (até 6 tentativas × 5s = 30s máx)
    d. publishMedia() → ig_media_id
@@ -325,8 +326,8 @@ VALUES ('SEU_IG_USER_ID', 'estrategia_nerd', 'SEU_ACCESS_TOKEN_PERMANENTE', 1);
 As 4 views estão implementadas em:
 
 - [`app/Views/admin/instagram/index.php`](../../app/Views/admin/instagram/index.php) — dashboard: status da conexão, header do perfil com métricas e badge de variação, métricas 7d/30d, feed recente, agendados e rascunhos
-- [`app/Views/admin/instagram/create.php`](../../app/Views/admin/instagram/create.php) — criação de post com seletor de tipo (imagem, carrossel, reels, story), upload/preview, importar do blog e preview interativo
-- [`app/Views/admin/instagram/edit.php`](../../app/Views/admin/instagram/edit.php) — edição com gerenciamento e remoção individual de mídias (bloqueada em modo somente leitura quando o post já está `publicado`/`publicando`)
+- [`app/Views/admin/instagram/create.php`](../../app/Views/admin/instagram/create.php) — criação de post com seletor de tipo (imagem, carrossel, reels, story) com travas por mídia, upload cumulativo com lixeira e preview interativo (carrossel navegável e vídeo)
+- [`app/Views/admin/instagram/edit.php`](../../app/Views/admin/instagram/edit.php) — edição com as mesmas travas; a lixeira das mídias salvas só marca para remoção ao salvar (bloqueada em modo somente leitura quando o post já está `publicado`/`publicando`)
 - [`app/Views/admin/instagram/show.php`](../../app/Views/admin/instagram/show.php) — detalhes, insights e comentários
 
 ---
@@ -435,6 +436,37 @@ Ao salvar um post na tela do Instagram (criar ou editar) com a opção **"Ajusta
 
 ---
 
+## Travas de tipo x mídias (Tasks #394 a #398)
+
+Regra única, usada nas telas (JavaScript) e no servidor (`InstagramPostRepository::mediaRuleError`):
+
+| Tipo | Mídias aceitas |
+|---|---|
+| Imagem | exatamente 1 imagem |
+| Reels | exatamente 1 vídeo |
+| Story | exatamente 1 item (imagem ou vídeo) |
+| Carrossel | 2 a 10 itens (imagens e vídeos misturados) |
+
+**Telas (criar e editar)** — contam mídias salvas + novas:
+
+- 0 mídia: todos os tipos liberados. 1 imagem: Reels desabilitado. 1 vídeo: Imagem desabilitado. 2 a 10: só Carrossel (selecionado automaticamente). O motivo aparece no tooltip do botão desabilitado.
+- Tipo de 1 mídia (Imagem, Reels, Story) com 1 mídia: o "enviar mídia" fica travado com aviso até remover a atual (ou trocar para Carrossel). Com 10 mídias, trava pelo limite.
+- Seleção cumulativa: cada escolha soma às anteriores. Um lote que passaria de 10 é recusado inteiro, mantendo a seleção atual.
+- Lixeira ao passar o mouse: nas mídias novas remove o arquivo da seleção; nas salvas (edição) só **marca** para remoção (escurece, com "desfazer") — a remoção acontece ao salvar, junto com o resto, sem perder legenda nem arquivos novos. Depois de remover, os tipos voltam a ser liberados pela tabela.
+- Carrossel com 1 item não salva (aviso na tela).
+- Preview do celular mostra todas as mídias na ordem de publicação (salvas, depois novas), com setas, pontos e contador "n/total"; vídeo toca no preview (mudo, em loop, com controles) e as miniaturas de vídeo mostram o primeiro quadro. Reels e Story usam moldura 9:16 sem corte.
+
+**Servidor** (`InstagramController::store`/`update`):
+
+- Confere tudo **antes** de gravar: mídias salvas que ficam, uploads (MIME real; upload que falhou vira erro e não conta) e URLs da biblioteca. Rascunho sem nenhuma mídia continua permitido; agendar/publicar exige mídia.
+- Em erro, a tela volta com a mensagem e, se havia arquivos, "Selecione os arquivos novamente" (o navegador descarta arquivos ao recarregar). Na edição, as marcas da lixeira e a legenda digitada são mantidas.
+- Os arquivos são movidos antes da transação; post/mídias gravam numa transação. Se algo falhar, desfaz a transação e apaga os arquivos movidos — nada fica pela metade.
+- Ao salvar, a `ordem` das mídias é renumerada em sequência (0, 1, 2…: salvas primeiro, depois as novas).
+- Post agendado não fica inválido por remoção: o `update` recusa, e a rota antiga `POST /admin/instagram/media/{id}/delete` (que a tela não usa mais) também bloqueia para posts `agendado`.
+- "Publicar agora" e o agendador conferem de novo antes de chamar a Meta; combinação inválida vai para `erro` com mensagem clara e nenhum envio.
+
+---
+
 ## Diretriz de Ambientes e Banco de Dados
 
 > **REGRA ARQUITETURAL MANDATÓRIA (Ambiente Único):**
@@ -486,6 +518,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-30 | 2.5.4 | Arquivos do FEAT-010 alterados desde `ec7f946` (cross-post, agendador, snapshot do feed) foram para Stage e Produção dentro da `RELEASE-2026-09-29-cron-monitoramento`, porque o pacote técnico é incremental. Não executam em produção: `/admin` é bloqueado fora do local e o Instagram segue local-only; o log de erros de produção não mostrou nenhum tipo de erro novo após o deploy. |
 | 2026-09-30 | 2.6.0 | Smart Canvas para qualquer imagem do módulo (`InstagramMediaFitter`, regras por tipo, EXIF, conjunto final, transação e limpeza), opção e avisos nas telas de criar/editar, e "Importar do Blog" da tela de criar levando para a rotina do post do blog (`?ig=1`), listando só posts sem Instagram e com trava de ambiente. |
 | 2026-09-30 | 2.7.0 | "Importar do Blog" removido das telas do Instagram (criação só pelo post do blog); lista de Posts do blog com coluna do Instagram (verde/vermelho/cinza), métricas em ícones com legenda e filtro Instagram com/sem post; Agendamento mostrando também os posts do Instagram (rosa, erro e vencido destacados, botões Blog/Instagram, dias de 150px com "+N mais"). |
+| 2026-09-30 | 2.8.0 | Travas de tipo x mídias (Tasks #394 a #398): tipos desabilitados com motivo, seleção cumulativa até 10, lixeira (nova remove; salva marca para remoção ao salvar), envio travado em tipos de 1 mídia, preview com carrossel navegável e vídeo; validação no servidor antes de gravar (com desfazer em falha e renumeração da ordem), conferência no "Publicar agora" e no agendador, e bloqueio na rota antiga de remover mídia para posts agendados. |
 
 
 

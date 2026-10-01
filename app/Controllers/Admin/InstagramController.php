@@ -323,28 +323,49 @@ final class InstagramController
             }
         }
 
-        $postId = $repo->create([
-            'account_id'      => (int) $account['id'],
-            'status'          => $status,
-            'tipo'            => $tipo,
-            'legenda'         => $legenda ?: null,
-            'hashtags_count'  => $api->countHashtags($legenda),
-            'agendado_para'   => $agendadoPara,
-            'post_blog_id'    => ($_POST['post_blog_id'] ?? '') !== '' ? (int) $_POST['post_blog_id'] : null,
-            'idempotency_key' => $this->uuid4(),
-            'origin'          => 'local',
-            'criado_por'      => Auth::id(),
-        ]);
+        // Valida tipo x midias antes de gravar qualquer coisa (rascunho sem midia continua permitido).
+        $input     = $this->inspectMediaInput($_FILES, $_POST);
+        $ruleError = $input['errors'] === []
+            ? InstagramPostRepository::mediaRuleError($tipo, array_column($input['items'], 'kind'), $status === 'rascunho' && $acao !== 'publicar')
+            : null;
+        $moved     = ($input['errors'] === [] && $ruleError === null) ? $this->moveUploads($input['items']) : ['items' => [], 'errors' => []];
+        $failure   = $this->mediaErrorMessage(array_merge($input['errors'], $moved['errors']), $ruleError, $input['had_files']);
 
-        // Salvar mídias enviadas
-        $uploadErrors = $this->saveUploadedMedia($repo, $postId, $_FILES, $_POST);
-        if (!empty($uploadErrors)) {
-            $errors = implode(' ', $uploadErrors);
+        if ($failure === null) {
+            /** @var \PDO $pdo */
+            $pdo = $GLOBALS['pdo'];
+            try {
+                $pdo->beginTransaction();
+                $postId = $repo->create([
+                    'account_id'      => (int) $account['id'],
+                    'status'          => $status,
+                    'tipo'            => $tipo,
+                    'legenda'         => $legenda ?: null,
+                    'hashtags_count'  => $api->countHashtags($legenda),
+                    'agendado_para'   => $agendadoPara,
+                    'post_blog_id'    => ($_POST['post_blog_id'] ?? '') !== '' ? (int) $_POST['post_blog_id'] : null,
+                    'idempotency_key' => $this->uuid4(),
+                    'origin'          => 'local',
+                    'criado_por'      => Auth::id(),
+                ]);
+                $this->persistMedia($repo, $postId, $moved['items'], 0);
+                $pdo->commit();
+            } catch (\Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                $this->discardMovedFiles($moved['items']);
+                error_log('[InstagramController] store: ' . $e->getMessage());
+                $failure = $this->mediaErrorMessage(['Não foi possível salvar o post; nada foi gravado.'], null, $input['had_files']);
+            }
+        }
+
+        if ($failure !== null || !isset($postId)) {
             View::render('admin/instagram/create', [
                 'title'      => 'Novo Post — Instagram',
                 'account'    => $account,
                 'csrf_token' => Csrf::generate(),
-                'error'      => $errors,
+                'error'      => $failure,
                 'old'        => $_POST,
             ]);
             return;
@@ -442,31 +463,67 @@ final class InstagramController
             return;
         }
 
-        $repo->update($id, [
-            'status'          => $status,
-            'tipo'            => $tipo,
-            'legenda'         => $legenda ?: null,
-            'hashtags_count'  => $api->countHashtags($legenda),
-            'agendado_para'   => $agendado,
-            'post_blog_id'    => ($_POST['post_blog_id'] ?? '') !== '' ? (int) $_POST['post_blog_id'] : null,
-        ]);
+        // Midias salvas marcadas na lixeira: so saem agora, junto com o resto, se o conjunto final for valido.
+        $existing  = $repo->findMediaByPostId($id);
+        $removeIds = array_map('intval', (array) ($_POST['remove_media_ids'] ?? []));
+        $kept      = array_values(array_filter($existing, static fn (array $m): bool => !in_array((int) ($m['id'] ?? 0), $removeIds, true)));
+        $removed   = array_values(array_filter($existing, static fn (array $m): bool => in_array((int) ($m['id'] ?? 0), $removeIds, true)));
 
-        // Adicionar novas mídias se foram enviadas
-        if (!empty($_FILES['medias']['name'][0])) {
-            $existingMedias = $repo->findMediaByPostId($id);
-            $uploadErrors   = $this->saveUploadedMedia($repo, $id, $_FILES, $_POST, count($existingMedias));
-            if (!empty($uploadErrors)) {
-                $medias = $repo->findMediaByPostId($id);
-                View::render('admin/instagram/edit', [
-                    'title'      => 'Editar Post — Instagram',
-                    'post'       => $post,
-                    'medias'     => $medias,
-                    'csrf_token' => Csrf::generate(),
-                    'error'      => implode(' ', $uploadErrors),
-                    'old'        => $_POST,
+        $input     = $this->inspectMediaInput($_FILES, $_POST);
+        $ruleError = $input['errors'] === []
+            ? InstagramPostRepository::mediaRuleError(
+                $tipo,
+                array_merge(InstagramPostRepository::mediaKinds($kept), array_column($input['items'], 'kind')),
+                $status === 'rascunho' && $acao !== 'publicar',
+            )
+            : null;
+        $moved     = ($input['errors'] === [] && $ruleError === null) ? $this->moveUploads($input['items']) : ['items' => [], 'errors' => []];
+        $failure   = $this->mediaErrorMessage(array_merge($input['errors'], $moved['errors']), $ruleError, $input['had_files']);
+
+        if ($failure === null) {
+            /** @var \PDO $pdo */
+            $pdo = $GLOBALS['pdo'];
+            try {
+                $pdo->beginTransaction();
+                $repo->update($id, [
+                    'status'          => $status,
+                    'tipo'            => $tipo,
+                    'legenda'         => $legenda ?: null,
+                    'hashtags_count'  => $api->countHashtags($legenda),
+                    'agendado_para'   => $agendado,
+                    'post_blog_id'    => ($_POST['post_blog_id'] ?? '') !== '' ? (int) $_POST['post_blog_id'] : null,
                 ]);
-                return;
+                foreach ($removed as $m) {
+                    $repo->deleteMedia((int) $m['id'], $id);
+                }
+                // Novas entram depois das salvas; a renumeracao deixa 0, 1, 2... na ordem de publicacao.
+                $this->persistMedia($repo, $id, $moved['items'], 100000);
+                $repo->renumberMedia($id);
+                $pdo->commit();
+            } catch (\Throwable $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                $this->discardMovedFiles($moved['items']);
+                error_log('[InstagramController] update: ' . $e->getMessage());
+                $failure = $this->mediaErrorMessage(['Não foi possível salvar as alterações; nada foi gravado.'], null, $input['had_files']);
             }
+        }
+
+        if ($failure !== null) {
+            View::render('admin/instagram/edit', [
+                'title'      => 'Editar Post — Instagram',
+                'post'       => $post,
+                'medias'     => $existing,
+                'csrf_token' => Csrf::generate(),
+                'error'      => $failure,
+                'old'        => $_POST,
+            ]);
+            return;
+        }
+
+        foreach ($removed as $m) {
+            $this->unlinkInstagramUpload((string) ($m['caminho'] ?? ''));
         }
 
         if (!$this->fitMediaIfRequested($id, $tipo)) {
@@ -519,7 +576,18 @@ final class InstagramController
             return;
         }
 
+        // Post agendado nao pode ficar invalido para o tipo (ex.: carrossel com 1 item).
+        if ((string) ($post['status'] ?? '') === 'agendado') {
+            $remaining = array_values(array_filter($repo->findMediaByPostId($postId), static fn (array $m): bool => (int) ($m['id'] ?? 0) !== $mediaId));
+            $ruleError = InstagramPostRepository::mediaRuleError((string) ($post['tipo'] ?? ''), InstagramPostRepository::mediaKinds($remaining));
+            if ($ruleError !== null) {
+                header('Location: ' . url('/admin/instagram/posts/' . $postId . '/editar?error=' . urlencode('Remoção bloqueada: ' . $ruleError)));
+                exit;
+            }
+        }
+
         $repo->deleteMedia($mediaId, $postId);
+        $repo->renumberMedia($postId);
 
         // Se for upload local do Instagram, remove o arquivo físico com segurança
         $caminho = (string) ($media['caminho'] ?? '');
@@ -741,6 +809,12 @@ final class InstagramController
                 return;
             }
 
+            $ruleError = InstagramPostRepository::mediaRuleError((string) ($post['tipo'] ?? ''), InstagramPostRepository::mediaKinds($medias));
+            if ($ruleError !== null) {
+                $repo->markError($postId, 'Mídias incompatíveis com o tipo do post (nada foi enviado ao Instagram): ' . $ruleError);
+                return;
+            }
+
             $tipo    = (string) ($post['tipo'] ?? 'imagem');
             $legenda = $post['legenda'] ?? null;
             $isVideo = false;
@@ -814,62 +888,49 @@ final class InstagramController
     }
 
     /**
-     * Salva arquivos $_FILES['medias'] ou URLs da biblioteca no repositório de mídias com validação robusta.
+     * Confere URLs da biblioteca e uploads sem gravar nada: formato, MIME real e tamanho.
+     * Uploads que falharam viram erro e nao entram na contagem de midias.
      *
-     * @param array<string,mixed> $files   $_FILES
-     * @param array<string,mixed> $post    $_POST
-     * @return list<string> Lista de erros encontrados
+     * @param array<string,mixed> $files $_FILES
+     * @param array<string,mixed> $post  $_POST
+     * @return array{items: list<array<string,mixed>>, errors: list<string>, had_files: bool}
      */
-    private function saveUploadedMedia(
-        InstagramPostRepository $repo,
-        int $postId,
-        array $files,
-        array $post,
-        int $startOrder = 0,
-    ): array {
+    private function inspectMediaInput(array $files, array $post): array
+    {
         $appUrl   = rtrim((string) config('app.url', ''), '/');
+        $items    = [];
         $errors   = [];
-        $uploaded = $files['medias'] ?? [];
+        $hadFiles = false;
 
-        // Validação e inclusão de URLs enviadas da biblioteca interna
         $libraryUrls = $post['media_urls'] ?? [];
-        if (is_array($libraryUrls) && !empty($libraryUrls)) {
-            $ordem = $startOrder;
+        if (is_array($libraryUrls)) {
             foreach ($libraryUrls as $rawUrl) {
                 $url = trim((string) $rawUrl);
                 if ($url === '') {
                     continue;
                 }
-                $ext = strtolower((string) pathinfo(parse_url($url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
+                $ext = strtolower((string) pathinfo((string) (parse_url($url, PHP_URL_PATH) ?? ''), PATHINFO_EXTENSION));
                 if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'mp4', 'mov'], true)) {
                     $errors[] = "A URL selecionada possui formato '{$ext}' incompatível com o Instagram.";
                     continue;
                 }
-                $tipoArq    = in_array($ext, ['mp4', 'mov'], true) ? 'video' : 'imagem';
-                $urlPublica = str_starts_with($url, 'http') ? $url : $appUrl . '/' . ltrim($url, '/');
-
-                $repo->addMedia($postId, [
-                    'ordem'        => $ordem++,
-                    'tipo_arquivo' => $tipoArq,
-                    'caminho'      => $url,
-                    'url_publica'  => $urlPublica,
-                ]);
+                $items[] = [
+                    'source'      => 'url',
+                    'kind'        => in_array($ext, ['mp4', 'mov'], true) ? 'video' : 'imagem',
+                    'caminho'     => $url,
+                    'url_publica' => str_starts_with($url, 'http') ? $url : $appUrl . '/' . ltrim($url, '/'),
+                ];
             }
         }
 
-        if (!is_array($uploaded) || empty($uploaded['name']) || empty($uploaded['name'][0])) {
-            return $errors;
+        $uploaded = $files['medias'] ?? [];
+        if (!is_array($uploaded) || empty($uploaded['name']) || !is_array($uploaded['name'])) {
+            return ['items' => $items, 'errors' => $errors, 'had_files' => $hadFiles];
         }
 
-        $names    = (array) $uploaded['name'];
-        $tmpNames = (array) $uploaded['tmp_name'];
+        $tmpNames = (array) ($uploaded['tmp_name'] ?? []);
         $errCodes = (array) ($uploaded['error'] ?? []);
         $sizes    = (array) ($uploaded['size'] ?? []);
-
-        $uploadsDir = __DIR__ . '/../../../public/uploads/instagram/';
-        if (!is_dir($uploadsDir)) {
-            mkdir($uploadsDir, 0755, true);
-        }
 
         $allowedImageMimes = ['image/jpeg', 'image/png', 'image/webp'];
         $allowedVideoMimes = ['video/mp4', 'video/quicktime'];
@@ -878,7 +939,7 @@ final class InstagramController
 
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
 
-        foreach ($names as $i => $name) {
+        foreach ($uploaded['name'] as $i => $name) {
             $nameStr = (string) $name;
             $tmpName = (string) ($tmpNames[$i] ?? '');
             $errCode = (int) ($errCodes[$i] ?? UPLOAD_ERR_NO_FILE);
@@ -887,6 +948,7 @@ final class InstagramController
             if ($errCode === UPLOAD_ERR_NO_FILE || $nameStr === '') {
                 continue;
             }
+            $hadFiles = true;
 
             if ($errCode !== UPLOAD_ERR_OK || $tmpName === '' || !is_uploaded_file($tmpName)) {
                 $errors[] = "Falha no upload do arquivo '{$nameStr}'.";
@@ -900,50 +962,123 @@ final class InstagramController
             }
 
             $detectedMime = $finfo !== false ? (string) finfo_file($finfo, $tmpName) : (string) mime_content_type($tmpName);
-
-            $isVideo = in_array($detectedMime, $allowedVideoMimes, true);
-            $isImage = in_array($detectedMime, $allowedImageMimes, true);
+            $isVideo      = in_array($detectedMime, $allowedVideoMimes, true);
+            $isImage      = in_array($detectedMime, $allowedImageMimes, true);
 
             if (!$isVideo && !$isImage) {
                 $errors[] = "Tipo MIME real ('{$detectedMime}') não permitido para '{$nameStr}'.";
                 continue;
             }
-
             if ($isImage && $size > $maxImageBytes) {
                 $errors[] = "A imagem '{$nameStr}' excede o limite máximo permitido de 8MB.";
                 continue;
             }
-
             if ($isVideo && $size > $maxVideoBytes) {
                 $errors[] = "O vídeo '{$nameStr}' excede o limite máximo permitido de 100MB.";
                 continue;
             }
 
-            // Nome de arquivo aleatório seguro (evita colisão e sobrescrita)
-            $filename = bin2hex(random_bytes(16)) . '.' . $ext;
-            $dest     = $uploadsDir . $filename;
-
-            if (move_uploaded_file($tmpName, $dest)) {
-                $relative  = 'uploads/instagram/' . $filename;
-                $tipoArq   = $isVideo ? 'video' : 'imagem';
-                $urlPublic = $appUrl . '/' . $relative;
-
-                $repo->addMedia($postId, [
-                    'ordem'        => $startOrder + $i,
-                    'tipo_arquivo' => $tipoArq,
-                    'caminho'      => $relative,
-                    'url_publica'  => $urlPublic,
-                ]);
-            } else {
-                $errors[] = "Falha ao gravar o arquivo '{$nameStr}' no disco.";
-            }
+            $items[] = ['source' => 'upload', 'kind' => $isVideo ? 'video' : 'imagem', 'name' => $nameStr, 'tmp' => $tmpName, 'ext' => $ext];
         }
 
         if ($finfo !== false) {
             finfo_close($finfo);
         }
 
-        return $errors;
+        return ['items' => $items, 'errors' => $errors, 'had_files' => $hadFiles];
+    }
+
+    /**
+     * Move os uploads conferidos para public/uploads/instagram. Se algum falhar, desfaz os ja movidos.
+     *
+     * @param list<array<string,mixed>> $items
+     * @return array{items: list<array<string,mixed>>, errors: list<string>}
+     */
+    private function moveUploads(array $items): array
+    {
+        $appUrl     = rtrim((string) config('app.url', ''), '/');
+        $uploadsDir = __DIR__ . '/../../../public/uploads/instagram/';
+        if (!is_dir($uploadsDir)) {
+            mkdir($uploadsDir, 0755, true);
+        }
+
+        foreach ($items as $k => $item) {
+            if ($item['source'] !== 'upload') {
+                continue;
+            }
+            // Nome de arquivo aleatório seguro (evita colisão e sobrescrita)
+            $filename = bin2hex(random_bytes(16)) . '.' . (string) $item['ext'];
+            if (!move_uploaded_file((string) $item['tmp'], $uploadsDir . $filename)) {
+                $this->discardMovedFiles($items);
+
+                return ['items' => [], 'errors' => ["Falha ao gravar o arquivo '" . (string) $item['name'] . "' no disco."]];
+            }
+            $items[$k]['caminho']     = 'uploads/instagram/' . $filename;
+            $items[$k]['url_publica'] = $appUrl . '/uploads/instagram/' . $filename;
+        }
+
+        return ['items' => $items, 'errors' => []];
+    }
+
+    /**
+     * @param list<array<string,mixed>> $items Itens ja movidos (moveUploads)
+     */
+    private function persistMedia(InstagramPostRepository $repo, int $postId, array $items, int $startOrder): void
+    {
+        foreach ($items as $i => $item) {
+            $repo->addMedia($postId, [
+                'ordem'        => $startOrder + $i,
+                'tipo_arquivo' => (string) $item['kind'],
+                'caminho'      => (string) $item['caminho'],
+                'url_publica'  => $item['url_publica'] ?? null,
+            ]);
+        }
+    }
+
+    /**
+     * Apaga os arquivos movidos nesta requisicao (usado quando o salvamento e desfeito).
+     *
+     * @param list<array<string,mixed>> $items
+     */
+    private function discardMovedFiles(array $items): void
+    {
+        foreach ($items as $item) {
+            if ($item['source'] === 'upload' && isset($item['caminho'])) {
+                $this->unlinkInstagramUpload((string) $item['caminho']);
+            }
+        }
+    }
+
+    /**
+     * Remove um arquivo de public/uploads/instagram, sem sair dessa pasta.
+     */
+    private function unlinkInstagramUpload(string $caminho): void
+    {
+        if ($caminho === '' || !str_starts_with($caminho, 'uploads/instagram/')) {
+            return;
+        }
+        $baseDir  = realpath(__DIR__ . '/../../../public/uploads/instagram');
+        $fullPath = realpath(__DIR__ . '/../../../public/' . $caminho);
+        if ($baseDir && $fullPath && str_starts_with($fullPath, $baseDir) && is_file($fullPath)) {
+            @unlink($fullPath);
+        }
+    }
+
+    /**
+     * Junta os erros de midia numa mensagem; o navegador descarta os arquivos ao recarregar a tela.
+     *
+     * @param list<string> $errors
+     */
+    private function mediaErrorMessage(array $errors, ?string $ruleError, bool $hadFiles): ?string
+    {
+        if ($ruleError !== null) {
+            $errors[] = $ruleError;
+        }
+        if ($errors === []) {
+            return null;
+        }
+
+        return implode(' ', $errors) . ($hadFiles ? ' Selecione os arquivos novamente.' : '');
     }
 
     /**

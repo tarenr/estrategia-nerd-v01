@@ -456,6 +456,61 @@ final class InstagramPostRepository
     }
 
     /**
+     * Regra tipo x midias: imagem = 1 imagem; reels = 1 video; story = 1 item; carrossel = 2 a 10.
+     * Retorna a mensagem de erro, ou null quando o conjunto e valido.
+     *
+     * @param list<string> $kinds 'imagem' ou 'video', na ordem de publicacao
+     */
+    public static function mediaRuleError(string $tipo, array $kinds, bool $allowEmpty = false): ?string
+    {
+        $total  = count($kinds);
+        $videos = count(array_filter($kinds, static fn (string $k): bool => $k === 'video'));
+
+        if (!in_array($tipo, ['imagem', 'carrossel', 'reels', 'story'], true)) {
+            return 'Tipo de post inválido.';
+        }
+        if ($total === 0) {
+            return $allowEmpty ? null : 'Adicione a mídia do post antes de agendar ou publicar.';
+        }
+
+        return match ($tipo) {
+            'imagem'    => ($total === 1 && $videos === 0) ? null : 'Post do tipo Imagem aceita exatamente 1 imagem (vídeo vai como Reels; várias mídias, como Carrossel).',
+            'reels'     => ($total === 1 && $videos === 1) ? null : 'Reels aceita exatamente 1 vídeo.',
+            'story'     => $total === 1 ? null : 'Story aceita exatamente 1 imagem ou 1 vídeo.',
+            default     => ($total >= 2 && $total <= 10) ? null : 'Carrossel precisa de 2 a 10 mídias (hoje: ' . $total . ').',
+        };
+    }
+
+    /**
+     * Tipos ('imagem'/'video') das midias salvas de um post, na ordem de publicacao.
+     *
+     * @param array<int,array<string,mixed>> $medias
+     * @return list<string>
+     */
+    public static function mediaKinds(array $medias): array
+    {
+        $kinds = [];
+        foreach ($medias as $m) {
+            $kinds[] = (string) ($m['tipo_arquivo'] ?? 'imagem') === 'video' ? 'video' : 'imagem';
+        }
+
+        return $kinds;
+    }
+
+    /**
+     * Renumera a ordem das midias do post em sequencia (0, 1, 2...) mantendo a ordem atual.
+     */
+    public function renumberMedia(int $postId): void
+    {
+        $ids  = $this->pdo->prepare("SELECT id FROM instagram_post_media WHERE post_id = :post_id ORDER BY ordem ASC, id ASC");
+        $ids->execute([':post_id' => $postId]);
+        $stmt = $this->pdo->prepare("UPDATE instagram_post_media SET ordem = :ordem WHERE id = :id");
+        foreach ($ids->fetchAll(PDO::FETCH_COLUMN) as $i => $mediaId) {
+            $stmt->execute([':ordem' => $i, ':id' => (int) $mediaId]);
+        }
+    }
+
+    /**
      * Remove todas as mídias de um post (usado ao reeditar).
      */
     public function deleteMediaByPostId(int $postId): bool

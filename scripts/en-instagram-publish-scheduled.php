@@ -127,6 +127,12 @@ foreach ($duePosts as $post) {
             throw new RuntimeException('Nenhuma mídia encontrada para o post.');
         }
 
+        // Post antigo pode ter combinacao invalida (antes das travas): vai para erro sem chamar a Meta.
+        $ruleError = InstagramPostRepository::mediaRuleError((string) ($post['tipo'] ?? ''), InstagramPostRepository::mediaKinds($medias));
+        if ($ruleError !== null) {
+            throw new RuntimeException('Mídias incompatíveis com o tipo do post (nada foi enviado ao Instagram): ' . $ruleError);
+        }
+
         $legenda = $post['legenda'] ?? null;
 
         // Valida legenda antes de chamar a API
