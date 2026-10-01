@@ -96,6 +96,23 @@ $tipoBadge = static function (string $tp): string {
 
 $tipoLabel = ['imagem' => 'Imagem', 'carrossel' => 'Carrossel', 'reels' => 'Reels', 'story' => 'Story'];
 
+$resolveMediaUrl = static function (?string $path, int $postId = 0): string {
+    if ($postId > 0) {
+        $localAsset = '/assets/instagram-feed/post_' . $postId . '.jpg';
+        if (is_file(base_path('public' . $localAsset))) {
+            return url($localAsset);
+        }
+    }
+    $path = trim((string) $path);
+    if ($path === '') {
+        return '';
+    }
+    if (preg_match('#^(https?:)?//#i', $path) || str_starts_with($path, 'data:') || str_starts_with($path, 'blob:')) {
+        return $path;
+    }
+    return url('/' . ltrim($path, '/'));
+};
+
 $baseUrl = function_exists('url') ? url('/admin/instagram') : '/admin/instagram';
 $buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $sort, $dir, $page, $perPage, $period, $start, $end, $viewMode): string {
     $current = [
@@ -942,11 +959,7 @@ if (($endRange - $startRange) < 4) {
                     $pComents    = (int) ($item['comentarios_count'] ?? 0);
                     $pDataPub    = $item['publicado_em'] ?? null;
                     $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
-                    $thumbUrl    = $medias[0] ?? '';
-                    $localAsset  = '/assets/instagram-feed/post_' . $pId . '.jpg';
-                    if (is_file(base_path('public' . $localAsset))) {
-                        $thumbUrl = url($localAsset);
-                    }
+                    $thumbUrl    = $resolveMediaUrl($medias[0] ?? '', $pId);
                     $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
                   ?>
                   <tr class="posts-table-row">
@@ -1057,11 +1070,7 @@ if (($endRange - $startRange) < 4) {
                 $pComents    = (int) ($item['comentarios_count'] ?? 0);
                 $pDataPub    = $item['publicado_em'] ?? null;
                 $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
-                $thumbUrl    = $medias[0] ?? '';
-                $localAsset  = '/assets/instagram-feed/post_' . $pId . '.jpg';
-                if (is_file(base_path('public' . $localAsset))) {
-                    $thumbUrl = url($localAsset);
-                }
+                $thumbUrl    = $resolveMediaUrl($medias[0] ?? '', $pId);
                 $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
               ?>
               <div class="rounded-2xl border border-slate-800/80 bg-slate-900/60 overflow-hidden hover:border-cyan-500/40 transition-all flex flex-col group shadow-lg">
@@ -1234,7 +1243,7 @@ if (($endRange - $startRange) < 4) {
                   $sLegenda = (string) ($s['legenda'] ?? '');
                   $sData    = (string) ($s['agendado_para'] ?? '');
                   $sMedias  = array_values(array_filter(explode('|', (string) ($s['medias'] ?? ''))));
-                  $sThumb   = $sMedias[0] ?? '';
+                  $sThumb   = $resolveMediaUrl($sMedias[0] ?? '', $sId);
                   $sEdit    = url('/admin/instagram/posts/' . $sId . '/editar');
                 ?>
                 <tr class="posts-table-row" data-row-search="<?= $esc(mb_strtolower($sLegenda . ' ' . $sTipo)) ?>">
@@ -1344,7 +1353,7 @@ if (($endRange - $startRange) < 4) {
                   $dLegenda = (string) ($d['legenda'] ?? '');
                   $dData    = (string) ($d['criado_em'] ?? '');
                   $dMedias  = array_values(array_filter(explode('|', (string) ($d['medias'] ?? ''))));
-                  $dThumb   = $dMedias[0] ?? '';
+                  $dThumb   = $resolveMediaUrl($dMedias[0] ?? '', $dId);
                   $dEdit    = url('/admin/instagram/posts/' . $dId . '/editar');
                 ?>
                 <tr class="posts-table-row" data-row-search="<?= $esc(mb_strtolower($dLegenda . ' ' . $dTipo)) ?>">
