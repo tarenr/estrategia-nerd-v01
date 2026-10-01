@@ -97,9 +97,10 @@ if (!is_dir($targetDir)) {
     mkdir($targetDir, 0755, true);
 }
 
-// Buscar as 18 publicações que vão para o feed
-$published = $repo->listPublished((int) $account['id'], 18);
-echo "Encontrados " . count($published) . " posts publicados para o feed.\n";
+// Capa local de todos os posts publicados: o admin mostra todos; o feed do site usa os 18 mais recentes.
+$published = $repo->listPublished((int) $account['id'], max(18, count($apiItems)));
+$total = count($published);
+echo "Encontrados {$total} posts publicados.\n";
 
 $downloadedCount = 0;
 $reusedCount = 0;
@@ -132,7 +133,7 @@ foreach ($published as $index => $post) {
     }
 
     $num = $index + 1;
-    echo sprintf("[%02d/18] Post #%d (%s): ", $num, $postId, $post['tipo']);
+    echo sprintf("[%02d/%02d] Post #%d (%s): ", $num, $total, $postId, $post['tipo']);
 
     // Se já temos a imagem válida em disco e tem mais de 2KB, mantemos ou atualizamos
     if ($imageUrl !== '') {

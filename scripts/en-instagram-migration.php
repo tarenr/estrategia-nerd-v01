@@ -86,8 +86,8 @@ CREATE TABLE IF NOT EXISTS `instagram_post_media` (
   `post_id`     int(11) unsigned NOT NULL,
   `ordem`       tinyint(3) unsigned NOT NULL DEFAULT 0 COMMENT 'Posição no carrossel (0-based)',
   `tipo_arquivo` enum('imagem','video') NOT NULL DEFAULT 'imagem',
-  `caminho`     varchar(500)     NOT NULL COMMENT 'Caminho relativo em uploads/ ou URL absoluta',
-  `url_publica` varchar(500)     DEFAULT NULL COMMENT 'URL pública para API da Meta',
+  `caminho`     varchar(2048)    NOT NULL COMMENT 'Caminho relativo em uploads/ ou URL absoluta',
+  `url_publica` varchar(2048)    DEFAULT NULL COMMENT 'URL pública para API da Meta',
   `largura`     smallint(5)      DEFAULT NULL,
   `altura`      smallint(5)      DEFAULT NULL,
   `duracao_s`   smallint(5)      DEFAULT NULL COMMENT 'Duração em segundos (vídeos)',
@@ -129,6 +129,15 @@ CREATE TABLE IF NOT EXISTS `instagram_insights_cache` (
   COMMENT='Cache de métricas e histórico de seguidores do Instagram (FEAT-010)';
 SQL;
 
+// ── Ajustes em tabelas já existentes ──────────────────────────────────────────
+// v2.9.0: links de capa da Meta passam de 500 caracteres. MODIFY é idempotente.
+$alters = [];
+$alters['instagram_post_media: caminho e url_publica para varchar(2048)'] = <<<SQL
+ALTER TABLE `instagram_post_media`
+  MODIFY `caminho`     varchar(2048)    NOT NULL COMMENT 'Caminho relativo em uploads/ ou URL absoluta',
+  MODIFY `url_publica` varchar(2048)    DEFAULT NULL COMMENT 'URL pública para API da Meta'
+SQL;
+
 // ── Executar ──────────────────────────────────────────────────────────────────
 $errors = 0;
 
@@ -138,6 +147,16 @@ foreach ($migrations as $table => $sql) {
         echo "[OK] Tabela '{$table}' criada (ou já existia)." . PHP_EOL;
     } catch (PDOException $e) {
         echo "[ERRO] Tabela '{$table}': " . $e->getMessage() . PHP_EOL;
+        $errors++;
+    }
+}
+
+foreach ($alters as $label => $sql) {
+    try {
+        $pdo->exec($sql);
+        echo "[OK] Ajuste '{$label}' aplicado." . PHP_EOL;
+    } catch (PDOException $e) {
+        echo "[ERRO] Ajuste '{$label}': " . $e->getMessage() . PHP_EOL;
         $errors++;
     }
 }

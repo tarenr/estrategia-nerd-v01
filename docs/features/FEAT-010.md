@@ -99,8 +99,8 @@ Arquivos de mídia associados a cada post (suporta carrossel de 2–10 itens).
 | `post_id` | int unsigned FK | Referência a `instagram_posts.id` CASCADE |
 | `ordem` | tinyint unsigned | Posição no carrossel (0-based) |
 | `tipo_arquivo` | enum | `imagem` · `video` |
-| `caminho` | varchar(500) | Caminho relativo em `uploads/instagram/` ou URL absoluta |
-| `url_publica` | varchar(500) | URL acessível publicamente (exigida pela Meta API) |
+| `caminho` | varchar(2048) | Caminho relativo em `uploads/instagram/` ou URL absoluta |
+| `url_publica` | varchar(2048) | URL acessível publicamente (exigida pela Meta API) |
 | `largura` | smallint | Largura em pixels |
 | `altura` | smallint | Altura em pixels |
 | `duracao_s` | smallint | Duração em segundos (vídeos) |
@@ -520,6 +520,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-30 | 2.7.0 | "Importar do Blog" removido das telas do Instagram (criação só pelo post do blog); lista de Posts do blog com coluna do Instagram (verde/vermelho/cinza), métricas em ícones com legenda e filtro Instagram com/sem post; Agendamento mostrando também os posts do Instagram (rosa, erro e vencido destacados, botões Blog/Instagram, dias de 150px com "+N mais"). |
 | 2026-09-30 | 2.8.0 | Travas de tipo x mídias (Tasks #394 a #398): tipos desabilitados com motivo, seleção cumulativa até 10, lixeira (nova remove; salva marca para remoção ao salvar), envio travado em tipos de 1 mídia, preview com carrossel navegável e vídeo; validação no servidor antes de gravar (com desfazer em falha e renumeração da ordem), conferência no "Publicar agora" e no agendador, e bloqueio na rota antiga de remover mídia para posts agendados. |
 | 2026-10-01 | 2.8.1 | Tela de edição: o preview mostra a conta real (`@usuario`) também nas telas de erro do salvamento (antes aparecia "@sua_conta") e deixa de gerar aviso de PHP pela variável inexistente `$oldLegenda` (Tasks #400 a #403). |
+| 2026-10-01 | 2.9.0 | Capas no admin para todos os posts (Tasks #404 a #407): `sync-instagram-feed-assets.php` passa a baixar a capa local de todos os posts publicados (o feed do site continua com os 18 mais recentes); `caminho`/`url_publica` de `instagram_post_media` sobem de varchar(500) para varchar(2048) (links de capa de Reels/carrossel da Meta passavam de 500 e eram cortados, dando 403); `upsertFromFeed` não grava mais capa em post criado no admin (`origin = 'local'`, ordem 0-based). |
 
 
 

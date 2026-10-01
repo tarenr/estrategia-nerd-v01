@@ -588,11 +588,14 @@ final class InstagramPostRepository
                 ':publicado_em'      => $data['publicado_em'] ?? null,
             ]);
 
-            $stmtId = $this->pdo->prepare("SELECT id FROM instagram_posts WHERE ig_media_id = :ig_media_id LIMIT 1");
+            $stmtId = $this->pdo->prepare("SELECT id, origin FROM instagram_posts WHERE ig_media_id = :ig_media_id LIMIT 1");
             $stmtId->execute([':ig_media_id' => $igMediaId]);
-            $postId = (int) $stmtId->fetchColumn();
+            $row    = $stmtId->fetch(PDO::FETCH_ASSOC) ?: [];
+            $postId = (int) ($row['id'] ?? 0);
 
-            if ($postId > 0) {
+            // Post criado no admin (origin 'local') ja tem as proprias midias, numeradas a partir de 0;
+            // a capa do feed so e gravada nos posts que vieram do Instagram.
+            if ($postId > 0 && ($row['origin'] ?? '') === 'instagram') {
                 $rawThumb = trim((string) ($data['thumbnail_url'] ?? ''));
                 $rawMedia = trim((string) ($data['media_url'] ?? ''));
                 $isReels  = ($data['tipo'] ?? '') === 'reels';
