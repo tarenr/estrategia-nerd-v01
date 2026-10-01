@@ -102,9 +102,11 @@ final class InstagramController
 
         // ── Filtros, Ordenação e Paginação da Lista de Posts ───────────────────
         $filters = [
-            'busca'  => trim((string) ($_GET['busca'] ?? '')),
-            'tipo'   => trim((string) ($_GET['tipo'] ?? '')),
-            'status' => trim((string) ($_GET['status'] ?? '')),
+            'busca'        => trim((string) ($_GET['busca'] ?? '')),
+            'tipo'         => trim((string) ($_GET['tipo'] ?? '')),
+            'status'       => trim((string) ($_GET['status'] ?? '')),
+            'origem'       => trim((string) ($_GET['origem'] ?? '')),
+            'periodo_post' => trim((string) ($_GET['periodo_post'] ?? '')),
         ];
 
         $sort    = trim((string) ($_GET['sort'] ?? 'publicado_em'));
@@ -115,7 +117,7 @@ final class InstagramController
             $perPage = 9999;
         } else {
             $perPageInt = (int) $rawPerPage;
-            $perPage = in_array($perPageInt, [8, 16, 24, 48], true) ? $perPageInt : 8;
+            $perPage = in_array($perPageInt, [8, 16, 24, 32, 48], true) ? $perPageInt : 8;
         }
 
         $postsPaged = $repo->listPostsPaged($accountId, $filters, $sort, $dir, $page, $perPage);
@@ -157,7 +159,7 @@ final class InstagramController
             return;
         }
 
-        View::render('admin/instagram/index', [
+        $viewData = [
             'title'             => 'Instagram',
             'account'           => $account,
             'scheduled'         => $scheduled,
@@ -172,7 +174,14 @@ final class InstagramController
             'insights'          => $insights,
             'content_types'     => $contentTypeDist,
             'daily_performance' => $dailyPerf,
-        ]);
+        ];
+
+        if (isset($_GET['_partial']) && (string) $_GET['_partial'] === '1') {
+            echo View::fragment('admin/instagram/index', $viewData);
+            return;
+        }
+
+        View::render('admin/instagram/index', $viewData);
     }
 
     // ── Sincronizar ───────────────────────────────────────────────────────────

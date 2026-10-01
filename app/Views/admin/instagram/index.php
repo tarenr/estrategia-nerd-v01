@@ -31,10 +31,12 @@ $page        = max(1, (int) ($postsPaged['page'] ?? 1));
 $perPage     = max(1, (int) ($postsPaged['per_page'] ?? 8));
 $pages       = max(1, (int) ($postsPaged['pages'] ?? 1));
 
-$filters     = $filters ?? ['busca' => '', 'tipo' => '', 'status' => ''];
+$filters     = $filters ?? ['busca' => '', 'tipo' => '', 'status' => '', 'origem' => '', 'periodo_post' => ''];
 $busca       = (string) ($filters['busca'] ?? '');
 $tipo        = (string) ($filters['tipo'] ?? '');
 $status      = (string) ($filters['status'] ?? '');
+$origem      = (string) ($filters['origem'] ?? '');
+$periodoPost = (string) ($filters['periodo_post'] ?? '');
 
 $sort        = (string) ($sort ?? 'publicado_em');
 $dir         = (string) ($dir ?? 'desc');
@@ -107,6 +109,15 @@ $resolveMediaUrl = static function (?string $path, int $postId = 0): string {
     if ($path === '') {
         return '';
     }
+    // Para Reels/vídeos MP4, checa se existe a miniatura JPG gerada correspondente
+    if (preg_match('#\.mp4(\?.*)?$#i', $path)) {
+        $cleanPath = preg_replace('#\?.*$#', '', $path);
+        $jpgPath = preg_replace('#\.mp4$#i', '.jpg', $cleanPath);
+        $localJpg = base_path('public/' . ltrim($jpgPath, '/'));
+        if (is_file($localJpg)) {
+            return url('/' . ltrim($jpgPath, '/'));
+        }
+    }
     if (preg_match('#^(https?:)?//#i', $path) || str_starts_with($path, 'data:') || str_starts_with($path, 'blob:')) {
         return $path;
     }
@@ -116,17 +127,19 @@ $resolveMediaUrl = static function (?string $path, int $postId = 0): string {
 $baseUrl = function_exists('url') ? url('/admin/instagram') : '/admin/instagram';
 $buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $sort, $dir, $page, $perPage, $period, $start, $end, $viewMode): string {
     $current = [
-        'busca'    => (string) ($filters['busca'] ?? ''),
-        'tipo'     => (string) ($filters['tipo'] ?? ''),
-        'status'   => (string) ($filters['status'] ?? ''),
-        'period'   => $period,
-        'start'    => $start,
-        'end'      => $end,
-        'sort'     => $sort,
-        'dir'      => $dir,
-        'page'     => $page,
-        'per_page' => $perPage,
-        'view'     => $viewMode,
+        'busca'        => (string) ($filters['busca'] ?? ''),
+        'tipo'         => (string) ($filters['tipo'] ?? ''),
+        'status'       => (string) ($filters['status'] ?? ''),
+        'origem'       => (string) ($filters['origem'] ?? ''),
+        'periodo_post' => (string) ($filters['periodo_post'] ?? ''),
+        'period'       => $period,
+        'start'        => $start,
+        'end'          => $end,
+        'sort'         => $sort,
+        'dir'          => $dir,
+        'page'         => $page,
+        'per_page'     => $perPage,
+        'view'         => $viewMode,
     ];
 
     foreach ($overrides as $k => $v) {
@@ -142,6 +155,12 @@ $buildUrl = static function (array $overrides = []) use ($baseUrl, $filters, $so
     }
     if (!empty($current['status'])) {
         $clean['status'] = (string) $current['status'];
+    }
+    if (!empty($current['origem'])) {
+        $clean['origem'] = (string) $current['origem'];
+    }
+    if (!empty($current['periodo_post'])) {
+        $clean['periodo_post'] = (string) $current['periodo_post'];
     }
     if (!empty($current['period']) && (string) $current['period'] !== '7d') {
         $clean['period'] = (string) $current['period'];
@@ -503,22 +522,8 @@ if (($endRange - $startRange) < 4) {
             onclick="switchIgTab('feed')"
           >
             <i class="fa-solid fa-images"></i>
-            <span>Posts Recentes</span>
+            <span>Posts</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300 font-semibold"><?= $totalPosts ?></span>
-          </button>
-
-          <button
-            type="button"
-            class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 border border-transparent text-slate-400 hover:text-white hover:bg-slate-800/60"
-            data-ig-tab-btn="agendados"
-            onclick="switchIgTab('agendados')"
-          >
-            <i class="fa-solid fa-calendar-days"></i>
-            <span>Agendados & Rascunhos</span>
-            <?php $totalFila = count($scheduled) + count($drafts); ?>
-            <?php if ($totalFila > 0): ?>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold"><?= $totalFila ?></span>
-            <?php endif; ?>
           </button>
 
           <button
@@ -808,17 +813,17 @@ if (($endRange - $startRange) < 4) {
       </div>
     </div>
 
-    <!-- Conteúdo da Aba 2: Posts Recentes (Filtros, Tabela/Cards e Paginação) -->
-    <div data-ig-tab-content="feed" class="hidden space-y-6">
+    <!-- Conteúdo da Aba 2: Posts (Filtros, Tabela/Cards e Paginação) -->
+    <div data-ig-tab-content="feed" data-ig-posts-root class="hidden space-y-6">
       <!-- Painel de Filtros da Lista de Posts (Padrão Central de Posts) -->
       <form method="GET" action="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="admin-panel admin-filter-panel" data-admin-instagram-filters>
       <div class="admin-filter-head">
         <div>
           <h3 class="font-orbitron text-xl font-black text-white">Filtros</h3>
-          <div class="text-xs text-slate-400 mt-1">Refine a listagem mantendo a navegação fluida</div>
+          <div class="text-xs text-slate-400 mt-1">Refine a listagem mantendo a navegação fluida sem refresh</div>
         </div>
         <div class="text-xs text-slate-400">
-          Página atual <span class="text-cyan-300 font-bold"><?= $page ?></span> - <span class="text-slate-200 font-bold"><?= $perPage ?></span> por página
+          Página atual <span class="text-cyan-300 font-bold"><?= $page ?></span> - <span class="text-slate-200 font-bold"><?= $perPage >= 9999 ? 'Todos' : $perPage ?></span> por página
         </div>
       </div>
 
@@ -837,7 +842,7 @@ if (($endRange - $startRange) < 4) {
         <div class="admin-filter-field">
           <label class="admin-filter-label" for="posts-tipo">Tipo</label>
           <select id="posts-tipo" name="tipo" class="nerd-input admin-filter-control">
-            <option value="" <?= $tipo === '' ? 'selected' : '' ?>>Todos</option>
+            <option value="" <?= $tipo === '' ? 'selected' : '' ?>>Todos os tipos</option>
             <option value="imagem" <?= $tipo === 'imagem' ? 'selected' : '' ?>>Imagem</option>
             <option value="carrossel" <?= $tipo === 'carrossel' ? 'selected' : '' ?>>Carrossel</option>
             <option value="reels" <?= $tipo === 'reels' ? 'selected' : '' ?>>Reels</option>
@@ -848,10 +853,43 @@ if (($endRange - $startRange) < 4) {
         <div class="admin-filter-field">
           <label class="admin-filter-label" for="posts-status">Status</label>
           <select id="posts-status" name="status" class="nerd-input admin-filter-control">
-            <option value="" <?= $status === '' ? 'selected' : '' ?>>Todos</option>
+            <option value="" <?= $status === '' ? 'selected' : '' ?>>Todos os status</option>
             <option value="publicado" <?= $status === 'publicado' ? 'selected' : '' ?>>Publicado</option>
             <option value="agendado" <?= $status === 'agendado' ? 'selected' : '' ?>>Agendado</option>
             <option value="rascunho" <?= $status === 'rascunho' ? 'selected' : '' ?>>Rascunho</option>
+            <option value="erro" <?= $status === 'erro' ? 'selected' : '' ?>>Erro/Falhou</option>
+          </select>
+        </div>
+
+        <div class="admin-filter-field">
+          <label class="admin-filter-label" for="posts-origem">Origem</label>
+          <select id="posts-origem" name="origem" class="nerd-input admin-filter-control">
+            <option value="" <?= $origem === '' ? 'selected' : '' ?>>Todas as origens</option>
+            <option value="blog" <?= $origem === 'blog' ? 'selected' : '' ?>>Blog (Sincronizado)</option>
+            <option value="local" <?= $origem === 'local' ? 'selected' : '' ?>>Painel Local</option>
+            <option value="instagram" <?= $origem === 'instagram' ? 'selected' : '' ?>>Instagram (Feed)</option>
+          </select>
+        </div>
+
+        <div class="admin-filter-field">
+          <label class="admin-filter-label" for="posts-periodo">Período</label>
+          <select id="posts-periodo" name="periodo_post" class="nerd-input admin-filter-control">
+            <option value="" <?= $periodoPost === '' ? 'selected' : '' ?>>Todo o período</option>
+            <option value="hoje" <?= $periodoPost === 'hoje' ? 'selected' : '' ?>>Hoje</option>
+            <option value="7d" <?= $periodoPost === '7d' ? 'selected' : '' ?>>Últimos 7 dias</option>
+            <option value="30d" <?= $periodoPost === '30d' ? 'selected' : '' ?>>Últimos 30 dias</option>
+            <option value="mes" <?= $periodoPost === 'mes' ? 'selected' : '' ?>>Este Mês</option>
+          </select>
+        </div>
+
+        <div class="admin-filter-field">
+          <label class="admin-filter-label" for="posts-per-page">Por Página</label>
+          <select id="posts-per-page" name="per_page" class="nerd-input admin-filter-control">
+            <option value="8" <?= $perPage === 8 ? 'selected' : '' ?>>8 por página</option>
+            <option value="16" <?= $perPage === 16 ? 'selected' : '' ?>>16 por página</option>
+            <option value="24" <?= $perPage === 24 ? 'selected' : '' ?>>24 por página</option>
+            <option value="32" <?= $perPage === 32 ? 'selected' : '' ?>>32 por página</option>
+            <option value="todos" <?= $perPage >= 9999 ? 'selected' : '' ?>>Todos</option>
           </select>
         </div>
       </div>
@@ -864,10 +902,9 @@ if (($endRange - $startRange) < 4) {
         <?php endif; ?>
         <?php if ($sort !== 'publicado_em'): ?><input type="hidden" name="sort" value="<?= $esc($sort) ?>"><?php endif; ?>
         <?php if ($dir !== 'desc'): ?><input type="hidden" name="dir" value="<?= $esc($dir) ?>"><?php endif; ?>
-        <?php if ($perPage !== 8): ?><input type="hidden" name="per_page" value="<?= $perPage >= 9999 ? 'todos' : (int) $perPage ?>"><?php endif; ?>
         <?php if ($viewMode !== 'table'): ?><input type="hidden" name="view" value="<?= $esc($viewMode) ?>"><?php endif; ?>
         <button class="admin-btn admin-btn-primary admin-filter-button" type="submit">Filtrar</button>
-        <a class="admin-btn admin-btn-secondary admin-filter-button" href="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Limpar</a>
+        <a class="admin-btn admin-btn-secondary admin-filter-button" href="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-admin-instagram-link>Limpar</a>
       </div>
     </form>
 
@@ -877,6 +914,10 @@ if (($endRange - $startRange) < 4) {
         <div>
           <h3 class="font-orbitron text-xl font-black text-white">Lista de Posts</h3>
           <div class="text-xs text-slate-400 mt-1"><?= number_format($totalPosts, 0, ',', '.') ?> resultado(s) encontrado(s)</div>
+          <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400" aria-label="Legenda da tabela">
+            <span><i class="fa-solid fa-heart text-pink-400" aria-hidden="true"></i> Curtidas</span>
+            <span><i class="fa-solid fa-comment text-cyan-400" aria-hidden="true"></i> Comentários</span>
+          </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-3">
@@ -920,28 +961,28 @@ if (($endRange - $startRange) < 4) {
                   <th class="posts-table-th posts-table-th-center" style="width: 60px;">Mídia</th>
                   <th class="posts-table-th posts-table-th-center" style="width: 100px;">Tipo</th>
                   <th class="posts-table-th posts-table-th-left">
-                    <a class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('legenda'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    <a data-admin-instagram-link class="posts-table-sort posts-table-sort-left" href="<?= htmlspecialchars($sortLink('legenda'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                       Legenda <?= $sortIcon('legenda') ?>
                     </a>
                   </th>
                   <th class="posts-table-th posts-table-th-center" style="width: 110px;">
-                    <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    <a data-admin-instagram-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                       Status <?= $sortIcon('status') ?>
                     </a>
                   </th>
                   <th class="posts-table-th posts-table-th-center" style="width: 140px;">
-                    <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('publicado_em'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    <a data-admin-instagram-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('publicado_em'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                       Publicação <?= $sortIcon('publicado_em') ?>
                     </a>
                   </th>
                   <th class="posts-table-th posts-table-th-center" style="width: 90px;">
-                    <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('curtidas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                      Curtidas <?= $sortIcon('curtidas') ?>
+                    <a data-admin-instagram-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('curtidas'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Curtidas" aria-label="Ordenar por curtidas">
+                      <i class="fa-solid fa-heart text-pink-400" aria-hidden="true"></i> <?= $sortIcon('curtidas') ?>
                     </a>
                   </th>
                   <th class="posts-table-th posts-table-th-center" style="width: 110px;">
-                    <a class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('comentarios'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                      Comentários <?= $sortIcon('comentarios') ?>
+                    <a data-admin-instagram-link class="posts-table-sort posts-table-sort-center" href="<?= htmlspecialchars($sortLink('comentarios'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Comentários" aria-label="Ordenar por comentários">
+                      <i class="fa-solid fa-comment text-cyan-400" aria-hidden="true"></i> <?= $sortIcon('comentarios') ?>
                     </a>
                   </th>
                   <th class="posts-table-th posts-table-th-center" style="width: 90px;">Ações</th>
@@ -1149,9 +1190,10 @@ if (($endRange - $startRange) < 4) {
           <div class="posts-pagination-per-page">
             <span class="posts-pagination-kicker">Por página</span>
             <div class="posts-pagination-chip-group">
-              <?php foreach ([8 => '8', 16 => '16', 24 => '24', 'todos' => 'Todos'] as $optVal => $optLabel): ?>
+              <?php foreach ([8 => '8', 16 => '16', 24 => '24', 32 => '32', 'todos' => 'Todos'] as $optVal => $optLabel): ?>
                 <?php $activeChip = ($optVal === 'todos' ? $perPage >= 9999 : $perPage === (int) $optVal); ?>
                 <a
+                  data-admin-instagram-link
                   class="posts-pagination-chip<?= $activeChip ? ' is-active' : '' ?>"
                   href="<?= htmlspecialchars($buildUrl(['per_page' => $optVal, 'page' => 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
                 >
@@ -1164,18 +1206,21 @@ if (($endRange - $startRange) < 4) {
           <?php if ($perPage < 9999 && $pages > 1): ?>
             <nav class="posts-pagination-nav" aria-label="Paginação dos posts do Instagram">
               <a
+                data-admin-instagram-link
                 class="posts-pagination-link posts-pagination-link-wide<?= $totalPosts === 0 || $page <= 1 ? ' is-disabled' : '' ?>"
                 href="<?= htmlspecialchars($buildUrl(['page' => $page - 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
               >Anterior</a>
 
               <?php for ($curr = $startRange; $curr <= $endRange; $curr++): ?>
                 <a
+                  data-admin-instagram-link
                   class="posts-pagination-link<?= $curr === $page ? ' is-active' : '' ?>"
                   href="<?= htmlspecialchars($buildUrl(['page' => $curr]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
                 ><?= $curr ?></a>
               <?php endfor; ?>
 
               <a
+                data-admin-instagram-link
                 class="posts-pagination-link posts-pagination-link-wide<?= $totalPosts === 0 || $page >= $pages ? ' is-disabled' : '' ?>"
                 href="<?= htmlspecialchars($buildUrl(['page' => $page + 1]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
               >Próxima</a>
@@ -1186,228 +1231,7 @@ if (($endRange - $startRange) < 4) {
     </section>
     </div>
 
-    <!-- Conteúdo da Aba 3: Posts Agendados & Rascunhos -->
-    <div data-ig-tab-content="agendados" class="hidden space-y-6">
-      <!-- Fila Editorial 1: Agendados (Por último, largura total, tabela padrão) -->
-    <section class="admin-panel posts-table-panel" id="secao-agendados">
-      <div class="posts-table-head">
-        <div>
-          <h3 class="font-orbitron text-xl font-black text-white flex items-center gap-2">
-            <i class="fa-solid fa-clock text-amber-300" aria-hidden="true"></i>
-            <span>Agendados</span>
-          </h3>
-          <div class="text-xs text-slate-400 mt-1"><?= count($scheduled) ?> publicação(ões) programada(s) para o Instagram</div>
-        </div>
 
-        <div class="flex items-center gap-3">
-          <?php if ($scheduled !== []): ?>
-            <div class="relative">
-              <input
-                type="text"
-                placeholder="Filtrar agendados..."
-                class="nerd-input !py-1 !px-3 text-xs w-48 rounded-xl"
-                data-filter-table="agendados"
-                aria-label="Filtrar agendados"
-              />
-            </div>
-          <?php endif; ?>
-          <a href="<?= url('/admin/instagram/posts/criar') ?>" class="admin-btn admin-btn-secondary !px-3 !py-1 text-xs">
-            <i class="fa-solid fa-plus mr-1" aria-hidden="true"></i> Novo Agendamento
-          </a>
-        </div>
-      </div>
-
-      <?php if ($scheduled === []): ?>
-        <div class="text-center py-10 border-2 border-dashed border-gray-700/80 rounded-xl">
-          <div class="text-slate-400 text-sm font-medium">Nenhum post agendado no momento.</div>
-          <div class="text-slate-500 text-xs mt-1">Crie um post e selecione uma data de publicação futura.</div>
-        </div>
-      <?php else: ?>
-        <div class="posts-table-wrap">
-          <table class="posts-table" data-table-id="agendados">
-            <thead class="posts-table-thead">
-              <tr>
-                <th class="posts-table-th posts-table-th-center" style="width: 60px;">Mídia</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 100px;">Tipo</th>
-                <th class="posts-table-th posts-table-th-left">Legenda</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 160px;">Data/Hora Agendada</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 110px;">Status</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 140px;">Ações</th>
-              </tr>
-            </thead>
-            <tbody class="posts-table-body">
-              <?php foreach ($scheduled as $s): ?>
-                <?php
-                  $sId      = (int) ($s['id'] ?? 0);
-                  $sTipo    = (string) ($s['tipo'] ?? 'imagem');
-                  $sLegenda = (string) ($s['legenda'] ?? '');
-                  $sData    = (string) ($s['agendado_para'] ?? '');
-                  $sMedias  = array_values(array_filter(explode('|', (string) ($s['medias'] ?? ''))));
-                  $sThumb   = $resolveMediaUrl($sMedias[0] ?? '', $sId);
-                  $sEdit    = url('/admin/instagram/posts/' . $sId . '/editar');
-                ?>
-                <tr class="posts-table-row" data-row-search="<?= $esc(mb_strtolower($sLegenda . ' ' . $sTipo)) ?>">
-                  <td class="posts-table-td posts-table-td-center">
-                    <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex items-center justify-center shrink-0">
-                      <?php if ($sThumb !== ''): ?>
-                        <img src="<?= $esc($sThumb) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
-                        <div class="hidden h-full w-full flex items-center justify-center bg-slate-800 text-slate-500">
-                          <i class="fa-brands fa-instagram text-sm" aria-hidden="true"></i>
-                        </div>
-                      <?php else: ?>
-                        <i class="fa-brands fa-instagram text-slate-500 text-sm" aria-hidden="true"></i>
-                      <?php endif; ?>
-                    </div>
-                  </td>
-                  <td class="posts-table-td posts-table-td-center">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge($sTipo) ?>">
-                      <?= $esc($tipoLabel[$sTipo] ?? $sTipo) ?>
-                    </span>
-                  </td>
-                  <td class="posts-table-td posts-table-title-cell">
-                    <div class="posts-table-title-top">
-                      <a class="posts-table-title-link" href="<?= $esc($sEdit) ?>">
-                        <?= $esc($excerpt($sLegenda, 80)) ?>
-                      </a>
-                    </div>
-                    <div class="posts-table-subline">#<?= $sId ?></div>
-                  </td>
-                  <td class="posts-table-td posts-table-td-center">
-                    <div class="posts-table-date font-bold text-amber-300 whitespace-nowrap">
-                      <i class="fa-regular fa-clock mr-1" aria-hidden="true"></i> <?= $esc($formatDate($sData)) ?>
-                    </div>
-                  </td>
-                  <td class="posts-table-td posts-table-td-center">
-                    <span class="status-badge status-agendado">Agendado</span>
-                  </td>
-                  <td class="posts-table-td posts-table-td-center">
-                    <div class="flex items-center justify-center gap-1.5">
-                      <a href="<?= $esc($sEdit) ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs" title="Editar agendamento">
-                        <i class="fa-solid fa-pen mr-1" aria-hidden="true"></i> Editar
-                      </a>
-                      <button type="button" class="admin-btn !px-2.5 !py-1 text-xs !border-rose-500/40 text-rose-300 hover:!bg-rose-500/20" title="Excluir post agendado" onclick="openIgDeleteModal('<?= url('/admin/instagram/posts/' . $sId . '/delete') ?>', '<?= $esc(addslashes($sLegenda !== '' ? $excerpt($sLegenda, 35) : ('Agendamento #' . $sId))) ?>')">
-                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
-        </div>
-      <?php endif; ?>
-    </section>
-
-    <!-- Fila Editorial 2: Rascunhos (Por último, largura total, tabela padrão) -->
-    <section class="admin-panel posts-table-panel" id="secao-rascunhos">
-      <div class="posts-table-head">
-        <div>
-          <h3 class="font-orbitron text-xl font-black text-white flex items-center gap-2">
-            <i class="fa-solid fa-pen-to-square text-cyan-300" aria-hidden="true"></i>
-            <span>Rascunhos</span>
-          </h3>
-          <div class="text-xs text-slate-400 mt-1"><?= count($drafts) ?> rascunho(s) salvo(s) aguardando finalização</div>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <?php if ($drafts !== []): ?>
-            <div class="relative">
-              <input
-                type="text"
-                placeholder="Filtrar rascunhos..."
-                class="nerd-input !py-1 !px-3 text-xs w-48 rounded-xl"
-                data-filter-table="rascunhos"
-                aria-label="Filtrar rascunhos"
-              />
-            </div>
-          <?php endif; ?>
-          <a href="<?= url('/admin/instagram/posts/criar') ?>" class="admin-btn admin-btn-secondary !px-3 !py-1 text-xs">
-            <i class="fa-solid fa-plus mr-1" aria-hidden="true"></i> Novo Rascunho
-          </a>
-        </div>
-      </div>
-
-      <?php if ($drafts === []): ?>
-        <div class="text-center py-10 border-2 border-dashed border-gray-700/80 rounded-xl">
-          <div class="text-slate-400 text-sm font-medium">Nenhum rascunho em aberto.</div>
-          <div class="text-slate-500 text-xs mt-1">Posts iniciados e salvos sem agendar ficam catalogados aqui.</div>
-        </div>
-      <?php else: ?>
-        <div class="posts-table-wrap">
-          <table class="posts-table" data-table-id="rascunhos">
-            <thead class="posts-table-thead">
-              <tr>
-                <th class="posts-table-th posts-table-th-center" style="width: 60px;">Mídia</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 100px;">Tipo</th>
-                <th class="posts-table-th posts-table-th-left">Legenda</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 160px;">Data de Criação</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 110px;">Status</th>
-                <th class="posts-table-th posts-table-th-center" style="width: 140px;">Ações</th>
-              </tr>
-            </thead>
-            <tbody class="posts-table-body">
-              <?php foreach ($drafts as $d): ?>
-                <?php
-                  $dId      = (int) ($d['id'] ?? 0);
-                  $dTipo    = (string) ($d['tipo'] ?? 'imagem');
-                  $dLegenda = (string) ($d['legenda'] ?? '');
-                  $dData    = (string) ($d['criado_em'] ?? '');
-                  $dMedias  = array_values(array_filter(explode('|', (string) ($d['medias'] ?? ''))));
-                  $dThumb   = $resolveMediaUrl($dMedias[0] ?? '', $dId);
-                  $dEdit    = url('/admin/instagram/posts/' . $dId . '/editar');
-                ?>
-                <tr class="posts-table-row" data-row-search="<?= $esc(mb_strtolower($dLegenda . ' ' . $dTipo)) ?>">
-                  <td class="posts-table-td posts-table-td-center">
-                    <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden bg-slate-800 border border-slate-700/80 flex items-center justify-center shrink-0">
-                      <?php if ($dThumb !== ''): ?>
-                        <img src="<?= $esc($dThumb) ?>" alt="Mídia" class="h-full w-full object-cover" loading="lazy" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
-                        <div class="hidden h-full w-full flex items-center justify-center bg-slate-800 text-slate-500">
-                          <i class="fa-brands fa-instagram text-sm" aria-hidden="true"></i>
-                        </div>
-                      <?php else: ?>
-                        <i class="fa-brands fa-instagram text-slate-500 text-sm" aria-hidden="true"></i>
-                      <?php endif; ?>
-                    </div>
-                  </td>
-                  <td class="posts-table-td posts-table-td-center">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold <?= $tipoBadge($dTipo) ?>">
-                      <?= $esc($tipoLabel[$dTipo] ?? $dTipo) ?>
-                    </span>
-                  </td>
-                  <td class="posts-table-td posts-table-title-cell">
-                    <div class="posts-table-title-top">
-                      <a class="posts-table-title-link" href="<?= $esc($dEdit) ?>">
-                        <?= $esc($excerpt($dLegenda, 80)) ?>
-                      </a>
-                    </div>
-                    <div class="posts-table-subline">#<?= $dId ?></div>
-                  </td>
-                  <td class="posts-table-td posts-table-td-center">
-                    <div class="posts-table-date whitespace-nowrap">
-                      <?= $esc($formatDate($dData)) ?>
-                    </div>
-                  </td>
-                  <td class="posts-table-td posts-table-td-center">
-                    <span class="status-badge status-rascunho">Rascunho</span>
-                  </td>
-                  <td class="posts-table-td posts-table-td-center">
-                    <div class="flex items-center justify-center gap-1.5">
-                      <a href="<?= $esc($dEdit) ?>" class="admin-btn admin-btn-secondary !px-2.5 !py-1 text-xs" title="Editar rascunho">
-                        <i class="fa-solid fa-pen mr-1" aria-hidden="true"></i> Editar
-                      </a>
-                      <button type="button" class="admin-btn !px-2.5 !py-1 text-xs !border-rose-500/40 text-rose-300 hover:!bg-rose-500/20" title="Excluir rascunho" onclick="openIgDeleteModal('<?= url('/admin/instagram/posts/' . $dId . '/delete') ?>', '<?= $esc(addslashes($dLegenda !== '' ? $excerpt($dLegenda, 35) : ('Rascunho #' . $dId))) ?>')">
-                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
-        </div>
-      <?php endif; ?>
-    </section>
-    </div>
 
     <!-- Conteúdo da Aba 4: Insights Detalhados -->
     <div data-ig-tab-content="insights" class="hidden space-y-6">
@@ -1943,9 +1767,9 @@ if (($endRange - $startRange) < 4) {
     document.body.classList.add('overflow-hidden');
   };
 
-  // Alternador de Abas (Métricas, Posts Recentes, Agendados & Rascunhos, Insights)
+  // Alternador de Abas (Métricas, Posts, Insights)
   window.switchIgTab = function (tabName) {
-    var tabs = ['metricas', 'feed', 'agendados', 'insights'];
+    var tabs = ['metricas', 'feed', 'insights'];
     if (!tabs.includes(tabName)) tabName = 'metricas';
 
     tabs.forEach(function (t) {
@@ -1976,10 +1800,10 @@ if (($endRange - $startRange) < 4) {
   try {
     var savedTab = localStorage.getItem('ig_active_tab');
     var urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('page') || urlParams.has('busca') || urlParams.has('tipo') || urlParams.has('status')) {
+    if (urlParams.has('page') || urlParams.has('busca') || urlParams.has('tipo') || urlParams.has('status') || urlParams.has('origem') || urlParams.has('periodo_post')) {
       savedTab = 'feed';
     }
-    if (savedTab && ['metricas', 'feed', 'agendados', 'insights'].includes(savedTab)) {
+    if (savedTab && ['metricas', 'feed', 'insights'].includes(savedTab)) {
       window.switchIgTab(savedTab);
     }
   } catch (e) {}
@@ -2147,4 +1971,8 @@ if (($endRange - $startRange) < 4) {
     </div>
   </div>
 </div>
+<?php endif; ?>
+
+<?php if (!isset($_GET['_partial']) || (string) $_GET['_partial'] !== '1'): ?>
+<script src="<?= url('/assets/js/admin-instagram-posts.js') . '?v=' . @filemtime(base_path('public/assets/js/admin-instagram-posts.js')) ?>" defer></script>
 <?php endif; ?>

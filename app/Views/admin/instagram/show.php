@@ -46,10 +46,10 @@ $firstMedia    = $medias[0] ?? null;
 $firstMediaUrl = '';
 $firstIsVideo  = false;
 if ($firstMedia !== null) {
-    $firstIsVideo = (string) ($firstMedia['tipo_arquivo'] ?? '') === 'video';
+    $caminho = trim((string) ($firstMedia['caminho'] ?? ''));
+    $firstIsVideo = (string) ($firstMedia['tipo_arquivo'] ?? '') === 'video' || preg_match('#\.mp4(\?.*)?$#i', $caminho);
     $firstMediaUrl = trim((string) ($firstMedia['url_publica'] ?? ''));
     if ($firstMediaUrl === '') {
-        $caminho = trim((string) ($firstMedia['caminho'] ?? ''));
         $firstMediaUrl = $caminho !== '' ? (str_starts_with($caminho, 'http') ? $caminho : url('/' . ltrim($caminho, '/'))) : '';
     }
 }
@@ -73,8 +73,8 @@ if ($firstMedia !== null) {
     <!-- Mídia -->
     <section class="admin-panel">
       <div class="rounded-xl overflow-hidden bg-slate-900 border border-slate-800 aspect-square flex items-center justify-center">
-        <?php if ($firstIsVideo): ?>
-          <i class="fa-solid fa-video text-4xl text-slate-500" aria-hidden="true"></i>
+        <?php if ($firstIsVideo && $firstMediaUrl !== ''): ?>
+          <video src="<?= $esc($firstMediaUrl) ?>" controls playsinline class="h-full w-full object-contain bg-black"></video>
         <?php elseif ($firstMediaUrl !== ''): ?>
           <img src="<?= $esc($firstMediaUrl) ?>" alt="" class="h-full w-full object-cover" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
           <div class="hidden h-full w-full flex items-center justify-center bg-slate-900 text-slate-600">
@@ -89,15 +89,15 @@ if ($firstMedia !== null) {
           <?php foreach (array_slice($medias, 1) as $m): ?>
             <?php
             $mUrl = trim((string) ($m['url_publica'] ?? ''));
+            $caminho = trim((string) ($m['caminho'] ?? ''));
             if ($mUrl === '') {
-                $caminho = trim((string) ($m['caminho'] ?? ''));
                 $mUrl = $caminho !== '' ? (str_starts_with($caminho, 'http') ? $caminho : url('/' . ltrim($caminho, '/'))) : '';
             }
-            $mVideo = (string) ($m['tipo_arquivo'] ?? '') === 'video';
+            $mVideo = (string) ($m['tipo_arquivo'] ?? '') === 'video' || preg_match('#\.mp4(\?.*)?$#i', $caminho);
             ?>
             <div class="aspect-square rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center">
-              <?php if ($mVideo): ?>
-                <i class="fa-solid fa-video text-slate-400 text-sm" aria-hidden="true"></i>
+              <?php if ($mVideo && $mUrl !== ''): ?>
+                <video src="<?= $esc($mUrl) ?>" muted class="h-full w-full object-cover"></video>
               <?php elseif ($mUrl !== ''): ?>
                 <img src="<?= $esc($mUrl) ?>" alt="" class="h-full w-full object-cover" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
                 <div class="hidden h-full w-full flex items-center justify-center bg-slate-800 text-slate-500">
@@ -113,6 +113,8 @@ if ($firstMedia !== null) {
 
       <?php if (!empty($post['legenda'])): ?>
         <div class="mt-4 text-sm text-slate-300 leading-5"><?= nl2br($esc((string) $post['legenda'])) ?></div>
+      <?php else: ?>
+        <div class="mt-4 text-xs italic text-slate-500">Sem legenda cadastrada para esta publicação.</div>
       <?php endif; ?>
 
       <?php if (!empty($audio_track)): ?>

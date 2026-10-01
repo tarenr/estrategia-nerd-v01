@@ -46,6 +46,7 @@ $environmentSwitcherPaths = [
     '#/admin/editar-usuario$#',
     '#/admin/excluir-usuario$#',
     '#/admin/posts$#',
+    '#/admin/agendamento-posts$#',
     '#/admin/criar-post$#',
     '#/admin/editar-post$#',
     '#/admin/excluir-post$#',

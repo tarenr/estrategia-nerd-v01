@@ -127,5 +127,22 @@ Para assegurar compatibilidade universal com navegadores (Chromium/Direct3D 11, 
 
 ### 7.2. Resolução de URLs e Preview no Painel Administrativo
 - Mídias locais devem sempre ser resolvidas de forma dinâmica utilizando `url('/' . ltrim($caminho, '/'))` nas views e endpoints administrativos para garantir correspondência exata com o domínio/host/porta em que o operador estiver autenticado (localhost, virtualhost ou túnel Cloudflare).
-- Elementos `<video>` nos previews interativos devem possuir atributos `controls`, `playsinline`, `muted` e suporte a renderização nativa imediata no HTML inicial de edição.
+- Elementos `<video>` nos previews interativos devem possuir atributos `controls`, `playsinline`, `muted` e suporte a renderização nativa imediata no HTML inicial de edição e detalhes.
+
+### 7.3. Geração Automática de Miniaturas (Posters JPG) para Reels e Vídeos
+- Todo Reel gerado via `AudioReelGeneratorService` extrai e salva automaticamente uma miniatura `.jpg` no mesmo diretório com o mesmo nome base via FFmpeg (`-ss 00:00:00.500 -vframes 1 -q:v 2`).
+- A função de resolução de mídia `$resolveMediaUrl` inspeciona extensões `.mp4` locais e serve o poster `.jpg` correspondente em tags `<img>` de listagens, cards e tabelas, eliminando telas pretas ou ícones quebrados.
+- Na tela de detalhes do post (`show.php`), vídeos MP4 são renderizados nativamente em players HTML5 com controles completos e áudio.
+
+---
+
+## 8. Padrões de Navegação Fluida e Filtros Assíncronos (AJAX/Fetch)
+
+Para proporcionar uma experiência rápida e moderna sem recarregamento de página:
+1. **Atualização Assíncrona com Fragmentos (`_partial=1`):** Formulários de filtro, paginação e cabeçalhos de ordenação interceptam eventos de navegação, consultam o endpoint com o cabeçalho `X-Requested-With: XMLHttpRequest` e o parâmetro `_partial=1`, e substituem atomicamente o elemento raiz (`[data-ig-posts-root]`).
+2. **URLs Amigáveis (`history.pushState`):** O histórico de navegação do browser é mantido perfeitamente atualizado com `pushState`/`replaceState`, limpando parâmetros vazios e padrões (`period=7d`, `sort=publicado_em`, `dir=desc`, `per_page=8`, `view=table`).
+3. **Busca em Tempo Real com Debounce:** O campo de busca textual executa requisições automáticas com debounce de 350ms, dispensando cliques manuais em botões de envio.
+4. **Legendas e Símbolos Padronizados:** Tabelas com indicadores de engajamento (curtidas, comentários, views) utilizam ícones visuais nos cabeçalhos (`<i class="fa-solid fa-heart"></i>`, `<i class="fa-solid fa-comment"></i>`) acompanhados de barra de legenda explicativa padronizada acima da tabela.
+5. **Unificação Editorial:** As publicações, agendamentos e rascunhos coexistem na aba principal «Posts», permitindo segmentação rápida através dos filtros de «Status», «Origem» e «Período».
+
 

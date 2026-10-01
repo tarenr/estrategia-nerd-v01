@@ -452,7 +452,17 @@ textarea.admin-filter-control {
 
 @media (min-width: 1024px) {
     .admin-filter-grid-instagram {
-        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .admin-filter-grid-instagram .admin-filter-field-search {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (min-width: 1280px) {
+    .admin-filter-grid-instagram {
+        grid-template-columns: minmax(0, 1.8fr) repeat(5, minmax(0, 1fr));
     }
 
     .admin-filter-grid-instagram .admin-filter-field-search {

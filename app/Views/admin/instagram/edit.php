@@ -78,7 +78,7 @@ if (isset($old['hashtags'])) {
         <div class="text-xs text-slate-400 mt-1">
           Editar a legenda ou a mídia por aqui não altera o post que já está no ar — a API do Instagram não permite editar uma mídia publicada, e reenviar criaria uma publicação duplicada. Por isso a edição fica bloqueada para este post.
         </div>
-        <div class="mt-3 text-sm text-slate-300"><span class="font-bold">Legenda atual:</span> <?= nl2br($esc((string) ($post['legenda'] ?? '—'))) ?></div>
+        <div class="mt-3 text-sm text-slate-300"><span class="font-bold">Legenda atual:</span> <?= !empty($post['legenda']) ? nl2br($esc((string) $post['legenda'])) : '<span class="italic text-slate-500">Sem legenda cadastrada</span>' ?></div>
         <?php if (!empty($post['permalink'])): ?>
           <a href="<?= $esc((string) $post['permalink']) ?>" target="_blank" rel="noopener noreferrer" class="admin-btn admin-btn-secondary mt-4"><i class="fa-brands fa-instagram" aria-hidden="true"></i> Ver no Instagram</a>
         <?php endif; ?>
@@ -261,8 +261,8 @@ if (isset($old['hashtags'])) {
               $firstMediaUrl = '';
               $firstMediaIsVideo = false;
               if ($firstMedia !== null) {
-                  $firstMediaIsVideo = (string) ($firstMedia['tipo_arquivo'] ?? '') === 'video';
                   $caminho = trim((string) ($firstMedia['caminho'] ?? ''));
+                  $firstMediaIsVideo = (string) ($firstMedia['tipo_arquivo'] ?? '') === 'video' || preg_match('#\.mp4(\?.*)?$#i', $caminho);
                   if ($caminho !== '' && !str_starts_with($caminho, 'http')) {
                       $firstMediaUrl = url('/' . ltrim($caminho, '/'));
                   } else {

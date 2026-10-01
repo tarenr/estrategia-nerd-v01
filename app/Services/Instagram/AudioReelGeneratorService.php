@@ -205,6 +205,18 @@ final class AudioReelGeneratorService
             );
         }
 
+        // Gera automaticamente a miniatura pôster .jpg para o vídeo
+        $posterPath = preg_replace('/\.mp4$/i', '.jpg', $fullOutputPath);
+        if (is_string($posterPath) && !is_file($posterPath)) {
+            $thumbCmd = sprintf(
+                '%s -y -ss 00:00:00.100 -i %s -vframes 1 -q:v 2 %s 2>&1',
+                escapeshellcmd($this->ffmpegBinary),
+                escapeshellarg($fullOutputPath),
+                escapeshellarg($posterPath)
+            );
+            @exec($thumbCmd);
+        }
+
         return str_replace('\\', '/', $outputPath);
     }
 

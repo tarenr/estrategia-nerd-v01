@@ -801,17 +801,18 @@ final class InstagramPostRepository
         int $perPage = 10
     ): array {
         $allowedSort = [
-            'data'              => 'p.publicado_em',
-            'publicado_em'      => 'p.publicado_em',
+            'data'              => 'COALESCE(p.publicado_em, p.agendado_para, p.criado_em)',
+            'publicado_em'      => 'COALESCE(p.publicado_em, p.agendado_para, p.criado_em)',
             'curtidas'          => 'p.curtidas',
             'comentarios'       => 'p.comentarios_count',
             'comentarios_count' => 'p.comentarios_count',
             'tipo'              => 'p.tipo',
             'status'            => 'p.status',
+            'legenda'           => 'p.legenda',
             'id'                => 'p.id',
         ];
 
-        $sortCol = $allowedSort[$sort] ?? 'p.publicado_em';
+        $sortCol = $allowedSort[$sort] ?? 'COALESCE(p.publicado_em, p.agendado_para, p.criado_em)';
         $direction = strtolower($dir) === 'asc' ? 'ASC' : 'DESC';
 
         $where = ['p.account_id = :account_id'];
@@ -833,6 +834,26 @@ final class InstagramPostRepository
         if ($status !== '' && in_array($status, ['publicado', 'agendado', 'rascunho', 'publicando', 'erro'], true)) {
             $where[] = 'p.status = :status';
             $params[':status'] = $status;
+        }
+
+        $origem = trim((string) ($filters['origem'] ?? ''));
+        if ($origem === 'blog') {
+            $where[] = 'p.post_blog_id IS NOT NULL';
+        } elseif ($origem === 'local') {
+            $where[] = "p.origin = 'local' AND p.post_blog_id IS NULL";
+        } elseif ($origem === 'instagram') {
+            $where[] = "p.origin = 'instagram'";
+        }
+
+        $periodoPost = trim((string) ($filters['periodo_post'] ?? ''));
+        if ($periodoPost === 'hoje') {
+            $where[] = 'DATE(COALESCE(p.publicado_em, p.agendado_para, p.criado_em)) = CURDATE()';
+        } elseif ($periodoPost === '7d') {
+            $where[] = 'COALESCE(p.publicado_em, p.agendado_para, p.criado_em) >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
+        } elseif ($periodoPost === '30d') {
+            $where[] = 'COALESCE(p.publicado_em, p.agendado_para, p.criado_em) >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
+        } elseif ($periodoPost === 'mes') {
+            $where[] = 'YEAR(COALESCE(p.publicado_em, p.agendado_para, p.criado_em)) = YEAR(CURDATE()) AND MONTH(COALESCE(p.publicado_em, p.agendado_para, p.criado_em)) = MONTH(CURDATE())';
         }
 
         $whereSql = implode(' AND ', $where);
