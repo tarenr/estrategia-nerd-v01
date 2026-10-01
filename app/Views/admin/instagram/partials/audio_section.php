@@ -33,25 +33,40 @@ if ($trackUrl === '' && !empty($track['arquivo_path'])) {
 ?>
 
 <!-- Seção Trilha Sonora (FEAT-012) -->
-<div class="mt-4" id="igAudioModuleRoot" data-csrf="<?= htmlspecialchars($csrfToken, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+<div id="igAudioModuleRoot" data-csrf="<?= htmlspecialchars($csrfToken, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="space-y-4">
   <!-- Campos hidden para envio no form -->
   <input type="hidden" name="audio_track_id" id="igAudioTrackId" value="<?= $audioTrackId > 0 ? $audioTrackId : '' ?>">
   <input type="hidden" name="audio_start_seconds" id="igAudioStartSeconds" value="<?= $audioStartSeconds ?>">
   <input type="hidden" name="audio_duration_seconds" id="igAudioDurationSeconds" value="<?= $audioDurationSeconds ?>">
 
-  <!-- Botão Discreto de Abertura / Status -->
-  <div class="flex items-center justify-between">
-    <button type="button" id="btnToggleAudioSection" class="admin-btn admin-btn-secondary text-xs flex items-center gap-2 border-purple-500/40 text-purple-300 hover:bg-purple-950/40 hover:border-purple-400 transition-colors">
-      <i class="fa-solid fa-music text-purple-400" aria-hidden="true"></i>
-      <span id="btnToggleAudioText"><?= $hasAudio ? '🎵 Trilha: ' . htmlspecialchars($trackTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : '🎵 Adicionar Trilha Sonora (Reel com Música)' ?></span>
-    </button>
-    <div id="igAudioNoticeBadge" class="<?= $hasAudio ? '' : 'hidden' ?> text-[11px] text-cyan-400 flex items-center gap-1.5">
-      <i class="fa-solid fa-sparkles text-amber-400"></i> Gera Reel 1080×1920 com áudio cortado
+  <!-- Card/Botão de Largura Total (Mesma largura dos outros painéis) -->
+  <button type="button" id="btnToggleAudioSection" class="w-full admin-panel hover:border-purple-500/50 transition-all p-4 flex items-center justify-between text-left group cursor-pointer focus:outline-none focus:ring-1 focus:ring-purple-400">
+    <div class="flex items-center gap-3.5 min-w-0">
+      <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center text-base border border-purple-500/30 group-hover:scale-105 group-hover:border-purple-400 transition-all flex-shrink-0">
+        <i class="fa-solid fa-music"></i>
+      </div>
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span id="btnToggleAudioText" class="text-sm font-bold text-slate-100 group-hover:text-purple-200 transition-colors truncate">
+            <?= $hasAudio ? 'Trilha: ' . htmlspecialchars($trackTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') : 'Adicionar Trilha Sonora (Reel com Música)' ?>
+          </span>
+          <span id="igAudioPillBadge" class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded font-semibold <?= $hasAudio ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-purple-500/20 text-purple-300 border border-purple-500/30' ?>">
+            <?= $hasAudio ? 'Ativa' : 'Opcional' ?>
+          </span>
+        </div>
+        <div class="text-xs text-slate-400 mt-0.5 truncate">
+          Gera automaticamente um Reel vertical (1080×1920) com transições suaves e fade-out.
+        </div>
+      </div>
     </div>
-  </div>
+    <div class="flex items-center gap-2 text-purple-400 text-xs font-semibold flex-shrink-0 pl-3">
+      <span id="lblToggleAudioChevronText"><?= $hasAudio ? 'Configurada' : 'Configurar' ?></span>
+      <i id="iconToggleAudioChevron" class="fa-solid fa-chevron-down transition-transform duration-200<?= $hasAudio ? ' rotate-180' : '' ?>"></i>
+    </div>
+  </button>
 
   <!-- Painel Expansível da Trilha Sonora (Oculto por padrão) -->
-  <section id="igAudioPanel" class="<?= $hasAudio ? '' : 'hidden' ?> admin-panel border border-purple-500/30 bg-slate-900/90 mt-3 p-4 rounded-xl space-y-4">
+  <section id="igAudioPanel" class="<?= $hasAudio ? '' : 'hidden' ?> admin-panel border border-purple-500/30 bg-slate-900/90 p-4 rounded-xl space-y-4">
     <!-- Cabeçalho do Painel -->
     <div class="flex items-center justify-between border-b border-purple-500/20 pb-3">
       <div class="flex items-center gap-2">
@@ -201,9 +216,24 @@ if ($trackUrl === '' && !empty($track['arquivo_path'])) {
 
   var btnToggle = document.getElementById('btnToggleAudioSection');
   var btnToggleText = document.getElementById('btnToggleAudioText');
+  var chevronIcon = document.getElementById('iconToggleAudioChevron');
+  var chevronText = document.getElementById('lblToggleAudioChevronText');
+  var pillBadge = document.getElementById('igAudioPillBadge');
   var panel = document.getElementById('igAudioPanel');
-  var noticeBadge = document.getElementById('igAudioNoticeBadge');
   var btnRemove = document.getElementById('btnRemoveAudioTrack');
+
+  function updateToggleUI(isOpen) {
+    if (chevronIcon) {
+      if (isOpen) {
+        chevronIcon.classList.add('rotate-180');
+      } else {
+        chevronIcon.classList.remove('rotate-180');
+      }
+    }
+    if (chevronText) {
+      chevronText.textContent = isOpen ? 'Recolher' : (currentTrack ? 'Configurada' : 'Configurar');
+    }
+  }
 
   var selectedCard = document.getElementById('igSelectedTrackCard');
   var lblTitle = document.getElementById('lblSelectedTitle');
@@ -291,9 +321,11 @@ if ($trackUrl === '' && !empty($track['arquivo_path'])) {
     var isHidden = panel.classList.contains('hidden');
     if (isHidden) {
       panel.classList.remove('hidden');
+      updateToggleUI(true);
       loadLocalTracks();
     } else {
       panel.classList.add('hidden');
+      updateToggleUI(false);
     }
   });
 
@@ -304,9 +336,13 @@ if ($trackUrl === '' && !empty($track['arquivo_path'])) {
     currentTrack = null;
     audioPlayer.src = '';
     selectedCard.classList.add('hidden');
-    noticeBadge.classList.add('hidden');
-    btnToggleText.textContent = '🎵 Adicionar Trilha Sonora (Reel com Música)';
+    btnToggleText.textContent = 'Adicionar Trilha Sonora (Reel com Música)';
+    if (pillBadge) {
+      pillBadge.textContent = 'Opcional';
+      pillBadge.className = 'text-[10px] uppercase tracking-wider px-2 py-0.5 rounded font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30';
+    }
     panel.classList.add('hidden');
+    updateToggleUI(false);
   });
 
   // 3. Slider de Corte
@@ -378,8 +414,11 @@ if ($trackUrl === '' && !empty($track['arquivo_path'])) {
 
     audioPlayer.src = track.url;
     selectedCard.classList.remove('hidden');
-    noticeBadge.classList.remove('hidden');
-    btnToggleText.textContent = '🎵 Trilha: ' + track.titulo;
+    btnToggleText.textContent = 'Trilha: ' + track.titulo;
+    if (pillBadge) {
+      pillBadge.textContent = 'Ativa';
+      pillBadge.className = 'text-[10px] uppercase tracking-wider px-2 py-0.5 rounded font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30';
+    }
 
     updateReelDuration();
     selectedCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
