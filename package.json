@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "npm run build:css && npm run build:admin-html-editor",
+    "build:css": "tailwindcss -i resources/css/tailwind.css -o public/assets/css/tailwind.min.css --minify",
+    "watch:css": "tailwindcss -i resources/css/tailwind.css -o public/assets/css/tailwind.min.css --watch",
     "build:admin-html-editor": "node scripts/build-admin-html-editor.mjs"
   },
   "dependencies": {
@@ -14,5 +17,8 @@
     "codemirror": "^6.0.2",
     "esbuild": "^0.28.0",
     "prettier": "^3.8.3"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
   }
 }

@@ -102,19 +102,7 @@ $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            orbitron: ['Orbitron', 'ui-sans-serif', 'system-ui'],
-            rajdhani: ['Rajdhani', 'ui-sans-serif', 'system-ui'],
-          }
-        }
-      }
-    };
-  </script>
+  <link rel="stylesheet" href="<?= asset('assets/css/tailwind.min.css') ?>">
 
   <?php if ($isLogin): ?>
     <link rel="stylesheet" href="<?= url('/assets/css/login.css') ?>">

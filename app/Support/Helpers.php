@@ -182,6 +182,13 @@ if (!function_exists('url')) {
     }
 }
 
+if (!function_exists('asset')) {
+    function asset(string $path = ''): string
+    {
+        return url($path);
+    }
+}
+
 if (!function_exists('portal_configs')) {
     /**
      * @return array<string, string>

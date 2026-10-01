@@ -61,5 +61,51 @@ C:\xampp\php\php.exe scripts/verify-changes.php
    - Renderiza a view administrativa de `/admin/instagram`, garantindo integridade de componentes, carregamento do perfil e ausência de warnings.
 
 ### 4.2. Critério de Aceitação
-- **Aprovação:** Todos os 12 testes do `scripts/verify-changes.php` devem retornar `[PASS]`.
+- **Aprovação:** Todos os testes do `scripts/verify-changes.php` devem retornar `[PASS]`.
 - **Reprovação:** Qualquer `[FAIL]` bloqueia o commit e exige correção imediata da causa raiz antes do prosseguimento.
+
+---
+
+## 5. Pipeline de Compilação de Assets (Tailwind CSS)
+
+Para garantir máxima performance, estabilidade e conformidade de segurança:
+1. **Proibição do Play CDN em Produção:** O uso de `<script src="https://cdn.tailwindcss.com"></script>` é expressamente proibido nos layouts do portal (`admin.php` e `site.php`). Toda estilização utilitária deve ser compilada previamente para arquivo estático minificado.
+2. **Localização do CSS Compilado:** O arquivo gerado deve ser salvo em `public/assets/css/tailwind.min.css`.
+3. **Comando Oficial de Build:**
+   ```bash
+   npm run build:css
+   ```
+   Para modo contínuo durante desenvolvimento:
+   ```bash
+   npm run watch:css
+   ```
+4. **Preservação de Classes Dinâmicas (Safelist):** Ao criar novos componentes que utilizem classes utilitárias geradas dinamicamente (como tons de badges, variantes de gradientes de posts ou seletores dinâmicos), a classe ou seu padrão regex correspondente deve ser registrado na propriedade `safelist` do arquivo `tailwind.config.js`.
+
+---
+
+## 6. Governança de Banco de Dados e Runner de Migrations
+
+Todas as alterações estruturais de banco de dados devem ser versionadas em arquivos SQL sequenciais e executadas através do runner oficial:
+
+### 6.1. Estrutura de Arquivos
+- Diretório de migrations: `database/migrations/`
+- Padrão de nomenclatura: `NNNN_descricao_em_snake_case.sql` (ex.: `0001_baseline_schema.sql`, `0002_create_instagram_tables.sql`).
+
+### 6.2. Comandos do Runner
+```bash
+# Verificar status das migrations (sem aplicar)
+C:\xampp\php\php.exe scripts/migrate.php --status
+
+# Executar migrations pendentes no ambiente local
+C:\xampp\php\php.exe scripts/migrate.php
+
+# Executar ou verificar em ambientes remotos
+C:\xampp\php\php.exe scripts/migrate.php --target=stage
+C:\xampp\php\php.exe scripts/migrate.php --target=production
+```
+
+### 6.3. Regras Mandatórias de Idempotência e Segurança
+1. **Idempotência Obrigatória:** Cada comando SQL em uma migration deve ser idempotente (`CREATE TABLE IF NOT EXISTS`, etc.).
+2. **Proibição de Comandos Destrutivos:** É estritamente proibido o uso de `DROP TABLE`, `DROP DATABASE` ou `TRUNCATE` em migrations de release/produção sem autorização e plano específico.
+3. **Rastreabilidade:** Cada execução registra o arquivo e o número do lote (batch) na tabela `migrations` do banco alvo.
+

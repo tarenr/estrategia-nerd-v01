@@ -146,23 +146,11 @@ if ($adminFavicon === url('/assets/brand/favicon.ico')) {
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= url('/assets/vendor/fontawesome/css/all.min.css') ?>">
 
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="<?= asset('assets/css/tailwind.min.css') ?>">
   <?php if ($usesAdminCharts): ?>
     <script src="<?= url('/assets/vendor/chartjs/chart.umd.min.js') ?>" defer></script>
     <script src="<?= url('/assets/js/admin-module-charts.js?v=' . $adminModuleChartsJsVersion) ?>" defer></script>
   <?php endif; ?>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            orbitron: ['Orbitron', 'ui-sans-serif', 'system-ui'],
-            rajdhani: ['Rajdhani', 'ui-sans-serif', 'system-ui'],
-          }
-        }
-      }
-    };
-  </script>
 
   <link rel="stylesheet" href="<?= url('/assets/css/admin.css?v=' . $adminCssVersion) ?>">
 </head>
