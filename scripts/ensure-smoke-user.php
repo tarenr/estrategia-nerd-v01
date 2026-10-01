@@ -81,7 +81,7 @@ if ($password === '') {
 $hash = password_hash($password, PASSWORD_DEFAULT);
 $results = [];
 
-foreach (['local', 'stage', 'production'] as $environment) {
+foreach (['local'] as $environment) {
     $profile = (array) ($profiles[$environment] ?? []);
     $database = (array) ($profile['database'] ?? []);
 
