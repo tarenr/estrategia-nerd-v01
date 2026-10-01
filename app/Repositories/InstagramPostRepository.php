@@ -194,22 +194,31 @@ final class InstagramPostRepository
         $stmt = $this->pdo->prepare(
             "INSERT INTO instagram_posts
                (account_id, status, tipo, legenda, hashtags_count,
-                agendado_para, post_blog_id, idempotency_key, origin, criado_por)
+                agendado_para, post_blog_id, audio_track_id, audio_start_seconds,
+                audio_duration_seconds, video_rendered_path, render_status,
+                idempotency_key, origin, criado_por)
              VALUES
                (:account_id, :status, :tipo, :legenda, :hashtags_count,
-                :agendado_para, :post_blog_id, :idempotency_key, :origin, :criado_por)"
+                :agendado_para, :post_blog_id, :audio_track_id, :audio_start_seconds,
+                :audio_duration_seconds, :video_rendered_path, :render_status,
+                :idempotency_key, :origin, :criado_por)"
         );
         $stmt->execute([
-            ':account_id'      => (int) ($data['account_id'] ?? 0),
-            ':status'          => (string) ($data['status'] ?? 'rascunho'),
-            ':tipo'            => (string) ($data['tipo'] ?? 'imagem'),
-            ':legenda'         => $data['legenda'] ?? null,
-            ':hashtags_count'  => (int) ($data['hashtags_count'] ?? 0),
-            ':agendado_para'   => $data['agendado_para'] ?? null,
-            ':post_blog_id'    => $data['post_blog_id'] ?? null,
-            ':idempotency_key' => $data['idempotency_key'] ?? null,
-            ':origin'          => (string) ($data['origin'] ?? 'local'),
-            ':criado_por'      => $data['criado_por'] ?? null,
+            ':account_id'             => (int) ($data['account_id'] ?? 0),
+            ':status'                 => (string) ($data['status'] ?? 'rascunho'),
+            ':tipo'                   => (string) ($data['tipo'] ?? 'imagem'),
+            ':legenda'                => $data['legenda'] ?? null,
+            ':hashtags_count'         => (int) ($data['hashtags_count'] ?? 0),
+            ':agendado_para'          => $data['agendado_para'] ?? null,
+            ':post_blog_id'           => $data['post_blog_id'] ?? null,
+            ':audio_track_id'         => !empty($data['audio_track_id']) ? (int) $data['audio_track_id'] : null,
+            ':audio_start_seconds'    => (int) ($data['audio_start_seconds'] ?? 0),
+            ':audio_duration_seconds' => (int) ($data['audio_duration_seconds'] ?? 0),
+            ':video_rendered_path'    => $data['video_rendered_path'] ?? null,
+            ':render_status'          => (string) ($data['render_status'] ?? 'idle'),
+            ':idempotency_key'        => $data['idempotency_key'] ?? null,
+            ':origin'                 => (string) ($data['origin'] ?? 'local'),
+            ':criado_por'             => $data['criado_por'] ?? null,
         ]);
 
         return (int) $this->pdo->lastInsertId();
@@ -224,25 +233,47 @@ final class InstagramPostRepository
     {
         $stmt = $this->pdo->prepare(
             "UPDATE instagram_posts
-                SET status         = :status,
-                    tipo           = :tipo,
-                    legenda        = :legenda,
-                    hashtags_count = :hashtags_count,
-                    agendado_para  = :agendado_para,
-                    post_blog_id   = :post_blog_id,
-                    atualizado_em  = NOW()
+                SET status                 = :status,
+                    tipo                   = :tipo,
+                    legenda                = :legenda,
+                    hashtags_count         = :hashtags_count,
+                    agendado_para          = :agendado_para,
+                    post_blog_id           = :post_blog_id,
+                    audio_track_id         = :audio_track_id,
+                    audio_start_seconds    = :audio_start_seconds,
+                    audio_duration_seconds = :audio_duration_seconds,
+                    video_rendered_path    = :video_rendered_path,
+                    render_status          = :render_status,
+                    atualizado_em          = NOW()
               WHERE id = :id"
         );
 
         return $stmt->execute([
-            ':id'             => $id,
-            ':status'         => (string) ($data['status'] ?? 'rascunho'),
-            ':tipo'           => (string) ($data['tipo'] ?? 'imagem'),
-            ':legenda'        => $data['legenda'] ?? null,
-            ':hashtags_count' => (int) ($data['hashtags_count'] ?? 0),
-            ':agendado_para'  => $data['agendado_para'] ?? null,
-            ':post_blog_id'   => $data['post_blog_id'] ?? null,
+            ':id'                     => $id,
+            ':status'                 => (string) ($data['status'] ?? 'rascunho'),
+            ':tipo'                   => (string) ($data['tipo'] ?? 'imagem'),
+            ':legenda'                => $data['legenda'] ?? null,
+            ':hashtags_count'         => (int) ($data['hashtags_count'] ?? 0),
+            ':agendado_para'          => $data['agendado_para'] ?? null,
+            ':post_blog_id'           => $data['post_blog_id'] ?? null,
+            ':audio_track_id'         => !empty($data['audio_track_id']) ? (int) $data['audio_track_id'] : null,
+            ':audio_start_seconds'    => (int) ($data['audio_start_seconds'] ?? 0),
+            ':audio_duration_seconds' => (int) ($data['audio_duration_seconds'] ?? 0),
+            ':video_rendered_path'    => $data['video_rendered_path'] ?? null,
+            ':render_status'          => (string) ($data['render_status'] ?? 'idle'),
         ]);
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    public function findAudioTrack(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM instagram_audio_tracks WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($row) ? $row : null;
     }
 
     /**
@@ -461,7 +492,7 @@ final class InstagramPostRepository
      *
      * @param list<string> $kinds 'imagem' ou 'video', na ordem de publicacao
      */
-    public static function mediaRuleError(string $tipo, array $kinds, bool $allowEmpty = false): ?string
+    public static function mediaRuleError(string $tipo, array $kinds, bool $allowEmpty = false, bool $hasAudioTrack = false): ?string
     {
         $total  = count($kinds);
         $videos = count(array_filter($kinds, static fn (string $k): bool => $k === 'video'));
@@ -471,6 +502,15 @@ final class InstagramPostRepository
         }
         if ($total === 0) {
             return $allowEmpty ? null : 'Adicione a mídia do post antes de agendar ou publicar.';
+        }
+
+        if ($hasAudioTrack) {
+            // Com trilha sonora, o post vira Reels vertical compilado via FFmpeg
+            // Aceita de 1 a 10 imagens (ou 1 vídeo)
+            if ($total <= 10) {
+                return null;
+            }
+            return 'Post com trilha sonora aceita de 1 a 10 imagens para compor o Reel.';
         }
 
         return match ($tipo) {

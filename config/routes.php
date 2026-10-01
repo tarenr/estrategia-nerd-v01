@@ -138,6 +138,10 @@ return [
     ['POST', '/admin/instagram/media/{id}/delete',       [\App\Controllers\Admin\InstagramController::class, 'deleteMedia'], 'auth'],
     ['POST', '/admin/instagram/posts/{id}/delete',       [\App\Controllers\Admin\InstagramController::class, 'deletePost'],  'auth'],
     ['POST', '/admin/instagram/api/crosspost-preview',   [\App\Controllers\Admin\InstagramController::class, 'crosspostPreview'], 'auth'],
+    ['GET',  '/admin/instagram/api/audio/local',         [\App\Controllers\Admin\InstagramController::class, 'audioLocalTracks'], 'auth'],
+    ['GET',  '/admin/instagram/api/audio/search',        [\App\Controllers\Admin\InstagramController::class, 'audioSearch'],      'auth'],
+    ['POST', '/admin/instagram/api/audio/download',      [\App\Controllers\Admin\InstagramController::class, 'audioDownload'],    'auth'],
+    ['POST', '/admin/instagram/api/audio/upload',        [\App\Controllers\Admin\InstagramController::class, 'audioUpload'],      'auth'],
 
     ['GET',  '/admin/comentarios',         [\App\Controllers\Admin\ComentariosController::class, 'index'], 'auth'],
     ['GET',  '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'reply'], 'auth'],

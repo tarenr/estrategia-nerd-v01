@@ -13,6 +13,8 @@ namespace App\Controllers\Admin;
 
 use App\Repositories\InstagramPostRepository;
 use App\Repositories\PostRepository;
+use App\Services\Instagram\AudioReelGeneratorService;
+use App\Services\Instagram\AudiusTrackService;
 use App\Services\Instagram\BlogCrosspostService;
 use App\Services\Instagram\InstagramApiService;
 use App\Services\Instagram\InstagramMediaFitter;
@@ -324,9 +326,10 @@ final class InstagramController
         }
 
         // Valida tipo x midias antes de gravar qualquer coisa (rascunho sem midia continua permitido).
+        $hasAudio  = !empty($_POST['audio_track_id']);
         $input     = $this->inspectMediaInput($_FILES, $_POST);
         $ruleError = $input['errors'] === []
-            ? InstagramPostRepository::mediaRuleError($tipo, array_column($input['items'], 'kind'), $status === 'rascunho' && $acao !== 'publicar')
+            ? InstagramPostRepository::mediaRuleError($tipo, array_column($input['items'], 'kind'), $status === 'rascunho' && $acao !== 'publicar', $hasAudio)
             : null;
         $moved     = ($input['errors'] === [] && $ruleError === null) ? $this->moveUploads($input['items']) : ['items' => [], 'errors' => []];
         $failure   = $this->mediaErrorMessage(array_merge($input['errors'], $moved['errors']), $ruleError, $input['had_files']);
@@ -337,16 +340,19 @@ final class InstagramController
             try {
                 $pdo->beginTransaction();
                 $postId = $repo->create([
-                    'account_id'      => (int) $account['id'],
-                    'status'          => $status,
-                    'tipo'            => $tipo,
-                    'legenda'         => $legenda ?: null,
-                    'hashtags_count'  => $api->countHashtags($legenda),
-                    'agendado_para'   => $agendadoPara,
-                    'post_blog_id'    => ($_POST['post_blog_id'] ?? '') !== '' ? (int) $_POST['post_blog_id'] : null,
-                    'idempotency_key' => $this->uuid4(),
-                    'origin'          => 'local',
-                    'criado_por'      => Auth::id(),
+                    'account_id'             => (int) $account['id'],
+                    'status'                 => $status,
+                    'tipo'                   => !empty($_POST['audio_track_id']) ? 'reels' : $tipo,
+                    'legenda'                => $legenda ?: null,
+                    'hashtags_count'         => $api->countHashtags($legenda),
+                    'agendado_para'          => $agendadoPara,
+                    'post_blog_id'           => ($_POST['post_blog_id'] ?? '') !== '' ? (int) $_POST['post_blog_id'] : null,
+                    'audio_track_id'         => !empty($_POST['audio_track_id']) ? (int) $_POST['audio_track_id'] : null,
+                    'audio_start_seconds'    => (int) ($_POST['audio_start_seconds'] ?? 0),
+                    'audio_duration_seconds' => (int) ($_POST['audio_duration_seconds'] ?? 0),
+                    'idempotency_key'        => $this->uuid4(),
+                    'origin'                 => 'local',
+                    'criado_por'             => Auth::id(),
                 ]);
                 $this->persistMedia($repo, $postId, $moved['items'], 0);
                 $pdo->commit();
@@ -401,13 +407,15 @@ final class InstagramController
         }
 
         $medias = $repo->findMediaByPostId($id);
+        $audioTrack = !empty($post['audio_track_id']) ? $repo->findAudioTrack((int) $post['audio_track_id']) : null;
 
         View::render('admin/instagram/edit', [
-            'title'      => 'Editar Post — Instagram',
-            'post'       => $post,
-            'medias'     => $medias,
-            'account'    => $repo->findActiveAccount(),
-            'csrf_token' => Csrf::generate(),
+            'title'       => 'Editar Post — Instagram',
+            'post'        => $post,
+            'medias'      => $medias,
+            'audio_track' => $audioTrack,
+            'account'     => $repo->findActiveAccount(),
+            'csrf_token'  => Csrf::generate(),
         ]);
     }
 
@@ -471,12 +479,14 @@ final class InstagramController
         $kept      = array_values(array_filter($existing, static fn (array $m): bool => !in_array((int) ($m['id'] ?? 0), $removeIds, true)));
         $removed   = array_values(array_filter($existing, static fn (array $m): bool => in_array((int) ($m['id'] ?? 0), $removeIds, true)));
 
+        $hasAudio  = !empty($_POST['audio_track_id']);
         $input     = $this->inspectMediaInput($_FILES, $_POST);
         $ruleError = $input['errors'] === []
             ? InstagramPostRepository::mediaRuleError(
                 $tipo,
                 array_merge(InstagramPostRepository::mediaKinds($kept), array_column($input['items'], 'kind')),
                 $status === 'rascunho' && $acao !== 'publicar',
+                $hasAudio,
             )
             : null;
         $moved     = ($input['errors'] === [] && $ruleError === null) ? $this->moveUploads($input['items']) : ['items' => [], 'errors' => []];
@@ -488,12 +498,15 @@ final class InstagramController
             try {
                 $pdo->beginTransaction();
                 $repo->update($id, [
-                    'status'          => $status,
-                    'tipo'            => $tipo,
-                    'legenda'         => $legenda ?: null,
-                    'hashtags_count'  => $api->countHashtags($legenda),
-                    'agendado_para'   => $agendado,
-                    'post_blog_id'    => ($_POST['post_blog_id'] ?? '') !== '' ? (int) $_POST['post_blog_id'] : null,
+                    'status'                 => $status,
+                    'tipo'                   => !empty($_POST['audio_track_id']) ? 'reels' : $tipo,
+                    'legenda'                => $legenda ?: null,
+                    'hashtags_count'         => $api->countHashtags($legenda),
+                    'agendado_para'          => $agendado,
+                    'post_blog_id'           => ($_POST['post_blog_id'] ?? '') !== '' ? (int) $_POST['post_blog_id'] : null,
+                    'audio_track_id'         => !empty($_POST['audio_track_id']) ? (int) $_POST['audio_track_id'] : null,
+                    'audio_start_seconds'    => (int) ($_POST['audio_start_seconds'] ?? 0),
+                    'audio_duration_seconds' => (int) ($_POST['audio_duration_seconds'] ?? 0),
                 ]);
                 foreach ($removed as $m) {
                     $repo->deleteMedia((int) $m['id'], $id);
@@ -716,12 +729,15 @@ final class InstagramController
             }
         }
 
+        $audioTrack = !empty($post['audio_track_id']) ? $repo->findAudioTrack((int) $post['audio_track_id']) : null;
+
         View::render('admin/instagram/show', [
-            'title'    => 'Detalhes do Post — Instagram',
-            'post'     => $post,
-            'medias'   => $medias,
-            'insights' => $insights,
-            'comments' => $comments,
+            'title'       => 'Detalhes do Post — Instagram',
+            'post'        => $post,
+            'medias'      => $medias,
+            'audio_track' => $audioTrack,
+            'insights'    => $insights,
+            'comments'    => $comments,
         ]);
     }
 
@@ -749,6 +765,100 @@ final class InstagramController
         }
 
         echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    // ── Trilha Sonora / Audius (FEAT-012) ────────────────────────────────────
+
+    public function audioLocalTracks(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+        try {
+            $service = AudiusTrackService::fromGlobals();
+            $tracks = $service->listLocalTracks();
+            echo json_encode(['ok' => true, 'tracks' => $tracks], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    public function audioSearch(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+        $q = trim((string) ($_GET['q'] ?? ''));
+        if ($q === '') {
+            echo json_encode(['ok' => true, 'tracks' => []], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $service = AudiusTrackService::fromGlobals();
+            $tracks = $service->search($q, 15);
+            echo json_encode(['ok' => true, 'tracks' => $tracks], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    public function audioDownload(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo json_encode(['ok' => false, 'error' => 'Token CSRF inválido.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $trackId = trim((string) ($_POST['track_id'] ?? ''));
+        $title = trim((string) ($_POST['title'] ?? 'Sem título'));
+        $artist = trim((string) ($_POST['artist'] ?? 'Artista Audius'));
+        $genre = trim((string) ($_POST['genre'] ?? 'Eletrônica'));
+        $duration = (int) ($_POST['duration'] ?? 0);
+
+        if ($trackId === '') {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'ID da faixa ausente.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $service = AudiusTrackService::fromGlobals();
+            $track = $service->downloadAudiusTrack($trackId, $title, $artist, $genre, $duration);
+            echo json_encode(['ok' => true, 'track' => $track], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    public function audioUpload(): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+        if (!Csrf::validate($_POST['_csrf_token'] ?? null)) {
+            http_response_code(419);
+            echo json_encode(['ok' => false, 'error' => 'Token CSRF inválido.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $file = $_FILES['audio_file'] ?? null;
+        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'Nenhum arquivo de áudio enviado.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $title = trim((string) ($_POST['title'] ?? ''));
+        $artist = trim((string) ($_POST['artist'] ?? ''));
+
+        try {
+            $service = AudiusTrackService::fromGlobals();
+            $track = $service->uploadCustomTrack($file, $title, $artist);
+            echo json_encode(['ok' => true, 'track' => $track], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     // ── Helpers Privados ──────────────────────────────────────────────────────
@@ -812,7 +922,8 @@ final class InstagramController
                 return;
             }
 
-            $ruleError = InstagramPostRepository::mediaRuleError((string) ($post['tipo'] ?? ''), InstagramPostRepository::mediaKinds($medias));
+            $hasAudio = !empty($post['audio_track_id']);
+            $ruleError = InstagramPostRepository::mediaRuleError((string) ($post['tipo'] ?? ''), InstagramPostRepository::mediaKinds($medias), false, $hasAudio);
             if ($ruleError !== null) {
                 $repo->markError($postId, 'Mídias incompatíveis com o tipo do post (nada foi enviado ao Instagram): ' . $ruleError);
                 return;
@@ -822,7 +933,50 @@ final class InstagramController
             $legenda = $post['legenda'] ?? null;
             $isVideo = false;
 
-            if ($tipo === 'carrossel' && count($medias) >= 2) {
+            if ($hasAudio) {
+                $audioTrack = $repo->findAudioTrack((int) $post['audio_track_id']);
+                if ($audioTrack === null) {
+                    throw new RuntimeException('Trilha sonora associada ao post não foi encontrada.');
+                }
+
+                $renderedRel = (string) ($post['video_rendered_path'] ?? '');
+                $renderedFull = base_path('public/' . ltrim($renderedRel, '/'));
+                if ($renderedRel === '' || !is_file($renderedFull) || filesize($renderedFull) === 0) {
+                    $reelGen = AudioReelGeneratorService::fromGlobals();
+                    $imagePaths = [];
+                    foreach ($medias as $m) {
+                        $p = trim((string) ($m['caminho'] ?? ''));
+                        if ($p !== '') {
+                            $imagePaths[] = $p;
+                        }
+                    }
+                    if ($imagePaths === []) {
+                        throw new RuntimeException('Ao menos uma imagem é necessária para gerar o Reel com áudio.');
+                    }
+                    $startSec = (int) ($post['audio_start_seconds'] ?? 0);
+                    $durSec   = (int) ($post['audio_duration_seconds'] ?? 0);
+                    $renderedRel = $reelGen->generateReel(
+                        $imagePaths,
+                        (string) $audioTrack['arquivo_path'],
+                        $startSec,
+                        $durSec > 0 ? $durSec : null
+                    );
+                    /** @var \PDO $pdo */
+                    $pdo = $GLOBALS['pdo'];
+                    $pdo->prepare('UPDATE instagram_posts SET video_rendered_path = :vp, render_status = "ready" WHERE id = :id')
+                        ->execute([':vp' => $renderedRel, ':id' => $postId]);
+                }
+
+                $appUrl = rtrim((string) config('app.url', ''), '/');
+                $reelVideoUrl = function_exists('asset') ? asset($renderedRel) : ($appUrl . '/' . ltrim($renderedRel, '/'));
+
+                $isVideo = true;
+                $creationId = $api->createVideoContainer(
+                    (string) $reelVideoUrl,
+                    $legenda,
+                    ['media_type' => 'REELS'],
+                );
+            } elseif ($tipo === 'carrossel' && count($medias) >= 2) {
                 $childIds = [];
                 foreach ($medias as $m) {
                     $mediaUrl = (string) ($m['url_publica'] ?? '');

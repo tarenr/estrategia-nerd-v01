@@ -192,6 +192,15 @@ if (isset($old['hashtags'])) {
             </label>
           </section>
 
+          <!-- Trilha Sonora do Reel (FEAT-012) -->
+          <?php
+          $audioTrack = $audio_track ?? null;
+          $audioTrackId = (int) ($old['audio_track_id'] ?? $post['audio_track_id'] ?? 0);
+          $audioStartSeconds = (int) ($old['audio_start_seconds'] ?? $post['audio_start_seconds'] ?? 0);
+          $audioDurationSeconds = (int) ($old['audio_duration_seconds'] ?? $post['audio_duration_seconds'] ?? 10);
+          require __DIR__ . '/partials/audio_section.php';
+          ?>
+
           <!-- Legenda e Hashtags -->
           <section class="admin-panel">
             <div class="flex items-center justify-between">

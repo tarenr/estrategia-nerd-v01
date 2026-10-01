@@ -20,6 +20,7 @@ if (PHP_SAPI !== 'cli') {
 require_once __DIR__ . '/../bootstrap.php';
 
 use App\Repositories\InstagramPostRepository;
+use App\Services\Instagram\AudioReelGeneratorService;
 use App\Services\Instagram\InstagramApiService;
 
 // ── Configuração de Logs ──────────────────────────────────────────────────────
@@ -128,7 +129,8 @@ foreach ($duePosts as $post) {
         }
 
         // Post antigo pode ter combinacao invalida (antes das travas): vai para erro sem chamar a Meta.
-        $ruleError = InstagramPostRepository::mediaRuleError((string) ($post['tipo'] ?? ''), InstagramPostRepository::mediaKinds($medias));
+        $hasAudio = !empty($post['audio_track_id']);
+        $ruleError = InstagramPostRepository::mediaRuleError((string) ($post['tipo'] ?? ''), InstagramPostRepository::mediaKinds($medias), false, $hasAudio);
         if ($ruleError !== null) {
             throw new RuntimeException('Mídias incompatíveis com o tipo do post (nada foi enviado ao Instagram): ' . $ruleError);
         }
@@ -145,7 +147,48 @@ foreach ($duePosts as $post) {
         $tipo    = (string) ($post['tipo'] ?? 'imagem');
         $isVideo = false;
 
-        if ($tipo === 'carrossel' && count($medias) >= 2) {
+        if ($hasAudio) {
+            $audioTrack = $repo->findAudioTrack((int) $post['audio_track_id']);
+            if ($audioTrack === null) {
+                throw new RuntimeException('Trilha sonora associada ao post não foi encontrada no banco.');
+            }
+
+            $renderedRel = (string) ($post['video_rendered_path'] ?? '');
+            $renderedFull = base_path('public/' . ltrim($renderedRel, '/'));
+            if ($renderedRel === '' || !is_file($renderedFull) || filesize($renderedFull) === 0) {
+                $reelGen = AudioReelGeneratorService::fromGlobals();
+                $imagePaths = [];
+                foreach ($medias as $m) {
+                    $p = trim((string) ($m['caminho'] ?? ''));
+                    if ($p !== '') {
+                        $imagePaths[] = $p;
+                    }
+                }
+                if ($imagePaths === []) {
+                    throw new RuntimeException('Ao menos uma imagem é necessária para gerar o Reel com áudio.');
+                }
+                $startSec = (int) ($post['audio_start_seconds'] ?? 0);
+                $durSec   = (int) ($post['audio_duration_seconds'] ?? 0);
+                $renderedRel = $reelGen->generateReel(
+                    $imagePaths,
+                    (string) $audioTrack['arquivo_path'],
+                    $startSec,
+                    $durSec > 0 ? $durSec : null
+                );
+                $pdo->prepare('UPDATE instagram_posts SET video_rendered_path = :vp, render_status = "ready" WHERE id = :id')
+                    ->execute([':vp' => $renderedRel, ':id' => $postId]);
+            }
+
+            $appUrl = rtrim((string) config('app.url', ''), '/');
+            $reelVideoUrl = function_exists('asset') ? asset($renderedRel) : ($appUrl . '/' . ltrim($renderedRel, '/'));
+
+            $isVideo = true;
+            $creationId = $api->createVideoContainer(
+                (string) $reelVideoUrl,
+                $legenda,
+                ['media_type' => 'REELS'],
+            );
+        } elseif ($tipo === 'carrossel' && count($medias) >= 2) {
             $childIds = [];
             foreach ($medias as $m) {
                 $mTipo    = (string) ($m['tipo_arquivo'] ?? 'imagem');

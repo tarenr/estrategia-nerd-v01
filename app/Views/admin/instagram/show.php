@@ -115,6 +115,31 @@ if ($firstMedia !== null) {
         <div class="mt-4 text-sm text-slate-300 leading-5"><?= nl2br($esc((string) $post['legenda'])) ?></div>
       <?php endif; ?>
 
+      <?php if (!empty($audio_track)): ?>
+        <div class="mt-4 p-3 rounded-xl bg-purple-950/20 border border-purple-500/30 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-purple-900/40 border border-purple-500/30 flex items-center justify-center text-purple-300">
+              <i class="fa-solid fa-music"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-100"><?= $esc((string) ($audio_track['titulo'] ?? 'Trilha Sonora')) ?></div>
+              <div class="text-[11px] text-slate-400">
+                <?= $esc((string) ($audio_track['artista'] ?? '')) ?> • Corte: <?= sprintf('%02d:%02d', floor((int) ($post['audio_start_seconds'] ?? 0) / 60), (int) ($post['audio_start_seconds'] ?? 0) % 60) ?> - <?= sprintf('%02d:%02d', floor(((int) ($post['audio_start_seconds'] ?? 0) + (int) ($post['audio_duration_seconds'] ?? 10)) / 60), ((int) ($post['audio_start_seconds'] ?? 0) + (int) ($post['audio_duration_seconds'] ?? 10)) % 60) ?> (<?= (int) ($post['audio_duration_seconds'] ?? 10) ?>s)
+              </div>
+            </div>
+          </div>
+          <?php
+          $trackUrl = (string) ($audio_track['url'] ?? '');
+          if ($trackUrl === '' && !empty($audio_track['arquivo_path'])) {
+              $trackUrl = (string) asset($audio_track['arquivo_path']);
+          }
+          ?>
+          <?php if ($trackUrl !== ''): ?>
+            <audio controls src="<?= $esc($trackUrl) ?>" class="h-8 max-w-[180px]"></audio>
+          <?php endif; ?>
+        </div>
+      <?php endif; ?>
+
       <?php if (!empty($post['permalink'])): ?>
         <a href="<?= $esc((string) $post['permalink']) ?>" target="_blank" rel="noopener noreferrer" class="admin-btn admin-btn-secondary mt-4 w-full justify-center">
           <i class="fa-brands fa-instagram" aria-hidden="true"></i> Abrir no Instagram
