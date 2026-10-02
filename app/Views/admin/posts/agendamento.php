@@ -82,45 +82,42 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
 
 <div class="max-w-[1400px] mx-auto px-4 py-6" data-admin-schedule-root>
 
-  <!-- 1. Header Principal -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-    <div class="flex items-center gap-3.5">
-      <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 via-purple-600/30 to-purple-800/40 border border-purple-500/40 text-purple-300 shadow-[0_0_24px_rgba(168,85,247,0.3)]">
-        <i class="fa-solid fa-calendar-days text-xl"></i>
-      </div>
-      <div>
-        <h1 class="text-2xl font-bold font-orbitron tracking-wide text-white">Agendamento de Posts</h1>
-        <p class="text-xs sm:text-sm text-slate-400 mt-0.5">Gerencie e visualize seus posts do Instagram e do Blog em um só calendário.</p>
-      </div>
+  <!-- 1. Header Principal Padronizado (Sem Ícone) -->
+  <div class="admin-page-header">
+    <div class="admin-page-heading">
+      <h1 class="admin-page-title">Agendamento de Posts</h1>
+      <div class="admin-page-subtitle">Gerencie e visualize seus posts do Instagram e do Blog em um só calendário.</div>
     </div>
 
     <!-- Ação de Criar Agendamento com Dropdown -->
-    <div class="relative" data-new-schedule-wrap>
-      <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all cursor-pointer" data-new-schedule-btn>
-        <i class="fa-solid fa-plus text-xs"></i>
-        <span>Adicionar agendamento</span>
-        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-80"></i>
-      </button>
+    <div class="admin-page-actions">
+      <div class="relative" data-new-schedule-wrap>
+        <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all cursor-pointer" data-new-schedule-btn>
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Adicionar agendamento</span>
+          <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-80"></i>
+        </button>
 
-      <div class="hidden absolute right-0 top-full mt-2 w-52 rounded-2xl border border-slate-800 bg-slate-950/95 p-1.5 shadow-2xl backdrop-blur-xl z-50" data-new-schedule-menu>
-        <a href="<?= url('/admin/criar-post') ?>" class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-slate-900 hover:text-white transition-colors">
-          <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
-            <i class="fa-solid fa-file-lines text-xs"></i>
-          </span>
-          <div>
-            <div class="font-bold">Post no Blog</div>
-            <div class="text-[10px] text-slate-400 font-normal">Criar e agendar artigo</div>
-          </div>
-        </a>
-        <a href="<?= url('/admin/instagram') ?>" class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-slate-900 hover:text-white transition-colors">
-          <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-500/20 text-pink-400 border border-pink-500/30">
-            <i class="fa-brands fa-instagram text-xs"></i>
-          </span>
-          <div>
-            <div class="font-bold">Post no Instagram</div>
-            <div class="text-[10px] text-slate-400 font-normal">Reel, Carrossel ou Imagem</div>
-          </div>
-        </a>
+        <div class="hidden absolute right-0 top-full mt-2 w-52 rounded-2xl border border-slate-800 bg-slate-950/95 p-1.5 shadow-2xl backdrop-blur-xl z-50" data-new-schedule-menu>
+          <a href="<?= url('/admin/criar-post') ?>" class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-slate-900 hover:text-white transition-colors">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
+              <i class="fa-solid fa-file-lines text-xs"></i>
+            </span>
+            <div>
+              <div class="font-bold">Post no Blog</div>
+              <div class="text-[10px] text-slate-400 font-normal">Criar e agendar artigo</div>
+            </div>
+          </a>
+          <a href="<?= url('/admin/instagram') ?>" class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-slate-900 hover:text-white transition-colors">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-500/20 text-pink-400 border border-pink-500/30">
+              <i class="fa-brands fa-instagram text-xs"></i>
+            </span>
+            <div>
+              <div class="font-bold">Post no Instagram</div>
+              <div class="text-[10px] text-slate-400 font-normal">Reel, Carrossel ou Imagem</div>
+            </div>
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -173,25 +170,19 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
         </a>
       </div>
 
-      <!-- Dropdown de Filtro de Plataformas -->
-      <div class="relative">
-        <select data-filter-platform class="rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-200 hover:border-slate-700 focus:border-cyan-400 focus:outline-none cursor-pointer">
-          <option value="all">Todas as plataformas</option>
-          <option value="instagram">Instagram</option>
-          <option value="blog">Blog</option>
-        </select>
-      </div>
-
-      <!-- Legenda Visual com Bolinhas -->
-      <div class="flex items-center gap-3 text-xs pl-1">
-        <span class="inline-flex items-center gap-1.5 text-slate-300 font-medium">
-          <span class="h-2.5 w-2.5 rounded-full bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.6)]"></span>
-          Instagram
-        </span>
-        <span class="inline-flex items-center gap-1.5 text-slate-300 font-medium">
-          <span class="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span>
-          Blog
-        </span>
+      <!-- Filtros Interativos por Plataforma (Botões com Indicadores Coloridos) -->
+      <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800" data-platform-filter-group>
+        <button type="button" data-schedule-filter="all" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-white shadow cursor-pointer" title="Mostrar todas as plataformas">
+          Todas as plataformas
+        </button>
+        <button type="button" data-schedule-filter="instagram" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-pink-300 hover:bg-slate-800/60 cursor-pointer" title="Filtrar posts do Instagram">
+          <span style="width: 9px; height: 9px; border-radius: 50%; background-color: #ec4899; box-shadow: 0 0 8px rgba(236,72,153,0.8); display: inline-block; flex-shrink: 0;"></span>
+          <span>Instagram</span>
+        </button>
+        <button type="button" data-schedule-filter="blog" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-blue-300 hover:bg-slate-800/60 cursor-pointer" title="Filtrar posts do Blog">
+          <span style="width: 9px; height: 9px; border-radius: 50%; background-color: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.8); display: inline-block; flex-shrink: 0;"></span>
+          <span>Blog</span>
+        </button>
       </div>
     </div>
   </div>
@@ -404,11 +395,22 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
   var root = document.querySelector('[data-admin-schedule-root]');
   if (!root) { return; }
 
-  // Filtro de Plataformas (Todas / Instagram / Blog)
-  var platformSelect = root.querySelector('[data-filter-platform]');
-  if (platformSelect) {
-    platformSelect.addEventListener('change', function () {
-      var selected = this.value;
+  // Filtro de Plataformas via Botões Interativos (Todas / Instagram / Blog)
+  var filterButtons = root.querySelectorAll('[data-schedule-filter]');
+  filterButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var selected = this.getAttribute('data-schedule-filter');
+
+      // Atualiza estilo ativo nos botões
+      filterButtons.forEach(function (b) {
+        var isCurrent = (b === btn);
+        b.classList.toggle('bg-slate-800', isCurrent);
+        b.classList.toggle('text-white', isCurrent);
+        b.classList.toggle('shadow', isCurrent);
+        b.classList.toggle('text-slate-400', !isCurrent);
+      });
+
+      // Filtra os cards de evento em tempo real na grade e na lista
       root.querySelectorAll('[data-schedule-item]').forEach(function (item) {
         var kind = item.getAttribute('data-schedule-item');
         if (selected === 'all' || selected === kind) {
@@ -418,7 +420,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
         }
       });
     });
-  }
+  });
 
   // Menu Dropdown "+ Adicionar agendamento"
   var newBtn = root.querySelector('[data-new-schedule-btn]');
