@@ -8405,7 +8405,15 @@ select.nerd-input {
 
 /* Painel de Agendamento — Quadros Uniformes do Calendário */
 .schedule-day-cell {
-  min-height: 180px !important;
-  height: 180px !important;
+  min-height: 215px !important;
+  height: 215px !important;
+  overflow: hidden !important;
 }
+.schedule-day-cell * {
+  scrollbar-width: none !important;
+}
+.schedule-day-cell *::-webkit-scrollbar {
+  display: none !important;
+}
+
 

@@ -209,7 +209,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
         <!-- Dias do mês anterior -->
         <?php for ($i = 0; $i < $startWeekday; $i++): ?>
           <?php $prevDayNumber = $prevMonthStartDay + $i; ?>
-          <div class="schedule-day-cell rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none overflow-hidden" style="min-height: 180px; height: 180px;">
+          <div class="schedule-day-cell rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none overflow-hidden" style="min-height: 215px; height: 215px;">
             <div class="text-xs font-bold text-slate-500 mb-1"><?= $prevDayNumber ?></div>
           </div>
         <?php endfor; ?>
@@ -220,7 +220,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
             $dayEvents = $eventsByDay[$day] ?? [];
             $isToday = $isCurrentMonth && $day === $today;
           ?>
-          <div class="schedule-day-cell rounded-xl border <?= $isToday ? 'border-cyan-400/50 bg-cyan-950/10 shadow-[inset_0_0_15px_rgba(6,182,212,0.05)]' : 'border-slate-800/80 bg-slate-900/40' ?> p-2 flex flex-col justify-start transition-colors overflow-hidden" style="min-height: 180px; height: 180px;" data-schedule-day>
+          <div class="schedule-day-cell rounded-xl border <?= $isToday ? 'border-cyan-400/50 bg-cyan-950/10 shadow-[inset_0_0_15px_rgba(6,182,212,0.05)]' : 'border-slate-800/80 bg-slate-900/40' ?> p-2 flex flex-col justify-start transition-colors overflow-hidden" style="min-height: 215px; height: 215px;" data-schedule-day>
             <div class="flex items-center justify-between mb-1 shrink-0">
               <span class="text-xs font-bold <?= $isToday ? 'text-cyan-300 font-black' : 'text-slate-400' ?>"><?= $day ?></span>
               <?php if ($isToday): ?>
@@ -228,8 +228,8 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
               <?php endif; ?>
             </div>
 
-            <!-- Cards de Eventos do Dia com altura flexível contida -->
-            <div class="flex-1 overflow-y-auto space-y-1.5 pr-0.5" style="scrollbar-width: thin;">
+            <!-- Cards de Eventos do Dia (Sem Barra de Rolagem) -->
+            <div class="flex-1 space-y-1.5 overflow-hidden" style="scrollbar-width: none;">
               <?php foreach ($dayEvents as $event): ?>
                 <?php
                   $isIg = ($event['kind'] ?? '') === 'instagram';
@@ -256,13 +256,13 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
                 ?>
                 <div data-schedule-item="<?= $e($event['kind']) ?>" class="group relative rounded-xl border p-2 text-xs transition-all <?= $cardClasses ?>">
                   <div class="flex items-start justify-between gap-1.5">
-                    <!-- Informações do Post (Horário e Título) -->
+                    <!-- Informações do Post (Horário e Título em até 3 linhas) -->
                     <div class="flex-1 min-w-0 pr-1">
                       <div class="flex items-center gap-1.5 font-bold text-[11px] mb-1 <?= $headerClass ?>">
                         <?= $iconHtml ?>
                         <span><?= $e($timeFormatted) ?></span>
                       </div>
-                      <a href="<?= $e($event['url']) ?>" class="block font-medium text-white/95 line-clamp-2 leading-tight hover:underline text-[11px]" title="<?= $e($event['titulo']) ?>">
+                      <a href="<?= $e($event['url']) ?>" class="block font-medium text-white/95 line-clamp-3 leading-tight hover:underline text-[11px]" title="<?= $e($event['titulo']) ?>">
                         <?= $e($event['titulo']) ?>
                       </a>
                       <?php if ($overdue || $isErr): ?>
@@ -307,7 +307,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
           $trailingDays = $remainder === 0 ? 0 : 7 - $remainder;
         ?>
         <?php for ($nextDay = 1; $nextDay <= $trailingDays; $nextDay++): ?>
-          <div class="schedule-day-cell rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none overflow-hidden" style="min-height: 180px; height: 180px;">
+          <div class="schedule-day-cell rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none overflow-hidden" style="min-height: 215px; height: 215px;">
             <div class="text-xs font-bold text-slate-500 mb-1"><?= $nextDay ?></div>
           </div>
         <?php endfor; ?>
