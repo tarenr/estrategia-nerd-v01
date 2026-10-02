@@ -8435,6 +8435,11 @@ select.nerd-input {
   justify-content: center !important;
 }
 
+.schedule-event-card.hidden,
+.schedule-event-card[style*="display: none"] {
+  display: none !important;
+}
+
 .schedule-card-title {
   display: -webkit-box !important;
   -webkit-line-clamp: 3 !important;

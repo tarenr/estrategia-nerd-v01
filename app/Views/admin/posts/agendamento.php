@@ -170,17 +170,18 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
         </a>
       </div>
 
-      <!-- Filtros Interativos por Plataforma (Botões com Indicadores Coloridos) -->
+      <!-- Filtros Interativos por Plataforma (Botões com Indicadores de Ícones) -->
       <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800" data-platform-filter-group>
-        <button type="button" data-schedule-filter="all" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-white shadow cursor-pointer" title="Mostrar todas as plataformas">
-          Todas as plataformas
+        <button type="button" data-schedule-filter="all" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-white shadow cursor-pointer" title="Mostrar todas as plataformas">
+          <i class="fa-solid fa-layer-group text-slate-400 text-xs"></i>
+          <span>Todas as plataformas</span>
         </button>
-        <button type="button" data-schedule-filter="instagram" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-pink-300 hover:bg-slate-800/60 cursor-pointer" title="Filtrar posts do Instagram">
-          <span style="width: 9px; height: 9px; border-radius: 50%; background-color: #ec4899; box-shadow: 0 0 8px rgba(236,72,153,0.8); display: inline-block; flex-shrink: 0;"></span>
+        <button type="button" data-schedule-filter="instagram" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-pink-300 hover:bg-slate-800/60 cursor-pointer" title="Filtrar posts do Instagram">
+          <i class="fa-brands fa-instagram text-pink-400 text-xs"></i>
           <span>Instagram</span>
         </button>
-        <button type="button" data-schedule-filter="blog" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-blue-300 hover:bg-slate-800/60 cursor-pointer" title="Filtrar posts do Blog">
-          <span style="width: 9px; height: 9px; border-radius: 50%; background-color: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.8); display: inline-block; flex-shrink: 0;"></span>
+        <button type="button" data-schedule-filter="blog" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-blue-300 hover:bg-slate-800/60 cursor-pointer" title="Filtrar posts do Blog">
+          <i class="fa-regular fa-file-lines text-blue-400 text-xs"></i>
           <span>Blog</span>
         </button>
       </div>
@@ -401,22 +402,33 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
     btn.addEventListener('click', function () {
       var selected = this.getAttribute('data-schedule-filter');
 
-      // Atualiza estilo ativo nos botões
+      // Atualiza estilo ativo nos botões com destaque da plataforma
       filterButtons.forEach(function (b) {
         var isCurrent = (b === btn);
-        b.classList.toggle('bg-slate-800', isCurrent);
-        b.classList.toggle('text-white', isCurrent);
-        b.classList.toggle('shadow', isCurrent);
-        b.classList.toggle('text-slate-400', !isCurrent);
+        var bKind = b.getAttribute('data-schedule-filter');
+        if (isCurrent) {
+          if (bKind === 'instagram') {
+            b.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-pink-950/70 border border-pink-500/50 text-pink-200 shadow-[0_0_12px_rgba(236,72,153,0.25)] cursor-pointer';
+          } else if (bKind === 'blog') {
+            b.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-blue-950/70 border border-blue-500/50 text-blue-200 shadow-[0_0_12px_rgba(59,130,246,0.25)] cursor-pointer';
+          } else {
+            b.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-800 text-white shadow cursor-pointer';
+          }
+        } else {
+          b.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-white hover:bg-slate-800/60 cursor-pointer';
+        }
       });
 
       // Filtra os cards de evento em tempo real na grade e na lista
       root.querySelectorAll('[data-schedule-item]').forEach(function (item) {
         var kind = item.getAttribute('data-schedule-item');
-        if (selected === 'all' || selected === kind) {
+        var match = (selected === 'all' || selected === kind);
+        if (match) {
           item.classList.remove('hidden');
+          item.style.removeProperty('display');
         } else {
           item.classList.add('hidden');
+          item.style.setProperty('display', 'none', 'important');
         }
       });
     });
@@ -432,8 +444,8 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
     });
   }
 
-  // Menus de 3 pontinhos nas ações dos cards
-  root.addEventListener('click', function (e) {
+  // Menus de 3 pontinhos nas ações dos cards e fechamento global
+  document.addEventListener('click', function (e) {
     var actionBtn = e.target.closest('[data-action-menu-btn]');
     var allDropdowns = root.querySelectorAll('[data-action-menu-dropdown]');
 
@@ -449,12 +461,15 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
       if (dropdown) {
         dropdown.classList.toggle('hidden');
       }
+      if (newMenu) { newMenu.classList.add('hidden'); }
       return;
     }
 
     // Fechar menus ao clicar fora
     allDropdowns.forEach(function (d) { d.classList.add('hidden'); });
-    if (newMenu) { newMenu.classList.add('hidden'); }
+    if (newMenu && !newMenu.contains(e.target) && e.target !== newBtn && !newBtn.contains(e.target)) {
+      newMenu.classList.add('hidden');
+    }
   });
 })();
 </script>
