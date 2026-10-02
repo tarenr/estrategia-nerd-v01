@@ -8402,3 +8402,10 @@ select.nerd-input {
   background: rgba(252, 165, 165, 0.1);
   color: #fca5a5;
 }
+
+/* Painel de Agendamento — Quadros Uniformes do Calendário */
+.schedule-day-cell {
+  min-height: 180px !important;
+  height: 180px !important;
+}
+
