@@ -209,7 +209,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
         <!-- Dias do mês anterior -->
         <?php for ($i = 0; $i < $startWeekday; $i++): ?>
           <?php $prevDayNumber = $prevMonthStartDay + $i; ?>
-          <div class="min-h-[140px] rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none">
+          <div class="h-[185px] rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none overflow-hidden">
             <div class="text-xs font-bold text-slate-500 mb-1"><?= $prevDayNumber ?></div>
           </div>
         <?php endfor; ?>
@@ -220,16 +220,16 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
             $dayEvents = $eventsByDay[$day] ?? [];
             $isToday = $isCurrentMonth && $day === $today;
           ?>
-          <div class="min-h-[140px] rounded-xl border <?= $isToday ? 'border-cyan-400/50 bg-cyan-950/10 shadow-[inset_0_0_15px_rgba(6,182,212,0.05)]' : 'border-slate-800/80 bg-slate-900/40' ?> p-2 flex flex-col justify-start space-y-1.5 transition-colors" data-schedule-day>
-            <div class="flex items-center justify-between mb-0.5">
+          <div class="h-[185px] rounded-xl border <?= $isToday ? 'border-cyan-400/50 bg-cyan-950/10 shadow-[inset_0_0_15px_rgba(6,182,212,0.05)]' : 'border-slate-800/80 bg-slate-900/40' ?> p-2 flex flex-col justify-start transition-colors overflow-hidden" data-schedule-day>
+            <div class="flex items-center justify-between mb-1 shrink-0">
               <span class="text-xs font-bold <?= $isToday ? 'text-cyan-300 font-black' : 'text-slate-400' ?>"><?= $day ?></span>
               <?php if ($isToday): ?>
                 <span class="text-[9px] font-black uppercase tracking-wider text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">Hoje</span>
               <?php endif; ?>
             </div>
 
-            <!-- Cards de Eventos do Dia -->
-            <div class="space-y-1.5">
+            <!-- Cards de Eventos do Dia com altura flexível contida -->
+            <div class="flex-1 overflow-y-auto space-y-1.5 pr-0.5" style="scrollbar-width: thin;">
               <?php foreach ($dayEvents as $event): ?>
                 <?php
                   $isIg = ($event['kind'] ?? '') === 'instagram';
@@ -307,7 +307,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
           $trailingDays = $remainder === 0 ? 0 : 7 - $remainder;
         ?>
         <?php for ($nextDay = 1; $nextDay <= $trailingDays; $nextDay++): ?>
-          <div class="min-h-[140px] rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none">
+          <div class="h-[185px] rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none overflow-hidden">
             <div class="text-xs font-bold text-slate-500 mb-1"><?= $nextDay ?></div>
           </div>
         <?php endfor; ?>
