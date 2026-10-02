@@ -145,4 +145,26 @@ Para proporcionar uma experiência rápida e moderna sem recarregamento de pági
 4. **Legendas e Símbolos Padronizados:** Tabelas com indicadores de engajamento (curtidas, comentários, views) utilizam ícones visuais nos cabeçalhos (`<i class="fa-solid fa-heart"></i>`, `<i class="fa-solid fa-comment"></i>`) acompanhados de barra de legenda explicativa padronizada acima da tabela.
 5. **Unificação Editorial:** As publicações, agendamentos e rascunhos coexistem na aba principal «Posts», permitindo segmentação rápida através dos filtros de «Status», «Origem» e «Período».
 
+---
+
+## 9. Governança da Grade Coordenada de Publicação (Instagram & Blog)
+
+Para assegurar coesão editorial e máxima tração cruzada sem riscos de links quebrados:
+
+### 9.1. Regra de Ouro da Sincronização Cruzada
+1. **Prioridade do Blog:** Nenhum post do Instagram sobre um artigo novo pode ser publicado antes do artigo estar no ar no blog de produção.
+2. **Grade Oficial:**
+   - **Blog:** Publica às terças e sextas-feiras às 09:00 (horário de Brasília).
+   - **Instagram (Artigos Novos):** O Reel correspondente é agendado rigorosamente para as **19:30 do mesmo dia** em que o artigo entra no ar no blog. Isso garante que qualquer chamada "link na bio" ou busca pelo tema no blog encontre o conteúdo ativo.
+   - **Instagram (Acervo Publicado):** Os Reels de artigos que já estão no ar são distribuídos nos **dias livres** (segundas, quartas, quintas, sábados e domingos às 19:30), preenchendo o calendário sem conflito com as estreias do blog.
+   - **Frequência Diária:** 1 publicação por dia no Instagram às 19:30, assegurando consistência algorítmica e previsibilidade para a audiência.
+
+### 9.2. Ferramental CLI de Automação
+- **Sincronizador de Reels do Blog (`scripts/en-instagram-sync-blog-reels.php`):**
+  - Suporta a flag `--include-scheduled` para gerar antecipadamente o Smart Canvas 9:16, o áudio por categoria, a legenda e a miniatura para os posts agendados do blog.
+- **Distribuidor da Grade (`scripts/en-instagram-distribute-schedule.php`):**
+  - Suporta `--dry-run` para simulação visual da grade cronológica de 30 dias.
+  - Suporta `--force` para reaplicação ou reordenação idempotente.
+  - Atualiza as datas em `instagram_posts` marcando o status como `agendado` e vinculando com precisão de segundo (`19:30:00`).
+
 

@@ -36,6 +36,7 @@ use App\Support\TargetEnvironmentDatabase;
 
 $isDryRun = in_array('--dry-run', $argv, true);
 $force = in_array('--force', $argv, true);
+$includeScheduled = in_array('--include-scheduled', $argv, true);
 $limit = 0;
 $targetPostId = 0;
 
@@ -51,10 +52,11 @@ foreach ($argv as $arg) {
 echo "\n=======================================================\n";
 echo "   ESTRATÉGIA NERD — SINCRONIZAÇÃO BLOG -> INSTAGRAM REELS\n";
 echo "=======================================================\n";
-echo sprintf("Modo: %s | Limite: %s | Post Específico: %s\n\n",
+echo sprintf("Modo: %s | Limite: %s | Post Específico: %s | Incluir Agendados: %s\n\n",
     $isDryRun ? 'DRY-RUN (Simulação)' : 'EXECUÇÃO REAL',
     $limit > 0 ? (string)$limit : 'Sem limite',
-    $targetPostId > 0 ? '#' . $targetPostId : 'Todos os pendentes'
+    $targetPostId > 0 ? '#' . $targetPostId : 'Todos os pendentes',
+    $includeScheduled ? 'SIM' : 'NÃO'
 );
 
 try {
@@ -94,15 +96,24 @@ if ($audioTracks === []) {
     }
 }
 
-// 2. Buscar posts publicados em produção
-$sql = "SELECT id, titulo, slug, categoria, resumo, conteudo, imagem_capa, data_publicacao, tags 
+// 2. Buscar posts em produção (publicados ou agendados conforme opção)
+$statusList = $includeScheduled ? "'publicado', 'agendado'" : "'publicado'";
+$sql = "SELECT id, titulo, slug, categoria, resumo, conteudo, imagem_capa, data_publicacao, tags, status 
           FROM posts 
-         WHERE status = 'publicado'";
+         WHERE status IN ($statusList)";
 $params = [];
 
 if ($targetPostId > 0) {
-    $sql .= " AND id = ?";
-    $params[] = $targetPostId;
+    // Se um ID específico foi pedido, permite mesmo que não seja 'publicado' por padrão
+    if (!$includeScheduled) {
+        $sql = "SELECT id, titulo, slug, categoria, resumo, conteudo, imagem_capa, data_publicacao, tags, status 
+                  FROM posts 
+                 WHERE id = ?";
+        $params = [$targetPostId];
+    } else {
+        $sql .= " AND id = ?";
+        $params[] = $targetPostId;
+    }
 }
 $sql .= " ORDER BY id ASC";
 
@@ -124,7 +135,10 @@ foreach ($prodPosts as $post) {
     $postId = (int) $post['id'];
     $slug = (string) ($post['slug'] ?? '');
     $tituloOriginal = (string) ($post['titulo'] ?? '');
-    $categoria = strtolower(trim((string) ($post['categoria'] ?? 'hardware')));
+    $categoria = strtolower(trim((string) ($post['categoria'] ?? '')));
+    if ($categoria === '') {
+        $categoria = 'cultura';
+    }
     $resumo = (string) ($post['resumo'] ?? '');
     $coverRel = (string) ($post['imagem_capa'] ?? '');
 
