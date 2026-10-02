@@ -8405,8 +8405,8 @@ select.nerd-input {
 
 /* Painel de Agendamento — Quadros Uniformes do Calendário */
 .schedule-day-cell {
-  min-height: 235px !important;
-  height: 235px !important;
+  min-height: 200px !important;
+  height: 200px !important;
   overflow: hidden !important;
 }
 .schedule-day-cell * {
@@ -8414,6 +8414,25 @@ select.nerd-input {
 }
 .schedule-day-cell *::-webkit-scrollbar {
   display: none !important;
+}
+
+.schedule-events-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  flex: 1 1 0% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.schedule-event-card {
+  flex: 1 1 calc(50% - 3px) !important;
+  max-height: calc(50% - 3px) !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
 }
 
 .schedule-card-title {
