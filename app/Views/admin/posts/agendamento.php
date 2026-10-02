@@ -1,5 +1,16 @@
 <?php
+/**
+ * -----------------------------------------------------------------------------
+ * @file        app/Views/admin/posts/agendamento.php
+ * @project     Estrategia Nerd
+ * @purpose     Painel de Agendamento Unificado de Posts (Blog e Instagram)
+ *              em Grade Mensal, Semanal e Lista, com miniaturas e ações rápidas
+ * -----------------------------------------------------------------------------
+ */
+
 declare(strict_types=1);
+
+use App\Support\Csrf;
 
 $view = (($view ?? 'grade') === 'lista') ? 'lista' : 'grade';
 $year = (int) ($year ?? date('Y'));
@@ -27,8 +38,9 @@ $buildUrl = static function (array $overrides = []) use ($view, $year, $month): 
     return $base . '?' . http_build_query($query);
 };
 
-$weekdayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
-$monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+$weekdayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+$monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+$currentMonthLabel = ($monthNames[$month - 1] ?? 'Mês') . ' de ' . $year;
 
 $formatDayLabel = static function (int $day) use ($year, $month): string {
     try {
@@ -38,189 +50,409 @@ $formatDayLabel = static function (int $day) use ($year, $month): string {
     }
 };
 
-$statusClasses = static function (string $status): string {
-    return match ($status) {
-        'publicado' => 'status-badge status-publicado',
-        'rascunho' => 'status-badge status-rascunho',
-        'agendado' => 'status-badge status-agendado',
-        default => 'status-badge',
-    };
-};
-
 $nowTs = (new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo')))->getTimestamp();
 $isOverdue = static fn (array $event): bool => ($event['status'] ?? '') === 'agendado' && (int) ($event['ts'] ?? 0) < $nowTs;
 
-// Blog mantem as cores de status; Instagram em rosa, com erro em vermelho e vencido com borda vermelha.
-$eventClasses = static function (array $event) use ($statusClasses, $isOverdue): string {
-    if (($event['kind'] ?? '') === 'instagram') {
-        $base = ($event['status'] ?? '') === 'erro'
-            ? 'border border-rose-500/60 bg-rose-500/20 text-rose-100'
-            : 'border border-pink-400/40 bg-pink-500/15 text-pink-100';
-    } else {
-        $base = $statusClasses((string) ($event['status'] ?? ''));
-    }
+$statusLabel = static fn (array $event): string => (string) ($event['status'] ?? '') . ($isOverdue($event) ? ' - vencido' : '');
 
-    return $base . ($isOverdue($event) ? ' ring-1 ring-rose-400' : '');
+$resolveThumbUrl = static function (?string $path): string {
+    $path = trim((string) $path);
+    if ($path === '') {
+        return '';
+    }
+    if (preg_match('#^(https?:)?//#i', $path) || str_starts_with($path, 'data:') || str_starts_with($path, 'blob:')) {
+        return $path;
+    }
+    if (preg_match('#\.mp4(\?.*)?$#i', $path)) {
+        $clean = preg_replace('#\?.*$#', '', $path);
+        $jpg = preg_replace('#\.mp4$#i', '.jpg', $clean);
+        if (is_string($jpg) && is_file(base_path('public/' . ltrim($jpg, '/\\')))) {
+            return url('/' . ltrim($jpg, '/\\'));
+        }
+    }
+    return url('/' . ltrim($path, '/\\'));
 };
 
-$eventIcon = static fn (array $event): string => ($event['kind'] ?? '') === 'instagram'
-    ? '<i class="fa-brands fa-instagram" aria-hidden="true"></i>'
-    : '<i class="fa-solid fa-newspaper" aria-hidden="true"></i>';
-
-$statusLabel = static fn (array $event): string => (string) ($event['status'] ?? '') . ($isOverdue($event) ? ' - vencido' : '');
+// Dias do mês anterior para preenchimento natural do calendário
+$prevMonthNum = $month === 1 ? 12 : $month - 1;
+$prevYearNum = $month === 1 ? $year - 1 : $year;
+$daysInPrevMonth = (int) date('t', (int) mktime(0, 0, 0, $prevMonthNum, 1, $prevYearNum));
+$prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
 ?>
 
-<div class="max-w-7xl mx-auto px-4 py-6" data-admin-schedule-root>
-  <div class="admin-page-header">
-    <div class="admin-page-heading">
-      <h1 class="admin-page-title">Agendamento de Posts</h1>
-      <div class="admin-page-subtitle">Visualize quando cada post do blog e do Instagram foi ou sera publicado.</div>
+<div class="max-w-[1400px] mx-auto px-4 py-6" data-admin-schedule-root>
+
+  <!-- 1. Header Principal -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div class="flex items-center gap-3.5">
+      <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 via-purple-600/30 to-purple-800/40 border border-purple-500/40 text-purple-300 shadow-[0_0_24px_rgba(168,85,247,0.3)]">
+        <i class="fa-solid fa-calendar-days text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold font-orbitron tracking-wide text-white">Agendamento de Posts</h1>
+        <p class="text-xs sm:text-sm text-slate-400 mt-0.5">Gerencie e visualize seus posts do Instagram e do Blog em um só calendário.</p>
+      </div>
     </div>
-    <div class="admin-page-actions">
-      <a href="<?= $buildUrl(['view' => 'grade']) ?>" class="admin-btn <?= $view === 'grade' ? 'admin-btn-primary' : 'admin-btn-secondary' ?>">Grade</a>
-      <a href="<?= $buildUrl(['view' => 'lista']) ?>" class="admin-btn <?= $view === 'lista' ? 'admin-btn-primary' : 'admin-btn-secondary' ?>">Lista</a>
+
+    <!-- Ação de Criar Agendamento com Dropdown -->
+    <div class="relative" data-new-schedule-wrap>
+      <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all cursor-pointer" data-new-schedule-btn>
+        <i class="fa-solid fa-plus text-xs"></i>
+        <span>Adicionar agendamento</span>
+        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-80"></i>
+      </button>
+
+      <div class="hidden absolute right-0 top-full mt-2 w-52 rounded-2xl border border-slate-800 bg-slate-950/95 p-1.5 shadow-2xl backdrop-blur-xl z-50" data-new-schedule-menu>
+        <a href="<?= url('/admin/criar-post') ?>" class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-slate-900 hover:text-white transition-colors">
+          <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            <i class="fa-solid fa-file-lines text-xs"></i>
+          </span>
+          <div>
+            <div class="font-bold">Post no Blog</div>
+            <div class="text-[10px] text-slate-400 font-normal">Criar e agendar artigo</div>
+          </div>
+        </a>
+        <a href="<?= url('/admin/instagram') ?>" class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:bg-slate-900 hover:text-white transition-colors">
+          <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-pink-500/20 text-pink-400 border border-pink-500/30">
+            <i class="fa-brands fa-instagram text-xs"></i>
+          </span>
+          <div>
+            <div class="font-bold">Post no Instagram</div>
+            <div class="text-[10px] text-slate-400 font-normal">Reel, Carrossel ou Imagem</div>
+          </div>
+        </a>
+      </div>
     </div>
   </div>
 
-  <div class="admin-panel flex items-center justify-between gap-4 mb-4 flex-wrap">
-    <a href="<?= $buildUrl(['ano' => $prev['ano'], 'mes' => $prev['mes']]) ?>" class="admin-btn admin-btn-secondary">&larr; Anterior</a>
-    <form method="get" action="<?= function_exists('url') ? url('/admin/agendamento-posts') : '/admin/agendamento-posts' ?>" class="flex items-center gap-2">
-      <input type="hidden" name="view" value="<?= $e($view) ?>">
-      <select name="mes" class="nerd-input px-3 py-2 rounded-xl" onchange="this.form.submit()">
-        <?php foreach ($monthNames as $index => $label): ?>
-          <option value="<?= $index + 1 ?>" <?= ($month === $index + 1) ? 'selected' : '' ?>><?= $label ?></option>
-        <?php endforeach; ?>
-      </select>
-      <select name="ano" class="nerd-input px-3 py-2 rounded-xl" onchange="this.form.submit()">
-        <?php for ($y = (int) date('Y') - 1; $y <= (int) date('Y') + 2; $y++): ?>
-          <option value="<?= $y ?>" <?= ($year === $y) ? 'selected' : '' ?>><?= $y ?></option>
-        <?php endfor; ?>
-      </select>
-    </form>
-    <a href="<?= $buildUrl(['ano' => $next['ano'], 'mes' => $next['mes']]) ?>" class="admin-btn admin-btn-secondary">Proximo &rarr;</a>
-  </div>
+  <!-- 2. Barra de Navegação Temporal e Controles -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 bg-slate-950/60 border border-slate-800/80 rounded-2xl p-3 backdrop-blur-sm">
+    <!-- Lado Esquerdo: < > Mês/Ano e Hoje -->
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center gap-1.5">
+        <a href="<?= $buildUrl(['ano' => $prev['ano'], 'mes' => $prev['mes']]) ?>" class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" title="Mês anterior">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </a>
+        <a href="<?= $buildUrl(['ano' => $next['ano'], 'mes' => $next['mes']]) ?>" class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors" title="Próximo mês">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </a>
+      </div>
 
-  <div class="flex flex-wrap items-center gap-3 mb-4 text-xs text-slate-400">
-    <span>Mostrar:</span>
-    <button type="button" class="admin-btn admin-btn-secondary !px-3 !py-1.5" data-schedule-kind="blog" aria-pressed="true"><i class="fa-solid fa-newspaper" aria-hidden="true"></i> Blog</button>
-    <button type="button" class="admin-btn admin-btn-secondary !px-3 !py-1.5 text-pink-200" data-schedule-kind="instagram" aria-pressed="true"><i class="fa-brands fa-instagram" aria-hidden="true"></i> Instagram</button>
-    <span class="ml-auto">Blog: ambiente <?= $e(function_exists('environment_label') ? environment_label($targetEnvironment) : $targetEnvironment) ?> · Instagram: banco local · <span class="text-rose-300">borda vermelha = agendado vencido · fundo vermelho = erro</span></span>
+      <div class="text-lg font-bold font-orbitron text-white min-w-[190px]">
+        <?= $e($currentMonthLabel) ?>
+      </div>
+
+      <a href="<?= $buildUrl(['ano' => (int) date('Y'), 'mes' => (int) date('n')]) ?>" class="px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900/80 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+        Hoje
+      </a>
+
+      <!-- Seletor Rápido de Ambiente Alvo -->
+      <form method="POST" action="<?= htmlspecialchars(url('/admin/ambiente-alvo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center gap-1.5 ml-2">
+        <?= Csrf::field() ?>
+        <input type="hidden" name="redirect_to" value="<?= htmlspecialchars((string) ($_SERVER['REQUEST_URI'] ?? url('/admin/agendamento-posts')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+        <span class="text-[11px] text-slate-500 font-semibold uppercase tracking-wider hidden sm:inline">Blog:</span>
+        <select name="target_environment" onchange="this.form.submit()" class="rounded-xl border border-slate-800 bg-slate-900/90 px-2.5 py-1 text-xs font-semibold text-cyan-300 hover:border-cyan-500/40 focus:outline-none cursor-pointer" title="Trocar ambiente do blog">
+          <?php foreach (\App\Support\EnvironmentManager::allowedTargets() as $envOpt): ?>
+            <option value="<?= htmlspecialchars($envOpt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"<?= $envOpt === $targetEnvironment ? ' selected' : '' ?>>
+              <?= htmlspecialchars(environment_label($envOpt), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </form>
+    </div>
+
+    <!-- Lado Direito: Modos de Visão, Filtro de Plataforma e Legenda -->
+    <div class="flex items-center gap-3.5 flex-wrap">
+      <!-- Segmented Control: Mês / Lista -->
+      <div class="inline-flex p-1 rounded-xl bg-slate-900 border border-slate-800">
+        <a href="<?= $buildUrl(['view' => 'grade']) ?>" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all <?= $view === 'grade' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200' ?>">
+          Mês
+        </a>
+        <a href="<?= $buildUrl(['view' => 'lista']) ?>" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all <?= $view === 'lista' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200' ?>">
+          Lista
+        </a>
+      </div>
+
+      <!-- Dropdown de Filtro de Plataformas -->
+      <div class="relative">
+        <select data-filter-platform class="rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-200 hover:border-slate-700 focus:border-cyan-400 focus:outline-none cursor-pointer">
+          <option value="all">Todas as plataformas</option>
+          <option value="instagram">Instagram</option>
+          <option value="blog">Blog</option>
+        </select>
+      </div>
+
+      <!-- Legenda Visual com Bolinhas -->
+      <div class="flex items-center gap-3 text-xs pl-1">
+        <span class="inline-flex items-center gap-1.5 text-slate-300 font-medium">
+          <span class="h-2.5 w-2.5 rounded-full bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.6)]"></span>
+          Instagram
+        </span>
+        <span class="inline-flex items-center gap-1.5 text-slate-300 font-medium">
+          <span class="h-2.5 w-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span>
+          Blog
+        </span>
+      </div>
+    </div>
   </div>
 
   <?php if ($instagramUnavailable): ?>
-    <div class="admin-panel border border-amber-500/40 mb-4 text-xs text-amber-100">Nao foi possivel carregar os posts do Instagram agora. O calendario mostra so o blog.</div>
+    <div class="admin-panel border border-amber-500/40 mb-4 text-xs text-amber-100 flex items-center gap-2">
+      <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+      <span>Não foi possível carregar os posts do Instagram no momento. Exibindo apenas a grade do blog.</span>
+    </div>
   <?php endif; ?>
 
+  <!-- 3. Visualização em Grade (Mês) -->
   <?php if ($view === 'grade'): ?>
-    <div class="admin-panel">
-      <div class="grid grid-cols-7 gap-2 mb-2">
+    <div class="admin-panel !p-3">
+      <!-- Dias da Semana -->
+      <div class="grid grid-cols-7 gap-2 mb-2 border-b border-slate-800/80 pb-2">
         <?php foreach ($weekdayLabels as $label): ?>
-          <div class="text-xs font-bold text-slate-400 text-center"><?= $label ?></div>
+          <div class="text-xs font-bold text-slate-400 text-center tracking-wider uppercase"><?= $label ?></div>
         <?php endforeach; ?>
       </div>
+
+      <!-- Células do Calendário -->
       <div class="grid grid-cols-7 gap-2">
+        <!-- Dias do mês anterior -->
         <?php for ($i = 0; $i < $startWeekday; $i++): ?>
-          <div class="min-h-[150px] rounded-xl bg-slate-900/20"></div>
+          <?php $prevDayNumber = $prevMonthStartDay + $i; ?>
+          <div class="min-h-[140px] rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none">
+            <div class="text-xs font-bold text-slate-500 mb-1"><?= $prevDayNumber ?></div>
+          </div>
         <?php endfor; ?>
+
+        <!-- Dias do mês atual -->
         <?php for ($day = 1; $day <= $daysInMonth; $day++): ?>
-          <?php $dayEvents = $eventsByDay[$day] ?? []; $isToday = $isCurrentMonth && $day === $today; ?>
-          <div class="min-h-[150px] rounded-xl border <?= $isToday ? 'border-cyan-400/60 bg-cyan-500/5' : 'border-slate-800 bg-slate-900/40' ?> p-2 space-y-1" data-schedule-day>
-            <div class="text-xs font-bold <?= $isToday ? 'text-cyan-300' : 'text-slate-400' ?>"><?= $day ?></div>
-            <?php foreach ($dayEvents as $event): ?>
-              <a href="<?= $e($event['url']) ?>" data-schedule-item="<?= $e($event['kind']) ?>" class="block rounded-lg px-2 py-1 text-xs <?= $eventClasses($event) ?>" title="<?= $e($event['titulo'] . ' (' . $statusLabel($event) . ')') ?>">
-                <span class="font-bold"><?= $eventIcon($event) ?> <?= $e(date('H:i', (int) $event['ts'])) ?></span>
-                <span class="block line-clamp-2 break-words"><?= $e($event['titulo']) ?></span>
-                <?php if (($event['kind'] ?? '') === 'instagram' || $isOverdue($event)): ?>
-                  <span class="block text-[10px] opacity-80"><?= $e($statusLabel($event)) ?></span>
-                <?php endif; ?>
-              </a>
-            <?php endforeach; ?>
+          <?php
+            $dayEvents = $eventsByDay[$day] ?? [];
+            $isToday = $isCurrentMonth && $day === $today;
+          ?>
+          <div class="min-h-[140px] rounded-xl border <?= $isToday ? 'border-cyan-400/50 bg-cyan-950/10 shadow-[inset_0_0_15px_rgba(6,182,212,0.05)]' : 'border-slate-800/80 bg-slate-900/40' ?> p-2 flex flex-col justify-start space-y-1.5 transition-colors" data-schedule-day>
+            <div class="flex items-center justify-between mb-0.5">
+              <span class="text-xs font-bold <?= $isToday ? 'text-cyan-300 font-black' : 'text-slate-400' ?>"><?= $day ?></span>
+              <?php if ($isToday): ?>
+                <span class="text-[9px] font-black uppercase tracking-wider text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">Hoje</span>
+              <?php endif; ?>
+            </div>
+
+            <!-- Cards de Eventos do Dia -->
+            <div class="space-y-1.5">
+              <?php foreach ($dayEvents as $event): ?>
+                <?php
+                  $isIg = ($event['kind'] ?? '') === 'instagram';
+                  $timeFormatted = date('H:i', (int) $event['ts']);
+                  $thumbUrl = $resolveThumbUrl($event['thumb'] ?? '');
+                  $isErr = ($event['status'] ?? '') === 'erro';
+                  $overdue = $isOverdue($event);
+
+                  if ($isIg) {
+                      $cardClasses = $isErr
+                          ? 'border-rose-500/60 bg-rose-950/40 text-rose-100 hover:border-rose-400'
+                          : 'border-pink-500/40 bg-[#241228]/95 hover:border-pink-400/80 text-pink-100 shadow-[0_2px_10px_rgba(236,72,153,0.08)]';
+                      $headerClass = 'text-pink-300';
+                      $iconHtml = '<i class="fa-brands fa-instagram text-pink-400 text-xs"></i>';
+                  } else {
+                      $cardClasses = 'border-blue-500/40 bg-[#0f1d38]/95 hover:border-blue-400/80 text-blue-100 shadow-[0_2px_10px_rgba(59,130,246,0.08)]';
+                      $headerClass = 'text-blue-300';
+                      $iconHtml = '<i class="fa-regular fa-file-lines text-blue-400 text-xs"></i>';
+                  }
+
+                  if ($overdue) {
+                      $cardClasses .= ' ring-1 ring-rose-400';
+                  }
+                ?>
+                <div data-schedule-item="<?= $e($event['kind']) ?>" class="group relative rounded-xl border p-2 text-xs transition-all <?= $cardClasses ?>">
+                  <div class="flex items-start justify-between gap-1.5">
+                    <!-- Informações do Post (Horário e Título) -->
+                    <div class="flex-1 min-w-0 pr-1">
+                      <div class="flex items-center gap-1.5 font-bold text-[11px] mb-1 <?= $headerClass ?>">
+                        <?= $iconHtml ?>
+                        <span><?= $e($timeFormatted) ?></span>
+                      </div>
+                      <a href="<?= $e($event['url']) ?>" class="block font-medium text-white/95 line-clamp-2 leading-tight hover:underline text-[11px]" title="<?= $e($event['titulo']) ?>">
+                        <?= $e($event['titulo']) ?>
+                      </a>
+                      <?php if ($overdue || $isErr): ?>
+                        <div class="mt-1 text-[9px] font-semibold text-rose-300">
+                          <?= $isErr ? 'Erro no envio' : 'Agendado vencido' ?>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+
+                    <!-- Miniatura de Capa e Menu de Ações -->
+                    <div class="flex items-center gap-1 shrink-0">
+                      <?php if ($thumbUrl !== ''): ?>
+                        <a href="<?= $e($event['url']) ?>" class="block w-9 h-9 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-slate-800" title="Ver post">
+                          <img src="<?= $e($thumbUrl) ?>" alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy">
+                        </a>
+                      <?php endif; ?>
+
+                      <!-- Menu de 3 pontinhos vertical -->
+                      <div class="relative" data-action-menu-wrap>
+                        <button type="button" class="w-5 h-7 flex items-center justify-center text-slate-400 hover:text-white rounded transition-colors" data-action-menu-btn title="Opções">
+                          <i class="fa-solid fa-ellipsis-vertical text-[10px]"></i>
+                        </button>
+                        <div class="hidden absolute right-0 top-full mt-1 w-28 rounded-xl border border-slate-800 bg-slate-950 p-1 shadow-2xl backdrop-blur-md z-30" data-action-menu-dropdown>
+                          <a href="<?= $e($event['url']) ?>" class="flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-slate-300 hover:bg-slate-900 hover:text-white rounded-lg transition-colors">
+                            <i class="fa-solid fa-pen text-[10px]"></i> Editar
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
             <button type="button" class="hidden w-full rounded-lg px-2 py-0.5 text-[11px] text-cyan-300 hover:bg-slate-800" data-schedule-more></button>
+          </div>
+        <?php endfor; ?>
+
+        <!-- Dias do próximo mês para completar a última semana -->
+        <?php
+          $totalCells = $startWeekday + $daysInMonth;
+          $remainder = $totalCells % 7;
+          $trailingDays = $remainder === 0 ? 0 : 7 - $remainder;
+        ?>
+        <?php for ($nextDay = 1; $nextDay <= $trailingDays; $nextDay++): ?>
+          <div class="min-h-[140px] rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none">
+            <div class="text-xs font-bold text-slate-500 mb-1"><?= $nextDay ?></div>
           </div>
         <?php endfor; ?>
       </div>
     </div>
+
+  <!-- 4. Visualização em Lista -->
   <?php else: ?>
-    <div class="admin-panel space-y-4">
+    <div class="admin-panel space-y-4 !p-4">
       <?php if ($events === []): ?>
-        <div class="text-sm text-slate-400">Nenhum post com data neste mes.</div>
+        <div class="text-sm text-slate-400 py-8 text-center">Nenhum post agendado ou publicado neste mês.</div>
       <?php endif; ?>
+
       <?php ksort($eventsByDay); ?>
       <?php foreach ($eventsByDay as $day => $dayEvents): ?>
-        <div data-schedule-day>
-          <div class="text-sm font-bold text-slate-200 mb-2"><?= $formatDayLabel((int) $day) ?></div>
-          <div class="space-y-2">
+        <div class="border-b border-slate-800/80 pb-4 last:border-b-0" data-schedule-day>
+          <div class="text-sm font-bold font-orbitron text-slate-200 mb-3 flex items-center gap-2">
+            <i class="fa-regular fa-calendar text-cyan-400 text-xs"></i>
+            <span><?= $formatDayLabel((int) $day) ?></span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <?php foreach ($dayEvents as $event): ?>
-              <a href="<?= $e($event['url']) ?>" data-schedule-item="<?= $e($event['kind']) ?>" class="admin-panel flex items-center justify-between gap-3 hover:border-cyan-500/40">
-                <div class="flex min-w-0 items-center gap-3">
-                  <span class="text-xs text-slate-400 whitespace-nowrap"><?= $e(date('H:i', (int) $event['ts'])) ?></span>
-                  <span class="text-sm <?= ($event['kind'] ?? '') === 'instagram' ? 'text-pink-200' : 'text-slate-300' ?>"><?= $eventIcon($event) ?></span>
-                  <span class="text-sm text-white truncate"><?= $e($event['titulo']) ?></span>
+              <?php
+                $isIg = ($event['kind'] ?? '') === 'instagram';
+                $timeFormatted = date('H:i', (int) $event['ts']);
+                $thumbUrl = $resolveThumbUrl($event['thumb'] ?? '');
+                $isErr = ($event['status'] ?? '') === 'erro';
+                $overdue = $isOverdue($event);
+
+                if ($isIg) {
+                    $cardClasses = $isErr
+                        ? 'border-rose-500/60 bg-rose-950/40 text-rose-100 hover:border-rose-400'
+                        : 'border-pink-500/40 bg-[#241228]/95 hover:border-pink-400/80 text-pink-100';
+                    $headerClass = 'text-pink-300';
+                    $iconHtml = '<i class="fa-brands fa-instagram text-pink-400 text-xs"></i>';
+                } else {
+                    $cardClasses = 'border-blue-500/40 bg-[#0f1d38]/95 hover:border-blue-400/80 text-blue-100';
+                    $headerClass = 'text-blue-300';
+                    $iconHtml = '<i class="fa-regular fa-file-lines text-blue-400 text-xs"></i>';
+                }
+
+                if ($overdue) {
+                    $cardClasses .= ' ring-1 ring-rose-400';
+                }
+              ?>
+              <div data-schedule-item="<?= $e($event['kind']) ?>" class="group rounded-xl border p-3 text-xs transition-all <?= $cardClasses ?> flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5 font-bold text-xs mb-1.5 <?= $headerClass ?>">
+                    <?= $iconHtml ?>
+                    <span><?= $e($timeFormatted) ?></span>
+                    <span class="text-[10px] font-normal opacity-70 ml-1">(<?= $e($event['kind']) ?>)</span>
+                  </div>
+                  <a href="<?= $e($event['url']) ?>" class="block font-medium text-white/95 line-clamp-2 leading-snug hover:underline text-xs" title="<?= $e($event['titulo']) ?>">
+                    <?= $e($event['titulo']) ?>
+                  </a>
+                  <div class="mt-2 flex items-center gap-2 text-[10px]">
+                    <span class="opacity-70"><?= $e($statusLabel($event)) ?></span>
+                  </div>
                 </div>
-                <span class="rounded-lg px-2 py-1 text-xs whitespace-nowrap <?= $eventClasses($event) ?>"><?= $e($statusLabel($event)) ?></span>
-              </a>
+
+                <div class="flex items-center gap-2 shrink-0">
+                  <?php if ($thumbUrl !== ''): ?>
+                    <a href="<?= $e($event['url']) ?>" class="block w-12 h-12 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-slate-800">
+                      <img src="<?= $e($thumbUrl) ?>" alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy">
+                    </a>
+                  <?php endif; ?>
+                  <a href="<?= $e($event['url']) ?>" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors" title="Editar">
+                    <i class="fa-solid fa-pen text-xs"></i>
+                  </a>
+                </div>
+              </div>
             <?php endforeach; ?>
           </div>
         </div>
       <?php endforeach; ?>
     </div>
   <?php endif; ?>
+
 </div>
 
+<!-- 5. Script Interativo de Filtros e Dropdowns -->
 <script>
 (function () {
   var root = document.querySelector('[data-admin-schedule-root]');
   if (!root) { return; }
-  var LIMIT = 4;
-  var isGrid = <?= $view === 'grade' ? 'true' : 'false' ?>;
-  var active = { blog: true, instagram: true };
-  try {
-    var saved = JSON.parse(window.localStorage.getItem('en-schedule-kinds') || 'null');
-    if (saved && typeof saved === 'object') { active.blog = saved.blog !== false; active.instagram = saved.instagram !== false; }
-  } catch (err) { /* armazenamento indisponivel: usa o padrao */ }
 
-  function apply() {
-    root.querySelectorAll('[data-schedule-kind]').forEach(function (btn) {
-      var on = active[btn.getAttribute('data-schedule-kind')];
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      btn.classList.toggle('opacity-40', !on);
-    });
-    root.querySelectorAll('[data-schedule-day]').forEach(function (day) {
-      var expanded = day.getAttribute('data-expanded') === '1';
-      var visible = 0;
-      var hiddenByLimit = 0;
-      day.querySelectorAll('[data-schedule-item]').forEach(function (item) {
-        var show = !!active[item.getAttribute('data-schedule-item')];
-        if (show && isGrid && !expanded && visible >= LIMIT) { show = false; hiddenByLimit++; }
-        if (show) { visible++; }
-        item.classList.toggle('hidden', !show);
+  // Filtro de Plataformas (Todas / Instagram / Blog)
+  var platformSelect = root.querySelector('[data-filter-platform]');
+  if (platformSelect) {
+    platformSelect.addEventListener('change', function () {
+      var selected = this.value;
+      root.querySelectorAll('[data-schedule-item]').forEach(function (item) {
+        var kind = item.getAttribute('data-schedule-item');
+        if (selected === 'all' || selected === kind) {
+          item.classList.remove('hidden');
+        } else {
+          item.classList.add('hidden');
+        }
       });
-      var more = day.querySelector('[data-schedule-more]');
-      if (more) {
-        more.classList.toggle('hidden', !(hiddenByLimit > 0 || expanded));
-        more.textContent = expanded ? 'mostrar menos' : '+' + hiddenByLimit + ' mais';
-      }
-      if (!isGrid) { day.classList.toggle('hidden', visible === 0); }
     });
   }
 
-  root.addEventListener('click', function (event) {
-    var kindBtn = event.target.closest('[data-schedule-kind]');
-    if (kindBtn) {
-      var kind = kindBtn.getAttribute('data-schedule-kind');
-      active[kind] = !active[kind];
-      try { window.localStorage.setItem('en-schedule-kinds', JSON.stringify(active)); } catch (err) { /* ignora */ }
-      apply();
+  // Menu Dropdown "+ Adicionar agendamento"
+  var newBtn = root.querySelector('[data-new-schedule-btn]');
+  var newMenu = root.querySelector('[data-new-schedule-menu]');
+  if (newBtn && newMenu) {
+    newBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      newMenu.classList.toggle('hidden');
+    });
+  }
+
+  // Menus de 3 pontinhos nas ações dos cards
+  root.addEventListener('click', function (e) {
+    var actionBtn = e.target.closest('[data-action-menu-btn]');
+    var allDropdowns = root.querySelectorAll('[data-action-menu-dropdown]');
+
+    if (actionBtn) {
+      e.stopPropagation();
+      var wrap = actionBtn.closest('[data-action-menu-wrap]');
+      var dropdown = wrap ? wrap.querySelector('[data-action-menu-dropdown]') : null;
+
+      allDropdowns.forEach(function (d) {
+        if (d !== dropdown) { d.classList.add('hidden'); }
+      });
+
+      if (dropdown) {
+        dropdown.classList.toggle('hidden');
+      }
       return;
     }
-    var more = event.target.closest('[data-schedule-more]');
-    if (more) {
-      var day = more.closest('[data-schedule-day]');
-      day.setAttribute('data-expanded', day.getAttribute('data-expanded') === '1' ? '0' : '1');
-      apply();
-    }
-  });
 
-  apply();
+    // Fechar menus ao clicar fora
+    allDropdowns.forEach(function (d) { d.classList.add('hidden'); });
+    if (newMenu) { newMenu.classList.add('hidden'); }
+  });
 })();
 </script>

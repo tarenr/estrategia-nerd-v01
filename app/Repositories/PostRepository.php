@@ -569,7 +569,7 @@ final class PostRepository
         $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
         $end = date('Y-m-d H:i:s', mktime(23, 59, 59, $month + 1, 0, $year));
 
-        $stmt = $this->pdo->prepare('SELECT id, titulo, slug, status, data_publicacao FROM posts WHERE data_publicacao BETWEEN :start AND :end ORDER BY data_publicacao ASC');
+        $stmt = $this->pdo->prepare('SELECT id, titulo, slug, status, data_publicacao, imagem_capa, imagem_thumb FROM posts WHERE data_publicacao BETWEEN :start AND :end ORDER BY data_publicacao ASC');
         $stmt->bindValue(':start', $start);
         $stmt->bindValue(':end', $end);
         $stmt->execute();

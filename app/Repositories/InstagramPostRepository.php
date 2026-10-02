@@ -148,11 +148,12 @@ final class InstagramPostRepository
         $end   = date('Y-m-d H:i:s', (int) mktime(23, 59, 59, $month + 1, 0, $year));
 
         $stmt = $this->pdo->prepare(
-            "SELECT id, status, tipo, legenda, agendado_para, publicado_em, origin,
-                    CASE WHEN status = 'publicado' THEN publicado_em ELSE agendado_para END AS data_evento
-               FROM instagram_posts
-              WHERE (status = 'publicado' AND publicado_em BETWEEN :s1 AND :e1)
-                 OR (status IN ('agendado', 'publicando', 'erro') AND agendado_para BETWEEN :s2 AND :e2)
+            "SELECT p.id, p.status, p.tipo, p.legenda, p.agendado_para, p.publicado_em, p.origin,
+                    CASE WHEN p.status = 'publicado' THEN p.publicado_em ELSE p.agendado_para END AS data_evento,
+                    (SELECT m.caminho FROM instagram_post_media m WHERE m.post_id = p.id ORDER BY m.ordem ASC LIMIT 1) AS media_caminho
+               FROM instagram_posts p
+              WHERE (p.status = 'publicado' AND p.publicado_em BETWEEN :s1 AND :e1)
+                 OR (p.status IN ('agendado', 'publicando', 'erro') AND p.agendado_para BETWEEN :s2 AND :e2)
               ORDER BY data_evento ASC"
         );
         $stmt->execute([':s1' => $start, ':e1' => $end, ':s2' => $start, ':e2' => $end]);

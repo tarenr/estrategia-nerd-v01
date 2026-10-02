@@ -157,8 +157,6 @@ Para assegurar coesão editorial e máxima tração cruzada sem riscos de links 
    - **Blog:** Publica às terças e sextas-feiras às 09:00 (horário de Brasília).
    - **Instagram (Artigos Novos):** O Reel correspondente é agendado rigorosamente para as **19:30 do mesmo dia** em que o artigo entra no ar no blog. Isso garante que qualquer chamada "link na bio" ou busca pelo tema no blog encontre o conteúdo ativo.
    - **Instagram (Acervo Publicado):** Os Reels de artigos que já estão no ar são distribuídos nos **dias livres** (segundas, quartas, quintas, sábados e domingos às 19:30), preenchendo o calendário sem conflito com as estreias do blog.
-   - **Frequência Diária:** 1 publicação por dia no Instagram às 19:30, assegurando consistência algorítmica e previsibilidade para a audiência.
-
 ### 9.2. Ferramental CLI de Automação
 - **Sincronizador de Reels do Blog (`scripts/en-instagram-sync-blog-reels.php`):**
   - Suporta a flag `--include-scheduled` para gerar antecipadamente o Smart Canvas 9:16, o áudio por categoria, a legenda e a miniatura para os posts agendados do blog.
@@ -166,5 +164,15 @@ Para assegurar coesão editorial e máxima tração cruzada sem riscos de links 
   - Suporta `--dry-run` para simulação visual da grade cronológica de 30 dias.
   - Suporta `--force` para reaplicação ou reordenação idempotente.
   - Atualiza as datas em `instagram_posts` marcando o status como `agendado` e vinculando com precisão de segundo (`19:30:00`).
+
+### 9.3. Padrão Visual do Painel de Agendamento (`/admin/agendamento-posts`)
+- **Cards Retangulares com Miniaturas:** Todos os eventos (Blog e Instagram) compartilham o formato retangular (`rounded-xl` com padding consistente), eliminando distorções ovais (`.status-badge` com `border-radius: 9999px` não deve ser aplicada aos cards de calendário).
+- **Miniaturas de Capa:** Cada card renderiza uma miniatura quadrada (`w-9 h-9` ou `w-12 h-12`) no lado direito, exibindo a capa do post do blog ou o poster JPG do Reel do Instagram.
+- **Diferenciação Cromática:**
+  * **Blog:** Fundo azul profundo (`bg-[#0f1d38]/95`), borda azul sutil (`border-blue-500/40`), ícone de documento e horário em azul claro.
+  * **Instagram:** Fundo magenta profundo (`bg-[#241228]/95`), borda rosa sutil (`border-pink-500/40`), ícone de câmera e horário em rosa claro.
+- **Sanitização de Títulos:** Títulos do blog são desprovidos de marcações wiki `[[` e `]]` na camada de serviço antes da exibição no calendário.
+- **Ações Rápidas:** Cada card possui menu de contexto com atalho direto de edição, além de navegação temporal com atalho "Hoje", seletor rápido de ambiente e botão "+ Adicionar agendamento" com opções dedicadas para Blog e Instagram.
+
 
 

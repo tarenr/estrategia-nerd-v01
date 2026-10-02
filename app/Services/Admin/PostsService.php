@@ -166,13 +166,17 @@ final class PostsService
             if ($ts === false) {
                 continue;
             }
+            $cleanTitulo = trim((string) preg_replace('/\[\[(.*?)\]\]/', '$1', (string) ($post['titulo'] ?? '')));
+            $thumb = (string) ($post['imagem_thumb'] ?? ($post['imagem_capa'] ?? ''));
+
             $events[] = [
-                'kind'   => 'blog',
-                'id'     => (int) ($post['id'] ?? 0),
-                'titulo' => (string) ($post['titulo'] ?? ''),
-                'status' => (string) ($post['status'] ?? ''),
-                'ts'     => $ts,
-                'url'    => url('/admin/editar-post?id=' . (int) ($post['id'] ?? 0)),
+                'kind'      => 'blog',
+                'id'        => (int) ($post['id'] ?? 0),
+                'titulo'    => $cleanTitulo !== '' ? $cleanTitulo : 'Post #' . (int) ($post['id'] ?? 0),
+                'status'    => (string) ($post['status'] ?? ''),
+                'ts'        => $ts,
+                'thumb'     => $thumb,
+                'url'       => url('/admin/editar-post?id=' . (int) ($post['id'] ?? 0)),
             ];
         }
 
@@ -184,16 +188,27 @@ final class PostsService
                     if ($ts === false) {
                         continue;
                     }
-                    $status  = (string) ($ig['status'] ?? '');
-                    $legenda = trim((string) strtok(trim((string) ($ig['legenda'] ?? '')), "
-"));
+                    $status = (string) ($ig['status'] ?? '');
+                    $cleanLegenda = trim((string) preg_replace('/\[\[(.*?)\]\]/', '$1', (string) ($ig['legenda'] ?? '')));
+                    $primeiraLinha = trim((string) strtok($cleanLegenda, "\r\n"));
+
+                    $mediaRel = (string) ($ig['media_caminho'] ?? '');
+                    $thumb = $mediaRel;
+                    if (preg_match('/\.mp4$/i', $mediaRel)) {
+                        $jpg = preg_replace('/\.mp4$/i', '.jpg', $mediaRel);
+                        if (is_string($jpg) && is_file(base_path('public/' . ltrim($jpg, '/\\')))) {
+                            $thumb = $jpg;
+                        }
+                    }
+
                     $events[] = [
-                        'kind'   => 'instagram',
-                        'id'     => (int) $ig['id'],
-                        'titulo' => $legenda !== '' ? $legenda : '(sem legenda)',
-                        'status' => $status,
-                        'ts'     => $ts,
-                        'url'    => url('/admin/instagram/posts/' . (int) $ig['id'] . (in_array($status, ['agendado', 'erro'], true) ? '/editar' : '')),
+                        'kind'      => 'instagram',
+                        'id'        => (int) $ig['id'],
+                        'titulo'    => $primeiraLinha !== '' ? $primeiraLinha : 'Reel #' . (int) $ig['id'],
+                        'status'    => $status,
+                        'ts'        => $ts,
+                        'thumb'     => $thumb,
+                        'url'       => url('/admin/instagram/posts/' . (int) $ig['id'] . (in_array($status, ['agendado', 'erro'], true) ? '/editar' : '')),
                     ];
                 }
             } catch (Throwable $e) {
