@@ -112,6 +112,8 @@ if (isset($options['pilot'])) {
         $check('Renderer recusa sobrescrever piloto e preserva bytes', $refusedOverwrite && $hash === hash_file('sha256', $dir . '/pilot.mp4'));
         $spec = $renderer->probe($dir . '/pilot.mp4');
         $check('Audio incorporado uma vez: exatamente um stream de cada tipo', count($spec['streams']) === 2);
+        $videoStreams = array_values(array_filter($spec['streams'], static fn (array $stream): bool => $stream['codec_type'] === 'video'));
+        $check('Video entrega todos os frames previstos', (int) ($videoStreams[0]['nb_frames'] ?? 0) === (int) $manifest['duration'] * 30);
         $frames = [];
         foreach ([1, 2, 3, 4, 5] as $i) {
             $frame = imagecreatefrompng($dir . '/frame-' . $i . '.png');
@@ -132,6 +134,57 @@ if (isset($options['pilot'])) {
         $check('Destaques trocam de conteudo ao longo da timeline', $differentPixels($frames[2], $frames[3], 1270, 1570) > 100);
         $check('Encerramento apresenta nova cena', $differentPixels($frames[3], $frames[4], 1270, 1570) > 100);
         foreach ($frames as $frame) { imagedestroy($frame); }
+        if (isset($manifest['opening'])) {
+            $openingFrames = [];
+            foreach (range(1, 7) as $i) {
+                $frame = imagecreatefrompng($dir . '/opening-frame-' . $i . '.png');
+                if (!$frame instanceof GdImage) { throw new RuntimeException('Frame intermediario da abertura ausente.'); }
+                $openingFrames[] = $frame;
+            }
+            // Mede o conteudo visivel do MP4 decodificado, nao apenas os parametros do filtro.
+            $bounds = static function (GdImage $frame, int $top, int $bottom, string $kind): ?array {
+                $left = 1080; $right = -1; $first = 1920; $last = -1; $count = 0;
+                for ($y = $top; $y < $bottom; $y += 2) {
+                    for ($x = 60; $x < 1020; $x += 2) {
+                        $rgb = imagecolorat($frame, $x, $y);
+                        $r = ($rgb >> 16) & 255; $g = ($rgb >> 8) & 255; $b = $rgb & 255;
+                        $match = match ($kind) {
+                            'white' => $r > 170 && $g > 170 && $b > 170,
+                            'cyan' => $r < 100 && $g > 160 && $b > 160,
+                            default => max($r, $g, $b) > 100,
+                        };
+                        if ($match) { $left = min($left, $x); $right = max($right, $x); $first = min($first, $y); $last = max($last, $y); $count++; }
+                    }
+                }
+                return $count === 0 ? null : ['left' => $left, 'right' => $right, 'top' => $first, 'bottom' => $last, 'count' => $count];
+            };
+            $lines = $manifest['opening']['title_lines'];
+            $firstLine = $lines[0];
+            $firstColor = count($lines) === 1 ? 'cyan' : 'white';
+            $empty = $bounds($openingFrames[0], 260, 545, $firstColor);
+            $partial = $bounds($openingFrames[1], $firstLine['y'], $firstLine['y'] + $firstLine['height'], $firstColor);
+            $settled = $bounds($openingFrames[3], $firstLine['y'], $firstLine['y'] + $firstLine['height'], $firstColor);
+            $check('Titulo realmente surge e sobe dentro da mascara', $empty === null && $partial !== null && $settled !== null
+                && $partial['top'] > $settled['top'] + 3);
+            if (count($lines) > 1) {
+                $second = $lines[1];
+                $check('Linhas seguintes aguardam sua vez', $bounds($openingFrames[1], $second['y'], 545, 'white') === null
+                    && $bounds($openingFrames[1], $second['y'], 545, 'cyan') === null);
+            }
+            $lastLine = $lines[count($lines) - 1];
+            $check('Ultima linha aparece destacada em ciano', $bounds($openingFrames[3], $lastLine['y'],
+                $lastLine['y'] + $lastLine['height'], 'cyan') !== null);
+            $smallCover = $bounds($openingFrames[4], 590, 1250, 'content');
+            $fullCover = $bounds($openingFrames[6], 590, 1250, 'content');
+            $check('Imagem cresce de forma evidente na entrada', $smallCover !== null && $fullCover !== null
+                && ($fullCover['right'] - $fullCover['left']) > ($smallCover['right'] - $smallCover['left']) + 80);
+            $check('Imagem sobe ate o encaixe', $smallCover !== null && $fullCover !== null
+                && $smallCover['top'] > $fullCover['top'] + 30);
+            $check('Moldura aparece somente depois do encaixe', $bounds($openingFrames[4], 590, 612, 'cyan') === null
+                && $bounds($openingFrames[6], 590, 612, 'cyan') !== null);
+            foreach ($openingFrames as $frame) { imagedestroy($frame); }
+            $check('Linhas do titulo mantem o texto original', implode(' ', array_column($lines, 'text')) === $manifest['titulo']);
+        }
         $article = json_decode((string) file_get_contents($dir . '/article.json'), true, 512, JSON_THROW_ON_ERROR);
         $summary = trim((string) preg_replace('/\[\[(.*?)\]\]/u', '$1', html_entity_decode(strip_tags((string) $article['resumo']), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
         $joined = str_replace('…', '', implode('', $manifest['destaques']));

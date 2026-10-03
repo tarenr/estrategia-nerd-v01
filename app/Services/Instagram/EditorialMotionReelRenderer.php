@@ -10,7 +10,7 @@ use RuntimeException;
 /** Camadas GD independentes; FFmpeg anima e codifica o video com audio uma vez. */
 final class EditorialMotionReelRenderer
 {
-    public const VERSION = 'editorial-motion-v1';
+    public const VERSION = 'editorial-motion-v2';
     public const WIDTH = 1080;
     public const HEIGHT = 1920;
     public const FPS = 30;
@@ -60,37 +60,55 @@ final class EditorialMotionReelRenderer
         $this->background($layers . '/background.png', $font, (string) ($meta['categoria'] ?? 'EDITORIAL'));
         $this->coverLayer($cover, $layers . '/cover.png');
         $this->hudLayer($layers . '/hud.png');
-        $this->textLayer($layers . '/title.png', $title, $font, 60, 285, false);
+        $titleLines = $this->titleLayers($layers, $title, $font);
+        $titleEnd = $titleLines[count($titleLines) - 1]['end'];
+        $coverStart = max(1.65, $titleEnd + 0.2);
+        $coverEnd = $coverStart + 1.1;
+        $hudStart = $coverEnd + 0.1;
         $this->textLayer($layers . '/point-1.png', $points[0], $font, 43, 300, true, '01 / DESTAQUE');
         $this->textLayer($layers . '/point-2.png', $points[1], $font, 43, 300, true, '02 / CONTEXTO');
         $this->textLayer($layers . '/cta.png', 'Confira o artigo completo.\nLink na bio.', $font, 51, 300, true, 'CONTINUE NO BLOG');
 
         $end = $seconds - 3;
         $middle = (5 + $end) / 2;
-        $args = [$this->ffmpeg, '-hide_banner', '-loglevel', 'error', '-n'];
-        foreach (['background', 'cover', 'title', 'point-1', 'point-2', 'cta', 'hud'] as $layer) {
-            array_push($args, '-loop', '1', '-framerate', '30', '-i', $layers . '/' . $layer . '.png');
+        $args = [$this->ffmpeg, '-hide_banner', '-loglevel', 'info', '-nostdin', '-n'];
+        foreach (['background', 'cover', 'point-1', 'point-2', 'cta', 'hud'] as $layer) {
+            array_push($args, '-loop', '1', '-framerate', '30', '-threads', '1', '-t', (string) $seconds, '-i', $layers . '/' . $layer . '.png');
         }
-        array_push($args, '-ss', (string) $audioStart, '-i', $audio);
-        // Zoom restrito a capa. Textos nunca recebem zoom e continuam legiveis.
+        foreach ($titleLines as $i => $line) {
+            array_push($args, '-loop', '1', '-framerate', '30', '-threads', '1', '-t', (string) $seconds, '-i', $layers . '/title-line-' . ($i + 1) . '.png');
+        }
+        array_push($args, '-ss', (string) $audioStart, '-t', (string) $seconds, '-i', $audio);
+        // A capa cresce de 68% ate o encaixe. Depois, somente a imagem recebe zoom lento.
+        $coverScale = sprintf('0.68+0.32*(1-pow(1-min(max((t-%.3f)/1.1,0),1),3))', $coverStart);
         $filters = [
             '[0:v]format=yuv420p[bg]',
-            "[1:v]zoompan=z='1+min(on,900)*0.000035':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=960x600:fps=30,format=rgba,fade=t=in:st=1.5:d=0.5:alpha=1[cover]",
-            "[bg][cover]overlay=x=60:y='590+90*pow(1-min(max((t-1.5)/0.65,0),1),3)':enable='gte(t,1.5)'[s1]",
-            '[2:v]format=rgba,fade=t=in:st=0:d=0.5:alpha=1[title]',
-            "[s1][title]overlay=x='60+100*pow(1-min(t/0.65,1),3)':y=260[s2]",
-            sprintf('[3:v]format=rgba,fade=t=in:st=5:d=0.4:alpha=1,fade=t=out:st=%.3f:d=0.3:alpha=1[p1]', $middle - 0.3),
-            sprintf("[s2][p1]overlay=x='60+70*pow(1-min(max((t-5)/0.55,0),1),3)':y=1270:enable='between(t,5,%.3f)'[s3]", $middle),
-            sprintf('[4:v]format=rgba,fade=t=in:st=%.3f:d=0.4:alpha=1,fade=t=out:st=%.3f:d=0.3:alpha=1[p2]', $middle, $end - 0.3),
-            sprintf("[s3][p2]overlay=x='60+70*pow(1-min(max((t-%.3f)/0.55,0),1),3)':y=1270:enable='between(t,%.3f,%d)'[s4]", $middle, $middle, $end),
-            sprintf('[5:v]format=rgba,fade=t=in:st=%d:d=0.4:alpha=1[cta]', $end),
-            sprintf("[s4][cta]overlay=x=60:y='1270+45*pow(1-min(max((t-%d)/0.6,0),1),3)':enable='gte(t,%d)'[s5]", $end, $end),
-            '[6:v]format=rgba,fade=t=in:st=2:d=0.7:alpha=1[hud]',
-            "[s5][hud]overlay=x=60:y=590:enable='gte(t,2)'[s6]",
-            // A barra fica recortada na margem segura, sem atravessar a tela.
-            sprintf("color=c=0x203344:s=960x4:r=30[barbase];color=c=0x22d3ee:s=960x4:r=30[bar];[barbase][bar]overlay=x='-960+960*min(t/%d,1)':y=0[progress];[s6][progress]overlay=x=60:y=1690,format=yuv420p[v]", $seconds),
-            sprintf('[7:a]atrim=duration=%d,asetpts=PTS-STARTPTS,afade=t=in:st=0:d=0.25,afade=t=out:st=%.2f:d=1.5[a]', $seconds, $seconds - 1.5),
+            sprintf("[1:v]zoompan=z='1+min(max(on-%.3f,0),900)*0.000035':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=960x600:fps=30,format=rgba,scale=w='trunc(960*(%s)/2)*2':h='trunc(600*(%s)/2)*2':eval=frame,fade=t=in:st=%.3f:d=0.2:alpha=1[cover]", $coverEnd * self::FPS, $coverScale, $coverScale, $coverStart),
+            sprintf("[bg][cover]overlay=x='(W-w)/2':y='590+(600-h)/2+150*pow(1-min(max((t-%.3f)/1.1,0),1),3)':enable='gte(t,%.3f)'[s1]", $coverStart, $coverStart),
         ];
+        $previous = 's1';
+        foreach ($titleLines as $i => $line) {
+            $input = 6 + $i;
+            // Cada linha sobe dentro de sua propria mascara; nao atravessa outra linha.
+            $filters[] = sprintf("[%d:v]format=rgba,crop=w=960:h=%d:x=0:y='%d*(1-pow(1-min(max((t-%.3f)/0.65,0),1),3))'[title%d]",
+                $input, $line['height'], $line['height'], $line['start'], $i);
+            $next = 'titleScene' . $i;
+            $filters[] = sprintf("[%s][title%d]overlay=x=60:y=%d:enable='gte(t,%.3f)'[%s]", $previous, $i, $line['y'], $line['start'], $next);
+            $previous = $next;
+        }
+        $filters = array_merge($filters, [
+            sprintf('[2:v]format=rgba,fade=t=in:st=5:d=0.4:alpha=1,fade=t=out:st=%.3f:d=0.3:alpha=1[p1]', $middle - 0.3),
+            sprintf("[%s][p1]overlay=x='60+70*pow(1-min(max((t-5)/0.55,0),1),3)':y=1270:enable='between(t,5,%.3f)'[s3]", $previous, $middle),
+            sprintf('[3:v]format=rgba,fade=t=in:st=%.3f:d=0.4:alpha=1,fade=t=out:st=%.3f:d=0.3:alpha=1[p2]', $middle, $end - 0.3),
+            sprintf("[s3][p2]overlay=x='60+70*pow(1-min(max((t-%.3f)/0.55,0),1),3)':y=1270:enable='between(t,%.3f,%d)'[s4]", $middle, $middle, $end),
+            sprintf('[4:v]format=rgba,fade=t=in:st=%d:d=0.4:alpha=1[cta]', $end),
+            sprintf("[s4][cta]overlay=x=60:y='1270+45*pow(1-min(max((t-%d)/0.6,0),1),3)':enable='gte(t,%d)'[s5]", $end, $end),
+            sprintf('[5:v]format=rgba,fade=t=in:st=%.3f:d=0.45:alpha=1[hud]', $hudStart),
+            sprintf("[s5][hud]overlay=x=60:y=590:enable='gte(t,%.3f)'[s6]", $hudStart),
+            // A barra fica recortada na margem segura, sem atravessar a tela.
+            sprintf("color=c=0x203344:s=960x4:r=30:d=%d[barbase];color=c=0x22d3ee:s=960x4:r=30:d=%d[bar];[barbase][bar]overlay=x='-960+960*min(t/%d,1)':y=0[progress];[s6][progress]overlay=x=60:y=1690,format=yuv420p[v]", $seconds, $seconds, $seconds),
+            sprintf('[%d:a]atrim=duration=%d,asetpts=PTS-STARTPTS,afade=t=in:st=0:d=0.25,afade=t=out:st=%.2f:d=1.5[a]', 6 + count($titleLines), $seconds, $seconds - 1.5),
+        ]);
         array_push($args, '-filter_complex_threads', '1', '-filter_complex', implode(';', $filters), '-map', '[v]', '-map', '[a]',
             '-c:v', 'libx264', '-preset', 'fast', '-crf', '20', '-threads', '2', '-pix_fmt', 'yuv420p',
             '-color_range', 'tv', '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709',
@@ -98,9 +116,11 @@ final class EditorialMotionReelRenderer
         $this->command($args, $layers . '/encode.log');
         $this->assertVideo($output, $seconds);
         $poster = $dir . '/' . pathinfo($output, PATHINFO_FILENAME) . '.jpg';
-        $this->capture($output, 3.5, $poster);
+        $this->capture($output, max(3.5, $hudStart + 0.5), $poster);
         $manifest = ['template' => self::VERSION, 'titulo' => $title, 'resumo' => $summary, 'destaques' => $points,
-            'duration' => $seconds, 'audio_start_seconds' => $audioStart, 'scenes' => [0, 1.5, 5, $middle, $end]];
+            'duration' => $seconds, 'audio_start_seconds' => $audioStart, 'scenes' => [0, $coverStart, 5, $middle, $end],
+            'opening' => ['title_lines' => $titleLines, 'title_end' => $titleEnd,
+                'cover_start' => $coverStart, 'cover_end' => $coverEnd, 'hud_start' => $hudStart]];
         if (file_put_contents($layers . '/manifest.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) === false) {
             throw new RuntimeException('Falha ao gravar o manifesto do Reel.');
         }
@@ -274,6 +294,60 @@ final class EditorialMotionReelRenderer
             imagettftext($image, $size, 0, $panel ? 30 : 0, $top + $size + $i * $lineHeight, $white, $font, $line);
         }
         $this->save($image, $path);
+    }
+
+    /** @return list<array{text:string,y:int,height:int,start:float,end:float}> */
+    private function titleLayers(string $dir, string $title, string $font): array
+    {
+        $parts = [$title];
+        if (str_contains($title, ': ')) {
+            [$lead, $rest] = explode(': ', $title, 2);
+            $parts = [$lead . ':', $rest];
+            if (preg_match('/^(.*?)\s+vs\s+(.*?)$/ui', $lead, $match)) {
+                $parts = [$match[1], 'vs ' . $match[2] . ':', $rest];
+            }
+        }
+        $size = 60;
+        do {
+            $lines = [];
+            foreach ($parts as $part) { $lines = array_merge($lines, $this->wrap($part, $font, $size, 890)); }
+            $height = (int) ceil($size * 1.45);
+            $fits = 8 + count($lines) * $height <= 269;
+            foreach ($lines as $line) {
+                $box = imagettfbbox($size, 0, $font, $line);
+                if ($box === false || $box[2] - $box[0] > 890) { $fits = false; }
+            }
+            if (!$fits) { $size--; }
+        } while (!$fits && $size >= 24);
+        if (!$fits) { throw new RuntimeException('Titulo excede a area segura da abertura.'); }
+        $result = [];
+        $remainingHeight = 269 - count($lines) * $height;
+        $y = 260;
+        foreach ($lines as $i => $line) {
+            // Linhas curtas podem ser maiores sem reduzir a legibilidade da pergunta longa.
+            $lineSize = $size;
+            $lineHeight = $height;
+            while ($lineSize < 60) {
+                $nextHeight = (int) ceil(($lineSize + 1) * 1.45);
+                $box = imagettfbbox($lineSize + 1, 0, $font, $line);
+                if ($box === false || $box[2] - $box[0] > 890 || $nextHeight - $lineHeight > $remainingHeight) { break; }
+                $remainingHeight -= $nextHeight - $lineHeight;
+                $lineSize++;
+                $lineHeight = $nextHeight;
+            }
+            // Metade superior transparente; metade inferior guarda a linha inteira.
+            $image = $this->image(960, 2 * $lineHeight, true);
+            $highlight = $i === count($lines) - 1;
+            $color = $highlight ? (int) imagecolorallocate($image, 34, 211, 238)
+                : (int) imagecolorallocate($image, 241, 245, 249);
+            imagettftext($image, $lineSize, 0, 0, $lineHeight + 8 + $lineSize, $color, $font, $line);
+            $this->save($image, $dir . '/title-line-' . ($i + 1) . '.png');
+            $start = 0.1 + $i * 0.35;
+            $result[] = ['text' => $line, 'y' => $y, 'height' => $lineHeight,
+                'start' => $start, 'end' => $start + 0.65];
+            $y += $lineHeight;
+        }
+        return $result;
     }
 
     /** @return list<string> */
