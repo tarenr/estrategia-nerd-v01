@@ -80,6 +80,7 @@ $GLOBALS['config'] = [
     'database' => require __DIR__ . '/config/database.php',
     'content_sync' => require __DIR__ . '/config/content-sync.php',
     'environment_capabilities' => require __DIR__ . '/config/environment-capabilities.php',
+    'instagram' => require __DIR__ . '/config/instagram.php',
 ];
 
 /*

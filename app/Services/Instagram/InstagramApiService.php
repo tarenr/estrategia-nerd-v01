@@ -296,6 +296,58 @@ final class InstagramApiService
     }
 
     /**
+     * Monta a URL pública acessível para envio de mídias à Meta API.
+     *
+     * - Caminho relativo: base pública configurada + '/' + caminho.
+     * - URL absoluta https://: mantida sem alteração.
+     * - URL legada apontando para localhost/127.0.0.1: extrai o caminho relativo e aplica a base pública.
+     *
+     * Valida a base pública contra localhost/127.0.0.1 ou valor vazio.
+     *
+     * @param string $pathOrUrl Caminho relativo do arquivo (ex.: uploads/reels/...) ou URL pública existente
+     * @return string URL pública formatada para a Meta
+     * @throws RuntimeException se a base configurada for vazia ou apontar para localhost/127.0.0.1
+     */
+    public static function buildPublicMediaUrl(string $pathOrUrl): string
+    {
+        $raw = trim($pathOrUrl);
+        if ($raw === '') {
+            throw new RuntimeException('Caminho ou URL da mídia não pode ser vazio para envio à Meta.');
+        }
+
+        // Se já for uma URL HTTPS externa/absoluta válida, retorna como está
+        if (preg_match('#^https://#i', $raw) === 1) {
+            return $raw;
+        }
+
+        // Se for uma URL legada local (http://localhost... ou http://127.0.0.1...), extrai o caminho relativo
+        if (preg_match('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?(?:/[^/]+)?/(uploads/.*)$#i', $raw, $matches) === 1) {
+            $raw = $matches[1];
+        }
+
+        $base = trim((string) config('instagram.public_media_url', 'https://nerd.tfr-info.com.br'));
+
+        $host = parse_url($base, PHP_URL_HOST);
+        $hostLower = is_string($host) ? strtolower($host) : '';
+
+        if (
+            $base === ''
+            || $hostLower === ''
+            || $hostLower === 'localhost'
+            || str_ends_with($hostLower, '.localhost')
+            || $hostLower === '127.0.0.1'
+            || str_starts_with($hostLower, '127.')
+            || $hostLower === '::1'
+        ) {
+            throw new RuntimeException(
+                "Endereço público das mídias não configurado para envio à Meta (base inválida, vazia ou aponta para localhost: '{$base}'). Configure a variável INSTAGRAM_PUBLIC_MEDIA_URL no ambiente."
+            );
+        }
+
+        return rtrim($base, '/') . '/' . ltrim($raw, '/');
+    }
+
+    /**
      * Cria um container de imagem única ou Story (imagem).
      *
      * @param array<string,mixed> $extra Parâmetros adicionais (ex: is_carousel_item, media_type)

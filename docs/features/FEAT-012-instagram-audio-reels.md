@@ -53,6 +53,13 @@ O serviço `App\Services\Instagram\AudioReelGeneratorService` orquestra a geraç
 - **Fade de Áudio**: `-afade=t=out:st={duration - 1.5}:d=1.5` para uma finalização suave.
 - **Otimização Web**: `-movflags +faststart` para posicionar o átomo `moov` no início do contêiner MP4.
 
+### 4.1 Suporte a Vídeo de Entrada com Trilha Externa
+Além de imagens estáticas, o `AudioReelGeneratorService::generateReel` aceita **1 arquivo de vídeo** (ex.: `.mp4`, `.mov`, `.webm`) como entrada para o Reel com trilha sonora:
+- **Sem repetição desnecessária**: Remove o parâmetro `-loop 1` (exclusivo para imagens), evitando falhas do FFmpeg (`Option loop not found`).
+- **Descarte de áudio original**: O áudio original embutido no vídeo é completamente descartado no transcode (`-map "[v]" -map "[a]"`), sendo substituído integralmente pela trilha sonora selecionada cortada em `startSeconds` com fade-out final de 1.5s.
+- **Regra de duração**: Se `audio_duration_seconds` for maior que zero, utiliza exatamente essa duração; caso contrário, detecta a duração do vídeo de entrada via `ffprobe` e limita a no máximo 60 segundos.
+- **Validação de entrada**: Não é permitida a mistura de vídeo com imagens nem o envio de mais de 1 vídeo para um post com trilha sonora. Nesses casos, o método rejeita a execução imediatamente com a mensagem `"Post com trilha aceita imagens ou 1 vídeo"`, sem onerar o FFmpeg.
+
 ---
 
 ## 5. Estrutura do Banco de Dados

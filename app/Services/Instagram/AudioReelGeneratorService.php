@@ -69,9 +69,54 @@ final class AudioReelGeneratorService
     }
 
     /**
-     * Gera um vídeo Reels MP4 (1080x1920) unindo imagens à trilha de áudio.
+     * Verifica se o arquivo informado possui extensão ou tipo de vídeo.
+     */
+    private function isVideoFile(string $filePath): bool
+    {
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        if (in_array($ext, ['mp4', 'mov', 'webm', 'mkv', 'm4v', 'avi'], true)) {
+            return true;
+        }
+
+        if (function_exists('mime_content_type')) {
+            $mime = @mime_content_type($filePath);
+            if (is_string($mime) && str_starts_with($mime, 'video/')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Retorna a duração em segundos de um arquivo de vídeo usando ffprobe.
+     */
+    public function getVideoDuration(string $path): float
+    {
+        $fullPath = $this->resolvePath($path);
+        if (!is_file($fullPath)) {
+            return 0.0;
+        }
+
+        $cmdStream = sprintf(
+            '%s -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 %s',
+            escapeshellcmd($this->ffprobeBinary),
+            escapeshellarg($fullPath)
+        );
+        $output = @shell_exec($cmdStream);
+        $duration = (float) trim((string) $output);
+
+        if ($duration <= 0.0) {
+            $duration = $this->getAudioDuration($fullPath);
+        }
+
+        return max(0.0, $duration);
+    }
+
+    /**
+     * Gera um vídeo Reels MP4 (1080x1920) unindo imagens ou 1 vídeo à trilha de áudio.
      *
-     * @param list<string> $imagePaths Imagens (caminhos absolutos ou relativos à pasta public)
+     * @param list<string> $imagePaths Imagens ou 1 vídeo (caminhos absolutos ou relativos à pasta public)
      * @param string $audioPath Áudio MP3/M4A (caminho absoluto ou relativo à pasta public)
      * @param int $startSeconds Ponto de início do corte do áudio em segundos
      * @param int|null $durationSeconds Duração total do vídeo (null para cálculo automático)
@@ -86,7 +131,7 @@ final class AudioReelGeneratorService
         ?string $outputPath = null
     ): string {
         if ($imagePaths === []) {
-            throw new RuntimeException('Ao menos uma imagem deve ser fornecida para gerar o Reel.');
+            throw new RuntimeException('Ao menos uma imagem ou vídeo deve ser fornecido para gerar o Reel.');
         }
 
         $fullAudioPath = $this->resolvePath($audioPath);
@@ -94,19 +139,49 @@ final class AudioReelGeneratorService
             throw new RuntimeException("Arquivo de áudio não encontrado: {$fullAudioPath}");
         }
 
-        $resolvedImages = [];
-        foreach ($imagePaths as $img) {
-            $p = $this->resolvePath($img);
+        $resolvedMedias = [];
+        $videoCount = 0;
+        $imageCount = 0;
+
+        foreach ($imagePaths as $mediaItem) {
+            $p = $this->resolvePath($mediaItem);
             if (!is_file($p)) {
-                throw new RuntimeException("Arquivo de imagem não encontrado: {$p}");
+                throw new RuntimeException("Arquivo de mídia não encontrado: {$p}");
             }
-            $resolvedImages[] = $p;
+            if ($this->isVideoFile($p)) {
+                $videoCount++;
+            } else {
+                $imageCount++;
+            }
+            $resolvedMedias[] = $p;
         }
 
-        $totalImages = count($resolvedImages);
-        $reelDuration = $durationSeconds !== null && $durationSeconds > 0
-            ? (int) min(60, max(5, $durationSeconds))
-            : self::calculateDuration($totalImages);
+        if ($videoCount > 0 && $imageCount > 0) {
+            throw new RuntimeException('Post com trilha aceita imagens ou 1 vídeo');
+        }
+
+        if ($videoCount > 1) {
+            throw new RuntimeException('Post com trilha aceita imagens ou 1 vídeo');
+        }
+
+        $isVideoInput = ($videoCount === 1);
+
+        if ($isVideoInput) {
+            if ($durationSeconds !== null && $durationSeconds > 0) {
+                $reelDuration = (int) min(60, max(1, $durationSeconds));
+            } else {
+                $detectedDur = $this->getVideoDuration($resolvedMedias[0]);
+                if ($detectedDur <= 0.0) {
+                    $detectedDur = 12.0;
+                }
+                $reelDuration = (int) min(60, max(1, (int) round($detectedDur)));
+            }
+        } else {
+            $totalImages = count($resolvedMedias);
+            $reelDuration = $durationSeconds !== null && $durationSeconds > 0
+                ? (int) min(60, max(5, $durationSeconds))
+                : self::calculateDuration($totalImages);
+        }
 
         // Clampar o startSeconds para não ultrapassar o áudio disponível
         $audioTotalDuration = $this->getAudioDuration($fullAudioPath);
@@ -137,12 +212,22 @@ final class AudioReelGeneratorService
         $inputArgs = [];
         $filterParts = [];
         $fadeStartTime = max(0.0, (float) $reelDuration - 1.5);
+        $fadeDuration = min(1.5, (float) $reelDuration);
 
-        if ($totalImages === 1) {
+        if ($isVideoInput) {
+            // Vídeo único de entrada em scale/pad 1080x1920 a 30fps sem loop
+            $inputArgs[] = '-t ' . escapeshellarg((string) $reelDuration);
+            $inputArgs[] = '-i ' . escapeshellarg($resolvedMedias[0]);
+
+            $filterParts[] = '[0:v]scale=1080:1920:force_original_aspect_ratio=decrease:force_divisible_by=2,'
+                . 'pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,fps=30,format=yuv420p[v]';
+
+            $audioInputIndex = 1;
+        } elseif ($totalImages === 1) {
             // Imagem única em loop contínuo
             $inputArgs[] = '-loop 1';
             $inputArgs[] = '-t ' . escapeshellarg((string) $reelDuration);
-            $inputArgs[] = '-i ' . escapeshellarg($resolvedImages[0]);
+            $inputArgs[] = '-i ' . escapeshellarg($resolvedMedias[0]);
 
             $filterParts[] = '[0:v]scale=1080:1920:force_original_aspect_ratio=decrease:force_divisible_by=2,'
                 . 'pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,fps=30,format=yuv420p[v]';
@@ -151,7 +236,7 @@ final class AudioReelGeneratorService
         } else {
             // Múltiplas imagens (slideshow uniforme)
             $perImageDuration = round($reelDuration / $totalImages, 3);
-            foreach ($resolvedImages as $idx => $img) {
+            foreach ($resolvedMedias as $idx => $img) {
                 $inputArgs[] = '-loop 1';
                 $inputArgs[] = '-t ' . escapeshellarg((string) $perImageDuration);
                 $inputArgs[] = '-i ' . escapeshellarg($img);
@@ -173,24 +258,26 @@ final class AudioReelGeneratorService
             $audioInputIndex = $totalImages;
         }
 
-        // Áudio cortado com fade-out de 1.5s no final
+        // Áudio cortado com fade-out no final (áudio original do vídeo é descartado)
         $inputArgs[] = '-ss ' . escapeshellarg((string) $startSeconds);
         $inputArgs[] = '-t ' . escapeshellarg((string) $reelDuration);
         $inputArgs[] = '-i ' . escapeshellarg($fullAudioPath);
 
         $filterParts[] = sprintf(
-            '[%d:a]afade=t=out:st=%.2f:d=1.5[a]',
+            '[%d:a]afade=t=out:st=%.2f:d=%.2f[a]',
             $audioInputIndex,
-            $fadeStartTime
+            $fadeStartTime,
+            $fadeDuration
         );
 
         $filterComplex = implode(';', $filterParts);
 
         $cmd = sprintf(
-            '%s -y %s -filter_complex %s -map "[v]" -map "[a]" -c:v libx264 -preset fast -crf 22 -pix_fmt yuv420p -color_range tv -colorspace bt709 -color_primaries bt709 -color_trc bt709 -c:a aac -b:a 128k -ar 48000 -movflags +faststart -shortest %s 2>&1',
+            '%s -y %s -filter_complex %s -map "[v]" -map "[a]" -c:v libx264 -preset fast -crf 22 -pix_fmt yuv420p -color_range tv -colorspace bt709 -color_primaries bt709 -color_trc bt709 -c:a aac -b:a 128k -ar 48000 -movflags +faststart -t %s %s 2>&1',
             escapeshellcmd($this->ffmpegBinary),
             implode(' ', $inputArgs),
             escapeshellarg($filterComplex),
+            escapeshellarg((string) $reelDuration),
             escapeshellarg($fullOutputPath)
         );
 

@@ -976,8 +976,7 @@ final class InstagramController
                         ->execute([':vp' => $renderedRel, ':id' => $postId]);
                 }
 
-                $appUrl = rtrim((string) config('app.url', ''), '/');
-                $reelVideoUrl = function_exists('asset') ? asset($renderedRel) : ($appUrl . '/' . ltrim($renderedRel, '/'));
+                $reelVideoUrl = InstagramApiService::buildPublicMediaUrl($renderedRel);
 
                 $isVideo = true;
                 $creationId = $api->createVideoContainer(
@@ -988,7 +987,7 @@ final class InstagramController
             } elseif ($tipo === 'carrossel' && count($medias) >= 2) {
                 $childIds = [];
                 foreach ($medias as $m) {
-                    $mediaUrl = (string) ($m['url_publica'] ?? '');
+                    $mediaUrl = InstagramApiService::buildPublicMediaUrl((string) ($m['caminho'] ?? $m['url_publica'] ?? ''));
                     $mTipo    = (string) ($m['tipo_arquivo'] ?? 'imagem');
                     if ($mTipo === 'video') {
                         $isVideo    = true;
@@ -1001,16 +1000,17 @@ final class InstagramController
                 $creationId = $api->createCarouselContainer($childIds, $legenda);
             } elseif ($tipo === 'reels') {
                 $first      = $medias[0];
+                $mediaUrl   = InstagramApiService::buildPublicMediaUrl((string) ($first['caminho'] ?? $first['url_publica'] ?? ''));
                 $isVideo    = true;
                 $creationId = $api->createVideoContainer(
-                    (string) ($first['url_publica'] ?? ''),
+                    $mediaUrl,
                     $legenda,
                     ['media_type' => 'REELS'],
                 );
             } elseif ($tipo === 'story') {
                 $first    = $medias[0];
                 $mTipo    = (string) ($first['tipo_arquivo'] ?? 'imagem');
-                $mediaUrl = (string) ($first['url_publica'] ?? '');
+                $mediaUrl = InstagramApiService::buildPublicMediaUrl((string) ($first['caminho'] ?? $first['url_publica'] ?? ''));
                 if ($mTipo === 'video') {
                     $isVideo    = true;
                     $creationId = $api->createVideoContainer($mediaUrl, null, ['media_type' => 'STORIES']);
@@ -1019,8 +1019,9 @@ final class InstagramController
                 }
             } else {
                 $first      = $medias[0];
+                $mediaUrl   = InstagramApiService::buildPublicMediaUrl((string) ($first['caminho'] ?? $first['url_publica'] ?? ''));
                 $creationId = $api->createImageContainer(
-                    (string) ($first['url_publica'] ?? ''),
+                    $mediaUrl,
                     $legenda,
                 );
             }
