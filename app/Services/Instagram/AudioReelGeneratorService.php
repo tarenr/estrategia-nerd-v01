@@ -36,6 +36,31 @@ final class AudioReelGeneratorService
     }
 
     /**
+     * Cache pronto e presente: publicadores nao voltam a codificar esse MP4.
+     * @param array<string, mixed> $post
+     */
+    public static function readyVideoPath(array $post, string $publicRoot): ?string
+    {
+        if (($post['render_status'] ?? '') !== 'ready') {
+            return null;
+        }
+        $path = trim((string) ($post['video_rendered_path'] ?? ''));
+        if ($path === '' || !str_ends_with(strtolower($path), '.mp4')) {
+            return null;
+        }
+        $root = realpath($publicRoot);
+        $full = realpath($publicRoot . '/' . ltrim($path, '/\\'));
+        if ($root === false || $full === false || !is_file($full) || filesize($full) === 0) {
+            return null;
+        }
+        $prefix = strtolower(str_replace('\\', '/', $root)) . '/';
+        if (!str_starts_with(strtolower(str_replace('\\', '/', $full)), $prefix)) {
+            return null;
+        }
+        return str_replace('\\', '/', $path);
+    }
+
+    /**
      * Calcula a duração recomendada em segundos com base na quantidade de imagens.
      * Regra: 4s por imagem, mínimo de 10s e máximo de 30s.
      */
@@ -318,6 +343,7 @@ final class AudioReelGeneratorService
      * @param int $startSeconds Início do corte
      * @param int|null $durationSeconds Duração (null = 12s padrão)
      * @param string|null $outputVideoPath
+     * @param bool $animated Opt-in para camadas animadas; false preserva Smart Canvas.
      * @return array{video_path: string, canvas_path: string, duration: int}
      */
     public function generateEditorialReel(
@@ -326,8 +352,20 @@ final class AudioReelGeneratorService
         array $meta = [],
         int $startSeconds = 0,
         ?int $durationSeconds = 12,
-        ?string $outputVideoPath = null
+        ?string $outputVideoPath = null,
+        bool $animated = false
     ): array {
+        if ($animated) {
+            $videoRel = $outputVideoPath ?? ('uploads/reels/motion_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.mp4');
+            $motion = new EditorialMotionReelRenderer($this->ffmpegBinary, $this->ffprobeBinary);
+            $result = $motion->render($this->resolvePath($coverPath), $this->resolvePath($audioPath), $meta,
+                $this->resolvePath($videoRel), $startSeconds, $durationSeconds);
+            return [
+                'video_path' => str_replace('\\', '/', $videoRel),
+                'canvas_path' => str_replace('\\', '/', dirname($videoRel) . '/' . pathinfo($videoRel, PATHINFO_FILENAME) . '.jpg'),
+                'duration' => $result['duration'],
+            ];
+        }
         $renderer = new SmartCanvasRenderer();
         $fullCoverPath = $this->resolvePath($coverPath);
 

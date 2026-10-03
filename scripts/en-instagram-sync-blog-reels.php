@@ -8,7 +8,8 @@
  *              limpa (Smart Canvas), chamada de impacto e trilha sonora automática.
  *
  * Uso:
- *   php scripts/en-instagram-sync-blog-reels.php [--dry-run] [--limit=N] [--post-id=ID] [--force]
+ *   php scripts/en-instagram-sync-blog-reels.php [--dry-run] [--limit=N] [--post-id=ID] [--force] [--motion]
+ * --motion e opt-in: o hook automatico existente continua no template estatico.
  * -----------------------------------------------------------------------------
  */
 
@@ -36,6 +37,7 @@ use App\Support\TargetEnvironmentDatabase;
 
 $isDryRun = in_array('--dry-run', $argv, true);
 $force = in_array('--force', $argv, true);
+$animated = in_array('--motion', $argv, true);
 $includeScheduled = in_array('--include-scheduled', $argv, true);
 $limit = 0;
 $targetPostId = 0;
@@ -83,7 +85,7 @@ $apiService = new InstagramApiService('', '');
 
 // 1. Carregar faixas de áudio ativas da biblioteca local
 $audioTracks = $audiusService->listLocalTracks();
-if ($audioTracks === []) {
+if ($audioTracks === [] && !$isDryRun) {
     fwrite(STDERR, "AVISO: Nenhuma faixa de áudio local encontrada. Buscando faixa padrão no Audius...\n");
     try {
         $found = $audiusService->search('synthwave', 3);
@@ -159,9 +161,15 @@ foreach ($prodPosts as $post) {
         $skippedCount++;
         continue;
     }
+    if ($existing !== null && !in_array((string) ($existing['status'] ?? ''), ['rascunho', 'erro'], true)) {
+        echo "  -> [SKIP] Recriacao por --force permitida somente para rascunhos ou erros; status preservado.\n";
+        $skippedCount++;
+        continue;
+    }
 
     if ($isDryRun) {
-        echo "  -> [DRY-RUN] Seria gerado Smart Canvas 9:16 + Reel MP4 + Rascunho com áudio.\n";
+        echo $animated ? "  -> [DRY-RUN] Seria gerado Reel animado + Rascunho com audio.\n"
+            : "  -> [DRY-RUN] Seria gerado Smart Canvas 9:16 + Reel MP4 + Rascunho com áudio.\n";
         $createdCount++;
         continue;
     }
@@ -237,6 +245,8 @@ foreach ($prodPosts as $post) {
         }
 
         $meta = [
+            'titulo'         => $cleanTitulo,
+            'resumo'         => $cleanResumo,
             'categoria'      => $categoria,
             'chamada_titulo' => $hookTitle,
             'chamada_texto'  => $hookText,
@@ -250,7 +260,9 @@ foreach ($prodPosts as $post) {
             $audioRelPath,
             $meta,
             0,
-            12 // 12 segundos padrão
+            12, // O template animado amplia a duracao conforme o tempo de leitura.
+            null,
+            $animated
         );
 
         $videoRel = $reelResult['video_path'];
@@ -295,7 +307,7 @@ foreach ($prodPosts as $post) {
             $upd = $localPdo->prepare(
                 'UPDATE instagram_posts 
                     SET tipo = "reels", legenda = :legenda, hashtags_count = :ht,
-                        audio_track_id = :audio_id, audio_start_seconds = 0, audio_duration_seconds = 12,
+                        audio_track_id = :audio_id, audio_start_seconds = 0, audio_duration_seconds = :duration,
                         status = "rascunho", atualizado_em = NOW()
                   WHERE id = :id'
             );
@@ -303,6 +315,7 @@ foreach ($prodPosts as $post) {
                 ':legenda'  => $fullCaption,
                 ':ht'       => $hashtagsCount,
                 ':audio_id' => $audioTrackId,
+                ':duration' => $reelResult['duration'],
                 ':id'       => $igPostId,
             ]);
 
@@ -320,7 +333,7 @@ foreach ($prodPosts as $post) {
                 'origin'                 => 'local',
                 'audio_track_id'         => $audioTrackId,
                 'audio_start_seconds'    => 0,
-                'audio_duration_seconds' => 12,
+                'audio_duration_seconds' => $reelResult['duration'],
                 'criado_por'             => $authorId,
             ]);
         }
@@ -335,7 +348,11 @@ foreach ($prodPosts as $post) {
             'url_publica'  => $publicVideoUrl,
             'largura'      => 1080,
             'altura'       => 1920,
+            'duracao_s'    => $reelResult['duration'],
         ]);
+
+        // Depois de addMedia: alteracoes de midia invalidam qualquer cache anterior.
+        $igRepo->markRenderedReady($igPostId, $videoRel);
 
         $localPdo->commit();
 

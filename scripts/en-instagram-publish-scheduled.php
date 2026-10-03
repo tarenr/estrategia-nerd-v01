@@ -148,14 +148,12 @@ foreach ($duePosts as $post) {
         $isVideo = false;
 
         if ($hasAudio) {
-            $audioTrack = $repo->findAudioTrack((int) $post['audio_track_id']);
-            if ($audioTrack === null) {
-                throw new RuntimeException('Trilha sonora associada ao post não foi encontrada no banco.');
-            }
-
-            $renderedRel = (string) ($post['video_rendered_path'] ?? '');
-            $renderedFull = base_path('public/' . ltrim($renderedRel, '/'));
-            if ($renderedRel === '' || !is_file($renderedFull) || filesize($renderedFull) === 0) {
+            $renderedRel = AudioReelGeneratorService::readyVideoPath($post, base_path('public'));
+            if ($renderedRel === null) {
+                $audioTrack = $repo->findAudioTrack((int) $post['audio_track_id']);
+                if ($audioTrack === null) {
+                    throw new RuntimeException('Trilha sonora associada ao post não foi encontrada no banco.');
+                }
                 $reelGen = AudioReelGeneratorService::fromGlobals();
                 $imagePaths = [];
                 foreach ($medias as $m) {
@@ -175,8 +173,7 @@ foreach ($duePosts as $post) {
                     $startSec,
                     $durSec > 0 ? $durSec : null
                 );
-                $pdo->prepare('UPDATE instagram_posts SET video_rendered_path = :vp, render_status = "ready" WHERE id = :id')
-                    ->execute([':vp' => $renderedRel, ':id' => $postId]);
+                $repo->markRenderedReady($postId, $renderedRel);
             }
 
             $reelVideoUrl = InstagramApiService::buildPublicMediaUrl($renderedRel);

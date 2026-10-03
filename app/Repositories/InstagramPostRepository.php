@@ -232,6 +232,20 @@ final class InstagramPostRepository
      */
     public function update(int $id, array $data): bool
     {
+        $previous = $this->findById($id);
+        if ($previous === null) {
+            return false;
+        }
+        $audioChanged = false;
+        foreach (['audio_track_id', 'audio_start_seconds', 'audio_duration_seconds'] as $key) {
+            if ((int) ($previous[$key] ?? 0) !== (int) ($data[$key] ?? 0)) {
+                $audioChanged = true;
+            }
+        }
+        if (!array_key_exists('video_rendered_path', $data)) {
+            $data['video_rendered_path'] = $audioChanged ? null : ($previous['video_rendered_path'] ?? null);
+            $data['render_status'] = $audioChanged ? 'idle' : ($previous['render_status'] ?? 'idle');
+        }
         $stmt = $this->pdo->prepare(
             "UPDATE instagram_posts
                 SET status                 = :status,
@@ -436,7 +450,9 @@ final class InstagramPostRepository
             ':duracao_s'    => $media['duracao_s'] ?? null,
         ]);
 
-        return (int) $this->pdo->lastInsertId();
+        $id = (int) $this->pdo->lastInsertId();
+        $this->invalidateRenderedVideo($postId);
+        return $id;
     }
 
     /**
@@ -444,6 +460,7 @@ final class InstagramPostRepository
      */
     public function updateMediaFile(int $mediaId, string $caminho, ?string $urlPublica, int $largura, int $altura): void
     {
+        $previous = $this->findMediaById($mediaId);
         $stmt = $this->pdo->prepare(
             "UPDATE instagram_post_media
                 SET caminho = :caminho, url_publica = :url_publica, largura = :largura, altura = :altura
@@ -456,6 +473,10 @@ final class InstagramPostRepository
             ':largura'     => $largura,
             ':altura'      => $altura,
         ]);
+        if ($previous !== null && ((string) ($previous['caminho'] ?? '') !== $caminho
+            || (int) ($previous['largura'] ?? 0) !== $largura || (int) ($previous['altura'] ?? 0) !== $altura)) {
+            $this->invalidateRenderedVideo((int) $previous['post_id']);
+        }
     }
 
     /**
@@ -481,10 +502,27 @@ final class InstagramPostRepository
             "DELETE FROM instagram_post_media WHERE id = :id AND post_id = :post_id"
         );
 
-        return $stmt->execute([
+        $ok = $stmt->execute([
             ':id'      => $mediaId,
             ':post_id' => $postId,
         ]);
+        if ($stmt->rowCount() > 0) {
+            $this->invalidateRenderedVideo($postId);
+        }
+        return $ok;
+    }
+
+    public function invalidateRenderedVideo(int $postId): void
+    {
+        $this->pdo->prepare('UPDATE instagram_posts SET video_rendered_path = NULL, render_status = "idle" WHERE id = :id')
+            ->execute([':id' => $postId]);
+    }
+
+    /** Chamar depois de salvar todas as midias, na mesma transacao quando aplicavel. */
+    public function markRenderedReady(int $postId, string $path): void
+    {
+        $this->pdo->prepare('UPDATE instagram_posts SET video_rendered_path = :path, render_status = "ready" WHERE id = :id')
+            ->execute([':path' => $path, ':id' => $postId]);
     }
 
     /**
@@ -560,7 +598,11 @@ final class InstagramPostRepository
             "DELETE FROM instagram_post_media WHERE post_id = :post_id"
         );
 
-        return $stmt->execute([':post_id' => $postId]);
+        $ok = $stmt->execute([':post_id' => $postId]);
+        if ($stmt->rowCount() > 0) {
+            $this->invalidateRenderedVideo($postId);
+        }
+        return $ok;
     }
 
     /**
