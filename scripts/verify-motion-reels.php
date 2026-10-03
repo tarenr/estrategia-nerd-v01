@@ -142,7 +142,8 @@ if (isset($options['pilot'])) {
                 $openingFrames[] = $frame;
             }
             // Mede o conteudo visivel do MP4 decodificado, nao apenas os parametros do filtro.
-            $bounds = static function (GdImage $frame, int $top, int $bottom, string $kind): ?array {
+            $accent = $manifest['template_settings']['accent'] ?? [34, 211, 238];
+            $bounds = static function (GdImage $frame, int $top, int $bottom, string $kind) use ($accent): ?array {
                 $left = 1080; $right = -1; $first = 1920; $last = -1; $count = 0;
                 for ($y = $top; $y < $bottom; $y += 2) {
                     for ($x = 60; $x < 1020; $x += 2) {
@@ -150,7 +151,7 @@ if (isset($options['pilot'])) {
                         $r = ($rgb >> 16) & 255; $g = ($rgb >> 8) & 255; $b = $rgb & 255;
                         $match = match ($kind) {
                             'white' => $r > 170 && $g > 170 && $b > 170,
-                            'cyan' => $r < 100 && $g > 160 && $b > 160,
+                            'cyan' => abs($r - $accent[0]) < 65 && abs($g - $accent[1]) < 65 && abs($b - $accent[2]) < 65,
                             default => max($r, $g, $b) > 100,
                         };
                         if ($match) { $left = min($left, $x); $right = max($right, $x); $first = min($first, $y); $last = max($last, $y); $count++; }
@@ -172,14 +173,17 @@ if (isset($options['pilot'])) {
                     && $bounds($openingFrames[1], $second['y'], 545, 'cyan') === null);
             }
             $lastLine = $lines[count($lines) - 1];
-            $check('Ultima linha aparece destacada em ciano', $bounds($openingFrames[3], $lastLine['y'],
+            $check('Ultima linha aparece na cor da categoria', $bounds($openingFrames[3], $lastLine['y'],
                 $lastLine['y'] + $lastLine['height'], 'cyan') !== null);
             $smallCover = $bounds($openingFrames[4], 590, 1250, 'content');
             $fullCover = $bounds($openingFrames[6], 590, 1250, 'content');
             $check('Imagem cresce de forma evidente na entrada', $smallCover !== null && $fullCover !== null
-                && ($fullCover['right'] - $fullCover['left']) > ($smallCover['right'] - $smallCover['left']) + 80);
-            $check('Imagem sobe ate o encaixe', $smallCover !== null && $fullCover !== null
-                && $smallCover['top'] > $fullCover['top'] + 30);
+                && ($fullCover['right'] - $fullCover['left']) > ($smallCover['right'] - $smallCover['left']) + 20);
+            $horizontal = abs((int) ($manifest['template_settings']['cover_x'] ?? 0)) > abs((int) ($manifest['template_settings']['cover_y'] ?? 150));
+            $check('Imagem se desloca ate o encaixe da categoria', $smallCover !== null && $fullCover !== null
+                && ($horizontal
+                    ? abs(($smallCover['left'] + $smallCover['right']) - ($fullCover['left'] + $fullCover['right'])) > 20
+                    : $smallCover['top'] > $fullCover['top'] + 20));
             $check('Moldura aparece somente depois do encaixe', $bounds($openingFrames[4], 590, 612, 'cyan') === null
                 && $bounds($openingFrames[6], 590, 612, 'cyan') !== null);
             foreach ($openingFrames as $frame) { imagedestroy($frame); }
@@ -188,7 +192,11 @@ if (isset($options['pilot'])) {
         $article = json_decode((string) file_get_contents($dir . '/article.json'), true, 512, JSON_THROW_ON_ERROR);
         $summary = trim((string) preg_replace('/\[\[(.*?)\]\]/u', '$1', html_entity_decode(strip_tags((string) $article['resumo']), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
         $joined = str_replace('…', '', implode('', $manifest['destaques']));
-        $check('Destaques preservam o resumo de origem neste piloto', preg_replace('/\s+/u', '', $joined) === preg_replace('/\s+/u', '', $summary));
+        $check('Destaques preservam o resumo exibido', preg_replace('/\s+/u', '', $joined) === preg_replace('/\s+/u', '', str_replace('…', '', $manifest['resumo'])));
+        $check('Resumo exibido vem do artigo original', str_starts_with((string) preg_replace('/\s+/u', '', $summary),
+            (string) preg_replace('/\s+/u', '', str_replace('…', '', $manifest['resumo']))));
+        $check('Rotulos fixos removidos do resumo', ($manifest['summary_labels'] ?? ['legacy']) === []);
+        $check('Template corresponde a categoria do artigo', ($manifest['category_template'] ?? '') === EditorialMotionReelRenderer::templateKey((string) $article['categoria']));
         file_put_contents($work . '/pilot-spec.json', json_encode($spec, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
     } catch (Throwable $e) { $check('Verificacao do piloto: ' . $e->getMessage(), false); }
 }

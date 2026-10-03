@@ -16,7 +16,7 @@ spl_autoload_register(static function (string $class) use ($root): void {
         if (is_file($path)) { require_once $path; }
     }
 });
-$options = getopt('', ['post-id:', 'article:', 'audio:', 'list', 'help', 'ffmpeg:', 'ffprobe:']);
+$options = getopt('', ['post-id:', 'article:', 'audio:', 'audio-start:', 'list', 'help', 'ffmpeg:', 'ffprobe:']);
 if (isset($options['help']) || $options === []) {
     echo "Piloto separado; somente SELECT no banco local, sem publicar ou substituir cadastros.\n"
         . "php scripts/en-instagram-preview-motion-reel.php --list\n"
@@ -79,7 +79,7 @@ try {
     $service = new AudioReelGeneratorService($ffmpeg, $ffprobe, $root . '/public');
     echo "Renderizando piloto em: {$dir}\n";
     $started = microtime(true);
-    $result = $service->generateEditorialReel($cover, $audio, $article, 0, null, $dir . '/pilot.mp4', true);
+    $result = $service->generateEditorialReel($cover, $audio, $article, (int) ($options['audio-start'] ?? 0), null, $dir . '/pilot.mp4', true);
     $renderer = new EditorialMotionReelRenderer($ffmpeg, $ffprobe);
     $times = [0.75, 3.5, 6.5, ($result['duration'] + 2) / 2 + 1, $result['duration'] - 1.5];
     $sheet = imagecreatetruecolor(270 * count($times), 480);
@@ -91,11 +91,11 @@ try {
         imagecopyresampled($sheet, $image, $i * 270, 0, 0, 0, 270, 480, 1080, 1920);
         imagedestroy($image);
     }
-    if ($sheet instanceof GdImage) { imagepng($sheet, $dir . '/contact-sheet.png'); imagedestroy($sheet); }
+    imagepng($sheet, $dir . '/contact-sheet.png'); imagedestroy($sheet);
     $manifest = json_decode((string) file_get_contents($dir . '/pilot-layers/manifest.json'), true, 512, JSON_THROW_ON_ERROR);
     $opening = $manifest['opening'];
     $lines = $opening['title_lines'];
-    $openingTimes = [max(0, $lines[0]['start'] - 0.04), $lines[0]['start'] + 0.3,
+    $openingTimes = [max(0, $lines[0]['start'] - 0.04), $lines[0]['start'] + min(0.3, $manifest['template_settings']['title_step'] / 2),
         $lines[count($lines) - 1]['start'] + 0.3, $opening['title_end'] + 0.05,
         $opening['cover_start'] + 0.22, $opening['cover_start'] + 0.6, $opening['hud_start'] + 0.5];
     $openingSheet = imagecreatetruecolor(270 * count($openingTimes), 480);
@@ -107,7 +107,7 @@ try {
         imagecopyresampled($openingSheet, $image, $i * 270, 0, 0, 0, 270, 480, 1080, 1920);
         imagedestroy($image);
     }
-    if ($openingSheet instanceof GdImage) { imagepng($openingSheet, $dir . '/opening-sheet.png'); imagedestroy($openingSheet); }
+    imagepng($openingSheet, $dir . '/opening-sheet.png'); imagedestroy($openingSheet);
     file_put_contents($dir . '/article.json', json_encode($article, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
     $elapsed = round(microtime(true) - $started, 2);
     file_put_contents($dir . '/validation.json', json_encode(['duration' => $result['duration'], 'render_seconds' => $elapsed,
@@ -117,7 +117,7 @@ try {
     echo "PILOTO PRONTO: {$dir}/pilot.mp4\nDURACAO: {$result['duration']} s | RENDER: {$elapsed} s\n"
         . "COMPARACAO: {$dir}/contact-sheet.png\nABERTURA: {$dir}/opening-sheet.png\nNenhum cadastro foi alterado; nenhum Reel foi publicado.\n";
 } catch (Throwable $e) {
-    if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) { $pdo->rollBack(); }
+    if (isset($pdo) && $pdo->inTransaction()) { $pdo->rollBack(); }
     // Nao imprime erros de conexao que possam incluir detalhes das credenciais.
     fwrite(STDERR, $e instanceof PDOException ? "Falha ao ler o banco local.\n" : $e->getMessage() . "\n");
     exit(1);

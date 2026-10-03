@@ -10,10 +10,34 @@ use RuntimeException;
 /** Camadas GD independentes; FFmpeg anima e codifica o video com audio uma vez. */
 final class EditorialMotionReelRenderer
 {
-    public const VERSION = 'editorial-motion-v2';
+    public const VERSION = 'editorial-motion-v3';
     public const WIDTH = 1080;
     public const HEIGHT = 1920;
     public const FPS = 30;
+
+    /** @var array<string, mixed> */
+    private array $theme = [];
+
+    public static function templateKey(string $category): string
+    {
+        $key = mb_strtolower(trim($category));
+        return in_array($key, ['hardware', 'games', 'dicas'], true) ? $key : 'editorial';
+    }
+
+    /** @return array<string, mixed> */
+    public static function template(string $category): array
+    {
+        $templates = require dirname(__DIR__, 3) . '/config/instagram-motion-templates.php';
+        return $templates[self::templateKey($category)];
+    }
+
+    /** @param array<string, mixed> $meta */
+    public function duration(array $meta, ?int $requested = null): int
+    {
+        $summary = $this->shortText((string) ($meta['resumo'] ?? $meta['chamada_texto'] ?? ''), 260);
+        $reading = (int) ceil(str_word_count($summary, 0, 'áàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ') / 2.8);
+        return min(30, max(16, 7 + $reading, $requested ?? 0));
+    }
 
     public function __construct(
         private readonly string $ffmpeg = 'ffmpeg',
@@ -40,14 +64,16 @@ final class EditorialMotionReelRenderer
         $summary = $this->shortText((string) ($meta['resumo'] ?? $meta['chamada_texto'] ?? ''), 260);
         $points = $this->splitSummary($summary);
         // Tempo de leitura conservador; a duracao explicita nunca encurta esse minimo.
-        $readingSeconds = (int) ceil(str_word_count($summary, 0, 'áàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ') / 2.8);
-        $seconds = min(30, max(16, 7 + $readingSeconds, $duration ?? 0));
+        $seconds = $this->duration($meta, $duration);
+        $this->theme = self::template((string) ($meta['categoria'] ?? ''));
         $audioSpec = $this->probe($audio);
         $audioSeconds = (float) ($audioSpec['format']['duration'] ?? 0);
         if ($audioSeconds < $seconds) {
             throw new RuntimeException('A trilha precisa cobrir toda a duracao do Reel.');
         }
-        $audioStart = min(max(0, $audioStart), max(0, (int) floor($audioSeconds - $seconds)));
+        if ($audioStart < 0 || $audioStart + $seconds > $audioSeconds) {
+            throw new RuntimeException('O inicio escolhido da trilha nao cobre a nova duracao; nao sera deslocado automaticamente.');
+        }
         $dir = dirname($output);
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
             throw new RuntimeException('Nao foi possivel criar a pasta do piloto.');
@@ -57,16 +83,18 @@ final class EditorialMotionReelRenderer
             throw new RuntimeException('A pasta de camadas ja existe ou nao pode ser criada.');
         }
         $font = $this->font();
-        $this->background($layers . '/background.png', $font, (string) ($meta['categoria'] ?? 'EDITORIAL'));
+        $category = trim((string) ($meta['categoria'] ?? ''));
+        $this->background($layers . '/background.png', $font, $category === '' ? 'EDITORIAL' : $category);
         $this->coverLayer($cover, $layers . '/cover.png');
         $this->hudLayer($layers . '/hud.png');
         $titleLines = $this->titleLayers($layers, $title, $font);
         $titleEnd = $titleLines[count($titleLines) - 1]['end'];
         $coverStart = max(1.65, $titleEnd + 0.2);
-        $coverEnd = $coverStart + 1.1;
+        $coverDuration = (float) $this->theme['cover_duration'];
+        $coverEnd = $coverStart + $coverDuration;
         $hudStart = $coverEnd + 0.1;
-        $this->textLayer($layers . '/point-1.png', $points[0], $font, 43, 300, true, '01 / DESTAQUE');
-        $this->textLayer($layers . '/point-2.png', $points[1], $font, 43, 300, true, '02 / CONTEXTO');
+        $this->textLayer($layers . '/point-1.png', $points[0], $font, 43, 300, true);
+        $this->textLayer($layers . '/point-2.png', $points[1], $font, 43, 300, true);
         $this->textLayer($layers . '/cta.png', 'Confira o artigo completo.\nLink na bio.', $font, 51, 300, true, 'CONTINUE NO BLOG');
 
         $end = $seconds - 3;
@@ -80,33 +108,35 @@ final class EditorialMotionReelRenderer
         }
         array_push($args, '-ss', (string) $audioStart, '-t', (string) $seconds, '-i', $audio);
         // A capa cresce de 68% ate o encaixe. Depois, somente a imagem recebe zoom lento.
-        $coverScale = sprintf('0.68+0.32*(1-pow(1-min(max((t-%.3f)/1.1,0),1),3))', $coverStart);
+        $scale = (float) $this->theme['cover_scale'];
+        $ease = sprintf('pow(1-min(max((t-%.3f)/%.3f,0),1),3)', $coverStart, $coverDuration);
+        $coverScale = sprintf('%.3f+%.3f*(1-%s)', $scale, 1 - $scale, $ease);
         $filters = [
             '[0:v]format=yuv420p[bg]',
-            sprintf("[1:v]zoompan=z='1+min(max(on-%.3f,0),900)*0.000035':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=960x600:fps=30,format=rgba,scale=w='trunc(960*(%s)/2)*2':h='trunc(600*(%s)/2)*2':eval=frame,fade=t=in:st=%.3f:d=0.2:alpha=1[cover]", $coverEnd * self::FPS, $coverScale, $coverScale, $coverStart),
-            sprintf("[bg][cover]overlay=x='(W-w)/2':y='590+(600-h)/2+150*pow(1-min(max((t-%.3f)/1.1,0),1),3)':enable='gte(t,%.3f)'[s1]", $coverStart, $coverStart),
+            sprintf("[1:v]zoompan=z='1+min(max(on-%.3f,0),900)*%.6f':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=960x600:fps=30,format=rgba,scale=w='trunc(960*(%s)/2)*2':h='trunc(600*(%s)/2)*2':eval=frame,fade=t=in:st=%.3f:d=0.2:alpha=1[cover]", $coverEnd * self::FPS, (float) $this->theme['zoom'], $coverScale, $coverScale, $coverStart),
+            sprintf("[bg][cover]overlay=x='(W-w)/2+%d*%s':y='590+(600-h)/2+%d*%s':enable='gte(t,%.3f)'[s1]", $this->theme['cover_x'], $ease, $this->theme['cover_y'], $ease, $coverStart),
         ];
         $previous = 's1';
         foreach ($titleLines as $i => $line) {
             $input = 6 + $i;
             // Cada linha sobe dentro de sua propria mascara; nao atravessa outra linha.
-            $filters[] = sprintf("[%d:v]format=rgba,crop=w=960:h=%d:x=0:y='%d*(1-pow(1-min(max((t-%.3f)/0.65,0),1),3))'[title%d]",
-                $input, $line['height'], $line['height'], $line['start'], $i);
+            $filters[] = sprintf("[%d:v]format=rgba,crop=w=960:h=%d:x=0:y='%d*(1-pow(1-min(max((t-%.3f)/%.3f,0),1),3))'[title%d]",
+                $input, $line['height'], $line['height'], $line['start'], $this->theme['title_duration'], $i);
             $next = 'titleScene' . $i;
             $filters[] = sprintf("[%s][title%d]overlay=x=60:y=%d:enable='gte(t,%.3f)'[%s]", $previous, $i, $line['y'], $line['start'], $next);
             $previous = $next;
         }
         $filters = array_merge($filters, [
             sprintf('[2:v]format=rgba,fade=t=in:st=5:d=0.4:alpha=1,fade=t=out:st=%.3f:d=0.3:alpha=1[p1]', $middle - 0.3),
-            sprintf("[%s][p1]overlay=x='60+70*pow(1-min(max((t-5)/0.55,0),1),3)':y=1270:enable='between(t,5,%.3f)'[s3]", $previous, $middle),
+            sprintf("[%s][p1]overlay=x='60+%d*pow(1-min(max((t-5)/%.3f,0),1),3)':y='1270+%d*pow(1-min(max((t-5)/%.3f,0),1),3)':enable='between(t,5,%.3f)'[s3]", $previous, $this->theme['panel_x'], $this->theme['panel_duration'], $this->theme['panel_y'], $this->theme['panel_duration'], $middle),
             sprintf('[3:v]format=rgba,fade=t=in:st=%.3f:d=0.4:alpha=1,fade=t=out:st=%.3f:d=0.3:alpha=1[p2]', $middle, $end - 0.3),
-            sprintf("[s3][p2]overlay=x='60+70*pow(1-min(max((t-%.3f)/0.55,0),1),3)':y=1270:enable='between(t,%.3f,%d)'[s4]", $middle, $middle, $end),
+            sprintf("[s3][p2]overlay=x='60+%d*pow(1-min(max((t-%.3f)/%.3f,0),1),3)':y='1270+%d*pow(1-min(max((t-%.3f)/%.3f,0),1),3)':enable='between(t,%.3f,%d)'[s4]", $this->theme['panel_x'], $middle, $this->theme['panel_duration'], $this->theme['panel_y'], $middle, $this->theme['panel_duration'], $middle, $end),
             sprintf('[4:v]format=rgba,fade=t=in:st=%d:d=0.4:alpha=1[cta]', $end),
             sprintf("[s4][cta]overlay=x=60:y='1270+45*pow(1-min(max((t-%d)/0.6,0),1),3)':enable='gte(t,%d)'[s5]", $end, $end),
             sprintf('[5:v]format=rgba,fade=t=in:st=%.3f:d=0.45:alpha=1[hud]', $hudStart),
             sprintf("[s5][hud]overlay=x=60:y=590:enable='gte(t,%.3f)'[s6]", $hudStart),
             // A barra fica recortada na margem segura, sem atravessar a tela.
-            sprintf("color=c=0x203344:s=960x4:r=30:d=%d[barbase];color=c=0x22d3ee:s=960x4:r=30:d=%d[bar];[barbase][bar]overlay=x='-960+960*min(t/%d,1)':y=0[progress];[s6][progress]overlay=x=60:y=1690,format=yuv420p[v]", $seconds, $seconds, $seconds),
+            sprintf("color=c=0x203344:s=960x4:r=30:d=%d[barbase];color=c=0x%02x%02x%02x:s=960x4:r=30:d=%d[bar];[barbase][bar]overlay=x='-960+960*min(t/%d,1)':y=0[progress];[s6][progress]overlay=x=60:y=1690,format=yuv420p[v]", $seconds, ...[...$this->theme['accent'], $seconds, $seconds]),
             sprintf('[%d:a]atrim=duration=%d,asetpts=PTS-STARTPTS,afade=t=in:st=0:d=0.25,afade=t=out:st=%.2f:d=1.5[a]', 6 + count($titleLines), $seconds, $seconds - 1.5),
         ]);
         array_push($args, '-filter_complex_threads', '1', '-filter_complex', implode(';', $filters), '-map', '[v]', '-map', '[a]',
@@ -117,7 +147,8 @@ final class EditorialMotionReelRenderer
         $this->assertVideo($output, $seconds);
         $poster = $dir . '/' . pathinfo($output, PATHINFO_FILENAME) . '.jpg';
         $this->capture($output, max(3.5, $hudStart + 0.5), $poster);
-        $manifest = ['template' => self::VERSION, 'titulo' => $title, 'resumo' => $summary, 'destaques' => $points,
+        $manifest = ['template' => self::VERSION, 'category_template' => self::templateKey((string) ($meta['categoria'] ?? '')),
+            'template_settings' => $this->theme, 'summary_labels' => [], 'titulo' => $title, 'resumo' => $summary, 'destaques' => $points,
             'duration' => $seconds, 'audio_start_seconds' => $audioStart, 'scenes' => [0, $coverStart, 5, $middle, $end],
             'opening' => ['title_lines' => $titleLines, 'title_end' => $titleEnd,
                 'cover_start' => $coverStart, 'cover_end' => $coverEnd, 'hud_start' => $hudStart]];
@@ -225,7 +256,7 @@ final class EditorialMotionReelRenderer
         for ($x = 60; $x < 1020; $x += 60) {
             for ($y = 80; $y < 1700; $y += 60) { imagefilledellipse($image, $x, $y, 2, 2, $grid); }
         }
-        $cyan = (int) imagecolorallocate($image, 34, 211, 238);
+        $cyan = (int) imagecolorallocate($image, ...$this->theme['accent']);
         $muted = (int) imagecolorallocate($image, 148, 163, 184);
         imagettftext($image, 22, 0, 60, 160, $cyan, $font, 'ESTRATÉGIA NERD');
         $cat = mb_strtoupper($this->shortText($category, 20));
@@ -258,7 +289,7 @@ final class EditorialMotionReelRenderer
     private function hudLayer(string $path): void
     {
         $image = $this->image(960, 600, true);
-        $cyan = (int) imagecolorallocate($image, 34, 211, 238);
+        $cyan = (int) imagecolorallocate($image, ...$this->theme['accent']);
         imagesetthickness($image, 4);
         foreach ([[2, 2, 1, 1], [957, 2, -1, 1], [2, 597, 1, -1], [957, 597, -1, -1]] as [$x, $y, $dx, $dy]) {
             imageline($image, $x, $y, $x + $dx * 45, $y, $cyan);
@@ -271,12 +302,12 @@ final class EditorialMotionReelRenderer
     {
         $image = $this->image(960, $height, true);
         $white = (int) imagecolorallocate($image, 241, 245, 249);
-        $cyan = (int) imagecolorallocate($image, 34, 211, 238);
-        $top = $panel ? 84 : 8;
+        $cyan = (int) imagecolorallocate($image, ...$this->theme['accent']);
+        $top = $panel ? ($label === '' ? 28 : 84) : 8;
         if ($panel) {
             imagefilledrectangle($image, 0, 0, 959, $height - 1, (int) imagecolorallocatealpha($image, 9, 18, 30, 8));
             imagefilledrectangle($image, 0, 0, 5, $height - 1, $cyan);
-            imagettftext($image, 16, 0, 30, 44, $cyan, $font, $label);
+            if ($label !== '') { imagettftext($image, 16, 0, 30, 44, $cyan, $font, $label); }
         }
         $text = str_replace('\\n', "\n", $text);
         do {
@@ -338,13 +369,13 @@ final class EditorialMotionReelRenderer
             // Metade superior transparente; metade inferior guarda a linha inteira.
             $image = $this->image(960, 2 * $lineHeight, true);
             $highlight = $i === count($lines) - 1;
-            $color = $highlight ? (int) imagecolorallocate($image, 34, 211, 238)
+            $color = $highlight ? (int) imagecolorallocate($image, ...$this->theme['accent'])
                 : (int) imagecolorallocate($image, 241, 245, 249);
             imagettftext($image, $lineSize, 0, 0, $lineHeight + 8 + $lineSize, $color, $font, $line);
             $this->save($image, $dir . '/title-line-' . ($i + 1) . '.png');
-            $start = 0.1 + $i * 0.35;
+            $start = 0.1 + $i * (float) $this->theme['title_step'];
             $result[] = ['text' => $line, 'y' => $y, 'height' => $lineHeight,
-                'start' => $start, 'end' => $start + 0.65];
+                'start' => $start, 'end' => $start + (float) $this->theme['title_duration']];
             $y += $lineHeight;
         }
         return $result;
@@ -384,7 +415,7 @@ final class EditorialMotionReelRenderer
         if ($summary === '') { return ['Conheça os detalhes deste artigo.', 'Veja o conteúdo completo no blog.']; }
         $sentences = preg_split('/(?<=[.!?])\s+/u', $summary) ?: [$summary];
         if (count($sentences) >= 2 && mb_strlen($sentences[0]) <= 150) {
-            return [$this->shortText($sentences[0], 150), $this->shortText(implode(' ', array_slice($sentences, 1)), 150)];
+            return [$sentences[0], implode(' ', array_slice($sentences, 1))];
         }
         if (mb_strlen($summary) <= 70) { return [$summary, 'Veja os detalhes e o contexto no artigo completo.']; }
         // Distribui o resumo nas duas cenas, sem substituir contexto por uma alegacao nova.
