@@ -817,13 +817,37 @@ final class LinksService
                     CURLOPT_NOBODY => true,
                     CURLOPT_TIMEOUT => 12,
                     CURLOPT_CONNECTTIMEOUT => 6,
-                    CURLOPT_USERAGENT => 'EstrategiaNerdBot/1.0',
+                    CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 EstrategiaNerd/1.0',
+                    CURLOPT_SSL_VERIFYPEER => false,
                 ]);
                 curl_exec($ch);
                 $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 $finalUrl = (string) curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
                 $error = curl_error($ch);
                 curl_close($ch);
+
+                // Fallback para GET caso o destino recuse HEAD (comum em meli.la que responde 405 Method Not Allowed)
+                if ($code === 405 || ($code === 403 && str_contains($url, 'meli.la'))) {
+                    $chGet = curl_init($url);
+                    curl_setopt_array($chGet, [
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_FOLLOWLOCATION => true,
+                        CURLOPT_NOBODY => false,
+                        CURLOPT_RANGE => '0-2048',
+                        CURLOPT_TIMEOUT => 12,
+                        CURLOPT_CONNECTTIMEOUT => 6,
+                        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+                        CURLOPT_SSL_VERIFYPEER => false,
+                    ]);
+                    curl_exec($chGet);
+                    $code = (int) curl_getinfo($chGet, CURLINFO_HTTP_CODE);
+                    $effective = (string) curl_getinfo($chGet, CURLINFO_EFFECTIVE_URL);
+                    if ($effective !== '') {
+                        $finalUrl = $effective;
+                    }
+                    $error = curl_error($chGet);
+                    curl_close($chGet);
+                }
 
                 if ($error !== '') {
                     return $default + ['observacao_status' => $error];
