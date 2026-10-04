@@ -207,10 +207,10 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
               </a>
             </th>
             <th class="posts-table-th posts-table-th-left">
-              <a href="<?= htmlspecialchars($sortUrl('tipo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="posts-table-sort" data-admin-links-link>
+              <a href="<?= htmlspecialchars($sortUrl('categoria'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="posts-table-sort" data-admin-links-link>
                 <i class="fa-solid fa-layer-group text-slate-400 text-xs mr-1" aria-hidden="true"></i>
                 <span>Categoria</span>
-                <span><?= $sortIcon('tipo') ?></span>
+                <span><?= $sortIcon('categoria') ?></span>
               </a>
             </th>
             <th class="posts-table-th posts-table-th-center">
@@ -307,16 +307,6 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
                         <span class="links-table-star-badge" title="Destaque principal da Central Nerd"><i class="fa-solid fa-star"></i></span>
                       <?php endif; ?>
                     </div>
-
-                    <?php if ($slug !== ''): ?>
-                      <div class="links-table-subline">
-                        <span class="links-table-slug">/link/<?= htmlspecialchars($slug, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
-                        <button type="button" class="links-table-copy-btn" data-copy-link="<?= htmlspecialchars($canonicalShortUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Copiar link rastreado">
-                          <i class="fa-regular fa-copy" aria-hidden="true"></i>
-                          <span class="links-copy-label">Copiar</span>
-                        </button>
-                      </div>
-                    <?php endif; ?>
                   </div>
                 </div>
               </td>
@@ -372,9 +362,12 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
                     </a>
 
                     <?php if ($canonicalShortUrl !== ''): ?>
-                      <button type="button" class="links-dropdown-item" data-copy-link="<?= htmlspecialchars($canonicalShortUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                        <i class="fa-regular fa-copy" aria-hidden="true"></i>
-                        <span class="links-copy-text">Copiar link curto</span>
+                      <button type="button" class="links-dropdown-item links-dropdown-item-copy" data-copy-link="<?= htmlspecialchars($canonicalShortUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Copiar link de divulgação para a área de transferência">
+                        <i class="fa-solid fa-copy text-cyan-400" aria-hidden="true"></i>
+                        <span class="links-copy-info">
+                          <span class="links-copy-text">Copiar Link</span>
+                          <span class="links-copy-slug">/link/<?= htmlspecialchars($slug, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                        </span>
                       </button>
                     <?php endif; ?>
 

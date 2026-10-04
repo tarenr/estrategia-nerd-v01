@@ -712,7 +712,7 @@ final class LinksService
 
     private function normalizeSortDir(string $sort, string $dir): array
     {
-        $allowedSort = ['titulo', 'tipo', 'status', 'posicao', 'expira_em', 'updated_at'];
+        $allowedSort = ['titulo', 'tipo', 'categoria', 'status', 'posicao', 'expira_em', 'updated_at'];
         if (!in_array($sort, $allowedSort, true)) {
             $sort = 'posicao';
         }

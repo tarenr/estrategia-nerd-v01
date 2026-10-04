@@ -458,9 +458,12 @@ final class LinkRepository
     private function buildAdminOrderBy(string $sort, string $dir): string
     {
         $dir = strtolower($dir) === 'desc' ? 'DESC' : 'ASC';
+        if ($sort === 'tipo' || $sort === 'categoria') {
+            return "COALESCE(NULLIF(subgrupo_publico, ''), tipo) {$dir}, tipo {$dir}, destaque DESC, id DESC";
+        }
+
         $map = [
             'titulo' => 'titulo',
-            'tipo' => 'tipo',
             'status' => 'status',
             'posicao' => 'posicao',
             'expira_em' => 'expira_em',
