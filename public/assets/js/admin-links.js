@@ -466,6 +466,15 @@
       }
     }
 
+    const checkAllBtn = form.querySelector("[data-check-all-button]");
+    let originalBtnHtml = "";
+    if (action === "check_all" && checkAllBtn) {
+      checkAllBtn.disabled = true;
+      checkAllBtn.classList.add("is-loading");
+      originalBtnHtml = checkAllBtn.innerHTML;
+      checkAllBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-cyan-400"></i><span>Verificando links...</span>';
+    }
+
     const viewState = captureViewState(form);
     setLoading(root, true);
 
@@ -505,6 +514,11 @@
       console.error(error);
       form.submit();
     } finally {
+      if (checkAllBtn && originalBtnHtml) {
+        checkAllBtn.disabled = false;
+        checkAllBtn.classList.remove("is-loading");
+        checkAllBtn.innerHTML = originalBtnHtml;
+      }
       const currentRoot = getRoot();
       if (currentRoot) {
         setLoading(currentRoot, false);

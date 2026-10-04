@@ -165,9 +165,20 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
   <div class="posts-table-head">
     <div>
       <h3 class="font-orbitron text-xl font-black text-white">Lista de links</h3>
-      <div class="text-xs text-slate-400 mt-1"><?= number_format($total, 0, ',', '.') ?> link(s) encontrado(s)</div>
+      <div class="text-xs text-slate-400 mt-1"><?= number_format($total, 0, ',', '.') ?> link(s) cadastrado(s)</div>
     </div>
-    <span class="posts-table-order"><?= htmlspecialchars($orderLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+    <div class="links-table-head-actions">
+      <form method="POST" action="<?= url('/admin/links/acao') ?>" data-admin-links-action data-check-all-form class="links-table-check-all-form">
+        <?= Csrf::field() ?>
+        <input type="hidden" name="action" value="check_all">
+        <input type="hidden" name="return_to" value="<?= htmlspecialchars($currentUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+        <button type="submit" class="links-btn-check-all" data-check-all-button title="Testar integridade HTTP de todos os links do catálogo agora sem recarregar a página">
+          <i class="fa-solid fa-bolt-lightning text-amber-400" aria-hidden="true"></i>
+          <span class="links-check-all-label">Verificar Todos</span>
+        </button>
+      </form>
+      <span class="posts-table-order"><?= htmlspecialchars($orderLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+    </div>
   </div>
 
   <?php if ($items === []): ?>
@@ -180,53 +191,46 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
     <div class="posts-table-wrap links-table-wrap">
       <table class="links-table">
         <colgroup>
-          <col class="links-table-col-title">
-          <col class="links-table-col-type">
-          <col class="links-table-col-status">
-          <col class="links-table-col-position">
-          <col class="links-table-col-expire">
-          <col class="links-table-col-monitor">
-          <col class="links-table-col-actions">
+          <col class="links-col-item">
+          <col class="links-col-category">
+          <col class="links-col-clicks">
+          <col class="links-col-status">
+          <col class="links-col-actions">
         </colgroup>
         <thead class="posts-table-thead">
           <tr>
             <th class="posts-table-th posts-table-th-left">
               <a href="<?= htmlspecialchars($sortUrl('titulo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="posts-table-sort" data-admin-links-link>
-                <span>Produto / Link</span>
+                <i class="fa-solid fa-cube text-cyan-400 text-xs mr-1" aria-hidden="true"></i>
+                <span>Item / Link</span>
                 <span><?= $sortIcon('titulo') ?></span>
               </a>
             </th>
-            <th class="posts-table-th posts-table-th-center">
-              <a href="<?= htmlspecialchars($sortUrl('tipo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="posts-table-sort posts-table-sort-center" data-admin-links-link>
-                <span>Tipo / Categoria</span>
+            <th class="posts-table-th posts-table-th-left">
+              <a href="<?= htmlspecialchars($sortUrl('tipo'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="posts-table-sort" data-admin-links-link>
+                <i class="fa-solid fa-layer-group text-slate-400 text-xs mr-1" aria-hidden="true"></i>
+                <span>Categoria</span>
                 <span><?= $sortIcon('tipo') ?></span>
               </a>
             </th>
             <th class="posts-table-th posts-table-th-center">
+              <a href="<?= htmlspecialchars($sortUrl('updated_at'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="posts-table-sort posts-table-sort-center" data-admin-links-link>
+                <i class="fa-solid fa-arrow-pointer text-sky-400 text-xs mr-1" aria-hidden="true"></i>
+                <span>Cliques</span>
+                <span><?= $sortIcon('updated_at') ?></span>
+              </a>
+            </th>
+            <th class="posts-table-th posts-table-th-center">
               <a href="<?= htmlspecialchars($sortUrl('status'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="posts-table-sort posts-table-sort-center" data-admin-links-link>
+                <i class="fa-solid fa-circle-dot text-emerald-400 text-xs mr-1" aria-hidden="true"></i>
                 <span>Status</span>
                 <span><?= $sortIcon('status') ?></span>
               </a>
             </th>
             <th class="posts-table-th posts-table-th-center">
-              <a href="<?= htmlspecialchars($sortUrl('posicao'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="posts-table-sort posts-table-sort-center" data-admin-links-link>
-                <span>Posição</span>
-                <span><?= $sortIcon('posicao') ?></span>
-              </a>
+              <i class="fa-solid fa-ellipsis text-slate-400 text-xs mr-1" aria-hidden="true"></i>
+              <span>Ações</span>
             </th>
-            <th class="posts-table-th posts-table-th-center">
-              <a href="<?= htmlspecialchars($sortUrl('expira_em'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="posts-table-sort posts-table-sort-center" data-admin-links-link>
-                <span>Expiração</span>
-                <span><?= $sortIcon('expira_em') ?></span>
-              </a>
-            </th>
-            <th class="posts-table-th posts-table-th-center">
-              <a href="<?= htmlspecialchars($sortUrl('updated_at'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="posts-table-sort posts-table-sort-center" data-admin-links-link>
-                <span>Métricas & Monitor</span>
-                <span><?= $sortIcon('updated_at') ?></span>
-              </a>
-            </th>
-            <th class="posts-table-th posts-table-th-center">Ações</th>
           </tr>
         </thead>
         <tbody class="posts-table-body" data-admin-links-sortable>
@@ -234,10 +238,7 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
             <?php
             $id = (int) ($item['id'] ?? 0);
             $status = (string) ($item['status'] ?? 'ativo');
-            $statusMeta = $statusBadge($status);
             $tipo = (string) ($item['tipo'] ?? 'conteudo');
-            $tipoMeta = $typeBadge($tipo);
-            $expiraMeta = $expiryMeta((string) ($item['expira_em'] ?? ''));
             $monitor = $monitorMeta($item);
             $editUrl = url('/admin/editar-link?id=' . $id);
             $deleteUrl = url('/admin/excluir-link?' . http_build_query(['id' => $id, 'return_to' => $currentUrl]));
@@ -246,16 +247,20 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
             $promocao = (int) ($item['promocao'] ?? 0) === 1;
             $titulo = trim((string) ($item['titulo'] ?? ''));
             $slug = trim((string) ($item['slug'] ?? ''));
-            $descricao = trim((string) ($item['descricao'] ?? ''));
             $grupo = trim((string) ($item['subgrupo_publico'] ?? ''));
             $desconto = trim((string) ($item['desconto_percentual'] ?? ''));
             $imagem = trim((string) ($item['imagem'] ?? ''));
-            $selo = trim((string) ($item['selo'] ?? ''));
             $canonicalShortUrl = $slug !== '' ? url('/link/' . rawurlencode($slug)) : '';
             $needsFeaturedConfirm = !$destaque && $currentFeaturedId > 0 && $currentFeaturedId !== $id;
             $featuredConfirmMessage = $needsFeaturedConfirm
                 ? 'Confirmar? Este item substituirá o destaque atual: ' . ($currentFeaturedTitle !== '' ? $currentFeaturedTitle : 'item atual') . '.'
                 : '';
+
+            // Cache-busting automático baseado no timestamp do arquivo
+            $imageFile = $imagem !== '' ? dirname(__DIR__, 4) . '/public/' . ltrim($imagem, '/\\') : '';
+            $imageVer = ($imageFile !== '' && is_file($imageFile)) ? (string) filemtime($imageFile) : '1';
+            $imageUrl = $imagem !== '' ? url('/' . ltrim($imagem, '/\\')) . '?v=' . $imageVer : '';
+
             $iconFallback = match ($tipo) {
                 'produto' => 'fa-box',
                 'cupom' => 'fa-ticket',
@@ -263,8 +268,20 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
                 'servico' => 'fa-laptop-code',
                 default => 'fa-link',
             };
+
+            // Rótulo limpo de Categoria
+            $categoriaLabel = match ($tipo) {
+                'cupom' => ($desconto !== '' ? 'Cupom ' . $desconto : 'Cupom de Desconto'),
+                'produto' => ($grupo !== '' ? $grupo : 'Produto'),
+                'rede_social' => 'Rede Social',
+                'servico' => 'Serviços',
+                default => 'Conteúdo Geral',
+            };
+
+            $isBroken = $status === 'quebrado' || ($monitor['label'] ?? '') === 'REVISAR';
             ?>
             <tr class="posts-table-row<?= $destaque ? ' is-highlight' : '' ?>" data-link-row-id="<?= $id ?>" draggable="true">
+              <!-- 1. Item / Link -->
               <td class="posts-table-td links-table-title-cell">
                 <div class="links-table-title-top">
                   <span class="links-table-drag" title="Arrastar para reordenar" data-link-drag-handle>
@@ -273,7 +290,7 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
 
                   <a href="<?= htmlspecialchars($editUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="links-table-thumb-wrap" title="Editar link">
                     <?php if ($imagem !== ''): ?>
-                      <img src="<?= htmlspecialchars(url('/' . ltrim($imagem, '/\\')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($titulo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="links-table-thumb" width="52" height="52" loading="lazy">
+                      <img src="<?= htmlspecialchars($imageUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($titulo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="links-table-thumb" width="46" height="46" loading="lazy">
                     <?php else: ?>
                       <div class="links-table-thumb-placeholder">
                         <i class="fa-solid <?= $iconFallback ?>" aria-hidden="true"></i>
@@ -287,118 +304,64 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
                         <?= htmlspecialchars($titulo !== '' ? $titulo : 'Sem título', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                       </a>
                       <?php if ($destaque): ?>
-                        <span class="links-table-star-badge" title="Destaque principal da Central"><i class="fa-solid fa-star"></i></span>
+                        <span class="links-table-star-badge" title="Destaque principal da Central Nerd"><i class="fa-solid fa-star"></i></span>
                       <?php endif; ?>
                     </div>
 
-                    <div class="links-table-subline">
-                      <span class="links-table-id">#<?= $id ?></span>
-                      <?php if ($slug !== ''): ?>
+                    <?php if ($slug !== ''): ?>
+                      <div class="links-table-subline">
                         <span class="links-table-slug">/link/<?= htmlspecialchars($slug, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
-                        <button type="button" class="links-table-copy-btn" data-copy-link="<?= htmlspecialchars($canonicalShortUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Copiar link curto rastreado">
+                        <button type="button" class="links-table-copy-btn" data-copy-link="<?= htmlspecialchars($canonicalShortUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Copiar link rastreado">
                           <i class="fa-regular fa-copy" aria-hidden="true"></i>
                           <span class="links-copy-label">Copiar</span>
                         </button>
-                      <?php endif; ?>
-                    </div>
-
-                    <?php if ($openUrl !== ''): ?>
-                      <a href="<?= htmlspecialchars($openUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" class="links-table-url" title="<?= htmlspecialchars($openUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                        <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
-                        <span class="links-table-url-text"><?= htmlspecialchars($openUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
-                      </a>
-                    <?php endif; ?>
-
-                    <?php if ($descricao !== ''): ?>
-                      <div class="links-table-desc"><?= htmlspecialchars($descricao, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                      </div>
                     <?php endif; ?>
                   </div>
                 </div>
               </td>
 
+              <!-- 2. Categoria Limpa -->
+              <td class="posts-table-td links-table-category-cell">
+                <span class="links-table-category-text" title="<?= htmlspecialchars($categoriaLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                  <?= htmlspecialchars($categoriaLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                </span>
+              </td>
+
+              <!-- 3. Cliques / Desempenho -->
               <td class="posts-table-td posts-table-td-center">
-                <div class="links-table-type-stack">
-                  <span class="links-table-type-chip <?= htmlspecialchars($tipoMeta['class'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                    <?= htmlspecialchars($tipoMeta['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
-                  </span>
-                  <?php if ($tipo === 'produto' && $grupo !== ''): ?>
-                    <span class="links-table-type-chip border-cyan-500/20 text-cyan-100 bg-cyan-500/10" title="<?= htmlspecialchars($grupo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                      <?= htmlspecialchars($grupo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
-                    </span>
-                  <?php endif; ?>
-                  <?php if ($promocao): ?>
-                    <span class="links-table-type-chip border-emerald-500/25 text-emerald-200 bg-emerald-500/10"><i class="fa-solid fa-tag text-[0.65rem] mr-1"></i> Oferta</span>
-                  <?php endif; ?>
-                  <?php if ($tipo === 'cupom' && $desconto !== ''): ?>
-                    <span class="links-table-type-chip border-blue-500/25 text-blue-100 bg-blue-500/10">
-                      <?= htmlspecialchars($desconto, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
-                    </span>
-                  <?php endif; ?>
-                  <?php if ($selo !== ''): ?>
-                    <span class="links-table-type-chip border-amber-500/25 text-amber-200 bg-amber-500/10">
-                      <?= htmlspecialchars($selo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
-                    </span>
-                  <?php endif; ?>
+                <div class="links-table-perf">
+                  <span class="links-perf-total"><strong><?= number_format((int) ($monitor['click_total'] ?? 0), 0, ',', '.') ?></strong> <span class="links-perf-unit">cliques</span></span>
+                  <span class="links-perf-today">+<?= number_format((int) ($monitor['click_today'] ?? 0), 0, ',', '.') ?> hoje</span>
                 </div>
               </td>
 
+              <!-- 4. Status com Dot Circular -->
               <td class="posts-table-td posts-table-td-center">
-                <div class="links-table-status-stack">
-                  <form method="POST" action="<?= url('/admin/links/acao') ?>" data-admin-links-action class="links-table-status-form">
+                <?php if ($isBroken): ?>
+                  <span class="links-status-dot-btn is-broken" title="Alerta: URL externa falhou no último teste (<?= htmlspecialchars($monitor['detail'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>)">
+                    <span class="links-status-dot is-broken"></span>
+                    <span class="links-status-text">Revisar</span>
+                  </span>
+                <?php else: ?>
+                  <form method="POST" action="<?= url('/admin/links/acao') ?>" data-admin-links-action class="links-status-dot-form">
                     <?= Csrf::field() ?>
                     <input type="hidden" name="id" value="<?= $id ?>">
                     <input type="hidden" name="return_to" value="<?= htmlspecialchars($currentUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                     <input type="hidden" name="action" value="toggle_status">
-                    <button type="submit" class="links-table-status-toggle <?= htmlspecialchars($statusMeta['class'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="<?= htmlspecialchars($statusMeta['title'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                      <?= htmlspecialchars($statusMeta['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
+                    <button type="submit" class="links-status-dot-btn <?= $status === 'ativo' ? 'is-active' : 'is-hidden' ?>" title="Status: <?= $status === 'ativo' ? 'Ativo (clique para ocultar)' : 'Oculto (clique para ativar)' ?>">
+                      <span class="links-status-dot <?= $status === 'ativo' ? 'is-active' : 'is-hidden' ?>"></span>
+                      <span class="links-status-text"><?= $status === 'ativo' ? 'Ativo' : 'Oculto' ?></span>
                     </button>
                   </form>
-                  <?php if ($destaque): ?>
-                    <span class="links-table-badge-featured" title="Item em destaque na Central Nerd">
-                      <i class="fa-solid fa-star text-[0.65rem] text-amber-300"></i> Destaque
-                    </span>
-                  <?php endif; ?>
-                </div>
+                <?php endif; ?>
               </td>
 
-              <td class="posts-table-td posts-table-td-center">
-                <span class="links-table-position">#<?= number_format((int) ($item['posicao'] ?? 0), 0, ',', '.') ?></span>
-              </td>
-
-              <td class="posts-table-td posts-table-td-center">
-                <div class="links-table-expiry">
-                  <div class="links-table-expiry-main <?= htmlspecialchars($expiraMeta['class'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                    <?= htmlspecialchars($expiraMeta['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
-                  </div>
-                  <?php if ($expiraMeta['note'] !== ''): ?>
-                    <div class="links-table-expiry-note"><?= htmlspecialchars($expiraMeta['note'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                  <?php endif; ?>
-                </div>
-              </td>
-
-              <td class="posts-table-td posts-table-td-center">
-                <div class="links-table-monitor">
-                  <div class="links-table-monitor-metrics">
-                    <span class="links-table-monitor-chip links-table-monitor-chip-total" title="Total de cliques acumulados"><?= number_format((int) ($monitor['click_total'] ?? 0), 0, ',', '.') ?> tot</span>
-                    <span class="links-table-monitor-chip links-table-monitor-chip-today" title="Cliques hoje"><?= number_format((int) ($monitor['click_today'] ?? 0), 0, ',', '.') ?> hoje</span>
-                  </div>
-                  <form method="POST" action="<?= url('/admin/links/acao') ?>" data-admin-links-action class="links-table-monitor-form">
-                    <?= Csrf::field() ?>
-                    <input type="hidden" name="id" value="<?= $id ?>">
-                    <input type="hidden" name="return_to" value="<?= htmlspecialchars($currentUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                    <input type="hidden" name="action" value="check_link">
-                    <button type="submit" class="links-table-monitor-toggle <?= htmlspecialchars($monitor['class'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" title="Clique para testar o destino agora">
-                      <?= htmlspecialchars($monitor['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
-                    </button>
-                  </form>
-                  <div class="links-table-monitor-meta"><?= htmlspecialchars($monitor['timestamp'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                </div>
-              </td>
-
+              <!-- 5. Ações Dropdown -->
               <td class="posts-table-td posts-table-td-center links-table-actions-cell">
                 <div class="links-dropdown" data-links-dropdown>
                   <button type="button" class="links-dropdown-trigger" data-dropdown-trigger aria-expanded="false" title="Menu de ações">
-                    <span>Ações</span>
+                    <span>⋯ Ações</span>
                     <i class="fa-solid fa-chevron-down links-dropdown-chevron" aria-hidden="true"></i>
                   </button>
 
@@ -442,7 +405,7 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
                       <input type="hidden" name="action" value="check_link">
                       <button type="submit" class="links-dropdown-item">
                         <i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
-                        <span>Testar status HTTP</span>
+                        <span>Testar este link</span>
                       </button>
                     </form>
 

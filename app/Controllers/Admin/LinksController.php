@@ -106,6 +106,24 @@ final class LinksController
         $id = (int) ($_POST['id'] ?? 0);
         $action = trim((string) ($_POST['action'] ?? ''));
         $returnTo = $this->sanitizeReturnUrl((string) ($_POST['return_to'] ?? ''));
+
+        if ($action === 'check_all') {
+            $result = $this->service()->checkAllLinks();
+            if ($this->isAjaxRequest()) {
+                $query = $this->extractQueryParams($returnTo);
+                $query['updated'] = '1';
+                $query['mode'] = 'checked_all';
+                $query['checked'] = (string) ($result['checked'] ?? 0);
+                $query['ok_count'] = (string) ($result['ok_count'] ?? 0);
+                $query['broken_count'] = (string) ($result['broken_count'] ?? 0);
+                View::render('admin/links/index', $this->service()->getIndexViewModel($query));
+                return;
+            }
+
+            header('Location: ' . $this->appendQuery($returnTo, ['updated' => '1', 'mode' => 'checked_all']));
+            exit;
+        }
+
         $result = $this->service()->quickAction($id, $action);
 
         if (($result['not_found'] ?? false) === true) {

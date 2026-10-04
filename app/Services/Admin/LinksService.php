@@ -207,6 +207,32 @@ final class LinksService
         };
     }
 
+    public function checkAllLinks(): array
+    {
+        $links = $this->links->listAdmin([], 'posicao', 'asc');
+        $checked = 0;
+        $okCount = 0;
+        $brokenCount = 0;
+
+        foreach ($links as $link) {
+            $res = $this->checkLink($link);
+            $checked++;
+            if (($res['mode'] ?? '') === 'checked_ok') {
+                $okCount++;
+            } else {
+                $brokenCount++;
+            }
+        }
+
+        return [
+            'ok' => true,
+            'mode' => 'checked_all',
+            'checked' => $checked,
+            'ok_count' => $okCount,
+            'broken_count' => $brokenCount,
+        ];
+    }
+
     public function reorderLinks(array $ids): array
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)));
