@@ -602,6 +602,79 @@
     }
   });
 
+  const closeAllDropdowns = () => {
+    document.querySelectorAll("[data-links-dropdown].is-open").forEach((dropdown) => {
+      dropdown.classList.remove("is-open", "is-dropup");
+      const trigger = dropdown.querySelector("[data-dropdown-trigger]");
+      if (trigger) trigger.setAttribute("aria-expanded", "false");
+    });
+  };
+
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-dropdown-trigger]");
+    if (trigger) {
+      event.preventDefault();
+      event.stopPropagation();
+      const dropdown = trigger.closest("[data-links-dropdown]");
+      if (!dropdown) return;
+
+      const wasOpen = dropdown.classList.contains("is-open");
+      closeAllDropdowns();
+
+      if (!wasOpen) {
+        dropdown.classList.add("is-open");
+        trigger.setAttribute("aria-expanded", "true");
+
+        const menu = dropdown.querySelector("[data-dropdown-menu]");
+        if (menu) {
+          const rect = menu.getBoundingClientRect();
+          if (rect.bottom > (window.innerHeight - 20)) {
+            dropdown.classList.add("is-dropup");
+          }
+        }
+      }
+      return;
+    }
+
+    if (!event.target.closest("[data-links-dropdown]")) {
+      closeAllDropdowns();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeAllDropdowns();
+    }
+  });
+
+  document.addEventListener("click", async (event) => {
+    const copyBtn = event.target.closest("[data-copy-link]");
+    if (!copyBtn) return;
+
+    event.preventDefault();
+    const url = copyBtn.getAttribute("data-copy-link") || "";
+    if (!url) return;
+
+    const label = copyBtn.querySelector(".links-copy-label, .links-copy-text") || copyBtn;
+    const originalText = label.textContent || "Copiar";
+
+    try {
+      const ok = await copyTextToClipboard(url);
+      if (!ok) throw new Error("copy-failed");
+      copyBtn.classList.add("is-copied");
+      label.textContent = "Copiado!";
+      window.setTimeout(() => {
+        copyBtn.classList.remove("is-copied");
+        label.textContent = originalText;
+      }, 1800);
+    } catch (e) {
+      label.textContent = "Erro!";
+      window.setTimeout(() => {
+        label.textContent = originalText;
+      }, 1800);
+    }
+  });
+
   window.addEventListener("popstate", () => {
     fetchAndSwap(window.location.href, { pushState: false });
   });
