@@ -369,7 +369,7 @@ No criar/editar post do blog (`app/Views/components/admin/posts/form-instagram-c
 2. O servidor gera a imagem em `public/uploads/instagram/preview/<token>.jpg` e a legenda (IA ou alternativa sem IA) e devolve imagem, legenda, hashtags e um **token**.
 3. O card estilo Instagram atualiza ao vivo conforme o autor edita legenda/hashtags (contadores 2.200/30, "Gerar outra legenda").
 4. **Salvar o blog** → depois que o post do blog é gravado, `PostsService` chama `BlogCrosspostService::persistAfterSave()` isolado em `try/catch (\Throwable)`. A IA **não** é chamada de novo: grava-se a legenda como o autor deixou e a mesma imagem da prévia.
-5. Na edição, o card do post do Instagram vinculado mostra status, imagem, legenda e link para o módulo.
+5. Na edição, o card do post do Instagram vinculado mostra status, imagem, legenda e link para o módulo. Em Reels, a imagem é a capa `.jpg` gerada ao lado do MP4 (a mesma da lista do Instagram); sem capa, o card mostra o próprio vídeo, sem som.
 
 ### Imagem — `SmartCanvasRenderer`
 
@@ -392,6 +392,7 @@ No criar/editar post do blog (`app/Views/components/admin/posts/form-instagram-c
 - **Chave idempotente:** `idempotency_key` = UUID v5 de `blog:<ambiente>:<post_id>`. O índice único existente impede rascunho duplicado (inclusive em saves simultâneos) e separa o mesmo `post_id` de ambientes diferentes. Sem migration.
 - **Token** (sessão, 24 h): ligado a autor, ambiente, post (ou `form_uid` na criação), arquivo da prévia e SHA-256 dos bytes da imagem usada. No save, a capa é comparada pelos **bytes originais** recebidos (upload pendente ou arquivo no caminho informado), então mudar o slug não invalida a prévia; trocar a capa sem gerar nova prévia é recusado.
 - **Status:** só `rascunho` e `erro` são atualizados (linha lida com `SELECT … FOR UPDATE`, sem depender de `rowCount`); `agendado`, `publicando` e `publicado` ficam somente leitura. Atualizar um `erro` volta para `rascunho`.
+- **Reels (Task #541):** post vinculado do tipo `reels` (Reels automático do IMP-026 ou post que ganhou trilha na tela do Instagram) é somente leitura pelo blog em qualquer status. O card avisa "este artigo já tem um Reels" e o save recusa a gravação dentro da mesma transação (`SELECT … FOR UPDATE`), inclusive quando o formulário foi aberto antes de o Reels existir, sem trocar o vídeo pela arte quadrada. O Reels é editado pelo módulo Instagram.
 - **Transação local:** legenda + troca de mídia na mesma transação; em falha, rollback e o arquivo promovido é apagado.
 - **Falha parcial:** o blog sempre fica salvo; o controller mostra "Blog salvo; rascunho do Instagram não foi atualizado: <motivo>". Salvar de novo tenta outra vez sem duplicar.
 - Capa que não existe nos uploads deste servidor (ex.: post editado em outro ambiente) exige arte dedicada.
@@ -522,6 +523,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-10-01 | 2.8.1 | Tela de edição: o preview mostra a conta real (`@usuario`) também nas telas de erro do salvamento (antes aparecia "@sua_conta") e deixa de gerar aviso de PHP pela variável inexistente `$oldLegenda` (Tasks #400 a #403). |
 | 2026-10-01 | 2.9.0 | Capas no admin para todos os posts (Tasks #404 a #407): `sync-instagram-feed-assets.php` passa a baixar a capa local de todos os posts publicados (o feed do site continua com os 18 mais recentes); `caminho`/`url_publica` de `instagram_post_media` sobem de varchar(500) para varchar(2048) (links de capa de Reels/carrossel da Meta passavam de 500 e eram cortados, dando 403); `upsertFromFeed` não grava mais capa em post criado no admin (`origin = 'local'`, ordem 0-based). |
 | 2026-10-03 | 2.10.0 | Resolução de Mídias Públicas e Compatibilidade de Vídeo no Reel: (1) `InstagramApiService::buildPublicMediaUrl` centraliza a resolução de URLs públicas de mídias enviadas à Meta a partir de `config('instagram.public_media_url')` (default `https://nerd.tfr-info.com.br`), impedindo chamadas com `localhost` ou `127.0.0.1` e normalizando URLs legadas; (2) Liberação de bypass no Cloudflare Access para `/uploads/` garantindo acesso irrestrito da Meta aos arquivos de mídia; (3) `AudioReelGeneratorService::generateReel` aceita vídeo como entrada com descarte do áudio original e aplicação da trilha sonora com fade-out. |
+| 2026-10-03 | 2.10.1 | Cross-post x Reels (Tasks #541 e #542): post vinculado do tipo `reels` fica somente leitura pelo blog em qualquer status; o card mostra a capa `.jpg` do vídeo e avisa que o artigo já tem um Reels; o save recusa dentro da transação, sem trocar o vídeo pela arte quadrada. |
 
 
 

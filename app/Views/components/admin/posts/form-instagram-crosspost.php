@@ -69,10 +69,22 @@ $statusLabels = [
       $st = (string) ($linked['status'] ?? 'rascunho');
       [$stLabel, $stClass] = $statusLabels[$st] ?? [$st, 'text-slate-200 border-slate-500/40'];
       $media = (string) ($linked['_media'] ?? '');
+      $isReels = ($linked['_is_reels'] ?? false) === true;
+      // Video (Reels): usa o poster .jpg gerado ao lado do .mp4, como a lista do Instagram; sem poster, o proprio video.
+      $mediaIsVideo = ($linked['_media_tipo'] ?? '') === 'video' || preg_match('#\.mp4$#i', $media) === 1;
+      $mediaPoster = '';
+      if ($mediaIsVideo) {
+          $posterRel = (string) preg_replace('#\.mp4$#i', '.jpg', $media);
+          if ($posterRel !== $media && is_file(base_path('public/' . ltrim($posterRel, '/')))) {
+              $mediaPoster = $posterRel;
+          }
+      }
     ?>
     <div class="flex flex-wrap gap-4 items-start rounded-xl border border-slate-700/60 p-3" data-ig-linked>
-      <?php if ($media !== ''): ?>
-        <img src="<?= $e(url('/' . ltrim($media, '/'))) ?>" alt="Imagem do post do Instagram vinculado" class="w-28 h-28 object-cover rounded-lg border border-slate-700">
+      <?php if ($media !== '' && $mediaIsVideo && $mediaPoster === ''): ?>
+        <video src="<?= $e(url('/' . ltrim($media, '/'))) ?>" muted playsinline preload="metadata" aria-label="Video do post do Instagram vinculado" class="w-28 h-28 object-cover rounded-lg border border-slate-700"></video>
+      <?php elseif ($media !== ''): ?>
+        <img src="<?= $e(url('/' . ltrim($mediaPoster !== '' ? $mediaPoster : $media, '/'))) ?>" alt="<?= $mediaIsVideo ? 'Capa do video do post do Instagram vinculado' : 'Imagem do post do Instagram vinculado' ?>" class="w-28 h-28 object-cover rounded-lg border border-slate-700">
       <?php endif; ?>
       <div class="flex-1 min-w-[220px] space-y-2">
         <div class="flex flex-wrap items-center gap-2 text-xs">
@@ -84,7 +96,9 @@ $statusLabels = [
           <a href="<?= $e(url('/admin/instagram/posts/' . (int) ($linked['id'] ?? 0) . '/editar')) ?>" class="text-cyan-300 underline">Abrir no modulo Instagram</a>
         </div>
         <p class="text-sm text-slate-300 whitespace-pre-line line-clamp-4"><?= $e($linked['legenda'] ?? '') ?></p>
-        <?php if (!$editable): ?>
+        <?php if ($isReels): ?>
+          <p class="text-xs text-amber-200">Somente leitura: este artigo ja tem um Reels no Instagram. O blog nao altera Reels; edite pelo modulo Instagram.</p>
+        <?php elseif (!$editable): ?>
           <p class="text-xs text-amber-200">Somente leitura: posts agendados, em publicacao ou publicados nao sao alterados pelo blog.</p>
         <?php endif; ?>
       </div>

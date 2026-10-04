@@ -32,6 +32,9 @@ final class BlogCrosspostService
     private const PREVIEW_REL_DIR = 'uploads/instagram/preview';
     private const FINAL_REL_DIR   = 'uploads/instagram';
     private const EDITABLE        = ['rascunho', 'erro'];
+    // Reels vinculado (Reels automatico do IMP-026 ou post que ganhou trilha na tela do Instagram)
+    // e somente leitura pelo blog: o cross-post trocaria o video/as imagens pela arte quadrada.
+    private const REELS_LOCKED_MESSAGE = 'Este artigo ja tem um Reels no Instagram; edite pelo modulo Instagram.';
     // Namespace fixo (RFC 4122 NAMESPACE_URL) para a chave idempotente UUID v5.
     private const UUID_NAMESPACE  = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
 
@@ -246,7 +249,9 @@ final class BlogCrosspostService
             }
             $medias = $repo->findMediaByPostId((int) $post['id']);
             $post['_media'] = $medias[0]['caminho'] ?? '';
-            $post['_editable'] = in_array((string) ($post['status'] ?? ''), self::EDITABLE, true);
+            $post['_media_tipo'] = (string) ($medias[0]['tipo_arquivo'] ?? '');
+            $post['_is_reels'] = self::isReels($post);
+            $post['_editable'] = !$post['_is_reels'] && in_array((string) ($post['status'] ?? ''), self::EDITABLE, true);
 
             return $post;
         } catch (\Throwable $e) {
@@ -310,6 +315,14 @@ final class BlogCrosspostService
     // ── Internos ──────────────────────────────────────────────────────────────
 
     /**
+     * @param array<string,mixed> $post
+     */
+    private static function isReels(array $post): bool
+    {
+        return (string) ($post['tipo'] ?? '') === 'reels';
+    }
+
+    /**
      * @return array{status:string,message:string,instagram_post_id:int}
      */
     private function writeDraft(int $blogPostId, string $environment, string $legenda, int $hashtagsCount, string $previewAbs, ?int $authorId, bool $allowRetry): array
@@ -344,6 +357,13 @@ final class BlogCrosspostService
                     'O post do Instagram vinculado esta "' . (string) $row['status'] . '" e nao pode ser alterado por aqui.',
                     (int) $row['id'],
                 );
+            }
+            // Mesmo com o formulario aberto antes de o Reels existir, nada do Reels e alterado.
+            if ($row !== null && self::isReels($row)) {
+                $this->localPdo->rollBack();
+                @unlink($promotedAbs);
+
+                return $this->result(self::STATUS_REFUSED, self::REELS_LOCKED_MESSAGE, (int) $row['id']);
             }
 
             if ($row === null) {
