@@ -257,7 +257,7 @@ $orderLabel = mb_strtoupper(str_replace('_', ' ', $sort)) . ' / ' . mb_strtouppe
                 : '';
 
             // Cache-busting automático baseado no timestamp do arquivo
-            $imageFile = $imagem !== '' ? dirname(__DIR__, 4) . '/public/' . ltrim($imagem, '/\\') : '';
+            $imageFile = $imagem !== '' ? dirname(__DIR__, 5) . '/public/' . ltrim($imagem, '/\\') : '';
             $imageVer = ($imageFile !== '' && is_file($imageFile)) ? (string) filemtime($imageFile) : '1';
             $imageUrl = $imagem !== '' ? url('/' . ltrim($imagem, '/\\')) . '?v=' . $imageVer : '';
 
