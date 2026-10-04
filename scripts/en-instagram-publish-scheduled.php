@@ -177,12 +177,14 @@ foreach ($duePosts as $post) {
             }
 
             $reelVideoUrl = InstagramApiService::buildPublicMediaUrl($renderedRel);
+            $cover        = InstagramApiService::reelCoverParams($renderedRel, base_path('public'));
+            ig_log('info', "Post #{$postId} — capa: " . ($cover['cover_url'] ?? 'primeiro quadro do vídeo (sem .jpg ao lado do MP4)'));
 
             $isVideo = true;
             $creationId = $api->createVideoContainer(
                 (string) $reelVideoUrl,
                 $legenda,
-                ['media_type' => 'REELS'],
+                ['media_type' => 'REELS'] + $cover,
             );
         } elseif ($tipo === 'carrossel' && count($medias) >= 2) {
             $childIds = [];
@@ -200,12 +202,15 @@ foreach ($duePosts as $post) {
             $creationId = $api->createCarouselContainer($childIds, $legenda);
         } elseif ($tipo === 'reels') {
             $first      = $medias[0];
-            $mediaUrl   = InstagramApiService::buildPublicMediaUrl((string) ($first['caminho'] ?? $first['url_publica'] ?? ''));
+            $firstPath  = (string) ($first['caminho'] ?? $first['url_publica'] ?? '');
+            $mediaUrl   = InstagramApiService::buildPublicMediaUrl($firstPath);
+            $cover      = InstagramApiService::reelCoverParams($firstPath, base_path('public'));
+            ig_log('info', "Post #{$postId} — capa: " . ($cover['cover_url'] ?? 'primeiro quadro do vídeo (sem .jpg ao lado do MP4)'));
             $isVideo    = true;
             $creationId = $api->createVideoContainer(
                 $mediaUrl,
                 $legenda,
-                ['media_type' => 'REELS'],
+                ['media_type' => 'REELS'] + $cover,
             );
         } elseif ($tipo === 'story') {
             $first    = $medias[0];

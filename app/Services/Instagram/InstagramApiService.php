@@ -348,6 +348,44 @@ final class InstagramApiService
     }
 
     /**
+     * Parâmetro de capa do Reels: a capa .jpg gerada ao lado do MP4, com o mesmo nome.
+     *
+     * Sem `cover_url`, a Meta usa o primeiro quadro do vídeo (thumb_offset 0), que nos
+     * Reels animados é só o fundo, antes de o título e a imagem entrarem.
+     * Sem uma capa JPEG válida dentro de public/, devolve [] e a Meta mantém o primeiro quadro.
+     *
+     * @param string $videoPath Caminho relativo do MP4 (ex.: uploads/reels/...)
+     * @return array{cover_url?: string}
+     */
+    public static function reelCoverParams(string $videoPath, string $publicRoot): array
+    {
+        $videoRel = ltrim(str_replace('\\', '/', trim($videoPath)), '/');
+        if ($videoRel === '' || preg_match('#^[a-z][a-z0-9+.-]*://#i', $videoRel) === 1) {
+            return [];
+        }
+        $coverRel = (string) preg_replace('#\.mp4$#i', '.jpg', $videoRel);
+        if ($coverRel === $videoRel) {
+            return [];
+        }
+
+        $root = realpath($publicRoot);
+        $full = realpath($publicRoot . '/' . $coverRel);
+        if ($root === false || $full === false || !is_file($full) || filesize($full) === 0) {
+            return [];
+        }
+        $prefix = strtolower(str_replace('\\', '/', $root)) . '/';
+        if (!str_starts_with(strtolower(str_replace('\\', '/', $full)), $prefix)) {
+            return [];
+        }
+        $info = @getimagesize($full);
+        if (!is_array($info) || $info[2] !== IMAGETYPE_JPEG) {
+            return [];
+        }
+
+        return ['cover_url' => self::buildPublicMediaUrl($coverRel)];
+    }
+
+    /**
      * Cria um container de imagem única ou Story (imagem).
      *
      * @param array<string,mixed> $extra Parâmetros adicionais (ex: is_carousel_item, media_type)

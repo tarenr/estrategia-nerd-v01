@@ -977,7 +977,7 @@ final class InstagramController
                 $creationId = $api->createVideoContainer(
                     (string) $reelVideoUrl,
                     $legenda,
-                    ['media_type' => 'REELS'],
+                    ['media_type' => 'REELS'] + InstagramApiService::reelCoverParams($renderedRel, base_path('public')),
                 );
             } elseif ($tipo === 'carrossel' && count($medias) >= 2) {
                 $childIds = [];
@@ -995,12 +995,13 @@ final class InstagramController
                 $creationId = $api->createCarouselContainer($childIds, $legenda);
             } elseif ($tipo === 'reels') {
                 $first      = $medias[0];
-                $mediaUrl   = InstagramApiService::buildPublicMediaUrl((string) ($first['caminho'] ?? $first['url_publica'] ?? ''));
+                $firstPath  = (string) ($first['caminho'] ?? $first['url_publica'] ?? '');
+                $mediaUrl   = InstagramApiService::buildPublicMediaUrl($firstPath);
                 $isVideo    = true;
                 $creationId = $api->createVideoContainer(
                     $mediaUrl,
                     $legenda,
-                    ['media_type' => 'REELS'],
+                    ['media_type' => 'REELS'] + InstagramApiService::reelCoverParams($firstPath, base_path('public')),
                 );
             } elseif ($tipo === 'story') {
                 $first    = $medias[0];

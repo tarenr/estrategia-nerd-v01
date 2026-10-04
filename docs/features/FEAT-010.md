@@ -266,7 +266,7 @@ C:\xampp\php\php.exe scripts/en-instagram-publish-scheduled.php
 5. Para cada post:
    a. UPDATE status='publicando' WHERE id=X AND status='agendado' (lock atômico)
    a2. Conferir tipo x mídias (InstagramPostRepository::mediaRuleError); combinação inválida (ex.: post antigo, de antes das travas) vai para 'erro' com a mensagem, sem chamar a Meta
-   b. Criar container(s) na Meta API
+   b. Criar container(s) na Meta API (Reels: com `cover_url` da capa .jpg ao lado do MP4, quando existe; ver "Capa do Reels")
    c. Polling do status do container (até 6 tentativas × 5s = 30s máx)
    d. publishMedia() → ig_media_id
    e. Buscar permalink via getMediaDetails()
@@ -274,6 +274,17 @@ C:\xampp\php\php.exe scripts/en-instagram-publish-scheduled.php
 6. Log mensal em storage/logs/instagram/publish-YYYY-MM.log
 7. Liberar lock de processo
 ```
+
+### Capa do Reels (`cover_url`) — Tasks #643 a #645
+
+Sem capa, a Meta usa o primeiro quadro do vídeo (`thumb_offset` padrão `0`). Nos Reels animados esse quadro é só o fundo azul, antes de o título e a imagem entrarem, e era essa a capa que aparecia no Instagram.
+
+- `InstagramApiService::reelCoverParams($videoPath, base_path('public'))` procura a capa `.jpg` com o mesmo nome ao lado do MP4 (ex.: `reel-192-article-12-fa0fff0b.mp4` → `reel-192-article-12-fa0fff0b.jpg`) e devolve `['cover_url' => URL pública]`. A capa precisa estar dentro de `public/`, não estar vazia e ser JPEG de verdade; caso contrário devolve `[]` e a Meta continua usando o primeiro quadro.
+- Usado nos dois ramos de Reels (com trilha e sem trilha) do agendador (`scripts/en-instagram-publish-scheduled.php`) e do "Publicar agora" (`InstagramController`). Carrossel e Story não mudam.
+- As capas já existem para os Reels gerados pelo sistema: `EditorialMotionReelRenderer` captura a capa depois da entrada do título e da imagem (`max(3,5 s, entrada do HUD + 0,5 s)`), e `AudioReelGeneratorService::generateReel()` grava o pôster aos 0,1 s (canvas estático).
+- O agendador registra a capa usada em cada publicação: `Post #N — capa: <URL>` ou `capa: primeiro quadro do vídeo (sem .jpg ao lado do MP4)`.
+- A URL da capa passa pelo mesmo `buildPublicMediaUrl()` do vídeo; `/uploads/` já está liberado no Cloudflare Access para a Meta.
+- A Meta só aceita a capa na criação do container. Reel já publicado não troca a capa pela API (o update de IG Media só aceita `comment_enabled`); a troca é manual no app do Instagram.
 
 ### Exit codes
 
@@ -524,6 +535,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-10-01 | 2.9.0 | Capas no admin para todos os posts (Tasks #404 a #407): `sync-instagram-feed-assets.php` passa a baixar a capa local de todos os posts publicados (o feed do site continua com os 18 mais recentes); `caminho`/`url_publica` de `instagram_post_media` sobem de varchar(500) para varchar(2048) (links de capa de Reels/carrossel da Meta passavam de 500 e eram cortados, dando 403); `upsertFromFeed` não grava mais capa em post criado no admin (`origin = 'local'`, ordem 0-based). |
 | 2026-10-03 | 2.10.0 | Resolução de Mídias Públicas e Compatibilidade de Vídeo no Reel: (1) `InstagramApiService::buildPublicMediaUrl` centraliza a resolução de URLs públicas de mídias enviadas à Meta a partir de `config('instagram.public_media_url')` (default `https://nerd.tfr-info.com.br`), impedindo chamadas com `localhost` ou `127.0.0.1` e normalizando URLs legadas; (2) Liberação de bypass no Cloudflare Access para `/uploads/` garantindo acesso irrestrito da Meta aos arquivos de mídia; (3) `AudioReelGeneratorService::generateReel` aceita vídeo como entrada com descarte do áudio original e aplicação da trilha sonora com fade-out. |
 | 2026-10-03 | 2.10.1 | Cross-post x Reels (Tasks #541 e #542): post vinculado do tipo `reels` fica somente leitura pelo blog em qualquer status; o card mostra a capa `.jpg` do vídeo e avisa que o artigo já tem um Reels; o save recusa dentro da transação, sem trocar o vídeo pela arte quadrada. |
+| 2026-10-03 | 2.11.0 | Capa do Reels (Tasks #643 a #645): a publicação de Reels (agendador e "Publicar agora") envia `cover_url` com a capa `.jpg` gerada ao lado do MP4 (`InstagramApiService::reelCoverParams`), em vez de deixar a Meta usar o primeiro quadro (fundo azul nos Reels animados); o agendador registra a capa usada no log. |
 
 
 
