@@ -34,7 +34,13 @@ $featuredSwitchMessage = ($currentFeaturedId > 0 && $currentFeaturedId !== $edit
 
 $fieldError = static fn (string $key): string => (string) ($errors[$key] ?? '');
 $imageValue = trim((string) ($form['imagem'] ?? ''));
-$imagePreview = $imageValue !== '' ? (preg_match('~^https?://~i', $imageValue) ? $imageValue : url('/' . ltrim($imageValue, '/'))) : '';
+$imageFile = ($imageValue !== '' && !preg_match('~^https?://~i', $imageValue))
+    ? dirname(__DIR__, 5) . '/public/' . ltrim($imageValue, '/\\')
+    : '';
+$imageVer = ($imageFile !== '' && is_file($imageFile)) ? (string) filemtime($imageFile) : '1';
+$imagePreview = $imageValue !== ''
+    ? (preg_match('~^https?://~i', $imageValue) ? $imageValue : url('/' . ltrim($imageValue, '/\\')) . '?v=' . $imageVer)
+    : '';
 ?>
 
 <form method="POST" action="<?= htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" enctype="multipart/form-data" class="space-y-6" novalidate data-link-form data-featured-switch-message="<?= htmlspecialchars($featuredSwitchMessage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
