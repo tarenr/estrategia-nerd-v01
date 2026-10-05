@@ -890,6 +890,16 @@ final class LinksService
                     ];
                 }
 
+                // Link curto invalido da AliExpress cai na pagina inicial de ofertas, que tambem responde 200.
+                if (str_contains($url, 's.click.aliexpress.com') && $finalHost === 'best.aliexpress.com') {
+                    return [
+                        'ok' => false,
+                        'codigo_http' => $code > 0 ? $code : null,
+                        'url_final' => $finalUrl,
+                        'observacao_status' => 'Link da AliExpress invalido (caiu na pagina inicial).',
+                    ];
+                }
+
                 return [
                     'ok' => $code >= 200 && $code < 400,
                     'codigo_http' => $code > 0 ? $code : null,

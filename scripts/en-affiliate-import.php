@@ -20,6 +20,7 @@ const LOJAS = [
         'nome' => 'Shopee',
         'hosts_link' => ['s.shopee.com.br', 'shope.ee'],
         'host_destino' => 'shopee.com.br',
+        'caminho_destino' => null,
         'texto_botao' => 'Ver na Shopee',
         'desconto_contexto' => 'na Shopee',
     ],
@@ -27,12 +28,22 @@ const LOJAS = [
         'nome' => 'Mercado Livre',
         'hosts_link' => ['meli.la'],
         'host_destino' => 'mercadolivre.com.br',
+        'caminho_destino' => null,
         'texto_botao' => 'Ver no Mercado Livre',
         'desconto_contexto' => 'no Mercado Livre',
     ],
+    'aliexpress' => [
+        'nome' => 'AliExpress',
+        'hosts_link' => ['s.click.aliexpress.com'],
+        'host_destino' => 'aliexpress.com',
+        // Link curto invalido cai na pagina inicial (best.aliexpress.com); so produto e aceito.
+        'caminho_destino' => '#^/item/\d+\.html$#',
+        'texto_botao' => 'Ver na AliExpress',
+        'desconto_contexto' => 'na AliExpress',
+    ],
 ];
 
-const HOSTS_IMAGEM = ['susercontent.com', 'mlstatic.com'];
+const HOSTS_IMAGEM = ['susercontent.com', 'mlstatic.com', 'aliexpress-media.com', 'alicdn.com'];
 const STATUS_PERMITIDOS = ['ativo', 'oculto'];
 
 function printUsage(): void
@@ -47,7 +58,7 @@ function printUsage(): void
     echo "  --dry-run           Valida tudo e mostra a previa, sem gravar nada (nem capa)\n";
     echo "  --allow-duplicate   Permite link de afiliado ja cadastrado ou repetido no lote\n";
     echo "\nCampos de cada produto:\n";
-    echo "  loja (shopee|mercadolivre), titulo, url (link de afiliado), imagem (URL),\n";
+    echo "  loja (shopee|mercadolivre|aliexpress), titulo, url (link de afiliado), imagem (URL),\n";
     echo "  subgrupo, posicao, status (ativo|oculto); opcionais: cta_curto, selo, descricao, origem\n";
     echo "========================================================\n";
 }
@@ -85,7 +96,7 @@ function validarItem(array $item, MercadoLivreExtractorService $resolver): array
 
     $loja = $texto('loja');
     if (!isset(LOJAS[$loja])) {
-        return ['erros' => ["loja invalida: '{$loja}' (use shopee ou mercadolivre)"], 'dados' => []];
+        return ['erros' => ["loja invalida: '{$loja}' (use " . implode(', ', array_keys(LOJAS)) . ')'], 'dados' => []];
     }
     $config = LOJAS[$loja];
 
@@ -138,7 +149,9 @@ function validarItem(array $item, MercadoLivreExtractorService $resolver): array
         $final = $resolver->resolveFinalUrl((string) $dados['url']);
         $dados['url_final'] = $final;
         $hostFinal = strtolower((string) parse_url($final, PHP_URL_HOST));
-        if (str_contains($final, 'error_page') || !hostMatches($hostFinal, $config['host_destino'])) {
+        $caminhoFinal = (string) parse_url($final, PHP_URL_PATH);
+        $caminhoOk = $config['caminho_destino'] === null || preg_match($config['caminho_destino'], $caminhoFinal) === 1;
+        if (str_contains($final, 'error_page') || !hostMatches($hostFinal, $config['host_destino']) || !$caminhoOk) {
             $erros[] = 'link de afiliado nao abre um destino valido: ' . mb_substr($final, 0, 120);
         }
     }
