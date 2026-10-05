@@ -330,6 +330,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var previewEmpty = document.getElementById('imagem_link_preview_empty');
   var clearButton = document.getElementById('limparImagemLink');
   var publicBase = <?= json_encode(rtrim(url('/'), '/'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+  var initialImagePreview = <?= json_encode($imagePreview, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+  var initialImageValue = <?= json_encode($imageValue, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
   var featuredSwitchMessage = formEl ? (formEl.getAttribute('data-featured-switch-message') || '').trim() : '';
   var featuredSwitchConfirmed = false;
 
@@ -432,12 +434,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
   var syncPreview = function (value) {
     if (!preview) return;
-    var resolved = resolveUrl(value || (imageInput ? imageInput.value : ''));
-    if (!resolved) {
+    var raw = typeof value === 'string' ? value : (imageInput ? imageInput.value : '');
+    var trimmed = raw.trim();
+    if (!trimmed) {
       preview.src = '';
       preview.classList.add('hidden');
       if (previewEmpty) previewEmpty.classList.remove('hidden');
       return;
+    }
+
+    // Se for o mesmo valor inicial renderizado pelo PHP, preserva a URL cache-busted original
+    if (trimmed === initialImageValue && initialImagePreview) {
+      preview.src = initialImagePreview;
+      preview.classList.remove('hidden');
+      if (previewEmpty) previewEmpty.classList.add('hidden');
+      return;
+    }
+
+    var resolved = resolveUrl(trimmed);
+    if (resolved && resolved.indexOf('?') === -1) {
+      resolved += '?v=' + Date.now();
     }
     preview.src = resolved;
     preview.classList.remove('hidden');
