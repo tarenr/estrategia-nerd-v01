@@ -879,6 +879,17 @@ final class LinksService
                     return $default + ['observacao_status' => $error];
                 }
 
+                // Link curto invalido da Shopee redireciona para uma pagina de erro que responde 200.
+                $finalHost = strtolower((string) parse_url($finalUrl, PHP_URL_HOST));
+                if (str_contains($finalUrl, 'error_page') && ($finalHost === 'shope.ee' || str_ends_with($finalHost, 'shopee.com.br'))) {
+                    return [
+                        'ok' => false,
+                        'codigo_http' => $code > 0 ? $code : null,
+                        'url_final' => $finalUrl,
+                        'observacao_status' => 'Link da Shopee invalido (pagina de erro).',
+                    ];
+                }
+
                 return [
                     'ok' => $code >= 200 && $code < 400,
                     'codigo_http' => $code > 0 ? $code : null,
