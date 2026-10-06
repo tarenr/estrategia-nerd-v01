@@ -207,7 +207,7 @@ final class LinksService
         };
     }
 
-    public function checkAllLinks(): array
+    public function checkAllLinks(int $pausaMs = 0): array
     {
         $links = $this->links->listAdmin([], 'posicao', 'asc');
         $checked = 0;
@@ -215,6 +215,10 @@ final class LinksService
         $brokenCount = 0;
 
         foreach ($links as $link) {
+            // Pausa opcional entre links (usada pela rotina agendada para nao parecer trafego automatizado).
+            if ($pausaMs > 0 && $checked > 0) {
+                usleep($pausaMs * 1000);
+            }
             $res = $this->checkLink($link);
             $checked++;
             if (($res['mode'] ?? '') === 'checked_ok') {
@@ -801,7 +805,7 @@ final class LinksService
 
         $currentStatus = (string) ($link['status'] ?? 'ativo');
         $nextStatus = $currentStatus;
-        if ($currentStatus !== 'oculto' && $currentStatus !== 'expirado') {
+        if ($currentStatus !== 'oculto' && $currentStatus !== 'expirado' && ($result['inconclusivo'] ?? false) !== true) {
             $nextStatus = ($result['ok'] ?? false) === true ? 'ativo' : 'quebrado';
         }
 
@@ -836,21 +840,33 @@ final class LinksService
 
         if (function_exists('curl_init')) {
             try {
-                $ch = curl_init($url);
-                curl_setopt_array($ch, [
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_FOLLOWLOCATION => true,
-                    CURLOPT_NOBODY => true,
-                    CURLOPT_TIMEOUT => 12,
-                    CURLOPT_CONNECTTIMEOUT => 6,
-                    CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 EstrategiaNerd/1.0',
-                    CURLOPT_SSL_VERIFYPEER => false,
-                ]);
-                curl_exec($ch);
-                $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                $finalUrl = (string) curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-                $error = curl_error($ch);
-                curl_close($ch);
+                $code = 0;
+                $finalUrl = '';
+                $error = '';
+                // Uma nova tentativa em erro de rede ou 5xx, para nao reprovar o link por falha passageira.
+                for ($tentativa = 1; $tentativa <= 2; $tentativa++) {
+                    $ch = curl_init($url);
+                    curl_setopt_array($ch, [
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_FOLLOWLOCATION => true,
+                        CURLOPT_NOBODY => true,
+                        CURLOPT_TIMEOUT => 12,
+                        CURLOPT_CONNECTTIMEOUT => 6,
+                        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 EstrategiaNerd/1.0',
+                        CURLOPT_SSL_VERIFYPEER => false,
+                    ]);
+                    curl_exec($ch);
+                    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    $finalUrl = (string) curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
+                    $error = curl_error($ch);
+                    curl_close($ch);
+                    if ($error === '' && $code < 500) {
+                        break;
+                    }
+                    if ($tentativa === 1) {
+                        sleep(3);
+                    }
+                }
 
                 // Fallback para GET caso o destino recuse HEAD (comum em meli.la que responde 405 Method Not Allowed)
                 if ($code === 405 || ($code === 403 && str_contains($url, 'meli.la'))) {
@@ -900,6 +916,30 @@ final class LinksService
                     ];
                 }
 
+                // Anuncio removido da AliExpress: a pagina do produto responde 200, mas vem sem og:title.
+                $finalPath = (string) parse_url($finalUrl, PHP_URL_PATH);
+                if ($code >= 200 && $code < 400 && str_ends_with($finalHost, 'aliexpress.com')
+                    && preg_match('#^/item/(\d+)\.html$#', $finalPath, $item) === 1) {
+                    $estado = $this->aliexpressAnuncioEstado($item[1]);
+                    if ($estado === 'removido') {
+                        return [
+                            'ok' => false,
+                            'codigo_http' => $code,
+                            'url_final' => $finalUrl,
+                            'observacao_status' => 'Anuncio da AliExpress possivelmente removido (pagina sem titulo).',
+                        ];
+                    }
+                    if ($estado === 'inconclusivo') {
+                        return [
+                            'ok' => true,
+                            'inconclusivo' => true,
+                            'codigo_http' => $code,
+                            'url_final' => $finalUrl,
+                            'observacao_status' => 'Verificacao inconclusiva na AliExpress (captcha ou sem resposta); status mantido.',
+                        ];
+                    }
+                }
+
                 return [
                     'ok' => $code >= 200 && $code < 400,
                     'codigo_http' => $code > 0 ? $code : null,
@@ -930,5 +970,47 @@ final class LinksService
         } catch (Throwable) {
             return $default;
         }
+    }
+
+    /**
+     * Le a pagina publica do produto (sem parametros de afiliado) e devolve ativo, removido ou inconclusivo.
+     */
+    private function aliexpressAnuncioEstado(string $itemId): string
+    {
+        $ch = curl_init('https://pt.aliexpress.com/item/' . $itemId . '.html');
+        if ($ch === false) {
+            return 'inconclusivo';
+        }
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_CONNECTTIMEOUT => 6,
+            CURLOPT_ENCODING => '',
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+            CURLOPT_SSL_VERIFYPEER => false,
+        ]);
+        $html = curl_exec($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if (!is_string($html) || $code !== 200 || strlen($html) < 1000 || preg_match('/captcha|punish|x5sec|slide to verify/i', $html) === 1) {
+            return 'inconclusivo';
+        }
+
+        $padroes = [
+            '/<meta[^>]+property=["\']og:title["\'][^>]+content=["\']([^"\']*)["\']/i',
+            '/<meta[^>]+content=["\']([^"\']*)["\'][^>]+property=["\']og:title["\']/i',
+        ];
+        foreach ($padroes as $padrao) {
+            if (preg_match($padrao, $html, $m) === 1) {
+                $titulo = trim(html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                if ($titulo !== '' && strcasecmp($titulo, 'AliExpress') !== 0) {
+                    return 'ativo';
+                }
+            }
+        }
+
+        return 'removido';
     }
 }
