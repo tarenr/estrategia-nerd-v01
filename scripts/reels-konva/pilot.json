@@ -1,0 +1,42 @@
+{
+  "articleId": 17,
+  "articleTitle": "A Lore Completa de Diablo: Entenda Toda a História do Universo",
+  "source": "storage/backups/reels-motion/batch-20261007-102309-7e921398/manifest.json",
+  "duration": 24,
+  "audio": "public/uploads/audio/pixabay_399898.mp3",
+  "audioStart": 9,
+  "scenes": [
+    {
+      "eyebrow": "Um universo em conflito",
+      "title": "DIABLO: ALÉM DO JOGO",
+      "body": "Uma história de origem, guerra e humanidade. Entre na lore de Diablo.",
+      "image": "public/uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img-004.webp",
+      "caption": "UMA JORNADA PELA HISTÓRIA DO UNIVERSO",
+      "chapter": "01 / ONDE TUDO COMEÇA"
+    },
+    {
+      "eyebrow": "A origem do universo",
+      "title": "ANU E TATHAMET",
+      "body": "Conheça o início da história e as forças que deram origem a esse universo.",
+      "image": "public/uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img-001.webp",
+      "caption": "AS ORIGENS DA LUZ E DAS TREVAS",
+      "chapter": "02 / ANTES DE SANTUÁRIO"
+    },
+    {
+      "eyebrow": "O conflito que atravessa eras",
+      "title": "A GUERRA ETERNA",
+      "body": "Céu e Inferno disputam poder. A humanidade ocupa um lugar decisivo nessa história.",
+      "image": "public/uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img-002.webp",
+      "caption": "CÉU, INFERNO E O DESTINO DA HUMANIDADE",
+      "chapter": "03 / UM CONFLITO SEM FIM"
+    },
+    {
+      "eyebrow": "Continue a jornada",
+      "title": "DESCUBRA SANTUÁRIO",
+      "body": "Explore a história completa e entenda como tudo se conecta. Leia no Estratégia Nerd.",
+      "image": "public/uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img.webp",
+      "caption": "O MUNDO EM QUE ESSA HISTÓRIA ACONTECE",
+      "chapter": "04 / A LORE COMPLETA NO BLOG"
+    }
+  ]
+}

@@ -16,7 +16,9 @@
     "@codemirror/view": "^6.41.1",
     "codemirror": "^6.0.2",
     "esbuild": "^0.28.0",
-    "prettier": "^3.8.3"
+    "konva": "10.7.1",
+    "prettier": "^3.8.3",
+    "skia-canvas": "3.0.8"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.19"
