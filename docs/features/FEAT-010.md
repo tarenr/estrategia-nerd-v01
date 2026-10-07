@@ -266,7 +266,7 @@ C:\xampp\php\php.exe scripts/en-instagram-publish-scheduled.php
 5. Para cada post:
    a. UPDATE status='publicando' WHERE id=X AND status='agendado' (lock atômico)
    a2. Conferir tipo x mídias (InstagramPostRepository::mediaRuleError); combinação inválida (ex.: post antigo, de antes das travas) vai para 'erro' com a mensagem, sem chamar a Meta
-   b. Criar container(s) na Meta API (Reels: com `cover_url` da capa .jpg ao lado do MP4, quando existe; ver "Capa do Reels")
+   b. Validar a capa JPEG dos Reels e criar container(s) na Meta API com `cover_url` obrigatório; capa ausente/inválida bloqueia antes do envio (ver "Capa do Reels")
    c. Polling do status do container (até 6 tentativas × 5s = 30s máx)
    d. publishMedia() → ig_media_id
    e. Buscar permalink via getMediaDetails()
@@ -279,10 +279,12 @@ C:\xampp\php\php.exe scripts/en-instagram-publish-scheduled.php
 
 Sem capa, a Meta usa o primeiro quadro do vídeo (`thumb_offset` padrão `0`). Nos Reels animados esse quadro é só o fundo azul, antes de o título e a imagem entrarem, e era essa a capa que aparecia no Instagram.
 
-- `InstagramApiService::reelCoverParams($videoPath, base_path('public'))` procura a capa `.jpg` com o mesmo nome ao lado do MP4 (ex.: `reel-192-article-12-fa0fff0b.mp4` → `reel-192-article-12-fa0fff0b.jpg`) e devolve `['cover_url' => URL pública]`. A capa precisa estar dentro de `public/`, não estar vazia e ser JPEG de verdade; caso contrário devolve `[]` e a Meta continua usando o primeiro quadro.
+- `InstagramApiService::reelCoverParams($videoPath, base_path('public'))` procura a capa `.jpg` com o mesmo nome ao lado do MP4 (ex.: `reel-192-article-12-fa0fff0b.mp4` → `reel-192-article-12-fa0fff0b.jpg`) e devolve `['cover_url' => URL pública]`. A capa precisa estar dentro de `public/`, não estar vazia, ter dimensões positivas e ser JPEG decodificável pelo GD. Desde 07/10/2026, ausência ou invalidez lança um aviso claro e **bloqueia antes de qualquer POST à Meta**; não retorna parâmetros vazios nem usa o quadro inicial como fallback.
+- A criação genérica de containers também exige `cover_url` não vazio para `media_type=REELS`, protegendo chamadas que não passam pelo helper. O tratamento existente registra `status=erro` e a orientação de gerar/repor a capa, visível nas telas do post e de edição. Não há novo container/ID de publicação nessa falha. Após corrigir o JPG, tentar novamente pela ação normal de publicação.
 - Usado nos dois ramos de Reels (com trilha e sem trilha) do agendador (`scripts/en-instagram-publish-scheduled.php`) e do "Publicar agora" (`InstagramController`). Carrossel e Story não mudam.
-- As capas já existem para os Reels gerados pelo sistema: `EditorialMotionReelRenderer` captura a capa depois da entrada do título e da imagem (`max(3,5 s, entrada do HUD + 0,5 s)`), e `AudioReelGeneratorService::generateReel()` grava o pôster aos 0,1 s (canvas estático).
-- O agendador registra a capa usada em cada publicação: `Post #N — capa: <URL>` ou `capa: primeiro quadro do vídeo (sem .jpg ao lado do MP4)`.
+- As capas já existem para os Reels gerados pelo sistema: Konva captura a primeira cena completa aos 1,6 s; o modelo anterior `EditorialMotionReelRenderer` captura depois da entrada do título e da imagem (`max(3,5 s, entrada do HUD + 0,5 s)`), e `AudioReelGeneratorService::generateReel()` grava o pôster aos 0,1 s (canvas estático).
+- O agendador registra `Post #N — capa validada: <URL>`; capa inválida produz erro com orientação, sem envio. Vídeos remotos/manuais sem JPG local também precisam de uma capa válida para publicar como Reel.
+- Regressão: `C:\xampp\php\php.exe scripts/verify-reel-cover.php` usa JPEGs isolados, SQLite efêmero e HTTP simulado para verificar ausência, arquivo vazio/corrompido/incompleto, PNG com extensão JPG, caminho externo, chamadas diretas sem capa e fluxo válido. As 26 capas agendadas são conferidas em leitura, sem removê-las para simular falhas.
 - A URL da capa passa pelo mesmo `buildPublicMediaUrl()` do vídeo; `/uploads/` já está liberado no Cloudflare Access para a Meta.
 - A Meta só aceita a capa na criação do container. Reel já publicado não troca a capa pela API (o update de IG Media só aceita `comment_enabled`); a troca é manual no app do Instagram.
 

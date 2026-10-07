@@ -191,7 +191,7 @@ foreach ($duePosts as $post) {
 
             $reelVideoUrl = InstagramApiService::buildPublicMediaUrl($renderedRel);
             $cover        = InstagramApiService::reelCoverParams($renderedRel, base_path('public'));
-            ig_log('info', "Post #{$postId} — capa: " . ($cover['cover_url'] ?? 'primeiro quadro do vídeo (sem .jpg ao lado do MP4)'));
+            ig_log('info', "Post #{$postId} — capa validada: " . $cover['cover_url']);
 
             $isVideo = true;
             $creationId = $api->createVideoContainer(
@@ -218,7 +218,7 @@ foreach ($duePosts as $post) {
             $firstPath  = (string) ($first['caminho'] ?? $first['url_publica'] ?? '');
             $mediaUrl   = InstagramApiService::buildPublicMediaUrl($firstPath);
             $cover      = InstagramApiService::reelCoverParams($firstPath, base_path('public'));
-            ig_log('info', "Post #{$postId} — capa: " . ($cover['cover_url'] ?? 'primeiro quadro do vídeo (sem .jpg ao lado do MP4)'));
+            ig_log('info', "Post #{$postId} — capa validada: " . $cover['cover_url']);
             $isVideo    = true;
             $creationId = $api->createVideoContainer(
                 $mediaUrl,

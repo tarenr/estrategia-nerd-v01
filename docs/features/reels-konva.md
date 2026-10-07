@@ -12,6 +12,8 @@ O valor `legacy` permite diagnóstico/rollback explícito de configuração. Nã
 
 O enquadramento editorial usa `imageFit=contain`: mantém a imagem inteira dentro da moldura, inclusive capas com texto incorporado. O zoom progride de 94% a 100% do espaço disponível, preservando bordas durante todo o movimento. A revisão do primeiro lote detectou cortes no modelo de preenchimento; esse lote foi preservado como evidência e não aplicado.
 
+A capa JPEG gerada aos 1,6 s é obrigatória na publicação do Reel. Desde a proteção aprovada em 07/10/2026, o helper confere presença, tipo real e decodificação; falta ou corrupção bloqueia o envio e registra um aviso no post/log. A camada de containers também recusa Reels sem `cover_url`. Nunca voltar ao primeiro quadro vazio como fallback. Testar com `scripts/verify-reel-cover.php`, usando fixtures isoladas e HTTP simulado; não remover capas reais para provocar uma falha.
+
 ## Migração protegida dos 26 agendados
 
 O comando `scripts/en-instagram-konva-batch.php` limita a aplicação aos IDs 190, 194–213 e 215–219. #214 publicado fica preservado. Não seleciona músicas, não gera legendas, não publica na Meta e não escreve artigos de produção.

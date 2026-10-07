@@ -288,6 +288,9 @@ final class InstagramApiService
      */
     public function createMediaContainer(array $params): string
     {
+        if (($params['media_type'] ?? '') === 'REELS' && (!is_string($params['cover_url'] ?? null) || trim($params['cover_url']) === '')) {
+            throw new RuntimeException('Capa do Reel não informada. Publicação bloqueada; gere uma capa JPEG válida antes de enviar.');
+        }
         $payload = array_merge(['access_token' => $this->accessToken], $params);
         $response = $this->graphPost("/{$this->igUserId}/media", $payload);
         $id = (string) ($response['id'] ?? '');
@@ -354,37 +357,40 @@ final class InstagramApiService
     /**
      * Parâmetro de capa do Reels: a capa .jpg gerada ao lado do MP4, com o mesmo nome.
      *
-     * Sem `cover_url`, a Meta usa o primeiro quadro do vídeo (thumb_offset 0), que nos
-     * Reels animados é só o fundo, antes de o título e a imagem entrarem.
-     * Sem uma capa JPEG válida dentro de public/, devolve [] e a Meta mantém o primeiro quadro.
+     * Exige JPEG local decodificável; ausência/invalidez bloqueia o envio com aviso.
+     * Nunca permite fallback para o primeiro quadro da animação.
      *
      * @param string $videoPath Caminho relativo do MP4 (ex.: uploads/reels/...)
-     * @return array{cover_url?: string}
+     * @return array{cover_url: string}
      */
     public static function reelCoverParams(string $videoPath, string $publicRoot): array
     {
+        $error = 'Capa do Reel ausente ou inválida. Publicação bloqueada para evitar o quadro inicial vazio. Gere ou reponha a capa JPEG (.jpg) com o mesmo nome do vídeo e tente novamente.';
         $videoRel = ltrim(str_replace('\\', '/', trim($videoPath)), '/');
         if ($videoRel === '' || preg_match('#^[a-z][a-z0-9+.-]*://#i', $videoRel) === 1) {
-            return [];
+            throw new RuntimeException($error);
         }
         $coverRel = (string) preg_replace('#\.mp4$#i', '.jpg', $videoRel);
         if ($coverRel === $videoRel) {
-            return [];
+            throw new RuntimeException($error);
         }
 
         $root = realpath($publicRoot);
         $full = realpath($publicRoot . '/' . $coverRel);
         if ($root === false || $full === false || !is_file($full) || filesize($full) === 0) {
-            return [];
+            throw new RuntimeException($error);
         }
         $prefix = strtolower(str_replace('\\', '/', $root)) . '/';
         if (!str_starts_with(strtolower(str_replace('\\', '/', $full)), $prefix)) {
-            return [];
+            throw new RuntimeException($error);
         }
         $info = @getimagesize($full);
-        if (!is_array($info) || $info[2] !== IMAGETYPE_JPEG) {
-            return [];
+        if (!is_array($info) || $info[2] !== IMAGETYPE_JPEG || $info[0] < 1 || $info[1] < 1) {
+            throw new RuntimeException($error);
         }
+        $image = @imagecreatefromjpeg($full);
+        if (!$image instanceof \GdImage) { throw new RuntimeException($error); }
+        imagedestroy($image);
 
         return ['cover_url' => self::buildPublicMediaUrl($coverRel)];
     }
