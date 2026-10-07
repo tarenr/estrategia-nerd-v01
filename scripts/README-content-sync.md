@@ -47,6 +47,8 @@ Essa rotina valida:
 
 Se houver falha bloqueante, corrija antes de continuar.
 
+O scanner aceita acentos legítimos como “Âmbar” e “BOTÃO” e identifica sequências características de encoding corrompido. Teste isolado: `php scripts/verify-preflight-encoding.php`. Regras e resultados em `docs/features/preflight-encoding.md`.
+
 ## Fluxo recomendado
 
 1. Gere um backup antes de publicar:

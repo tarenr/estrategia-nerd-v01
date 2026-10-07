@@ -5,6 +5,7 @@ if (PHP_SAPI !== 'cli') { exit(1); }
 
 
 require_once __DIR__ . '/backup/EnvLoader.php';
+require_once __DIR__ . '/preflight-encoding.php';
 
 use Scripts\Backup\EnvLoader;
 
@@ -219,16 +220,13 @@ function scanEncodingIssues(string $projectRoot): array
 {
     $roots = [$projectRoot . '/app/Views', $projectRoot . '/app/Services', $projectRoot . '/app/Controllers', $projectRoot . '/config', $projectRoot . '/public/assets/js'];
     $extensions = ['php', 'html', 'txt', 'md', 'xml', 'js', 'css'];
-    $badPatterns = ['/\x{00C3}./u' => 'mojibake-utf8', '/\x{00C2}./u' => 'mojibake-cp1252', '/\x{FFFD}/u' => 'replacement-char'];
     $issues = [];
     $filesScanned = 0;
     foreach (iterateTextFiles($roots, $extensions) as $filePath) {
         $filesScanned++;
         $content = (string) file_get_contents($filePath);
-        foreach ($badPatterns as $pattern => $label) {
-            if (preg_match($pattern, $content) === 1) {
-                $issues[] = $label . ' => ' . $filePath;
-            }
+        foreach (preflightEncodingIssues($content) as $label) {
+            $issues[] = $label . ' => ' . $filePath;
         }
         $skipQuestionInsideWord = str_replace('\\', '/', $filePath);
         $skipQuestionInsideWord = str_ends_with($skipQuestionInsideWord, '/public/assets/js/admin-post-html-editor.js');
