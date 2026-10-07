@@ -22,6 +22,7 @@ require_once __DIR__ . '/../bootstrap.php';
 use App\Repositories\InstagramPostRepository;
 use App\Services\Instagram\AudioReelGeneratorService;
 use App\Services\Instagram\InstagramApiService;
+use App\Services\Instagram\InstagramPublishConfirmationService;
 
 // ── Configuração de Logs ──────────────────────────────────────────────────────
 $logDir  = __DIR__ . '/../storage/logs/instagram/';
@@ -78,6 +79,15 @@ if ($account === null) {
 }
 
 $accountId = (int) $account['id'];
+$api = new InstagramApiService((string) ($account['access_token'] ?? ''), (string) ($account['ig_user_id'] ?? ''));
+$confirmation = new InstagramPublishConfirmationService($repo, $api);
+// Reconciliation only reads Meta; never re-sends an uncertain media_publish.
+try {
+    foreach ($repo->listPublishConfirmations($accountId) as $pendingPost) {
+        try { $confirmation->reconcile((int) $pendingPost['id']); }
+        catch (Throwable) { ig_log('warn', 'Confirmação local pendente para post #' . (int) $pendingPost['id'] . '; sem novo envio.'); }
+    }
+} catch (Throwable) { ig_log('warn', 'Não foi possível consultar as confirmações pendentes; nenhuma tentativa reenviada.'); }
 
 // ── Busca Posts Agendados ─────────────────────────────────────────────────────
 $pdo->beginTransaction();
@@ -103,12 +113,9 @@ if (empty($duePosts)) {
 ig_log('info', 'Posts agendados encontrados: ' . count($duePosts));
 
 // ── Publicação ────────────────────────────────────────────────────────────────
-$api       = new InstagramApiService(
-    (string) ($account['access_token'] ?? ''),
-    (string) ($account['ig_user_id'] ?? ''),
-);
 $published = 0;
 $errors    = 0;
+$pending = 0;
 
 foreach ($duePosts as $post) {
     $postId = (int) $post['id'];
@@ -231,7 +238,7 @@ foreach ($duePosts as $post) {
             );
         }
 
-        $repo->saveCreationId($postId, $creationId);
+        if (!$repo->saveCreationId($postId, $creationId)) { throw new RuntimeException('Container não registrado; nada publicado.'); }
         ig_log('info', "Post #{$postId} — container criado: {$creationId} (tipo: {$tipo})");
 
         // Polling do status do container (vídeos têm tempo limite maior: até 60s)
@@ -253,16 +260,14 @@ foreach ($duePosts as $post) {
         }
 
         // Publica
-        $igMediaId = $api->publishMedia($creationId);
-        ig_log('info', "Post #{$postId} — ig_media_id: {$igMediaId}");
-
-        // Busca permalink
-        $detail    = $api->getMediaDetails($igMediaId);
-        $permalink = (string) ($detail['permalink'] ?? '');
-
-        $repo->markPublished($postId, $igMediaId, $permalink);
-        ig_log('info', "Post #{$postId} publicado com sucesso. Permalink: {$permalink}");
-        $published++;
+        $result = $confirmation->publish($postId, $creationId);
+        if ($result['state'] === 'published') {
+            ig_log('info', "Post #{$postId} publicado com sucesso. ID Meta: " . $result['media_id']);
+            $published++;
+        } elseif ($result['state'] === 'pending') {
+            ig_log('warn', "Post #{$postId}: aguardando confirmação. Não será reenviado automaticamente.");
+            $pending++;
+        } else { ig_log('error', "Post #{$postId}: publicação rejeitada pela Meta."); $errors++; }
     } catch (Throwable $e) {
         $errMsg = $e->getMessage();
         $repo->markError($postId, $errMsg);
@@ -272,7 +277,7 @@ foreach ($duePosts as $post) {
 }
 
 // ── Relatório Final ───────────────────────────────────────────────────────────
-ig_log('info', "=== Fim da execução: {$published} publicados, {$errors} erros ===");
+ig_log('info', "=== Fim da execução: {$published} publicados, {$errors} erros, {$pending} aguardando confirmação ===");
 
 flock($lock, LOCK_UN);
 fclose($lock);

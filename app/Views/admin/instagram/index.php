@@ -1040,7 +1040,7 @@ if (($endRange - $startRange) < 4) {
                     <!-- Status -->
                     <td class="posts-table-td posts-table-td-center">
                       <span class="<?= htmlspecialchars($statusClasses($pStatus), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                        <?= $esc($statusLabel[$pStatus] ?? $pStatus) ?>
+                        <?= $esc(in_array((string) ($item['publish_phase'] ?? ''), ['awaiting_confirmation','published_id_pending'], true) ? 'Aguardando confirmação' : ($statusLabel[$pStatus] ?? $pStatus)) ?>
                       </span>
                     </td>
 
@@ -1132,7 +1132,7 @@ if (($endRange - $startRange) < 4) {
                       <?= $esc($tipoLabel[$pTipo] ?? $pTipo) ?>
                     </span>
                     <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider backdrop-blur-md <?= htmlspecialchars($statusClasses($pStatus), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                      <?= $esc($statusLabel[$pStatus] ?? $pStatus) ?>
+                      <?= $esc(in_array((string) ($item['publish_phase'] ?? ''), ['awaiting_confirmation','published_id_pending'], true) ? 'Aguardando confirmação' : ($statusLabel[$pStatus] ?? $pStatus)) ?>
                     </span>
                   </div>
                 </div>

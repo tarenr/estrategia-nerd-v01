@@ -24,6 +24,7 @@ $fmt = static fn (int $v): string => number_format($v, 0, ',', '.');
 
 $postId = (int) ($post['id'] ?? 0);
 $status = (string) ($post['status'] ?? 'rascunho');
+$confirmationPending = in_array((string) ($post['publish_phase'] ?? ''), ['awaiting_confirmation','published_id_pending'], true);
 
 $statusLabels = ['rascunho' => 'Rascunho', 'agendado' => 'Agendado', 'publicando' => 'Publicando', 'publicado' => 'Publicado', 'erro' => 'Erro'];
 $statusColors = ['rascunho' => 'border-slate-600 text-slate-300', 'agendado' => 'border-amber-500/40 text-amber-200', 'publicando' => 'border-cyan-500/40 text-cyan-200', 'publicado' => 'border-emerald-500/40 text-emerald-200', 'erro' => 'border-rose-500/40 text-rose-200'];
@@ -60,7 +61,7 @@ if ($firstMedia !== null) {
     <div class="admin-page-heading">
       <h1 class="admin-page-title"><i class="fa-brands fa-instagram text-pink-400" aria-hidden="true"></i> Detalhes do Post</h1>
       <div class="admin-page-subtitle">
-        <span class="admin-chip <?= $esc($statusColors[$status] ?? 'border-slate-600 text-slate-300') ?>"><?= $esc($statusLabels[$status] ?? $status) ?></span>
+        <span class="admin-chip <?= $esc($statusColors[$status] ?? 'border-slate-600 text-slate-300') ?>"><?= $esc($confirmationPending ? 'Aguardando confirmação' : ($statusLabels[$status] ?? $status)) ?></span>
       </div>
     </div>
     <div class="admin-page-actions">
@@ -68,6 +69,18 @@ if ($firstMedia !== null) {
       <a href="<?= url('/admin/instagram') ?>" class="admin-btn admin-btn-primary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Voltar</a>
     </div>
   </div>
+
+  <?php if ($confirmationPending): ?>
+    <div role="status" class="mt-4 rounded-xl border border-amber-500/40 bg-amber-950/30 p-4 text-sm text-amber-100">
+      <strong>Aguardando confirmação da publicação.</strong>
+      <p class="mt-1"><?= $esc((string) ($post['error_log'] ?? 'A resposta da Meta ainda não permite confirmar o resultado.')) ?></p>
+      <p class="mt-1">Confira o Instagram antes de uma nova tentativa. O sistema não reenviará esta publicação automaticamente.</p>
+    </div>
+  <?php elseif ($status === 'publicado' && empty($post['permalink'])): ?>
+    <div role="status" class="mt-4 rounded-xl border border-cyan-500/40 p-4 text-sm text-cyan-100">Publicação confirmada. O link está aguardando atualização; não é necessário publicar novamente.</div>
+  <?php elseif ($status === 'erro' && !empty($post['error_log'])): ?>
+    <div role="alert" class="mt-4 rounded-xl border border-rose-500/40 p-4 text-sm text-rose-100"><?= $esc((string) $post['error_log']) ?></div>
+  <?php endif; ?>
 
   <div class="grid grid-cols-1 lg:grid-cols-[1fr_1.3fr] gap-6 mt-6">
     <!-- Mídia -->

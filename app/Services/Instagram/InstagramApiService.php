@@ -25,6 +25,8 @@ final class InstagramApiService
     private const HELPER_BASE    = 'http://127.0.0.1:58772';
     private const HELPER_TIMEOUT = 2;
     private const API_TIMEOUT    = 15;
+    private const PUBLISH_TIMEOUT = 45;
+    private const CONNECT_TIMEOUT = 5;
 
     /** Limite da legenda conforme documentação da Meta */
     public const MAX_CAPTION_LENGTH   = 2200;
@@ -36,9 +38,11 @@ final class InstagramApiService
     public const MIN_CAROUSEL_ITEMS   = 2;
 
 
+    /** @param (\Closure(string,string,array<string,mixed>,int,int): array{body:string|false,http_code:int,error:string,errno:int})|null $httpTransport */
     public function __construct(
         private readonly string $accessToken,
         private readonly string $igUserId,
+        private readonly ?\Closure $httpTransport = null,
     ) {
     }
 
@@ -473,15 +477,15 @@ final class InstagramApiService
      */
     public function publishMedia(string $creationId): string
     {
-        $response = $this->graphPost("/{$this->igUserId}/media_publish", [
+        $response = $this->httpPost(self::GRAPH_BASE . "/{$this->igUserId}/media_publish", [
             'creation_id'  => $creationId,
             'access_token' => $this->accessToken,
-        ]);
+        ], self::PUBLISH_TIMEOUT);
 
         $id = (string) ($response['id'] ?? '');
 
-        if ($id === '') {
-            throw new RuntimeException('Meta API não retornou ig_media_id após publicação.');
+        if ($id === '' || !ctype_digit($id) || $id === $creationId) {
+            throw new InstagramPublishOutcomeUnknownException('Publicação enviada, mas a Meta não retornou um ID de mídia válido. Não reenviar.');
         }
 
         return $id;
@@ -585,26 +589,8 @@ final class InstagramApiService
      */
     private function httpGet(string $url, int $timeout): array
     {
-        $ch = curl_init();
-
-        if ($ch === false) {
-            throw new RuntimeException('Não foi possível inicializar cURL.');
-        }
-
-        curl_setopt_array($ch, [
-            CURLOPT_URL            => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => $timeout,
-            CURLOPT_CONNECTTIMEOUT => $timeout,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS      => 3,
-            CURLOPT_HTTPHEADER     => ['Accept: application/json'],
-        ]);
-
-        $body     = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlErr  = curl_error($ch);
-        curl_close($ch);
+        $result = $this->performHttpRequest('GET', $url, [], $timeout);
+        $body = $result['body']; $httpCode = $result['http_code']; $curlErr = $result['error'];
 
         $safeUrl = $this->sanitizeUrl($url);
 
@@ -639,26 +625,29 @@ final class InstagramApiService
      */
     private function httpPost(string $url, array $payload, int $timeout): array
     {
-        $ch = curl_init();
-
-        if ($ch === false) {
-            throw new RuntimeException('Não foi possível inicializar cURL.');
+        $isPublish = str_ends_with($url, '/media_publish');
+        try { $result = $this->performHttpRequest('POST', $url, $payload, $timeout); }
+        catch (\Throwable $e) {
+            if ($isPublish) { throw new InstagramPublishOutcomeUnknownException('Resultado da publicação desconhecido; não reenviar.'); }
+            throw $e;
         }
+        $body = $result['body']; $httpCode = $result['http_code']; $curlErr = $result['error'];
 
-        curl_setopt_array($ch, [
-            CURLOPT_URL            => $url,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => http_build_query($payload),
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => $timeout,
-            CURLOPT_CONNECTTIMEOUT => $timeout,
-            CURLOPT_HTTPHEADER     => ['Accept: application/json'],
-        ]);
-
-        $body     = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlErr  = curl_error($ch);
-        curl_close($ch);
+        if ($isPublish) {
+            $decoded = is_string($body) ? json_decode($body, true) : null;
+            if ($body === false || $curlErr !== '' || $httpCode < 200 || $httpCode >= 500 || !is_array($decoded)) {
+                throw new InstagramPublishOutcomeUnknownException('Resposta de publicação inconclusiva (HTTP ' . $httpCode . ', cURL ' . $result['errno'] . '); aguardando confirmação.');
+            }
+            if ($httpCode >= 300 || isset($decoded['error'])) {
+                $error = $decoded['error'] ?? [];
+                if ($httpCode >= 400 && is_array($error)
+                    && empty($error['is_transient']) && in_array((int) ($error['code'] ?? 0), [10, 190, 200], true)) {
+                    throw new RuntimeException('Meta rejeitou a publicação por autenticação/permissão (código ' . (int) $error['code'] . ').');
+                }
+                throw new InstagramPublishOutcomeUnknownException('A resposta da Meta exige confirmação antes de qualquer novo envio.');
+            }
+            return $decoded;
+        }
 
         $safeUrl = $this->sanitizeUrl($url);
 
@@ -683,6 +672,27 @@ final class InstagramApiService
         }
 
         return $decoded;
+    }
+
+    /**
+     * @param array<string,mixed> $payload
+     * @return array{body:string|false,http_code:int,error:string,errno:int}
+     */
+    private function performHttpRequest(string $method, string $url, array $payload, int $timeout): array
+    {
+        if ($this->httpTransport !== null) { return ($this->httpTransport)($method, $url, $payload, $timeout, self::CONNECT_TIMEOUT); }
+        $ch = curl_init();
+        if ($ch === false) { throw new RuntimeException('Não foi possível inicializar cURL.'); }
+        $options = [CURLOPT_URL => $url, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_CONNECTTIMEOUT => self::CONNECT_TIMEOUT, CURLOPT_HTTPHEADER => ['Accept: application/json']];
+        if ($method === 'POST') { $options += [CURLOPT_POST => true, CURLOPT_POSTFIELDS => http_build_query($payload)]; }
+        else { $options += [CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 3]; }
+        curl_setopt_array($ch, $options);
+        $body = curl_exec($ch);
+        $result = ['body' => is_string($body) ? $body : false, 'http_code' => (int) curl_getinfo($ch, CURLINFO_HTTP_CODE),
+            'error' => curl_error($ch), 'errno' => curl_errno($ch)];
+        curl_close($ch);
+        return $result;
     }
 
     /**

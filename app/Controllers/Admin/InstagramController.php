@@ -17,6 +17,7 @@ use App\Services\Instagram\AudioReelGeneratorService;
 use App\Services\Instagram\AudiusTrackService;
 use App\Services\Instagram\BlogCrosspostService;
 use App\Services\Instagram\InstagramApiService;
+use App\Services\Instagram\InstagramPublishConfirmationService;
 use App\Services\Instagram\InstagramMediaFitter;
 use App\Support\Auth;
 use App\Support\Csrf;
@@ -393,7 +394,7 @@ final class InstagramController
 
         if ($acao === 'publicar') {
             $this->publishNow($repo, $api, $postId, $account);
-            header('Location: ' . url('/admin/instagram?published=1'));
+            header('Location: ' . url('/admin/instagram/posts/' . $postId));
             exit;
         }
 
@@ -558,7 +559,7 @@ final class InstagramController
 
         if ($acao === 'publicar') {
             $this->publishNow($repo, $api, $id, $account);
-            header('Location: ' . url('/admin/instagram?published=1'));
+            header('Location: ' . url('/admin/instagram/posts/' . $id));
             exit;
         }
 
@@ -922,6 +923,7 @@ final class InstagramController
         int $postId,
         array $account,
     ): void {
+        if (!$repo->claimForImmediatePublishing($postId)) { return; }
         try {
             $post   = $repo->findById($postId);
             $medias = $repo->findMediaByPostId($postId);
@@ -1022,7 +1024,7 @@ final class InstagramController
                 );
             }
 
-            $repo->saveCreationId($postId, $creationId);
+            if (!$repo->saveCreationId($postId, $creationId)) { throw new RuntimeException('Container não registrado; nada publicado.'); }
 
             // Aguarda o container estar pronto (vídeos demandam mais tempo de transcodificação)
             $maxTries = $isVideo ? 15 : 6;
@@ -1040,12 +1042,10 @@ final class InstagramController
                 throw new RuntimeException("Container não ficou pronto a tempo na Meta (status: {$containerStatus}).");
             }
 
-            $igMediaId = $api->publishMedia($creationId);
-            $detail    = $api->getMediaDetails($igMediaId);
-            $permalink = (string) ($detail['permalink'] ?? '');
-
-            $repo->markPublished($postId, $igMediaId, $permalink);
-        } catch (RuntimeException $e) {
+            // Reset this request's execution budget for the bounded publish + details calls.
+            @set_time_limit(90);
+            (new InstagramPublishConfirmationService($repo, $api))->publish($postId, $creationId);
+        } catch (\Throwable $e) {
             $repo->markError($postId, $e->getMessage());
         }
     }

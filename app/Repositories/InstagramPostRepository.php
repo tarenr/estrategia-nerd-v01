@@ -172,6 +172,8 @@ final class InstagramPostRepository
         $stmt = $this->pdo->query(
             "SELECT * FROM instagram_posts
               WHERE status = 'agendado'
+                AND publish_phase IN ('idle','failed')
+                AND (creation_id IS NULL OR publish_phase = 'failed')
                 AND agendado_para <= NOW()
               ORDER BY agendado_para ASC"
         );
@@ -345,10 +347,25 @@ final class InstagramPostRepository
      */
     public function lockForPublishing(int $id): bool
     {
+        return $this->claimPublication($id, ['agendado']);
+    }
+
+    public function claimForImmediatePublishing(int $id): bool
+    {
+        return $this->claimPublication($id, ['rascunho', 'agendado', 'erro']);
+    }
+
+    /** @param list<string> $statuses */
+    private function claimPublication(int $id, array $statuses): bool
+    {
+        $allowed = implode(',', array_map(static fn (string $s): string => "'" . $s . "'", $statuses));
         $stmt = $this->pdo->prepare(
             "UPDATE instagram_posts
-                SET status = 'publicando', atualizado_em = NOW()
-              WHERE id = :id AND status = 'agendado'"
+                SET status = 'publicando', publish_phase = 'preparing', publish_attempted_at = NULL,
+                    creation_id = NULL, error_log = NULL, atualizado_em = NOW()
+              WHERE id = :id AND status IN ($allowed) AND ig_media_id IS NULL
+                AND publish_phase IN ('idle','failed')
+                AND (creation_id IS NULL OR publish_phase = 'failed')"
         );
         $stmt->execute([':id' => $id]);
 
@@ -363,10 +380,12 @@ final class InstagramPostRepository
     {
         $stmt = $this->pdo->prepare(
             "UPDATE instagram_posts
-                SET status        = 'erro',
+                SET status        = 'erro', publish_phase = 'failed',
                     error_log     = :error_log,
                     atualizado_em = NOW()
               WHERE status = 'publicando'
+                AND (publish_phase IN ('preparing','container_created')
+                     OR (publish_phase IN ('idle','failed') AND creation_id IS NULL))
                 AND atualizado_em < NOW() - INTERVAL :minutes MINUTE"
         );
         $stmt->bindValue(':error_log', 'Publicação interrompida (processo encerrado no meio). Verifique no Instagram se o post saiu antes de reagendar.');
@@ -405,10 +424,11 @@ final class InstagramPostRepository
     {
         $stmt = $this->pdo->prepare(
             "UPDATE instagram_posts
-                SET status        = 'erro',
+                SET status        = 'erro', publish_phase = 'failed',
                     error_log     = :error_log,
                     atualizado_em = NOW()
-              WHERE id = :id"
+              WHERE id = :id AND status <> 'publicado'
+                AND publish_phase NOT IN ('awaiting_confirmation','published_id_pending','confirmed')"
         );
 
         return $stmt->execute([':id' => $id, ':error_log' => $errorMessage]);
@@ -420,10 +440,67 @@ final class InstagramPostRepository
     public function saveCreationId(int $id, string $creationId): bool
     {
         $stmt = $this->pdo->prepare(
-            "UPDATE instagram_posts SET creation_id = :cid, atualizado_em = NOW() WHERE id = :id"
+            "UPDATE instagram_posts SET creation_id = :cid, publish_phase = 'container_created', atualizado_em = NOW()
+              WHERE id = :id AND status = 'publicando' AND publish_phase = 'preparing'"
         );
+        $stmt->execute([':id' => $id, ':cid' => $creationId]);
+        return $stmt->rowCount() === 1;
+    }
 
-        return $stmt->execute([':id' => $id, ':cid' => $creationId]);
+    public function beginPublishAttempt(int $id, string $creationId): bool
+    {
+        $stmt = $this->pdo->prepare("UPDATE instagram_posts SET publish_phase='awaiting_confirmation',
+            publish_attempted_at=NOW(), atualizado_em=NOW()
+            WHERE id=:id AND creation_id=:cid AND status='publicando' AND publish_phase='container_created' AND ig_media_id IS NULL");
+        $stmt->execute([':id'=>$id, ':cid'=>$creationId]);
+        return $stmt->rowCount() === 1;
+    }
+
+    public function markPublishPending(int $id, string $message, bool $containerPublished = false): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE instagram_posts SET error_log=:message,
+            publish_phase=CASE WHEN publish_phase='published_id_pending' THEN publish_phase ELSE :phase END, atualizado_em=NOW()
+            WHERE id=:id AND status='publicando' AND publish_phase IN ('awaiting_confirmation','published_id_pending') AND ig_media_id IS NULL");
+        $stmt->execute([':id'=>$id, ':message'=>$message, ':phase'=>$containerPublished ? 'published_id_pending' : 'awaiting_confirmation']);
+    }
+
+    public function rejectPublishAttempt(int $id, string $creationId, string $message): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE instagram_posts SET status='erro',publish_phase='failed',error_log=:message,atualizado_em=NOW()
+            WHERE id=:id AND creation_id=:cid AND status='publicando' AND publish_phase='awaiting_confirmation' AND ig_media_id IS NULL");
+        $stmt->execute([':id'=>$id, ':cid'=>$creationId, ':message'=>$message]);
+    }
+
+    public function confirmPublishAttempt(int $id, string $creationId, string $mediaId): bool
+    {
+        $stmt = $this->pdo->prepare("UPDATE instagram_posts SET status='publicado', publish_phase='confirmed',
+            ig_media_id=:mid, error_log=NULL, publicado_em=COALESCE(publicado_em,NOW()), atualizado_em=NOW()
+            WHERE id=:id AND creation_id=:cid AND status='publicando'
+              AND publish_phase IN ('awaiting_confirmation','published_id_pending') AND ig_media_id IS NULL");
+        $stmt->execute([':id'=>$id, ':cid'=>$creationId, ':mid'=>$mediaId]);
+        if ($stmt->rowCount() === 1) { return true; }
+        $current = $this->findById($id);
+        return $current !== null && $current['status']==='publicado' && $current['creation_id']===$creationId && $current['ig_media_id']===$mediaId;
+    }
+
+    public function updatePublishedPermalink(int $id, string $mediaId, string $permalink): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE instagram_posts SET permalink=:link, atualizado_em=NOW()
+            WHERE id=:id AND status='publicado' AND ig_media_id=:mid");
+        $stmt->execute([':id'=>$id, ':mid'=>$mediaId, ':link'=>$permalink]);
+    }
+
+    /** @return list<array<string,mixed>> */
+    public function listPublishConfirmations(int $accountId, int $limit = 20): array
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM instagram_posts WHERE account_id=:account
+            AND ((status='publicando' AND publish_phase IN ('awaiting_confirmation','published_id_pending'))
+              OR (status='publicado' AND publish_phase='confirmed' AND (permalink IS NULL OR permalink='')))
+            ORDER BY atualizado_em,id LIMIT :lim");
+        $stmt->bindValue(':account', $accountId, PDO::PARAM_INT);
+        $stmt->bindValue(':lim', max(1, $limit), PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
