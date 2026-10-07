@@ -40,4 +40,4 @@ Amostras: artigo sobre o setup do Estratégia Nerd, lore de Diablo e MSI MAG B65
 
 ## Limites
 
-Produção continua aguardando plano e aprovação próprios. `dateModified` segue omitido pela ausência de fonte editorial confiável, conforme `docs/features/seo-artigos.md`. A correção do preflight permanece local. Os artefatos de backup/pacote/evidência ficam fora do Git; código da correção e documentação são versionados.
+Ao concluir esta etapa, produção aguardava plano e aprovação próprios. Foi posteriormente publicada em uma entrega específica: `docs/releases/RELEASE-2026-10-07-seo-production.md`. `dateModified` segue omitido pela ausência de fonte editorial confiável, conforme `docs/features/seo-artigos.md`. A correção do preflight permanece local. Os artefatos de backup/pacote/evidência ficam fora do Git; código da correção e documentação são versionados.

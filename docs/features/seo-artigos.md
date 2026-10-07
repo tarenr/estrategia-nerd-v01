@@ -1,6 +1,6 @@
 # SEO dos artigos — dados estruturados e compartilhamento
 
-Entrega local de 07/10/2026, tarefas Forge #338, #339 e #340. Reaproveita o motor existente; não cria dependências, tabelas ou metadados paralelos. Stage foi publicado e validado em uma etapa posteriormente aprovada, tarefas #869–872: `docs/releases/RELEASE-2026-10-07-seo-stage.md`. Produção não foi publicada.
+Entrega local de 07/10/2026, tarefas Forge #338, #339 e #340. Reaproveita o motor existente; não cria dependências, tabelas ou metadados paralelos. Stage foi publicado e validado em uma etapa posteriormente aprovada, tarefas #869–872: `docs/releases/RELEASE-2026-10-07-seo-stage.md`. Produção também foi publicada e validada após aprovação própria, tarefas #876–878: `docs/releases/RELEASE-2026-10-07-seo-production.md`.
 
 ## Caminho de navegação
 
