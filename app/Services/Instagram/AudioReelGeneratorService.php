@@ -35,6 +35,14 @@ final class AudioReelGeneratorService
         return new self();
     }
 
+    /** @param array<string,mixed> $meta */
+    public static function editorialDuration(array $meta, bool $animated=false): int
+    {
+        return config('instagram.editorial_renderer','konva')==='konva'
+            ? KonvaReelRenderer::duration($meta)
+            : ($animated?(new EditorialMotionReelRenderer())->duration($meta,12):12);
+    }
+
     /**
      * Cache pronto e presente: publicadores nao voltam a codificar esse MP4.
      * @param array<string, mixed> $post
@@ -341,9 +349,9 @@ final class AudioReelGeneratorService
      * @param string $audioPath Caminho do áudio
      * @param array<string, mixed> $meta Metadados (categoria, resumo, chamada_titulo, chamada_texto, cta_texto)
      * @param int $startSeconds Início do corte
-     * @param int|null $durationSeconds Duração (null = 12s padrão)
+     * @param int|null $durationSeconds Duração no modelo legacy; Konva calcula o tempo de leitura.
      * @param string|null $outputVideoPath
-     * @param bool $animated Opt-in para camadas animadas; false preserva Smart Canvas.
+     * @param bool $animated Compatibilidade com camadas animadas quando editorial_renderer=legacy.
      * @return array{video_path: string, canvas_path: string, duration: int}
      */
     public function generateEditorialReel(
@@ -355,6 +363,12 @@ final class AudioReelGeneratorService
         ?string $outputVideoPath = null,
         bool $animated = false
     ): array {
+        $rendererKey=(string) config('instagram.editorial_renderer','konva');
+        if($rendererKey==='konva'){
+            $renderer=new KonvaReelRenderer(dirname($this->publicRoot),$this->ffmpegBinary,$this->ffprobeBinary,(string) config('instagram.node_path','node'));
+            return $renderer->render($coverPath,$audioPath,$meta,$startSeconds,self::editorialDuration($meta),$outputVideoPath);
+        }
+        if($rendererKey!=='legacy')throw new RuntimeException('Renderizador editorial configurado é inválido.');
         if ($animated) {
             $videoRel = $outputVideoPath ?? ('uploads/reels/motion_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.mp4');
             $motion = new EditorialMotionReelRenderer($this->ffmpegBinary, $this->ffprobeBinary);

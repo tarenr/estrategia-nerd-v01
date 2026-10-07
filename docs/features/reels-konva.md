@@ -1,4 +1,63 @@
-# Reels Konva — piloto local com som
+# Reels Konva — padrão editorial local com som
+
+## Integração editorial v2
+
+O plano aprovado em 07/10/2026 inclui tornar Konva o padrão dos próximos Reels editoriais do blog e substituir os 26 agendados. O modelo conserva o visual do piloto aprovado: quatro cenas, tipografia local, molduras, movimento de imagem, entrada de texto, partículas e progresso. As paletas identificam hardware, games, dicas e cultura nerd. Os textos usam título e trechos do resumo do próprio artigo, além de chamadas genéricas para leitura; não há geração paga de imagens nem de fatos.
+
+`config/instagram.php` define `editorial_renderer=konva` e `node_path=node`. O sincronizador existente continua sendo chamado por `en-blog-publish-prod.php`; não exige `--motion` para o modelo novo. A duração calculada (24–30 segundos) é informada ao seletor de trilhas antes da escolha do recorte. A produção só fornece os artigos; os registros Instagram continuam no PDO local. Posts manuais conservam seu fluxo próprio.
+
+`KonvaReelRenderer` monta o conteúdo e supervisiona o worker `scripts/reels-konva/editorial.mjs`. O worker valida as quatro cenas antes de exportar MP4 e JPG. Publicadores manual e agendado reutilizam o MP4 pronto. Se o cache de um Reel vinculado estiver ausente, `EditorialReelService` busca o artigo original em produção e regenera com a trilha e o início cadastrados. O novo cache e a referência da mídia são atualizados juntos, em transação, somente enquanto o post permanece na fase anterior ao envio. Falha de imagem, fonte, Node ou recorte impede o envio e aparece pelo tratamento de erro existente; não há fallback silencioso para um vídeo simples. As proteções de confirmação da Meta continuam sendo usadas.
+
+O valor `legacy` permite diagnóstico/rollback explícito de configuração. Não muda arquivos já produzidos. Restaurar referências de um lote usa o journal descrito abaixo; não substituir vídeos antigos nem reaplicar snapshots após publicação iniciada.
+
+O enquadramento editorial usa `imageFit=contain`: mantém a imagem inteira dentro da moldura, inclusive capas com texto incorporado. O zoom progride de 94% a 100% do espaço disponível, preservando bordas durante todo o movimento. A revisão do primeiro lote detectou cortes no modelo de preenchimento; esse lote foi preservado como evidência e não aplicado.
+
+## Migração protegida dos 26 agendados
+
+O comando `scripts/en-instagram-konva-batch.php` limita a aplicação aos IDs 190, 194–213 e 215–219. #214 publicado fica preservado. Não seleciona músicas, não gera legendas, não publica na Meta e não escreve artigos de produção.
+
+1. `--inventory` grava um manifesto e snapshots completos dos posts/mídias em `storage/backups/reels-konva/batch-*/`. Confere vínculo de origem, fontes, hashes, áudio e duração do recorte original.
+2. `--prepare --manifest=CAMINHO` gera novos MP4/JPG e folhas das quatro cenas em `public/uploads/reels/konva-batch/`. Retoma itens prontos sem recomprimir. Arquivos de tentativas anteriores permanecem preservados.
+3. `--validate --manifest=CAMINHO` confere fontes e saídas e mostra o hash do manifesto. `node scripts/reels-konva/verify-editorial.mjs --manifest CAMINHO` decodifica integralmente todos os vídeos, mede áudio e verifica legibilidade e movimento; salva `validation.json` junto ao backup. Conferir também todas as folhas visuais.
+4. Pausar a tarefa `EstrategiaNerd-InstagramPublicarAgendados` e confirmar que nenhum processo do publicador está em execução. Desabilitar a tarefa não interrompe uma instância já iniciada. Conferir calendário antes da pausa e antes de reativar.
+5. `--apply --manifest=CAMINHO --approved-manifest=HASH --publisher-paused` exige o manifesto conferido. Os 26 estados completos são comparados sob lock. Journal com estados anteriores/posteriores é persistido com flush/fsync antes de uma única transação para todos os posts e mídias. A troca conserva IDs, trilhas, início de áudio, legenda, horários e vínculos. Só atualiza caminho de vídeo, dimensões/duração/cache e data de atualização.
+6. `--verify --manifest=CAMINHO` confere o resultado inteiro e os registros/mídias externos ao lote. Reativar o publicador somente após conferência. Não alterar horários vencidos nem executar publicação manual como parte da migração.
+
+Rollback: com o publicador pausado e sem execução ativa, usar `--rollback` com os mesmos argumentos de manifesto/hash. A recuperação exige igualdade com o estado posterior e hash intacto do MP4 anterior. Posts já iniciados/publicados ou editados recusam o rollback inteiro. Não exclui arquivos. Se houver interrupção depois do commit e antes de atualizar o journal, `--verify` confere os estados posteriores registrados no intent; não reenviar publicação nem reaplicar o lote. O CLI recusa uma segunda aplicação com journal existente.
+
+### Erro encontrado no Windows e orientação para IAs
+
+A origem encerra sessões MySQL ociosas após 20 segundos. Pipes PHP no Windows bloquearam `stream_get_contents`, apesar de `stream_set_blocking(false)`, impedindo a supervisão e a manutenção da conexão durante Node. A correção usa arquivos para stdout/stderr, laço de supervisão independente e consultas de manutenção a cada três segundos durante a renderização do lote. Não aumentar timeout do servidor nem usar uma segunda conexão local como origem. Falha de conexão cancela o processo próprio e impede a aplicação. Tentativas iniciais produziram arquivos de vídeo, mas não alteraram posts; não considerar existência de MP4 como evidência de migração concluída.
+
+CLI sem bootstrap deve carregar `content_sync` e identificar explicitamente o ambiente atual como `local` antes de chamar `TargetEnvironmentDatabase::pdo('production')`. O ambiente padrão `production` pode fazer o helper devolver o PDO global local como se fosse a origem. A primeira consulta recusou o inventário por ausência de artigo, antes de gravar o backup ou alterar posts. Não improvisar conexão de origem com o banco local.
+
+### Validação da integração
+
+```powershell
+C:\xampp\php\php.exe scripts/verify-konva-integration.php --manifest=CAMINHO --render-default
+node scripts/reels-konva/verify-editorial.mjs --manifest CAMINHO
+# Usar um MP4 atual de 24s; o piloto histórico v1 tem hashes de código históricos.
+$env:EN_KONVA_PILOT='public/uploads/reels/konva-batch/LOTE/REEL-DE-24S.mp4'
+node --test scripts/reels-konva/verify.mjs
+C:\xampp\php\php.exe scripts/verify-instagram-publish-confirmation.php
+C:\xampp\php\php.exe scripts/verify-changes.php
+```
+
+Os testes de integração usam SQLite efêmero e arquivos reais, sem carregar credenciais nem chamar a Meta: concorrência, falha no último UPDATE com rollback integral, preservação dos campos, recusa de reaplicação e rollback após início da publicação. `--render-default` exercita o mesmo gerador chamado pelo sincronizador, sem flag de animação. O lote é validado antes de alterar os registros. Uploads e backups locais não são enviados ao Git; o checkout no GitHub não transporta esses arquivos nem altera sozinho um servidor remoto.
+
+### Resultado da implantação local — 07/10/2026
+
+- Lote aplicado: `storage/backups/reels-konva/batch-20261007-145016-0065c4eb/manifest.json`, SHA-256 `a4d2b9bf7c97b8c10bdedb332f6f99bc81fc397193781147604c83b8ed54876c`.
+- Journal aplicado: `application.json` na mesma pasta, SHA-256 `a6a1d04147fe1734a651bc58fd2e0756d28b3726f8bd50908b8686eed200a545`. Guardar junto a `all-records-before.json`, `validation.json` e registros do publicador; não compartilhar credenciais.
+- 26/26 agendados substituídos atomicamente: 13 hardware, 7 games, 3 dicas e 3 cultura nerd. MP4 de 24–29 segundos; todas as cenas revisadas, decodificação integral, áudio audível, fontes legíveis e movimento confirmados.
+- Música/início, legenda, horários, vínculo e IDs preservados. Conferência após o commit SQL confirmou também todos os posts e mídias externos ao lote. Os arquivos anteriores continuam disponíveis.
+- Publicador pausado às 15h02 e reativado às 15h03, `Enabled=true`, `State=Ready`, último resultado 0; nenhuma execução ativa na troca e nenhum agendamento vencido. Próximo Reel: #194 em 07/10 às 19h30, horário original.
+- Geração padrão exercitada sem `--motion`. Sincronizador em dry-run reconheceu #197 existente e não criou duplicata. Nenhuma chamada de publicação de teste à Meta.
+- Testes: **34/34 integração**, **14/14 Konva**, **75/75 confirmação de publicação**, **17/17 suíte geral**, PHPStan nível 5 sem erros. Verificação completa dos **26/26 vídeos** registrada em `validation.json`.
+- Renderização por vídeo: 15.702–22.336 ms; maior RSS Node registrado: 394,7 MiB (exclui FFmpeg). Sem novas dependências ou APIs pagas de geração/renderização.
+- Código preparado na branch `main`; publicação efetiva dos Reels continua pelo agendamento normal do executor local. O push não representa deploy de Node em uma hospedagem remota nem postagem antecipada no Instagram.
+
+## Histórico do piloto v1
 
 ## Objetivo e limite da entrega
 
@@ -73,6 +132,4 @@ Os testes pressupõem o piloto final acima. Para testar outro piloto do mesmo sp
 
 Conferência em leitura ao concluir: 123 posts locais (1 rascunho, 26 agendados, 96 publicados); 26/26 vídeos anteriores com hashes preservados; publicador Windows ativo/Ready. Todos os arquivos alheios à tarefa foram preservados.
 
-## Próxima etapa
-
-A aprovação técnica deste piloto não é aprovação visual do usuário. Depois da avaliação do MP4 com som, planejar a integração ao fluxo existente, os modelos das demais categorias e eventual substituição protegida dos vídeos. Nenhuma dessas mudanças está ativada nesta etapa.
+O usuário avaliou o piloto, confirmou que o resultado estava melhor que o modelo anterior e aprovou o plano de integração v2 descrito no início deste documento. Os números desta seção histórica pertencem ao piloto original.

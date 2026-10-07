@@ -161,26 +161,32 @@ foreach ($duePosts as $post) {
                 if ($audioTrack === null) {
                     throw new RuntimeException('Trilha sonora associada ao post não foi encontrada no banco.');
                 }
-                $reelGen = AudioReelGeneratorService::fromGlobals();
-                $imagePaths = [];
-                foreach ($medias as $m) {
-                    $p = trim((string) ($m['caminho'] ?? ''));
-                    if ($p !== '') {
-                        $imagePaths[] = $p;
+                if (\App\Services\Instagram\EditorialReelService::isLinked($post)) {
+                    $result = \App\Services\Instagram\EditorialReelService::regenerate($post, $audioTrack);
+                    $renderedRel = $result['video_path'];
+                    $repo->markRenderedReady($postId, $renderedRel, $result['duration']);
+                } else {
+                    $reelGen = AudioReelGeneratorService::fromGlobals();
+                    $imagePaths = [];
+                    foreach ($medias as $m) {
+                        $p = trim((string) ($m['caminho'] ?? ''));
+                        if ($p !== '') {
+                            $imagePaths[] = $p;
+                        }
                     }
+                    if ($imagePaths === []) {
+                        throw new RuntimeException('Ao menos uma imagem é necessária para gerar o Reel com áudio.');
+                    }
+                    $startSec = (int) ($post['audio_start_seconds'] ?? 0);
+                    $durSec   = (int) ($post['audio_duration_seconds'] ?? 0);
+                    $renderedRel = $reelGen->generateReel(
+                        $imagePaths,
+                        (string) $audioTrack['arquivo_path'],
+                        $startSec,
+                        $durSec > 0 ? $durSec : null
+                    );
+                    $repo->markRenderedReady($postId, $renderedRel);
                 }
-                if ($imagePaths === []) {
-                    throw new RuntimeException('Ao menos uma imagem é necessária para gerar o Reel com áudio.');
-                }
-                $startSec = (int) ($post['audio_start_seconds'] ?? 0);
-                $durSec   = (int) ($post['audio_duration_seconds'] ?? 0);
-                $renderedRel = $reelGen->generateReel(
-                    $imagePaths,
-                    (string) $audioTrack['arquivo_path'],
-                    $startSec,
-                    $durSec > 0 ? $durSec : null
-                );
-                $repo->markRenderedReady($postId, $renderedRel);
             }
 
             $reelVideoUrl = InstagramApiService::buildPublicMediaUrl($renderedRel);

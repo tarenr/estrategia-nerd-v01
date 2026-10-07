@@ -7,11 +7,17 @@ import { resolve } from 'node:path';
 export const WIDTH = 1080;
 export const HEIGHT = 1920;
 export const FPS = 30;
-export const VERSION = 'konva-editorial-v1';
+export const VERSION = 'konva-editorial-v2';
 const WHITE = '#f7f3ef';
 const AMBER = '#ffb36c';
 const CYAN = '#57dce8';
 const PURPLE = '#9966ef';
+export const THEMES = {
+  hardware: {label:'HARDWARE',accent:'#61dcf0',secondary:'#92eff5',frame:'#597ef3'},
+  games: {label:'GAMES',accent:AMBER,secondary:CYAN,frame:PURPLE},
+  dicas: {label:'DICAS',accent:'#74e2b0',secondary:'#b6f6d0',frame:'#54a7d4'},
+  editorial: {label:'CULTURA NERD',accent:'#d2a0ff',secondary:'#80deee',frame:'#b678f0'},
+};
 
 export function registerFonts(root) {
   const fonts = [
@@ -49,6 +55,12 @@ export function proportionalCrop(imageWidth, imageHeight, width, height, focusX 
   return { x: (imageWidth - cropWidth) * focusX, y: (imageHeight - cropHeight) / 2, width: cropWidth, height: cropHeight };
 }
 
+export function containedImage(imageWidth,imageHeight,width,height,progress) {
+  const scale=Math.min(width/imageWidth,height/imageHeight)*(0.94+Math.max(0,Math.min(1,progress))*0.06);
+  const fittedWidth=imageWidth*scale,fittedHeight=imageHeight*scale;
+  return {x:(width-fittedWidth)/2,y:(height-fittedHeight)/2,width:fittedWidth,height:fittedHeight};
+}
+
 const clamp = (n) => Math.max(0, Math.min(1, n));
 const ease = (n) => 1 - (1 - clamp(n)) ** 3;
 export function timeline(time, duration) {
@@ -83,6 +95,8 @@ export function fitText(node, maxHeight, maxSize, minSize) {
 export async function createScene(spec, root) {
   validateSpec(spec);
   registerFonts(root);
+  const theme=THEMES[spec.category] || THEMES.games;
+  const AMBER=theme.accent;const CYAN=theme.secondary;const PURPLE=theme.frame;
   const images = [];
   for (const scene of spec.scenes) {
     const path = resolve(root, scene.image);
@@ -109,7 +123,7 @@ export async function createScene(spec, root) {
   text(layer,'ESTRATÉGIA',{ x:92,y:169,width:610,fontSize:27,fontStyle:'bold',letterSpacing:5 });
   text(layer,'NERD',{ x:355,y:169,width:230,fontSize:27,fontStyle:'bold',letterSpacing:5,fill:CYAN });
   layer.add(new Konva.Rect({x:784,y:164,width:152,height:42,cornerRadius:5,stroke:PURPLE,strokeWidth:1,fill:'#20152e'}));
-  text(layer,'GAMES',{x:784,y:174,width:152,fontSize:17,align:'center',letterSpacing:3,fill:'#d5b4ff'});
+  text(layer,theme.label,{x:784,y:176,width:152,fontSize:14,align:'center',letterSpacing:2,fill:'#e5d4f5'});
   line(layer,[92,236,936,236],'#49334e',1);
 
   const content = new Konva.Group({ listening: false });
@@ -156,12 +170,18 @@ export async function createScene(spec, root) {
       const titleSize=fitText(title,230,136,70);
       subtitle.text(scene.body);const bodySize=fitText(subtitle,145,31,26);
       photo.image(images[active]);
-      chapter.text(scene.chapter || `${String(active+1).padStart(2,'0')} / A LORE DE DIABLO`);
+      chapter.text(scene.chapter || `${String(active+1).padStart(2,'0')} / ${theme.label}`);
       imageCaption.text(scene.caption || 'ILUSTRAÇÃO DO ARTIGO');
       typography.push({scene:active,titleSize,bodySize});
     }
     const scale=1+state.progress*0.06;
-    photo.crop(proportionalCrop(images[active].width,images[active].height,840/scale,600/scale,0.5));
+    if(spec.scenes[active].imageFit==='contain'){
+      photo.crop({x:0,y:0,width:images[active].width,height:images[active].height});
+      photo.setAttrs(containedImage(images[active].width,images[active].height,840,600,state.progress));
+    }else{
+      photo.position({x:0,y:0});photo.size({width:840,height:600});
+      photo.crop(proportionalCrop(images[active].width,images[active].height,840/scale,600/scale,0.5));
+    }
     content.opacity(state.entrance*state.exit);
     title.x(86+(1-state.entrance)*45);
     picture.y(770+(1-state.entrance)*65);

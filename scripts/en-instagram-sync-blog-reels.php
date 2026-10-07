@@ -9,7 +9,7 @@
  *
  * Uso:
  *   php scripts/en-instagram-sync-blog-reels.php [--dry-run] [--limit=N] [--post-id=ID] [--force] [--motion]
- * --motion e opt-in: o hook automatico existente continua no template estatico.
+ * Konva é o padrão editorial; --motion permanece compatível com a configuração legacy.
  * -----------------------------------------------------------------------------
  */
 
@@ -30,7 +30,6 @@ require dirname(__DIR__) . '/bootstrap.php';
 use App\Repositories\InstagramPostRepository;
 use App\Services\Instagram\AudioReelGeneratorService;
 use App\Services\Instagram\BlogCrosspostService;
-use App\Services\Instagram\EditorialMotionReelRenderer;
 use App\Services\Instagram\GeminiCaptionService;
 use App\Services\Instagram\InstagramApiService;
 use App\Services\Instagram\TrackPickerService;
@@ -154,10 +153,16 @@ foreach ($prodPosts as $post) {
         $skippedCount++;
         continue;
     }
+    if ($existing !== null && (!in_array((string) ($existing['publish_phase'] ?? 'idle'), ['idle', 'failed'], true)
+        || !empty($existing['ig_media_id']) || (!empty($existing['creation_id']) && ($existing['publish_phase'] ?? '') !== 'failed'))) {
+        echo "  -> [SKIP] Publicacao iniciada ou pendente de confirmacao; --force nao altera o registro.\n";
+        $skippedCount++;
+        continue;
+    }
 
     if ($isDryRun) {
-        echo $animated ? "  -> [DRY-RUN] Seria gerado Reel animado + Rascunho com audio.\n"
-            : "  -> [DRY-RUN] Seria gerado Smart Canvas 9:16 + Reel MP4 + Rascunho com áudio.\n";
+        echo config('instagram.editorial_renderer','konva')==='konva' ? "  -> [DRY-RUN] Seria gerado Reel Konva + Rascunho com áudio.\n" : ($animated ? "  -> [DRY-RUN] Seria gerado Reel animado + Rascunho com audio.\n"
+            : "  -> [DRY-RUN] Seria gerado Smart Canvas 9:16 + Reel MP4 + Rascunho com áudio.\n");
         $createdCount++;
         continue;
     }
@@ -194,6 +199,7 @@ foreach ($prodPosts as $post) {
         }
 
         $meta = [
+            'id'             => $postId,
             'titulo'         => $cleanTitulo,
             'resumo'         => $cleanResumo,
             'categoria'      => $categoria,
@@ -203,7 +209,7 @@ foreach ($prodPosts as $post) {
         ];
 
         // B. Trilha sem repetição (IMP-032): duração prevista do Reel define o trecho sorteado
-        $plannedSeconds = $animated ? (new EditorialMotionReelRenderer())->duration($meta, 12) : 12;
+        $plannedSeconds = AudioReelGeneratorService::editorialDuration($meta,$animated);
         $picked = $trackPicker->pick($categoria, $plannedSeconds);
         if ($picked === null) {
             throw new RuntimeException("Nenhuma trilha ativa na biblioteca para a categoria {$categoria}. Cadastre faixas com scripts/en-instagram-import-tracks.php.");
@@ -215,13 +221,13 @@ foreach ($prodPosts as $post) {
             $picked['track']['genero'], $audioStart, $picked['reused'] ? ' [repetida: biblioteca esgotada]' : '');
 
         // D. Gerar Reel 9:16 com áudio
-        echo "  -> Renderizando Smart Canvas 9:16 e Reel em vídeo via FFmpeg...\n";
+        echo "  -> Renderizando Reel editorial 9:16 com o modelo configurado e trilha local...\n";
         $reelResult = $reelGenerator->generateEditorialReel(
             $coverRel,
             $audioRelPath,
             $meta,
             $audioStart,
-            12, // O template animado amplia a duracao conforme o tempo de leitura.
+            $plannedSeconds,
             null,
             $animated
         );

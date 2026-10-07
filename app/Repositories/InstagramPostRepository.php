@@ -596,10 +596,31 @@ final class InstagramPostRepository
     }
 
     /** Chamar depois de salvar todas as midias, na mesma transacao quando aplicavel. */
-    public function markRenderedReady(int $postId, string $path): void
+    public function markRenderedReady(int $postId, string $path, ?int $seconds = null): void
     {
-        $this->pdo->prepare('UPDATE instagram_posts SET video_rendered_path = :path, render_status = "ready" WHERE id = :id')
-            ->execute([':path' => $path, ':id' => $postId]);
+        if ($seconds === null) {
+            $this->pdo->prepare('UPDATE instagram_posts SET video_rendered_path = :path, render_status = "ready" WHERE id = :id')
+                ->execute([':path' => $path, ':id' => $postId]);
+            return;
+        }
+        // Editorial cache regeneration updates the media reference and cache together,
+        // only while the caller still owns the pre-publication claim.
+        $ownsTransaction = !$this->pdo->inTransaction();
+        if ($ownsTransaction) { $this->pdo->beginTransaction(); }
+        try {
+            $statement = $this->pdo->prepare("UPDATE instagram_posts SET video_rendered_path=:path,render_status='ready',audio_duration_seconds=:seconds
+                WHERE id=:id AND status='publicando' AND publish_phase='preparing' AND creation_id IS NULL AND ig_media_id IS NULL");
+            $statement->execute([':path'=>$path,':seconds'=>$seconds,':id'=>$postId]);
+            if ($statement->rowCount() !== 1) { throw new \RuntimeException('Post mudou durante a regeneração; vídeo não enviado.'); }
+            $statement = $this->pdo->prepare("UPDATE instagram_post_media SET caminho=:path,url_publica=NULL,largura=1080,altura=1920,duracao_s=:seconds
+                WHERE post_id=:id AND tipo_arquivo='video'");
+            $statement->execute([':path'=>$path,':seconds'=>$seconds,':id'=>$postId]);
+            if ($statement->rowCount() !== 1) { throw new \RuntimeException('Composição editorial mudou; vídeo não enviado.'); }
+            if ($ownsTransaction) { $this->pdo->commit(); }
+        } catch (\Throwable $e) {
+            if ($ownsTransaction) { $this->pdo->rollBack(); }
+            throw $e;
+        }
     }
 
     /**
