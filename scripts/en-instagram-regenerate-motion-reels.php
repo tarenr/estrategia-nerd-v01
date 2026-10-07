@@ -16,7 +16,8 @@ spl_autoload_register(static function (string $class) use ($root): void {
     }
 });
 $options = getopt('', ['dry-run', 'inventory', 'pilots', 'prepare', 'validate', 'apply', 'rollback',
-    'manifest:', 'approved-manifest:', 'approved-pilots:', 'ffmpeg:', 'ffprobe:', 'help']);
+    'manifest:', 'approved-manifest:', 'approved-pilots:', 'ffmpeg:', 'ffprobe:', 'ids:', 'help']);
+$allowedIds = isset($options['ids']) ? array_values(array_unique(array_map('intval', explode(',', (string) $options['ids'])))) : [];
 $modes = array_intersect(['dry-run', 'inventory', 'pilots', 'prepare', 'validate', 'apply', 'rollback'], array_keys($options));
 if (isset($options['help']) || $options === []) {
     echo "Reels locais por categoria; nunca publica nem escreve na origem dos artigos.\n"
@@ -26,6 +27,7 @@ if (isset($options['help']) || $options === []) {
         . "--validate --manifest=CAMINHO: verifica fontes/MP4s e emite hash para aprovacao\n"
         . "--apply --manifest=CAMINHO --approved-manifest=HASH: troca referencias locais\n"
         . "--rollback --manifest=CAMINHO --approved-manifest=HASH: recupera referencias sob guarda\n";
+    echo "--ids=190,194,...: limita o inventario e rejeita manifesto com IDs externos ao lote.\n";
     exit(0);
 }
 $lock = null;
@@ -57,6 +59,7 @@ try {
         $production->exec('SET TRANSACTION READ ONLY');
         $production->beginTransaction();
         $items = $batch->inventory($production);
+        $items = array_values(array_filter($items, static fn (array $i): bool => $allowedIds === [] || in_array((int) $i['id'], $allowedIds, true)));
         $production->rollBack();
         $local->rollBack();
         $report = array_map(static fn (array $i): array => ['reel' => $i['id'], 'state' => $i['state'],
@@ -122,6 +125,11 @@ try {
     if ($lock === false || !flock($lock, LOCK_EX | LOCK_NB)) { throw new RuntimeException('Outra execucao deste lote esta ativa.'); }
     $manifest = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
     if (!is_array($manifest)) { throw new RuntimeException('Manifesto invalido.'); }
+    if ($allowedIds !== []) {
+        foreach ($manifest['items'] as $item) {
+            if (!in_array((int) $item['id'], $allowedIds, true)) { throw new RuntimeException('Manifesto contém ID fora do escopo solicitado.'); }
+        }
+    }
     $batch->assertVersion($manifest);
     if (in_array($mode, ['prepare', 'validate', 'apply'], true)) {
         $production = $connect($config['profiles']['production']['database']);

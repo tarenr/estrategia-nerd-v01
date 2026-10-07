@@ -61,3 +61,9 @@ A suíte executa de forma encadeada e automatizada:
 - **PHPStan:** `vendor/bin/phpstan analyse --level=5 --no-progress`
 - **Suíte de Testes Geral:** `C:\xampp\php\php.exe scripts/verify-changes.php`
 - **Smoke Tests:** `C:\xampp\php\php.exe scripts/smoke-test.php local`
+
+## 5. Downloads de trilhas — aprendizado obrigatório (IMP-032)
+
+Antes de retomar downloads de músicas do Pixabay, ler `docs/features/IMP-032.md`, especialmente "Erros observados e orientação para IAs". Não repetir o ciclo de abrir abas, clicar em Recarregar e pedir ao usuário cliques por faixa: a automação foi testada e não salvou novos MP3s. Não atribuir a causa a permissões de múltiplos downloads sem evidência. Confirmar sucesso pelo arquivo completo, duração, codec e hash; a tela de erro e o estado anterior do arquivo não comprovam o resultado da ação atual.
+
+Nesta tarefa, a transferência HTTP do link público observado no botão do site funcionou sem cookies ou mudanças de segurança. Reutilizar esse procedimento apenas dentro de um escopo aprovado, preservar os arquivos existentes e interromper em caso de recusa do servidor. Nunca inventar links de CDN ou desativar proteções para forçar o download.

@@ -29,10 +29,11 @@ require dirname(__DIR__) . '/bootstrap.php';
 
 use App\Repositories\InstagramPostRepository;
 use App\Services\Instagram\AudioReelGeneratorService;
-use App\Services\Instagram\AudiusTrackService;
 use App\Services\Instagram\BlogCrosspostService;
+use App\Services\Instagram\EditorialMotionReelRenderer;
 use App\Services\Instagram\GeminiCaptionService;
 use App\Services\Instagram\InstagramApiService;
+use App\Services\Instagram\TrackPickerService;
 use App\Support\TargetEnvironmentDatabase;
 
 $isDryRun = in_array('--dry-run', $argv, true);
@@ -79,24 +80,11 @@ if ($activeAccount === null) {
 }
 
 $reelGenerator = AudioReelGeneratorService::fromGlobals();
-$audiusService = AudiusTrackService::fromGlobals();
 $captionService = GeminiCaptionService::fromEnv();
 $apiService = new InstagramApiService('', '');
 
-// 1. Carregar faixas de áudio ativas da biblioteca local
-$audioTracks = $audiusService->listLocalTracks();
-if ($audioTracks === [] && !$isDryRun) {
-    fwrite(STDERR, "AVISO: Nenhuma faixa de áudio local encontrada. Buscando faixa padrão no Audius...\n");
-    try {
-        $found = $audiusService->search('synthwave', 3);
-        if ($found !== []) {
-            $audiusService->downloadAudiusTrack($found[0]['id'], $found[0]['title'], $found[0]['artist'], $found[0]['genre']);
-            $audioTracks = $audiusService->listLocalTracks();
-        }
-    } catch (Throwable $e) {
-        fwrite(STDERR, "Falha ao baixar faixa inicial: " . $e->getMessage() . PHP_EOL);
-    }
-}
+// 1. Seletor de trilhas: faixa sem uso do grupo da categoria; não baixa do Audius (IMP-032)
+$trackPicker = new TrackPickerService($localPdo);
 
 // 2. Buscar posts em produção (publicados ou agendados conforme opção)
 $statusList = $includeScheduled ? "'publicado', 'agendado'" : "'publicado'";
@@ -192,45 +180,6 @@ foreach ($prodPosts as $post) {
             echo "  -> Capa baixada com sucesso (" . filesize($coverAbs) . " bytes).\n";
         }
 
-        // B. Selecionar trilha sonora adequada
-        $selectedTrack = null;
-        $genreQuery = match ($categoria) {
-            'hardware' => 'synthwave',
-            'games'    => 'chiptune',
-            'dicas'    => 'lofi',
-            default    => 'electronic',
-        };
-
-        foreach ($audioTracks as $track) {
-            $gen = strtolower((string) ($track['genero'] ?? ''));
-            $tit = strtolower((string) ($track['titulo'] ?? ''));
-            if (str_contains($gen, $genreQuery) || str_contains($tit, $genreQuery)) {
-                $selectedTrack = $track;
-                break;
-            }
-        }
-
-        // Se não achou na biblioteca local, usar a primeira ativa ou buscar no Audius
-        if ($selectedTrack === null && $audioTracks !== []) {
-            $selectedTrack = $audioTracks[0];
-        }
-
-        if ($selectedTrack === null) {
-            $results = $audiusService->search($genreQuery, 3);
-            if ($results !== []) {
-                $selectedTrack = $audiusService->downloadAudiusTrack($results[0]['id'], $results[0]['title'], $results[0]['artist'], $results[0]['genre']);
-                $audioTracks = $audiusService->listLocalTracks();
-            }
-        }
-
-        if ($selectedTrack === null) {
-            throw new RuntimeException("Nenhuma trilha sonora disponível para a categoria {$categoria}.");
-        }
-
-        $audioRelPath = (string) $selectedTrack['arquivo_path'];
-        $audioTrackId = (int) $selectedTrack['id'];
-        echo sprintf("  -> Trilha: #%d - %s (%s)\n", $audioTrackId, $selectedTrack['titulo'], $selectedTrack['genero']);
-
         // C. Metadados do Smart Canvas
         $hookTitle = match ($categoria) {
             'hardware' => 'TESTAMOS NA PRÁTICA:',
@@ -253,13 +202,25 @@ foreach ($prodPosts as $post) {
             'cta_texto'      => 'VER TESTES E ANÁLISE COMPLETA',
         ];
 
+        // B. Trilha sem repetição (IMP-032): duração prevista do Reel define o trecho sorteado
+        $plannedSeconds = $animated ? (new EditorialMotionReelRenderer())->duration($meta, 12) : 12;
+        $picked = $trackPicker->pick($categoria, $plannedSeconds);
+        if ($picked === null) {
+            throw new RuntimeException("Nenhuma trilha ativa na biblioteca para a categoria {$categoria}. Cadastre faixas com scripts/en-instagram-import-tracks.php.");
+        }
+        $audioRelPath = (string) $picked['track']['arquivo_path'];
+        $audioTrackId = (int) $picked['track']['id'];
+        $audioStart = $picked['start'];
+        echo sprintf("  -> Trilha: #%d - %s (%s) a partir de %ds%s\n", $audioTrackId, $picked['track']['titulo'],
+            $picked['track']['genero'], $audioStart, $picked['reused'] ? ' [repetida: biblioteca esgotada]' : '');
+
         // D. Gerar Reel 9:16 com áudio
         echo "  -> Renderizando Smart Canvas 9:16 e Reel em vídeo via FFmpeg...\n";
         $reelResult = $reelGenerator->generateEditorialReel(
             $coverRel,
             $audioRelPath,
             $meta,
-            0,
+            $audioStart,
             12, // O template animado amplia a duracao conforme o tempo de leitura.
             null,
             $animated
@@ -271,23 +232,19 @@ foreach ($prodPosts as $post) {
 
         // E. Gerar Legenda
         $captionData = $captionService->generate($cleanTitulo, $cleanResumo, $categoria);
-        $legendaFinal = trim((string) ($captionData['caption'] ?? ($captionData['legenda'] ?? '')));
+        $legendaFinal = trim($captionData['caption']);
         if ($legendaFinal === '') {
             $legendaFinal = $cleanTitulo . "\n\n" . $cleanResumo;
         }
 
-        $rawTags = $captionData['hashtags'] ?? [];
-        if (is_array($rawTags)) {
-            $cleanedTags = [];
-            foreach ($rawTags as $tag) {
-                if (is_string($tag) && trim($tag) !== '') {
-                    $cleanedTags[] = str_starts_with(trim($tag), '#') ? trim($tag) : '#' . trim($tag);
-                }
+        $rawTags = $captionData['hashtags'];
+        $cleanedTags = [];
+        foreach ($rawTags as $tag) {
+            if (trim($tag) !== '') {
+                $cleanedTags[] = str_starts_with(trim($tag), '#') ? trim($tag) : '#' . trim($tag);
             }
-            $hashtagsFinal = implode(' ', $cleanedTags);
-        } else {
-            $hashtagsFinal = trim((string) $rawTags);
         }
+        $hashtagsFinal = implode(' ', $cleanedTags);
 
         $fullCaption = $legendaFinal;
         if ($hashtagsFinal !== '') {
@@ -307,7 +264,7 @@ foreach ($prodPosts as $post) {
             $upd = $localPdo->prepare(
                 'UPDATE instagram_posts 
                     SET tipo = "reels", legenda = :legenda, hashtags_count = :ht,
-                        audio_track_id = :audio_id, audio_start_seconds = 0, audio_duration_seconds = :duration,
+                        audio_track_id = :audio_id, audio_start_seconds = :audio_start, audio_duration_seconds = :duration,
                         status = "rascunho", atualizado_em = NOW()
                   WHERE id = :id'
             );
@@ -315,6 +272,7 @@ foreach ($prodPosts as $post) {
                 ':legenda'  => $fullCaption,
                 ':ht'       => $hashtagsCount,
                 ':audio_id' => $audioTrackId,
+                ':audio_start' => $audioStart,
                 ':duration' => $reelResult['duration'],
                 ':id'       => $igPostId,
             ]);
@@ -332,7 +290,7 @@ foreach ($prodPosts as $post) {
                 'idempotency_key'        => $idempotencyKey,
                 'origin'                 => 'local',
                 'audio_track_id'         => $audioTrackId,
-                'audio_start_seconds'    => 0,
+                'audio_start_seconds'    => $audioStart,
                 'audio_duration_seconds' => $reelResult['duration'],
                 'criado_por'             => $authorId,
             ]);
