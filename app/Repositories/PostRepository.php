@@ -241,6 +241,21 @@ final class PostRepository
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Autoria é opcional: ausência da tabela/perfil não deve quebrar o artigo.
+        if (is_array($row)) {
+            $row['autor_nome'] = '';
+            if ((int) ($row['autor_id'] ?? 0) > 0) {
+                try {
+                    $author = $this->pdo->prepare('SELECT nome FROM usuarios WHERE id = :id LIMIT 1');
+                    $author->execute(['id' => (int) $row['autor_id']]);
+                    $name = $author->fetchColumn();
+                    $row['autor_nome'] = is_string($name) ? trim($name) : '';
+                } catch (\Throwable $e) {
+                    error_log('[SEO] Nome do autor indisponível; usando autoria editorial.');
+                }
+            }
+        }
+
         return is_array($row) ? $row : null;
     }
 

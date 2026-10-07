@@ -4221,3 +4221,11 @@ body {
   background: linear-gradient(180deg, rgba(64,18,31,.92), rgba(22,10,18,.92));
   color: rgba(254,205,211,.92);
 }
+/* SEO: o mesmo caminho usado pelo BreadcrumbList, com quebra em telas pequenas. */
+.post-breadcrumbs { margin: 0 auto 1.5rem; max-width: 100%; color: #94a3b8; font-size: .875rem; }
+.post-breadcrumbs ol { display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem .6rem; padding: 0; margin: 0; list-style: none; }
+.post-breadcrumbs li { min-width: 0; overflow-wrap: anywhere; }
+.post-breadcrumbs li + li::before { content: '/'; margin-right: .6rem; color: #64748b; }
+.post-breadcrumbs a { color: #67e8f9; }
+.post-breadcrumbs a:hover { text-decoration: underline; }
+.post-breadcrumbs a:focus-visible { outline: 2px solid #67e8f9; outline-offset: 3px; }

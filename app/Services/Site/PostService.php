@@ -49,12 +49,18 @@ final class PostService
             $nextStep = null;
         }
         $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
-        $pageTitle = $post['seo_title'] !== '' ? $post['seo_title'] : ($post['titulo'] . ' | ' . $siteName);
-        $metaDescription = $post['seo_description'] !== ''
-            ? $post['seo_description']
-            : ($post['resumo'] !== '' ? $post['resumo'] : (string) portal_config('meta_description_padrao', portal_config('descricao_site', 'Estrategia Nerd')));
+        $seoTitle = $this->metadataText($post['seo_title']);
+        $pageTitle = $seoTitle !== '' ? $seoTitle : $this->metadataText($post['titulo'] . ' | ' . $siteName);
+        $metaDescription = $this->metadataText($post['seo_description']);
+        if ($metaDescription === '') {
+            $metaDescription = $this->metadataText($post['resumo']);
+        }
+        if ($metaDescription === '') {
+            $metaDescription = $this->metadataText((string) portal_config('meta_description_padrao', portal_config('descricao_site', 'Estrategia Nerd')));
+        }
         $canonicalUrl = (string) ($post['url'] ?? url('/post/' . (string) ($row['slug'] ?? '')));
         $metaImage = (string) ($post['imagem'] ?? '');
+        $breadcrumbs = $this->buildBreadcrumbs($post);
 
         return [
             'title' => $pageTitle,
@@ -66,6 +72,7 @@ final class PostService
             'site_chrome' => false,
             'post_page' => true,
             'post' => $post,
+            'post_breadcrumbs' => $breadcrumbs,
             'post_comments' => $comments,
             'post_comments_total' => $this->countPublicDiscussionComments($approvedComments),
             'post_related' => $related,
@@ -286,6 +293,7 @@ final class PostService
             'comentarios_count' => (int) ($row['comentarios_count'] ?? 0),
             'seo_title' => public_text(trim((string) ($row['seo_title'] ?? ''))),
             'seo_description' => public_text(trim((string) ($row['seo_description'] ?? ''))),
+            'autor_nome' => public_text(trim((string) ($row['autor_nome'] ?? ''))),
             'tags' => $this->normalizeTags((string) ($row['tags'] ?? '')),
             'data' => $this->formatDate((string) ($row['data_publicacao'] ?? '')),
             'data_iso' => (string) ($row['data_publicacao'] ?? ''),
@@ -466,12 +474,8 @@ final class PostService
 
     private function formatDate(string $value): string
     {
-        $timestamp = strtotime($value);
-        if ($timestamp === false) {
-            return '';
-        }
-
-        return date('d/m/Y', $timestamp);
+        $iso = $this->toIsoDate($value);
+        return $iso === null ? '' : (new \DateTimeImmutable($iso))->format('d/m/Y');
     }
 
     private function formatCommentDate(string $value): string
@@ -1183,29 +1187,35 @@ final class PostService
     {
         $publisherLogo = (string) portal_config('logo_url', '');
         $publisherLogo = $publisherLogo !== '' ? $this->toPublicUrl($publisherLogo) : '';
+        $authorName = trim((string) ($post['autor_nome'] ?? ''));
+        $organizationAuthor = $authorName === '' || mb_strtolower($authorName) === mb_strtolower($siteName);
 
         $data = [
             '@context' => 'https://schema.org',
             '@type' => 'Article',
-            'headline' => $title,
+            'headline' => $this->metadataText((string) ($post['titulo'] ?? $title)),
             'description' => $metaDescription,
             'mainEntityOfPage' => [
                 '@type' => 'WebPage',
                 '@id' => (string) ($post['url'] ?? ''),
             ],
-            'datePublished' => $this->toIsoDate((string) ($post['data_iso'] ?? '')),
-            'dateModified' => $this->toIsoDate((string) ($post['data_iso'] ?? '')),
             'articleSection' => (string) ($post['categoria_nome'] ?? ''),
             'keywords' => implode(', ', array_map(static fn (mixed $tag): string => (string) $tag, (array) ($post['tags'] ?? []))),
             'author' => [
-                '@type' => 'Organization',
-                'name' => $siteName,
+                '@type' => $organizationAuthor ? 'Organization' : 'Person',
+                'name' => $authorName !== '' ? $authorName : $siteName,
             ],
             'publisher' => [
                 '@type' => 'Organization',
                 'name' => $siteName,
             ],
         ];
+
+        $published = $this->toIsoDate((string) ($post['data_iso'] ?? ''));
+        if ($published !== null) {
+            $data['datePublished'] = $published;
+        }
+        // data_atualizacao também muda com contadores; não é uma data editorial.
 
         if ($publisherLogo !== '') {
             $data['publisher']['logo'] = [
@@ -1219,17 +1229,43 @@ final class PostService
             $data['image'] = [$image];
         }
 
-        return [$data];
-    }
-
-    private function toIsoDate(string $value): string
-    {
-        $timestamp = strtotime($value);
-        if ($timestamp === false) {
-            return date(DATE_ATOM);
+        $items = [];
+        foreach ($this->buildBreadcrumbs($post) as $index => $crumb) {
+            $items[] = ['@type' => 'ListItem', 'position' => $index + 1, 'name' => $crumb['name'], 'item' => $crumb['url']];
         }
 
-        return date(DATE_ATOM, $timestamp);
+        return [$data, ['@context' => 'https://schema.org', '@type' => 'BreadcrumbList', 'itemListElement' => $items]];
+    }
+
+    /** @return list<array{name: string, url: string}> */
+    private function buildBreadcrumbs(array $post): array
+    {
+        $items = [['name' => 'Início', 'url' => url('/')], ['name' => 'Blog', 'url' => url('/blog')]];
+        $slug = trim((string) ($post['categoria_slug'] ?? ''));
+        if ($slug !== '' && trim((string) ($post['categoria_nome'] ?? '')) !== '') {
+            $items[] = ['name' => (string) $post['categoria_nome'], 'url' => url('/blog/' . rawurlencode($slug))];
+        }
+        $items[] = ['name' => $this->metadataText((string) ($post['titulo'] ?? '')), 'url' => (string) ($post['url'] ?? '')];
+        return $items;
+    }
+
+    private function metadataText(string $value): string
+    {
+        return trim(strip_tags(preg_replace('/\[\[(.*?)\]\]/us', '$1', $value) ?? $value));
+    }
+
+    private function toIsoDate(string $value): ?string
+    {
+        $value = trim($value);
+        if (!preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/D', $value) || str_starts_with($value, '0000-')) {
+            return null;
+        }
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $value);
+        $errors = \DateTimeImmutable::getLastErrors();
+        if ($date === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+            return null;
+        }
+        return $date->format(DATE_ATOM);
     }
 }
 

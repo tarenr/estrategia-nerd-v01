@@ -134,6 +134,21 @@ $renderHighlightedTitle = static function (string $value): string {
     <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/10 via-transparent to-slate-950/60"></div>
 
     <header class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <?php if (is_array($post_breadcrumbs ?? null)): ?>
+        <nav class="post-breadcrumbs" aria-label="Caminho de navegação">
+          <ol>
+            <?php foreach ($post_breadcrumbs as $index => $crumb): ?>
+              <li>
+                <?php if ($index === count($post_breadcrumbs) - 1): ?>
+                  <span aria-current="page"><?= htmlspecialchars($crumb['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                <?php else: ?>
+                  <a href="<?= htmlspecialchars($crumb['url'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($crumb['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+                <?php endif; ?>
+              </li>
+            <?php endforeach; ?>
+          </ol>
+        </nav>
+      <?php endif; ?>
       <div class="mb-5 inline-flex items-center gap-3 flex-wrap justify-center">
         <?php if ($categoryUrl !== ''): ?>
           <a class="post-category-pill" href="<?= htmlspecialchars($categoryUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars($categoryName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
@@ -157,6 +172,7 @@ $renderHighlightedTitle = static function (string $value): string {
       <?php endif; ?>
 
       <div class="post-meta-line mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-slate-400">
+        <span>Por <?= htmlspecialchars(trim((string) ($post['autor_nome'] ?? '')) !== '' ? (string) $post['autor_nome'] : $siteName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
         <span><?= htmlspecialchars((string) ($post['data'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
         <span>&bull;</span>
         <span><?= number_format((int) ($post['views'] ?? 0), 0, ',', '.') ?> visualizações</span>
