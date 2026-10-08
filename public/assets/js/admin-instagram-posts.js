@@ -8,6 +8,35 @@
     return document.querySelector(rootSelector);
   };
 
+  var viewMode = 'table';
+  var applyViewMode = function (mode) {
+    viewMode = mode === 'grid' ? 'grid' : 'table';
+    var root = getRoot();
+    if (!root) return;
+    root.querySelectorAll('[data-posts-view-container]').forEach(function (container) {
+      container.classList.toggle('hidden', container.getAttribute('data-posts-view-container') !== viewMode);
+    });
+    root.querySelectorAll('[data-view-btn]').forEach(function (button) {
+      var active = button.getAttribute('data-view-btn') === viewMode;
+      ['bg-cyan-500/20', 'text-cyan-200', 'shadow'].forEach(function (name) { button.classList.toggle(name, active); });
+      button.classList.toggle('text-slate-400', !active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    var input = root.querySelector('input[name="view"]');
+    if (input) input.value = viewMode;
+    root.querySelectorAll('a[data-admin-instagram-link]').forEach(function (link) {
+      var target = new URL(link.href, window.location.origin);
+      target.searchParams.set('view', viewMode);
+      link.href = target.toString();
+    });
+    try { localStorage.setItem('ig_posts_view_preference', viewMode); } catch (e) {}
+  };
+  var initialMode = new URL(window.location.href).searchParams.get('view');
+  if (initialMode !== 'grid' && initialMode !== 'table') {
+    try { initialMode = localStorage.getItem('ig_posts_view_preference'); } catch (e) {}
+  }
+  applyViewMode(initialMode);
+
   var setLoading = function (root, isLoading) {
     if (!root) return;
     root.style.opacity = isLoading ? '0.6' : '1';
@@ -42,9 +71,6 @@
         continue;
       }
       if (key === 'per_page' && value === '8') {
-        continue;
-      }
-      if (key === 'view' && value === 'table') {
         continue;
       }
 
@@ -86,6 +112,7 @@
       nextRoot.classList.remove('hidden');
 
       root.replaceWith(nextRoot);
+      applyViewMode(new URL(url, window.location.origin).searchParams.get('view') || viewMode);
 
       // Se existir a função de troca de abas, garante que o botão "Posts" fique ativo
       if (typeof window.switchIgTab === 'function') {
@@ -187,34 +214,11 @@
     var targetView = btn.getAttribute('data-view-btn');
     if (!targetView) return;
 
-    var root = getRoot();
-    if (!root) return;
-
-    var containers = root.querySelectorAll('[data-posts-view-container]');
-    containers.forEach(function (c) {
-      if (c.getAttribute('data-posts-view-container') === targetView) {
-        c.classList.remove('hidden');
-      } else {
-        c.classList.add('hidden');
-      }
-    });
-
-    var buttons = root.querySelectorAll('[data-posts-view-toggle] button[data-view-btn]');
-    buttons.forEach(function (b) {
-      if (b.getAttribute('data-view-btn') === targetView) {
-        b.className = 'px-3 py-1.5 rounded-lg transition bg-cyan-500/20 text-cyan-200 shadow';
-      } else {
-        b.className = 'px-3 py-1.5 rounded-lg transition text-slate-400 hover:text-white';
-      }
-    });
+    applyViewMode(targetView);
 
     // Atualiza parâmetro view na URL sem recarregar
     var currentUrl = new URL(window.location.href);
-    if (targetView === 'table') {
-      currentUrl.searchParams.delete('view');
-    } else {
-      currentUrl.searchParams.set('view', targetView);
-    }
+    currentUrl.searchParams.set('view', targetView);
     window.history.replaceState({}, '', currentUrl.toString());
   });
 })();

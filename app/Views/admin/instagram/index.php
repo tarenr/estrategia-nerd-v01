@@ -889,6 +889,7 @@ if (($endRange - $startRange) < 4) {
             <option value="16" <?= $perPage === 16 ? 'selected' : '' ?>>16 por página</option>
             <option value="24" <?= $perPage === 24 ? 'selected' : '' ?>>24 por página</option>
             <option value="32" <?= $perPage === 32 ? 'selected' : '' ?>>32 por página</option>
+            <option value="48" <?= $perPage === 48 ? 'selected' : '' ?>>48 por página</option>
             <option value="todos" <?= $perPage >= 9999 ? 'selected' : '' ?>>Todos</option>
           </select>
         </div>
@@ -902,7 +903,7 @@ if (($endRange - $startRange) < 4) {
         <?php endif; ?>
         <?php if ($sort !== 'publicado_em'): ?><input type="hidden" name="sort" value="<?= $esc($sort) ?>"><?php endif; ?>
         <?php if ($dir !== 'desc'): ?><input type="hidden" name="dir" value="<?= $esc($dir) ?>"><?php endif; ?>
-        <?php if ($viewMode !== 'table'): ?><input type="hidden" name="view" value="<?= $esc($viewMode) ?>"><?php endif; ?>
+        <input type="hidden" name="view" value="<?= $esc($viewMode) ?>">
         <button class="admin-btn admin-btn-primary admin-filter-button" type="submit">Filtrar</button>
         <a class="admin-btn admin-btn-secondary admin-filter-button" href="<?= htmlspecialchars($baseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-admin-instagram-link>Limpar</a>
       </div>
@@ -1190,7 +1191,7 @@ if (($endRange - $startRange) < 4) {
           <div class="posts-pagination-per-page">
             <span class="posts-pagination-kicker">Por página</span>
             <div class="posts-pagination-chip-group">
-              <?php foreach ([8 => '8', 16 => '16', 24 => '24', 32 => '32', 'todos' => 'Todos'] as $optVal => $optLabel): ?>
+              <?php foreach ([8 => '8', 16 => '16', 24 => '24', 32 => '32', 48 => '48', 'todos' => 'Todos'] as $optVal => $optLabel): ?>
                 <?php $activeChip = ($optVal === 'todos' ? $perPage >= 9999 : $perPage === (int) $optVal); ?>
                 <a
                   data-admin-instagram-link
@@ -1346,56 +1347,6 @@ if (($endRange - $startRange) < 4) {
           syncBtn.disabled = false;
           if (label) { label.textContent = originalLabel; }
         });
-    });
-  }
-
-  // Alternador de Visualização: Planilha vs. Cards com persistência
-  var viewToggle = document.querySelector('[data-posts-view-toggle]');
-  if (viewToggle) {
-    var tableContainer = document.querySelector('[data-posts-view-container="table"]');
-    var gridContainer = document.querySelector('[data-posts-view-container="grid"]');
-
-    function applyViewMode(mode) {
-      if (!tableContainer || !gridContainer) return;
-      var isTable = mode === 'table';
-      tableContainer.classList.toggle('hidden', !isTable);
-      gridContainer.classList.toggle('hidden', isTable);
-
-      viewToggle.querySelectorAll('[data-view-btn]').forEach(function (btn) {
-        var active = btn.getAttribute('data-view-btn') === mode;
-        btn.classList.toggle('bg-cyan-500/20', active);
-        btn.classList.toggle('text-cyan-200', active);
-        btn.classList.toggle('shadow', active);
-        btn.classList.toggle('text-slate-400', !active);
-      });
-
-      try {
-        localStorage.setItem('ig_posts_view_preference', mode);
-      } catch (e) {}
-
-      // Atualiza o hidden field do formulário de filtros se existir
-      var filterViewInput = document.querySelector('input[name="view"]');
-      if (filterViewInput) {
-        filterViewInput.value = mode;
-      }
-    }
-
-    // Se houver preferência salva e a URL não especificar explicitamente view=
-    var urlParams = new URLSearchParams(window.location.search);
-    if (!urlParams.has('view')) {
-      try {
-        var savedPreference = localStorage.getItem('ig_posts_view_preference');
-        if (savedPreference && (savedPreference === 'table' || savedPreference === 'grid')) {
-          applyViewMode(savedPreference);
-        }
-      } catch (e) {}
-    }
-
-    viewToggle.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-view-btn]');
-      if (!btn) return;
-      var targetMode = btn.getAttribute('data-view-btn');
-      applyViewMode(targetMode);
     });
   }
 
