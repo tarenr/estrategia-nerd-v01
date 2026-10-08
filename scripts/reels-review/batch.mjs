@@ -65,7 +65,8 @@ if(args.includes('--revise')){
   const folder='public/'+dirname(article.imagem_capa).replaceAll('\\','/');
   const revision='v'+(Number(item.revision?.slice(1)??1)+1);
   item.previousPreviews=[...(item.previousPreviews??[]),{video:item.video,poster:item.poster,sha256:item.sha256,spec:item.spec}];
-  item.spec={...item.spec,scenes:board.scenes.map(s=>({...s,image:imageFor(s,article)}))};
+  item.title=board.reviewedTitle??item.title;
+  item.spec={...item.spec,articleTitle:board.reviewedTitle??item.spec.articleTitle,scenes:board.scenes.map(s=>({...s,image:imageFor(s,article)}))};
   validateSpec(item.spec);const scene=await createScene(item.spec,root);try{for(const start of item.spec.beatStarts)scene.render(start+2.6);}finally{scene.destroy();}
   item.revision=revision;item.note=board.note;item.warnings=board.warnings??[];item.sources=board.sources??[];item.state='prepared';
   writeFileSync(resolve(evidence,`spec-${id}-${revision}.json`),JSON.stringify(item.spec,null,2),{flag:'wx'});

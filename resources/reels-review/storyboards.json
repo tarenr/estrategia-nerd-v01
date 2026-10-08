@@ -1064,12 +1064,12 @@
       "musicSourceId": "10376",
       "audioStart": 45,
       "duration": 28,
-      "note": "Notícia conferida na CDPR; retirar 'chega dia 29' e manter condições do upgrade. Texto do artigo ainda precisa de revisão temporal.",
+      "note": "Artigo local e roteiro revisados em 08/10/2026: lançamento em 29/09/2026 e upgrade no mesmo ecossistema para proprietários elegíveis.",
       "scenes": [
         {
           "eyebrow": "The Witcher 3 Remastered",
           "title": "Geralt retorna",
-          "body": "A CD PROJEKT RED anunciou uma versão aprimorada da aventura.",
+          "body": "A versão aprimorada foi lançada em 29 de setembro de 2026.",
           "image": "cover",
           "framing": {
             "mode": "cover",
@@ -1080,9 +1080,9 @@
           }
         },
         {
-          "eyebrow": "O anúncio do upgrade",
-          "title": "Grátis para quem tem o jogo",
-          "body": "A gratuidade depende de já possuir o jogo nas plataformas elegíveis.",
+          "eyebrow": "Condições do upgrade",
+          "title": "Para proprietários elegíveis",
+          "body": "O upgrade é gratuito dentro do mesmo ecossistema de plataforma.",
           "image": "cover",
           "framing": {
             "mode": "cover",
@@ -1108,7 +1108,7 @@
         {
           "eyebrow": "Acompanhe a atualização",
           "title": "Volte ao Caminho",
-          "body": "Leia a cobertura no blog e confira os detalhes no anúncio oficial.",
+          "body": "Confira as novidades e as condições do upgrade no artigo completo.",
           "image": "cover",
           "framing": {
             "mode": "cover",
@@ -1120,11 +1120,11 @@
         }
       ],
       "sources": [
-        "https://www.thewitcher.com/es/en/news/52017/announcing-the-witcher-3-wild-hunt-remastered"
+        "https://www.thewitcher.com/es/en/news/52054/the-witcher-3-the-wild-hunt-remastered-is-available-now",
+        "https://www.thewitcher.com/es/en/news/52041/see-whats-new-in-the-witcher-3-wild-hunt-remastered"
       ],
-      "warnings": [
-        "O título do artigo ainda diz 'chega dia 29 de setembro'; revisar o texto do blog antes de usar esta prévia."
-      ]
+      "warnings": [],
+      "reviewedTitle": "The Witcher 3: Wild Hunt Remastered: novidades e condições do upgrade gratuito"
     },
     {
       "id": 209,
@@ -1133,12 +1133,12 @@
       "musicSourceId": "10149",
       "audioStart": 37,
       "duration": 28,
-      "note": "Data confirmada na tabela oficial de versões: 13/10/2026 para Home/Pro; conferir timing antes de publicar.",
+      "note": "Artigo local e roteiro revisados em 08/10/2026: data fixa, prazos por edição e atualização oferecida ao dispositivo; agenda preservada.",
       "scenes": [
         {
           "eyebrow": "Windows 11 Home e Pro",
           "title": "Seu PC está no 24H2?",
-          "body": "O fim das atualizações dessa versão está marcado para 13 de outubro de 2026.",
+          "body": "Data de fim do suporte: 13 de outubro de 2026, nas edições Home e Pro.",
           "image": "cover",
           "framing": {
             "mode": "cover",
@@ -1164,7 +1164,7 @@
         {
           "eyebrow": "Planeje a atualização",
           "title": "Use o Windows Update",
-          "body": "Confira as atualizações oferecidas ao seu dispositivo.",
+          "body": "Busque uma versão com suporte oferecida ao seu dispositivo.",
           "image": "cover",
           "framing": {
             "mode": "cover",
@@ -1191,9 +1191,8 @@
       "sources": [
         "https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information"
       ],
-      "warnings": [
-        "Conteúdo com prazo: ajustar o tempo verbal na data efetiva de publicação. A agenda atual não foi alterada."
-      ]
+      "warnings": [],
+      "reviewedTitle": "Windows 11 24H2 Home e Pro: fim do suporte em 13/10/2026"
     },
     {
       "id": 210,
