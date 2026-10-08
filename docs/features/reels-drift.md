@@ -29,6 +29,14 @@ Usar pasta inexistente. O comando lê `scripts/reels-konva/pilot.json`, importa 
 
 Evidência local: `storage/previews/reels-drift/diablo-pilot-final/`.
 
+### Prévia no celular via cloudflared
+
+A pedido do usuário, o piloto foi disponibilizado **somente no servidor local**, em `public/uploads/previews/drift-diablo-20261007/`: `index.html`, `diablo.mp4` e `capa.jpg`. A cópia MP4 mantém o SHA-256 original `60dde0417fce0f677686788694442f17d82b66e7f0691ca221e1fbde9d097321`.
+
+Player: https://nerd.tfr-info.com.br/uploads/previews/drift-diablo-20261007/index.html
+
+O HTML tem viewport móvel, controles nativos, `playsinline`, capa aos 1,6 s, carregamento inicial somente de metadados e link de download. Player, JPEG e MP4 retornaram HTTP 200 com os tipos corretos pelo túnel; a requisição `Range: bytes=0-1023` retornou HTTP 206 e os 1.024 bytes esperados, permitindo reprodução parcial. A disponibilidade depende do computador, Apache e cloudflared ligados. A pasta uploads já tem bypass de Cloudflare Access; o teste não mudou essa configuração. Não foi enviado ao stage. Os três arquivos são artefatos locais ignorados pelo Git.
+
 | Medida | Drift, piloto final | Konva, piloto anterior do mesmo artigo |
 |---|---|---|
 | Tempo registrado | 5.351 e 5.307 ms | 19.484 ms |
