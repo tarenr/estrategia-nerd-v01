@@ -71,7 +71,7 @@ O catálogo dispõe de poucas faixas dark. Cinco Reels sombrios de Diablo usam *
 - `scripts/reels-review/scene.mjs`: composição manual isolada; o motor Konva existente só delega quando `editorial=manual`. A geração automática e os vídeos da fila não são migrados implicitamente.
 - `scripts/reels-review/batch.mjs`: preflight de texto/fontes/imagens/trilhas, renderização, verificação e página estática. Recusa diretório inicial existente e não sobrescreve MP4 anterior. Correções de uma prévia recebem nome v2/v3, mantendo as anteriores.
 - `scripts/reels-review/verify.mjs`: verifica continuidade real da imagem nas fronteiras do texto, precedência da imagem, leitura, movimento e determinismo.
-- `resources/reels-review/gallery.html`: modelo da página, com busca, filtro Diablo/agendados/publicados/referência, alternância anterior/revisado, reprodução individual, download e link por post. Vídeos só carregam ao escolher uma versão, sem autoplay em massa.
+- `resources/reels-review/gallery.html`: modelo da página, com busca, filtro Diablo/agendados/publicados/referência, alternância anterior/revisado, reprodução individual, download e link por post. Cada player já aponta para o revisado com preload="none", sem autoplay. A reprodução pode começar pelo controle nativo; os botões alternam versões.
 
 ```powershell
 C:/xampp/php/php.exe scripts/reels-review/snapshot.php
@@ -102,3 +102,9 @@ Critérios: 30 posts presentes, 29 vídeos novos e referência #214 idêntica, M
 Resultados desta entrega: os 30 posts passaram na validação do renderer e na decodificação integral de vídeo/áudio. As 30 versões originais mantiveram seus hashes. A comparação dos snapshots confirmou os 30 registros locais intactos (`database-validation.json`). A suíte obrigatória passou nas 17 verificações; PHPStan nível 5 não encontrou erros e a regressão temática passou nas 25 verificações.
 
 Pelo túnel, a página respondeu HTTP 200, as 30 capas responderam com MIME de imagem e os 60 vídeos anteriores/revisados responderam Range 206 com MIME MP4 (`http-validation.json`). No navegador com viewport de 390×844, as duas versões do #194 reproduziram sem erro; o revisado avançou até 9,49 segundos. Busca, ausência de resultados e filtros retornaram as contagens esperadas: Diablo 6, publicados 5, agendados 25 e referência 1. Não houve rolagem horizontal. Evidência visual: `mobile-gallery.png`. Essa verificação simula a largura de celular; não é teste em um aparelho físico.
+
+## Correção do player inicial
+
+O player inicialmente não tinha `src`: tocar no controle nativo antes de escolher uma versão deixava a impressão de vídeo ausente. Corrigido associando a prévia revisada desde a criação de cada card, com seleção inicial coerente e `preload="none"`. A página continua sem autoplay e pausa os demais vídeos ao reproduzir um. Não regenerou MP4 nem alterou banco ou fila.
+
+Galeria atualizada no mesmo diretório local. Link com versão para evitar a página antiga em cache: https://nerd.tfr-info.com.br/uploads/previews/revisao-reels-20261007/index.html?v=player2 . Tarefas existentes #887 e #888 reabertas para esta correção, sem duplicação. Suíte obrigatória: 17 verificações aprovadas, zero falhas. Reprodução nativa conferida pelo túnel em viewport de 390×844, sem selecionar o botão Revisado antes: duração 28 s, reprodução ativa e nenhum erro de mídia.
