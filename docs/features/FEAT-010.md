@@ -74,7 +74,7 @@ Posts locais: rascunhos, agendados, em publicação, publicados e com erro.
 |---|---|---|
 | `id` | int unsigned PK | |
 | `account_id` | int unsigned FK | Referência a `instagram_accounts.id` |
-| `status` | enum | `rascunho` · `agendado` · `publicando` · `publicado` · `erro` |
+| `status` | enum | `rascunho` · `agendado` · `publicando` · `publicado` · `erro` · `cancelado` |
 | `tipo` | enum | `imagem` · `carrossel` · `reels` · `story` |
 | `legenda` | text | Texto do post (máx 2.200 chars, máx 30 hashtags) |
 | `hashtags_count` | tinyint | Quantidade de hashtags na legenda |

@@ -961,8 +961,9 @@ final class InstagramPostRepository
 
         $busca = trim((string) ($filters['busca'] ?? ''));
         if ($busca !== '') {
-            $where[] = 'p.legenda LIKE :busca';
-            $params[':busca'] = '%' . $busca . '%';
+            $where[] = '(p.legenda LIKE :busca1 OR bp.titulo LIKE :busca2)';
+            $params[':busca1'] = '%' . $busca . '%';
+            $params[':busca2'] = '%' . $busca . '%';
         }
 
         $tipo = trim((string) ($filters['tipo'] ?? ''));
@@ -972,7 +973,7 @@ final class InstagramPostRepository
         }
 
         $status = trim((string) ($filters['status'] ?? ''));
-        if ($status !== '' && in_array($status, ['publicado', 'agendado', 'rascunho', 'publicando', 'erro'], true)) {
+        if ($status !== '' && in_array($status, ['publicado', 'agendado', 'rascunho', 'publicando', 'erro', 'cancelado'], true)) {
             $where[] = 'p.status = :status';
             $params[':status'] = $status;
         }
@@ -999,7 +1000,7 @@ final class InstagramPostRepository
 
         $whereSql = implode(' AND ', $where);
 
-        $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM instagram_posts p WHERE {$whereSql}");
+        $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM instagram_posts p LEFT JOIN posts bp ON bp.id = p.post_blog_id WHERE {$whereSql}");
         $countStmt->execute($params);
         $total = (int) $countStmt->fetchColumn();
 
@@ -1015,6 +1016,7 @@ final class InstagramPostRepository
         $sql = "SELECT p.*, GROUP_CONCAT(m.caminho ORDER BY m.ordem SEPARATOR '|') AS medias
                   FROM instagram_posts p
                   LEFT JOIN instagram_post_media m ON m.post_id = p.id
+                  LEFT JOIN posts bp ON bp.id = p.post_blog_id
                  WHERE {$whereSql}
                  GROUP BY p.id
                  ORDER BY {$sortCol} {$direction}, p.id DESC

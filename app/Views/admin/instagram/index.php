@@ -75,6 +75,7 @@ $statusClasses = static function (string $st): string {
         'rascunho'   => 'status-badge status-rascunho',
         'publicando' => 'status-badge border-amber-500/30 text-amber-200 bg-amber-500/10',
         'erro'       => 'status-badge border-rose-500/30 text-rose-300 bg-rose-500/10',
+        'cancelado'  => 'status-badge border-slate-500/30 text-slate-400 bg-slate-500/10',
         default      => 'status-badge',
     };
 };
@@ -85,6 +86,7 @@ $statusLabel = [
     'rascunho'   => 'Rascunho',
     'publicando' => 'Publicando',
     'erro'       => 'Erro',
+    'cancelado'  => 'Cancelado',
 ];
 
 $tipoBadge = static function (string $tp): string {
@@ -858,6 +860,7 @@ if (($endRange - $startRange) < 4) {
             <option value="agendado" <?= $status === 'agendado' ? 'selected' : '' ?>>Agendado</option>
             <option value="rascunho" <?= $status === 'rascunho' ? 'selected' : '' ?>>Rascunho</option>
             <option value="erro" <?= $status === 'erro' ? 'selected' : '' ?>>Erro/Falhou</option>
+            <option value="cancelado" <?= $status === 'cancelado' ? 'selected' : '' ?>>Cancelado</option>
           </select>
         </div>
 

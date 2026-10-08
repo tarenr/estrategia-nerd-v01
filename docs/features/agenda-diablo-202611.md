@@ -13,7 +13,7 @@ Plano e datas aprovados em 08/10/2026. Horário: America/Sao_Paulo, 19h30. A ord
 
 ## Status e histórico
 
-O usuário informou ter excluído os quatro Reels anteriores. Os registros 191–194 passam de `publicado` para `rascunho`, com observação explícita da exclusão em `error_log` e identificação da nova entrada. Não existe estado `excluido` no schema atual; não foi criada migration. Datas da publicação original, IDs da Meta, links, legendas, mídias e métricas foram mantidos como histórico; esses registros não fazem parte dos publicados nem da seleção do publicador automático.
+O usuário informou ter excluído os quatro Reels anteriores. Os registros 191–194 passam de `publicado` para `cancelado` (após inclusão do valor `cancelado` ao ENUM `status` em 08/10/2026), com observação explícita da exclusão em `error_log` e identificação da nova entrada. Datas da publicação original, IDs da Meta, links, legendas, mídias e métricas foram mantidos como histórico; esses registros não fazem parte dos publicados nem da seleção do publicador automático.
 
 As quatro republicações têm novas entradas e chaves de idempotência determinísticas, sem reaproveitar IDs ou containers da Meta. Os registros 195 e 197 ainda não tinham sido publicados e foram reagendados, retirando os vídeos antigos de 08/10 e 11/10. Ninguém será publicado antes da nova agenda por esta operação. Os demais posts foram preservados.
 

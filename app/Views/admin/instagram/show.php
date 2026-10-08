@@ -26,8 +26,8 @@ $postId = (int) ($post['id'] ?? 0);
 $status = (string) ($post['status'] ?? 'rascunho');
 $confirmationPending = in_array((string) ($post['publish_phase'] ?? ''), ['awaiting_confirmation','published_id_pending'], true);
 
-$statusLabels = ['rascunho' => 'Rascunho', 'agendado' => 'Agendado', 'publicando' => 'Publicando', 'publicado' => 'Publicado', 'erro' => 'Erro'];
-$statusColors = ['rascunho' => 'border-slate-600 text-slate-300', 'agendado' => 'border-amber-500/40 text-amber-200', 'publicando' => 'border-cyan-500/40 text-cyan-200', 'publicado' => 'border-emerald-500/40 text-emerald-200', 'erro' => 'border-rose-500/40 text-rose-200'];
+$statusLabels = ['rascunho' => 'Rascunho', 'agendado' => 'Agendado', 'publicando' => 'Publicando', 'publicado' => 'Publicado', 'erro' => 'Erro', 'cancelado' => 'Cancelado'];
+$statusColors = ['rascunho' => 'border-slate-600 text-slate-300', 'agendado' => 'border-amber-500/40 text-amber-200', 'publicando' => 'border-cyan-500/40 text-cyan-200', 'publicado' => 'border-emerald-500/40 text-emerald-200', 'erro' => 'border-rose-500/40 text-rose-200', 'cancelado' => 'border-slate-500/40 text-slate-400'];
 
 // $insights vem no formato bruto da Graph API: [{name, values:[{value}]}, ...]
 $insightTotals = ['reach' => null, 'impressions' => null, 'saved' => null, 'total_interactions' => null];

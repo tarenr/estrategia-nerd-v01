@@ -85,6 +85,17 @@
     var root = getRoot();
     if (!root) return;
 
+    var activeEl = document.activeElement;
+    var activeId = activeEl && activeEl.id ? activeEl.id : null;
+    var selStart = null;
+    var selEnd = null;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+      try {
+        selStart = activeEl.selectionStart;
+        selEnd = activeEl.selectionEnd;
+      } catch (e) {}
+    }
+
     var requestUrl = normalizeUrl(url);
     setLoading(root, true);
 
@@ -113,6 +124,19 @@
 
       root.replaceWith(nextRoot);
       applyViewMode(new URL(url, window.location.origin).searchParams.get('view') || viewMode);
+
+      // Restaura o foco e a posição do cursor no campo (ex: #posts-busca) para manter o teclado mobile aberto
+      if (activeId) {
+        var restoredEl = nextRoot.querySelector('#' + activeId);
+        if (restoredEl && typeof restoredEl.focus === 'function') {
+          restoredEl.focus();
+          if (selStart !== null && selEnd !== null && typeof restoredEl.setSelectionRange === 'function') {
+            try {
+              restoredEl.setSelectionRange(selStart, selEnd);
+            } catch (e) {}
+          }
+        }
+      }
 
       // Se existir a função de troca de abas, garante que o botão "Posts" fique ativo
       if (typeof window.switchIgTab === 'function') {
