@@ -1,0 +1,95 @@
+{
+  "timezone": "America/Sao_Paulo",
+  "deletedSourceIds": [
+    191,
+    192,
+    193,
+    194
+  ],
+  "items": [
+    {
+      "sourceId": 191,
+      "articleId": 11,
+      "title": "O mundo de Diablo: Santuário, Céu e Inferno explicados",
+      "scheduled": "2026-11-02 19:30:00",
+      "video": "uploads/reels/diablo-agenda-20261008/diablo-191-10020fb8b266.mp4",
+      "sha256": "10020fb8b2668c2ed0b6c706f55182dd8c4a4aa2df0febe2948ee87301fa4a1b",
+      "cover": "uploads/reels/diablo-agenda-20261008/diablo-191-10020fb8b266.jpg",
+      "coverSha256": "ea712d2db9b945ccfb95ebca7a703aa468e6e673b2f667f79e7010433e6268a9",
+      "trackId": 25,
+      "musicSourceId": "248213",
+      "audioStart": 5,
+      "duration": 28
+    },
+    {
+      "sourceId": 193,
+      "articleId": 13,
+      "title": "Os Arcanjos do Céu: a verdade por trás da luz em Diablo",
+      "scheduled": "2026-11-03 19:30:00",
+      "video": "uploads/reels/diablo-agenda-20261008/diablo-193-2afa9cae1665.mp4",
+      "sha256": "2afa9cae16659645e4f049da387703cf2c73ae55460415b750fe3fd1b3529aa1",
+      "cover": "uploads/reels/diablo-agenda-20261008/diablo-193-2afa9cae1665.jpg",
+      "coverSha256": "9e492c7be8ea9d0ba9a0f78e7d1887982eb8e32c501f3d26713309ddb4d7feae",
+      "trackId": 24,
+      "musicSourceId": "239599",
+      "audioStart": 21,
+      "duration": 28
+    },
+    {
+      "sourceId": 192,
+      "articleId": 12,
+      "title": "Os Males do Inferno em Diablo: Quem Realmente Controla o Caos",
+      "scheduled": "2026-11-04 19:30:00",
+      "video": "uploads/reels/diablo-agenda-20261008/diablo-192-18f9df4ef964.mp4",
+      "sha256": "18f9df4ef9646971f9295315a0d808f4d2c473c52efb5480f72b3825b0371269",
+      "cover": "uploads/reels/diablo-agenda-20261008/diablo-192-18f9df4ef964.jpg",
+      "coverSha256": "7fa333f185a8a789c834e24712631e6b0fa1cee6a26999760308e9668e643399",
+      "trackId": 25,
+      "musicSourceId": "248213",
+      "audioStart": 29,
+      "duration": 28
+    },
+    {
+      "sourceId": 195,
+      "articleId": 15,
+      "title": "A Guerra Eterna: o conflito que nunca teve fim",
+      "scheduled": "2026-11-05 19:30:00",
+      "video": "uploads/reels/diablo-agenda-20261008/diablo-195-ef2665c53780.mp4",
+      "sha256": "ef2665c5378046d082b99393a5f69e1b822895f3b0d8053406464fa57f2a2dc6",
+      "cover": "uploads/reels/diablo-agenda-20261008/diablo-195-ef2665c53780.jpg",
+      "coverSha256": "cdcf0775623ffbb1550e51362253736c4186d6c385e16799bd6c951ae080d608",
+      "trackId": 25,
+      "musicSourceId": "248213",
+      "audioStart": 12,
+      "duration": 28
+    },
+    {
+      "sourceId": 194,
+      "articleId": 14,
+      "title": "Os Nefalem: o verdadeiro poder por trás da humanidade",
+      "scheduled": "2026-11-06 19:30:00",
+      "video": "uploads/reels/diablo-agenda-20261008/diablo-194-aaa1a12d0bf2.mp4",
+      "sha256": "aaa1a12d0bf22c2f4061fb33a628fc2a41ef08ed0b4fea9aaf1a3deb3e37ff58",
+      "cover": "uploads/reels/diablo-agenda-20261008/diablo-194-aaa1a12d0bf2.jpg",
+      "coverSha256": "a1dda9181e6a3f5e56ccb346de702fb221a888a359ff7a56998612989432bf08",
+      "trackId": 25,
+      "musicSourceId": "248213",
+      "audioStart": 53,
+      "duration": 28
+    },
+    {
+      "sourceId": 197,
+      "articleId": 17,
+      "title": "A Lore Completa de Diablo: Entenda Toda a História do Universo",
+      "scheduled": "2026-11-07 19:30:00",
+      "video": "uploads/reels/diablo-agenda-20261008/diablo-197-a9940dab6a71.mp4",
+      "sha256": "a9940dab6a716f802d5310fe4680fa0039b644aad10bbabd5cb4968381cbd466",
+      "cover": "uploads/reels/diablo-agenda-20261008/diablo-197-a9940dab6a71.jpg",
+      "coverSha256": "d416a9672441e86382366dd6dd1be8494d4c36768b3927899c319d6346ee87b2",
+      "trackId": 25,
+      "musicSourceId": "248213",
+      "audioStart": 38,
+      "duration": 28
+    }
+  ]
+}
