@@ -49,3 +49,15 @@ C:\xampp\php\php.exe scripts/smoke-test.php local
 
 ## Diretrizes de Desenvolvimento
 Consulte [AGENTS.md](file:///C:/Users/WINDOWS/Projects/estrategia-nerd/AGENTS.md) e [docs/governanca/DIRETRIZES-DE-QUALIDADE-E-TESTES.md](file:///C:/Users/WINDOWS/Projects/estrategia-nerd/docs/governanca/DIRETRIZES-DE-QUALIDADE-E-TESTES.md) para convenções de ambiente, código defensivo e regras mandatórias.
+
+---
+
+## Integrações e Serviços
+
+- **Cloudflare Tunnel:** Acesso externo seguro (`https://nerd.tfr-info.com.br`) com proteção de borda.
+- **Hostinger API:** Integração de hospedagem, domínios e zonas DNS.
+- **Matomo Analytics:** Monitoramento auto-hospedado de tráfego, audiência e métricas do portal (`MATOMO_URL`).
+- **Dropbox & Google Drive APIs:** Destinos automatizados de redundância para rotinas de backup local.
+- **Meta / Instagram Graph API:** Automação de publicação de mídias e instagram cards (`/admin/instagram`).
+- **FTP Deploy / Sync:** Sincronização de conteúdo e deploy entre ambientes Local, Stage e Produção.
+
