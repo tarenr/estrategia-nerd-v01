@@ -1007,6 +1007,18 @@ final class PostService
             base_path('deploy/public_html/' . $normalized),
         ];
 
+        // Embedded deployments keep the public files beside _app_core, including
+        // installations in a subdirectory whose DOCUMENT_ROOT is the domain root.
+        $appRoot = rtrim(base_path(), '/\\');
+        if (basename($appRoot) === '_app_core') {
+            $candidates[] = dirname($appRoot) . DIRECTORY_SEPARATOR . $normalized;
+        }
+
+        $frontController = trim((string) ($_SERVER['SCRIPT_FILENAME'] ?? ''));
+        if ($frontController !== '' && basename($frontController) === 'index.php') {
+            $candidates[] = dirname($frontController) . DIRECTORY_SEPARATOR . $normalized;
+        }
+
         $documentRoot = trim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''));
         if ($documentRoot !== '') {
             $candidates[] = rtrim($documentRoot, '/\\') . DIRECTORY_SEPARATOR . $normalized;

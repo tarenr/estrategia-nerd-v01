@@ -1,0 +1,165 @@
+{
+  "status": "awaiting-visual-approval",
+  "scope": "preview only; no blog references changed",
+  "entries": [
+    {
+      "key": "01",
+      "name": "Auriel",
+      "slug": "os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo",
+      "original": "C:/Users/WINDOWS/Projects/estrategia-nerd/public/uploads/posts/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo/images/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-03.webp",
+      "originalSha256": "feb1c072e43300905c5cdb78d232f0718f5e454e457d25ff618ee4b06fc1c114",
+      "before": "01-antes.webp",
+      "after": "01-mesa-v1.webp",
+      "sha256": "1ce8b88192051727010082ed6fcb15d540a1a4b55fcc44e5dacbae8ba96f7e92",
+      "method": "native-imagegen",
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "key": "02",
+      "name": "Itherael",
+      "slug": "os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo",
+      "original": "C:/Users/WINDOWS/Projects/estrategia-nerd/public/uploads/posts/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo/images/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-04.webp",
+      "originalSha256": "29b346077f5bf6a9746de1928ab9ca27d1b4552da87cf740b5d7ea29f29783a7",
+      "before": "02-antes.webp",
+      "after": "02-mesa-v1.webp",
+      "sha256": "1b1af66f20d1bc191ac7ce6327b19bee94b497fdc291b6dcc6f4a641b59ba298",
+      "method": "native-imagegen",
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "key": "03",
+      "name": "Andariel",
+      "slug": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos",
+      "original": "C:/Users/WINDOWS/Projects/estrategia-nerd/public/uploads/posts/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos/images/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-04.webp",
+      "originalSha256": "c7261b925c120c52c619ab9c5eace45e331e7128f31e16726f7fc160afdf591a",
+      "before": "03-antes.webp",
+      "after": "03-mesa-v1.webp",
+      "sha256": "c816394a8e7d9a896d2699e69cd3fc3d903c958c372db0b16c61b77c4679fbf7",
+      "method": "original-contained",
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "key": "04",
+      "name": "Duriel",
+      "slug": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos",
+      "original": "C:/Users/WINDOWS/Projects/estrategia-nerd/public/uploads/posts/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos/images/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-06.webp",
+      "originalSha256": "1dc82d6a8af579a094bf64387bfff73bed315bdf4ba3fc4e243e37984f9ca904",
+      "before": "04-antes.webp",
+      "after": "04-mesa-v1.webp",
+      "sha256": "729b4041cd75fef35d0cbfc10ce1c7ca0f2b327ab47bed157f6a2b669f907d56",
+      "method": "original-contained",
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "key": "05",
+      "name": "Belial",
+      "slug": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos",
+      "original": "C:/Users/WINDOWS/Projects/estrategia-nerd/public/uploads/posts/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos/images/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-07.webp",
+      "originalSha256": "fd14738ee747e9da1dcf6de0351d8cc06efa03e84fe694c6fbfeb97d14bf22d8",
+      "before": "05-antes.webp",
+      "after": "05-mesa-v1.webp",
+      "sha256": "76aac9605bd4f99e02841b68da64c442a8194538ec5281f6248cc97f7c8c96a7",
+      "method": "original-contained",
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "key": "06",
+      "name": "Azmodan",
+      "slug": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos",
+      "original": "C:/Users/WINDOWS/Projects/estrategia-nerd/public/uploads/posts/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos/images/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-08.webp",
+      "originalSha256": "001e965a12721b0b38555bb946eb44a19ae25147848879cfff0fd177a7b3b5fb",
+      "before": "06-antes.webp",
+      "after": "06-mesa-v1.webp",
+      "sha256": "df0f3c07ecdd7ad29a376469244f996b7c08b5844139bd9a8427a00acaf9a5eb",
+      "method": "original-contained",
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "key": "07",
+      "name": "Inarius e Lilith",
+      "slug": "a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo",
+      "original": "C:/Users/WINDOWS/Projects/estrategia-nerd/public/uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img-012.webp",
+      "originalSha256": "4054e61b99759cc6cb120c963bf587572be46618818434e1e539c85469ab5cd1",
+      "before": "07-antes.webp",
+      "after": "07-mesa-v1.webp",
+      "sha256": "03ea3fb5f0e0cb3d7247fd8af3dabfb8c5ea06ac7734f8b10691e3f9317191a2",
+      "method": "original-contained",
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "key": "08",
+      "name": "Arcanjos",
+      "slug": "a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo",
+      "original": "C:/Users/WINDOWS/Projects/estrategia-nerd/public/uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img-010.webp",
+      "originalSha256": "5a672ebb5871ec8f590efe5dfcc0c6f3139319d11ad80d44f04fbcf76102c1c5",
+      "before": "08-antes.webp",
+      "after": "08-mesa-v1.webp",
+      "sha256": "783b64a3b014f3f3236563e66ffbdd95b9907633a112a2e2f2bb727b3fc1738d",
+      "method": "approved-art-reused",
+      "dimensions": [
+        1672,
+        941
+      ]
+    },
+    {
+      "key": "09",
+      "name": "Mapa do Inferno",
+      "slug": "a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo",
+      "original": "C:/Users/WINDOWS/Projects/estrategia-nerd/public/uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img.webp",
+      "originalSha256": "7ff9baa7ce83dbb679afb96204141550dc660cb397ce357e6d005e7dd3c8914d",
+      "before": "09-antes.webp",
+      "after": "09-mesa-v2.webp",
+      "sha256": "486043cf49f18b01cac18d28e00de050ec1d634a08aeff485975ed00cfe31503",
+      "method": "exterior-white-mask-composite-original-map-preserved",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "previousVersions": [
+        {
+          "after": "09-mesa-v1.webp",
+          "sha256": "c39f22689d2c2f77061c1b43f092eaf6b2fed02c3e0c9467c12818b10f4a07e0",
+          "method": "original-map-composite"
+        }
+      ],
+      "correction": "White exterior margin removed; original map pixels outside white edge mask preserved",
+      "correctedPixels": 31406
+    },
+    {
+      "key": "10",
+      "name": "Diablo",
+      "slug": "a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo",
+      "original": "C:/Users/WINDOWS/Projects/estrategia-nerd/public/uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img-009.webp",
+      "originalSha256": "608ed71903b9439f5bad07c4dd09d3b017bce0cfeb2f7d492518ed2f24115a87",
+      "before": "10-antes.webp",
+      "after": "10-mesa-v1.webp",
+      "sha256": "4c0c771fc861f0d727c0668560d5218e234a328c315c05d8aadecee148a9e2b7",
+      "method": "native-imagegen",
+      "dimensions": [
+        1672,
+        941
+      ]
+    }
+  ]
+}
