@@ -1,0 +1,1080 @@
+{
+  "version": 1,
+  "reviewedOn": "2026-10-07",
+  "scope": "Instagram local 190–219; revisão humana para prévias, sem alterar fila ou publicar.",
+  "items": [
+    {
+      "id": 190,
+      "layout": "versus",
+      "tone": "tech",
+      "musicSourceId": "95436",
+      "audioStart": 31,
+      "duration": 28,
+      "note": "Comparação de capacidade; a imagem permanece enquanto entram as decisões.",
+      "scenes": [
+        {
+          "eyebrow": "A dúvida do upgrade",
+          "title": "16 GB ou 32 GB?",
+          "body": "A resposta depende do jogo e do que você mantém aberto.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Seu uso decide",
+          "title": "16 GB: avalie seu cenário",
+          "body": "Pode atender jogos e uso mais enxuto. Observe o consumo de memória.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Mais espaço para trabalhar",
+          "title": "32 GB: mais margem",
+          "body": "Jogos, navegador e outros programas disputam a mesma RAM.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Antes de comprar",
+          "title": "Capacidade não é tudo",
+          "body": "Confira compatibilidade, módulos e orçamento. Comparação completa no blog.",
+          "image": "cover"
+        }
+      ],
+      "comparison": [
+        "16 GB",
+        "32 GB"
+      ]
+    },
+    {
+      "id": 191,
+      "layout": "chronicle",
+      "tone": "dark",
+      "musicSourceId": "248213",
+      "audioStart": 5,
+      "duration": 28,
+      "note": "Quatro imagens reais do artigo: conflito, Céu, Inferno e Santuário.",
+      "scenes": [
+        {
+          "eyebrow": "O mundo de Diablo",
+          "title": "Uma guerra antes de nós",
+          "body": "Céu e Inferno já lutavam antes de a humanidade existir.",
+          "image": "img-005.webp"
+        },
+        {
+          "eyebrow": "O Alto Céu",
+          "title": "A força da ordem",
+          "body": "Os anjos defendem sua visão de justiça e dever.",
+          "image": "img-003.webp"
+        },
+        {
+          "eyebrow": "O Inferno Ardente",
+          "title": "O domínio do caos",
+          "body": "Os demônios buscam poder e corrupção.",
+          "image": "img-004.webp"
+        },
+        {
+          "eyebrow": "Santuário",
+          "title": "Um refúgio em disputa",
+          "body": "A humanidade vive entre essas forças. Conheça esse mundo no blog.",
+          "image": "img-001.webp"
+        }
+      ]
+    },
+    {
+      "id": 192,
+      "layout": "chronicle",
+      "tone": "dark",
+      "musicSourceId": "248213",
+      "audioStart": 29,
+      "duration": 28,
+      "note": "Retratos individuais em vez de repetir a ilustração coletiva; três Grandes Males, sem ranking.",
+      "scenes": [
+        {
+          "eyebrow": "Os Grandes Males",
+          "title": "Diablo",
+          "body": "O Senhor do Terror transforma o medo em uma arma.",
+          "image": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-01.webp"
+        },
+        {
+          "eyebrow": "O ódio se espalha",
+          "title": "Mephisto",
+          "body": "O Senhor do Ódio corrompe relações e alimenta conflitos.",
+          "image": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-02.webp"
+        },
+        {
+          "eyebrow": "Nada permanece",
+          "title": "Baal",
+          "body": "O Senhor da Destruição deixa ruínas em seu caminho.",
+          "image": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-03.webp"
+        },
+        {
+          "eyebrow": "Além dos três irmãos",
+          "title": "O Inferno tem outros poderes",
+          "body": "Andariel, Duriel, Belial e Azmodan também fazem parte dessa história. Explore no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 193,
+      "layout": "chronicle",
+      "tone": "celestial",
+      "musicSourceId": "239599",
+      "audioStart": 21,
+      "duration": 28,
+      "note": "Luz dourada e nomes dos Arcanjos; exemplos identificados, sem numeração.",
+      "scenes": [
+        {
+          "eyebrow": "Os Arcanjos de Diablo",
+          "title": "Imperius: valor",
+          "body": "O comandante do Céu representa a força e a coragem.",
+          "image": "os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-01.webp"
+        },
+        {
+          "eyebrow": "Uma escolha difícil",
+          "title": "Tyrael: justiça",
+          "body": "Sua relação com a humanidade desafia a ordem dos Céus.",
+          "image": "os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-02.webp"
+        },
+        {
+          "eyebrow": "Da sabedoria à ruptura",
+          "title": "Malthael",
+          "body": "O caminho do antigo Aspecto da Sabedoria mostra que a luz também pode se perder.",
+          "image": "os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-05.webp"
+        },
+        {
+          "eyebrow": "O Conselho Angiris",
+          "title": "Cinco forças do Céu",
+          "body": "Auriel e Itherael completam essa história. Conheça os cinco Arcanjos no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 194,
+      "layout": "chronicle",
+      "tone": "dark",
+      "musicSourceId": "248213",
+      "audioStart": 53,
+      "duration": 28,
+      "note": "Uma imagem: revelação inicial, permanência e texto narrativo. Nenhuma falsa troca de cenário.",
+      "scenes": [
+        {
+          "eyebrow": "Os Nefalem",
+          "title": "Entre anjos e demônios",
+          "body": "A origem da humanidade de Santuário carrega os dois lados da Guerra Eterna.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Um poder inesperado",
+          "title": "Mais fortes que seus criadores",
+          "body": "Os primeiros Nefalem despertaram um poder que assustou Céu e Inferno.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "O poder foi contido",
+          "title": "A herança esquecida",
+          "body": "Ao longo das gerações, esse potencial foi enfraquecido.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "A humanidade de Santuário",
+          "title": "A força que ainda existe",
+          "body": "Entenda a origem dos Nefalem e seu papel no universo de Diablo. História no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 195,
+      "layout": "chronicle",
+      "tone": "dark",
+      "musicSourceId": "248213",
+      "audioStart": 12,
+      "duration": 28,
+      "note": "Duas imagens identificadas; sem reiniciar a arte quando só muda o texto.",
+      "scenes": [
+        {
+          "eyebrow": "A Guerra Eterna",
+          "title": "Um conflito sem fim",
+          "body": "Muito antes de Santuário, anjos e demônios já disputavam poder.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Céu e Inferno",
+          "title": "Visões que não se conciliam",
+          "body": "A ordem dos anjos e a dominação dos demônios alimentam essa guerra.",
+          "image": "a-guerra-eterna-o-conflito-que-nunca-teve-fim-01.webp"
+        },
+        {
+          "eyebrow": "Um mundo entre as forças",
+          "title": "Santuário entra na disputa",
+          "body": "O refúgio criado longe do conflito se torna parte dele.",
+          "image": "a-guerra-eterna-o-conflito-que-nunca-teve-fim-01.webp"
+        },
+        {
+          "eyebrow": "A guerra atravessa eras",
+          "title": "E a humanidade paga o preço",
+          "body": "Conheça o conflito que sustenta a história de Diablo. Leia no blog.",
+          "image": "a-guerra-eterna-o-conflito-que-nunca-teve-fim-01.webp"
+        }
+      ]
+    },
+    {
+      "id": 196,
+      "layout": "showcase",
+      "tone": "tech",
+      "musicSourceId": "141278",
+      "audioStart": 35,
+      "duration": 28,
+      "note": "O artigo é sobre periféricos, apesar da metáfora de guerreiros; tratamento de hardware.",
+      "scenes": [
+        {
+          "eyebrow": "Seu equipamento conta",
+          "title": "Ferramentas de quem joga",
+          "body": "Mouse, teclado e monitor mudam a forma como você interage com o jogo.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Na sua mão",
+          "title": "Precisão e conforto",
+          "body": "Um mouse adequado ao seu uso ajuda a manter o controle.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Cada comando importa",
+          "title": "Resposta e consistência",
+          "body": "Teclado e monitor precisam acompanhar sua rotina de jogo.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Um conjunto que faz sentido",
+          "title": "Escolha pelo seu uso",
+          "body": "Equilibre conforto, experiência e orçamento. Explore os periféricos no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 197,
+      "layout": "chronicle",
+      "tone": "dark",
+      "musicSourceId": "248213",
+      "audioStart": 38,
+      "duration": 28,
+      "note": "Linha narrativa: origem, Guerra Eterna, Santuário e humanidade; imagens específicas.",
+      "scenes": [
+        {
+          "eyebrow": "Antes de Santuário",
+          "title": "Anu e Tathamet",
+          "body": "Luz e trevas estão na origem desse universo.",
+          "image": "img-001.webp"
+        },
+        {
+          "eyebrow": "Da origem ao conflito",
+          "title": "A Guerra Eterna",
+          "body": "Céu e Inferno passam a disputar poder através das eras.",
+          "image": "img-002.webp"
+        },
+        {
+          "eyebrow": "Um refúgio improvável",
+          "title": "Santuário nasce",
+          "body": "Lilith e Inarius criam um refúgio longe do conflito.",
+          "image": "img-003.webp"
+        },
+        {
+          "eyebrow": "O destino da humanidade",
+          "title": "A história chega até nós",
+          "body": "Nefalem, demônios e anjos se cruzam nessa jornada. Explore a lore completa.",
+          "image": "img-004.webp"
+        }
+      ]
+    },
+    {
+      "id": 198,
+      "layout": "showcase",
+      "tone": "tech",
+      "musicSourceId": "199668",
+      "audioStart": 43,
+      "duration": 28,
+      "note": "Cada imagem acompanha seu componente. Não repetir a antiga referência B650: artigo atual cita B850.",
+      "scenes": [
+        {
+          "eyebrow": "Por trás do Estratégia Nerd",
+          "title": "O setup em ação",
+          "body": "A máquina reúne peças para trabalho, criação e jogos.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "O cérebro da máquina",
+          "title": "Ryzen 5 7600X",
+          "body": "O processador faz parte da base usada no dia a dia.",
+          "image": "img-001.webp"
+        },
+        {
+          "eyebrow": "A base da plataforma",
+          "title": "MSI B850 TOMAHAWK MAX",
+          "body": "A placa-mãe conecta os componentes e sustenta a plataforma AM5.",
+          "image": "img-002.webp"
+        },
+        {
+          "eyebrow": "Espaço para a rotina",
+          "title": "32 GB de DDR5",
+          "body": "A memória acompanha as tarefas do setup. Veja a configuração completa no blog.",
+          "image": "img-003.webp"
+        }
+      ]
+    },
+    {
+      "id": 199,
+      "layout": "showcase",
+      "tone": "tech",
+      "musicSourceId": "203118",
+      "audioStart": 25,
+      "duration": 28,
+      "note": "Produto persistente; foco em uso e limites, sem benchmarks inventados.",
+      "scenes": [
+        {
+          "eyebrow": "Ryzen 5 7600X",
+          "title": "Seis núcleos. Doze threads.",
+          "body": "O processador ocupa o centro deste setup AM5.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "No dia a dia",
+          "title": "Jogos e trabalho",
+          "body": "A escolha precisa considerar as tarefas que você realmente executa.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Além do processador",
+          "title": "Refrigeração também conta",
+          "body": "O conjunto precisa de placa-mãe, memória e resfriamento compatíveis.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Uma escolha com contexto",
+          "title": "Vale para o seu setup?",
+          "body": "Veja a experiência de uso, os pontos fortes e as limitações no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 200,
+      "layout": "showcase",
+      "tone": "tech",
+      "musicSourceId": "259777",
+      "audioStart": 36,
+      "duration": 28,
+      "note": "Imagem oficial da B650, substituindo a capa anterior que mostrava uma B850. Tomada contínua com textos sobre compatibilidade e conexões.",
+      "scenes": [
+        {
+          "eyebrow": "MSI B650 TOMAHAWK WIFI",
+          "title": "A base do conjunto",
+          "body": "Uma placa-mãe para conectar as peças da plataforma AM5.",
+          "image": "@asset:msi-b650.png"
+        },
+        {
+          "eyebrow": "Antes da compra",
+          "title": "Confira a compatibilidade",
+          "body": "CPU, memória DDR5 e BIOS precisam funcionar juntos.",
+          "image": "@asset:msi-b650.png"
+        },
+        {
+          "eyebrow": "O que você conecta",
+          "title": "Armazenamento e expansão",
+          "body": "Avalie as conexões que sua rotina exige, além do nome do chipset.",
+          "image": "@asset:msi-b650.png"
+        },
+        {
+          "eyebrow": "Um setup com planejamento",
+          "title": "Pense nos próximos upgrades",
+          "body": "Conheça os recursos e limites desta placa-mãe no artigo completo.",
+          "image": "@asset:msi-b650.png"
+        }
+      ],
+      "warnings": [
+        "A capa do artigo B650 ainda mostra uma B850. A prévia está corrigida; atualizar a capa do blog antes de usar o post."
+      ],
+      "sources": [
+        "https://www.msi.com/Motherboard/MAG-B650-TOMAHAWK-WIFI"
+      ]
+    },
+    {
+      "id": 201,
+      "layout": "showcase",
+      "tone": "tech",
+      "musicSourceId": "303922",
+      "audioStart": 23,
+      "duration": 28,
+      "note": "Imagem conferida: caixa indica 6 GB. Não prometer ray tracing pesado ou desempenho universal.",
+      "scenes": [
+        {
+          "eyebrow": "RTX 3050 de 6 GB",
+          "title": "Uma GPU de entrada",
+          "body": "O equilíbrio depende dos jogos, dos ajustes e do preço.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "A experiência que importa",
+          "title": "Ajuste as expectativas",
+          "body": "Resolução e qualidade gráfica mudam o desempenho de cada jogo.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Recursos não são garantias",
+          "title": "DLSS e ray tracing",
+          "body": "Compatibilidade com um recurso não significa rodar tudo no máximo.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Antes de escolher",
+          "title": "Compare o conjunto",
+          "body": "Considere preço, alternativas e sua configuração. Análise completa no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 202,
+      "layout": "showcase",
+      "tone": "tech",
+      "musicSourceId": "477714",
+      "audioStart": 41,
+      "duration": 28,
+      "note": "Memória persistente; capacidade e compatibilidade, sem universalizar EXPO/XMP.",
+      "scenes": [
+        {
+          "eyebrow": "Corsair Vengeance",
+          "title": "32 GB para a rotina",
+          "body": "O kit DDR5 do setup oferece espaço para jogos e multitarefa.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Mais margem de memória",
+          "title": "Aplicativos ao mesmo tempo",
+          "body": "Jogo, navegador e ferramentas compartilham a capacidade disponível.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "O kit certo para a placa",
+          "title": "Compatibilidade primeiro",
+          "body": "Confira modelo, frequência suportada e perfil de memória da sua plataforma.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Sem comprar só pelo número",
+          "title": "Conheça o kit completo",
+          "body": "Veja a experiência de uso da Corsair Vengeance no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 203,
+      "layout": "showcase",
+      "tone": "tech",
+      "musicSourceId": "478200",
+      "audioStart": 49,
+      "duration": 28,
+      "note": "Imagem oficial da linha NV3, substituindo a capa anterior que mostrava um NV2. Texto sobre uso e compatibilidade, sem benchmark inventado.",
+      "scenes": [
+        {
+          "eyebrow": "Kingston NV3 de 1 TB",
+          "title": "Espaço e agilidade",
+          "body": "O SSD NVMe faz parte do armazenamento deste setup.",
+          "image": "@asset:kingston-nv3.jpg"
+        },
+        {
+          "eyebrow": "No uso cotidiano",
+          "title": "Sistema e aplicativos",
+          "body": "A experiência depende também da carga de trabalho e do restante do PC.",
+          "image": "@asset:kingston-nv3.jpg"
+        },
+        {
+          "eyebrow": "Instalação e escolha",
+          "title": "Confira o slot M.2",
+          "body": "Formato, interface e compatibilidade precisam ser verificados.",
+          "image": "@asset:kingston-nv3.jpg"
+        },
+        {
+          "eyebrow": "O que cabe na sua rotina",
+          "title": "Conheça os limites",
+          "body": "Veja os pontos fortes e as limitações do Kingston NV3 no blog.",
+          "image": "@asset:kingston-nv3.jpg"
+        }
+      ],
+      "warnings": [
+        "A capa do artigo NV3 ainda mostra um NV2. A prévia está corrigida; atualizar a capa do blog antes de usar o post."
+      ],
+      "sources": [
+        "https://www.kingston.com/en/ssd/nv3-nvme-pcie-ssd"
+      ]
+    },
+    {
+      "id": 204,
+      "layout": "guide",
+      "tone": "tech",
+      "musicSourceId": "511031",
+      "audioStart": 32,
+      "duration": 28,
+      "note": "Erro ligado à imagem correspondente; dicas concretas em vez de resumo cortado.",
+      "scenes": [
+        {
+          "eyebrow": "Montando um PC?",
+          "title": "Evite escolhas isoladas",
+          "body": "Uma peça forte não corrige um conjunto mal planejado.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "O orçamento precisa de equilíbrio",
+          "title": "Não pense só na GPU",
+          "body": "CPU, memória e placa de vídeo precisam acompanhar seu uso.",
+          "image": "img-010.webp"
+        },
+        {
+          "eyebrow": "A alimentação do conjunto",
+          "title": "Não economize na qualidade",
+          "body": "Escolha uma fonte adequada e confiável, além da potência anunciada.",
+          "image": "img-013.webp"
+        },
+        {
+          "eyebrow": "Antes de fechar a compra",
+          "title": "Revise o conjunto",
+          "body": "Compatibilidade, refrigeração e possibilidade de upgrade também contam. Guia no blog.",
+          "image": "img-002.webp"
+        }
+      ]
+    },
+    {
+      "id": 205,
+      "layout": "culture",
+      "tone": "fantasy",
+      "musicSourceId": "239599",
+      "audioStart": 61,
+      "duration": 28,
+      "note": "Três exemplos de estilos da seleção, sem transformar a lista em ranking ou usar trilha retrô para tudo.",
+      "scenes": [
+        {
+          "eyebrow": "RPGs que marcaram época",
+          "title": "Qual aventura é a sua?",
+          "body": "A lista reúne dez jogos. Estes são três caminhos para começar.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Histórias e personagens",
+          "title": "Chrono Trigger",
+          "body": "Viagem no tempo em um clássico do RPG japonês.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Escolhas em um mundo aberto",
+          "title": "The Witcher 3",
+          "body": "Contratos, personagens e decisões em uma fantasia medieval.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Estratégia e liberdade",
+          "title": "Baldur's Gate 3",
+          "body": "Um RPG de escolhas e combate por turnos. Conheça os dez títulos no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 206,
+      "layout": "versus",
+      "tone": "tech",
+      "musicSourceId": "511038",
+      "audioStart": 40,
+      "duration": 28,
+      "note": "Comparação sem benchmark fictício; distinguir RTX 3050 de 6 e 8 GB.",
+      "scenes": [
+        {
+          "eyebrow": "GPUs para Full HD",
+          "title": "RTX 3050 ou RX 6600?",
+          "body": "Compare o modelo exato, o preço e os jogos que você usa.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "O nome não conta tudo",
+          "title": "Qual RTX 3050?",
+          "body": "As versões de 6 e 8 GB são diferentes. Não trate as duas como a mesma placa.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Seu uso muda a escolha",
+          "title": "Jogos e recursos",
+          "body": "Desempenho, consumo e recursos precisam entrar na comparação.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Antes da compra",
+          "title": "Compare preços e modelos",
+          "body": "A escolha depende da oferta real e da configuração. Veja a análise no blog.",
+          "image": "cover"
+        }
+      ],
+      "comparison": [
+        "RTX 3050",
+        "RX 6600"
+      ]
+    },
+    {
+      "id": 207,
+      "layout": "guide",
+      "tone": "calm",
+      "musicSourceId": "9503",
+      "audioStart": 25,
+      "duration": 28,
+      "note": "Diagnóstico com sequência útil; não orientar desmontagem arriscada em um Reel curto.",
+      "scenes": [
+        {
+          "eyebrow": "O PC liga, mas não dá vídeo",
+          "title": "Comece pelo básico",
+          "body": "Evite trocar peças antes de conferir o caminho do sinal.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Fora do gabinete",
+          "title": "Entrada e cabo do monitor",
+          "body": "Verifique a entrada selecionada e a conexão do cabo de vídeo.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "O conector certo",
+          "title": "Onde o cabo está ligado?",
+          "body": "Confira a saída usada e se ela corresponde à configuração do PC.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Se o problema continuar",
+          "title": "Siga um diagnóstico seguro",
+          "body": "O guia organiza os próximos testes antes de substituir componentes. Leia no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 208,
+      "layout": "dispatch",
+      "tone": "fantasy",
+      "musicSourceId": "10376",
+      "audioStart": 45,
+      "duration": 28,
+      "note": "Notícia conferida na CDPR; retirar 'chega dia 29' e manter condições do upgrade. Texto do artigo ainda precisa de revisão temporal.",
+      "scenes": [
+        {
+          "eyebrow": "The Witcher 3 Remastered",
+          "title": "Geralt retorna",
+          "body": "A CD PROJEKT RED anunciou uma versão aprimorada da aventura.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "O anúncio do upgrade",
+          "title": "Grátis para quem tem o jogo",
+          "body": "A gratuidade depende de já possuir o jogo nas plataformas elegíveis.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Antes de instalar",
+          "title": "Confira a sua plataforma",
+          "body": "Recursos e disponibilidade precisam ser conferidos nos canais oficiais.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Acompanhe a atualização",
+          "title": "Volte ao Caminho",
+          "body": "Leia a cobertura no blog e confira os detalhes no anúncio oficial.",
+          "image": "cover"
+        }
+      ],
+      "sources": [
+        "https://www.thewitcher.com/es/en/news/52017/announcing-the-witcher-3-wild-hunt-remastered"
+      ],
+      "warnings": [
+        "O título do artigo ainda diz 'chega dia 29 de setembro'; revisar o texto do blog antes de usar esta prévia."
+      ]
+    },
+    {
+      "id": 209,
+      "layout": "dispatch",
+      "tone": "calm",
+      "musicSourceId": "10149",
+      "audioStart": 37,
+      "duration": 28,
+      "note": "Data confirmada na tabela oficial de versões: 13/10/2026 para Home/Pro; conferir timing antes de publicar.",
+      "scenes": [
+        {
+          "eyebrow": "Windows 11 Home e Pro",
+          "title": "Seu PC está no 24H2?",
+          "body": "O fim das atualizações dessa versão está marcado para 13 de outubro de 2026.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Confira a sua versão",
+          "title": "Abra o comando winver",
+          "body": "Verifique versão e edição: o prazo não é igual para todas.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Planeje a atualização",
+          "title": "Use o Windows Update",
+          "body": "Confira as atualizações oferecidas ao seu dispositivo.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Não deixe para depois",
+          "title": "Mantenha o sistema atualizado",
+          "body": "Veja como conferir sua versão e planejar a atualização no guia do blog.",
+          "image": "cover"
+        }
+      ],
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information"
+      ],
+      "warnings": [
+        "Conteúdo com prazo: ajustar o tempo verbal na data efetiva de publicação. A agenda atual não foi alterada."
+      ]
+    },
+    {
+      "id": 210,
+      "layout": "versus",
+      "tone": "tech",
+      "musicSourceId": "519731",
+      "audioStart": 30,
+      "duration": 28,
+      "note": "Disputa por critérios de uso; sem barras de FPS inventadas.",
+      "scenes": [
+        {
+          "eyebrow": "A disputa em 1080p",
+          "title": "RTX 5060 ou RX 9060 XT?",
+          "body": "A melhor escolha depende de preço, versão e jogos.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Compare o modelo exato",
+          "title": "Olhe além do nome",
+          "body": "Quantidade de memória e implementação variam entre as placas.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Na sua biblioteca",
+          "title": "Recursos e desempenho",
+          "body": "Compare testes dos jogos que você usa, com as mesmas configurações.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Uma compra com contexto",
+          "title": "Decida pelo conjunto",
+          "body": "Considere fonte, monitor e orçamento. Comparação completa no blog.",
+          "image": "cover"
+        }
+      ],
+      "comparison": [
+        "RTX 5060",
+        "RX 9060 XT"
+      ]
+    },
+    {
+      "id": 211,
+      "layout": "versus",
+      "tone": "tech",
+      "musicSourceId": "526520",
+      "audioStart": 44,
+      "duration": 28,
+      "note": "AM4/AM5 por cenário; reaproveitamento versus plataforma nova.",
+      "scenes": [
+        {
+          "eyebrow": "Montando ou atualizando?",
+          "title": "AM4 ou AM5?",
+          "body": "A plataforma certa começa no que você já tem.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Se você já usa AM4",
+          "title": "Reaproveitar pode fazer sentido",
+          "body": "Avalie CPU compatível, BIOS e memória DDR4 existentes.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Para começar um conjunto novo",
+          "title": "AM5 e memória DDR5",
+          "body": "Compare o custo total e o caminho de upgrades.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Some todas as peças",
+          "title": "Escolha pelo orçamento",
+          "body": "Não compare só o processador. Veja os cenários completos no blog.",
+          "image": "cover"
+        }
+      ],
+      "comparison": [
+        "AM4",
+        "AM5"
+      ]
+    },
+    {
+      "id": 212,
+      "layout": "guide",
+      "tone": "tech",
+      "musicSourceId": "528524",
+      "audioStart": 34,
+      "duration": 28,
+      "note": "Fonte: potência, qualidade e conexões; 80 Plus não é selo de proteção.",
+      "scenes": [
+        {
+          "eyebrow": "Escolhendo uma fonte",
+          "title": "Watts não contam tudo",
+          "body": "A potência anunciada é só uma parte da escolha.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Antes de olhar o selo",
+          "title": "Qualidade e proteções",
+          "body": "80 Plus informa eficiência. Não substitui a avaliação do projeto.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Para o seu conjunto",
+          "title": "Potência e conectores",
+          "body": "Confira os requisitos das peças e as conexões necessárias.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Escolha com informação",
+          "title": "Compare modelos e garantia",
+          "body": "Veja os critérios para selecionar uma fonte no guia completo.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 213,
+      "layout": "guide",
+      "tone": "calm",
+      "musicSourceId": "112369",
+      "audioStart": 32,
+      "duration": 28,
+      "note": "SMART e backup; status bom não garante que não haverá falha.",
+      "scenes": [
+        {
+          "eyebrow": "SSD e HD",
+          "title": "Como está a saúde?",
+          "body": "Ferramentas de diagnóstico ajudam a observar sinais de desgaste.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Leia os indicadores",
+          "title": "Verifique o SMART",
+          "body": "O CrystalDiskInfo mostra informações e alertas da unidade.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Um status não é uma garantia",
+          "title": "Mantenha o backup",
+          "body": "Mesmo uma unidade marcada como boa pode falhar.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Se houver alertas",
+          "title": "Planeje os próximos passos",
+          "body": "Entenda os indicadores antes de agir. Guia completo no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 214,
+      "layout": "reference",
+      "tone": "calm",
+      "musicSourceId": "552792",
+      "audioStart": 25,
+      "duration": 28,
+      "note": "Referência aprovada pelo usuário: preservar integralmente o vídeo atual de temperatura.",
+      "scenes": [
+        {
+          "eyebrow": "Referência aprovada",
+          "title": "Temperatura de CPU e GPU",
+          "body": "O vídeo atual permanece como referência de imagem persistente e textos.",
+          "image": "cover"
+        }
+      ],
+      "preserve": true
+    },
+    {
+      "id": 215,
+      "layout": "culture",
+      "tone": "light",
+      "musicSourceId": "12278",
+      "audioStart": 33,
+      "duration": 28,
+      "note": "Exemplos identificados; nenhuma promessa de que qualquer PC roda os 12 jogos.",
+      "scenes": [
+        {
+          "eyebrow": "Seu PC é modesto?",
+          "title": "Ainda há muito para jogar",
+          "body": "A seleção reúne doze jogos, com estilos e requisitos diferentes.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Para uma rotina tranquila",
+          "title": "Stardew Valley",
+          "body": "Uma das opções de simulação de fazenda da lista.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Sessões de ação",
+          "title": "Vampire Survivors",
+          "body": "Uma opção para partidas de ação com visual simples.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Antes de instalar",
+          "title": "Confira os requisitos",
+          "body": "Compare a configuração do seu PC com a ficha atual de cada jogo. Lista completa no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 216,
+      "layout": "chronicle",
+      "tone": "action",
+      "musicSourceId": "173062",
+      "audioStart": 29,
+      "duration": 28,
+      "note": "Linha do tempo por marcos e anos, sem números de capítulos.",
+      "scenes": [
+        {
+          "eyebrow": "A história de Counter-Strike",
+          "title": "Tudo começou como um mod",
+          "body": "Em 1999, um projeto de Half-Life abriu o caminho para a franquia.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Uma comunidade em crescimento",
+          "title": "Do mod ao competitivo",
+          "body": "As versões clássicas e o Counter-Strike 1.6 marcaram gerações.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Uma nova era",
+          "title": "CS:GO muda a escala",
+          "body": "Lançado em 2012, ampliou o alcance do cenário competitivo.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "A história continua",
+          "title": "Counter-Strike 2",
+          "body": "Em 2023, a franquia entrou em outra fase. Conheça a trajetória no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 217,
+      "layout": "culture",
+      "tone": "cinema",
+      "musicSourceId": "610029",
+      "audioStart": 27,
+      "duration": 28,
+      "note": "Três exemplos de gêneros, sem ranking; os outros sete ficam no artigo.",
+      "scenes": [
+        {
+          "eyebrow": "Dez filmes para explorar",
+          "title": "Qual universo chama você?",
+          "body": "Ficção científica, fantasia e aventura fazem parte da seleção.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Realidade em questão",
+          "title": "Matrix",
+          "body": "Um dos filmes da lista que convida a desconfiar do mundo ao redor.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Uma jornada pela Terra-média",
+          "title": "A Sociedade do Anel",
+          "body": "Fantasia, amizade e uma missão que muda o destino do mundo.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Aventura através do tempo",
+          "title": "De Volta para o Futuro",
+          "body": "Outro clássico da seleção. Conheça os dez filmes no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 218,
+      "layout": "culture",
+      "tone": "anime",
+      "musicSourceId": "413841",
+      "audioStart": 31,
+      "duration": 28,
+      "note": "Portas de entrada por gênero; o título não vira ranking.",
+      "scenes": [
+        {
+          "eyebrow": "Nunca assistiu anime?",
+          "title": "Comece pelo seu gosto",
+          "body": "A lista reúne dez títulos. Estes são exemplos de estilos diferentes.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Se você gosta de suspense",
+          "title": "Death Note",
+          "body": "Um duelo de inteligência e consequências difíceis.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Se prefere humor",
+          "title": "Spy x Family",
+          "body": "Espionagem e convivência familiar em uma comédia de identidades secretas.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Se procura aventura",
+          "title": "Fullmetal Alchemist: Brotherhood",
+          "body": "Dois irmãos em uma jornada de fantasia. Veja as dez indicações no blog.",
+          "image": "cover"
+        }
+      ]
+    },
+    {
+      "id": 219,
+      "layout": "culture",
+      "tone": "nostalgia",
+      "musicSourceId": "512837",
+      "audioStart": 19,
+      "duration": 28,
+      "note": "Nostalgia leve com obras nomeadas; sem inventar ranking nem trocar a imagem coletiva.",
+      "scenes": [
+        {
+          "eyebrow": "Desenhos que atravessaram gerações",
+          "title": "Além da nostalgia",
+          "body": "A seleção reúne dez séries que ainda rendem boas histórias.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Humor que segue funcionando",
+          "title": "Laboratório de Dexter",
+          "body": "Experimentos, rivalidade e comédia no laboratório mais famoso da infância.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Uma linguagem visual própria",
+          "title": "Samurai Jack",
+          "body": "Composição, silêncio e ação dão força à narrativa.",
+          "image": "cover"
+        },
+        {
+          "eyebrow": "Um mundo para revisitar",
+          "title": "Avatar: A Lenda de Aang",
+          "body": "Personagens e construção de mundo. Conheça os dez desenhos no blog.",
+          "image": "cover"
+        }
+      ]
+    }
+  ]
+}

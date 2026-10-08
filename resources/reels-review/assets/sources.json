@@ -1,0 +1,14 @@
+[
+  {
+    "url": "https://storage-asset.msi.com/global/picture/image/feature/mb/B650/MAG-B650-TOMAHAWK-WIFI/mag-b650-tomahawk-wifi.png",
+    "sha256": "13cf709c10686cd7672e07a144b9f220af2e16dd23880e8e7b63deab6508ad31",
+    "file": "msi-b650.png",
+    "page": "https://www.msi.com/Motherboard/MAG-B650-TOMAHAWK-WIFI"
+  },
+  {
+    "url": "https://media.kingston.com/kingston/key-features/ktc-keyfeatures-ssd-snv3s-kf1-lg.jpg",
+    "sha256": "36d1c39625ac0896c3322055b175ef14487a4ff53f008b459d127ad6138d6ec3",
+    "file": "kingston-nv3.jpg",
+    "page": "https://www.kingston.com/en/ssd/nv3-nvme-pcie-ssd"
+  }
+]

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Revisão dos Reels | Estratégia Nerd</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0c1118;color:#f1f4f8;font:16px/1.5 system-ui,sans-serif}main{max-width:1150px;margin:auto;padding:24px 18px}h1{font-size:clamp(26px,5vw,40px);margin:8px 0}h2{font-size:20px;line-height:1.3;margin:14px 0}p{margin:10px 0}.intro{max-width:780px;color:#c0cbd9}.toolbar{position:sticky;top:0;z-index:5;background:#0c1118ee;backdrop-filter:blur(8px);padding:12px 0;display:flex;gap:10px;flex-wrap:wrap}input,select,button{font:inherit;min-height:46px;border:1px solid #425169;border-radius:9px;background:#1a2534;color:#f1f4f8;padding:10px 13px}input{flex:1;min-width:180px}button{cursor:pointer}button[aria-pressed=true]{background:#174956;border-color:#73d5db}a{color:#91dde1;overflow-wrap:anywhere}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:24px;margin-top:16px}.card{background:#141e2b;border:1px solid #2d3e54;border-radius:16px;padding:16px;scroll-margin-top:150px}.tag{display:inline-block;padding:3px 9px;border-radius:20px;background:#233448;font-size:13px;color:#c9e9f0}.preserved{background:#244932}.player{position:relative;background:#07090c;aspect-ratio:9/16;border-radius:10px;overflow:hidden}video{display:block;width:100%;height:100%;max-height:70vh;object-fit:contain;background:#07090c}.switch{display:flex;gap:8px;margin:12px 0}.switch button{flex:1;font-size:14px}.note{color:#c8d3e1;font-size:14px}.warning{background:#493622;border-left:3px solid #e7b573;padding:10px;font-size:14px}.meta{color:#a9bacf;font-size:13px}.links{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0}details{margin-top:10px;font-size:14px}summary{cursor:pointer;padding:8px 0}footer{padding:28px 0;color:#a9bacf;font-size:14px}[hidden]{display:none!important}.empty{padding:30px;text-align:center}.share{font-size:13px}.counts{color:#c0cbd9}video:focus-visible,a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #91dde1;outline-offset:3px}@media(min-width:720px){video{max-height:none}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.card{width:100%;max-width:420px;justify-self:center}
+</style>
+</head>
+<body><main>
+<p class="tag">ESTRATÉGIA NERD · REVISÃO EDITORIAL</p>
+<h1>Todos os Reels, um por um</h1>
+<p class="intro">Escolha um post e toque em <strong>Revisado</strong> ou <strong>Anterior</strong> para comparar com som. As prévias ainda aguardam sua avaliação. A agenda e o Instagram não foram alterados por esta revisão.</p>
+<p class="intro">Inclui os posts de Diablo registrados como publicados no banco local. Você informou que os excluiu do Instagram; essa exclusão não foi sincronizada aqui.</p>
+<div class="toolbar"><input id="search" type="search" placeholder="Buscar título ou número do post" aria-label="Buscar post"><select id="filter" aria-label="Filtrar posts"><option value="all">Todos</option><option value="diablo">Diablo</option><option value="agendado">Agendados no cadastro</option><option value="publicado">Publicados no cadastro</option><option value="preserved">Referência preservada</option></select></div>
+<p class="counts" id="count" aria-live="polite"></p><div id="cards" class="grid"></div>
+<p class="empty" id="empty" hidden>Nenhum post corresponde à busca.</p>
+<footer>Prévia local pelo cloudflared. O computador, Apache e túnel precisam estar ligados. Os vídeos carregam quando você escolhe uma versão. Para avaliar a música, ative o som do player. Os downloads são arquivos MP4, sem publicar nada.</footer>
+</main>
+<script>
+const catalog=/* CATALOG */;
+const container=document.getElementById('cards');
+const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+for(const item of catalog){
+  const card=document.createElement('article');card.className='card';card.id='post-'+item.id;card.dataset.id=item.id;
+  const state=item.status==='publicado'?'Publicado no cadastro':item.status==='agendado'?'Agendado no cadastro':item.status;
+  card.innerHTML=`<span class="tag ${item.preserved?'preserved':''}">#${item.id} · ${escapeHtml(state)}</span><h2>${escapeHtml(item.title)}</h2><div class="player"><video controls playsinline preload="none" poster="${escapeHtml(item.poster)}" aria-label="Vídeo do post ${item.id}"></video></div><div class="switch"><button type="button" data-version="new" aria-pressed="false">${item.preserved?'Referência aprovada':'Revisado'}</button><button type="button" data-version="old" aria-pressed="false">Anterior</button></div><p class="meta version">Toque em uma versão para carregar o vídeo.</p><p class="note">${escapeHtml(item.note)}</p>${item.warnings.map(w=>`<p class="warning">${escapeHtml(w)}</p>`).join('')}<details><summary>Música e informações</summary><p>Trilha ${item.preserved?'preservada':'da prévia'}: <strong>${escapeHtml(item.music)}</strong>.<br>Recorte a partir de ${item.audioStart} s · duração ${item.duration} s.</p><p>Adequação musical: escolha editorial por tema e metadados. Avalie a trilha com som nesta prévia.</p>${item.sources.map((url,n)=>`<p><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Fonte oficial ${n+1}</a></p>`).join('')}</details><div class="links"><a href="${escapeHtml(item.video)}" download="reel-${item.id}-revisao.mp4">Baixar ${item.preserved?'referência':'revisado'}</a><a href="${escapeHtml(item.original)}" download>Baixar anterior</a><a class="share" href="#post-${item.id}">Link deste post</a></div>`;
+  const player=card.querySelector('video');
+  card.querySelectorAll('button[data-version]').forEach(button=>button.addEventListener('click',()=>{
+    document.querySelectorAll('video').forEach(other=>{if(other!==player)other.pause();});
+    player.pause();const old=button.dataset.version==='old';player.src=old?item.original:item.video;player.load();
+    card.querySelectorAll('button[data-version]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+    card.querySelector('.version').textContent=old?'Versão anterior · arquivo preservado':item.preserved?'Referência preservada integralmente':'Nova prévia · aguardando sua avaliação';
+    player.play().catch(()=>{card.querySelector('.version').textContent+=' · toque no player para reproduzir';});
+  }));
+  player.addEventListener('play',()=>document.querySelectorAll('video').forEach(other=>{if(other!==player)other.pause();}));
+  player.addEventListener('error',()=>{card.querySelector('.version').textContent='Não foi possível reproduzir. Use o download ou confira se o túnel está ligado.';});
+  container.append(card);
+}
+function filter(){const q=norm(document.getElementById('search').value);const f=document.getElementById('filter').value;let visible=0;
+  for(const item of catalog){const card=document.getElementById('post-'+item.id);const matches=norm(item.title+' '+item.id).includes(q)&&(f==='all'||f==='diablo'&&[191,192,193,194,195,197].includes(item.id)||f==='preserved'&&item.preserved||f===item.status);card.hidden=!matches;if(matches)visible++;else card.querySelector('video').pause();}
+  document.getElementById('count').textContent=visible+' de '+catalog.length+' posts · versões anteriores preservadas';document.getElementById('empty').hidden=visible!==0;
+}
+document.getElementById('search').addEventListener('input',filter);document.getElementById('filter').addEventListener('change',filter);filter();
+if(location.hash){const target=document.getElementById(location.hash.slice(1));if(target)setTimeout(()=>target.scrollIntoView(),100);}
+</script></body></html>

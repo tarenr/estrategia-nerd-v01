@@ -101,6 +101,7 @@ export async function renderVideo(spec,root,output,{ffmpeg='ffmpeg',ffprobe='ffp
       sources:spec.scenes.map(s=>({path:s.image,sha256:sha(resolve(root,s.image))})),audio:{path:spec.audio,start:spec.audioStart,sha256:sha(audioPath)},
       fonts:['BebasNeue-Regular.ttf','Inter.ttf'].map(f=>({file:f,sha256:sha(resolve(root,'resources/reels-konva/fonts',f))})),
       rendererSources:['scene.mjs','render.mjs'].map(f=>({file:f,sha256:sha(resolve(root,'scripts/reels-konva',f))})),
+      manualRenderer:spec.editorial==='manual'?{file:'scripts/reels-review/scene.mjs',sha256:sha(resolve(root,'scripts/reels-review/scene.mjs'))}:null,
       typography:scene.typography,videoSha256:sha(outputPath),media};
     writeFileSync(outputPath+'.manifest.json',JSON.stringify(manifest,null,2),{flag:'wx'});
     return manifest;

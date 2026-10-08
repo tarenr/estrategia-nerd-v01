@@ -3,6 +3,7 @@ import 'konva/skia-backend';
 import { FontLibrary, loadImage } from 'skia-canvas';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createManualScene, validateManualSpec } from '../reels-review/scene.mjs';
 
 export const WIDTH = 1080;
 export const HEIGHT = 1920;
@@ -46,6 +47,7 @@ export function validateSpec(spec) {
   }
   if (typeof spec.audio !== 'string' || !spec.audio) throw new Error('Trilha local obrigatória.');
   if (!Number.isFinite(spec.audioStart) || spec.audioStart < 0) throw new Error('Início da trilha inválido.');
+  if (spec.editorial === 'manual') validateManualSpec(spec);
 }
 
 export function proportionalCrop(imageWidth, imageHeight, width, height, focusX = 0.5) {
@@ -94,6 +96,7 @@ export function fitText(node, maxHeight, maxSize, minSize) {
 /** A reusable scene graph; rendering uses explicit frame time, never wall-clock animation. */
 export async function createScene(spec, root) {
   validateSpec(spec);
+  if (spec.editorial === 'manual') return createManualScene(spec, root);
   registerFonts(root);
   const theme=THEMES[spec.category] || THEMES.games;
   const AMBER=theme.accent;const CYAN=theme.secondary;const PURPLE=theme.frame;
