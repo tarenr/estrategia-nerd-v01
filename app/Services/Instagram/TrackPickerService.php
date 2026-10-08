@@ -4,7 +4,7 @@
  * @file        app/Services/Instagram/TrackPickerService.php
  * @project     Estrategia Nerd
  * @purpose     Escolhe a trilha de cada Reel sem repetir enquanto houver faixa
- *              ativa sem uso, respeitando o grupo musical da categoria (IMP-032)
+ *              ativa sem uso compatível com tema, atmosfera e ritmo (IMP-032).
  * -----------------------------------------------------------------------------
  */
 
@@ -23,8 +23,8 @@ final class TrackPickerService
         'dicas'    => ['lofi'],
     ];
     private const DEFAULT_POOLS = ['upbeat', 'lofi'];
-    private const FALLBACK_ORDER = ['synthwave', 'upbeat', 'lofi', 'epic', 'chiptune'];
     private const EDGE_SECONDS = 5;
+    private ?string $warning = null;
 
     /** @var array<int, list<int>> Escolhas feitas nesta execução: track_id => inícios. */
     private array $reserved = [];
@@ -34,7 +34,8 @@ final class TrackPickerService
      */
     public function __construct(
         private readonly PDO $pdo,
-        private readonly array $ignorePostIds = []
+        private readonly array $ignorePostIds = [],
+        private readonly ?array $catalog = null
     ) {
     }
 
@@ -45,19 +46,58 @@ final class TrackPickerService
     }
 
     /**
-     * Faixa nunca usada do grupo da categoria; sem nenhuma, faixa nunca usada de outro grupo;
-     * com tudo usado, a menos usada do grupo, em trecho diferente dos anteriores.
+     * Compatibilidade temática precede diversidade. Não atravessa atmosferas para evitar repetição.
+     * Depois de esgotar as compatíveis sem uso, reutiliza a menos usada, mantendo histórico e reservas.
+     * @param array<string,mixed> $context Título/resumo/tags; ritmo opcional slow|medium|fast.
      *
      * @return array{track: array<string,mixed>, start: int, reused: bool}|null
      */
-    public function pick(string $categoria, int $reelSeconds): ?array
+    public function pick(string $categoria, int $reelSeconds, array $context = []): ?array
     {
+        $this->warning = null;
         $reelSeconds = max(1, $reelSeconds);
         $tracks = $this->activeTracks($reelSeconds);
-        if ($tracks === []) {
+        $profile = self::profileFor($categoria, $context);
+        try {
+            $catalog = $this->catalog ?? json_decode((string) file_get_contents(dirname(__DIR__, 3) . '/config/reel-music.json'), true, 512, JSON_THROW_ON_ERROR);
+            if (!is_array($catalog) || !isset($catalog['tracks']) || !is_array($catalog['tracks'])) {
+                throw new \RuntimeException('Catálogo musical inválido');
+            }
+        } catch (\Throwable $e) {
+            error_log('Seleção musical: catálogo indisponível.');
+            $this->warning = 'Catálogo de classificação musical indisponível; nenhuma trilha foi escolhida.';
             return null;
         }
-
+        $eligible = [];
+        foreach ($tracks as $track) {
+            foreach ($catalog['tracks'] as $entry) {
+                if (!is_array($entry) || !is_string($entry['source'] ?? null) || !is_string($entry['sourceId'] ?? null)
+                    || !is_string($entry['sha256'] ?? null) || !is_string($entry['rhythm'] ?? null)) {
+                    continue;
+                }
+                if ($entry['source'] !== $track['origem'] || $entry['sourceId'] !== $track['origem_id']) {
+                    continue;
+                }
+                $themes = is_array($entry['themes'] ?? null) ? $entry['themes'] : [];
+                if (!in_array($profile['theme'], $themes, true) || !in_array($entry['rhythm'], $profile['rhythms'], true)) {
+                    continue;
+                }
+                $file = dirname(__DIR__, 3) . '/public/' . ltrim($track['arquivo_path'], '/\\');
+                $expected = $entry['sha256'];
+                if (!is_file($file) || $expected === '' || hash_file('sha256', $file) !== $expected) {
+                    continue;
+                }
+                $track['musical_theme'] = $profile['theme'];
+                $track['musical_rhythm'] = (string) $entry['rhythm'];
+                $eligible[] = $track;
+                break;
+            }
+        }
+        $tracks = $eligible;
+        if ($tracks === []) {
+            $this->warning = sprintf('Nenhuma trilha local compatível com o tema "%s" e ritmo "%s", com duração suficiente e integridade confirmada. Reel não gerado; ampliar ou revisar o catálogo.', $profile['theme'], implode('/', $profile['rhythms']));
+            return null;
+        }
         $usage = $this->usage();
         $uses = static fn (array $t): int => count($usage[(int) $t['id']]['starts'] ?? []);
         $poolUse = [];
@@ -65,22 +105,10 @@ final class TrackPickerService
             $poolUse[$t['genero']] = ($poolUse[$t['genero']] ?? 0) + $uses($t);
         }
 
-        $own = self::poolsFor($categoria);
-        $candidates = array_values(array_filter($tracks, static fn (array $t): bool => in_array($t['genero'], $own, true)));
+        $candidates = $tracks;
         $unused = array_values(array_filter($candidates, static fn (array $t): bool => $uses($t) === 0));
-        if ($unused === []) {
-            foreach (self::FALLBACK_ORDER as $pool) {
-                if (in_array($pool, $own, true)) {
-                    continue;
-                }
-                $unused = array_values(array_filter($tracks, static fn (array $t): bool => $t['genero'] === $pool && $uses($t) === 0));
-                if ($unused !== []) {
-                    break;
-                }
-            }
-        }
 
-        $pool = $unused !== [] ? $unused : ($candidates !== [] ? $candidates : $tracks);
+        $pool = $unused !== [] ? $unused : $candidates;
         usort($pool, static function (array $a, array $b) use ($uses, $poolUse, $usage): int {
             return [$uses($a), $poolUse[$a['genero']] ?? 0, $usage[(int) $a['id']]['last'] ?? '', (int) $a['id']]
                 <=> [$uses($b), $poolUse[$b['genero']] ?? 0, $usage[(int) $b['id']]['last'] ?? '', (int) $b['id']];
@@ -93,6 +121,37 @@ final class TrackPickerService
         $this->reserved[$trackId][] = $start;
 
         return ['track' => $chosen, 'start' => $start, 'reused' => $previous !== []];
+    }
+
+    public function warning(): ?string
+    {
+        return $this->warning;
+    }
+
+    /** @param array<string,mixed> $context @return array{theme:string,rhythms:list<string>} */
+    public static function profileFor(string $categoria, array $context = []): array
+    {
+        $text = strip_tags(implode(' ', array_map(static fn ($key): string => is_scalar($context[$key] ?? null) ? (string) $context[$key] : '', ['titulo', 'resumo', 'tags'])));
+        $text = strtolower((string) iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text));
+        $theme = match (true) {
+            preg_match('/\b(diablo|terror|horror|sombrio|sombria|demonios?|inferno|dark fantasy|dark souls|bloodborne|resident evil|silent hill|elden ring)\b/', $text) === 1 => 'dark',
+            preg_match('/\b(rpg|fantasia|medieval|skyrim|baldur|dragons?|dragoes|magia|santuario)\b/', $text) === 1 => 'fantasy',
+            preg_match('/\b(retro|nostalgia|nostalgico|nostalgica|8.?bits?|16.?bits?|pixel|chiptune|nes|snes|arcade|game boy)\b/', $text) === 1 => 'retro',
+            preg_match('/\b(fps|shooter|acao|corrida|competitivo|counter.?strike|valorant|doom)\b/', $text) === 1 => 'action',
+            strtolower(trim($categoria)) === 'hardware' => 'technology',
+            strtolower(trim($categoria)) === 'dicas' => 'calm',
+            strtolower(trim($categoria)) === 'games' => 'action',
+            default => 'light',
+        };
+        $rhythms = match ($theme) {
+            'dark', 'fantasy', 'calm' => ['slow', 'medium'],
+            'action', 'retro' => ['medium', 'fast'],
+            default => ['slow', 'medium', 'fast'],
+        };
+        if (in_array($context['ritmo'] ?? null, ['slow', 'medium', 'fast'], true)) {
+            $rhythms = [(string) $context['ritmo']];
+        }
+        return ['theme' => $theme, 'rhythms' => $rhythms];
     }
 
     /**
@@ -124,12 +183,12 @@ final class TrackPickerService
     }
 
     /**
-     * @return list<array{id: int, titulo: string, artista: string, genero: string, arquivo_path: string, duracao_s: int}>
+     * @return list<array{id: int, titulo: string, artista: string, genero: string, arquivo_path: string, duracao_s: int, origem:string, origem_id:string}>
      */
     private function activeTracks(int $reelSeconds): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT id, titulo, artista, genero, arquivo_path, duracao_s
+            'SELECT id, titulo, artista, genero, arquivo_path, duracao_s, origem, origem_id
                FROM instagram_audio_tracks
               WHERE ativo = 1 AND duracao_s > ?
               ORDER BY id'
@@ -145,6 +204,8 @@ final class TrackPickerService
                 'genero'       => strtolower(trim((string) ($row['genero'] ?? ''))),
                 'arquivo_path' => (string) $row['arquivo_path'],
                 'duracao_s'    => (int) $row['duracao_s'],
+                'origem'       => (string) $row['origem'],
+                'origem_id'    => (string) $row['origem_id'],
             ];
         }
 

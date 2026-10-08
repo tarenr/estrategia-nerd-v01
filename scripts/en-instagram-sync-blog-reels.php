@@ -210,15 +210,16 @@ foreach ($prodPosts as $post) {
 
         // B. Trilha sem repetição (IMP-032): duração prevista do Reel define o trecho sorteado
         $plannedSeconds = AudioReelGeneratorService::editorialDuration($meta,$animated);
-        $picked = $trackPicker->pick($categoria, $plannedSeconds);
+        $picked = $trackPicker->pick($categoria, $plannedSeconds, $meta + ['tags' => $post['tags'] ?? '']);
         if ($picked === null) {
-            throw new RuntimeException("Nenhuma trilha ativa na biblioteca para a categoria {$categoria}. Cadastre faixas com scripts/en-instagram-import-tracks.php.");
+            error_log(sprintf('Reel do artigo #%d: %s', $postId, $trackPicker->warning() ?? 'Nenhuma trilha temática disponível.'));
+            throw new RuntimeException($trackPicker->warning() ?? 'Nenhuma trilha temática disponível.');
         }
         $audioRelPath = (string) $picked['track']['arquivo_path'];
         $audioTrackId = (int) $picked['track']['id'];
         $audioStart = $picked['start'];
         echo sprintf("  -> Trilha: #%d - %s (%s) a partir de %ds%s\n", $audioTrackId, $picked['track']['titulo'],
-            $picked['track']['genero'], $audioStart, $picked['reused'] ? ' [repetida: biblioteca esgotada]' : '');
+            $picked['track']['genero'], $audioStart, $picked['reused'] ? ' [reutilizada: faixas compatíveis sem uso esgotadas]' : '');
 
         // D. Gerar Reel 9:16 com áudio
         echo "  -> Renderizando Reel editorial 9:16 com o modelo configurado e trilha local...\n";

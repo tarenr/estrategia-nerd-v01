@@ -1,0 +1,554 @@
+{
+  "version": 1,
+  "basis": "Conservative editorial classification from title and catalog genre; no automated audio interpretation or audition confirmation.",
+  "tracks": [
+    {
+      "source": "pixabay",
+      "sourceId": "95436",
+      "title": "Mezhdunami - Flashes",
+      "sha256": "00b65f37044b4d093b750e3524b1367c4c043fce5d4f1f26940805941fc97073",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "141278",
+      "title": "Mezhdunami - Meteor Shower",
+      "sha256": "8fa6381631b6ae1c470b5223d36a2625dae208afc3d400cba2fae4fb5f9510b9",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "199668",
+      "title": "Outrun Neon Dreams 80s",
+      "sha256": "80df0103f37e4c8907f01eb1d3da75d44b180aef724f6558dcb33009ce97c4d5",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "203118",
+      "title": "80x Deep Synthwave",
+      "sha256": "73b9766acd28ff26a391e382940283f9c3c10646727f34cbb64a50e5a002399e",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "211527",
+      "title": "Cool Retro Darkwave/Synthwave Type Beat - Shadows",
+      "sha256": "a46baba81077f86dfec85b22b42cc3ef814d460f3bb1794c01d9897ad5d65c53",
+      "themes": [
+        "technology",
+        "dark"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "259777",
+      "title": "Deep Vibes (synthwave beat)",
+      "sha256": "33ff3dfde981884169ca567f14bba99c9073e9a63b0fb0e1f7e505c2b2664373",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "303922",
+      "title": "80s Movie Synth Music",
+      "sha256": "f83fe1f1a8ca762ecab7bde385f32fe45f933fd0093d9d93ac212ee5c67ff721",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "477714",
+      "title": "Fragile | Synthwave Music",
+      "sha256": "f5c24353f7d5ba1d9046ecb01f3c72747eeaf919cbf5e7ad1b9f40b691cc07c6",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "478200",
+      "title": "Monk | Synthwave Music",
+      "sha256": "3d8fca7ab23c82b83528eb61e041e82f7524223ed1bec60622cc8d7c4437e55d",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "511031",
+      "title": "The Synthwave Vibe",
+      "sha256": "97113a4ac16f016b11bca2c268a9fe05b92fa50834303fb1cb573bd523f657dc",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "511038",
+      "title": "Last Sunset",
+      "sha256": "deac2fcbed021d6fa892593c157eae24ad546829c4480ae63c6a6e7f6ff7cf3c",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "519731",
+      "title": "The Arcade City - Cinematic Hybrid Music",
+      "sha256": "1fab60c72139cdf01f5ce9b05c5644fc151e4113c5d2a8e198b797cbb5e78b02",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "526520",
+      "title": "Synthwave",
+      "sha256": "fca33fdda6d008baa3e47fb764a31b21c2004daacb74d43ad56debe3192bf264",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "528524",
+      "title": "Still you",
+      "sha256": "6819b1dbfee292b114204ca024fa92bdd22e1956821ac32b41ca654bd57a8482",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "540963",
+      "title": "Ocean Night / pixelmaniaxx",
+      "sha256": "b3de00974c2134a15b12a9278746668f6cff8b8adf9794e4d43d998868023933",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "561438",
+      "title": "Outrun Synthwave",
+      "sha256": "053e5f54ddaa62836d28209ba17b910696eaf1cf5da15349b89c28d7e72ef2bc",
+      "themes": [
+        "technology"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "8037",
+      "title": "Battle Of The Dragons",
+      "sha256": "ec8f5bc3038604dee78f410b5622a739d944a36396d61c6b7423e0f9c0b49808",
+      "themes": [
+        "fantasy",
+        "action"
+      ],
+      "rhythm": "fast",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "10376",
+      "title": "Caves of Dawn",
+      "sha256": "b6d05068a4520c3c09e7ea672d9c9db4be63003777c8e70e95d9dbb219232065",
+      "themes": [
+        "fantasy"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "136824",
+      "title": "Best Dramatic Music",
+      "sha256": "4174d80f4596ba81f136be9bc867c42eb95e3186fdf03796323cffb6ece58c26",
+      "themes": [
+        "dramatic",
+        "action"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "207071",
+      "title": "Epic emotinal inspirational",
+      "sha256": "81060c8b628d8489512e3dd9954e6351f2a839fb492e98c2f52d1f904e2b6402",
+      "themes": [
+        "inspirational"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "239599",
+      "title": "Fantasy Medieval Epic Music",
+      "sha256": "abcc804f811ac9734283c818fee60432226e476300056b210b4f5811f46bf258",
+      "themes": [
+        "fantasy"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "248213",
+      "title": "Dark Fantasy Ambient (Dungeon Synth)",
+      "sha256": "e73aa0c337b710855762e659333e4944f2ad328dc2d222c3eb15f0575ef6780d",
+      "themes": [
+        "dark",
+        "fantasy"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "571169",
+      "title": "Cinematic Promo",
+      "sha256": "893bd82edc338f38be518c0975a9891419e3f1980dfdc95aabfd013700e42e60",
+      "themes": [
+        "action"
+      ],
+      "rhythm": "fast",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "610029",
+      "title": "Cinematic Adventure",
+      "sha256": "15bd3558c0d65f9a0511cf4e0622f7d16b739556e03e4266e92d2d92fcd44cd9",
+      "themes": [
+        "fantasy",
+        "action"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "151007",
+      "title": "Little Slime's Adventure",
+      "sha256": "091f2e16a59a73b3e4a38423ee121ea9eda1268c0a3a06117bd6584c9fcca1dc",
+      "themes": [
+        "retro"
+      ],
+      "rhythm": "fast",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "399898",
+      "title": "game 8 bit",
+      "sha256": "55bf56e1a8c727748818a5283c99020812eed7975b639c5082596676d6d346b7",
+      "themes": [
+        "retro"
+      ],
+      "rhythm": "fast",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "512837",
+      "title": "Retro Arcade Game Music",
+      "sha256": "d45cc1858ed3c2f2180f0ebb4c80966cc5759a2e98726f3ac7303426dfec5561",
+      "themes": [
+        "retro"
+      ],
+      "rhythm": "fast",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "535721",
+      "title": "Chiptune Garden Fight",
+      "sha256": "8413f840659495a0a5040bb972ac5ca94e6b57ae002e742ad49e859ab882b8f0",
+      "themes": [
+        "retro"
+      ],
+      "rhythm": "fast",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "552833",
+      "title": "Chiptune Video Game Games Music",
+      "sha256": "e44e696708f19d690c9af39ac54a186753d824d39d9e48b6e14afda0db854d54",
+      "themes": [
+        "retro"
+      ],
+      "rhythm": "fast",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "560089",
+      "title": "Cosmos",
+      "sha256": "13cc249c18f8524bf3307eed9fcc8a7d7eaa37d87004aea8c38c1b42d3344e11",
+      "themes": [
+        "retro"
+      ],
+      "rhythm": "fast",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "9503",
+      "title": "Sunset Vibes (Lo-Fi/Chillhop)",
+      "sha256": "7447c0d691ceb59a4b66be5ca85b798151e4cc79db1d48baf96b7e78a99c65d2",
+      "themes": [
+        "calm"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "10149",
+      "title": "WatR - Fluid",
+      "sha256": "5a2c1f9547a2339eb980d0ce4c8c73e48aae3c8e45ae536e7fbaa114728c546c",
+      "themes": [
+        "calm"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "112369",
+      "title": "Lofi Summer Background",
+      "sha256": "bec073a82a470d14c8e4c254370ac2123f7d029cc1a5c59ae05215bcb405e63a",
+      "themes": [
+        "calm"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "552792",
+      "title": "Chillhop Jazz Coffee Shop",
+      "sha256": "bbe54f4ab6f335b64d1bc6874a2a4f9349f0cc51d3c7248d35f3c2cbe055d20c",
+      "themes": [
+        "calm"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "552793",
+      "title": "Chillhop Jazz Rainy Night",
+      "sha256": "de86bae93a26dd74ec5ccd97eda4351c308a69a0665b1ae6be6b2d2fa0491466",
+      "themes": [
+        "calm"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "593048",
+      "title": "Happy Lofi",
+      "sha256": "913c339ecdfc83540f08f13d0fedb1f9681571c24d3ca5ca263b3aa898de7d37",
+      "themes": [
+        "calm"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "595571",
+      "title": "Chillhop",
+      "sha256": "76b6cbb4dcb7573577e5b56eb9f9e3bb0ee008af7eaeb2ecac8dbc854e59763a",
+      "themes": [
+        "calm"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "611601",
+      "title": "Lofi Upbeat",
+      "sha256": "24bc666c3996520d8f512f402e4d0ddd18c2e80005f0b2c48b45bdc6668fd5d6",
+      "themes": [
+        "calm"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "12278",
+      "title": "Embrace",
+      "sha256": "ed9814e925650be3364ec8ce8afe3c501af6962dde3c9cf108bbda70fdbe571b",
+      "themes": [
+        "light"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "15013",
+      "title": "Morning Garden - Acoustic Chill",
+      "sha256": "9a94a229fdedc9cb86c44bddd3565566ff828317cf0498c163aa3894838fcca0",
+      "themes": [
+        "light",
+        "calm"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "173062",
+      "title": "Drive Breakbeat",
+      "sha256": "089d5a0d970a1e5b70f417352a786c0f5a53e58a8f1699b37576505a7380dd62",
+      "themes": [
+        "light",
+        "action"
+      ],
+      "rhythm": "fast",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "202298",
+      "title": "For Her Chill Upbeat Summel Travel Vlog and IG Music Royalty Free Use",
+      "sha256": "52cfc0423b6dd80434e9055c370abebbca357bc7e4e93093b86b73ff450840d2",
+      "themes": [
+        "light"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "413841",
+      "title": "Honey Kisses",
+      "sha256": "2158dfccef77e2c67578140a337f4a9b476201881e0ed66cd0fc83bbd0f65706",
+      "themes": [
+        "light"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "483574",
+      "title": "Vlog Hip-Hop",
+      "sha256": "b325916dfbe178a07d798a78bbdc49b3b84a7e0897b74de7de265403a154b984",
+      "themes": [
+        "light"
+      ],
+      "rhythm": "medium",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    },
+    {
+      "source": "pixabay",
+      "sourceId": "610078",
+      "title": "Calm - Carefree",
+      "sha256": "ad8ffbb8a204d8d4576ce41dabec823671c63c56dc6b3fae343b8dd7e9887d9d",
+      "themes": [
+        "light",
+        "calm"
+      ],
+      "rhythm": "slow",
+      "basis": "metadata_inference",
+      "auditionConfirmed": false
+    }
+  ]
+}

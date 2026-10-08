@@ -18,7 +18,8 @@ const project = JSON.parse(fs.readFileSync(path.join(folder, 'project-inspection
 const clips = project.tracks.flatMap(track => track.items);
 check('Timeline com 24 segundos e quatro imagens', project.dur === 24 && clips.filter(clip => clip.kind === 'image').length === 4);
 check('Textos das quatro cenas no instante correto', [0, 6, 12, 18].every(at => clips.filter(clip => clip.kind === 'text' && clip.start === at && clip.duration === 6).length === 4));
-check('Recorte de áudio preservado: 9–33 segundos', clips.some(clip => clip.kind === 'audio' && clip.inPoint === 9 && clip.outPoint === 33 && clip.duration === 24));
+const clipAudio = clips.find(clip => clip.kind === 'audio');
+check('Recorte de áudio dentro da fonte e com 24 segundos', clipAudio && clipAudio.inPoint >= 0 && clipAudio.outPoint - clipAudio.inPoint === 24 && clipAudio.outPoint <= clipAudio.sourceDuration);
 for (let iteration = 1; iteration <= 2; iteration++) {
   const file = path.join(folder, `pilot-${iteration}.mp4`);
   const probe = JSON.parse(run('ffprobe', ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', file]));

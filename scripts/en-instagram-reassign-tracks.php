@@ -204,9 +204,9 @@ foreach ($posts as $p) {
     }
     $categoria = strtolower(trim((string) $a['categoria'])) ?: 'cultura';
     $segundos = $renderer->duration($a);
-    $escolha = $picker->pick($categoria, $segundos);
+    $escolha = $picker->pick($categoria, $segundos, $a);
     if ($escolha === null || $escolha['reused']) {
-        $pulados[] = "#{$p['id']}: nenhuma faixa ativa com duração suficiente";
+        $pulados[] = "#{$p['id']}: " . ($picker->warning() ?? 'Nenhuma faixa temática compatível sem uso disponível');
         continue;
     }
     $itens[] = [
