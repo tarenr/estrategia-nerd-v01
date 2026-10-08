@@ -77,58 +77,46 @@
       "musicSourceId": "248213",
       "audioStart": 5,
       "duration": 28,
-      "note": "Quatro imagens reais do artigo: conflito, Céu, Inferno e Santuário.",
+      "note": "Quatro imagens reais do artigo: conflito, Céu, Inferno e Santuário. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte.",
       "scenes": [
         {
           "eyebrow": "O mundo de Diablo",
           "title": "Uma guerra antes de nós",
           "body": "Céu e Inferno já lutavam antes de a humanidade existir.",
-          "image": "img-005.webp",
+          "image": "@diablo:art-01-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "O Alto Céu",
           "title": "A força da ordem",
           "body": "Os anjos defendem sua visão de justiça e dever.",
-          "image": "img-003.webp",
+          "image": "@diablo:art-02-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "O Inferno Ardente",
           "title": "O domínio do caos",
           "body": "Os demônios buscam poder e corrupção.",
-          "image": "img-004.webp",
+          "image": "@diablo:art-03-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Santuário",
           "title": "Um refúgio em disputa",
           "body": "A humanidade vive entre essas forças. Conheça esse mundo no blog.",
-          "image": "img-001.webp",
+          "image": "@diablo:art-04-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         }
       ]
@@ -140,58 +128,46 @@
       "musicSourceId": "248213",
       "audioStart": 29,
       "duration": 28,
-      "note": "Retratos individuais em vez de repetir a ilustração coletiva; três Grandes Males, sem ranking.",
+      "note": "Retratos individuais em vez de repetir a ilustração coletiva; três Grandes Males, sem ranking. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte.",
       "scenes": [
         {
           "eyebrow": "Os Grandes Males",
           "title": "Diablo",
           "body": "O Senhor do Terror transforma o medo em uma arma.",
-          "image": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-01.webp",
+          "image": "@diablo:art-05-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "O ódio se espalha",
           "title": "Mephisto",
           "body": "O Senhor do Ódio corrompe relações e alimenta conflitos.",
-          "image": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-02.webp",
+          "image": "@diablo:art-06-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Nada permanece",
           "title": "Baal",
           "body": "O Senhor da Destruição deixa ruínas em seu caminho.",
-          "image": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-03.webp",
+          "image": "@diablo:art-07-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Além dos três irmãos",
           "title": "O Inferno tem outros poderes",
           "body": "Andariel, Duriel, Belial e Azmodan também fazem parte dessa história. Explore no blog.",
-          "image": "cover",
+          "image": "@diablo:art-08-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         }
       ]
@@ -203,58 +179,46 @@
       "musicSourceId": "239599",
       "audioStart": 21,
       "duration": 28,
-      "note": "Luz dourada e nomes dos Arcanjos; exemplos identificados, sem numeração.",
+      "note": "Luz dourada e nomes dos Arcanjos; exemplos identificados, sem numeração. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte.",
       "scenes": [
         {
           "eyebrow": "Os Arcanjos de Diablo",
           "title": "Imperius: valor",
           "body": "O comandante do Céu representa a força e a coragem.",
-          "image": "os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-01.webp",
+          "image": "@diablo:art-09-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Uma escolha difícil",
           "title": "Tyrael: justiça",
           "body": "Sua relação com a humanidade desafia a ordem dos Céus.",
-          "image": "os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-02.webp",
+          "image": "@diablo:art-10-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Da sabedoria à ruptura",
           "title": "Malthael",
           "body": "O caminho do antigo Aspecto da Sabedoria mostra que a luz também pode se perder.",
-          "image": "os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-05.webp",
+          "image": "@diablo:art-11-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "O Conselho Angiris",
           "title": "Cinco forças do Céu",
           "body": "Auriel e Itherael completam essa história. Conheça os cinco Arcanjos no blog.",
-          "image": "cover",
+          "image": "@diablo:art-12-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         }
       ]
@@ -266,58 +230,46 @@
       "musicSourceId": "248213",
       "audioStart": 53,
       "duration": 28,
-      "note": "Uma imagem: revelação inicial, permanência e texto narrativo. Nenhuma falsa troca de cenário.",
+      "note": "Uma imagem: revelação inicial, permanência e texto narrativo. Nenhuma falsa troca de cenário. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte.",
       "scenes": [
         {
           "eyebrow": "Os Nefalem",
           "title": "Entre anjos e demônios",
           "body": "A origem da humanidade de Santuário carrega os dois lados da Guerra Eterna.",
-          "image": "cover",
+          "image": "@diablo:art-13-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Um poder inesperado",
           "title": "Mais fortes que seus criadores",
           "body": "Os primeiros Nefalem despertaram um poder que assustou Céu e Inferno.",
-          "image": "cover",
+          "image": "@diablo:art-13-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "O poder foi contido",
           "title": "A herança esquecida",
           "body": "Ao longo das gerações, esse potencial foi enfraquecido.",
-          "image": "cover",
+          "image": "@diablo:art-13-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "A humanidade de Santuário",
           "title": "A força que ainda existe",
           "body": "Entenda a origem dos Nefalem e seu papel no universo de Diablo. História no blog.",
-          "image": "cover",
+          "image": "@diablo:art-13-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         }
       ]
@@ -329,58 +281,46 @@
       "musicSourceId": "248213",
       "audioStart": 12,
       "duration": 28,
-      "note": "Duas imagens identificadas; sem reiniciar a arte quando só muda o texto.",
+      "note": "Duas imagens identificadas; sem reiniciar a arte quando só muda o texto. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte.",
       "scenes": [
         {
           "eyebrow": "A Guerra Eterna",
           "title": "Um conflito sem fim",
           "body": "Muito antes de Santuário, anjos e demônios já disputavam poder.",
-          "image": "cover",
+          "image": "@diablo:art-14-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Céu e Inferno",
           "title": "Visões que não se conciliam",
           "body": "A ordem dos anjos e a dominação dos demônios alimentam essa guerra.",
-          "image": "a-guerra-eterna-o-conflito-que-nunca-teve-fim-01.webp",
+          "image": "@diablo:art-15-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Um mundo entre as forças",
           "title": "Santuário entra na disputa",
           "body": "O refúgio criado longe do conflito se torna parte dele.",
-          "image": "a-guerra-eterna-o-conflito-que-nunca-teve-fim-01.webp",
+          "image": "@diablo:art-15-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "A guerra atravessa eras",
           "title": "E a humanidade paga o preço",
           "body": "Conheça o conflito que sustenta a história de Diablo. Leia no blog.",
-          "image": "a-guerra-eterna-o-conflito-que-nunca-teve-fim-01.webp",
+          "image": "@diablo:art-15-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         }
       ]
@@ -455,58 +395,46 @@
       "musicSourceId": "248213",
       "audioStart": 38,
       "duration": 28,
-      "note": "Linha narrativa: origem, Guerra Eterna, Santuário e humanidade; imagens específicas.",
+      "note": "Linha narrativa: origem, Guerra Eterna, Santuário e humanidade; imagens específicas. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte.",
       "scenes": [
         {
           "eyebrow": "Antes de Santuário",
           "title": "Anu e Tathamet",
           "body": "Luz e trevas estão na origem desse universo.",
-          "image": "img-001.webp",
+          "image": "@diablo:art-16-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Da origem ao conflito",
           "title": "A Guerra Eterna",
           "body": "Céu e Inferno passam a disputar poder através das eras.",
-          "image": "img-002.webp",
+          "image": "@diablo:art-15-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Um refúgio improvável",
           "title": "Santuário nasce",
           "body": "Lilith e Inarius criam um refúgio longe do conflito.",
-          "image": "img-003.webp",
+          "image": "@diablo:art-04-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "O destino da humanidade",
           "title": "A história chega até nós",
           "body": "Nefalem, demônios e anjos se cruzam nessa jornada. Explore a lore completa.",
-          "image": "img-004.webp",
+          "image": "@diablo:art-13-mesa-v1.webp",
           "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         }
       ]

@@ -18,6 +18,7 @@ const save=manifest=>writeFileSync(manifestPath,JSON.stringify(manifest,null,2))
 const safePublic=p=>{const path=resolve(root,'public',p);if(!path.startsWith(resolve(root,'public/uploads')+'/') && !path.startsWith(resolve(root,'public/uploads')+'\\'))throw new Error('Fonte fora de uploads');if(!existsSync(path))throw new Error('Mídia anterior ausente: '+p);return path;};
 const cmd=(tool,argv,timeout=30000)=>{const r=spawnSync(tool,argv,{encoding:'utf8',timeout,windowsHide:true});if(r.error || r.status!==0)throw new Error(tool+' falhou: '+r.stderr.slice(-500));return r;};
 function imageFor(scene,article){
+  if(scene.image.startsWith('@diablo:')){const name=scene.image.slice(8);if(!/^art-\d{2}-mesa-v1\.webp$/.test(name))throw new Error('Arte Diablo inválida');return 'resources/reels-review/assets/diablo/'+name;}
   if(scene.image.startsWith('@asset:')){const name=scene.image.slice(7);if(!/^[a-z0-9-]+\.(png|jpg)$/.test(name))throw new Error('Nome de asset inválido');return 'resources/reels-review/assets/'+name;}
   return scene.image==='cover'?'public/'+article.imagem_capa:'public/'+dirname(article.imagem_capa).replaceAll('\\','/')+'/'+scene.image;
 }

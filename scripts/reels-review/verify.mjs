@@ -32,6 +32,12 @@ for(const item of manifest.items){
       }
     }
     scene.render(0.9);const titles=scene.layer.find('Text').filter(n=>n.text()===spec.scenes[0].title);assert.equal(titles[0]?.opacity(),0,'texto deve esperar a imagem');
+    if(spec.scenes.every(s=>s.framing?.mode==='contain' && s.framing?.motion==='still')){
+      for(let time=0;time<spec.duration;time+=0.5){
+        scene.render(time);
+        for(const image of images){assert.ok(image.x()>=-0.001&&image.y()>=-0.001&&image.x()+image.width()<=IMAGE_FRAME.width+0.001&&image.y()+image.height()<=IMAGE_FRAME.height+0.001,'arte completa deve ficar dentro da moldura durante todo o vídeo');assert.equal(image.crop().width,image.image().width);assert.equal(image.crop().height,image.image().height);}
+      }
+    }
     scene.render(3);const first=await scene.layer.getCanvas()._canvas.toBuffer('png');
     scene.render(4);assert.ok(!first.equals(await scene.layer.getCanvas()._canvas.toBuffer('png')),'sem movimento');
     scene.render(3);assert.ok(first.equals(await scene.layer.getCanvas()._canvas.toBuffer('png')),'animação depende de relógio/aleatoriedade');

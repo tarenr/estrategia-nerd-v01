@@ -28,6 +28,10 @@ export function framingGeometry(width,height,framing={}){
   if(region.length!==4||region.some(n=>!Number.isFinite(n))||rx<0||ry<0||rw<=0||rh<=0||rx+rw>1.000001||ry+rh>1.000001)throw new Error('Região de imagem inválida');
   const crop={x:rx*width,y:ry*height,width:rw*width,height:rh*height};
   const w=IMAGE_FRAME.width,h=IMAGE_FRAME.height;
+  if(framing.mode==='contain'){
+    const scale=Math.min(w/crop.width,h/crop.height);
+    return {crop,x:(w-crop.width*scale)/2,y:(h-crop.height*scale)/2,width:crop.width*scale,height:crop.height*scale};
+  }
   if(framing.mode==='product'){
     const scale=Math.min(w*0.86/crop.width,h*0.9/crop.height);
     return {crop,x:(w-crop.width*scale)/2,y:(h-crop.height*scale)/2,width:crop.width*scale,height:crop.height*scale};
@@ -121,8 +125,8 @@ export async function createManualScene(spec,root){
       const {run,group,photo,base}=shot;const enter=ease((time-run.start)/0.72);
       const exit=run.end===spec.duration?1:1-ease((time-run.end)/0.72);
       group.opacity(enter*exit);
-      const p=clamp((time-run.start)/(run.end-run.start));const zoom=1+p*0.035;
-      photo.setAttrs({x:base.x-base.width*(zoom-1)/2+Math.sin(p*Math.PI)*5,y:base.y-base.height*(zoom-1)/2,width:base.width*zoom,height:base.height*zoom});
+      const p=clamp((time-run.start)/(run.end-run.start));const still=run.framing?.motion==='still';const zoom=still?1:1+p*0.035;
+      photo.setAttrs({x:base.x-base.width*(zoom-1)/2+(still?0:Math.sin(p*Math.PI)*5),y:base.y-base.height*(zoom-1)/2,width:base.width*zoom,height:base.height*zoom});
     }
     label.opacity(state.titleOpacity);title.opacity(state.titleOpacity);body.opacity(state.bodyOpacity);detail.opacity(state.bodyOpacity);
     const direction=spec.layout==='versus'?(active%2?1:-1):1;

@@ -1,0 +1,282 @@
+{
+  "version": 1,
+  "dimensions": [
+    1672,
+    941
+  ],
+  "instagramIds": [
+    191,
+    192,
+    193,
+    194,
+    195,
+    197
+  ],
+  "scope": "local blog and preview videos only",
+  "entries": [
+    {
+      "key": "art-01",
+      "file": "art-01-mesa-v1.webp",
+      "sha256": "04bf93f9cb63633b58a0041e47c9f4f771c1c20fb0d837725407cb91059d4a44",
+      "originalSha256": "cddcf5c6a0bfd9f5af23673ef580ddbd04538856dccfe52e1f2555680473f00d",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 191,
+          "scene": "Uma guerra antes de nós",
+          "path": "uploads/posts/o-mundo-de-diablo-entenda-santuario-ceu-e-inferno/images/img-005.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-02",
+      "file": "art-02-mesa-v1.webp",
+      "sha256": "30c94428ea2560e3a56fe2891394b753cc38e3fc0ba81e87c78c67ecf5ed2505",
+      "originalSha256": "bb19b723dbe581c97f82721adaf166cdd5be90196a80aa06653a7da6a5d14f17",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 191,
+          "scene": "A força da ordem",
+          "path": "uploads/posts/o-mundo-de-diablo-entenda-santuario-ceu-e-inferno/images/img-003.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-03",
+      "file": "art-03-mesa-v1.webp",
+      "sha256": "63d7913c2442e67860f3e0c1e4144a3a470fe572b4ba1b54bb5f41763d2b2315",
+      "originalSha256": "7ff9baa7ce83dbb679afb96204141550dc660cb397ce357e6d005e7dd3c8914d",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 191,
+          "scene": "O domínio do caos",
+          "path": "uploads/posts/o-mundo-de-diablo-entenda-santuario-ceu-e-inferno/images/img-004.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-04",
+      "file": "art-04-mesa-v1.webp",
+      "sha256": "31c42838c2211672d81b43fdb65291ad7a4d7d2f2e97f302df0161fa8de1fe9a",
+      "originalSha256": "1a3df5f3f4b6d459a56950168672a25874710233f2fabdfba125290f16be355e",
+      "method": "original-map-composite",
+      "uses": [
+        {
+          "id": 191,
+          "scene": "Um refúgio em disputa",
+          "path": "uploads/posts/o-mundo-de-diablo-entenda-santuario-ceu-e-inferno/images/img-001.webp"
+        },
+        {
+          "id": 197,
+          "scene": "Santuário nasce",
+          "path": "uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img-003.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-05",
+      "file": "art-05-mesa-v1.webp",
+      "sha256": "9a2efa9866ee251d91decd335047059e7b98f3caf043efb65e27d382787d6a69",
+      "originalSha256": "9b7b2c45e71929bfdaf614f13d26008d4b3978279d121247892b3d15c0d38588",
+      "method": "original-contained",
+      "uses": [
+        {
+          "id": 192,
+          "scene": "Diablo",
+          "path": "uploads/posts/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos/images/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-01.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-06",
+      "file": "art-06-mesa-v1.webp",
+      "sha256": "98a2c2a5e1f10969905648fc24d4dc5a4a325f0d07ad1bf0085420ee59271eae",
+      "originalSha256": "144c1ea1967dd13372a96aeb76ddf1fc7fcde760417d0a85c9b350e4bc9940dc",
+      "method": "original-contained",
+      "uses": [
+        {
+          "id": 192,
+          "scene": "Mephisto",
+          "path": "uploads/posts/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos/images/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-02.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-07",
+      "file": "art-07-mesa-v1.webp",
+      "sha256": "b4315dd2d7d8f7e61ae1b0a0a0ec22732ad80d2900dfe13f77579a42374dd916",
+      "originalSha256": "266b99f0741a39046ade38077523d5b4b863ea524c117940273b9d3c00df3632",
+      "method": "original-contained",
+      "uses": [
+        {
+          "id": 192,
+          "scene": "Baal",
+          "path": "uploads/posts/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos/images/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos-03.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-08",
+      "file": "art-08-mesa-v1.webp",
+      "sha256": "29da945bf46cb4316c2d678ee87439374eae0e497a1ca52b93b42473977dd85a",
+      "originalSha256": "de172e60f56488ea3543f9138633c87b6e4ad1ffef1471cccc7c8b992db8975a",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 192,
+          "scene": "O Inferno tem outros poderes",
+          "path": "uploads/posts/os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos/images/capa.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-09",
+      "file": "art-09-mesa-v1.webp",
+      "sha256": "935769df1bd8416cd0afb5336a72cacf8caf0ebffb63ef58ba983f6a71fd0fe3",
+      "originalSha256": "448641a2e65da8dca8d4f3d78e0baae9201d4f173cd86915390ad4056a837710",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 193,
+          "scene": "Imperius: valor",
+          "path": "uploads/posts/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo/images/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-01.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-10",
+      "file": "art-10-mesa-v1.webp",
+      "sha256": "3b11705c1487587983964e23223dcd869b18d1b8d8eaa570fd342be11690620c",
+      "originalSha256": "a5b342d259606140c74bf2d6bb9ca0b17ef47d90e31a00dfa75dcdb241eab5a2",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 193,
+          "scene": "Tyrael: justiça",
+          "path": "uploads/posts/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo/images/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-02.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-11",
+      "file": "art-11-mesa-v1.webp",
+      "sha256": "fd9168db7b2469f226fbfe4ba59bcab32038ef618db464c168e70f50eeb425f9",
+      "originalSha256": "542a84cec2c8399ddf78f43927a3576b31d86c5047a43e57db402f55a7dc7cb1",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 193,
+          "scene": "Malthael",
+          "path": "uploads/posts/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo/images/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo-05.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-12",
+      "file": "art-12-mesa-v1.webp",
+      "sha256": "5093f5ad6df54de84358a6f2e1ab214fc6b6d75ed640007c79eee443e719fcd4",
+      "originalSha256": "36c7bc8a41badf0e1c35a1031ea038dd5ebdbd2b7708e5dab533d7114b9f00b8",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 193,
+          "scene": "Cinco forças do Céu",
+          "path": "uploads/posts/os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo/images/capa.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-13",
+      "file": "art-13-mesa-v1.webp",
+      "sha256": "80ec1dedf5f432055ebf7f83c9d378998a6e2ef572dec38b89b406d4bb247d90",
+      "originalSha256": "d1a56c3b9961d4dacb4ef44d2e42480a79478e693bf0ed57168156631f30764d",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 194,
+          "scene": "Entre anjos e demônios",
+          "path": "uploads/posts/os-nefalem-o-verdadeiro-poder-por-tras-da-humanidade/images/capa.webp"
+        },
+        {
+          "id": 194,
+          "scene": "Mais fortes que seus criadores",
+          "path": "uploads/posts/os-nefalem-o-verdadeiro-poder-por-tras-da-humanidade/images/capa.webp"
+        },
+        {
+          "id": 194,
+          "scene": "A herança esquecida",
+          "path": "uploads/posts/os-nefalem-o-verdadeiro-poder-por-tras-da-humanidade/images/capa.webp"
+        },
+        {
+          "id": 194,
+          "scene": "A força que ainda existe",
+          "path": "uploads/posts/os-nefalem-o-verdadeiro-poder-por-tras-da-humanidade/images/capa.webp"
+        },
+        {
+          "id": 197,
+          "scene": "A história chega até nós",
+          "path": "uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img-004.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-14",
+      "file": "art-14-mesa-v1.webp",
+      "sha256": "3f6b7653c2ed2cd344028648cdbe98c9444b1c3889943944914edbfbf6f7307a",
+      "originalSha256": "e322472e026bc3b764d1e58ee21e80b8e1f94cd4c2aa86eb8a67ad9db5d8b73b",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 195,
+          "scene": "Um conflito sem fim",
+          "path": "uploads/posts/a-guerra-eterna-o-conflito-que-nunca-teve-fim/images/capa.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-15",
+      "file": "art-15-mesa-v1.webp",
+      "sha256": "a767127483eab7ff4fc68185ffa9198728fd407e282e780415451867bf59ab82",
+      "originalSha256": "6a938fe3f424ab54b4861782e3d64ae3724466a311368b6dd5e3e6ba1d2126f0",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 195,
+          "scene": "Visões que não se conciliam",
+          "path": "uploads/posts/a-guerra-eterna-o-conflito-que-nunca-teve-fim/images/a-guerra-eterna-o-conflito-que-nunca-teve-fim-01.webp"
+        },
+        {
+          "id": 195,
+          "scene": "Santuário entra na disputa",
+          "path": "uploads/posts/a-guerra-eterna-o-conflito-que-nunca-teve-fim/images/a-guerra-eterna-o-conflito-que-nunca-teve-fim-01.webp"
+        },
+        {
+          "id": 195,
+          "scene": "E a humanidade paga o preço",
+          "path": "uploads/posts/a-guerra-eterna-o-conflito-que-nunca-teve-fim/images/a-guerra-eterna-o-conflito-que-nunca-teve-fim-01.webp"
+        },
+        {
+          "id": 197,
+          "scene": "A Guerra Eterna",
+          "path": "uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img-002.webp"
+        }
+      ]
+    },
+    {
+      "key": "art-16",
+      "file": "art-16-mesa-v1.webp",
+      "sha256": "e7a3ab2918b03b5dd705bbd0fcda401874ce613f8a84b6377cb817d2c021bf44",
+      "originalSha256": "a0438546d567075f77cb1f4164550994c7cbde617c57c730cea3fdaee14290e0",
+      "method": "approved-image",
+      "uses": [
+        {
+          "id": 197,
+          "scene": "Anu e Tathamet",
+          "path": "uploads/posts/a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo/images/img-001.webp"
+        }
+      ]
+    }
+  ]
+}
