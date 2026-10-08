@@ -572,58 +572,46 @@
       "musicSourceId": "259777",
       "audioStart": 36,
       "duration": 28,
-      "note": "Imagem oficial da B650, substituindo a capa anterior que mostrava uma B850. Tomada contínua com textos sobre compatibilidade e conexões.",
+      "note": "Imagem oficial da B650, substituindo a capa anterior que mostrava uma B850. Tomada contínua com textos sobre compatibilidade e conexões. Arte de hardware aprovada: cenario ciano/dourado, produto inteiro e imagem fixa com animacao nos textos.",
       "scenes": [
         {
           "eyebrow": "MSI B650 TOMAHAWK WIFI",
           "title": "A base do conjunto",
           "body": "Uma placa-mãe para conectar as peças da plataforma AM5.",
-          "image": "@asset:msi-b650.png",
+          "image": "@asset:b650-cenario-v1.png",
           "framing": {
-            "mode": "product",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Antes da compra",
           "title": "Confira a compatibilidade",
           "body": "CPU, memória DDR5 e BIOS precisam funcionar juntos.",
-          "image": "@asset:msi-b650.png",
+          "image": "@asset:b650-cenario-v1.png",
           "framing": {
-            "mode": "product",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "O que você conecta",
           "title": "Armazenamento e expansão",
           "body": "Avalie as conexões que sua rotina exige, além do nome do chipset.",
-          "image": "@asset:msi-b650.png",
+          "image": "@asset:b650-cenario-v1.png",
           "framing": {
-            "mode": "product",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Um setup com planejamento",
           "title": "Pense nos próximos upgrades",
           "body": "Conheça os recursos e limites desta placa-mãe no artigo completo.",
-          "image": "@asset:msi-b650.png",
+          "image": "@asset:b650-cenario-v1.png",
           "framing": {
-            "mode": "product",
-            "focus": [
-              0.5,
-              0.5
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         }
       ],
@@ -765,82 +753,46 @@
       "musicSourceId": "478200",
       "audioStart": 49,
       "duration": 28,
-      "note": "Imagem oficial da linha NV3, substituindo a capa anterior que mostrava um NV2. Texto sobre uso e compatibilidade, sem benchmark inventado.",
+      "note": "Imagem oficial da linha NV3, substituindo a capa anterior que mostrava um NV2. Texto sobre uso e compatibilidade, sem benchmark inventado. Arte de hardware aprovada: cenario ciano/dourado, produto inteiro e imagem fixa com animacao nos textos.",
       "scenes": [
         {
           "eyebrow": "Kingston NV3 de 1 TB",
           "title": "Espaço e agilidade",
           "body": "O SSD NVMe faz parte do armazenamento deste setup.",
-          "image": "@asset:kingston-nv3.jpg",
+          "image": "@asset:nv3-cenario-v1.png",
           "framing": {
-            "mode": "cover",
-            "region": [
-              0.32,
-              0,
-              0.4,
-              0.74
-            ],
-            "focus": [
-              0.5,
-              0.45
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "No uso cotidiano",
           "title": "Sistema e aplicativos",
           "body": "A experiência depende também da carga de trabalho e do restante do PC.",
-          "image": "@asset:kingston-nv3.jpg",
+          "image": "@asset:nv3-cenario-v1.png",
           "framing": {
-            "mode": "cover",
-            "region": [
-              0.32,
-              0,
-              0.4,
-              0.74
-            ],
-            "focus": [
-              0.5,
-              0.45
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "Instalação e escolha",
           "title": "Confira o slot M.2",
           "body": "Formato, interface e compatibilidade precisam ser verificados.",
-          "image": "@asset:kingston-nv3.jpg",
+          "image": "@asset:nv3-cenario-v1.png",
           "framing": {
-            "mode": "cover",
-            "region": [
-              0.32,
-              0,
-              0.4,
-              0.74
-            ],
-            "focus": [
-              0.5,
-              0.45
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         },
         {
           "eyebrow": "O que cabe na sua rotina",
           "title": "Conheça os limites",
           "body": "Veja os pontos fortes e as limitações do Kingston NV3 no blog.",
-          "image": "@asset:kingston-nv3.jpg",
+          "image": "@asset:nv3-cenario-v1.png",
           "framing": {
-            "mode": "cover",
-            "region": [
-              0.32,
-              0,
-              0.4,
-              0.74
-            ],
-            "focus": [
-              0.5,
-              0.45
-            ]
+            "mode": "contain",
+            "motion": "still"
           }
         }
       ],
