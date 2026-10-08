@@ -21,6 +21,25 @@ const ease=n=>1-(1-clamp(n))**3;
 const txt=(parent,value,attrs)=>{const n=new Konva.Text({text:value,fontFamily:'EN Text',fill:'#f8f2e8',listening:false,...attrs});parent.add(n);return n;};
 const rule=(parent,points,color,opacity=1,width=2)=>{const n=new Konva.Line({points,stroke:color,strokeWidth:width,opacity,listening:false});parent.add(n);return n;};
 const fit=(node,maxHeight,maxSize,minSize)=>{for(let size=maxSize;size>=minSize;size-=2){node.fontSize(size);if(node.height()<=maxHeight)return size;}throw new Error('Texto manual não cabe com leitura confortável: '+node.text());};
+export const IMAGE_FRAME={x:86,y:365,width:908,height:511};
+export function framingGeometry(width,height,framing={}){
+  const region=framing.region??[0,0,1,1];
+  const [rx,ry,rw,rh]=region;
+  if(region.length!==4||region.some(n=>!Number.isFinite(n))||rx<0||ry<0||rw<=0||rh<=0||rx+rw>1.000001||ry+rh>1.000001)throw new Error('Região de imagem inválida');
+  const crop={x:rx*width,y:ry*height,width:rw*width,height:rh*height};
+  const w=IMAGE_FRAME.width,h=IMAGE_FRAME.height;
+  if(framing.mode==='product'){
+    const scale=Math.min(w*0.86/crop.width,h*0.9/crop.height);
+    return {crop,x:(w-crop.width*scale)/2,y:(h-crop.height*scale)/2,width:crop.width*scale,height:crop.height*scale};
+  }
+  if(framing.mode && framing.mode!=='cover')throw new Error('Modo de enquadramento inválido');
+  const focus=framing.focus??[0.5,0.5];
+  if(focus.length!==2||focus.some(n=>!Number.isFinite(n)||n<0||n>1))throw new Error('Foco inválido');
+  const ratio=w/h;
+  if(crop.width/crop.height>ratio){const wanted=crop.height*ratio;crop.x+=(crop.width-wanted)*focus[0];crop.width=wanted;}
+  else{const wanted=crop.width/ratio;crop.y+=(crop.height-wanted)*focus[1];crop.height=wanted;}
+  return {crop,x:0,y:0,width:w,height:h};
+}
 
 export function validateManualSpec(spec){
   if(spec.editorial!=='manual' || !PALETTES[spec.tone] || !['chronicle','guide','versus','showcase','culture','dispatch'].includes(spec.layout))throw new Error('Tratamento editorial inválido');
@@ -32,7 +51,7 @@ export function validateManualSpec(spec){
 // Adjacent identical images are one continuous shot, even as text changes.
 export function imageRuns(spec){
   const runs=[];
-  spec.scenes.forEach((s,i)=>{const last=runs.at(-1);if(last?.image===s.image){last.end=i===3?spec.duration:spec.beatStarts[i+1];return;}runs.push({image:s.image,start:spec.beatStarts[i],end:i===3?spec.duration:spec.beatStarts[i+1]});});
+  spec.scenes.forEach((s,i)=>{const last=runs.at(-1);if(last?.image===s.image && JSON.stringify(last.framing)===JSON.stringify(s.framing)){last.end=i===3?spec.duration:spec.beatStarts[i+1];return;}runs.push({image:s.image,framing:s.framing,start:spec.beatStarts[i],end:i===3?spec.duration:spec.beatStarts[i+1]});});
   return runs;
 }
 export function manualState(spec,time){
@@ -68,13 +87,14 @@ export async function createManualScene(spec,root){
   txt(layer,spec.collection,{x:86,y:211,width:850,fontSize:18,letterSpacing:2,fill:palette.accent});
   rule(layer,[86,264,994,264],palette.accent,0.4);
 
-  const geometry={chronicle:[86,316,908,620],guide:[86,330,908,595],versus:[86,365,908,580],showcase:[86,319,908,660],culture:[86,350,908,610],dispatch:[86,325,908,605]}[spec.layout];
-  const [x,y,w,h]=geometry;const runs=imageRuns(spec);const visual=[];
+  const {x,y,width:w,height:h}=IMAGE_FRAME;const runs=imageRuns(spec);const visual=[];
   for(const run of runs){
     const path=resolve(root,run.image);if(!existsSync(path))throw new Error('Imagem selecionada ausente: '+run.image);
     const img=await loadImage(path);const group=new Konva.Group({x,y,clipX:0,clipY:0,clipWidth:w,clipHeight:h,listening:false});layer.add(group);
-    const scale=Math.min(w/img.width,h/img.height)*0.94;
-    const photo=new Konva.Image({image:img,x:(w-img.width*scale)/2,y:(h-img.height*scale)/2,width:img.width*scale,height:img.height*scale,listening:false});group.add(photo);
+    group.add(new Konva.Rect({width:w,height:h,fillLinearGradientStartPoint:{x:0,y:0},fillLinearGradientEndPoint:{x:w,y:h},fillLinearGradientColorStops:[0,'#163143',0.5,palette.bg,1,'#18343e'],listening:false}));
+    const framed=framingGeometry(img.width,img.height,run.framing);
+    const photo=new Konva.Image({image:img,...framed,listening:false});group.add(photo);
+    group.add(new Konva.Rect({width:w,height:h,stroke:palette.accent,strokeWidth:2,opacity:0.3,listening:false}));
     visual.push({group,photo,run,base:{x:photo.x(),y:photo.y(),width:photo.width(),height:photo.height()}});
   }
   rule(layer,[86,y+h+22,994,y+h+22],palette.accent,0.38);

@@ -54,7 +54,7 @@ Cada roteiro define quatro momentos com textos completos, imagens identificadas 
 - [CD PROJEKT RED: anúncio do Remastered](https://www.thewitcher.com/es/en/news/52017/announcing-the-witcher-3-wild-hunt-remastered): confirmado o anúncio e a condição de upgrade para proprietários elegíveis. A prévia não diz que o jogo base é grátis para qualquer pessoa. O título/conteúdo do artigo ainda usa anúncio futuro de 29/09: **atualizar o blog antes de usar o post**, em escopo próprio. O título original continua visível na galeria para identificar o artigo.
 - [Microsoft: versões do Windows 11](https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information): a tabela registra 13/10/2026 para fim das atualizações de 24H2 Home/Pro. A redação deve ser conferida novamente na data de publicação. A fila não foi antecipada nem alterada.
 - [AMD: Ryzen 7600X](https://ir.amd.com/news-events/press-releases/detail/1089/amdlaunches-ryzen-7000-series-desktop-processors-with-zen-4-architecture-the-fastest-core-in-gaming): seis núcleos/doze threads. [MSI: B850](https://www.msi.com/Motherboard/MAG-B850-TOMAHAWK-MAX-WIFI/Specification): plataforma AM5. A imagem do setup indica B850. A capa do artigo específico B650 também mostra uma B850: foi substituída **na prévia** por imagem oficial da [B650](https://www.msi.com/Motherboard/MAG-B650-TOMAHAWK-WIFI). A capa da RTX 3050 foi inspecionada em tamanho original e indica 6 GB.
-- A capa do artigo Kingston NV3 mostra NV2. A nova prévia usa uma imagem oficial da [linha NV3](https://www.kingston.com/en/ssd/nv3-nvme-pcie-ssd). As capas incorretas dos dois artigos continuam no blog: corrigir o conteúdo publicado requer escopo próprio. Origem e hashes das duas imagens estão em `resources/reels-review/assets/sources.json`.
+- A capa do artigo Kingston NV3 mostra NV2. A nova prévia usa uma imagem oficial da [linha NV3](https://www.kingston.com/en/ssd/nv3-nvme-pcie-ssd). As capas incorretas foram corrigidas no banco local em 08/10/2026. Stage e produção seguem pendentes, conforme o impedimento descrito abaixo. Origem e hashes das duas imagens estão em `resources/reels-review/assets/sources.json`.
 - [Blizzard: história de Diablo](https://news.blizzard.com/en-us/article/23725427/diablo-ii-the-story-so-far): conferidos criação de Santuário, origem dos Nefalem e enfraquecimento pelo Worldstone.
 
 As afirmações quantitativas não verificadas do artigo (benchmarks, velocidades comerciais, preços e recomendações universais) não foram repetidas nos roteiros. Esta entrega não corrige automaticamente os artigos do blog.
@@ -108,3 +108,37 @@ Pelo túnel, a página respondeu HTTP 200, as 30 capas responderam com MIME de i
 O player inicialmente não tinha `src`: tocar no controle nativo antes de escolher uma versão deixava a impressão de vídeo ausente. Corrigido associando a prévia revisada desde a criação de cada card, com seleção inicial coerente e `preload="none"`. A página continua sem autoplay e pausa os demais vídeos ao reproduzir um. Não regenerou MP4 nem alterou banco ou fila.
 
 Galeria atualizada no mesmo diretório local. Link com versão para evitar a página antiga em cache: https://nerd.tfr-info.com.br/uploads/previews/revisao-reels-20261007/index.html?v=player2 . Tarefas existentes #887 e #888 reabertas para esta correção, sem duplicação. Suíte obrigatória: 17 verificações aprovadas, zero falhas. Reprodução nativa conferida pelo túnel em viewport de 390×844, sem selecionar o botão Revisado antes: duração 28 s, reprodução ativa e nenhum erro de mídia.
+
+## Enquadramento uniforme e capas corretas — 08/10/2026
+
+A área visual dos 29 Reels manuais agora tem posição e dimensões fixas: x=86, y=365, 908×511 pixels (16:9, com arredondamento de um pixel). Não varia por layout nem pelo tamanho do arquivo de origem. O primeiro ensaio com área mais alta cortava palavras já presentes nas capas; a versão final 16:9 conserva essas inscrições. Cada cena declara `framing`, com modo, foco e região de origem quando necessário. Ilustrações preenchem a moldura por recorte proporcional. A B650 usa composição de produto inteiro sobre fundo próprio; o NV3 usa uma região da arte oficial que elimina margens excessivas. Não existe esticamento da imagem. Uma imagem repetida com o mesmo enquadramento permanece em tomada contínua durante as trocas de texto.
+
+Foram geradas 29 versões adicionais: v2 na maioria dos posts e v3 nos IDs 197, 200 e 203. A referência #214 foi mantida. MP4 e prévias anteriores permanecem no diretório e no histórico do manifesto. A galeria atual é https://nerd.tfr-info.com.br/uploads/previews/revisao-reels-20261007/index.html?v=enquadramento3 . A fila e os arquivos usados pelo Instagram não foram alterados.
+
+Validação: 30 tratamentos passaram no teste de renderer, incluindo continuidade da tomada, moldura fixa, proporção sem distorção e produto inteiro. Os 30 vídeos passaram na decodificação integral e áudio audível; os originais mantiveram seus hashes. Todas as 29 folhas de contato novas foram examinadas visualmente. Os 30 arquivos responderam Range 206/MIME MP4 pelo túnel (`framing-http-validation.json`). O NV3 revisado reproduziu até 28 segundos em viewport de 390×844 sem erro. A suíte obrigatória passou nas 17 verificações e o publicador de capas passou no PHPStan nível 5.
+
+### Capas do blog e publicação restrita
+
+`scripts/reels-review/blog-covers.mjs` compõe duas capas WebP de 1200×800 a partir das fontes oficiais já conferidas, usando processamento local. O original da MSI é preservado com o equipamento inteiro; a arte da Kingston identifica NV3, sem inventar capacidade na etiqueta. Os arquivos recebem nome derivado de SHA-256.
+
+`scripts/reels-review/publish-blog-covers.php` opera somente nos dois slugs aprovados. Guarda todos os campos dos artigos, referências e cópias das capas; envia para nomes novos, compara hashes e atualiza apenas `posts.imagem_capa` com condição por ID, slug e referência anterior. O MySQL atualiza automaticamente `data_atualizacao` (ON UPDATE CURRENT_TIMESTAMP); os demais campos editoriais são comparados integralmente. Demais referências de capa também são conferidas. Instagram não é consultado nem modificado pelo publicador.
+
+Local concluído: B650 id23 e NV3 id26; as páginas HTTP 200 no Apache (`http://127.0.0.1/estrategia-nerd/post/{slug}`) referenciam as capas novas e ambas as imagens respondem HTTP 200/WebP pelo túnel. Os IDs diferem entre ambientes, por isso o slug é obrigatório. Referências de produção e suas imagens originais também foram guardadas antes de qualquer alteração. Evidências em `storage/previews/reels-review/blog-covers-20261008/`, incluindo `covers.json`, `references-local.json`, `references-production.json` e `verified-local.json`. Nenhum desses arquivos contém credenciais.
+
+**Impedimento:** stage contém B650 id21, mas não contém o artigo NV3; id23 lá é “teste”. A inspeção interrompeu antes de escrever em stage. Nenhuma capa foi publicada em stage ou produção. Criar um artigo não fazia parte do plano de atualização de duas referências; o complemento para copiar somente NV3 de produção para stage foi apresentado ao usuário e aguarda aprovação explícita. Não contornar o bloqueio usando IDs de outro ambiente nem sincronizar todo o blog. Tarefa Forge #889 permanece pendente.
+
+Operação autorizada inicialmente:
+
+```powershell
+node scripts/reels-review/blog-covers.mjs
+C:/xampp/php/php.exe scripts/reels-review/publish-blog-covers.php --inspect local
+C:/xampp/php/php.exe scripts/reels-review/publish-blog-covers.php --apply local
+C:/xampp/php/php.exe scripts/reels-review/publish-blog-covers.php --verify local
+# Após resolver o artigo ausente com aprovação própria:
+C:/xampp/php/php.exe scripts/reels-review/publish-blog-covers.php --inspect stage
+C:/xampp/php/php.exe scripts/reels-review/publish-blog-covers.php --apply stage
+C:/xampp/php/php.exe scripts/reels-review/publish-blog-covers.php --apply production
+# Recuperação: --rollback ambiente restaura somente as referências anteriores.
+```
+
+A produção exige política de origem stage e a arte exata verificada em stage; a criação ausente não é automatizada pelo script. Backups existentes não são sobrescritos. Se algum destino já contiver um arquivo de mesmo nome com hash diferente, a operação falha. Rollback mantém todos os arquivos e recupera as referências, com novo carimbo automático do banco.
