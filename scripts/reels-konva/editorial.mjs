@@ -18,7 +18,7 @@ try{
   const scene=await createScene(spec,root);
   let thumbnail;
   try{
-    for(let i=0;i<4;i++)scene.render(i*spec.duration/4+1.2);
+    for(const start of spec.beatStarts ?? [0,spec.duration/4,spec.duration/2,spec.duration*3/4])scene.render(start+2);
     scene.render(1.6);
     thumbnail=await scene.layer.getCanvas()._canvas.toBuffer('jpg',{quality:0.92});
   }finally{scene.destroy();}

@@ -19,7 +19,10 @@ $cover='uploads/posts/diablo-criacao-santuario/images/img004.png';
 $check('Rejeita fonte externa/ausente',$reject(static fn()=>$renderer->asset('https://example.test/photo.png')));
 $check('Rejeita saída fora de Reels antes de chamar Node',$reject(static fn()=>$renderer->renderSpec([],'../overwrite.mp4')));
 $check('Texto limpa HTML e marcações sem inventar fatos',KonvaReelRenderer::clean('<b>[[Santuário]]</b> &amp; Anu')==='Santuário & Anu');
+$check('Resumo sem roteiro individual não gera vídeo',$reject(static fn()=>$renderer->spec($cover,'uploads/audio/test.mp3',['id'=>1,'titulo'=>'Título','resumo'=>'Um resumo não é um roteiro.'],0)));
 $check('Duração conserva limites de leitura',KonvaReelRenderer::duration(['titulo'=>str_repeat('Palavra ',50)])===30);
+$check('Duração individual admite cinco cenas',KonvaReelRenderer::duration(['editorial_spec'=>['duration'=>35]])===35);
+$check('Duração individual inválida é recusada',$reject(static fn()=>KonvaReelRenderer::duration(['editorial_spec'=>['duration'=>90]])));
 $check('Inventário permite exatamente os 26 IDs aprovados',count(KonvaReelBatchService::IDS)===26 && !in_array(214,KonvaReelBatchService::IDS,true));
 $cacheDb=new PDO('sqlite::memory:',null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
 $cacheDb->exec("CREATE TABLE instagram_posts(id INTEGER,status TEXT,publish_phase TEXT,creation_id TEXT,ig_media_id TEXT,video_rendered_path TEXT,render_status TEXT,audio_duration_seconds INTEGER)");
@@ -42,12 +45,7 @@ if(isset($options['manifest'])){
         $GLOBALS['config']=['instagram'=>require $root.'/config/instagram.php'];
         $source=$manifest['items'][4];
         $generator=new AudioReelGeneratorService('ffmpeg','ffprobe',$root.'/public');
-        // Same method called by the automatic blog synchronizer, with no --motion opt-in.
-        $result=$generator->generateEditorialReel($source['article']['imagem_capa'],$source['track']['arquivo_path'],$source['article'],(int) $source['audio_start']);
-        $rendered=json_decode((string) file_get_contents($root.'/public/'.$result['video_path'].'.manifest.json'),true,512,JSON_THROW_ON_ERROR);
-        $check('Geração automática usa Konva sem flag extra',$rendered['version']==='konva-editorial-v2' && is_file($root.'/public/'.$result['canvas_path']));
-        $check('Geração automática preserva música e início',$rendered['spec']['audio']==='public/'.$source['track']['arquivo_path'] && $rendered['spec']['audioStart']===$source['audio_start']);
-        $check('Cache pronto reutiliza o MP4 sem nova renderização',AudioReelGeneratorService::readyVideoPath(['render_status'=>'ready','video_rendered_path'=>$result['video_path']],$root.'/public')===$result['video_path']);
+        $check('Geração sem roteiro individual recusa o resumo mesmo no fluxo automático',$reject(static fn()=>$generator->generateEditorialReel($source['article']['imagem_capa'],$source['track']['arquivo_path'],$source['article'],(int) $source['audio_start'])));
     }
     // Real files, ephemeral SQLite records: no MySQL or publication APIs.
     $local=new PDO('sqlite::memory:',null,null,[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);

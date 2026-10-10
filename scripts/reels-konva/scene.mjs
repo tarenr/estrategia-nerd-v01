@@ -33,10 +33,11 @@ export function registerFonts(root) {
 }
 
 export function validateSpec(spec) {
-  if (!spec || !Number.isInteger(spec.duration) || spec.duration < 16 || spec.duration > 30) {
-    throw new Error('Duração deve ser um inteiro entre 16 e 30 segundos.');
+  const manual = spec?.editorial === 'manual';
+  if (!spec || !Number.isInteger(spec.duration) || spec.duration < 16 || spec.duration > (manual ? 60 : 30)) {
+    throw new Error('Duração editorial fora do intervalo permitido.');
   }
-  if (!Array.isArray(spec.scenes) || spec.scenes.length !== 4) throw new Error('Informe quatro cenas.');
+  if (!Array.isArray(spec.scenes) || (manual ? spec.scenes.length < 2 || spec.scenes.length > 8 : spec.scenes.length !== 4)) throw new Error('Quantidade de cenas inválida.');
   for (const scene of spec.scenes) {
     for (const key of ['eyebrow', 'title', 'body', 'image']) {
       if (typeof scene[key] !== 'string' || !scene[key].trim()) throw new Error(`Cena sem ${key}.`);

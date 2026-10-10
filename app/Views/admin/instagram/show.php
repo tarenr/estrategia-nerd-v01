@@ -54,6 +54,11 @@ if ($firstMedia !== null) {
         $firstMediaUrl = $caminho !== '' ? (str_starts_with($caminho, 'http') ? $caminho : url('/' . ltrim($caminho, '/'))) : '';
     }
 }
+$readyPreview = \App\Services\Instagram\AudioReelGeneratorService::readyVideoPath($post, base_path('public'));
+if ($readyPreview !== null && !empty($post['audio_track_id'])) {
+    $firstMediaUrl = url('/' . ltrim($readyPreview, '/'));
+    $firstIsVideo = true;
+}
 ?>
 
 <div class="max-w-5xl mx-auto" data-instagram-show-root>

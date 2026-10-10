@@ -12,8 +12,14 @@ final class KonvaReelRenderer
     /** @param array<string,mixed> $meta */
     public static function duration(array $meta): int
     {
+        $curated=$meta['editorial_spec'] ?? null;
+        if (is_array($curated) && is_int($curated['duration'] ?? null)) {
+            $duration=$curated['duration'];
+            if ($duration<16 || $duration>60) { throw new RuntimeException('Duração do roteiro fora dos limites editoriais.'); }
+            return $duration;
+        }
         $title=self::clean((string) ($meta['titulo'] ?? ''));
-        // Four uniform scenes; opening title must have enough reading time.
+        // Legacy estimate for planning only; spec() still requires a curated script.
         return min(30,max(24,(int) ceil((count(preg_split('/\s+/u',$title) ?: []) / 2.5 + 1.1)*4)));
     }
 
@@ -23,42 +29,17 @@ final class KonvaReelRenderer
         return trim((string) preg_replace('/\s+/u',' ',html_entity_decode(strip_tags($text),ENT_QUOTES|ENT_HTML5,'UTF-8')));
     }
 
-    private static function excerpt(string $text, int $words=15, int $chars=180): string
-    {
-        $items=preg_split('/\s+/u',self::clean($text)) ?: [];
-        $value=implode(' ',array_slice($items,0,$words));
-        while(mb_strlen($value)>$chars && count($items)>1){array_pop($items);$value=implode(' ',array_slice($items,0,$words));}
-        return rtrim($value," .,;:") . (count(preg_split('/\s+/u',$text) ?: [])>count(preg_split('/\s+/u',$value) ?: [])?'…':'');
-    }
-
     /** @param array<string,mixed> $meta @return array<string,mixed> */
     public function spec(string $cover, string $audio, array $meta, int $start, ?int $seconds=null): array
     {
-        $title=self::clean((string) ($meta['titulo'] ?? ''));
-        if($title==='')throw new RuntimeException('Artigo sem título para Reel editorial.');
-        $summary=self::clean((string) ($meta['resumo'] ?? ''));
-        if($summary==='')throw new RuntimeException('Artigo sem resumo: revise antes de gerar o Reel.');
-        $category=mb_strtolower(trim((string) ($meta['categoria'] ?? '')));
-        if(!in_array($category,['hardware','games','dicas'],true))$category='editorial';
-        $images=[$this->asset($cover)];
-        $more=glob(dirname($images[0]).'/img*') ?: [];
-        sort($more,SORT_NATURAL);
-        foreach($more as $path){if(is_file($path) && in_array(strtolower(pathinfo($path,PATHINFO_EXTENSION)),['png','jpg','jpeg','webp'],true))$images[]=$this->asset($this->relative($path));}
-        $chunks=preg_split('/(?<=[.!?])\s+/u',$summary) ?: [$summary];
-        if(count($chunks)<2){$words=preg_split('/\s+/u',$summary) ?: []; $middle=(int) ceil(count($words)/2);$chunks=[implode(' ',array_slice($words,0,$middle)),implode(' ',array_slice($words,$middle))];}
-        $point1=self::excerpt($chunks[0]);
-        $point2=self::excerpt(implode(' ',array_slice($chunks,1)));
-        if($point2==='')$point2=self::excerpt($summary);
-        $shortTitle=mb_strlen($title)<=110?$title:self::excerpt($title,30,107);
-        $bodies=['Confira os pontos do artigo e continue a leitura no blog.',$point1,$point2,'Leia o artigo completo no Estratégia Nerd. Acesse pelo link na bio.'];
-        $titles=[$shortTitle,'O QUE VOCÊ VAI ENCONTRAR','CONTINUE EXPLORANDO','LEIA O ARTIGO COMPLETO'];
-        $labels=['EM FOCO','PRIMEIRO PONTO','OUTRO PONTO DO ARTIGO','CONTINUE NO BLOG'];
-        $scenes=[];
-        for($i=0;$i<4;$i++)$scenes[]=['eyebrow'=>$labels[$i],'title'=>$titles[$i],'body'=>$bodies[$i],
-            'image'=>'public/'.$this->relative($images[min($i,count($images)-1)]),'imageFit'=>'contain','caption'=>'IMAGEM DO ARTIGO',
-            'chapter'=>sprintf('%02d / %s',$i+1,$i===3?'LINK NA BIO':'ESTRATÉGIA NERD')];
-        return ['articleId'=>(int) ($meta['id'] ?? 0),'articleTitle'=>$title,'category'=>$category,'duration'=>$seconds ?? self::duration($meta),
-            'audio'=>'public/'.$this->relative($this->asset($audio)),'audioStart'=>$start,'scenes'=>$scenes];
+        // A summary is not a storyboard. Fail before rendering unless a curated
+        // scene sequence was explicitly supplied by the editorial workflow.
+        $curated = $meta['editorial_spec'] ?? null;
+        if (!is_array($curated) || ($curated['editorial'] ?? '') !== 'manual'
+            || !is_array($curated['scenes'] ?? null) || count($curated['scenes']) < 2) {
+            throw new RuntimeException('Reel sem roteiro individual revisado. Prepare cenas, imagens, tempos e áudio antes de renderizar.');
+        }
+        return $curated;
     }
 
     public function asset(string $path): string
@@ -67,13 +48,6 @@ final class KonvaReelRenderer
         $full=realpath(preg_match('~^(?:[A-Za-z]:[\\\\/]|/)~',$path)?$path:$this->root.'/public/'.ltrim($path,'/\\'));
         if($base===false || $full===false || !is_file($full) || !str_starts_with(strtolower(str_replace('\\','/',$full)),strtolower(str_replace('\\','/',$base)).'/'))throw new RuntimeException('Asset editorial ausente ou fora de public.');
         return $full;
-    }
-
-    private function relative(string $path): string
-    {
-        $base=realpath($this->root.'/public');
-        if($base===false)throw new RuntimeException('Raiz pública ausente.');
-        return substr(str_replace('\\','/',$path),strlen(str_replace('\\','/',$base))+1);
     }
 
     /** @param array<string,mixed> $spec @return array{video_path:string,canvas_path:string,duration:int} */

@@ -1,0 +1,3595 @@
+{
+  "version": 1,
+  "approvedOn": "2026-10-10",
+  "cancelled": [
+    191,
+    192,
+    193,
+    194
+  ],
+  "publicationApproval": false,
+  "items": [
+    {
+      "id": 1,
+      "title": "10 jogos que todo fã de RPG precisa jogar antes de morrer",
+      "status": "rascunho",
+      "scheduled": null,
+      "originEnvironment": "local",
+      "articleId": 28,
+      "articleSlug": "10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer",
+      "articleSha256": "9d2d02f479aa7db10fd78b46313d5f7c8a98f0f521e5ff0b695fdc58e60a07d1",
+      "type": "list",
+      "note": "Tr?s exemplos de estilos com screenshots oficiais de Chrono Trigger, The Witcher 3 e Baldur's Gate 3.",
+      "sources": [],
+      "caption": "🎮 Qual RPG merece entrar na sua próxima aventura?\n\nChrono Trigger, The Witcher 3 e Baldur’s Gate 3 mostram três formas de viver boas histórias: viagem no tempo, escolhas em mundo aberto e estratégia por turnos.\n\nQual desses você recomenda para alguém que está começando?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": null,
+      "originalSha256": null,
+      "reuse": false,
+      "trackId": 24,
+      "spec": {
+        "articleId": 28,
+        "articleTitle": "10 jogos que todo fã de RPG precisa jogar antes de morrer",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "CULTURA E JOGOS",
+        "layout": "culture",
+        "tone": "fantasy",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_239599.mp3",
+        "audioStart": 61,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "RPGs que marcaram época",
+            "title": "Qual aventura é a sua?",
+            "body": "A lista reúne dez jogos. Estes são três caminhos para começar.",
+            "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Histórias e personagens",
+            "title": "Chrono Trigger",
+            "body": "Viagem no tempo em um clássico do RPG japonês.",
+            "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/chrono-trigger.jpg",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Escolhas em um mundo aberto",
+            "title": "The Witcher 3",
+            "body": "Contratos, personagens e decisões em uma fantasia medieval.",
+            "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/the-witcher-3.jpg",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Estratégia e liberdade",
+            "title": "Baldur's Gate 3",
+            "body": "Um RPG de escolhas e combate por turnos. Conheça os dez títulos no blog.",
+            "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/baldurs-gate-3.jpg",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "list"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-1-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-1-v2.jpg",
+      "sha256": "e7078c24ddb547b6c697048fe78ce90cd2521ca412003950da5a166f1bf03722",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-1-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-1-v1.jpg",
+          "sha256": "ca8de71659d65d120210d6acb9f9aa6972192fea039c07f65afd9955697c5b0b"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 190,
+      "title": "16 GB ou 32 GB de RAM em 2026: quanto um PC gamer realmente precisa?",
+      "status": "agendado",
+      "scheduled": "2026-10-18 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 27,
+      "articleSlug": "16gb-ou-32gb-ram-pc-gamer-2026",
+      "articleSha256": "10815d5e13b033dd08f63344f66be53a7a4d5c0398494f5b9a3e83b2b213242a",
+      "type": "comparison",
+      "note": "Comparação de capacidade; a imagem permanece enquanto entram as decisões.",
+      "sources": [],
+      "caption": "💻 Seu PC precisa de 16 GB ou 32 GB?\n\nObserve os jogos e programas que você usa juntos. Mais capacidade pode dar margem para multitarefa, mas compatibilidade, configuração e orçamento também entram na decisão.\n\nO que costuma ficar aberto enquanto você joga?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-190-7765295a.mp4",
+      "originalSha256": "24a472bfd8ff85abc911215b5eb52202e194f09e08d7808c467adbe00c068b34",
+      "reuse": false,
+      "trackId": 4,
+      "spec": {
+        "articleId": 27,
+        "articleTitle": "16 GB ou 32 GB de RAM em 2026: quanto um PC gamer realmente precisa?",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "ESCOLHAS PARA SEU PC",
+        "layout": "versus",
+        "tone": "tech",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_95436.mp3",
+        "audioStart": 31,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "A dúvida do upgrade",
+            "title": "16 GB ou 32 GB?",
+            "body": "A resposta depende do jogo e do que você mantém aberto.",
+            "image": "public/uploads/posts/16gb-ou-32gb-ram-pc-gamer-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Seu uso decide",
+            "title": "16 GB: avalie seu cenário",
+            "body": "Pode atender jogos e uso mais enxuto. Observe o consumo de memória.",
+            "image": "public/uploads/posts/16gb-ou-32gb-ram-pc-gamer-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Mais espaço para trabalhar",
+            "title": "32 GB: mais margem",
+            "body": "Jogos, navegador e outros programas disputam a mesma RAM.",
+            "image": "public/uploads/posts/16gb-ou-32gb-ram-pc-gamer-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Antes de comprar",
+            "title": "Capacidade não é tudo",
+            "body": "Confira compatibilidade, módulos e orçamento. Comparação completa no blog.",
+            "image": "public/uploads/posts/16gb-ou-32gb-ram-pc-gamer-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "comparison": [
+          "16 GB",
+          "32 GB"
+        ],
+        "presentation": "comparison"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-190-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-190-v2.jpg",
+      "sha256": "85ac009e27517aad05fdfc76f1e22cc2de517551e1065785e7063032f06bf290",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-190-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-190-v1.jpg",
+          "sha256": "59d1c132f171fdd9fc48d25d7e3b82cbf81d5462e5d1c1309d36b021cf45e302"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 195,
+      "title": "A Guerra Eterna: o conflito que nunca teve fim",
+      "status": "agendado",
+      "scheduled": "2026-10-23 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 15,
+      "articleSlug": "a-guerra-eterna-o-conflito-que-nunca-teve-fim",
+      "articleSha256": "93e5ce26dc923d10d86ed8adff3d00570d7db542482015d212a243ba1134542c",
+      "type": "story",
+      "note": "Duas imagens identificadas; sem reiniciar a arte quando só muda o texto. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte. Nova agenda de Diablo: fila #195, 2026-11-05 19:30:00 (Brasília).",
+      "sources": [],
+      "caption": "A Guerra Eterna: o conflito que nunca teve fim\n\nMuito antes de Santuário existir, Céu e Inferno já travavam uma guerra sem vitória. A Guerra Eterna não acabou — ela apenas mudou de campo… e agora acontece onde você vive.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/diablo-agenda-20261008/diablo-195-ef2665c53780.mp4",
+      "originalSha256": "ef2665c5378046d082b99393a5f69e1b822895f3b0d8053406464fa57f2a2dc6",
+      "reuse": true,
+      "trackId": 25,
+      "spec": {
+        "articleId": 15,
+        "articleTitle": "A Guerra Eterna: o conflito que nunca teve fim",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+        "layout": "chronicle",
+        "tone": "dark",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_248213.mp3",
+        "audioStart": 12,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "A Guerra Eterna",
+            "title": "Um conflito sem fim",
+            "body": "Muito antes de Santuário, anjos e demônios já disputavam poder.",
+            "image": "resources/reels-review/assets/diablo/art-14-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Céu e Inferno",
+            "title": "Visões que não se conciliam",
+            "body": "A ordem dos anjos e a dominação dos demônios alimentam essa guerra.",
+            "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Um mundo entre as forças",
+            "title": "Santuário entra na disputa",
+            "body": "O refúgio criado longe do conflito se torna parte dele.",
+            "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "A guerra atravessa eras",
+            "title": "E a humanidade paga o preço",
+            "body": "Conheça o conflito que sustenta a história de Diablo. Leia no blog.",
+            "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "story"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-195-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-195-v1.jpg",
+      "sha256": "ef2665c5378046d082b99393a5f69e1b822895f3b0d8053406464fa57f2a2dc6"
+    },
+    {
+      "id": 196,
+      "title": "As ferramentas que moldam os guerreiros modernos",
+      "status": "publicado",
+      "scheduled": "2026-10-10 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 16,
+      "articleSlug": "as-ferramentas-que-moldam-os-guerreiros-modernos",
+      "articleSha256": "5ed25058ab81c24168f1b7d0100ec56f755a3f6dcc9279d3d35e293cabb11333",
+      "type": "story",
+      "note": "O artigo é sobre periféricos, apesar da metáfora de guerreiros; tratamento de hardware.",
+      "sources": [],
+      "caption": "🎮 As ferramentas mudaram. A estratégia continua contando.\n\nHoje, o controle está no mouse, no teclado e nas respostas do seu setup. O áudio também ajuda a perceber o que acontece ao redor.\n\nEquipamento pode apoiar sua experiência; prática, conforto e escolhas continuam fazendo parte do jogo. Qual ferramenta mais mudou sua forma de jogar?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-196-3e3b256a.mp4",
+      "originalSha256": "68273d8787ad8544c06ef704ec9f1d877c199525a82dfaa46b52c2263f6d0103",
+      "reuse": false,
+      "trackId": 5,
+      "spec": {
+        "articleId": 16,
+        "articleTitle": "As ferramentas que moldam os guerreiros modernos",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "chronicle",
+        "tone": "tech",
+        "duration": 32,
+        "audio": "public/uploads/audio/pixabay_141278.mp3",
+        "audioStart": 35,
+        "beatStarts": [
+          0,
+          8,
+          16,
+          24
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Os campos mudaram",
+            "title": "A batalha chegou à tela",
+            "body": "Hoje, os desafios pedem foco, estratégia e controle.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0,
+                0,
+                0.5,
+                0.5
+              ]
+            }
+          },
+          {
+            "eyebrow": "Controle",
+            "title": "Cada movimento importa",
+            "body": "Conforto e precisão ajudam a executar suas escolhas.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0.5,
+                0,
+                0.5,
+                0.5
+              ]
+            }
+          },
+          {
+            "eyebrow": "Resposta",
+            "title": "O conjunto acompanha você",
+            "body": "O jogo e o equipamento influenciam a resposta aos comandos.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0,
+                0.5,
+                0.5,
+                0.5
+              ]
+            }
+          },
+          {
+            "eyebrow": "Percepção",
+            "title": "Ouvir também é jogar",
+            "body": "Ferramentas apoiam a habilidade. Não substituem a prática.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0.5,
+                0.5,
+                0.5,
+                0.5
+              ]
+            }
+          }
+        ],
+        "presentation": "story"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-196-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-196-v2.jpg",
+      "sha256": "a7cd751467970ea7e01f238aa84896fe651d9435b978c8a6e57198c39e87f4f6",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-196-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-196-v1.jpg",
+          "sha256": "a7cd751467970ea7e01f238aa84896fe651d9435b978c8a6e57198c39e87f4f6"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 197,
+      "title": "A Lore Completa de Diablo: Entenda Toda a História do Universo",
+      "status": "agendado",
+      "scheduled": "2026-10-24 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 17,
+      "articleSlug": "a-lore-completa-de-diablo-entenda-toda-a-historia-do-universo",
+      "articleSha256": "a569645d70379148728add160b8d2e9d0883b37090c61e94749db99e0279e0ed",
+      "type": "story",
+      "note": "Linha narrativa: origem, Guerra Eterna, Santuário e humanidade; imagens específicas. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte. Nova agenda de Diablo: fila #197, 2026-11-07 19:30:00 (Brasília).",
+      "sources": [],
+      "caption": "A Lore Completa de Diablo: Entenda Toda a História do Universo\n\nDescubra a lore completa de Diablo, desde a origem do universo com Anu e Tathamet até a Guerra Eterna, o nascimento de Santuário e o verdadeiro papel da humanidade nesse conflito épico.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/diablo-agenda-20261008/diablo-197-a9940dab6a71.mp4",
+      "originalSha256": "a9940dab6a716f802d5310fe4680fa0039b644aad10bbabd5cb4968381cbd466",
+      "reuse": true,
+      "trackId": 25,
+      "spec": {
+        "articleId": 17,
+        "articleTitle": "A Lore Completa de Diablo: Entenda Toda a História do Universo",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+        "layout": "chronicle",
+        "tone": "dark",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_248213.mp3",
+        "audioStart": 38,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Antes de Santuário",
+            "title": "Anu e Tathamet",
+            "body": "Luz e trevas estão na origem desse universo.",
+            "image": "resources/reels-review/assets/diablo/art-16-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Da origem ao conflito",
+            "title": "A Guerra Eterna",
+            "body": "Céu e Inferno passam a disputar poder através das eras.",
+            "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Um refúgio improvável",
+            "title": "Santuário nasce",
+            "body": "Lilith e Inarius criam um refúgio longe do conflito.",
+            "image": "resources/reels-review/assets/diablo/art-04-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O destino da humanidade",
+            "title": "A história chega até nós",
+            "body": "Nefalem, demônios e anjos se cruzam nessa jornada. Explore a lore completa.",
+            "image": "resources/reels-review/assets/diablo/art-13-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "story"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-197-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-197-v1.jpg",
+      "sha256": "a9940dab6a716f802d5310fe4680fa0039b644aad10bbabd5cb4968381cbd466"
+    },
+    {
+      "id": 198,
+      "title": "O Setup que Sustenta o Estratégia Nerd: A Máquina por Trás de Tudo",
+      "status": "agendado",
+      "scheduled": "2026-10-12 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 18,
+      "articleSlug": "o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo",
+      "articleSha256": "87ce10fadca9d9918875139e652d9a2062b23e9986fccbe164726c8f6a3e67c9",
+      "type": "product",
+      "note": "Cada imagem acompanha seu componente. Não repetir a antiga referência B650: artigo atual cita B850.",
+      "sources": [],
+      "caption": "💻 O que sustenta o Estratégia Nerd por trás da tela?\n\nO conjunto reúne Ryzen 5 7600X, MSI B850 TOMAHAWK MAX WIFI e 32 GB de DDR5. O objetivo é atender a rotina de trabalho e jogos com escolhas que façam sentido juntas.\n\nVocê prioriza qual parte ao planejar seu setup?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-198-d257bb8f.mp4",
+      "originalSha256": "f70175f29e321520ae7ed0ff34a4e8725edbb72d14f4729f33c698eef7505bd8",
+      "reuse": false,
+      "trackId": 6,
+      "spec": {
+        "articleId": 18,
+        "articleTitle": "O Setup que Sustenta o Estratégia Nerd: A Máquina por Trás de Tudo",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "showcase",
+        "tone": "tech",
+        "duration": 35,
+        "audio": "public/uploads/audio/pixabay_199668.mp3",
+        "audioStart": 43,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21,
+          28
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Por trás do Estratégia Nerd",
+            "title": "O setup em ação",
+            "body": "A máquina reúne peças para trabalho, criação e jogos.",
+            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O cérebro da máquina",
+            "title": "Ryzen 5 7600X",
+            "body": "O processador faz parte da base usada no dia a dia.",
+            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/img-001.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "A base da plataforma",
+            "title": "MSI B850 TOMAHAWK MAX",
+            "body": "A placa-mãe conecta os componentes e sustenta a plataforma AM5.",
+            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/img-002.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Espaço para a rotina",
+            "title": "32 GB de DDR5",
+            "body": "A memória acompanha as tarefas do setup. Veja a configuração completa no blog.",
+            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/img-003.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "A escolha do conjunto",
+            "title": "As peças precisam conversar",
+            "body": "A B850 do setup e a B650 de outra análise são modelos distintos.",
+            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "product"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-198-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-198-v2.jpg",
+      "sha256": "a54b380099e2e22e4bb5ed791e8456413ca736ab2468fb08892f61073efa71c7",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-198-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-198-v1.jpg",
+          "sha256": "09939df16270204fbb1a16ced2eacf4b6e9f6b3299977497cfbeba718de8f450"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 199,
+      "title": "AMD Ryzen 5 7600X: Desempenho Real no Meu Setup",
+      "status": "agendado",
+      "scheduled": "2026-10-13 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 19,
+      "articleSlug": "amd-ryzen-5-7600x-desempenho-real-no-meu-setup",
+      "articleSha256": "42a135898fe30a8bec2d46eee5d792cee67af74e226e5c29f4856106ab3088ea",
+      "type": "product",
+      "note": "Produto persistente; foco em uso e limites, sem benchmarks inventados.",
+      "sources": [],
+      "caption": "💻 Ryzen 5 7600X: onde ele entra no seu planejamento?\n\nSão seis núcleos e doze threads na plataforma AM5. Antes da compra, pense no seu uso, na refrigeração e no custo do conjunto.\n\nVocê monta o PC pensando mais em jogos ou trabalho?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-199-27a36c57.mp4",
+      "originalSha256": "60bbebb9bf8172982ff500f02b07181a20bbb38edfbf94d66055f5e6c74dd113",
+      "reuse": false,
+      "trackId": 7,
+      "spec": {
+        "articleId": 19,
+        "articleTitle": "AMD Ryzen 5 7600X: Desempenho Real no Meu Setup",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "showcase",
+        "tone": "tech",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_203118.mp3",
+        "audioStart": 25,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Ryzen 5 7600X",
+            "title": "Seis núcleos. Doze threads.",
+            "body": "O processador ocupa o centro deste setup AM5.",
+            "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "No dia a dia",
+            "title": "Jogos e trabalho",
+            "body": "A escolha precisa considerar as tarefas que você realmente executa.",
+            "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Além do processador",
+            "title": "Refrigeração também conta",
+            "body": "O conjunto precisa de placa-mãe, memória e resfriamento compatíveis.",
+            "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Uma escolha com contexto",
+            "title": "Vale para o seu setup?",
+            "body": "Veja a experiência de uso, os pontos fortes e as limitações no blog.",
+            "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "product"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-199-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-199-v2.jpg",
+      "sha256": "498f8c470b25736f21eca8a7899c99e9579aae93c368524a610a518ab4461914",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-199-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-199-v1.jpg",
+          "sha256": "2b2e174cc4e2507eb963c8d4ff1a130f5800889a514d2ac4a599326c3f187787"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 200,
+      "title": "MSI MAG B650 TOMAHAWK WIFI: a base que sustenta um setup de verdade",
+      "status": "agendado",
+      "scheduled": "2026-10-14 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 20,
+      "articleSlug": "msi-mag-b650-tomahawk-wifi-a-base-que-sustenta-um-setup-de-verdade",
+      "articleSha256": "56cf283707cbd1f9eda420df6ab6401f5c991e23012a5c95a160d5c4d9087a01",
+      "type": "product",
+      "note": "Imagem oficial da B650, substituindo a capa anterior que mostrava uma B850. Tomada contínua com textos sobre compatibilidade e conexões. Arte de hardware aprovada: cenario ciano/dourado, produto inteiro e imagem fixa com animacao nos textos.",
+      "sources": [
+        "https://www.msi.com/Motherboard/MAG-B650-TOMAHAWK-WIFI"
+      ],
+      "caption": "🔧 Placa-mãe é decisão de conjunto.\n\nNa MSI MAG B650 TOMAHAWK WIFI, confira compatibilidade da CPU e BIOS, memória DDR5 e conexões necessárias para sua rotina. O artigo específico é sobre a B650; a B850 do setup é outro modelo.\n\nQue conexão não pode faltar na sua placa?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-200-3af45c05.mp4",
+      "originalSha256": "b14dc7b0b0efd39f57cf60bfef203fd0130a0b926136f83fe4a2b1128d63b472",
+      "reuse": false,
+      "trackId": 9,
+      "spec": {
+        "articleId": 20,
+        "articleTitle": "MSI MAG B650 TOMAHAWK WIFI: a base que sustenta um setup de verdade",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "showcase",
+        "tone": "tech",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_259777.mp3",
+        "audioStart": 36,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "MSI B650 TOMAHAWK WIFI",
+            "title": "A base do conjunto",
+            "body": "Uma placa-mãe para conectar as peças da plataforma AM5.",
+            "image": "resources/reels-review/assets/msi-b650.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Antes da compra",
+            "title": "Confira a compatibilidade",
+            "body": "CPU, memória DDR5 e BIOS precisam funcionar juntos.",
+            "image": "resources/reels-review/assets/msi-b650.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O que você conecta",
+            "title": "Armazenamento e expansão",
+            "body": "Avalie as conexões que sua rotina exige, além do nome do chipset.",
+            "image": "resources/reels-review/assets/msi-b650.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Um setup com planejamento",
+            "title": "Pense nos próximos upgrades",
+            "body": "Conheça os recursos e limites desta placa-mãe no artigo completo.",
+            "image": "resources/reels-review/assets/msi-b650.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "product"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-200-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-200-v2.jpg",
+      "sha256": "e76c8b076ba04f9e23d2151c5994c3f3b58356fe17aa2f7486a2716d1562456d",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-200-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-200-v1.jpg",
+          "sha256": "e76c8b076ba04f9e23d2151c5994c3f3b58356fe17aa2f7486a2716d1562456d"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 201,
+      "title": "RTX 3050 6GB: a escolha inteligente para um setup equilibrado",
+      "status": "agendado",
+      "scheduled": "2026-10-15 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 21,
+      "articleSlug": "rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado",
+      "articleSha256": "faa42ed42670530f4f88d1572c062b69f79c9c4a58679472b8b20a986145d384",
+      "type": "product",
+      "note": "Imagem conferida: caixa indica 6 GB. Não prometer ray tracing pesado ou desempenho universal.",
+      "sources": [],
+      "caption": "🎮 RTX 3050 6 GB: ajuste a compra à sua expectativa.\n\nÉ uma GPU de entrada. O resultado depende do jogo, da resolução e dos ajustes; recursos como ray tracing também têm limites. Compare o modelo exato e os preços disponíveis.\n\nVocê prefere qualidade visual ou mais fluidez?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-201-90294a89.mp4",
+      "originalSha256": "7c3a979e0a2dc5df88daead2cd23a44e2d4e439c041ffdf6826399ab044ced28",
+      "reuse": false,
+      "trackId": 10,
+      "spec": {
+        "articleId": 21,
+        "articleTitle": "RTX 3050 6GB: a escolha inteligente para um setup equilibrado",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "showcase",
+        "tone": "tech",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_303922.mp3",
+        "audioStart": 23,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "RTX 3050 de 6 GB",
+            "title": "Uma GPU de entrada",
+            "body": "O equilíbrio depende dos jogos, dos ajustes e do preço.",
+            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "A experiência que importa",
+            "title": "Ajuste as expectativas",
+            "body": "Resolução e qualidade gráfica mudam o desempenho de cada jogo.",
+            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Recursos não são garantias",
+            "title": "DLSS e ray tracing",
+            "body": "Compatibilidade com um recurso não significa rodar tudo no máximo.",
+            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Antes de escolher",
+            "title": "Compare o conjunto",
+            "body": "Considere preço, alternativas e sua configuração. Análise completa no blog.",
+            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "product"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-201-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-201-v2.jpg",
+      "sha256": "7b8e16e8827176525bc0bc7da3409a5a6e1de2d7ee0909feb905a9c00268cf92",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-201-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-201-v1.jpg",
+          "sha256": "45eca2012541c422f67bbb8655c77422092205b29f7ded22c001d18d915e78bb"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 202,
+      "title": "Corsair Vengeance DDR5 32GB 6000MHz: equilíbrio ideal para setups modernos",
+      "status": "agendado",
+      "scheduled": "2026-10-16 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 22,
+      "articleSlug": "corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos",
+      "articleSha256": "e617ed6f895ccbbc7810c067707397568c6887679eb306306a3c3ba077eee7b4",
+      "type": "product",
+      "note": "Memória persistente; capacidade e compatibilidade, sem universalizar EXPO/XMP.",
+      "sources": [],
+      "caption": "💻 Memória para o que você faz ao mesmo tempo.\n\nO kit Corsair Vengeance DDR5 de 32 GB e 6000 MT/s precisa ser compatível com a plataforma. Capacidade, perfil de memória e estabilidade importam tanto quanto a frequência anunciada.\n\nQuantos programas ficam abertos no seu PC?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-202-8cbe32a0.mp4",
+      "originalSha256": "3917d8f7f073f296d7084c7894bff89a4338f6d70709f3e3517c1063cfe8034b",
+      "reuse": false,
+      "trackId": 11,
+      "spec": {
+        "articleId": 22,
+        "articleTitle": "Corsair Vengeance DDR5 32GB 6000MHz: equilíbrio ideal para setups modernos",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "showcase",
+        "tone": "tech",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_477714.mp3",
+        "audioStart": 41,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Corsair Vengeance",
+            "title": "32 GB para a rotina",
+            "body": "O kit DDR5 do setup oferece espaço para jogos e multitarefa.",
+            "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Mais margem de memória",
+            "title": "Aplicativos ao mesmo tempo",
+            "body": "Jogo, navegador e ferramentas compartilham a capacidade disponível.",
+            "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O kit certo para a placa",
+            "title": "Compatibilidade primeiro",
+            "body": "Confira modelo, frequência suportada e perfil de memória da sua plataforma.",
+            "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Sem comprar só pelo número",
+            "title": "Conheça o kit completo",
+            "body": "Veja a experiência de uso da Corsair Vengeance no blog.",
+            "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "product"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-202-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-202-v2.jpg",
+      "sha256": "38e6e35f1cf134d599a5114c4396dcb453290b64f8bd6c76bd859ef1a0e23f3a",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-202-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-202-v1.jpg",
+          "sha256": "d5c1505f9c5ef9f3fed9bb2dd19ddf7302d4c37b45ae0f4d5ca3c7b4da0e19d7"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 203,
+      "title": "Kingston NV3 1TB NVMe PCIe 4.0: velocidade real para o dia a dia",
+      "status": "agendado",
+      "scheduled": "2026-10-17 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 23,
+      "articleSlug": "kingston-nv3-1tb-nvme-pcie-4-0-velocidade-real-para-o-dia-a-dia",
+      "articleSha256": "6424fa0953a6769039b1f74f3f93d197c972f1a70a8b4169013a06690f2a164b",
+      "type": "product",
+      "note": "Imagem oficial da linha NV3, substituindo a capa anterior que mostrava um NV2. Texto sobre uso e compatibilidade, sem benchmark inventado. Arte de hardware aprovada: cenario ciano/dourado, produto inteiro e imagem fixa com animacao nos textos.",
+      "sources": [
+        "https://www.kingston.com/en/ssd/nv3-nvme-pcie-ssd"
+      ],
+      "caption": "💾 Kingston NV3 de 1 TB: confira o modelo antes de comprar.\n\nEste conteúdo mostra o NV3, não o NV2. Para instalar, verifique o formato M.2, a interface aceita pelo slot e as condições do seu uso. Velocidade anunciada não é resultado garantido em toda tarefa.\n\nSeu armazenamento ainda dá conta da rotina?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-203-bac6582e.mp4",
+      "originalSha256": "80371ac108f25102a92ae8d2616640ce52a564879c559ab753d832a92beb9707",
+      "reuse": false,
+      "trackId": 12,
+      "spec": {
+        "articleId": 23,
+        "articleTitle": "Kingston NV3 1TB NVMe PCIe 4.0: velocidade real para o dia a dia",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "showcase",
+        "tone": "tech",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_478200.mp3",
+        "audioStart": 49,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Kingston NV3 de 1 TB",
+            "title": "Espaço e agilidade",
+            "body": "O SSD NVMe faz parte do armazenamento deste setup.",
+            "image": "resources/reels-review/assets/kingston-nv3.jpg",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "No uso cotidiano",
+            "title": "Sistema e aplicativos",
+            "body": "A experiência depende também da carga de trabalho e do restante do PC.",
+            "image": "resources/reels-review/assets/kingston-nv3.jpg",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Instalação e escolha",
+            "title": "Confira o slot M.2",
+            "body": "Formato, interface e compatibilidade precisam ser verificados.",
+            "image": "resources/reels-review/assets/kingston-nv3.jpg",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O que cabe na sua rotina",
+            "title": "Conheça os limites",
+            "body": "Veja os pontos fortes e as limitações do Kingston NV3 no blog.",
+            "image": "resources/reels-review/assets/kingston-nv3.jpg",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "product"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-203-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-203-v2.jpg",
+      "sha256": "19671cffcd754815910a1f856883d5ca315b6dcde05dd0412877c955c43a9b1f",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-203-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-203-v1.jpg",
+          "sha256": "19671cffcd754815910a1f856883d5ca315b6dcde05dd0412877c955c43a9b1f"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 204,
+      "title": "Erros comuns ao montar um PC gamer e como evitar",
+      "status": "agendado",
+      "scheduled": "2026-10-17 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 24,
+      "articleSlug": "erros-comuns-ao-montar-um-pc-gamer-e-como-evitar",
+      "articleSha256": "3b701b1ff967d084a8d9854524999cc047356d797badeb0f148799142389802e",
+      "type": "steps",
+      "note": "Erro ligado à imagem correspondente; dicas concretas em vez de resumo cortado.",
+      "sources": [],
+      "caption": "🔧 Antes de montar o PC, revise o conjunto.\n\nCompatibilidade, qualidade da fonte e equilíbrio entre componentes evitam escolhas feitas só pelo nome da peça. Planejar antes ajuda a não descobrir uma incompatibilidade depois.\n\nQual erro você gostaria de ter evitado no primeiro setup?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-204-58d32ce5.mp4",
+      "originalSha256": "060edc3d9c684a03bd000d4da7d4272f9ce875d877b6613a24028c0c116a6c6f",
+      "reuse": false,
+      "trackId": 13,
+      "spec": {
+        "articleId": 24,
+        "articleTitle": "Erros comuns ao montar um PC gamer e como evitar",
+        "category": "dicas",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "guide",
+        "tone": "tech",
+        "duration": 35,
+        "audio": "public/uploads/audio/pixabay_511031.mp3",
+        "audioStart": 32,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21,
+          28
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Montando um PC?",
+            "title": "Evite escolhas isoladas",
+            "body": "Uma peça forte não corrige um conjunto mal planejado.",
+            "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Compatibilidade",
+            "title": "Confira antes de montar",
+            "body": "Socket, memória, espaço e conexões precisam ser compatíveis.",
+            "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O orçamento precisa de equilíbrio",
+            "title": "Não pense só na GPU",
+            "body": "CPU, memória e placa de vídeo precisam acompanhar seu uso.",
+            "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/img-010.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "A alimentação do conjunto",
+            "title": "Não economize na qualidade",
+            "body": "Escolha uma fonte adequada e confiável, além da potência anunciada.",
+            "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/img-013.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Antes de fechar a compra",
+            "title": "Revise o conjunto",
+            "body": "Compatibilidade, refrigeração e possibilidade de upgrade também contam. Guia no blog.",
+            "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/img-002.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "steps"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-204-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-204-v2.jpg",
+      "sha256": "0b47582149f68629caf61222fd4d1f28e16e563971b0c7fc4d65f198b8b218c9",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-204-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-204-v1.jpg",
+          "sha256": "0dc97a1ef48cce7bc037e6faf619869b9878b08c87eb25beb236b6387f231113"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 205,
+      "title": "10 jogos que todo fã de RPG precisa jogar antes de morrer",
+      "status": "agendado",
+      "scheduled": "2026-10-14 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 25,
+      "articleSlug": "10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer",
+      "articleSha256": "9d2d02f479aa7db10fd78b46313d5f7c8a98f0f521e5ff0b695fdc58e60a07d1",
+      "type": "list",
+      "note": "Tr?s exemplos de estilos com screenshots oficiais de Chrono Trigger, The Witcher 3 e Baldur's Gate 3.",
+      "sources": [],
+      "caption": "10 jogos que todo fã de RPG precisa jogar antes de morrer\n\nDos clássicos inesquecíveis aos gigantes modernos, alguns RPGs marcaram gerações e redefiniram o gênero. Nesta lista, reunimos jogos que todo fã de aventura, exploração e boas histórias precisa experimentar pelo menos uma vez na vida. Prepare-se para nostalgia, mundos épicos e muitas horas perdidas em quests secundárias.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/editorial-202610/reel-205-v3.mp4",
+      "originalSha256": "7810c474aeaed319560c3cbbc31e966ddb8f59eb0bd740bfca469a9fbf4fdb76",
+      "reuse": true,
+      "trackId": 24,
+      "spec": {
+        "articleId": 25,
+        "articleTitle": "10 jogos que todo fã de RPG precisa jogar antes de morrer",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "CULTURA E JOGOS",
+        "layout": "culture",
+        "tone": "fantasy",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_239599.mp3",
+        "audioStart": 61,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "RPGs que marcaram época",
+            "title": "Qual aventura é a sua?",
+            "body": "A lista reúne dez jogos. Estes são três caminhos para começar.",
+            "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/capa.webp",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Histórias e personagens",
+            "title": "Chrono Trigger",
+            "body": "Viagem no tempo em um clássico do RPG japonês.",
+            "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/chrono-trigger.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Escolhas em um mundo aberto",
+            "title": "The Witcher 3",
+            "body": "Contratos, personagens e decisões em uma fantasia medieval.",
+            "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/the-witcher-3.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Estratégia e liberdade",
+            "title": "Baldur's Gate 3",
+            "body": "Um RPG de escolhas e combate por turnos. Conheça os dez títulos no blog.",
+            "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/baldurs-gate-3.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "list"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-205-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-205-v1.jpg",
+      "sha256": "7810c474aeaed319560c3cbbc31e966ddb8f59eb0bd740bfca469a9fbf4fdb76"
+    },
+    {
+      "id": 206,
+      "title": "RTX 3050 vs RX 6600: Qual Vale Mais a Pena em 2026?",
+      "status": "agendado",
+      "scheduled": "2026-10-18 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 26,
+      "articleSlug": "rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026",
+      "articleSha256": "1abc5d007a2c2b811ae3e6440d09324409e96914c7d298880f980651eed3af5b",
+      "type": "comparison",
+      "note": "Comparação sem benchmark fictício; distinguir RTX 3050 de 6 e 8 GB.",
+      "sources": [],
+      "caption": "🎮 RTX 3050 ou RX 6600? Comece pelo modelo exato.\n\nA RTX 3050 tem versões diferentes. Compare testes do mesmo jogo, resolução e ajustes, além dos recursos e do preço final.\n\nQual pesa mais para você: custo, desempenho ou recursos?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-206-7c162901.mp4",
+      "originalSha256": "e168d0e8191e108a0c82443e8c26a2d4aa5e5dc2aa32b4e454acffb3c27b5fe8",
+      "reuse": false,
+      "trackId": 14,
+      "spec": {
+        "articleId": 26,
+        "articleTitle": "RTX 3050 vs RX 6600: Qual Vale Mais a Pena em 2026?",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "ESCOLHAS PARA SEU PC",
+        "layout": "versus",
+        "tone": "tech",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_511038.mp3",
+        "audioStart": 40,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "GPUs para Full HD",
+            "title": "RTX 3050 ou RX 6600?",
+            "body": "Compare o modelo exato, o preço e os jogos que você usa.",
+            "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O nome não conta tudo",
+            "title": "Qual RTX 3050?",
+            "body": "As versões de 6 e 8 GB são diferentes. Não trate as duas como a mesma placa.",
+            "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Seu uso muda a escolha",
+            "title": "Jogos e recursos",
+            "body": "Desempenho, consumo e recursos precisam entrar na comparação.",
+            "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Antes da compra",
+            "title": "Compare preços e modelos",
+            "body": "A escolha depende da oferta real e da configuração. Veja a análise no blog.",
+            "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "comparison": [
+          "RTX 3050",
+          "RX 6600"
+        ],
+        "presentation": "comparison"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-206-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-206-v2.jpg",
+      "sha256": "cb78823a0f4153ef75b149ded3a8be8bf639ca5dada26a269fb3ce4dcb01a7ca",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-206-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-206-v1.jpg",
+          "sha256": "245432517cf7524a5c8d423b95b4902935a8de32e98ae5dd7a39fffdda565224"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 207,
+      "title": "PC liga, mas não dá vídeo: como diagnosticar sem trocar peças à toa",
+      "status": "agendado",
+      "scheduled": "2026-10-19 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 28,
+      "articleSlug": "pc-liga-mas-nao-da-video-checklist-diagnostico",
+      "articleSha256": "1d9c326ab591faf39c14d401ee774fe06963a1842fb7ad89352d8cf73ce67ad0",
+      "type": "steps",
+      "note": "Diagnóstico com sequência útil; não orientar desmontagem arriscada em um Reel curto.",
+      "sources": [],
+      "caption": "🖥️ O PC liga e a imagem não aparece?\n\nComece pelo monitor, entrada selecionada, cabo e saída correta. Se precisar verificar componentes internos, desligue o equipamento e siga um diagnóstico seguro.\n\nVocê já resolveu esse problema sem trocar nenhuma peça?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-207-90d1a3a2.mp4",
+      "originalSha256": "cdfafcf91ad460345c286cc7be08971723ca2755d8af3ea0c5bc3df5c300f9c5",
+      "reuse": false,
+      "trackId": 34,
+      "spec": {
+        "articleId": 28,
+        "articleTitle": "PC liga, mas não dá vídeo: como diagnosticar sem trocar peças à toa",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "guide",
+        "tone": "calm",
+        "duration": 35,
+        "audio": "public/uploads/audio/pixabay_9503.mp3",
+        "audioStart": 25,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21,
+          28
+        ],
+        "scenes": [
+          {
+            "eyebrow": "O PC liga, mas não dá vídeo",
+            "title": "Comece pelo básico",
+            "body": "Evite trocar peças antes de conferir o caminho do sinal.",
+            "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Fora do gabinete",
+            "title": "Entrada e cabo do monitor",
+            "body": "Verifique a entrada selecionada e a conexão do cabo de vídeo.",
+            "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O conector certo",
+            "title": "Onde o cabo está ligado?",
+            "body": "Confira a saída usada e se ela corresponde à configuração do PC.",
+            "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Se o problema continuar",
+            "title": "Siga um diagnóstico seguro",
+            "body": "O guia organiza os próximos testes antes de substituir componentes. Leia no blog.",
+            "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Se o problema continua",
+            "title": "Desligue antes de mexer",
+            "body": "Siga os próximos testes com segurança; não troque peças por tentativa.",
+            "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "steps"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-207-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-207-v2.jpg",
+      "sha256": "80a06a27cfd81c9d7f9ef8dc981ccbcdc68417aee11dd3a3a18deb2fbc3f6cb4",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-207-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-207-v1.jpg",
+          "sha256": "14b2acd5d167270b790648b8c90876f1217937212d24d5ecbfbf5de486ac189d"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 208,
+      "title": "The Witcher 3 Remastered: novidades e condições do upgrade",
+      "status": "agendado",
+      "scheduled": "2026-10-16 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 29,
+      "articleSlug": "the-witcher-3-wild-hunt-remastered-chega-gr-atis-dia-29-de-setembro",
+      "articleSha256": "a45ef166cf3f269e00b3e0960d8c1d0b67964634988af669d656791248e2d6d6",
+      "type": "story",
+      "note": "Artigo local e roteiro revisados em 08/10/2026: lançamento em 29/09/2026 e upgrade no mesmo ecossistema para proprietários elegíveis.",
+      "sources": [
+        "https://www.thewitcher.com/es/en/news/52054/the-witcher-3-the-wild-hunt-remastered-is-available-now",
+        "https://www.thewitcher.com/es/en/news/52041/see-whats-new-in-the-witcher-3-wild-hunt-remastered"
+      ],
+      "caption": "⚔️ Geralt voltou ao Caminho.\n\nThe Witcher 3: Wild Hunt Remastered foi lançado em 29 de setembro de 2026. O upgrade gratuito depende de já possuir o jogo e das condições do mesmo ecossistema de plataforma; não significa jogo base grátis para todos.\n\nVocê vai revisitar qual região primeiro?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-208-7c293fe0.mp4",
+      "originalSha256": "2002b606193518fc0e70a348663d2a39f441baa151ef8b275092b5b715db2e48",
+      "reuse": false,
+      "trackId": 21,
+      "spec": {
+        "articleId": 29,
+        "articleTitle": "The Witcher 3: Wild Hunt Remastered: novidades e condições do upgrade gratuito",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "EM FOCO",
+        "layout": "dispatch",
+        "tone": "fantasy",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_10376.mp3",
+        "audioStart": 45,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "The Witcher 3 Remastered",
+            "title": "Geralt retorna",
+            "body": "A versão aprimorada foi lançada em 29 de setembro de 2026.",
+            "image": "public/uploads/posts/the-witcher-3-wild-hunt-remastered-chega-gr-atis-dia-29-de-setembro/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Condições do upgrade",
+            "title": "Para proprietários elegíveis",
+            "body": "O upgrade é gratuito dentro do mesmo ecossistema de plataforma.",
+            "image": "public/uploads/posts/the-witcher-3-wild-hunt-remastered-chega-gr-atis-dia-29-de-setembro/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Antes de instalar",
+            "title": "Confira a sua plataforma",
+            "body": "Recursos e disponibilidade precisam ser conferidos nos canais oficiais.",
+            "image": "public/uploads/posts/the-witcher-3-wild-hunt-remastered-chega-gr-atis-dia-29-de-setembro/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Acompanhe a atualização",
+            "title": "Volte ao Caminho",
+            "body": "Confira as novidades e as condições do upgrade no artigo completo.",
+            "image": "public/uploads/posts/the-witcher-3-wild-hunt-remastered-chega-gr-atis-dia-29-de-setembro/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "story"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-208-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-208-v2.jpg",
+      "sha256": "047de7825ae1b9820c616a56a6df61ce0d963b326bdc70b65384225eacde2160",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-208-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-208-v1.jpg",
+          "sha256": "5b9383f3ca2bf91125b85030c2633a52c1a2d40f76a2ee668e9935284b12f077"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 209,
+      "title": "Windows 11 24H2 Home e Pro: fim do suporte em 13/10/2026",
+      "status": "agendado",
+      "scheduled": "2026-10-11 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 30,
+      "articleSlug": "windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026",
+      "articleSha256": "f65a26db313b06ae65163564c5a8c9aae95524ee3ad540bd0034d6d535e940b6",
+      "type": "steps",
+      "note": "Artigo local e roteiro revisados em 08/10/2026: data fixa, prazos por edição e atualização oferecida ao dispositivo; agenda preservada.",
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information"
+      ],
+      "caption": "🖥️ Confira a versão do Windows antes de ignorar o aviso.\n\nA tabela de atualizações da Microsoft informa 13/10/2026 para Windows 11 24H2 Home e Pro. Outras edições têm prazos próprios. Abra winver e planeje uma versão com suporte pelo Windows Update.\n\nVocê já conferiu a edição e a versão do seu PC?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-209-ca9d4c95.mp4",
+      "originalSha256": "ece80b0c0a3937f7e3f35625640940d9fff9d1f1804c1fa6bcd13a01005a33e9",
+      "reuse": false,
+      "trackId": 35,
+      "spec": {
+        "articleId": 30,
+        "articleTitle": "Windows 11 24H2 Home e Pro: fim do suporte em 13/10/2026",
+        "category": "dicas",
+        "editorial": "manual",
+        "collection": "EM FOCO",
+        "layout": "dispatch",
+        "tone": "calm",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_10149.mp3",
+        "audioStart": 37,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Windows 11 Home e Pro",
+            "title": "Seu PC está no 24H2?",
+            "body": "Data de fim do suporte: 13 de outubro de 2026, nas edições Home e Pro.",
+            "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Confira a sua versão",
+            "title": "Abra o comando winver",
+            "body": "Verifique versão e edição: o prazo não é igual para todas.",
+            "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Planeje a atualização",
+            "title": "Use o Windows Update",
+            "body": "Busque uma versão com suporte oferecida ao seu dispositivo.",
+            "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Não deixe para depois",
+            "title": "Mantenha o sistema atualizado",
+            "body": "Veja como conferir sua versão e planejar a atualização no guia do blog.",
+            "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "steps"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-209-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-209-v2.jpg",
+      "sha256": "dbfec32be3a6c1ebae4b80a043e65c8f3f1d000867e7c5a81e3f446516ed99ea",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-209-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-209-v1.jpg",
+          "sha256": "ad7256522331e9730327962d62799dcb4e91247cf52508d2cb9351d2d81ff12c"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 210,
+      "title": "RTX 5060 vs RX 9060 XT: qual placa compensa em 1080p",
+      "status": "agendado",
+      "scheduled": "2026-10-19 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 31,
+      "articleSlug": "rtx-5060-vs-rx-9060-xt-1080p",
+      "articleSha256": "eb25b8e068896dc08bd47c7c45ab613177979611b39c4aa0519eaa04e4baf471",
+      "type": "comparison",
+      "note": "Disputa por critérios de uso; sem barras de FPS inventadas.",
+      "sources": [],
+      "caption": "🎮 Uma comparação de GPU começa antes do gráfico de FPS.\n\nRTX 5060 e RX 9060 XT precisam ser comparadas por versão, memória, preço e testes nas mesmas condições. Considere também os jogos e recursos que você usa.\n\nO que decide a sua compra em 1080p?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-210-14a0d3f8.mp4",
+      "originalSha256": "6f55195f59b193c32769fcc3051f0e9bdf2de58fdeccd2f1e47710f6fc290f19",
+      "reuse": false,
+      "trackId": 15,
+      "spec": {
+        "articleId": 31,
+        "articleTitle": "RTX 5060 vs RX 9060 XT: qual placa compensa em 1080p",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "ESCOLHAS PARA SEU PC",
+        "layout": "versus",
+        "tone": "tech",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_519731.mp3",
+        "audioStart": 30,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "A disputa em 1080p",
+            "title": "RTX 5060 ou RX 9060 XT?",
+            "body": "A melhor escolha depende de preço, versão e jogos.",
+            "image": "public/uploads/posts/rtx-5060-vs-rx-9060-xt-1080p/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Compare o modelo exato",
+            "title": "Olhe além do nome",
+            "body": "Quantidade de memória e implementação variam entre as placas.",
+            "image": "public/uploads/posts/rtx-5060-vs-rx-9060-xt-1080p/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Na sua biblioteca",
+            "title": "Recursos e desempenho",
+            "body": "Compare testes dos jogos que você usa, com as mesmas configurações.",
+            "image": "public/uploads/posts/rtx-5060-vs-rx-9060-xt-1080p/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Uma compra com contexto",
+            "title": "Decida pelo conjunto",
+            "body": "Considere fonte, monitor e orçamento. Comparação completa no blog.",
+            "image": "public/uploads/posts/rtx-5060-vs-rx-9060-xt-1080p/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "comparison": [
+          "RTX 5060",
+          "RX 9060 XT"
+        ],
+        "presentation": "comparison"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-210-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-210-v2.jpg",
+      "sha256": "ba034a86f3c055d5ae01879562d82e05078bbd6fdafceca5c37315ffd201b915",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-210-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-210-v1.jpg",
+          "sha256": "ff4770e353a7811546da49da5904d89adc0a32a643690df6ad1fad4487f7ee95"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 211,
+      "title": "AM4 ou AM5 em 2026: qual plataforma escolher",
+      "status": "agendado",
+      "scheduled": "2026-10-20 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 32,
+      "articleSlug": "am4-ou-am5-em-2026",
+      "articleSha256": "a01ba4e6b747961a37cabe96763883e67dd0f59fb095a085f0157261d1b9cc08",
+      "type": "comparison",
+      "note": "AM4/AM5 por cenário; reaproveitamento versus plataforma nova.",
+      "sources": [],
+      "caption": "💻 AM4 ou AM5: o ponto de partida muda a resposta.\n\nReaproveitar componentes AM4 pode reduzir o custo. Uma plataforma AM5 exige considerar placa-mãe, CPU e DDR5 no orçamento completo.\n\nVocê está atualizando um PC ou começando do zero?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-211-c968e46a.mp4",
+      "originalSha256": "2cd32fa3f8812550e4c19c37f11b400821b5397fd9a70e137a46af67b71115bb",
+      "reuse": false,
+      "trackId": 16,
+      "spec": {
+        "articleId": 32,
+        "articleTitle": "AM4 ou AM5 em 2026: qual plataforma escolher",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "ESCOLHAS PARA SEU PC",
+        "layout": "versus",
+        "tone": "tech",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_526520.mp3",
+        "audioStart": 44,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Montando ou atualizando?",
+            "title": "AM4 ou AM5?",
+            "body": "A plataforma certa começa no que você já tem.",
+            "image": "public/uploads/posts/am4-ou-am5-em-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Se você já usa AM4",
+            "title": "Reaproveitar pode fazer sentido",
+            "body": "Avalie CPU compatível, BIOS e memória DDR4 existentes.",
+            "image": "public/uploads/posts/am4-ou-am5-em-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Para começar um conjunto novo",
+            "title": "AM5 e memória DDR5",
+            "body": "Compare o custo total e o caminho de upgrades.",
+            "image": "public/uploads/posts/am4-ou-am5-em-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Some todas as peças",
+            "title": "Escolha pelo orçamento",
+            "body": "Não compare só o processador. Veja os cenários completos no blog.",
+            "image": "public/uploads/posts/am4-ou-am5-em-2026/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "comparison": [
+          "AM4",
+          "AM5"
+        ],
+        "presentation": "comparison"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-211-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-211-v2.jpg",
+      "sha256": "1ac5fd5375a09e0c62b0e8b21ef64510840151c32deee73cac218041d883b8e5",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-211-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-211-v1.jpg",
+          "sha256": "c9f31b55f94a41a622a757d8c61b9539205b6078dc59d80c598543f7c567ae9d"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 212,
+      "title": "Como escolher uma fonte para PC: sem cair em marketing",
+      "status": "agendado",
+      "scheduled": "2026-10-20 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 33,
+      "articleSlug": "como-escolher-fonte-para-pc",
+      "articleSha256": "7b4666ef08fb9981b08e6627abaf634fb6d6bf675ed42b474afe2101f05e3e78",
+      "type": "steps",
+      "note": "Fonte: potência, qualidade e conexões; 80 Plus não é selo de proteção.",
+      "sources": [],
+      "caption": "⚡ A fonte merece mais atenção que um número de watts.\n\nAvalie modelo, proteções, conectores, demanda do conjunto e garantia. Certificação de eficiência não resume a qualidade de uma fonte. Nunca abra a fonte para conferir componentes.\n\nQual critério você olha primeiro?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-212-9428a9f4.mp4",
+      "originalSha256": "1336c6e2cff0c83e864981ddaeabfc7adecbff51f0a6ffd72991e813a31083e8",
+      "reuse": false,
+      "trackId": 17,
+      "spec": {
+        "articleId": 33,
+        "articleTitle": "Como escolher uma fonte para PC: sem cair em marketing",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "guide",
+        "tone": "tech",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_528524.mp3",
+        "audioStart": 34,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Escolhendo uma fonte",
+            "title": "Watts não contam tudo",
+            "body": "A potência anunciada é só uma parte da escolha.",
+            "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Antes de olhar o selo",
+            "title": "Qualidade e proteções",
+            "body": "80 Plus informa eficiência. Não substitui a avaliação do projeto.",
+            "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Para o seu conjunto",
+            "title": "Potência e conectores",
+            "body": "Confira os requisitos das peças e as conexões necessárias.",
+            "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Escolha com informação",
+            "title": "Compare modelos e garantia",
+            "body": "Veja os critérios para selecionar uma fonte no guia completo.",
+            "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "steps"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-212-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-212-v2.jpg",
+      "sha256": "930e4eb8add01f8f585b7ecaa39d269cfac08a885cd3416b699ffe1f89e487aa",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-212-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-212-v1.jpg",
+          "sha256": "f8f2f298d74c20d88e4849fe16a28c9347af03781dbbd92c9e104667de8a8aeb"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 213,
+      "title": "Como verificar a saúde do SSD e do HD antes de perder seus arquivos",
+      "status": "agendado",
+      "scheduled": "2026-10-21 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 34,
+      "articleSlug": "como-verificar-saude-ssd-hd",
+      "articleSha256": "be4cd88ac6fb3b4faf7eb82ff3b16b4bdf58317f838a5ace99f7ac5f69118ad8",
+      "type": "steps",
+      "note": "SMART e backup; status bom não garante que não haverá falha.",
+      "sources": [],
+      "caption": "💾 Não espere o alerta para lembrar do backup.\n\nSMART ajuda a acompanhar o armazenamento, mas um status bom não garante que uma falha não acontecerá. Preserve cópias importantes e investigue mudanças de comportamento.\n\nSeu backup está atualizado?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/konva-batch/batch-20261007-145016-0065c4eb/reel-213-1460bd8d.mp4",
+      "originalSha256": "6d1357f5ad16cd6e31cc5cd1f52c9289eecc9f81bfe9e90a00975afdcfc099f5",
+      "reuse": false,
+      "trackId": 36,
+      "spec": {
+        "articleId": 34,
+        "articleTitle": "Como verificar a saúde do SSD e do HD antes de perder seus arquivos",
+        "category": "dicas",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "guide",
+        "tone": "calm",
+        "duration": 35,
+        "audio": "public/uploads/audio/pixabay_112369.mp3",
+        "audioStart": 32,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21,
+          28
+        ],
+        "scenes": [
+          {
+            "eyebrow": "SSD e HD",
+            "title": "Como está a saúde?",
+            "body": "Ferramentas de diagnóstico ajudam a observar sinais de desgaste.",
+            "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Leia os indicadores",
+            "title": "Verifique o SMART",
+            "body": "O CrystalDiskInfo mostra informações e alertas da unidade.",
+            "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Um status não é uma garantia",
+            "title": "Mantenha o backup",
+            "body": "Mesmo uma unidade marcada como boa pode falhar.",
+            "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Se houver alertas",
+            "title": "Planeje os próximos passos",
+            "body": "Entenda os indicadores antes de agir. Guia completo no blog.",
+            "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Se houver sinais de falha",
+            "title": "Priorize seus arquivos",
+            "body": "Preserve cópias antes de procedimentos que possam agravar a perda.",
+            "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "steps"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-213-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-213-v2.jpg",
+      "sha256": "d0f1a86c3def5b194659ae4d0bf788ea08dd718b6b5072e1e88409ce686cd989",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-213-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-213-v1.jpg",
+          "sha256": "d8306bb9ce5dc4c5c115c7532575bceed8a502d419e2ed509b9751c1ef3b48d1"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 214,
+      "title": "Temperatura de CPU e GPU: quando você deve se preocupar",
+      "status": "publicado",
+      "scheduled": "2026-10-06 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 35,
+      "articleSlug": "temperatura-cpu-gpu-quando-se-preocupar",
+      "articleSha256": "8aecf1d14287e994b1f86a1e11efe909224e00f5cd9ae8fdb426082802b24c7b",
+      "type": "steps",
+      "note": "Referência aprovada pelo usuário: preservar integralmente o vídeo atual de temperatura.",
+      "sources": [],
+      "caption": "🌡️ Temperatura alta precisa de contexto.\n\nConfira o sensor, a carga e o limite do modelo antes de decidir que existe um defeito. Queda de desempenho, desligamentos e mudanças de temperatura merecem investigação.\n\nVocê costuma acompanhar CPU e GPU durante o jogo?\n\n#EstratégiaNerd #Hardware #Tecnologia #SetupGamer #Geek",
+      "original": "public/uploads/reels/motion-batch/batch-20261003-160306-9cd43821/reel-214-article-35-8e659c27.mp4",
+      "originalSha256": "3fa71f5d29e793fb3d1c245170bb7f0817f0e50214e707d181504d38ad215d41",
+      "reuse": false,
+      "trackId": 36,
+      "spec": {
+        "articleId": 35,
+        "articleTitle": "Temperatura de CPU e GPU: quando você deve se preocupar",
+        "category": "dicas",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "guide",
+        "tone": "calm",
+        "duration": 35,
+        "audio": "public/uploads/audio/pixabay_112369.mp3",
+        "audioStart": 32,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21,
+          28
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Identifique o dado",
+            "title": "Qual sensor você está vendo?",
+            "body": "Temperatura do chip e hotspot são leituras diferentes.",
+            "image": "public/uploads/posts/temperatura-cpu-gpu-quando-se-preocupar/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Observe a carga",
+            "title": "O PC está em repouso ou jogando?",
+            "body": "Compare situações equivalentes antes de tirar conclusões.",
+            "image": "public/uploads/posts/temperatura-cpu-gpu-quando-se-preocupar/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Confira o modelo",
+            "title": "O limite depende do componente",
+            "body": "Consulte a especificação da sua CPU ou GPU.",
+            "image": "public/uploads/posts/temperatura-cpu-gpu-quando-se-preocupar/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Sinais de problema",
+            "title": "Não olhe só o número",
+            "body": "Queda de desempenho e desligamentos merecem investigação.",
+            "image": "public/uploads/posts/temperatura-cpu-gpu-quando-se-preocupar/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Próxima verificação",
+            "title": "Revise a refrigeração",
+            "body": "Confira ventilação e limpeza com o equipamento desligado.",
+            "image": "public/uploads/posts/temperatura-cpu-gpu-quando-se-preocupar/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "steps"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-214-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-214-v2.jpg",
+      "sha256": "0c7976877aed925670de61daf38d27a5ce140a6708bd0cf07d8c428f3b9ed45a",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-214-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-214-v1.jpg",
+          "sha256": "0c7976877aed925670de61daf38d27a5ce140a6708bd0cf07d8c428f3b9ed45a"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 215,
+      "title": "12 jogos para PC fraco ou modesto: opções e requisitos",
+      "status": "agendado",
+      "scheduled": "2026-10-10 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 36,
+      "articleSlug": "12-jogos-leves-pc-fraco-ou-modesto",
+      "articleSha256": "cb44497d825786db5b84df72efb5e98caff76cbd8d0b5aa2a86013140ded0f2f",
+      "type": "list",
+      "note": "Exemplos identificados com imagens dedicadas de Stardew Valley e Vampire Survivors.",
+      "sources": [],
+      "caption": "12 jogos para PC fraco ou modesto: opções e requisitos\n\nConheça 12 jogos para considerar em um PC fraco ou modesto, com opções grátis e pagas e cuidados com os requisitos de cada título.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/editorial-202610/reel-215-v3.mp4",
+      "originalSha256": "29130b209bea477756c8b00ea2269a9871af3bfe3710ce1e38f5b78a1fb665ea",
+      "reuse": true,
+      "trackId": 42,
+      "spec": {
+        "articleId": 36,
+        "articleTitle": "12 jogos para PC fraco ou modesto: opções e requisitos",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "CULTURA E JOGOS",
+        "layout": "culture",
+        "tone": "light",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_12278.mp3",
+        "audioStart": 33,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Seu PC é modesto?",
+            "title": "Ainda há muito para jogar",
+            "body": "A seleção reúne doze jogos, com estilos e requisitos diferentes.",
+            "image": "public/uploads/posts/12-jogos-leves-pc-fraco-ou-modesto/images/capa.png",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Para uma rotina tranquila",
+            "title": "Stardew Valley",
+            "body": "Uma das opções de simulação de fazenda da lista.",
+            "image": "public/uploads/posts/12-jogos-leves-pc-fraco-ou-modesto/images/stardew-valley.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Sessões de ação",
+            "title": "Vampire Survivors",
+            "body": "Uma opção para partidas de ação com visual simples.",
+            "image": "public/uploads/posts/12-jogos-leves-pc-fraco-ou-modesto/images/vampire-survivors.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Antes de instalar",
+            "title": "Confira os requisitos",
+            "body": "Compare a configuração do seu PC com a ficha atual de cada jogo. Lista completa no blog.",
+            "image": "public/uploads/posts/12-jogos-leves-pc-fraco-ou-modesto/images/capa.png",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "list"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-215-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-215-v1.jpg",
+      "sha256": "29130b209bea477756c8b00ea2269a9871af3bfe3710ce1e38f5b78a1fb665ea"
+    },
+    {
+      "id": 216,
+      "title": "A história do Counter-Strike: por que ainda é gigante",
+      "status": "agendado",
+      "scheduled": "2026-10-11 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 37,
+      "articleSlug": "historia-counter-strike",
+      "articleSha256": "272186cd26bfbbbc9984380be594a9dd6545ead2427362d701140b085b5fa05b",
+      "type": "story",
+      "note": "Linha do tempo por marcos com a capa oficial, Half-Life Mod, CS 1.6 e Counter-Strike 2.",
+      "sources": [],
+      "caption": "A história do Counter-Strike: por que ainda é gigante\n\nDe um mod amador de Half-Life em 1999 até o Counter-Strike 2 de hoje: veja os principais marcos da franquia e o que sustenta sua relevância no cenário competitivo.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/editorial-202610/reel-216-v4.mp4",
+      "originalSha256": "b244d3a33185ab2479c161af94ff0c74dec88b6f48806b4ac4d78cd584bf19ef",
+      "reuse": true,
+      "trackId": 44,
+      "spec": {
+        "articleId": 37,
+        "articleTitle": "A história do Counter-Strike: por que ainda é gigante",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "HISTÓRIAS DOS GAMES",
+        "layout": "chronicle",
+        "tone": "action",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_173062.mp3",
+        "audioStart": 29,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "A história de Counter-Strike",
+            "title": "Do mod aos palcos globais",
+            "body": "De modificação de Half-Life a um dos maiores esports do planeta.",
+            "image": "public/uploads/posts/historia-counter-strike/images/capa.png",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "As origens no PC",
+            "title": "Tudo começou como um mod",
+            "body": "Em 1999, um projeto feito por fãs em Half-Life abriu caminho para a franquia.",
+            "image": "public/uploads/posts/historia-counter-strike/images/half-life-mod.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "A era das lan houses",
+            "title": "Counter-Strike 1.6",
+            "body": "As versões clássicas e o 1.6 marcaram gerações e definiram o competitivo.",
+            "image": "public/uploads/posts/historia-counter-strike/images/cs-16.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "A nova geração",
+            "title": "Counter-Strike 2",
+            "body": "Em 2023, nova engine e jogabilidade moderna. Conheça a trajetória no blog.",
+            "image": "public/uploads/posts/historia-counter-strike/images/cs2.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "story"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-216-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-216-v1.jpg",
+      "sha256": "b244d3a33185ab2479c161af94ff0c74dec88b6f48806b4ac4d78cd584bf19ef"
+    },
+    {
+      "id": 217,
+      "title": "10 filmes nerds essenciais que todo geek deveria ver",
+      "status": "agendado",
+      "scheduled": "2026-10-12 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 38,
+      "articleSlug": "10-filmes-nerds-essenciais",
+      "articleSha256": "67734d530654c89bc3004e0d7777c470a2fd4c64c7a5acb64c98ee2360dd8ffa",
+      "type": "list",
+      "note": "Tr?s cl?ssicos com imagens ic?nicas de Matrix, A Sociedade do Anel e De Volta para o Futuro.",
+      "sources": [],
+      "caption": "10 filmes nerds essenciais que todo geek deveria ver\n\nDe Star Wars a Duna, veja 10 filmes essenciais da cultura geek - clássicos de ficção científica, fantasia e super-heróis que marcaram gerações, com trailer de cada um.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Cinema #Filmes #CulturaGeek #Geek",
+      "original": "public/uploads/reels/editorial-202610/reel-217-v3.mp4",
+      "originalSha256": "dab1997170030f1eaaa3e629aa76bbb453397a7500589e9bed1fe9b61360caa4",
+      "reuse": true,
+      "trackId": 27,
+      "spec": {
+        "articleId": 38,
+        "articleTitle": "10 filmes nerds essenciais que todo geek deveria ver",
+        "category": "",
+        "editorial": "manual",
+        "collection": "CULTURA E JOGOS",
+        "layout": "culture",
+        "tone": "cinema",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_610029.mp3",
+        "audioStart": 27,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Dez filmes para explorar",
+            "title": "Qual universo chama você?",
+            "body": "Ficção científica, fantasia e aventura fazem parte da seleção.",
+            "image": "public/uploads/posts/10-filmes-nerds-essenciais/images/capa.png",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Realidade em questão",
+            "title": "Matrix",
+            "body": "Um dos filmes da lista que convida a desconfiar do mundo ao redor.",
+            "image": "public/uploads/posts/10-filmes-nerds-essenciais/images/matrix.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Uma jornada pela Terra-média",
+            "title": "A Sociedade do Anel",
+            "body": "Fantasia, amizade e uma missão que muda o destino do mundo.",
+            "image": "public/uploads/posts/10-filmes-nerds-essenciais/images/fellowship-of-the-ring.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Aventura através do tempo",
+            "title": "De Volta para o Futuro",
+            "body": "Outro clássico da seleção. Conheça os dez filmes no blog.",
+            "image": "public/uploads/posts/10-filmes-nerds-essenciais/images/back-to-the-future.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "list"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-217-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-217-v1.jpg",
+      "sha256": "dab1997170030f1eaaa3e629aa76bbb453397a7500589e9bed1fe9b61360caa4"
+    },
+    {
+      "id": 218,
+      "title": "10 animes essenciais pra quem nunca assistiu nenhum",
+      "status": "agendado",
+      "scheduled": "2026-10-13 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 39,
+      "articleSlug": "animes-essenciais-para-iniciantes",
+      "articleSha256": "9ca8152c846470acd2094521d74e582418b867aa83f61b4681af067625410ce7",
+      "type": "list",
+      "note": "Portas de entrada por g?nero com artes de Death Note, Spy x Family e Fullmetal Alchemist.",
+      "sources": [],
+      "caption": "10 animes essenciais pra quem nunca assistiu nenhum\n\nNunca assistiu anime? Conheça 10 títulos e descubra qual combina com você, do suspense de Death Note à comédia de Spy x Family.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Anime #Animes #CulturaGeek #Geek",
+      "original": "public/uploads/reels/editorial-202610/reel-218-v3.mp4",
+      "originalSha256": "d4c3bee5200decc2d80f4d379f6e94dd39cef45714f436b94f87104ed2c900c7",
+      "reuse": true,
+      "trackId": 46,
+      "spec": {
+        "articleId": 39,
+        "articleTitle": "10 animes essenciais pra quem nunca assistiu nenhum",
+        "category": "",
+        "editorial": "manual",
+        "collection": "CULTURA E JOGOS",
+        "layout": "culture",
+        "tone": "anime",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_413841.mp3",
+        "audioStart": 31,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Nunca assistiu anime?",
+            "title": "Comece pelo seu gosto",
+            "body": "A lista reúne dez títulos. Estes são exemplos de estilos diferentes.",
+            "image": "public/uploads/posts/animes-essenciais-para-iniciantes/images/capa.png",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Se você gosta de suspense",
+            "title": "Death Note",
+            "body": "Um duelo de inteligência e consequências difíceis.",
+            "image": "public/uploads/posts/animes-essenciais-para-iniciantes/images/death-note.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Se prefere humor",
+            "title": "Spy x Family",
+            "body": "Espionagem e convivência familiar em uma comédia de identidades secretas.",
+            "image": "public/uploads/posts/animes-essenciais-para-iniciantes/images/spy-x-family.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Se procura aventura",
+            "title": "Fullmetal Alchemist: Brotherhood",
+            "body": "Dois irmãos em uma jornada de fantasia. Veja as dez indicações no blog.",
+            "image": "public/uploads/posts/animes-essenciais-para-iniciantes/images/fullmetal-alchemist.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "list"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-218-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-218-v1.jpg",
+      "sha256": "d4c3bee5200decc2d80f4d379f6e94dd39cef45714f436b94f87104ed2c900c7"
+    },
+    {
+      "id": 219,
+      "title": "10 desenhos dos anos 90 e 2000 que envelheceram bem",
+      "status": "agendado",
+      "scheduled": "2026-10-15 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 40,
+      "articleSlug": "desenhos-anos-90-2000-que-envelheceram-bem",
+      "articleSha256": "a27b86c0a3d407f10f0560b2601111de3dc0506927cf34d3827648a3620d6dea",
+      "type": "list",
+      "note": "Nostalgia com cenas de Laboratório de Dexter, Samurai Jack e Avatar: A Lenda de Aang.",
+      "sources": [],
+      "caption": "10 desenhos dos anos 90 e 2000 que envelheceram bem\n\nNostalgia à parte, esses desenhos dos anos 90 e 2000 continuam bons de assistir hoje. Veja 10 clássicos da TV que resistiram ao tempo.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Nostalgia #Desenhos #CulturaGeek #Geek",
+      "original": "public/uploads/reels/editorial-202610/reel-219-v4.mp4",
+      "originalSha256": "1be15eec57dac84fea9791f5ed6f56d0dbaf9290248e1710eca8c245e85c124d",
+      "reuse": true,
+      "trackId": 30,
+      "spec": {
+        "articleId": 40,
+        "articleTitle": "10 desenhos dos anos 90 e 2000 que envelheceram bem",
+        "category": "",
+        "editorial": "manual",
+        "collection": "CULTURA E JOGOS",
+        "layout": "culture",
+        "tone": "nostalgia",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_512837.mp3",
+        "audioStart": 19,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Desenhos que atravessaram gerações",
+            "title": "Além da nostalgia",
+            "body": "A seleção reúne dez séries que ainda rendem boas histórias.",
+            "image": "public/uploads/posts/desenhos-anos-90-2000-que-envelheceram-bem/images/capa.png",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Humor que segue funcionando",
+            "title": "Laboratório de Dexter",
+            "body": "Experimentos, rivalidade e comédia no laboratório mais famoso da infância.",
+            "image": "public/uploads/posts/desenhos-anos-90-2000-que-envelheceram-bem/images/laboratorio-dexter.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Uma linguagem visual própria",
+            "title": "Samurai Jack",
+            "body": "Composição, silêncio e ação dão força à narrativa.",
+            "image": "public/uploads/posts/desenhos-anos-90-2000-que-envelheceram-bem/images/samurai-jack.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Um mundo para revisitar",
+            "title": "Avatar: A Lenda de Aang",
+            "body": "Personagens e construção de mundo. Conheça os dez desenhos no blog.",
+            "image": "public/uploads/posts/desenhos-anos-90-2000-que-envelheceram-bem/images/avatar-aang.jpg",
+            "framing": {
+              "mode": "cover",
+              "focus": [
+                0.5,
+                0.5
+              ],
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "list"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-219-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-219-v1.jpg",
+      "sha256": "1be15eec57dac84fea9791f5ed6f56d0dbaf9290248e1710eca8c245e85c124d"
+    },
+    {
+      "id": 224,
+      "title": "O mundo de Diablo: Santuário, Céu e Inferno explicados",
+      "status": "agendado",
+      "scheduled": "2026-10-21 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 11,
+      "articleSlug": "o-mundo-de-diablo-entenda-santuario-ceu-e-inferno",
+      "articleSha256": "c61a6a61dd6315fdeab5be24c5cf74d43f3b76fdb4759dab891ed1b13bbdc6cf",
+      "type": "story",
+      "note": "Quatro imagens reais do artigo: conflito, Céu, Inferno e Santuário. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte. Nova agenda de Diablo: fila #224, 2026-11-02 19:30:00 (Brasília).",
+      "sources": [],
+      "caption": "O mundo de Diablo: Santuário, Céu e Inferno explicados\n\nExplore o universo sombrio de Diablo e descubra como Santuário se tornou o centro da guerra entre o Alto Céu e o Inferno Ardente. Um guia essencial para entender a base de toda a história da franquia.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/diablo-agenda-20261008/diablo-191-10020fb8b266.mp4",
+      "originalSha256": "10020fb8b2668c2ed0b6c706f55182dd8c4a4aa2df0febe2948ee87301fa4a1b",
+      "reuse": true,
+      "trackId": 25,
+      "spec": {
+        "articleId": 11,
+        "articleTitle": "O mundo de Diablo: Santuário, Céu e Inferno explicados",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+        "layout": "chronicle",
+        "tone": "dark",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_248213.mp3",
+        "audioStart": 5,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "O mundo de Diablo",
+            "title": "Uma guerra antes de nós",
+            "body": "Céu e Inferno já lutavam antes de a humanidade existir.",
+            "image": "resources/reels-review/assets/diablo/art-01-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O Alto Céu",
+            "title": "A força da ordem",
+            "body": "Os anjos defendem sua visão de justiça e dever.",
+            "image": "resources/reels-review/assets/diablo/art-02-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O Inferno Ardente",
+            "title": "O domínio do caos",
+            "body": "Os demônios buscam poder e corrupção.",
+            "image": "resources/reels-review/assets/diablo/art-03-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Santuário",
+            "title": "Um refúgio em disputa",
+            "body": "A humanidade vive entre essas forças. Conheça esse mundo no blog.",
+            "image": "resources/reels-review/assets/diablo/art-04-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "story"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-224-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-224-v1.jpg",
+      "sha256": "10020fb8b2668c2ed0b6c706f55182dd8c4a4aa2df0febe2948ee87301fa4a1b"
+    },
+    {
+      "id": 225,
+      "title": "Os Arcanjos do Céu: a verdade por trás da luz em Diablo",
+      "status": "agendado",
+      "scheduled": "2026-10-22 12:00:00",
+      "originEnvironment": "production",
+      "articleId": 13,
+      "articleSlug": "os-arcanjos-do-ceu-a-verdade-por-tras-da-luz-em-diablo",
+      "articleSha256": "16c86f4b520e83f03ea3b74e424799d53781c1006aa16d86a7f23dda85ba6955",
+      "type": "story",
+      "note": "Luz dourada e nomes dos Arcanjos; exemplos identificados, sem numeração. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte. Nova agenda de Diablo: fila #225, 2026-11-03 19:30:00 (Brasília).",
+      "sources": [],
+      "caption": "⚔️ Os Altos Céus não têm uma única visão sobre Santuário.\n\nImperius, Tyrael, Auriel, Itherael e Malthael representam aspectos e escolhas diferentes. Tyrael se aproxima da humanidade; a trajetória de Malthael mostra outro caminho.\n\nQual decisão dos arcanjos mais marcou você em Diablo?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/diablo-agenda-20261008/diablo-193-2afa9cae1665.mp4",
+      "originalSha256": "2afa9cae16659645e4f049da387703cf2c73ae55460415b750fe3fd1b3529aa1",
+      "reuse": true,
+      "trackId": 24,
+      "spec": {
+        "articleId": 13,
+        "articleTitle": "Os Arcanjos do Céu: a verdade por trás da luz em Diablo",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+        "layout": "chronicle",
+        "tone": "celestial",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_239599.mp3",
+        "audioStart": 21,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Os Arcanjos de Diablo",
+            "title": "Imperius: valor",
+            "body": "O comandante do Céu representa a força e a coragem.",
+            "image": "resources/reels-review/assets/diablo/art-09-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Uma escolha difícil",
+            "title": "Tyrael: justiça",
+            "body": "Sua relação com a humanidade desafia a ordem dos Céus.",
+            "image": "resources/reels-review/assets/diablo/art-10-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Da sabedoria à ruptura",
+            "title": "Malthael",
+            "body": "O caminho do antigo Aspecto da Sabedoria mostra que a luz também pode se perder.",
+            "image": "resources/reels-review/assets/diablo/art-11-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O Conselho Angiris",
+            "title": "Cinco forças do Céu",
+            "body": "Auriel e Itherael completam essa história. Conheça os cinco Arcanjos no blog.",
+            "image": "resources/reels-review/assets/diablo/art-12-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "story"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-225-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-225-v1.jpg",
+      "sha256": "2afa9cae16659645e4f049da387703cf2c73ae55460415b750fe3fd1b3529aa1"
+    },
+    {
+      "id": 226,
+      "title": "Os Males do Inferno em Diablo: Quem Realmente Controla o Caos",
+      "status": "agendado",
+      "scheduled": "2026-10-22 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 12,
+      "articleSlug": "os-males-do-inferno-em-diablo-quem-realmente-controla-o-caos",
+      "articleSha256": "2a20b8100a4fe44bfcbe592cda410c3c2f135b571122c7f8d2534a04c8055f96",
+      "type": "story",
+      "note": "Retratos individuais em vez de repetir a ilustração coletiva; três Grandes Males, sem ranking. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte. Nova agenda de Diablo: fila #226, 2026-11-04 19:30:00 (Brasília).",
+      "sources": [],
+      "caption": "Os Males do Inferno em Diablo: Quem Realmente Controla o Caos\n\nDescubra quem são os Males do Inferno em Diablo e como cada um deles representa uma forma diferente de destruição, manipulação e poder dentro do universo da franquia.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/diablo-agenda-20261008/diablo-192-18f9df4ef964.mp4",
+      "originalSha256": "18f9df4ef9646971f9295315a0d808f4d2c473c52efb5480f72b3825b0371269",
+      "reuse": true,
+      "trackId": 25,
+      "spec": {
+        "articleId": 12,
+        "articleTitle": "Os Males do Inferno em Diablo: Quem Realmente Controla o Caos",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+        "layout": "chronicle",
+        "tone": "dark",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_248213.mp3",
+        "audioStart": 29,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Os Grandes Males",
+            "title": "Diablo",
+            "body": "O Senhor do Terror transforma o medo em uma arma.",
+            "image": "resources/reels-review/assets/diablo/art-05-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O ódio se espalha",
+            "title": "Mephisto",
+            "body": "O Senhor do Ódio corrompe relações e alimenta conflitos.",
+            "image": "resources/reels-review/assets/diablo/art-06-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Nada permanece",
+            "title": "Baal",
+            "body": "O Senhor da Destruição deixa ruínas em seu caminho.",
+            "image": "resources/reels-review/assets/diablo/art-07-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Além dos três irmãos",
+            "title": "O Inferno tem outros poderes",
+            "body": "Andariel, Duriel, Belial e Azmodan também fazem parte dessa história. Explore no blog.",
+            "image": "resources/reels-review/assets/diablo/art-08-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "story"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-226-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-226-v1.jpg",
+      "sha256": "18f9df4ef9646971f9295315a0d808f4d2c473c52efb5480f72b3825b0371269"
+    },
+    {
+      "id": 227,
+      "title": "Os Nefalem: o verdadeiro poder por trás da humanidade",
+      "status": "agendado",
+      "scheduled": "2026-10-23 19:30:00",
+      "originEnvironment": "production",
+      "articleId": 14,
+      "articleSlug": "os-nefalem-o-verdadeiro-poder-por-tras-da-humanidade",
+      "articleSha256": "2a2820d4d47532fdb2639af72ea48d97f92f099b16b7e189bc4bb6c7770b62f1",
+      "type": "story",
+      "note": "Uma imagem: revelação inicial, permanência e texto narrativo. Nenhuma falsa troca de cenário. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte. Nova agenda de Diablo: fila #227, 2026-11-06 19:30:00 (Brasília).",
+      "sources": [],
+      "caption": "Os Nefalem: o verdadeiro poder por trás da humanidade\n\nNem anjos… nem demônios. Os Nefalem são o elo proibido entre Céu e Inferno — e talvez a maior ameaça (ou esperança) de Santuário.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/diablo-agenda-20261008/diablo-194-aaa1a12d0bf2.mp4",
+      "originalSha256": "aaa1a12d0bf22c2f4061fb33a628fc2a41ef08ed0b4fea9aaf1a3deb3e37ff58",
+      "reuse": true,
+      "trackId": 25,
+      "spec": {
+        "articleId": 14,
+        "articleTitle": "Os Nefalem: o verdadeiro poder por trás da humanidade",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+        "layout": "chronicle",
+        "tone": "dark",
+        "duration": 28,
+        "audio": "public/uploads/audio/pixabay_248213.mp3",
+        "audioStart": 53,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Os Nefalem",
+            "title": "Entre anjos e demônios",
+            "body": "A origem da humanidade de Santuário carrega os dois lados da Guerra Eterna.",
+            "image": "resources/reels-review/assets/diablo/art-13-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Um poder inesperado",
+            "title": "Mais fortes que seus criadores",
+            "body": "Os primeiros Nefalem despertaram um poder que assustou Céu e Inferno.",
+            "image": "resources/reels-review/assets/diablo/art-13-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O poder foi contido",
+            "title": "A herança esquecida",
+            "body": "Ao longo das gerações, esse potencial foi enfraquecido.",
+            "image": "resources/reels-review/assets/diablo/art-13-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "A humanidade de Santuário",
+            "title": "A força que ainda existe",
+            "body": "Entenda a origem dos Nefalem e seu papel no universo de Diablo. História no blog.",
+            "image": "resources/reels-review/assets/diablo/art-13-mesa-v1.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "story"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-227-v1.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-227-v1.jpg",
+      "sha256": "aaa1a12d0bf22c2f4061fb33a628fc2a41ef08ed0b4fea9aaf1a3deb3e37ff58"
+    },
+    {
+      "id": 229,
+      "title": "Muito além dos jumpscares: 3 jogos que constroem o medo pela atmosfera",
+      "status": "agendado",
+      "scheduled": "2026-10-26 19:30:00",
+      "originEnvironment": "local",
+      "articleId": 77,
+      "articleSlug": "muito-alem-dos-jumpscares-3-jogos-que-transformam-a-atmosfera-em-verdadeiro-terror",
+      "articleSha256": "3d13423636c9bb65630c4b5678ca15d87e94a7fbef9c7b565a57c315edd1dd5e",
+      "type": "comedy",
+      "note": "Roteiro individual revisado conforme a pauta.",
+      "sources": [],
+      "caption": "🔦 Desliguei o terror. O corredor não recebeu o aviso.\n\nUm casaco no escuro já vira chefe opcional. E o gato escolhe exatamente essa hora para aparecer. 😅\n\nQual jogo deixou sua casa mais assustadora depois?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/leva02-bloco1/reel-229-revisado.mp4",
+      "originalSha256": "35ddf1f8d9157df35a65a327b125c67882fbb654ebddb2c08f3e2e1466f2423e",
+      "reuse": false,
+      "trackId": 21,
+      "spec": {
+        "articleId": 77,
+        "articleTitle": "Muito além dos jumpscares: 3 jogos que constroem o medo pela atmosfera",
+        "tone": "tech",
+        "layout": "showcase",
+        "collection": "PERRENGUE NERD · TERROR",
+        "audio": "public/uploads/audio/pixabay_10376.mp3",
+        "audioStart": 5,
+        "footer": "Qual jogo te fez olhar para trás?",
+        "closingLabel": "CONTA NOS COMENTÁRIOS",
+        "scenes": [
+          {
+            "eyebrow": "Depois do jogo",
+            "title": "O terror acabou. Será?",
+            "body": "Você desligou o jogo, mas continua em estado de alerta.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0,
+                0,
+                0.5,
+                0.43779904306220097
+              ]
+            }
+          },
+          {
+            "eyebrow": "O corredor",
+            "title": "A casa ganhou dificuldade",
+            "body": "Agora você atravessa o corredor como se tivesse perdido o save.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0.5,
+                0,
+                0.5,
+                0.43779904306220097
+              ]
+            }
+          },
+          {
+            "eyebrow": "A sombra",
+            "title": "Tem alguma coisa ali",
+            "body": "O coração acelera. A lanterna aponta para a porta.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0,
+                0.43779904306220097,
+                0.5,
+                0.562200956937799
+              ]
+            }
+          },
+          {
+            "eyebrow": "O alívio",
+            "title": "Era só o casaco",
+            "body": "E o gato apareceu para garantir o susto.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0.5,
+                0.43779904306220097,
+                0.5,
+                0.562200956937799
+              ]
+            }
+          }
+        ],
+        "editorial": "manual",
+        "duration": 24,
+        "beatStarts": [
+          0,
+          6,
+          12,
+          18
+        ],
+        "category": "games",
+        "presentation": "comedy"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-229-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-229-v2.jpg",
+      "sha256": "d6f6c850b6c47737a9ea0d05aeed0b05a6052617443b0b99b087598ac88730b8",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-229-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-229-v1.jpg",
+          "sha256": "d41750d3e189511701dea0651d1114293982a7f1d924dbd0e9f860b7ee05190a"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 230,
+      "title": "Muito além dos jumpscares: 3 jogos que constroem o medo pela atmosfera",
+      "status": "agendado",
+      "scheduled": "2026-10-28 19:30:00",
+      "originEnvironment": "local",
+      "articleId": 77,
+      "articleSlug": "muito-alem-dos-jumpscares-3-jogos-que-transformam-a-atmosfera-em-verdadeiro-terror",
+      "articleSha256": "3d13423636c9bb65630c4b5678ca15d87e94a7fbef9c7b565a57c315edd1dd5e",
+      "type": "comparison",
+      "note": "Roteiro individual revisado conforme a pauta.",
+      "sources": [],
+      "caption": "👻 Medo também tem estilos.\n\nSilent Hill 2 trabalha a incerteza; Signalis transforma recursos em decisões; Alan Wake 2 aproxima a ameaça de um cotidiano estranho. Três recortes do artigo, sem misturar outra seleção.\n\nQual desses mecanismos mais pega você?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/leva02-bloco1/reel-230-final.mp4",
+      "originalSha256": "ad72eb8440ab351cdb855f6f6eda4189c3ec9746625e3ef61b1f6e3e2d367883",
+      "reuse": false,
+      "trackId": 25,
+      "spec": {
+        "articleId": 77,
+        "articleTitle": "Muito além dos jumpscares: 3 jogos que constroem o medo pela atmosfera",
+        "tone": "tech",
+        "layout": "guide",
+        "collection": "UTILIDADE · TIPOS DE TERROR",
+        "audio": "public/uploads/audio/pixabay_248213.mp3",
+        "audioStart": 6,
+        "duration": 21,
+        "beatStarts": [
+          0,
+          7,
+          14
+        ],
+        "footer": "Salve para escolher seu próximo jogo.",
+        "closingLabel": "QUATRO JEITOS DE SENTIR MEDO",
+        "scenes": [
+          {
+            "eyebrow": "Silent Hill 2",
+            "title": "A dúvida assusta",
+            "body": "A névoa e o rádio fazem você antecipar o que ainda não vê.",
+            "image": "public/uploads/posts/muito-alem-dos-jumpscares-3-jogos-que-transformam-a-atmosfera-em-verdadeiro-terror/images/img-001.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Signalis",
+            "title": "Cada item é uma escolha",
+            "body": "Gerenciar recursos também faz parte da tensão.",
+            "image": "public/uploads/posts/muito-alem-dos-jumpscares-3-jogos-que-transformam-a-atmosfera-em-verdadeiro-terror/images/img-002.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Alan Wake 2",
+            "title": "O cotidiano fica estranho",
+            "body": "A investigação aproxima o medo de lugares reconhecíveis.",
+            "image": "public/uploads/posts/muito-alem-dos-jumpscares-3-jogos-que-transformam-a-atmosfera-em-verdadeiro-terror/images/img-003.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "editorial": "manual",
+        "category": "games",
+        "presentation": "comparison"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-230-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-230-v2.jpg",
+      "sha256": "e09f1c91f68d22383ce9581459ef2a0da341b73df552c375784bbecfa47867c5",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-230-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-230-v1.jpg",
+          "sha256": "e09f1c91f68d22383ce9581459ef2a0da341b73df552c375784bbecfa47867c5"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 231,
+      "title": "Como o som cria medo nos jogos: pistas, silêncio e espaço",
+      "status": "agendado",
+      "scheduled": "2026-10-31 19:30:00",
+      "originEnvironment": "local",
+      "articleId": 78,
+      "articleSlug": "como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror",
+      "articleSha256": "476e7d639048e67ce007a56dea594cd416e9a72bb3ce29fe731bdddda5eeb9aa",
+      "type": "sound",
+      "note": "Roteiro individual revisado conforme a pauta.",
+      "sources": [],
+      "caption": "🎧 Um ruído pode mudar a cena inteira.\n\nEste Reel usa exemplos sonoros ilustrativos para mostrar antecipação, silêncio e direção. São demonstrações produzidas para a explicação, não áudio original dos jogos.\n\nOuça com fones em volume confortável: de qual lado veio o último som?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/leva02-bloco1/reel-231-revisado.mp4",
+      "originalSha256": "65322781e18fa8c1a48ab32634993f80af430a88bbbf0462532737201a23a682",
+      "reuse": false,
+      "trackId": 22,
+      "spec": {
+        "articleId": 78,
+        "articleTitle": "Como o som cria medo nos jogos: pistas, silêncio e espaço",
+        "tone": "tech",
+        "layout": "guide",
+        "collection": "UTILIDADE · SOM NO TERROR",
+        "audio": "public/uploads/reels/correcao-instagram-20261010/audio/reel-231-demo.wav",
+        "audioStart": 0,
+        "footer": "Qual som de jogo ficou na sua memória?",
+        "closingLabel": "CONTA NOS COMENTÁRIOS",
+        "scenes": [
+          {
+            "eyebrow": "Exemplo ilustrativo",
+            "title": "Ouça antes de ver",
+            "body": "Um ruído pode mudar a leitura de uma cena.",
+            "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-001.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Antecipação",
+            "title": "O alerta se aproxima",
+            "body": "O sinal repetido faz você esperar alguma coisa.",
+            "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-002.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "O silêncio",
+            "title": "Agora, nada",
+            "body": "A pausa deixa o próximo ruído em destaque.",
+            "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Direção",
+            "title": "Esquerda ou direita?",
+            "body": "Ouça com fones em volume confortável.",
+            "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "editorial": "manual",
+        "duration": 28,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "category": "games",
+        "presentation": "sound"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-231-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v2.jpg",
+      "sha256": "dc01956f517e8f8a8e5fe3b6ff2dab196cbb31ba6c9f99474deca308aaf73aef",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-231-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v1.jpg",
+          "sha256": "dc01956f517e8f8a8e5fe3b6ff2dab196cbb31ba6c9f99474deca308aaf73aef"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 232,
+      "title": "O squad existe. O horário, não.",
+      "status": "agendado",
+      "scheduled": "2026-11-02 19:30:00",
+      "originEnvironment": "local",
+      "articleId": null,
+      "articleSlug": null,
+      "articleSha256": null,
+      "type": "chat",
+      "note": "Roteiro individual revisado conforme a pauta.",
+      "sources": [],
+      "caption": "🎮 O squad tem cinco pessoas e seis horários incompatíveis.\n\nVocê está pronto. Um está no trabalho, outro dormiu. Quando finalmente dá certo para você… a sala já ficou vazia. 😅\n\nQuem do seu grupo sempre chega depois?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/leva02-bloco1/reel-232-final.mp4",
+      "originalSha256": "be406cce94e5964552a0c6ee6bf09cae587554cf2f7c2f733847307030620bea",
+      "reuse": false,
+      "trackId": 34,
+      "spec": {
+        "articleId": 0,
+        "articleTitle": "O squad existe. O horário, não.",
+        "tone": "tech",
+        "layout": "chronicle",
+        "collection": "PERRENGUE NERD · CENA FICTÍCIA",
+        "audio": "public/uploads/audio/pixabay_9503.mp3",
+        "audioStart": 15,
+        "footer": "Marque quem chega quando todo mundo saiu.",
+        "closingLabel": "O GRUPO RECONHECE ESSA CENA?",
+        "scenes": [
+          {
+            "eyebrow": "O convite",
+            "title": "Hoje o squad fecha",
+            "body": "Você manda a mensagem e já prepara o controle.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0,
+                0,
+                0.5,
+                0.5
+              ]
+            }
+          },
+          {
+            "eyebrow": "A primeira resposta",
+            "title": "Ainda estou no trabalho",
+            "body": "Um horário livre não significa que todo mundo pode.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0.5,
+                0,
+                0.5,
+                0.5
+              ]
+            }
+          },
+          {
+            "eyebrow": "O silêncio",
+            "title": "Esse já dormiu",
+            "body": "O grupo segue combinando. Um participante saiu da realidade.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0,
+                0.5,
+                0.5,
+                0.5
+              ]
+            }
+          },
+          {
+            "eyebrow": "A chegada",
+            "title": "Cheguei! Cadê vocês?",
+            "body": "Quando você consegue entrar, os outros já desligaram.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0.5,
+                0.5,
+                0.5,
+                0.5
+              ]
+            }
+          }
+        ],
+        "editorial": "manual",
+        "duration": 28,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "category": "editorial",
+        "presentation": "chat"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-232-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-232-v2.jpg",
+      "sha256": "eb3b255bd43313e44fecc7706fc0b0f79843c0a8ed7b06df9f29d9aca390336e",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-232-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-232-v1.jpg",
+          "sha256": "eb3b255bd43313e44fecc7706fc0b0f79843c0a8ed7b06df9f29d9aca390336e"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 233,
+      "title": "Jogos para quem só tem 30 minutos por dia: escolha pela pausa",
+      "status": "agendado",
+      "scheduled": "2026-11-04 19:30:00",
+      "originEnvironment": "local",
+      "articleId": 79,
+      "articleSlug": "jogos-para-quem-so-tem-30-minutos-por-dia",
+      "articleSha256": "0cfd546304015e86db0ea74aeb573d7420c56a425808c33332ebd1355ee22ff4",
+      "type": "list",
+      "note": "Roteiro individual revisado conforme a pauta.",
+      "sources": [],
+      "caption": "⏳ Meia hora livre: escolha também seu ponto de parada.\n\nBalatro, Slay the Spire, Vampire Survivors, Celeste e Hades oferecem sessões diferentes. Rodada, trecho e run completa não são a mesma coisa. Confira modo, progresso e salvamento.\n\nQual você abre quando tem pouco tempo?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/leva02-bloco1/reel-233-final.mp4",
+      "originalSha256": "8f2ffa09a54d7985cbb580006effde30b4e779b6429941945f20232ff79b4243",
+      "reuse": false,
+      "trackId": 28,
+      "spec": {
+        "articleId": 79,
+        "articleTitle": "Jogos para quem só tem 30 minutos por dia: escolha pela pausa",
+        "tone": "tech",
+        "layout": "guide",
+        "collection": "UTILIDADE · SESSÕES CURTAS",
+        "audio": "public/uploads/audio/pixabay_151007.mp3",
+        "audioStart": 5,
+        "duration": 35,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21,
+          28
+        ],
+        "footer": "Salve estas ideias para uma noite corrida.",
+        "closingLabel": "SESSÃO CURTA NÃO É RUN COMPLETA",
+        "scenes": [
+          {
+            "eyebrow": "Balatro",
+            "title": "Uma rodada, não uma promessa",
+            "body": "Pare entre etapas; a sequência completa pode levar mais tempo.",
+            "image": "public/uploads/posts/jogos-para-quem-so-tem-30-minutos-por-dia/images/img-001.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Slay the Spire",
+            "title": "Uma decisão por vez",
+            "body": "Confira o salvamento da versão para continuar depois.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-233-img-002.jpg",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Vampire Survivors",
+            "title": "Confira o modo",
+            "body": "A duração muda por modo e estágio; escolha seu ponto de parada.",
+            "image": "public/uploads/posts/12-jogos-leves-pc-fraco-ou-modesto/images/vampire-survivors.jpg",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Celeste",
+            "title": "Um trecho da montanha",
+            "body": "Você pode avançar uma etapa sem terminar o capítulo.",
+            "image": "public/uploads/posts/jogos-para-quem-so-tem-30-minutos-por-dia/images/img-002.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Hades",
+            "title": "Sair também exige planejar",
+            "body": "Confira como preservar o progresso antes de encerrar.",
+            "image": "public/uploads/posts/jogos-para-quem-so-tem-30-minutos-por-dia/images/img-003.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "editorial": "manual",
+        "category": "dicas",
+        "presentation": "list"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-233-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-233-v2.jpg",
+      "sha256": "7d881d6099cedbd99e602ce91db219e6f9936fa2af02bb19d405012fbef20fff",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-233-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-233-v1.jpg",
+          "sha256": "7d881d6099cedbd99e602ce91db219e6f9936fa2af02bb19d405012fbef20fff"
+        }
+      ],
+      "revision": 2
+    },
+    {
+      "id": 234,
+      "title": "Só mais uma partida",
+      "status": "agendado",
+      "scheduled": "2026-11-07 19:30:00",
+      "originEnvironment": "local",
+      "articleId": null,
+      "articleSlug": null,
+      "articleSha256": null,
+      "type": "comedy",
+      "note": "Roteiro individual revisado conforme a pauta.",
+      "sources": [],
+      "caption": "⏰ “É a última partida.”\n\nPerdeu? Precisa recuperar. Ganhou? Agora embalou. O problema é que o amanhecer não entrou nessa negociação. 😅\n\nQual foi a sua desculpa mais recente para jogar mais uma?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "original": "public/uploads/reels/leva02-bloco1/reel-234-final.mp4",
+      "originalSha256": "774c4b98f2955f7f0313979102a6f3fe481111442bfee769a745a332f4b041fb",
+      "reuse": false,
+      "trackId": 15,
+      "spec": {
+        "articleId": 0,
+        "articleTitle": "Só mais uma partida",
+        "tone": "tech",
+        "layout": "chronicle",
+        "collection": "PERRENGUE NERD · SÓ MAIS UMA",
+        "audio": "public/uploads/audio/pixabay_519731.mp3",
+        "audioStart": 8,
+        "footer": "Qual jogo te faz negociar com o relógio?",
+        "closingLabel": "CONTA NOS COMENTÁRIOS",
+        "scenes": [
+          {
+            "eyebrow": "A promessa",
+            "title": "É a última partida",
+            "body": "O relógio ainda permite acreditar nessa frase.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0,
+                0,
+                0.5,
+                0.46570972886762363
+              ]
+            }
+          },
+          {
+            "eyebrow": "Depois da derrota",
+            "title": "Não posso parar assim",
+            "body": "Agora você precisa recuperar antes de encerrar.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0.5,
+                0,
+                0.5,
+                0.46570972886762363
+              ]
+            }
+          },
+          {
+            "eyebrow": "Depois da vitória",
+            "title": "Agora eu embalo",
+            "body": "Uma vitória vira argumento para jogar de novo.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0,
+                0.46570972886762363,
+                0.5,
+                0.5342902711323764
+              ]
+            }
+          },
+          {
+            "eyebrow": "O amanhecer",
+            "title": "A manhã não negocia",
+            "body": "O sol apareceu. Seu horário de dormir desapareceu.",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+            "framing": {
+              "mode": "contain",
+              "motion": "still",
+              "region": [
+                0.5,
+                0.46570972886762363,
+                0.5,
+                0.5342902711323764
+              ]
+            }
+          }
+        ],
+        "editorial": "manual",
+        "duration": 28,
+        "beatStarts": [
+          0,
+          7,
+          14,
+          21
+        ],
+        "category": "editorial",
+        "presentation": "comedy"
+      },
+      "state": "ready",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-234-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-234-v2.jpg",
+      "sha256": "df5f7d26db5b57ea8d1a56b296367b45932a0e37e2b26f398562fc6ec92d5aa1",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-234-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-234-v1.jpg",
+          "sha256": "06cbac9f36e5c5acf9746080534a2fdf41e528e7116c7f5b78621dd07760d0d0"
+        }
+      ],
+      "revision": 2
+    }
+  ],
+  "assetProvenance": {
+    "tool": "image_gen.imagegen",
+    "generated": [
+      {
+        "id": 196,
+        "file": "reel-196-img-001.png",
+        "direction": "Quatro painéis cinematográficos: jogador no setup, mão no mouse, resposta na tela e percepção com headset."
+      },
+      {
+        "id": 229,
+        "file": "reel-229-img-001.png",
+        "direction": "Quatro painéis de humor: encerrar terror, atravessar corredor, sombra do casaco e alívio com gato."
+      },
+      {
+        "id": 232,
+        "file": "reel-232-img-001.png",
+        "direction": "Quatro painéis de conversa: convite ao squad, amigo trabalhando, amigo dormindo e lobby vazio."
+      },
+      {
+        "id": 234,
+        "file": "reel-234-img-001.png",
+        "direction": "Quatro painéis de humor: última partida, derrota, vitória e amanhecer."
+      }
+    ],
+    "base": "public/uploads/reels/correcao-instagram-20261010/images/",
+    "slayTheSpire": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/646570/ss_c171816f7ecd35b5b46d2fa27532f4c5b8ca3cc5.1920x1080.jpg?t=1774015376"
+  }
+}

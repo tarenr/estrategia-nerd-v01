@@ -1,3 +1,48 @@
+## Correção aprovada em 10/10/2026 — estado vigente
+
+Esta seção substitui as declarações de conclusão integral e de formato uniforme dos relatórios anteriores. A implementação está preparada para inspeção; publicação e aplicação das novas versões à fila ainda estão pendentes da avaliação visual combinada.
+
+Foram auditados 41 registros. Os cancelados 191–194 permanecem cancelados, sem reativação. Os 37 restantes têm ficha individual com legenda, origem, cenas, imagens, enquadramento e trilha em `resources/reels-review/corrections-20261010.json`. São 25 novas renderizações e 12 vídeos reaproveitados. História, comparação, orientação prática, análise de produto, recomendações, explicação sonora e humor têm sequências próprias, com três, quatro ou cinco cenas, conforme a pauta.
+
+A causa do problema era transformar resumos em quatro cenas iguais, usar uma imagem genérica e tratar renderização técnica como revisão editorial. O renderizador agora exige roteiro individual; não fabrica cenas a partir do resumo. Imagens consecutivas iguais permanecem contínuas, sem aparentar uma troca a cada texto. A identidade visual é comum, mas a estrutura editorial é específica.
+
+O post 196, publicado ao meio-dia, tem uma nova prévia com quatro imagens narrativas geradas por ImageGen e legenda revisada. Seu cadastro publicado foi preservado. Não foi republicado e não foi criada uma duplicata com vínculo ambíguo. O publicado 214 também foi preservado. O rascunho 1 tem Reel preparado, mas seu cadastro continua rascunho no formato original até a inspeção. As 34 versões agendadas permanecem na fila original; as legendas e vídeos novos estão na galeria, aguardando liberação.
+
+Cinco referências de mídia (205, 216–219) foram sincronizadas ao cache já vigente pelo repositório oficial, sem mudar o vídeo efetivo ou as datas. O painel prioriza o mesmo cache válido utilizado na publicação. O artigo 17 em produção teve somente o título corrigido para “A Lore Completa de Diablo: Entenda Toda a História do Universo”; corpo, categoria, slug e SEO foram preservados.
+
+Os conteúdos 229, 232 e 234 usam artes de humor geradas por ImageGen. O 230 compara Silent Hill 2, Signalis e Alan Wake 2. O 231 usa exemplos sonoros ilustrativos de antecipação, silêncio e direção, identificados como demonstração, não áudio original de jogos. O 233 mostra separadamente Balatro, Slay the Spire, Vampire Survivors, Celeste e Hades. Não foram produzidas artes por CSS: CSS serve apenas à interface da galeria; o compositor posiciona imagens raster e textos no vídeo.
+
+### Validação e acesso
+
+- `scripts/verify-changes.php`: 17 OK, zero falhas, incluindo PHPStan e renderização local, produção e stage.
+- `scripts/verify-konva-integration.php`: 26 OK, zero falhas; rejeita geração sem roteiro individual e duração inválida.
+- `scripts/reels-review/verify-corrections.mjs`: 37 roteiros aprovados nas verificações de cenas, tempos, recortes e continuidade.
+- `scripts/reels-review/corrections.mjs --verify`: 37 vídeos decodificados integralmente, H.264/AAC, 1080×1920, áudio presente, hashes conferidos e originais preservados. Não equivale a escuta estética integral.
+- `correct-approved.php --verify-state`: 41 registros preservados, cinco mídias alinhadas e corpo do artigo 17 preservado. O horário de atualização dos cinco registros sincronizados muda normalmente.
+- Galeria: `public/uploads/previews/leva02-bloco1-v3/index.html`, com 37 players, filtros, roteiro e legenda. O acesso local foi verificado; a URL externa exige autenticação Cloudflare e não teve seu conteúdo externo confirmado.
+- Interface: busca por 196 retornou um resultado; filtro de humor retornou 229 e 234; Reel 196 reproduziu com duração de 32 s, 1080×1920 e sem erro. Não houve overflow horizontal no viewport efetivo de 1280 px. A tentativa de override móvel não alterou o viewport; validação móvel desta versão permanece pendente. A documentação foi aberta na rota oficial `/local/mudancas/documento?grupo=features&arquivo=revisao-editorial-reels.md`.
+- Backup: `storage/correcao-instagram-20261010/`, com JSON dos dados e 46 arquivos de mídia conferidos por SHA-256. As versões v1 foram preservadas após os ajustes de recorte v2.
+
+### Operação e recuperação
+
+Use os scripts CLI versionados; não execute atualizações genéricas por intervalo de ID. O backup é obrigatório antes de escrever. A sincronização de cinco mídias usa transação, verifica estado/arquivo e é idempotente quanto ao caminho. A correção do título 17 verifica concorrência e preserva o conteúdo. Não há alteração de schema nem nova dependência.
+
+Para recuperação, compare os registros com `before.json`, confirme que não houve edição/publicação posterior e restaure apenas os campos afetados em transação. Os arquivos originais não foram sobrescritos. Não restaure o lote inteiro por cima de alterações posteriores. Rollback de código deve usar o histórico Git sem apagar trabalho não relacionado.
+
+O catálogo mantém `publicationApproval=false`. A regeneração vinculada exige roteiro, origem de produção, slug, hash do corpo e trilha correspondentes. Após a inspeção, a aplicação à fila e a republicação de 196 deverão reconciliar cadastro, mídia e cache; a aprovação da execução técnica não foi tratada como aprovação de publicação.
+
+### Fontes e artes
+
+Imagens oficiais da MSI B650 e Kingston NV3 seguem `resources/reels-review/assets/sources.json`. A screenshot de Slay the Spire vem da página oficial Steam (app 646570). Artes ImageGen foram salvas em `public/uploads/reels/correcao-instagram-20261010/images/`: `reel-196-img-001.png`, `reel-229-img-001.png`, `reel-232-img-001.png` e `reel-234-img-001.png`. A direção de cada conjunto está registrada em `assetProvenance` no catálogo; cada painel é enquadrado como uma cena distinta.
+
+A data de suporte do Windows 11 24H2 Home/Pro foi conferida na [tabela oficial de versões da Microsoft](https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information). As condições do upgrade de The Witcher 3 foram conferidas no [anúncio oficial](https://www.thewitcher.com/no/en/news/52041/see-whats-new-in-the-witcher-3-wild-hunt-remastered).
+
+Mídias e backups seguem a política existente de arquivos ignorados. Commit/push de código e catálogo não substituem distribuição dos arquivos de vídeo ao servidor. A inspeção visual e musical pelo usuário, a liberação da fila e a republicação permanecem pendentes.
+
+---
+
+## Registro histórico anterior
+
 # Planejamento editorial — Leva 02: A vida de quem é nerd
 
 Registro: 06/10/2026. Projeto: Estratégia Nerd / @estrategia_nerd.
