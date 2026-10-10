@@ -1,3 +1,11 @@
+## 196 — versão 5 com composição anterior (10/10/2026)
+
+A primeira cena foi apresentada e recebeu o retorno “Ficou bom”. As quatro cenas usam agora a composição do vídeo anterior: título e apoio acima, moldura central com linhas e detalhes, chamada abaixo. As quatro artes foram adaptadas com ImageGen e salvas em `public/uploads/reels/correcao-instagram-20261010/images/reel-196-v5-scene-001.png` a `004.png`. O cenário ocupa toda a moldura de 840×600, sem faixas laterais; não há zoom da imagem. O perfil `196-v5` reutiliza o compositor existente exclusivamente neste item, mantendo textos, legenda, áudio, 32 segundos e quatro cenas de oito segundos. Os outros 36 itens foram comparados ao catálogo anterior e preservados.
+
+Vídeo vigente para inspeção: `public/uploads/reels/correcao-instagram-20261010/reel-196-v5.mp4`; galeria: `index.html?id=196&v=5`. As versões anteriores continuam preservadas. A v4 está superada como proposta visual. A primeira cena validada não equivale a aprovação do vídeo completo ou publicação; cadastro, fila e cancelamentos não foram alterados nesta revisão.
+
+Verificações: decodificação integral do MP4 sem erros; quatro quadros inspecionados; testes dos 37 roteiros aprovados, com continuidade, enquadramento e determinismo. A validação na interface nativa móvel do Instagram permanece pendente.
+
 ## Correção visual individual do 196 — versão 4 (10/10/2026)
 
 Somente a composição visual foi alterada. As quatro ilustrações do avatar, cenas, textos, duração e áudio da v3 foram preservados. A área de imagem é fixa em x=86, y=300, 908×680; cada ilustração permanece inteira e centralizada. Rótulo, título e corpo começam em y=1025, 1080 e 1300, seguindo as posições da composição comum. O perfil é restrito a `visualRevision: 196-v4`; os outros 36 itens não receberam alterações. A v3 e seu hash estão preservados em `previousVersions`.

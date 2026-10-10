@@ -49,6 +49,7 @@ export function validateSpec(spec) {
   if (typeof spec.audio !== 'string' || !spec.audio) throw new Error('Trilha local obrigatória.');
   if (!Number.isFinite(spec.audioStart) || spec.audioStart < 0) throw new Error('Início da trilha inválido.');
   if (spec.editorial === 'manual') validateManualSpec(spec);
+  if(spec.compositionProfile==='196-v5' && (spec.articleId!==16 || spec.category!=='hardware' || spec.scenes.length!==4 || spec.beatStarts.some((t,i)=>t!==i*spec.duration/4))) throw new Error('Composição 196-v5 incompatível com o roteiro preservado.');
 }
 
 export function proportionalCrop(imageWidth, imageHeight, width, height, focusX = 0.5) {
@@ -97,7 +98,7 @@ export function fitText(node, maxHeight, maxSize, minSize) {
 /** A reusable scene graph; rendering uses explicit frame time, never wall-clock animation. */
 export async function createScene(spec, root) {
   validateSpec(spec);
-  if (spec.editorial === 'manual') return createManualScene(spec, root);
+  if (spec.editorial === 'manual' && spec.compositionProfile !== '196-v5') return createManualScene(spec, root);
   registerFonts(root);
   const theme=THEMES[spec.category] || THEMES.games;
   const AMBER=theme.accent;const CYAN=theme.secondary;const PURPLE=theme.frame;
@@ -178,7 +179,7 @@ export async function createScene(spec, root) {
       imageCaption.text(scene.caption || 'ILUSTRAÇÃO DO ARTIGO');
       typography.push({scene:active,titleSize,bodySize});
     }
-    const scale=1+state.progress*0.06;
+    const scale=spec.compositionProfile==='196-v5'?1:1+state.progress*0.06;
     if(spec.scenes[active].imageFit==='contain'){
       photo.crop({x:0,y:0,width:images[active].width,height:images[active].height});
       photo.setAttrs(containedImage(images[active].width,images[active].height,840,600,state.progress));

@@ -16,14 +16,13 @@ if(catalog.avatarRevision){
  for(const item of catalog.items){
   const original=before.items.find(i=>i.id===item.id);
   if(!ids.includes(item.id)){assert.deepEqual(item,original,'Registro fora do escopo alterado #'+item.id);continue;}
-  assert.equal(item.revision,3);assert.equal(item.avatarReference,true);
+  const approved196=item.id===196&&item.spec.compositionProfile==='196-v5';assert.equal(item.revision,approved196?5:3);assert.equal(item.avatarReference,true);
   for(const key of ['caption','status','scheduled','articleId','articleSlug','original','originalSha256','trackId'])assert.deepEqual(item[key],original[key],'Campo preservado divergiu: '+key);
   for(const key of ['audio','audioStart','duration','beatStarts'])assert.deepEqual(item.spec[key],original.spec[key],'Áudio/tempos alterados #'+item.id);
   assert.equal(item.spec.scenes.length,4);
   for(const [index,s] of item.spec.scenes.entries()){
    for(const key of ['title','body','eyebrow'])assert.equal(s[key],original.spec.scenes[index][key],'Roteiro alterado #'+item.id);
-   assert.ok(s.image.endsWith('reel-'+item.id+'-avatar-v3.png'));
-   assert.deepEqual(s.framing.region,[[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]][index]);
+   if(approved196){assert.ok(s.image.endsWith('reel-196-v5-scene-'+String(index+1).padStart(3,'0')+'.png'));assert.equal(s.imageFit,'cover');}else{assert.ok(s.image.endsWith('reel-'+item.id+'-avatar-v3.png'));assert.deepEqual(s.framing.region,[[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]][index]);}
   }
   assert.ok(item.previousVersions.some(v=>v.sha256===original.sha256&&v.video===original.video));
  }
@@ -38,7 +37,7 @@ for(const item of catalog.items){
   assert.equal(stage.typography.length,spec.scenes.length);
   assert.ok(stage.typography.every(t=>t.bodySize>=31),'Texto pequeno #'+item.id);
   const images=stage.layer.find('Image');
-  assert.equal(images.length,imageRuns(spec).length);
+  assert.equal(images.length,spec.compositionProfile==='196-v5'?1:imageRuns(spec).length);
   if(imageRuns(spec).length===1){for(const time of spec.beatStarts.slice(1)){
    stage.render(time-.05);const before=images[0].width();stage.render(time+.05);
    assert.equal(images[0].width(),before,'Imagem reiniciou #'+item.id);assert.equal(images[0].getParent().opacity(),1);
