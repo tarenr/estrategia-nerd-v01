@@ -1156,6 +1156,14 @@ final class ContentSyncManager
         $stats = ['created' => 0, 'updated' => 0, 'history_added' => 0, 'next_step_links' => 0];
         $targetIdBySlug = [];
         $nextStepSlugByTargetId = [];
+        $claimedTargetIds = [];
+        $payloadSlugs = [];
+        foreach ($posts as $candidatePost) {
+            $candidateSlug = trim((string) ($candidatePost['slug'] ?? ''));
+            if ($candidateSlug !== '') {
+                $payloadSlugs[$candidateSlug] = true;
+            }
+        }
 
         foreach ($posts as $post) {
             $sourcePostId = (int) ($post['id'] ?? 0);
@@ -1165,7 +1173,7 @@ final class ContentSyncManager
             }
 
             $knownSlugs = array_values(array_unique(array_filter(array_merge([$currentSlug], $historyByPost[$sourcePostId] ?? []))));
-            $existing = $this->findTargetPost($pdo, $currentSlug, $knownSlugs);
+            $existing = $this->findTargetPost($pdo, $currentSlug, $knownSlugs, $claimedTargetIds, $payloadSlugs);
             $currentTargetSlug = (string) ($existing['slug'] ?? '');
             $categorySlug = trim((string) ($post['categoria_post_slug'] ?? ''));
             $categoryId = $categorySlug !== '' ? (int) ($categoryMap[$categorySlug] ?? 0) : 0;
@@ -1203,6 +1211,7 @@ final class ContentSyncManager
                 $stmt = $pdo->prepare("UPDATE posts SET {$assignments} WHERE id = :id");
                 $stmt->execute($data + ['id' => (int) $existing['id']]);
                 $targetPostId = (int) $existing['id'];
+                $claimedTargetIds[$targetPostId] = true;
                 $stats['updated']++;
                 if ($currentTargetSlug !== '' && $currentTargetSlug !== $currentSlug && $this->storePostSlug($pdo, $targetPostId, $currentTargetSlug)) {
                     $stats['history_added']++;
@@ -1217,8 +1226,12 @@ final class ContentSyncManager
                 $stmt = $pdo->prepare("INSERT INTO posts ({$columns}, views, curtidas, comentarios_count, likes_count) VALUES ({$values}, 0, 0, 0, 0)");
                 $stmt->execute($data);
                 $targetPostId = (int) $pdo->lastInsertId();
+                $claimedTargetIds[$targetPostId] = true;
                 $stats['created']++;
             }
+
+            $stmtCleanStaleHistory = $pdo->prepare('DELETE FROM post_slug_history WHERE slug = :slug AND post_id != :post_id');
+            $stmtCleanStaleHistory->execute(['slug' => $currentSlug, 'post_id' => $targetPostId]);
 
             $targetIdBySlug[$currentSlug] = $targetPostId;
             $nextStepSlugByTargetId[$targetPostId] = $nextStepSlug;
@@ -1283,16 +1296,32 @@ final class ContentSyncManager
         return (bool) $this->columnSupportCache[$cacheKey];
     }
 
-    private function findTargetPost(PDO $pdo, string $currentSlug, array $knownSlugs): ?array
+    private function findTargetPost(PDO $pdo, string $currentSlug, array $knownSlugs, array $claimedTargetIds = [], array $payloadSlugs = []): ?array
     {
         $direct = $this->fetchOne($pdo, 'SELECT id, slug FROM posts WHERE slug = :slug LIMIT 1', ['slug' => $currentSlug]);
         if ($direct !== null) {
-            return $direct;
+            $directId = (int) ($direct['id'] ?? 0);
+            if (!isset($claimedTargetIds[$directId])) {
+                return $direct;
+            }
         }
 
         foreach ($knownSlugs as $slug) {
-            $row = $this->fetchOne($pdo, 'SELECT p.id, p.slug FROM post_slug_history h INNER JOIN posts p ON p.id = h.post_id WHERE h.slug = :slug ORDER BY h.id DESC LIMIT 1', ['slug' => $slug]);
-            if ($row !== null) {
+            $rows = $this->fetchAll($pdo, 'SELECT p.id, p.slug FROM post_slug_history h INNER JOIN posts p ON p.id = h.post_id WHERE h.slug = :slug ORDER BY h.id DESC', ['slug' => $slug]);
+            foreach ($rows as $row) {
+                $targetId = (int) ($row['id'] ?? 0);
+                $targetSlug = (string) ($row['slug'] ?? '');
+
+                if (isset($claimedTargetIds[$targetId])) {
+                    continue;
+                }
+
+                // Se o slug atual deste post no destino pertence diretamente a outro post do mesmo lote,
+                // significa que o post de destino e a entidade ativa daquele outro post.
+                if ($targetSlug !== '' && $targetSlug !== $currentSlug && isset($payloadSlugs[$targetSlug])) {
+                    continue;
+                }
+
                 return $row;
             }
         }
