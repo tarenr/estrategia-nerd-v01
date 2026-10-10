@@ -430,26 +430,36 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
           </div>
         </section>
 
-        <section id="diagnostico" data-doc-panel="diagnostico" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'diagnostico' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">13) Erros comuns e diagnostico rapido</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Problema</th><th>Possivel causa</th><th>Acao recomendada</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">Imagem nao aparece</td><td class="text-slate-300">Path quebrado ou arquivo fora de uploads.</td><td class="text-slate-400">Revisar referencia no banco e em `public/uploads`.</td></tr><tr class="doc-row"><td class="text-white">Rota nao carrega</td><td class="text-slate-300">Regra em `config/routes.php`, `public/index.php` ou `.htaccess` incorreta.</td><td class="text-slate-400">Rodar preflight e validar entrada publica.</td></tr><tr class="doc-row"><td class="text-white">Conteudo nao sincroniza</td><td class="text-slate-300">Pacote invalido, lock ativo ou alvo remoto incompleto.</td><td class="text-slate-400">Verificar manifesto, lock e credenciais `CONTENT_SYNC_PRODUCTION_*`.</td></tr><tr class="doc-row"><td class="text-white">Pacote falha na validacao</td><td class="text-slate-300">JSON ausente, upload faltando ou manifesto inconsistente.</td><td class="text-slate-400">Executar verificacao do pacote e revisar arquivos referenciados.</td></tr><tr class="doc-row"><td class="text-white">Dropbox falha no envio</td><td class="text-slate-300">Scope ausente, redirect URI divergente ou token invalido.</td><td class="text-slate-400">Revisar app no Dropbox, scopes, callback e reconectar a conta.</td></tr><tr class="doc-row"><td class="text-white">Texto com acentuacao quebrada</td><td class="text-slate-300">Arquivo salvo com encoding invalido ou copia com mojibake.</td><td class="text-slate-400">Executar preflight e corrigir na origem antes do deploy.</td></tr></tbody></table></div>
-          <div class="mt-4 grid gap-4 xl:grid-cols-3">
+        <section id="diagnostico" data-doc-panel="diagnostico" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'diagnostico' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">13) Erros comuns e diagnostico rapido</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Problema</th><th>Possivel causa</th><th>Acao recomendada</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">Imagem nao aparece</td><td class="text-slate-300">Path quebrado ou arquivo fora de uploads.</td><td class="text-slate-400">Revisar referencia no banco e em `public/uploads`.</td></tr><tr class="doc-row"><td class="text-white">Capa pesada degradando o site</td><td class="text-slate-300">Capa do artigo salva em PNG de alto peso (~2 a 3 MB).</td><td class="text-slate-400">Obrigatorio converter para WebP (~150-250 KB) e apontar `posts.imagem_capa` para `capa.webp`.</td></tr><tr class="doc-row"><td class="text-white">Colisao de slugs no sync de posts</td><td class="text-slate-300">Post no destino capturado por historico antigo de outro post do lote.</td><td class="text-slate-400">Reivindicacao direta tem precedencia absoluta; limpar redirecionamentos obsoletos em `post_slug_history`.</td></tr><tr class="doc-row"><td class="text-white">Post ou Reel preso em rascunho</td><td class="text-slate-300">Item movido para rascunho para ajuste de midia e esquecido sem reagendamento.</td><td class="text-slate-400">Revisao so termina quando o status volta para `agendado` com data e horario validos.</td></tr><tr class="doc-row"><td class="text-white">Post agendado posterior ao fato</td><td class="text-slate-300">Falta de checagem do prazo do evento (ex.: fim de suporte).</td><td class="text-slate-400">Conteudo com deadline deve ser agendado com 1 a 3 dias de antecedencia do fato, nunca depois.</td></tr><tr class="doc-row"><td class="text-white">Rota nao carrega</td><td class="text-slate-300">Regra em `config/routes.php`, `public/index.php` ou `.htaccess` incorreta.</td><td class="text-slate-400">Rodar preflight e validar entrada publica.</td></tr><tr class="doc-row"><td class="text-white">Conteudo nao sincroniza</td><td class="text-slate-300">Pacote invalido, lock ativo ou alvo remoto incompleto.</td><td class="text-slate-400">Verificar manifesto, lock e credenciais `CONTENT_SYNC_PRODUCTION_*`.</td></tr><tr class="doc-row"><td class="text-white">Pacote falha na validacao</td><td class="text-slate-300">JSON ausente, upload faltando ou manifesto inconsistente.</td><td class="text-slate-400">Executar verificacao do pacote e revisar arquivos referenciados.</td></tr><tr class="doc-row"><td class="text-white">Dropbox falha no envio</td><td class="text-slate-300">Scope ausente, redirect URI divergente ou token invalido.</td><td class="text-slate-400">Revisar app no Dropbox, scopes, callback e reconectar a conta.</td></tr><tr class="doc-row"><td class="text-white">Texto com acentuacao quebrada</td><td class="text-slate-300">Arquivo salvo com encoding invalido ou scanner gerando falso-positivo.</td><td class="text-slate-400">Usar o scanner estrito por bytes de continuacao UTF-8 (`scripts/preflight-encoding.php`).</td></tr></tbody></table></div>
+          <div class="mt-4 grid gap-4 xl:grid-cols-2 lg:grid-cols-2">
             <div class="doc-card">
-              <p class="doc-label">Troubleshooting - backup</p>
+              <p class="doc-label">Troubleshooting - posts & reels</p>
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Checar <code>backup_root</code> e perfil do ambiente.</li>
+                <li>Reels revisados devem retornar imediatamente para <code>agendado</code> com <code>render_status = ready</code>.</li>
+                <li>Verificar prazos: noticias e encerramentos de suporte nunca saem apos a data limite.</li>
+                <li>Grade oficial do canal: 2 publicacoes diarias nos horarios de pico (<strong>12:00</strong> e <strong>19:30</strong>).</li>
+                <li>Todas as capas do blog devem ser salvas no padrao WebP otimizado (~150-250 KB).</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <p class="doc-label">Troubleshooting - sincronizacao de conteudo</p>
+              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
+                <li>Checar origem real do pacote e destino aplicado (nunca gerar pacote de producao a partir do local).</li>
+                <li>Sincronizador isola IDs ja reivindicados para impedir que posts distintos colidam no mesmo ID de destino.</li>
+                <li>Validar integridade de todos os slugs com <code>assertAppliedPostIntegrity</code> antes do commit da transacao.</li>
+                <li>Em caso de falha, o rollback automatico protege o banco de dados de producao.</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <p class="doc-label">Troubleshooting - backup & restore</p>
+              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
+                <li>Checar <code>backup_root</code> e perfil do ambiente antes de qualquer deploy.</li>
                 <li>Confirmar manifesto, <code>database.sql</code>, <code>uploads.zip</code> e <code>system-files.zip</code>.</li>
                 <li>Se a verificacao falhar, nao usar o backup no restore nem no Dropbox.</li>
               </ul>
             </div>
             <div class="doc-card">
-              <p class="doc-label">Troubleshooting - conteudo</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Checar origem real do pacote e destino aplicado.</li>
-                <li>Validar lock, manifesto, JSONs e uploads referenciados.</li>
-                <li>Conferir "Ultimas aplicacoes editoriais" para evidenciar o alvo final.</li>
-              </ul>
-            </div>
-            <div class="doc-card">
-              <p class="doc-label">Troubleshooting - codigo</p>
+              <p class="doc-label">Troubleshooting - codigo & deploy</p>
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
                 <li>Rodar preflight e lint antes de reaplicar pacote tecnico.</li>
                 <li>Conferir backup tecnico associado e ultimo deploy tecnico visivel na Central.</li>

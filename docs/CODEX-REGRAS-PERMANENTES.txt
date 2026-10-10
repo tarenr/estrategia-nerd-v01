@@ -379,3 +379,34 @@ Nada sobe sem:
 - impacto conhecido
 - origem validada
 - paridade confirmada
+
+============================================================
+17. REGRAS PERMANENTES DE CONTEUDO, CAPAS E AGENDAMENTO (PREVENCAO DE REINCIDENCIA)
+============================================================
+
+Para garantir que incidentes ocorridos anteriormente nao se repitam:
+
+1. REELS / POSTS EM AJUSTE NAO PODEM FICAR EM RASCUNHO:
+   - Se um Reel ou post for movido para "rascunho" para regravacao de audio, troca de video ou ajuste de legenda, a tarefa tecnica NUNCA e considerada concluida ate que o item retorne ao status "agendado" com render_status = "ready".
+   - Itens com video renderizado valido nao devem ser esquecidos em rascunho.
+
+2. DEADLINES E NOTICIAS CRITICAS (ANTECEDENCIA OBRIGATORIA):
+   - Noticias com prazo, fim de suporte (ex.: Windows 10/11), eventos ou lancamentos com data fixa DEVEM ser agendados com antecedencia minima de 1 a 3 dias do fato.
+   - E terminantemente proibido agendar um post informativo/noticioso para data posterior ao termino do evento.
+
+3. GRADE DIARIA DE PUBLICACOES (INSTAGRAM E PORTAL):
+   - A grade oficial de postagens e de 2 publicacoes por dia.
+   - Horarios oficiais de publicacao: 12:00 (almoco) e 19:30 (horario nobre noturno).
+   - Distribuir os posts respeitando rigorosamente esse intervalo para maximizar alcance e engajamento.
+
+4. PADRAO OBRIGATORIO DE CAPAS DE ARTIGOS (WEBP OTIMIZADO):
+   - Todas as capas do blog salvas em uploads devem ser convertidas para WebP otimizado (~150 a 250 KB).
+   - E proibido manter capas em PNG pesado (~2 a 3 MB) associadas a tabela `posts.imagem_capa`, pois isso degrada severamente a velocidade de carregamento e o SEO do portal.
+
+5. INTEGRIDADE NO SINCRONIZADOR DE CONTEUDO (CONTENT SYNC):
+   - O sincronizador deve sempre priorizar o mapeamento por slug direto sobre redirecionamentos historicos (`post_slug_history`).
+   - Manter isolamento estrito de IDs para impedir que dois posts distintos do mesmo pacote sejam associados ao mesmo ID remoto.
+   - Qualquer colisao detectada pela rotina `assertAppliedPostIntegrity` deve acionar rollback imediato da transacao de banco.
+
+6. VALIDACAO ESTRITA DE ENCODING UTF-8:
+   - Toda verificacao de integridade de arquivos de texto deve utilizar o verificador estrito baseado em bytes de continuacao (`scripts/preflight-encoding.php`), evitando falsos-positivos em caracteres acentuados legitimos (ex.: "NAO").

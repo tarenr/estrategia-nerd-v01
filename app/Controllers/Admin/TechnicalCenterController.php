@@ -213,6 +213,27 @@ final class TechnicalCenterController
                         'tone' => 'neutral',
                         'items' => ['Smoke tests', 'Conferência visual', 'Registro em mudanças'],
                     ],
+                    [
+                        'title' => 'Revisão e Agendamento de Posts/Reels',
+                        'status' => 'Regra Ativa',
+                        'tone' => 'success',
+                        'items' => [
+                            'Rascunho revisado DEVE voltar para agendado imediatamente',
+                            'Deadlines de notícias: antecedência mínima de 1 a 3 dias do fato',
+                            'Grade oficial: 2 posts/reels diários (12:00 e 19:30)',
+                            'Capas de posts: conversão obrigatória para WebP (~150-250 KB)',
+                        ],
+                    ],
+                    [
+                        'title' => 'Sincronização Segura de Conteúdo',
+                        'status' => 'Regra Ativa',
+                        'tone' => 'success',
+                        'items' => [
+                            'Precedência de slug direto sobre histórico de redirecionamento',
+                            'Isolamento de IDs reivindicados para evitar colisões entre posts',
+                            'Rollback automático em caso de falha de integridade',
+                        ],
+                    ],
                 ],
                 'copy_blocks' => [
                     [
@@ -436,6 +457,16 @@ TEXT,
                         'tone' => 'success',
                         'items' => ['Registrar após commit validado', 'Manter vínculo com commit', 'Não documentar dado falso'],
                     ],
+                    [
+                        'title' => 'Padrões de Mídia e Agendamento',
+                        'status' => 'Regra Ativa',
+                        'tone' => 'success',
+                        'items' => [
+                            'Capas sempre em WebP otimizado (nunca PNG pesado de ~2MB no banco)',
+                            'Grade fixa de 2 posts por dia (12:00 e 19:30)',
+                            'Vídeos prontos (render_status=ready) não podem permanecer em rascunho',
+                        ],
+                    ],
                 ],
             ],
             'estruturas-posts' => [
@@ -519,6 +550,33 @@ TEXT,
                         'status' => 'Respondido',
                         'tone' => 'success',
                         'items' => ['Não', 'Fluxo oficial é Local → Stage → Produção'],
+                    ],
+                    [
+                        'title' => 'O que fazer ao ajustar mídia/áudio de um Reel?',
+                        'status' => 'Respondido',
+                        'tone' => 'success',
+                        'items' => [
+                            'Se movido para rascunho para ajuste, a tarefa só é concluída ao retornar para agendado.',
+                            'Confirmar que render_status = ready e agendamento_status = agendado.',
+                        ],
+                    ],
+                    [
+                        'title' => 'Como agendar posts de notícias com data limite (deadlines)?',
+                        'status' => 'Respondido',
+                        'tone' => 'success',
+                        'items' => [
+                            'Datas críticas (ex: fim de suporte de SO, eventos) devem sair com 1 a 3 dias de antecedência.',
+                            'Nunca agendar para depois da data do evento.',
+                        ],
+                    ],
+                    [
+                        'title' => 'Por que ocorreu colisão no sync de posts e como prevenir?',
+                        'status' => 'Respondido',
+                        'tone' => 'success',
+                        'items' => [
+                            'Ocorria quando o histórico de slug redirecionava um post para outro do mesmo lote.',
+                            'A regra ativa dá precedência total a slugs diretos e limpa redirecionamentos obsoletos.',
+                        ],
                     ],
                 ],
             ],
