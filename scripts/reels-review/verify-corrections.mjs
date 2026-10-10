@@ -10,6 +10,25 @@ assert.deepEqual(catalog.cancelled,[191,192,193,194]);assert.equal(catalog.items
 assert.equal(new Set(catalog.items.map(i=>i.id)).size,37);assert.equal(catalog.publicationApproval,false);
 const counts=new Set(catalog.items.map(i=>i.spec.scenes.length));assert.ok(counts.has(3)&&counts.has(4)&&counts.has(5));
 const results=[];
+if(catalog.avatarRevision){
+ const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/avatar-before/corrections-20261010.json'),'utf8'));
+ const ids=[196,229,232,234];
+ for(const item of catalog.items){
+  const original=before.items.find(i=>i.id===item.id);
+  if(!ids.includes(item.id)){assert.deepEqual(item,original,'Registro fora do escopo alterado #'+item.id);continue;}
+  assert.equal(item.revision,3);assert.equal(item.avatarReference,true);
+  for(const key of ['caption','status','scheduled','articleId','articleSlug','original','originalSha256','trackId'])assert.deepEqual(item[key],original[key],'Campo preservado divergiu: '+key);
+  for(const key of ['audio','audioStart','duration','beatStarts'])assert.deepEqual(item.spec[key],original.spec[key],'Áudio/tempos alterados #'+item.id);
+  assert.equal(item.spec.scenes.length,4);
+  for(const [index,s] of item.spec.scenes.entries()){
+   for(const key of ['title','body','eyebrow'])assert.equal(s[key],original.spec.scenes[index][key],'Roteiro alterado #'+item.id);
+   assert.ok(s.image.endsWith('reel-'+item.id+'-avatar-v3.png'));
+   assert.deepEqual(s.framing.region,[[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]][index]);
+  }
+  assert.ok(item.previousVersions.some(v=>v.sha256===original.sha256&&v.video===original.video));
+ }
+ console.log('PASS: avatar em quatro Reels; roteiros, áudio, versões anteriores e demais 33 preservados.');
+}
 for(const item of catalog.items){
  const spec=item.spec;validateSpec(spec);assert.equal(spec.beatStarts.length,spec.scenes.length);
  assert.equal(manualState(spec,spec.duration-.1).index,spec.scenes.length-1);

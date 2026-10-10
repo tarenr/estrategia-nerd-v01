@@ -106,6 +106,25 @@ if(action==='--frame-revision'){
  }
  save(catalog);console.log('Enquadramentos corrigidos; versões anteriores preservadas.');
 }
+if(action==='--avatar-revision'){
+ const catalog=json(catalogPath),approved=[196,229,232,234];
+ const pending=catalog.items.filter(i=>approved.includes(i.id)&&i.revision!==3);
+ if(pending.length && pending.length!==4)throw new Error('Revisão parcial: verifique o catálogo antes de aplicar.');
+ for(const item of pending){
+  if(item.state!=='ready'||item.revision!==2||item.spec.scenes.length!==4)throw new Error('Estado anterior divergente #'+item.id);
+  if(hash(resolve(root,'public',item.video))!==item.sha256)throw new Error('Versão anterior divergente #'+item.id);
+  const image='public/uploads/reels/'+run+'/images/reel-'+item.id+'-avatar-v3.png';
+  if(!existsSync(resolve(root,image)))throw new Error('Arte do avatar ausente #'+item.id);
+ }
+ for(const item of pending){
+  item.previousVersions.push({video:item.video,poster:item.poster,sha256:item.sha256,spec:structuredClone(item.spec)});
+  const image='public/uploads/reels/'+run+'/images/reel-'+item.id+'-avatar-v3.png';
+  item.spec.scenes=item.spec.scenes.map((s,index)=>({...s,image,framing:{...still,region:quadrants[index]}}));
+  item.video=item.video.replace('-v2.mp4','-v3.mp4');item.poster=item.poster.replace('-v2.jpg','-v3.jpg');
+  item.state='prepared';item.revision=3;item.avatarReference=true;
+ }
+ save(catalog);console.log('Quatro Reels preparados com avatar; versões anteriores e demais 33 preservados.');
+}
 if(action==='--render'){
  const catalog=json(catalogPath);
  const ordered=[...catalog.items].sort((a,b)=>(a.id===196?-1:b.id===196?1:0));
@@ -142,4 +161,4 @@ if(action==='--verify'){
  }
  writeFileSync(resolve(evidence,'validation.json'),JSON.stringify({items:results,technicalOnly:true},null,2));
 }
-if(!['--prepare','--frame-revision','--render','--verify'].includes(action))throw new Error('Use --prepare|--frame-revision|--render|--verify [--id N]');
+if(!['--prepare','--frame-revision','--avatar-revision','--render','--verify'].includes(action))throw new Error('Use --prepare|--frame-revision|--avatar-revision|--render|--verify [--id N]');

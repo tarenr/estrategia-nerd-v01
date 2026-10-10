@@ -1,3 +1,11 @@
+## Avatar de referência — revisão 3 (10/10/2026)
+
+Os Reels 196, 229, 232 e 234 receberam 16 cenas geradas por ImageGen a partir de `1000000217.jpg`. Cabelo, óculos, barba, roupa e olhos castanhos seguem a referência; os coadjuvantes do 232 permanecem personagens distintos. Cada sequência conserva o roteiro, a legenda, os tempos e a trilha anteriores. Os outros 33 itens foram comparados integralmente ao catálogo anterior e preservados.
+
+As artes estão em `public/uploads/reels/correcao-instagram-20261010/images/reel-{id}-avatar-v3.png`; vídeos e folhas de conferência usam `reel-{id}-v3`. Prompts e referência estão em `avatarRevision` no catálogo `resources/reels-review/corrections-20261010.json`. O comando `node scripts/reels-review/corrections.mjs --avatar-revision` restringe a alteração aos quatro IDs e preserva as versões anteriores. Backup do catálogo, galeria e documentação: `storage/correcao-instagram-20261010/avatar-before/`.
+
+A galeria existente oferece o filtro **Com seu avatar (4)** e o acesso `index.html?avatar=1`. Não houve alteração de banco, fila, agendamentos ou cancelamentos, nem publicação no Instagram. Validação: 37 roteiros aprovados, preservação dos outros 33 e do áudio dos quatro confirmada; suíte oficial PHP com 17 OK e zero falhas. As quatro folhas de cenas foram inspecionadas visualmente. A inspeção externa depende do acesso Cloudflare; a validação de viewport móvel permanece limitada pelo navegador disponível.
+
 ## Correção aprovada em 10/10/2026 — estado vigente
 
 Esta seção substitui as declarações de conclusão integral e de formato uniforme dos relatórios anteriores. A implementação está preparada para inspeção; publicação e aplicação das novas versões à fila ainda estão pendentes da avaliação visual combinada.

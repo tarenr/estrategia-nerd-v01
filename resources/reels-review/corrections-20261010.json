@@ -1,4 +1,42 @@
 {
+  "avatarRevision": {
+    "tool": "image_gen.imagegen",
+    "reference": "1000000217.jpg",
+    "approvedScope": [
+      196,
+      229,
+      232,
+      234
+    ],
+    "scenes": 16,
+    "publicationApproval": false,
+    "assets": [
+      {
+        "id": 196,
+        "file": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-avatar-v3.png",
+        "generationPrompt": "Use case: illustration-story. Create a polished 2 by 2 storyboard sheet for Instagram Reel 196, with FOUR equally sized square panels, a perfectly centered vertical and horizontal division, no gutters, no captions or speech bubbles. Input image is the identity and illustration style reference, NOT an edit target. Use exactly this same adult male avatar in every panel: shoulder-length swept brown hair, large black rectangular glasses, brown eyes, thick eyebrows, curled moustache and short pointed dark beard, black hoodie, dark gamer shirt. Preserve his recognisable face, hair, glasses and facial hair, and the clean anime/comic style of the reference; do not turn him into a photoreal person. Cyan screen light, dark navy room, warm highlights. Four distinct narrative images in reading order: top left, medium three-quarter view of him happily playing at his desktop gamer setup, face clearly visible, fantasy landscape on monitor; top right, face and upper body visible, one natural hand resting on mouse on the desk, focused expression, showing game control; bottom left, same avatar reacting attentively to a fast action game on screen, wider desk view, showing equipment response; bottom right, close portrait with headset OVER his long hair and glasses, listening carefully, conveying spatial audio perception. Keep composition safe for individual panel framing: his face wholly within each panel, main action near panel center, no subjects spanning panels. Each panel is its own scene with natural anatomy, coherent hands and one character only. No new slogans, no logos, no watermark. Use the reference shirt appearance as a consistent dark gamer outfit without inventing lettering. Square output, four precisely equal quadrants.",
+        "correctionPrompt": "Use case: identity-preserve. Image 1 is the EDIT TARGET, a finished four-panel storyboard sheet. Image 2 is the protagonist identity reference. Make ONE precise correction ONLY: change the visible iris colour of the recurring long-haired male protagonist wearing black rectangular glasses, curled moustache and pointed beard to the warm reddish BROWN eyes in Image 2. Remove the blue iris hue. Preserve every other pixel-level feature as closely as possible: identical face shape, skin, hair, glasses, beard, facial expression, gaze direction, hands, outfit, background, objects, lighting, panel boundaries and composition. Do NOT redraw the scenes or introduce text. Eyes behind the glasses must look natural; keep pupils dark and existing catchlights. Do not modify the eyes of supporting friends; do not open closed eyes. Output the same square four-panel layout, with exact equal quadrants."
+      },
+      {
+        "id": 229,
+        "file": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-avatar-v3.png",
+        "generationPrompt": "Use case: illustration-story. Create a beautiful clean anime/comic 2 by 2 storyboard sheet for Instagram Reel 229, FOUR equally sized square panels, perfectly centered vertical and horizontal division, no gutters, no captions or speech bubbles. Input image is the exact character identity and visual style reference. Use the same recognizable adult male avatar in all four panels: long swept shoulder-length brown hair, thick eyebrows, large black rectangular glasses, brown eyes, curled moustache and short pointed dark beard, black hoodie over dark gamer shirt. Preserve the reference face and clean expressive illustration style, not photorealism. Story is gentle gamer horror comedy: top left, he finishes a horror game at his desktop late at night, hand near power button, a relieved expression but alert eyes; top right, he cautiously enters his familiar dark home corridor holding a small flashlight, tense expression, atmospheric blue shadows; bottom left, medium shot of his startled wide-eyed face with glasses and his flashlight aimed toward a distant coat on wall hooks, coat silhouette looks ominous but clearly has no human person inside; bottom right, relieved laughing avatar in the same corridor, actual coat plainly hanging on hooks and a small friendly cat at his feet, the reveal is ordinary and funny. Keep avatar face entirely within each quadrant and visually consistent. Panel four should show cat, coat and avatar all legibly. Cyan/night blue and small warm household lights match the reference palette. Natural anatomy, correct hands and flashlight. One avatar per panel. No gore, violence, monster, logos, text or watermark. Square output with four truly equal quadrants to frame as separate narrative scenes.",
+        "correctionPrompt": "Use case: identity-preserve. Image 1 is the EDIT TARGET, a finished four-panel storyboard sheet. Image 2 is the protagonist identity reference. Make ONE precise correction ONLY: change the visible iris colour of the recurring long-haired male protagonist wearing black rectangular glasses, curled moustache and pointed beard to the warm reddish BROWN eyes in Image 2. Remove the blue iris hue. Preserve every other pixel-level feature as closely as possible: identical face shape, skin, hair, glasses, beard, facial expression, gaze direction, hands, outfit, background, objects, lighting, panel boundaries and composition. Do NOT redraw the scenes or introduce text. Eyes behind the glasses must look natural; keep pupils dark and existing catchlights. Do not modify the eyes of supporting friends; do not open closed eyes. Output the same square four-panel layout, with exact equal quadrants."
+      },
+      {
+        "id": 232,
+        "file": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-avatar-v3.png",
+        "generationPrompt": "Use case: illustration-story. Create a polished clean anime/comic 2 by 2 storyboard sheet for Instagram Reel 232, FOUR equally sized square panels, exact centered horizontal and vertical boundaries, no gutters, captions or speech bubbles. Input image is the identity/style reference of the protagonist. Preserve him exactly: adult male with long swept shoulder-length brown hair, large black rectangular glasses, brown eyes, thick eyebrows, curled moustache and short pointed dark beard, black hoodie and dark gamer shirt, warm skin and expressive reference face. This is a humorous story about trying to get the gaming squad online: TOP LEFT, protagonist in cyan-lit gamer room excitedly sending an invitation on a smartphone held naturally, gaming controller on desk, optimistic grin; TOP RIGHT, a DIFFERENT friend in a mundane office surrounded by work and laptop, busy/tired expression, visually obvious unable to play, short hair and no avatar glasses or beard; BOTTOM LEFT, another DIFFERENT friend asleep under a blanket in bed, phone left on bedside table, ordinary cozy setting, visually obvious unavailable; BOTTOM RIGHT, original long-haired glasses/beard protagonist now at gaming desk in headset, surprised and disappointed, gesturing naturally at a monitor showing an empty lobby with four unfilled outlined player slots, NO words. Only protagonist in panels one and four uses the reference identity. Supporting friends differ clearly. Maintain reference cartoon/anime illustration style in all panels, soft cyan/navy and warm amber lighting, natural anatomy and correct hands. Protagonist's face stays fully visible in his panels. Each panel is a separately framable square scene, no content across boundaries, no watermark or logos. Four truly equal quadrants.",
+        "correctionPrompt": "Use case: identity-preserve. Image 1 is the EDIT TARGET, a finished four-panel storyboard sheet. Image 2 is the protagonist identity reference. Make ONE precise correction ONLY: change the visible iris colour of the recurring long-haired male protagonist wearing black rectangular glasses, curled moustache and pointed beard to the warm reddish BROWN eyes in Image 2. Remove the blue iris hue. Preserve every other pixel-level feature as closely as possible: identical face shape, skin, hair, glasses, beard, facial expression, gaze direction, hands, outfit, background, objects, lighting, panel boundaries and composition. Do NOT redraw the scenes or introduce text. Eyes behind the glasses must look natural; keep pupils dark and existing catchlights. Do not modify the eyes of supporting friends; do not open closed eyes. Output the same square four-panel layout, with exact equal quadrants."
+      },
+      {
+        "id": 234,
+        "file": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-avatar-v3.png",
+        "generationPrompt": "Use case: illustration-story. Create a polished clean anime/comic 2 by 2 storyboard sheet for Instagram Reel 234. FOUR equally sized square panels with perfectly centered vertical/horizontal boundaries, no gutters, captions or speech bubbles. Input reference defines EXACT same protagonist and drawing style in every panel: adult male gamer with shoulder-length swept brown hair, thick eyebrows, black rectangular glasses, brown eyes, curled moustache and short pointed dark beard, black hoodie and dark gamer shirt. Preserve recognizable face and hairstyle; do not shorten hair or remove glasses/beard. Funny narrative about saying one last match: TOP LEFT, at night in his gamer room, optimistic and relaxed holding a controller naturally, blue night outside window, simple analog clock on desk; TOP RIGHT, same protagonist visibly frustrated after losing, leaning forward with controller in BOTH hands correctly, clock hands later, same recognizable room; BOTTOM LEFT, joy after victory, celebrating with one clenched raised fist and the controller resting on desk, clock now later still, same avatar glasses/hair/beard; BOTTOM RIGHT, morning amber sun through same window, visibly exhausted surprised avatar rubbing his forehead with one natural hand, controller resting in lap or desk, discovering dawn. Reuse same clothing and room, expressions and poses distinctly different; show passage of time through window lighting and clocks WITHOUT digital text. Panel four keeps glasses on his face and brown long hair intact. Clean expressive cartoon/anime linework, saturated navy/cyan night transitioning warm morning, reference style throughout. Center his entire face safely inside each panel, coherent hands, no anatomical errors, no extra limbs. No written text, logos, watermark. Square output, four truly equal quadrants, each a separate narrative scene.",
+        "correctionPrompt": "Use case: identity-preserve. Image 1 is the EDIT TARGET, a finished four-panel storyboard sheet. Image 2 is the protagonist identity reference. Make ONE precise correction ONLY: change the visible iris colour of the recurring long-haired male protagonist wearing black rectangular glasses, curled moustache and pointed beard to the warm reddish BROWN eyes in Image 2. Remove the blue iris hue. Preserve every other pixel-level feature as closely as possible: identical face shape, skin, hair, glasses, beard, facial expression, gaze direction, hands, outfit, background, objects, lighting, panel boundaries and composition. Do NOT redraw the scenes or introduce text. Eyes behind the glasses must look natural; keep pupils dark and existing catchlights. Do not modify the eyes of supporting friends; do not open closed eyes. Output the same square four-panel layout, with exact equal quadrants."
+      }
+    ]
+  },
   "version": 1,
   "approvedOn": "2026-10-10",
   "cancelled": [
@@ -317,7 +355,7 @@
             "eyebrow": "Os campos mudaram",
             "title": "A batalha chegou à tela",
             "body": "Hoje, os desafios pedem foco, estratégia e controle.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -333,7 +371,7 @@
             "eyebrow": "Controle",
             "title": "Cada movimento importa",
             "body": "Conforto e precisão ajudam a executar suas escolhas.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -349,7 +387,7 @@
             "eyebrow": "Resposta",
             "title": "O conjunto acompanha você",
             "body": "O jogo e o equipamento influenciam a resposta aos comandos.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -365,7 +403,7 @@
             "eyebrow": "Percepção",
             "title": "Ouvir também é jogar",
             "body": "Ferramentas apoiam a habilidade. Não substituem a prática.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -381,17 +419,108 @@
         "presentation": "story"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-196-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-196-v2.jpg",
-      "sha256": "a7cd751467970ea7e01f238aa84896fe651d9435b978c8a6e57198c39e87f4f6",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-196-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-196-v3.jpg",
+      "sha256": "feb769adcfcf27a490b8ba756942c291ded9b7e688ea58dd2855d698a0d33116",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-196-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-196-v1.jpg",
           "sha256": "a7cd751467970ea7e01f238aa84896fe651d9435b978c8a6e57198c39e87f4f6"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-196-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-196-v2.jpg",
+          "sha256": "a7cd751467970ea7e01f238aa84896fe651d9435b978c8a6e57198c39e87f4f6",
+          "spec": {
+            "articleId": 16,
+            "articleTitle": "As ferramentas que moldam os guerreiros modernos",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "chronicle",
+            "tone": "tech",
+            "duration": 32,
+            "audio": "public/uploads/audio/pixabay_141278.mp3",
+            "audioStart": 35,
+            "beatStarts": [
+              0,
+              8,
+              16,
+              24
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Os campos mudaram",
+                "title": "A batalha chegou à tela",
+                "body": "Hoje, os desafios pedem foco, estratégia e controle.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "Controle",
+                "title": "Cada movimento importa",
+                "body": "Conforto e precisão ajudam a executar suas escolhas.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "Resposta",
+                "title": "O conjunto acompanha você",
+                "body": "O jogo e o equipamento influenciam a resposta aos comandos.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "Percepção",
+                "title": "Ouvir também é jogar",
+                "body": "Ferramentas apoiam a habilidade. Não substituem a prática.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              }
+            ],
+            "presentation": "story"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "avatarReference": true
     },
     {
       "id": 197,
@@ -2966,7 +3095,7 @@
             "eyebrow": "Depois do jogo",
             "title": "O terror acabou. Será?",
             "body": "Você desligou o jogo, mas continua em estado de alerta.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -2974,7 +3103,7 @@
                 0,
                 0,
                 0.5,
-                0.43779904306220097
+                0.5
               ]
             }
           },
@@ -2982,7 +3111,7 @@
             "eyebrow": "O corredor",
             "title": "A casa ganhou dificuldade",
             "body": "Agora você atravessa o corredor como se tivesse perdido o save.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -2990,7 +3119,7 @@
                 0.5,
                 0,
                 0.5,
-                0.43779904306220097
+                0.5
               ]
             }
           },
@@ -2998,15 +3127,15 @@
             "eyebrow": "A sombra",
             "title": "Tem alguma coisa ali",
             "body": "O coração acelera. A lanterna aponta para a porta.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
               "region": [
                 0,
-                0.43779904306220097,
                 0.5,
-                0.562200956937799
+                0.5,
+                0.5
               ]
             }
           },
@@ -3014,15 +3143,15 @@
             "eyebrow": "O alívio",
             "title": "Era só o casaco",
             "body": "E o gato apareceu para garantir o susto.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
               "region": [
                 0.5,
-                0.43779904306220097,
                 0.5,
-                0.562200956937799
+                0.5,
+                0.5
               ]
             }
           }
@@ -3039,17 +3168,110 @@
         "presentation": "comedy"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-229-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-229-v2.jpg",
-      "sha256": "d6f6c850b6c47737a9ea0d05aeed0b05a6052617443b0b99b087598ac88730b8",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-229-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-229-v3.jpg",
+      "sha256": "8f3a1ec80e9c21c97bea147c3549df0e61815cd07577e782817ac7ba32779b45",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-229-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-229-v1.jpg",
           "sha256": "d41750d3e189511701dea0651d1114293982a7f1d924dbd0e9f860b7ee05190a"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-229-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-229-v2.jpg",
+          "sha256": "d6f6c850b6c47737a9ea0d05aeed0b05a6052617443b0b99b087598ac88730b8",
+          "spec": {
+            "articleId": 77,
+            "articleTitle": "Muito além dos jumpscares: 3 jogos que constroem o medo pela atmosfera",
+            "tone": "tech",
+            "layout": "showcase",
+            "collection": "PERRENGUE NERD · TERROR",
+            "audio": "public/uploads/audio/pixabay_10376.mp3",
+            "audioStart": 5,
+            "footer": "Qual jogo te fez olhar para trás?",
+            "closingLabel": "CONTA NOS COMENTÁRIOS",
+            "scenes": [
+              {
+                "eyebrow": "Depois do jogo",
+                "title": "O terror acabou. Será?",
+                "body": "Você desligou o jogo, mas continua em estado de alerta.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0,
+                    0.5,
+                    0.43779904306220097
+                  ]
+                }
+              },
+              {
+                "eyebrow": "O corredor",
+                "title": "A casa ganhou dificuldade",
+                "body": "Agora você atravessa o corredor como se tivesse perdido o save.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0,
+                    0.5,
+                    0.43779904306220097
+                  ]
+                }
+              },
+              {
+                "eyebrow": "A sombra",
+                "title": "Tem alguma coisa ali",
+                "body": "O coração acelera. A lanterna aponta para a porta.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0.43779904306220097,
+                    0.5,
+                    0.562200956937799
+                  ]
+                }
+              },
+              {
+                "eyebrow": "O alívio",
+                "title": "Era só o casaco",
+                "body": "E o gato apareceu para garantir o susto.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0.43779904306220097,
+                    0.5,
+                    0.562200956937799
+                  ]
+                }
+              }
+            ],
+            "editorial": "manual",
+            "duration": 24,
+            "beatStarts": [
+              0,
+              6,
+              12,
+              18
+            ],
+            "category": "games",
+            "presentation": "comedy"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "avatarReference": true
     },
     {
       "id": 230,
@@ -3258,7 +3480,7 @@
             "eyebrow": "O convite",
             "title": "Hoje o squad fecha",
             "body": "Você manda a mensagem e já prepara o controle.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -3274,7 +3496,7 @@
             "eyebrow": "A primeira resposta",
             "title": "Ainda estou no trabalho",
             "body": "Um horário livre não significa que todo mundo pode.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -3290,7 +3512,7 @@
             "eyebrow": "O silêncio",
             "title": "Esse já dormiu",
             "body": "O grupo segue combinando. Um participante saiu da realidade.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -3306,7 +3528,7 @@
             "eyebrow": "A chegada",
             "title": "Cheguei! Cadê vocês?",
             "body": "Quando você consegue entrar, os outros já desligaram.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -3331,17 +3553,110 @@
         "presentation": "chat"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-232-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-232-v2.jpg",
-      "sha256": "eb3b255bd43313e44fecc7706fc0b0f79843c0a8ed7b06df9f29d9aca390336e",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-232-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-232-v3.jpg",
+      "sha256": "197a4dfe4b7fad33f8dd1847b00cf6c7aafda005d4fe16a60fbaa931815f51cd",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-232-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-232-v1.jpg",
           "sha256": "eb3b255bd43313e44fecc7706fc0b0f79843c0a8ed7b06df9f29d9aca390336e"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-232-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-232-v2.jpg",
+          "sha256": "eb3b255bd43313e44fecc7706fc0b0f79843c0a8ed7b06df9f29d9aca390336e",
+          "spec": {
+            "articleId": 0,
+            "articleTitle": "O squad existe. O horário, não.",
+            "tone": "tech",
+            "layout": "chronicle",
+            "collection": "PERRENGUE NERD · CENA FICTÍCIA",
+            "audio": "public/uploads/audio/pixabay_9503.mp3",
+            "audioStart": 15,
+            "footer": "Marque quem chega quando todo mundo saiu.",
+            "closingLabel": "O GRUPO RECONHECE ESSA CENA?",
+            "scenes": [
+              {
+                "eyebrow": "O convite",
+                "title": "Hoje o squad fecha",
+                "body": "Você manda a mensagem e já prepara o controle.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "A primeira resposta",
+                "title": "Ainda estou no trabalho",
+                "body": "Um horário livre não significa que todo mundo pode.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "O silêncio",
+                "title": "Esse já dormiu",
+                "body": "O grupo segue combinando. Um participante saiu da realidade.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "A chegada",
+                "title": "Cheguei! Cadê vocês?",
+                "body": "Quando você consegue entrar, os outros já desligaram.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              }
+            ],
+            "editorial": "manual",
+            "duration": 28,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "category": "editorial",
+            "presentation": "chat"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "avatarReference": true
     },
     {
       "id": 233,
@@ -3479,7 +3794,7 @@
             "eyebrow": "A promessa",
             "title": "É a última partida",
             "body": "O relógio ainda permite acreditar nessa frase.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -3487,7 +3802,7 @@
                 0,
                 0,
                 0.5,
-                0.46570972886762363
+                0.5
               ]
             }
           },
@@ -3495,7 +3810,7 @@
             "eyebrow": "Depois da derrota",
             "title": "Não posso parar assim",
             "body": "Agora você precisa recuperar antes de encerrar.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
@@ -3503,7 +3818,7 @@
                 0.5,
                 0,
                 0.5,
-                0.46570972886762363
+                0.5
               ]
             }
           },
@@ -3511,15 +3826,15 @@
             "eyebrow": "Depois da vitória",
             "title": "Agora eu embalo",
             "body": "Uma vitória vira argumento para jogar de novo.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
               "region": [
                 0,
-                0.46570972886762363,
                 0.5,
-                0.5342902711323764
+                0.5,
+                0.5
               ]
             }
           },
@@ -3527,15 +3842,15 @@
             "eyebrow": "O amanhecer",
             "title": "A manhã não negocia",
             "body": "O sol apareceu. Seu horário de dormir desapareceu.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-avatar-v3.png",
             "framing": {
               "mode": "contain",
               "motion": "still",
               "region": [
                 0.5,
-                0.46570972886762363,
                 0.5,
-                0.5342902711323764
+                0.5,
+                0.5
               ]
             }
           }
@@ -3552,17 +3867,110 @@
         "presentation": "comedy"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-234-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-234-v2.jpg",
-      "sha256": "df5f7d26db5b57ea8d1a56b296367b45932a0e37e2b26f398562fc6ec92d5aa1",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-234-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-234-v3.jpg",
+      "sha256": "21cc11e823a203bed5a11589ab73482cc930ce09effa19f736234678fb87a27c",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-234-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-234-v1.jpg",
           "sha256": "06cbac9f36e5c5acf9746080534a2fdf41e528e7116c7f5b78621dd07760d0d0"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-234-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-234-v2.jpg",
+          "sha256": "df5f7d26db5b57ea8d1a56b296367b45932a0e37e2b26f398562fc6ec92d5aa1",
+          "spec": {
+            "articleId": 0,
+            "articleTitle": "Só mais uma partida",
+            "tone": "tech",
+            "layout": "chronicle",
+            "collection": "PERRENGUE NERD · SÓ MAIS UMA",
+            "audio": "public/uploads/audio/pixabay_519731.mp3",
+            "audioStart": 8,
+            "footer": "Qual jogo te faz negociar com o relógio?",
+            "closingLabel": "CONTA NOS COMENTÁRIOS",
+            "scenes": [
+              {
+                "eyebrow": "A promessa",
+                "title": "É a última partida",
+                "body": "O relógio ainda permite acreditar nessa frase.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0,
+                    0.5,
+                    0.46570972886762363
+                  ]
+                }
+              },
+              {
+                "eyebrow": "Depois da derrota",
+                "title": "Não posso parar assim",
+                "body": "Agora você precisa recuperar antes de encerrar.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0,
+                    0.5,
+                    0.46570972886762363
+                  ]
+                }
+              },
+              {
+                "eyebrow": "Depois da vitória",
+                "title": "Agora eu embalo",
+                "body": "Uma vitória vira argumento para jogar de novo.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0.46570972886762363,
+                    0.5,
+                    0.5342902711323764
+                  ]
+                }
+              },
+              {
+                "eyebrow": "O amanhecer",
+                "title": "A manhã não negocia",
+                "body": "O sol apareceu. Seu horário de dormir desapareceu.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-img-001.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0.46570972886762363,
+                    0.5,
+                    0.5342902711323764
+                  ]
+                }
+              }
+            ],
+            "editorial": "manual",
+            "duration": 28,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "category": "editorial",
+            "presentation": "comedy"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "avatarReference": true
     }
   ],
   "assetProvenance": {
