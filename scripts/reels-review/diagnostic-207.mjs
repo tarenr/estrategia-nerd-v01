@@ -10,19 +10,27 @@ const read=p=>JSON.parse(readFileSync(p,'utf8'));
 const hash=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
 const original=read(resolve(root,'storage/correcao-instagram-20261010/diagnostic-207-before/catalog.json')).items.find(i=>i.id===207);
 const current=read(catalogPath).items.find(i=>i.id===207);
-if(current.revision===4&&current.spec.compositionProfile==='diagnostic-207-v1'){
+const ramFix=process.argv.includes('--ram-fix'),revision=ramFix?5:4;
+if(current.revision>=revision&&current.spec.compositionProfile==='diagnostic-207-v1'){
  const video=resolve(root,'public',current.video);inspectOutput(video,20);assert.equal(hash(video),current.sha256);
- console.log('207 v4 já concluído; nenhum arquivo ou catálogo alterado.');process.exit(0);
+ console.log('207 v'+current.revision+' já concluído; nenhum arquivo ou catálogo alterado.');process.exit(0);
 }
 const item=structuredClone(original);
 assert.equal(item.spec.scenes.length,5);
 item.previousVersions=[...(current.previousVersions??[]),{video:current.video,poster:current.poster,sha256:current.sha256,spec:structuredClone(current.spec)}];
-item.revision=4;item.state='prepared';
-item.video='uploads/reels/correcao-instagram-20261010/reel-207-v4.mp4';
-item.poster='uploads/reels/correcao-instagram-20261010/reel-207-v4.jpg';
+item.revision=revision;item.state='prepared';
+item.video='uploads/reels/correcao-instagram-20261010/reel-207-v'+revision+'.mp4';
+item.poster='uploads/reels/correcao-instagram-20261010/reel-207-v'+revision+'.jpg';
 Object.assign(item.spec,{duration:20,beatStarts:[0,4,8,12,16],reviewPostId:207,compositionProfile:'diagnostic-207-v1',visualStyle:{background:'public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-background.png'}});
 item.spec.scenes.forEach((s,i)=>{s.image='public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-'+String(i+1).padStart(3,'0')+'.png';s.framing={mode:'cover',motion:'still'};});
 item.diagnosticRevision={reference:'reel-207-proposta-01.png',tool:'ImageGen',prompts:'storage/correcao-instagram-20261010/diagnostic-207-imagegen.json',textsPreserved:true,queueChanged:false,publicationApproved:false};
+if(ramFix){
+ assert.equal(current.revision,4,'Correção da RAM exige a versão 4 existente');
+ item.spec.scenes[3].image='public/uploads/reels/correcao-instagram-20261010/images/reel-207-v5-scene-004.png';
+ const compare=structuredClone(current.spec);compare.scenes[3].image=item.spec.scenes[3].image;
+ assert.deepEqual(item.spec,compare,'Correção deve alterar somente a imagem da quarta cena');
+ item.diagnosticRevision.imageCorrection={scene:4,reason:'Remover mãos com posição artificial',prompts:'storage/correcao-instagram-20261010/diagnostic-207-ram-fix.json'};
+}
 const output=resolve(root,'public',item.video);
 if(!existsSync(output))await renderVideo(item.spec,root,output,{timeoutMs:600000,maxRssBytes:1536*1024**2});
 const manifest=read(output+'.manifest.json');assert.deepEqual(manifest.spec,item.spec);

@@ -1,3 +1,9 @@
+## Diagnóstico 207 — correção pontual da RAM, versão 5 (10/10/2026)
+
+A v5 substitui exclusivamente a quarta imagem após o usuário apontar uma posição artificial das mãos. A nova arte ImageGen mostra o gabinete aberto, desligado, com os módulos de RAM instalados e sem pessoas. As outras quatro imagens, fundo, compositor, textos, áudio e tempos foram preservados. A v4 permanece no histórico e em disco.
+
+Vídeo vigente: `public/uploads/reels/correcao-instagram-20261010/reel-207-v5.mp4`; galeria: `index.html?id=207&v=5`. Nova imagem: `images/reel-207-v5-scene-004.png`. Prompt e origem: `storage/correcao-instagram-20261010/diagnostic-207-ram-fix.json`; backup do catálogo: `diagnostic-207-before/catalog-before-ram-fix.json`. O comando `node scripts/reels-review/diagnostic-207.mjs --ram-fix` verifica que a única diferença no roteiro visual é o caminho da quarta imagem. Decodificação integral, duração e faststart passaram; suíte PHP: 17 OK, zero falhas. Fila e banco não foram alterados; avaliação visual do usuário permanece pendente.
+
 ## Diagnóstico 207 — versão 4, 20 segundos (10/10/2026)
 
 Primeiro Reel do grupo de orientação prática, produzido após aprovação da proposta visual. Preserva os cinco textos, a legenda e a origem/posição inicial da trilha; usa cinco cenas de quatro segundos. As artes ImageGen representam o problema, cabo do monitor, saída de vídeo, inspeção desligada e desconexão da energia. Grafite, ciano, pequenos detalhes em âmbar e marcações de bancada distinguem o diagnóstico da análise de produtos. Não houve revisão editorial nesta etapa.
