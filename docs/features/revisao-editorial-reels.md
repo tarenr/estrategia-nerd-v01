@@ -1,3 +1,9 @@
+## Correção visual individual do 196 — versão 4 (10/10/2026)
+
+Somente a composição visual foi alterada. As quatro ilustrações do avatar, cenas, textos, duração e áudio da v3 foram preservados. A área de imagem é fixa em x=86, y=300, 908×680; cada ilustração permanece inteira e centralizada. Rótulo, título e corpo começam em y=1025, 1080 e 1300, seguindo as posições da composição comum. O perfil é restrito a `visualRevision: 196-v4`; os outros 36 itens não receberam alterações. A v3 e seu hash estão preservados em `previousVersions`.
+
+Vídeo: `public/uploads/reels/correcao-instagram-20261010/reel-196-v4.mp4`. A galeria existente aceita `?id=196` para validar este item isoladamente. O cadastro publicado e a fila não foram alterados; aprovação visual e republicação continuam pendentes. A verificação técnica não comprova a área segura da interface nativa do Instagram.
+
 ## Avatar de referência — revisão 3 (10/10/2026)
 
 Os Reels 196, 229, 232 e 234 receberam 16 cenas geradas por ImageGen a partir de `1000000217.jpg`. Cabelo, óculos, barba, roupa e olhos castanhos seguem a referência; os coadjuvantes do 232 permanecem personagens distintos. Cada sequência conserva o roteiro, a legenda, os tempos e a trilha anteriores. Os outros 33 itens foram comparados integralmente ao catálogo anterior e preservados.

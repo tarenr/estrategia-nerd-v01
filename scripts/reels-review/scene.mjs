@@ -92,7 +92,7 @@ export async function createManualScene(spec,root){
   txt(layer,spec.collection,{x:86,y:211,width:850,fontSize:18,letterSpacing:2,fill:palette.accent});
   rule(layer,[86,264,994,264],palette.accent,0.4);
 
-  const frame=spec.presentation==='story'||spec.presentation==='comedy'||spec.presentation==='chat'?{x:60,y:300,width:960,height:800}:spec.presentation==='steps'?{x:86,y:810,width:908,height:620}:spec.presentation==='product'?{x:86,y:570,width:908,height:680}:spec.presentation==='list'?{x:86,y:410,width:908,height:700}:IMAGE_FRAME;
+  const frame=spec.visualRevision==='196-v4'?{x:86,y:300,width:908,height:680}:spec.presentation==='story'||spec.presentation==='comedy'||spec.presentation==='chat'?{x:60,y:300,width:960,height:800}:spec.presentation==='steps'?{x:86,y:810,width:908,height:620}:spec.presentation==='product'?{x:86,y:570,width:908,height:680}:spec.presentation==='list'?{x:86,y:410,width:908,height:700}:IMAGE_FRAME;
   const {x,y,width:w,height:h}=frame;const runs=imageRuns(spec);const visual=[];
   for(const run of runs){
     const path=resolve(root,run.image);if(!existsSync(path))throw new Error('Imagem selecionada ausente: '+run.image);
@@ -104,7 +104,7 @@ export async function createManualScene(spec,root){
     visual.push({group,photo,run,base:{x:photo.x(),y:photo.y(),width:photo.width(),height:photo.height()}});
   }
   rule(layer,[86,y+h+22,994,y+h+22],palette.accent,0.38);
-  const top=spec.presentation==='steps'?{label:320,title:380,body:600}:spec.presentation==='product'?{label:320,title:380,body:1300}:spec.presentation==='list'?{label:320,title:1150,body:1350}:['story','comedy','chat'].includes(spec.presentation)?{label:1140,title:1190,body:1390}:{label:1025,title:1080,body:1300};
+  const top=spec.visualRevision==='196-v4'?{label:1025,title:1080,body:1300}:spec.presentation==='steps'?{label:320,title:380,body:600}:spec.presentation==='product'?{label:320,title:380,body:1300}:spec.presentation==='list'?{label:320,title:1150,body:1350}:['story','comedy','chat'].includes(spec.presentation)?{label:1140,title:1190,body:1390}:{label:1025,title:1080,body:1300};
   const label=txt(layer,'',{x:90,y:top.label,width:890,fontSize:23,letterSpacing:2,fill:palette.accent});
   const title=txt(layer,'',{x:86,y:top.title,width:902,fontFamily:palette.font,fontSize:spec.layout==='chronicle'?74:106,lineHeight:1.08,fontStyle:spec.layout==='chronicle'?'bold':'normal'});
   const body=txt(layer,'',{x:90,y:top.body,width:890,fontSize:35,lineHeight:1.4,fill:palette.muted});

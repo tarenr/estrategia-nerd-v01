@@ -416,12 +416,13 @@
             }
           }
         ],
-        "presentation": "story"
+        "presentation": "story",
+        "visualRevision": "196-v4"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-196-v3.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-196-v3.jpg",
-      "sha256": "feb769adcfcf27a490b8ba756942c291ded9b7e688ea58dd2855d698a0d33116",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-196-v4.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-196-v4.jpg",
+      "sha256": "f4f5ad0741d8a0b277724490c13008f09d099fe865bae4693bc46442aa1e0299",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-196-v1.mp4",
@@ -517,9 +518,99 @@
             ],
             "presentation": "story"
           }
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-196-v3.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-196-v3.jpg",
+          "sha256": "feb769adcfcf27a490b8ba756942c291ded9b7e688ea58dd2855d698a0d33116",
+          "spec": {
+            "articleId": 16,
+            "articleTitle": "As ferramentas que moldam os guerreiros modernos",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "chronicle",
+            "tone": "tech",
+            "duration": 32,
+            "audio": "public/uploads/audio/pixabay_141278.mp3",
+            "audioStart": 35,
+            "beatStarts": [
+              0,
+              8,
+              16,
+              24
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Os campos mudaram",
+                "title": "A batalha chegou à tela",
+                "body": "Hoje, os desafios pedem foco, estratégia e controle.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "Controle",
+                "title": "Cada movimento importa",
+                "body": "Conforto e precisão ajudam a executar suas escolhas.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "Resposta",
+                "title": "O conjunto acompanha você",
+                "body": "O jogo e o equipamento influenciam a resposta aos comandos.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "Percepção",
+                "title": "Ouvir também é jogar",
+                "body": "Ferramentas apoiam a habilidade. Não substituem a prática.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-196-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              }
+            ],
+            "presentation": "story"
+          }
         }
       ],
-      "revision": 3,
+      "revision": 4,
       "avatarReference": true
     },
     {
