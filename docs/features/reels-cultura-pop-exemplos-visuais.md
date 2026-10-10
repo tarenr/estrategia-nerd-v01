@@ -51,12 +51,24 @@ Após a validação bem-sucedida do piloto do post #215 com troca dinâmica de i
 - **#216**: Abertura restaurada com a capa oficial do artigo (`cover`), mantendo a identidade visual do portal e reservando o mod de Half-Life para a cena seguinte.
 - **#219**: Asset de *O Laboratório de Dexter* substituído pela arte canônica do desenho animado do Cartoon Network (resolução 1280x720), corrigindo imagem anterior equivocada da série dramática com atores.
 
-## Reagendamento do Post #215 (12 Jogos PC Fraco)
-- **Arquivo promovido para produção:** `public/uploads/reels/editorial-202610/reel-215-v3.mp4` e `.jpg`.
-- **Registro MySQL atualizado:**
-  - `status`: `agendado`
-  - `agendado_para`: `2026-10-11 19:30:00` (preenchendo a vaga livre)
-  - `video_rendered_path`: `uploads/reels/editorial-202610/reel-215-v3.mp4`
-  - `idempotency_key`: Nova chave UUID v4 gerada
-  - `duracao_s`: 28 segundos
-- **Galeria visual:** Todos os vídeos revisados (`reel-216-v4.mp4`, `reel-219-v4.mp4` e demais `v3`) já estão atualizados e reproduzíveis em `public/uploads/previews/revisao-reels-20261007/index.html`.
+## Reagendamento dos Posts no Calendário de Produção
+Todos os vídeos revisados e aprovados foram promovidos para `public/uploads/reels/editorial-202610/` e seus status na tabela `instagram_posts` foram atualizados para `agendado`, preenchendo as datas oficiais de publicação:
+- **#215 (12 Jogos para PC Fraco):** `2026-10-11 19:30:00` | `uploads/reels/editorial-202610/reel-215-v3.mp4` (28s)
+- **#216 (A história do Counter-Strike):** `2026-10-13 19:30:00` | `uploads/reels/editorial-202610/reel-216-v4.mp4` (28s)
+- **#217 (10 Filmes Nerds Essenciais):** `2026-10-16 19:30:00` | `uploads/reels/editorial-202610/reel-217-v3.mp4` (28s)
+- **#218 (10 Animes Essenciais):** `2026-10-20 19:30:00` | `uploads/reels/editorial-202610/reel-218-v3.mp4` (28s)
+- **#205 (10 Jogos de RPG Imperdíveis):** `2026-10-22 19:30:00` | `uploads/reels/editorial-202610/reel-205-v3.mp4` (28s)
+- **#219 (10 Desenhos Anos 90/2000):** `2026-10-23 19:30:00` | `uploads/reels/editorial-202610/reel-219-v4.mp4` (28s)
+
+## Otimização de Imagens de Capa do Blog (WebP)
+Para resolver a lentidão no carregamento do site principal, foi realizada a conversão em lote das 14 capas de artigos que ainda se encontravam em PNG pesado (~2 MB cada):
+- **Script:** `scripts/reels-review/convert-covers-webp.mjs`
+- **Resultados:**
+  - Total original (14 capas PNG): **26,36 MB**
+  - Total convertido (14 capas WebP, qualidade 82): **2,08 MB**
+  - **Redução total de 92%** de transferência de rede no carregamento das páginas.
+  - Banco local (`posts.imagem_capa`): atualizado para apontar para `capa.webp` em todos os 14 artigos.
+  - Arquivos originais `capa.png`: preservados em disco como salvaguarda e compatibilidade.
+
+## Galeria de Revisão
+Todos os vídeos revisados (`reel-216-v4.mp4`, `reel-219-v4.mp4` e demais `v3`) continuam disponíveis para consulta em `public/uploads/previews/revisao-reels-20261007/index.html`.
