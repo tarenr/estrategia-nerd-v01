@@ -4,9 +4,9 @@ Registro: 06/10/2026. Projeto: Estratégia Nerd / @estrategia_nerd.
 
 ## Estado e objetivo
 
-Planejamento documentado; produção, pesquisa factual, revisão editorial,
-rascunhos, agendamentos e publicação ainda pendentes. A autorização desta
-etapa cobre somente documentação e registro de uma tarefa no The Forge.
+Bloco 1 revisado no ambiente local em 10/10/2026: artigos 77–80 e Instagram
+229–234. Datas e estados existentes foram preservados. Publicação e sincronização
+com stage/produção continuam fora desta correção. O Bloco 2 permanece pendente.
 
 Objetivo: atrair público novo e criar motivos para acompanhar a marca,
 conectando games, cultura geek e tecnologia a experiências do cotidiano.
@@ -52,11 +52,11 @@ Cada peça terá uma ação principal, sem acumular pedidos de interação.
 26/10 a 22/11/2026, em dois blocos de produção de duas semanas.
 
 - Blog: terça e sexta, oito artigos.
-- Instagram: segunda, quarta e sábado, oito Reels e quatro carrosséis.
+- Instagram: segunda, quarta e sábado, formato exclusivamente Reel para conteúdos relacionados aos artigos. A distribuição original de carrosséis foi substituída no Bloco 1 aprovado.
 - Stories: três conjuntos curtos por semana, 12 no total.
 - Horários: definir após conferir insights e agenda existente.
 - Reels: testar 20–40 segundos, ajustando ao conteúdo.
-- Carrosséis: cinco a sete cards, uma ideia por card.
+- Bloco 1: seis Reels com música; os antigos carrosséis 230 e 233 ficam preservados como versões anteriores.
 - Artigos: extensão suficiente para cumprir a proposta, sem meta artificial.
 
 ## Calendário do Instagram
@@ -64,10 +64,10 @@ Cada peça terá uma ação principal, sem acumular pedidos de interação.
 | Data | Formato / linha | Pauta e abordagem | Ação principal |
 |---|---|---|---|
 | 26/10 | Reel / Perrengue Nerd | Você escolhe um jogo de terror. À noite, até o corredor vira fase. Encenação cotidiana. | Qual jogo te deixou assim? |
-| 28/10 | Carrossel / Descobertas | Qual tipo de terror combina com você? Tensão, atmosfera, sobrevivência e sustos; exemplos pesquisados. | Salvar para escolher |
+| 28/10 | Reel / Descobertas | Qual tipo de terror combina com você? Tensão, atmosfera, sobrevivência e sustos; exemplos pesquisados. | Salvar para escolher |
 | 31/10 | Reel / Nostalgia | O som que fazia você parar de andar no jogo. Uma lembrança e o papel do áudio na expectativa. | Qual som você reconhece na hora? |
 | 02/11 | Reel / Perrengue Nerd | O grupo tem cinco pessoas e nenhuma consegue jogar no mesmo horário. Conversa encenada com personagens fictícios. | Enviar ao grupo |
-| 04/11 | Carrossel / Utilidade | Tenho 30 minutos: o que dá para jogar? Duração da sessão e facilidade de interromper. | Salvar para uma noite corrida |
+| 04/11 | Reel / Utilidade | Tenho 30 minutos: o que dá para jogar? Duração da sessão e facilidade de interromper. | Salvar para uma noite corrida |
 | 07/11 | Reel / Perrengue Nerd | Só mais uma partida: a frase que nunca vem sozinha. Negociação com o próprio horário. | Qual jogo causa isso? |
 | 09/11 | Reel / Utilidade | O contador mostra 120 FPS, mas o jogo engasga. Média de FPS e regularidade dos quadros. | Em qual jogo acontece? |
 | 11/11 | Carrossel / Utilidade | Antes de comprar uma peça, confira estas coisas. Uso, configurações, memória, armazenamento e temperaturas. | Salvar o checklist |
@@ -107,13 +107,12 @@ inventadas como relatos reais.
 1. Conferir filas atuais, publicações e métricas disponíveis em leitura.
 2. Pesquisar fontes, exemplos e condições de utilização das mídias.
 3. Detalhar briefing por peça: público, ideia, abertura, formato e ação principal.
-4. Redigir artigos, roteiros, cards e legendas seguindo as orientações locais
-   de `post-blog` e `post-instagram`.
-5. Produzir capas, carrosséis, gravações e edição; priorizar mídia própria ou autorizada.
-6. Revisar fatos, português, tom, legibilidade, áudio, imagens, links e SEO.
-7. Apresentar o conteúdo completo ao responsável para revisão editorial.
-8. Preparar rascunhos e publicação somente dentro de um plano de execução aprovado,
-   respeitando o fluxo vigente do projeto e a aprovação de produção.
+4. Redigir artigos com profundidade adequada (referência: cerca de 1.000 palavras), roteiros, cards e legendas seguindo `post-blog` e `post-instagram`. Escolher a estrutura pela intenção: curadoria, explicativo, recomendações ou guia. Tabelas, FAQ e vídeos são opcionais e precisam ajudar o assunto; não repetir o mesmo molde nos quatro artigos. Embutir somente vídeos com origem e funcionamento confirmados.
+5. Garantir atribuição obrigatória de categoria (`categoria_id` e `categoria_post_id` nunca nulos) em cada artigo.
+6. Produzir mídias: capas e imagens em `uploads/posts/{slug}/images/` com `capa.webp` e `img-001.webp` em diante, WebP 1200×675. Conferir visualmente a obra retratada antes de escrever alt e legenda. Renderizar Reels pelo engine Konva/Skia (`scripts/reels-konva/`), com `-movflags +faststart`, posters JPG e trilhas distintas no lote. Registrar as mídias na tabela oficial, além de gravar os arquivos. Quando uma imagem permanece entre cenas, usar um plano contínuo sem movimento de troca simulado.
+7. Revisar fatos, português, tom, legibilidade, áudio, imagens, links e SEO.
+8. Apresentar o conteúdo completo ao responsável para revisão editorial.
+9. Preparar rascunhos e publicação somente dentro de um plano de execução aprovado, respeitando o fluxo vigente do projeto e a aprovação de produção.
 
 Bloco 1: semanas de 26/10 e 02/11. Bloco 2: semanas de 09/11 e 16/11.
 Não executar comandos de importação ou publicação a partir deste documento
@@ -142,10 +141,11 @@ Referência sobre tempo assistido: [Meta — Reels insights](https://about.fb.co
 ## Checklist e acompanhamento
 
 - [x] Documentar proposta editorial e calendário.
-- [ ] Conferir filas, duplicidades e métricas de referência.
-- [ ] Validar pautas e datas finais com o responsável.
-- [ ] Aprovar plano operacional de produção.
-- [ ] Produzir e revisar bloco 1.
+- [x] Conferir filas, duplicidades e métricas de referência.
+- [x] Validar pautas e datas finais com o responsável.
+- [x] Aprovar plano operacional de produção.
+- [x] Atualizar a fonte oficial da Central de Conhecimento com regras de estrutura editorial, nomenclatura, categorias e validação de mídias.
+- [x] Produzir e revisar bloco 1 (artigos IDs 77–80 e Instagram IDs 229–234).
 - [ ] Produzir e revisar bloco 2.
 - [ ] Autorizar preparação e publicação conforme o fluxo vigente.
 - [ ] Realizar revisões intermediária e final.
@@ -156,6 +156,57 @@ A tarefa permanece pendente enquanto a leva não for executada e avaliada.
 
 ## Limites desta entrega
 
-Somente documentação e uma tarefa de acompanhamento. Sem novos briefings
-em arquivo separado, conteúdo final, artes, banco editorial, cron, alterações
-de código, publicação, commit ou deploy nesta etapa.
+Produção do Bloco 1 com documentação atualizada e galeria de prévia local/túnel. Publicação final em produção exige aprovação do fluxo de sync.
+
+## Correção verificada do Bloco 1 — 10/10/2026
+
+| Artigo | Estrutura editorial | Tipo do cadastro | Categoria |
+|---|---|---|---|
+| 77 | Seleção comentada: Silent Hill 2, Signalis e Alan Wake 2 | lista | Games (3) |
+| 78 | Explicação de pistas, silêncio, graves e áudio espacial | guia | Games (3) |
+| 79 | Recomendações por meta e ponto de parada | lista | Dicas (5) |
+| 80 | Passos para retomar uma campanha e preservar o save | guia | Dicas (5) |
+
+O cadastro não oferece o tipo “explicativo”; o artigo 78 usa `guia`, com estrutura
+explicativa no corpo. Os quatro textos não são reviews e não recebem FAQ/tabela
+por obrigação. O resumo, o SEO e o conteúdo usam a mesma pauta.
+
+Erros encontrados: imagem de Resident Evil 4 identificada como Alan Wake 2,
+imagens de jogos trocadas no artigo 79, taxonomia textual `gadgets`, tipo vazio,
+afirmações sem sustentação, HTML de outro sistema de estilos, vínculo do squad
+com “Os Nefalem”, chamada do Reel “Só mais uma” para um guia diferente e mídias
+ausentes no cadastro do Instagram. Os Reels antigos tinham sido marcados como
+prontos sem nova renderização. As prévias mantinham textos de versões anteriores.
+
+Correção: captura oficial de Alan Wake 2, mapeamento visual coerente, fontes
+primárias nos artigos, categorias e tipos preenchidos, seis legendas com uma
+ação principal e quatro a seis hashtags. Instagram 232 e 234 são humor autônomo,
+com `post_blog_id = NULL`; cenas fictícias são identificadas. Os vídeos têm
+24–30 segundos, 1080×1920, H.264/AAC e quatro cenas com progressão de texto.
+As artes dos dois Reels de humor permanecem estáticas enquanto a história avança.
+
+Mídias finais: seis Reels (229–234), cada um com um vídeo cadastrado e música incorporada. 229/231 usam `reel-{id}-revisado.mp4`; 230/232/233/234 usam `reel-{id}-final.mp4`, todos com poster JPG e manifesto. 230 dura 28 segundos; 233 dura 30; os demais duram 24. As seis trilhas são distintas no lote.
+
+As ilustrações de humor 232/234 foram criadas pelo ImageGen integrado, salvas como `squad-imagegen.png` e `relogio-imagegen.png` em `uploads/reels/leva02-bloco1/`. São cenas fictícias, sem simular capturas de gameplay. O canvas oficial organiza textos e compõe o vídeo; não desenha essas ilustrações. Não usar movimento de troca quando a imagem permanece a mesma. Os cards antigos não são removidos dos arquivos, mas deixam de ser a mídia ativa de 230/233. Todos os seis registros são `reels` e ficam `ready` somente após validar os vídeos.
+
+As galerias `leva02-bloco1`, `leva02-bloco1-v2` e `leva02-bloco1-v3` são geradas
+do mesmo payload que alimenta o banco. Sua revisão deve conferir o arquivo
+apontado pelo registro, não uma cópia antiga com aparência semelhante.
+
+Operação local: `scripts/execute-full-plan-corrections.php`, etapas `--backup-reels`, `--prepare`,
+`--render`, `--apply`, `--gallery` e `--verify`. Dados editoriais em
+`scripts/restructure-posts.php`, sem efeito colateral ao incluir o arquivo.
+Não executar sem o backup indicado e o escopo autorizado. O script não importa
+conteúdo em outro ambiente nem chama a publicação do Instagram.
+
+Backup anterior à conversão: `storage/correcao-leva02-reels-20261010/`, incluindo os 14 vínculos anteriores.
+
+Backup original: `storage/correcao-leva02-20261010-codex/`, com JSON de `posts`,
+`instagram_posts` e `instagram_post_media`, cópia de 183 arquivos e manifesto
+SHA-256. Renderizações e manifestos novos preservam os arquivos anteriores.
+Procedimento de recuperação e evidências em
+`docs/correcoes/2026-10-10-correcao-bloco-1.md`.
+
+Esta página é a própria fonte exibida pela Central de Conhecimento em
+`/admin/base-tecnica?aba=mudancas&grupo=features&arquivo=planejamento-editorial-leva-02.md`.
+Não há uma segunda cópia desta documentação em tabela do banco.

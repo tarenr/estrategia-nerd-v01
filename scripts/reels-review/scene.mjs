@@ -107,7 +107,7 @@ export async function createManualScene(spec,root){
   const body=txt(layer,'',{x:90,y:1300,width:890,fontSize:35,lineHeight:1.4,fill:palette.muted});
   const detail=txt(layer,'',{x:90,y:1495,width:885,fontSize:23,letterSpacing:1,fill:palette.accent});
   const progress=rule(layer,[86,1557,86,1557],palette.accent,0.7,3);
-  txt(layer,'Leia a história no blog  ·  Link na bio',{x:88,y:1602,width:895,fontSize:28,fill:palette.muted});
+  txt(layer,spec.footer ?? 'Leia a história no blog  ·  Link na bio',{x:88,y:1602,width:895,fontSize:28,fill:palette.muted});
   const dots=[];
   if(['dark','celestial','fantasy'].includes(spec.tone)){for(let n=0;n<13;n++){const dot=new Konva.Circle({radius:n%3===0?2:1,fill:palette.accent,opacity:0.3});layer.add(dot);dots.push(dot);}}
   let active=-1;const typography=[];
@@ -118,7 +118,7 @@ export async function createManualScene(spec,root){
       label.text(beat.eyebrow.toUpperCase());fit(label,55,23,21);
       title.text(beat.title);const titleSize=fit(title,190,spec.layout==='chronicle'?74:106,spec.layout==='chronicle'?54:72);
       body.text(beat.body);const bodySize=fit(body,178,35,31);
-      detail.text(active===3?'ARTIGO COMPLETO NO ESTRATÉGIA NERD':(spec.comparison?spec.comparison.join('   ×   '):''));
+      detail.text(active===3?(spec.closingLabel ?? 'ARTIGO COMPLETO NO ESTRATÉGIA NERD'):(spec.comparison?spec.comparison.join('   ×   '):''));
       typography.push({scene:active,titleSize,bodySize});
     }
     for(const shot of visual){
