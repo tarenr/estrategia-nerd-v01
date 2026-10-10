@@ -7,8 +7,9 @@ import {manualState} from './scene.mjs';
 
 // Stable composition for the approved hardware design; photos remain inside it.
 export const HARDWARE_FRAME={x:82,y:764,width:916,height:618};
+const ALLOWED_HARDWARE_IDS=[198,199,200,201,202,203];
 export async function createHardwareScene(spec,root){
-  if(spec.reviewPostId!==200||spec.presentation!=='product'||spec.duration!==20||spec.scenes.length!==4||spec.beatStarts.some((t,i)=>t!==i*5))throw new Error('Perfil de hardware fora do escopo aprovado do 200.');
+  if(!ALLOWED_HARDWARE_IDS.includes(spec.reviewPostId)||spec.presentation!=='product'||spec.duration!==20||spec.scenes.length!==4||spec.beatStarts.some((t,i)=>t!==i*5))throw new Error('Perfil de hardware fora do escopo aprovado.');
   const font='C:/Windows/Fonts/bahnschrift.ttf';
   if(!existsSync(font))throw new Error('Fonte de hardware indisponível; não substituir a tipografia silenciosamente.');
   FontLibrary.use('EN Hardware',font);
@@ -43,7 +44,7 @@ export async function createHardwareScene(spec,root){
       // Crop only excess scenery; keep a stationary full-bleed photo in every scene.
       const ratio=frame.width/frame.height;
       const width=Math.min(img.width,img.height*ratio),height=width/ratio;
-      photo.image(img);photo.crop({x:(img.width-width)/2,y:(img.height-height)/2,width,height});
+      photo.image(img);photo.crop({x:Math.max(0,(img.width-width)/2),y:Math.max(0,(img.height-height)/2),width:Math.min(img.width,width),height:Math.min(img.height,height)});
       typography.push({scene:active,titleSize,bodySize});
     }
     const opacity=Math.min(1,Math.max(0,state.local)/.25);

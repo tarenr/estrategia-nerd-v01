@@ -20,17 +20,28 @@ if(catalog.items.some(i=>i.spec.compositionProfile==='diagnostic-207-v1')){
  assert.equal(new Set(item.spec.scenes.map(s=>s.image)).size,5);
  console.log('PASS: diagnóstico 207 com cinco imagens e textos/trilha preservados.');
 }
-if(catalog.items.some(i=>i.spec.compositionProfile==='hardware-product-v1')){
- const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/hardware-200-before/catalog.json'),'utf8'));
- for(const item of catalog.items){if(item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;const original=before.items.find(i=>i.id===item.id);if(item.id!==200){assert.deepEqual(item,original,'Outro registro alterado #'+item.id);continue;}for(const key of ['caption','status','scheduled','trackId','articleId','originalSha256'])assert.deepEqual(item[key],original[key]);for(const key of ['audio','audioStart'])assert.deepEqual(item.spec[key],original.spec[key]);assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(new Set(item.spec.scenes.map(s=>s.image)).size,4);item.spec.scenes.forEach((s,n)=>{for(const key of ['title','body','eyebrow'])assert.equal(s[key],original.spec.scenes[n][key]);});assert.ok(item.previousVersions.some(v=>v.sha256===original.sha256&&v.video===original.video));}
- console.log('PASS: 200 com quatro fotos e 20 s; textos, áudio, versão anterior e demais 36 preservados.');
+const isHardwareRevision=i=>[198,199,200,201,202,203].includes(i.id)&&i.spec.compositionProfile==='hardware-product-v1';
+if(catalog.items.some(isHardwareRevision)){
+ const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/hardware-198-203-before/catalog.json'),'utf8'));
+ for(const item of catalog.items){
+  if(item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
+  const original=before.items.find(i=>i.id===item.id);
+  if(!isHardwareRevision(item)){assert.deepEqual(item,original,'Outro registro alterado #'+item.id);continue;}
+  for(const key of ['caption','status','scheduled','trackId','articleId','originalSha256'])assert.deepEqual(item[key],original[key]);
+  for(const key of ['audio','audioStart'])assert.deepEqual(item.spec[key],original.spec[key]);
+  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);
+  assert.equal(item.spec.scenes.length,4);
+  item.spec.scenes.forEach((s,n)=>{for(const key of ['title','body','eyebrow'])assert.equal(s[key],original.spec.scenes[n][key]);});
+  if(item.id!==200)assert.ok(item.previousVersions.some(v=>v.sha256===original.sha256&&v.video===original.video));
+ }
+ console.log('PASS: 198–203 com hardware 20 s; textos, áudio, versões anteriores e demais 31 preservados.');
 }
 if(catalog.avatarRevision){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/avatar-before/corrections-20261010.json'),'utf8'));
  const ids=[196,229,232,234];
  for(const item of catalog.items){
   const original=before.items.find(i=>i.id===item.id);
-  if(item.id===200&&item.spec.compositionProfile==='hardware-product-v1'||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
+  if(isHardwareRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
   if(!ids.includes(item.id)){assert.deepEqual(item,original,'Registro fora do escopo alterado #'+item.id);continue;}
   const approved196=item.id===196&&item.spec.compositionProfile==='196-v5';assert.equal(item.revision,approved196?5:3);assert.equal(item.avatarReference,true);
   for(const key of ['caption','status','scheduled','articleId','articleSlug','original','originalSha256','trackId'])assert.deepEqual(item[key],original[key],'Campo preservado divergiu: '+key);

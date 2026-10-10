@@ -1,3 +1,29 @@
+## Hardware 198, 199, 201, 202 e 203 — versão 3 com identidade aprovada do 200 (10/10/2026)
+
+Adaptação dos cinco Reels do grupo de produtos de hardware (198, 199, 201, 202 e 203) à identidade visual aprovada do Reel 200 v3 (commit `5e4ac85`). Cada Reel possui 20 segundos exatos (quatro cenas de 5 segundos), formato vertical 1080×1920 @ 30 fps, moldura técnica fixa (x=82, y=764, 916×618), fundo grafite com circuitos e tipografia Bahnschrift.
+
+- **198 (Setup Completo)**: 4 cenas com artes dedicadas ImageGen representando o setup completo, o processador Ryzen 5 7600X no socket AM5, a placa-mãe MSI B850 TOMAHAWK MAX e as memórias Corsair Vengeance DDR5.
+- **199 (Ryzen 5 7600X)**: 4 cenas com artes dedicadas ImageGen representando o processador em destaque (hero), instalação no socket AM5, montagem da refrigeração/pasta térmica e bancada em funcionamento.
+- **201 (RTX 3050 6 GB)**: 4 cenas com artes dedicadas ImageGen destacando a placa compacta sem conector de 8 pinos, detalhe da ventoinha/carcaça, instalação no slot PCIe e setup gamer em operação.
+- **202 (Corsair Vengeance DDR5 32 GB)**: Arte dedicada ImageGen do kit Corsair Vengeance DDR5 32 GB 6000 MHz em bancada escura, preenchendo a moldura sem distorções.
+- **203 (Kingston NV3 1 TB)**: Arte oficial do Kingston NV3 NVMe M.2 2280 em bancada de testes de alta resolução (1200×800), sem reutilizar referências do modelo anterior NV2.
+
+Compositor: `scripts/reels-review/hardware-scene.mjs` atualizado para autorizar exclusivamente os IDs [198, 199, 200, 201, 202, 203], mantendo o Reel 200 aprovado 100% intacto. Todos os vídeos foram renderizados com `-movflags +faststart` (átomo `moov` posicionado no início, offset 32 antes do `mdat`).
+Vídeos entregues: `public/uploads/reels/correcao-instagram-20261010/reel-{198,199,201,202,203}-v3.mp4` acompanhados de capa `.jpg` e folha de contato `-contact.jpg`. Galeria atualizada: `public/uploads/previews/leva02-bloco1-v3/index.html` e `public/uploads/reels/correcao-instagram-20261010/gallery.html`. Metadados de prompts registrados em `storage/correcao-instagram-20261010/hardware-198-203-imagegen.json`.
+Validações técnicas: decodificação integral sem erros em todos os MP4s, verificação dos 37 roteiros com determinismo e suíte oficial PHP com 17 OK e zero falhas. Nenhuma alteração foi realizada no banco de dados, na fila ou nos posts agendados/publicados.
+
+## Guias de PC — imagem fixa, versões 3 (10/10/2026)
+
+Os Reels 204, 209, 212 e 213 receberam a identidade aprovada do 207 v5: texto acima, moldura central preenchida e chamada abaixo, com posições fixas, grafite, ciano e detalhes em âmbar. Cada vídeo usa uma única imagem adaptada da capa do próprio artigo com ImageGen, sem títulos embutidos, durante todos os 20 segundos. Não há zoom, reinício, troca ou fade da imagem quando o texto muda. O 204 conserva cinco cenas, 209 e 212 quatro, e 213 cinco; roteiro, legenda, trilha e ponto inicial do áudio foram preservados.
+
+O perfil `diagnostic-guide-v1` reutiliza `scripts/reels-review/diagnostic-scene.mjs` exclusivamente para os quatro IDs. A fonte e a geometria do 207 foram preservadas; a imagem é carregada uma vez e compartilhada entre as cenas. O comando `node scripts/reels-review/diagnostic-guides.mjs` preserva arquivos anteriores e relê o catálogo após cada renderização, evitando substituir atualizações concorrentes de outros registros. `--verify` verifica sem atualizar o catálogo ou as capas.
+
+Entregas: `public/uploads/reels/correcao-instagram-20261010/reel-{204,209,212,213}-v3.mp4`, capas `.jpg` e folhas `-contact.jpg`. Imagens: `images/reel-{id}-guide-v3.png`. Galeria existente: `public/uploads/previews/leva02-bloco1-v3/index.html?id={id}&v=3`. Prompts e fontes: `storage/correcao-instagram-20261010/guides-imagegen.json`; backup: `guides-before/`; resultados: `guides-validation.json`.
+
+O usuário esclareceu que os publicados estão aprovados: 214 permanece integralmente preservado, sem nova prévia aplicada, exclusão ou republicação. Os aprovados 196, 200 e 207 também foram preservados. A arte experimental do 214 não foi incorporada ao projeto. Banco, artigos, fila, datas e cancelamentos não foram alterados.
+
+Validação: quatro folhas de cenas inspecionadas; todos os vídeos decodificados integralmente e com faststart confirmado por ordem de átomos; H.264/AAC, 1080×1920, 30 fps e 20 segundos. Testes compararam os pixels da moldura entre todas as cenas, confirmando imagem idêntica, recorte e opacidade contínuos. Os 37 roteiros passaram na regressão; suíte PHP: 17 OK e zero falhas. A avaliação visual dos quatro vídeos pelo usuário permanece pendente; não houve publicação.
+
 ## Diagnóstico 207 — correção pontual da RAM, versão 5 (10/10/2026)
 
 A v5 substitui exclusivamente a quarta imagem após o usuário apontar uma posição artificial das mãos. A nova arte ImageGen mostra o gabinete aberto, desligado, com os módulos de RAM instalados e sem pessoas. As outras quatro imagens, fundo, compositor, textos, áudio e tempos foram preservados. A v4 permanece no histórico e em disco.

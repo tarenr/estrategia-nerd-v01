@@ -808,24 +808,23 @@
         "collection": "DENTRO DO SEU SETUP",
         "layout": "showcase",
         "tone": "tech",
-        "duration": 35,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_199668.mp3",
         "audioStart": 43,
         "beatStarts": [
           0,
-          7,
-          14,
-          21,
-          28
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
             "eyebrow": "Por trás do Estratégia Nerd",
             "title": "O setup em ação",
             "body": "A máquina reúne peças para trabalho, criação e jogos.",
-            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-001.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -833,9 +832,9 @@
             "eyebrow": "O cérebro da máquina",
             "title": "Ryzen 5 7600X",
             "body": "O processador faz parte da base usada no dia a dia.",
-            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/img-001.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-002.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -843,9 +842,9 @@
             "eyebrow": "A base da plataforma",
             "title": "MSI B850 TOMAHAWK MAX",
             "body": "A placa-mãe conecta os componentes e sustenta a plataforma AM5.",
-            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/img-002.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-003.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -853,37 +852,118 @@
             "eyebrow": "Espaço para a rotina",
             "title": "32 GB de DDR5",
             "body": "A memória acompanha as tarefas do setup. Veja a configuração completa no blog.",
-            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/img-003.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-004.png",
             "framing": {
-              "mode": "contain",
-              "motion": "still"
-            }
-          },
-          {
-            "eyebrow": "A escolha do conjunto",
-            "title": "As peças precisam conversar",
-            "body": "A B850 do setup e a B650 de outra análise são modelos distintos.",
-            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/capa.webp",
-            "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "product"
+        "presentation": "product",
+        "compositionProfile": "hardware-product-v1",
+        "reviewPostId": 198,
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/hardware-product-background-v1.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-198-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-198-v2.jpg",
-      "sha256": "a54b380099e2e22e4bb5ed791e8456413ca736ab2468fb08892f61073efa71c7",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-198-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-198-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-198-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-198-v1.jpg",
           "sha256": "09939df16270204fbb1a16ced2eacf4b6e9f6b3299977497cfbeba718de8f450"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-198-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-198-v2.jpg",
+          "sha256": "a54b380099e2e22e4bb5ed791e8456413ca736ab2468fb08892f61073efa71c7",
+          "spec": {
+            "articleId": 18,
+            "articleTitle": "O Setup que Sustenta o Estratégia Nerd: A Máquina por Trás de Tudo",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "showcase",
+            "tone": "tech",
+            "duration": 35,
+            "audio": "public/uploads/audio/pixabay_199668.mp3",
+            "audioStart": 43,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21,
+              28
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Por trás do Estratégia Nerd",
+                "title": "O setup em ação",
+                "body": "A máquina reúne peças para trabalho, criação e jogos.",
+                "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O cérebro da máquina",
+                "title": "Ryzen 5 7600X",
+                "body": "O processador faz parte da base usada no dia a dia.",
+                "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/img-001.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A base da plataforma",
+                "title": "MSI B850 TOMAHAWK MAX",
+                "body": "A placa-mãe conecta os componentes e sustenta a plataforma AM5.",
+                "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/img-002.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Espaço para a rotina",
+                "title": "32 GB de DDR5",
+                "body": "A memória acompanha as tarefas do setup. Veja a configuração completa no blog.",
+                "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A escolha do conjunto",
+                "title": "As peças precisam conversar",
+                "body": "A B850 do setup e a B650 de outra análise são modelos distintos.",
+                "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "product"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "hardwareRevision": {
+        "reference": "reel-200-v3 commit 5e4ac85",
+        "tool": "ImageGen built-in",
+        "duration": 20,
+        "scenesCount": 4,
+        "textsPreserved": true,
+        "queueChanged": false,
+        "publicationApproved": false
+      },
+      "sha256": "60aab7c63dda77a80be80c068e6114e2f75cc3b55e8df730b8509691b9707ed7"
     },
     {
       "id": 199,
@@ -910,23 +990,23 @@
         "collection": "DENTRO DO SEU SETUP",
         "layout": "showcase",
         "tone": "tech",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_203118.mp3",
         "audioStart": 25,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
             "eyebrow": "Ryzen 5 7600X",
             "title": "Seis núcleos. Doze threads.",
             "body": "O processador ocupa o centro deste setup AM5.",
-            "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-199-v3-scene-001.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -934,9 +1014,9 @@
             "eyebrow": "No dia a dia",
             "title": "Jogos e trabalho",
             "body": "A escolha precisa considerar as tarefas que você realmente executa.",
-            "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-199-v3-scene-002.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -944,9 +1024,9 @@
             "eyebrow": "Além do processador",
             "title": "Refrigeração também conta",
             "body": "O conjunto precisa de placa-mãe, memória e resfriamento compatíveis.",
-            "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-199-v3-scene-003.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -954,27 +1034,107 @@
             "eyebrow": "Uma escolha com contexto",
             "title": "Vale para o seu setup?",
             "body": "Veja a experiência de uso, os pontos fortes e as limitações no blog.",
-            "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-199-v3-scene-004.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "product"
+        "presentation": "product",
+        "compositionProfile": "hardware-product-v1",
+        "reviewPostId": 199,
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/hardware-product-background-v1.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-199-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-199-v2.jpg",
-      "sha256": "498f8c470b25736f21eca8a7899c99e9579aae93c368524a610a518ab4461914",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-199-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-199-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-199-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-199-v1.jpg",
           "sha256": "2b2e174cc4e2507eb963c8d4ff1a130f5800889a514d2ac4a599326c3f187787"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-199-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-199-v2.jpg",
+          "sha256": "498f8c470b25736f21eca8a7899c99e9579aae93c368524a610a518ab4461914",
+          "spec": {
+            "articleId": 19,
+            "articleTitle": "AMD Ryzen 5 7600X: Desempenho Real no Meu Setup",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "showcase",
+            "tone": "tech",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_203118.mp3",
+            "audioStart": 25,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Ryzen 5 7600X",
+                "title": "Seis núcleos. Doze threads.",
+                "body": "O processador ocupa o centro deste setup AM5.",
+                "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "No dia a dia",
+                "title": "Jogos e trabalho",
+                "body": "A escolha precisa considerar as tarefas que você realmente executa.",
+                "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Além do processador",
+                "title": "Refrigeração também conta",
+                "body": "O conjunto precisa de placa-mãe, memória e resfriamento compatíveis.",
+                "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Uma escolha com contexto",
+                "title": "Vale para o seu setup?",
+                "body": "Veja a experiência de uso, os pontos fortes e as limitações no blog.",
+                "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "product"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "hardwareRevision": {
+        "reference": "reel-200-v3 commit 5e4ac85",
+        "tool": "ImageGen built-in",
+        "duration": 20,
+        "scenesCount": 4,
+        "textsPreserved": true,
+        "queueChanged": false,
+        "publicationApproved": false
+      },
+      "sha256": "11c1ce98144239792f2e89e1ac4bc04974970fd0712858ae1ff01a806fbf67d6"
     },
     {
       "id": 200,
@@ -1180,23 +1340,23 @@
         "collection": "DENTRO DO SEU SETUP",
         "layout": "showcase",
         "tone": "tech",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_303922.mp3",
         "audioStart": 23,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
             "eyebrow": "RTX 3050 de 6 GB",
             "title": "Uma GPU de entrada",
             "body": "O equilíbrio depende dos jogos, dos ajustes e do preço.",
-            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-001.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1204,9 +1364,9 @@
             "eyebrow": "A experiência que importa",
             "title": "Ajuste as expectativas",
             "body": "Resolução e qualidade gráfica mudam o desempenho de cada jogo.",
-            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-002.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1214,9 +1374,9 @@
             "eyebrow": "Recursos não são garantias",
             "title": "DLSS e ray tracing",
             "body": "Compatibilidade com um recurso não significa rodar tudo no máximo.",
-            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-003.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1224,27 +1384,107 @@
             "eyebrow": "Antes de escolher",
             "title": "Compare o conjunto",
             "body": "Considere preço, alternativas e sua configuração. Análise completa no blog.",
-            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-004.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "product"
+        "presentation": "product",
+        "compositionProfile": "hardware-product-v1",
+        "reviewPostId": 201,
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/hardware-product-background-v1.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-201-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-201-v2.jpg",
-      "sha256": "7b8e16e8827176525bc0bc7da3409a5a6e1de2d7ee0909feb905a9c00268cf92",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-201-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-201-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-201-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-201-v1.jpg",
           "sha256": "45eca2012541c422f67bbb8655c77422092205b29f7ded22c001d18d915e78bb"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-201-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-201-v2.jpg",
+          "sha256": "7b8e16e8827176525bc0bc7da3409a5a6e1de2d7ee0909feb905a9c00268cf92",
+          "spec": {
+            "articleId": 21,
+            "articleTitle": "RTX 3050 6GB: a escolha inteligente para um setup equilibrado",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "showcase",
+            "tone": "tech",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_303922.mp3",
+            "audioStart": 23,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "RTX 3050 de 6 GB",
+                "title": "Uma GPU de entrada",
+                "body": "O equilíbrio depende dos jogos, dos ajustes e do preço.",
+                "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A experiência que importa",
+                "title": "Ajuste as expectativas",
+                "body": "Resolução e qualidade gráfica mudam o desempenho de cada jogo.",
+                "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Recursos não são garantias",
+                "title": "DLSS e ray tracing",
+                "body": "Compatibilidade com um recurso não significa rodar tudo no máximo.",
+                "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antes de escolher",
+                "title": "Compare o conjunto",
+                "body": "Considere preço, alternativas e sua configuração. Análise completa no blog.",
+                "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "product"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "hardwareRevision": {
+        "reference": "reel-200-v3 commit 5e4ac85",
+        "tool": "ImageGen built-in",
+        "duration": 20,
+        "scenesCount": 4,
+        "textsPreserved": true,
+        "queueChanged": false,
+        "publicationApproved": false
+      },
+      "sha256": "4e3fea19a18a6f369a0cac3ee9b3a3baff115df6170faee206c679dad7c3544a"
     },
     {
       "id": 202,
@@ -1271,23 +1511,23 @@
         "collection": "DENTRO DO SEU SETUP",
         "layout": "showcase",
         "tone": "tech",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_477714.mp3",
         "audioStart": 41,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
             "eyebrow": "Corsair Vengeance",
             "title": "32 GB para a rotina",
             "body": "O kit DDR5 do setup oferece espaço para jogos e multitarefa.",
-            "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-202-v3-scene-001.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1295,9 +1535,9 @@
             "eyebrow": "Mais margem de memória",
             "title": "Aplicativos ao mesmo tempo",
             "body": "Jogo, navegador e ferramentas compartilham a capacidade disponível.",
-            "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-202-v3-scene-002.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1305,9 +1545,9 @@
             "eyebrow": "O kit certo para a placa",
             "title": "Compatibilidade primeiro",
             "body": "Confira modelo, frequência suportada e perfil de memória da sua plataforma.",
-            "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-202-v3-scene-003.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1315,27 +1555,107 @@
             "eyebrow": "Sem comprar só pelo número",
             "title": "Conheça o kit completo",
             "body": "Veja a experiência de uso da Corsair Vengeance no blog.",
-            "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-202-v3-scene-004.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "product"
+        "presentation": "product",
+        "compositionProfile": "hardware-product-v1",
+        "reviewPostId": 202,
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/hardware-product-background-v1.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-202-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-202-v2.jpg",
-      "sha256": "38e6e35f1cf134d599a5114c4396dcb453290b64f8bd6c76bd859ef1a0e23f3a",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-202-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-202-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-202-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-202-v1.jpg",
           "sha256": "d5c1505f9c5ef9f3fed9bb2dd19ddf7302d4c37b45ae0f4d5ca3c7b4da0e19d7"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-202-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-202-v2.jpg",
+          "sha256": "38e6e35f1cf134d599a5114c4396dcb453290b64f8bd6c76bd859ef1a0e23f3a",
+          "spec": {
+            "articleId": 22,
+            "articleTitle": "Corsair Vengeance DDR5 32GB 6000MHz: equilíbrio ideal para setups modernos",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "showcase",
+            "tone": "tech",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_477714.mp3",
+            "audioStart": 41,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Corsair Vengeance",
+                "title": "32 GB para a rotina",
+                "body": "O kit DDR5 do setup oferece espaço para jogos e multitarefa.",
+                "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Mais margem de memória",
+                "title": "Aplicativos ao mesmo tempo",
+                "body": "Jogo, navegador e ferramentas compartilham a capacidade disponível.",
+                "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O kit certo para a placa",
+                "title": "Compatibilidade primeiro",
+                "body": "Confira modelo, frequência suportada e perfil de memória da sua plataforma.",
+                "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Sem comprar só pelo número",
+                "title": "Conheça o kit completo",
+                "body": "Veja a experiência de uso da Corsair Vengeance no blog.",
+                "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "product"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "hardwareRevision": {
+        "reference": "reel-200-v3 commit 5e4ac85",
+        "tool": "ImageGen built-in",
+        "duration": 20,
+        "scenesCount": 4,
+        "textsPreserved": true,
+        "queueChanged": false,
+        "publicationApproved": false
+      },
+      "sha256": "6e3c5e9880c3659eea271297790b7681883c93716134158e3fd2efd51e084e3f"
     },
     {
       "id": 203,
@@ -1364,23 +1684,23 @@
         "collection": "DENTRO DO SEU SETUP",
         "layout": "showcase",
         "tone": "tech",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_478200.mp3",
         "audioStart": 49,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
             "eyebrow": "Kingston NV3 de 1 TB",
             "title": "Espaço e agilidade",
             "body": "O SSD NVMe faz parte do armazenamento deste setup.",
-            "image": "resources/reels-review/assets/kingston-nv3.jpg",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-203-v3-scene-001.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1388,9 +1708,9 @@
             "eyebrow": "No uso cotidiano",
             "title": "Sistema e aplicativos",
             "body": "A experiência depende também da carga de trabalho e do restante do PC.",
-            "image": "resources/reels-review/assets/kingston-nv3.jpg",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-203-v3-scene-002.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1398,9 +1718,9 @@
             "eyebrow": "Instalação e escolha",
             "title": "Confira o slot M.2",
             "body": "Formato, interface e compatibilidade precisam ser verificados.",
-            "image": "resources/reels-review/assets/kingston-nv3.jpg",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-203-v3-scene-003.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1408,27 +1728,107 @@
             "eyebrow": "O que cabe na sua rotina",
             "title": "Conheça os limites",
             "body": "Veja os pontos fortes e as limitações do Kingston NV3 no blog.",
-            "image": "resources/reels-review/assets/kingston-nv3.jpg",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-203-v3-scene-004.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "product"
+        "presentation": "product",
+        "compositionProfile": "hardware-product-v1",
+        "reviewPostId": 203,
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/hardware-product-background-v1.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-203-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-203-v2.jpg",
-      "sha256": "19671cffcd754815910a1f856883d5ca315b6dcde05dd0412877c955c43a9b1f",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-203-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-203-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-203-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-203-v1.jpg",
           "sha256": "19671cffcd754815910a1f856883d5ca315b6dcde05dd0412877c955c43a9b1f"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-203-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-203-v2.jpg",
+          "sha256": "19671cffcd754815910a1f856883d5ca315b6dcde05dd0412877c955c43a9b1f",
+          "spec": {
+            "articleId": 23,
+            "articleTitle": "Kingston NV3 1TB NVMe PCIe 4.0: velocidade real para o dia a dia",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "showcase",
+            "tone": "tech",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_478200.mp3",
+            "audioStart": 49,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Kingston NV3 de 1 TB",
+                "title": "Espaço e agilidade",
+                "body": "O SSD NVMe faz parte do armazenamento deste setup.",
+                "image": "resources/reels-review/assets/kingston-nv3.jpg",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "No uso cotidiano",
+                "title": "Sistema e aplicativos",
+                "body": "A experiência depende também da carga de trabalho e do restante do PC.",
+                "image": "resources/reels-review/assets/kingston-nv3.jpg",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Instalação e escolha",
+                "title": "Confira o slot M.2",
+                "body": "Formato, interface e compatibilidade precisam ser verificados.",
+                "image": "resources/reels-review/assets/kingston-nv3.jpg",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O que cabe na sua rotina",
+                "title": "Conheça os limites",
+                "body": "Veja os pontos fortes e as limitações do Kingston NV3 no blog.",
+                "image": "resources/reels-review/assets/kingston-nv3.jpg",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "product"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "hardwareRevision": {
+        "reference": "reel-200-v3 commit 5e4ac85",
+        "tool": "Arte oficial Kingston NV3 em cenário",
+        "duration": 20,
+        "scenesCount": 4,
+        "textsPreserved": true,
+        "queueChanged": false,
+        "publicationApproved": false
+      },
+      "sha256": "8a7523cb4be193f53166433e8163ca0c99725b285d42f435d92f3a8462816274"
     },
     {
       "id": 204,
