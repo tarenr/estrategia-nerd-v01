@@ -1542,38 +1542,12 @@
       "musicSourceId": "173062",
       "audioStart": 29,
       "duration": 28,
-      "note": "Linha do tempo por marcos com capturas de Half-Life Mod, CS 1.6 e Counter-Strike 2.",
+      "note": "Linha do tempo por marcos com a capa oficial, Half-Life Mod, CS 1.6 e Counter-Strike 2.",
       "scenes": [
         {
           "eyebrow": "A história de Counter-Strike",
-          "title": "Tudo começou como um mod",
-          "body": "Em 1999, um projeto de Half-Life abriu o caminho para a franquia.",
-          "image": "half-life-mod.jpg",
-          "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
-          }
-        },
-        {
-          "eyebrow": "Uma comunidade em crescimento",
-          "title": "Do mod ao competitivo",
-          "body": "As versões clássicas e o Counter-Strike 1.6 marcaram gerações.",
-          "image": "cs-16.jpg",
-          "framing": {
-            "mode": "cover",
-            "focus": [
-              0.5,
-              0.5
-            ]
-          }
-        },
-        {
-          "eyebrow": "Uma nova era",
-          "title": "CS:GO muda a escala",
-          "body": "Lançado em 2012, ampliou o alcance do cenário competitivo.",
+          "title": "Do mod aos palcos globais",
+          "body": "De modificação de Half-Life a um dos maiores esports do planeta.",
           "image": "cover",
           "framing": {
             "mode": "cover",
@@ -1584,9 +1558,35 @@
           }
         },
         {
-          "eyebrow": "A história continua",
+          "eyebrow": "As origens no PC",
+          "title": "Tudo começou como um mod",
+          "body": "Em 1999, um projeto feito por fãs em Half-Life abriu caminho para a franquia.",
+          "image": "half-life-mod.jpg",
+          "framing": {
+            "mode": "cover",
+            "focus": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "eyebrow": "A era das lan houses",
+          "title": "Counter-Strike 1.6",
+          "body": "As versões clássicas e o 1.6 marcaram gerações e definiram o competitivo.",
+          "image": "cs-16.jpg",
+          "framing": {
+            "mode": "cover",
+            "focus": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "eyebrow": "A nova geração",
           "title": "Counter-Strike 2",
-          "body": "Em 2023, a franquia entrou em outra fase. Conheça a trajetória no blog.",
+          "body": "Em 2023, nova engine e jogabilidade moderna. Conheça a trajetória no blog.",
           "image": "cs2.jpg",
           "framing": {
             "mode": "cover",
@@ -1731,7 +1731,7 @@
       "musicSourceId": "512837",
       "audioStart": 19,
       "duration": 28,
-      "note": "Nostalgia com cenas de Laborat?rio de Dexter, Samurai Jack e Avatar: A Lenda de Aang.",
+      "note": "Nostalgia com cenas de Laboratório de Dexter, Samurai Jack e Avatar: A Lenda de Aang.",
       "scenes": [
         {
           "eyebrow": "Desenhos que atravessaram gerações",
