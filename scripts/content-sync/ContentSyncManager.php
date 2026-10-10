@@ -1663,11 +1663,12 @@ final class ContentSyncManager
 
     private function detectBrokenTextReason(string $text): ?string
     {
-        if (preg_match('/\x{00C3}./u', $text) === 1) {
+        $continuation = '[\x{0080}-\x{00BF}\x{0152}\x{0153}\x{0160}\x{0161}\x{0178}\x{017D}\x{017E}\x{0192}\x{02C6}\x{02DC}\x{2013}-\x{201E}\x{2020}-\x{2022}\x{2026}\x{2030}\x{2039}\x{203A}\x{20AC}\x{2122}]';
+        if (preg_match('/\x{00C3}' . $continuation . '/u', $text) === 1) {
             return 'mojibake-utf8';
         }
 
-        if (preg_match('/\x{00C2}./u', $text) === 1) {
+        if (preg_match('/\x{00C2}' . $continuation . '/u', $text) === 1) {
             return 'mojibake-cp1252';
         }
 
