@@ -871,7 +871,7 @@
       "musicSourceId": "239599",
       "audioStart": 61,
       "duration": 28,
-      "note": "Três exemplos de estilos da seleção, sem transformar a lista em ranking ou usar trilha retrô para tudo.",
+      "note": "Tr?s exemplos de estilos com screenshots oficiais de Chrono Trigger, The Witcher 3 e Baldur's Gate 3.",
       "scenes": [
         {
           "eyebrow": "RPGs que marcaram época",
@@ -890,7 +890,7 @@
           "eyebrow": "Histórias e personagens",
           "title": "Chrono Trigger",
           "body": "Viagem no tempo em um clássico do RPG japonês.",
-          "image": "cover",
+          "image": "chrono-trigger.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -903,7 +903,7 @@
           "eyebrow": "Escolhas em um mundo aberto",
           "title": "The Witcher 3",
           "body": "Contratos, personagens e decisões em uma fantasia medieval.",
-          "image": "cover",
+          "image": "the-witcher-3.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -916,7 +916,7 @@
           "eyebrow": "Estratégia e liberdade",
           "title": "Baldur's Gate 3",
           "body": "Um RPG de escolhas e combate por turnos. Conheça os dez títulos no blog.",
-          "image": "cover",
+          "image": "baldurs-gate-3.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1542,13 +1542,13 @@
       "musicSourceId": "173062",
       "audioStart": 29,
       "duration": 28,
-      "note": "Linha do tempo por marcos e anos, sem números de capítulos.",
+      "note": "Linha do tempo por marcos com capturas de Half-Life Mod, CS 1.6 e Counter-Strike 2.",
       "scenes": [
         {
           "eyebrow": "A história de Counter-Strike",
           "title": "Tudo começou como um mod",
           "body": "Em 1999, um projeto de Half-Life abriu o caminho para a franquia.",
-          "image": "cover",
+          "image": "half-life-mod.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1561,7 +1561,7 @@
           "eyebrow": "Uma comunidade em crescimento",
           "title": "Do mod ao competitivo",
           "body": "As versões clássicas e o Counter-Strike 1.6 marcaram gerações.",
-          "image": "cover",
+          "image": "cs-16.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1587,7 +1587,7 @@
           "eyebrow": "A história continua",
           "title": "Counter-Strike 2",
           "body": "Em 2023, a franquia entrou em outra fase. Conheça a trajetória no blog.",
-          "image": "cover",
+          "image": "cs2.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1605,7 +1605,7 @@
       "musicSourceId": "610029",
       "audioStart": 27,
       "duration": 28,
-      "note": "Três exemplos de gêneros, sem ranking; os outros sete ficam no artigo.",
+      "note": "Tr?s cl?ssicos com imagens ic?nicas de Matrix, A Sociedade do Anel e De Volta para o Futuro.",
       "scenes": [
         {
           "eyebrow": "Dez filmes para explorar",
@@ -1624,7 +1624,7 @@
           "eyebrow": "Realidade em questão",
           "title": "Matrix",
           "body": "Um dos filmes da lista que convida a desconfiar do mundo ao redor.",
-          "image": "cover",
+          "image": "matrix.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1637,7 +1637,7 @@
           "eyebrow": "Uma jornada pela Terra-média",
           "title": "A Sociedade do Anel",
           "body": "Fantasia, amizade e uma missão que muda o destino do mundo.",
-          "image": "cover",
+          "image": "fellowship-of-the-ring.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1650,7 +1650,7 @@
           "eyebrow": "Aventura através do tempo",
           "title": "De Volta para o Futuro",
           "body": "Outro clássico da seleção. Conheça os dez filmes no blog.",
-          "image": "cover",
+          "image": "back-to-the-future.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1668,7 +1668,7 @@
       "musicSourceId": "413841",
       "audioStart": 31,
       "duration": 28,
-      "note": "Portas de entrada por gênero; o título não vira ranking.",
+      "note": "Portas de entrada por g?nero com artes de Death Note, Spy x Family e Fullmetal Alchemist.",
       "scenes": [
         {
           "eyebrow": "Nunca assistiu anime?",
@@ -1687,7 +1687,7 @@
           "eyebrow": "Se você gosta de suspense",
           "title": "Death Note",
           "body": "Um duelo de inteligência e consequências difíceis.",
-          "image": "cover",
+          "image": "death-note.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1700,7 +1700,7 @@
           "eyebrow": "Se prefere humor",
           "title": "Spy x Family",
           "body": "Espionagem e convivência familiar em uma comédia de identidades secretas.",
-          "image": "cover",
+          "image": "spy-x-family.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1713,7 +1713,7 @@
           "eyebrow": "Se procura aventura",
           "title": "Fullmetal Alchemist: Brotherhood",
           "body": "Dois irmãos em uma jornada de fantasia. Veja as dez indicações no blog.",
-          "image": "cover",
+          "image": "fullmetal-alchemist.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1731,7 +1731,7 @@
       "musicSourceId": "512837",
       "audioStart": 19,
       "duration": 28,
-      "note": "Nostalgia leve com obras nomeadas; sem inventar ranking nem trocar a imagem coletiva.",
+      "note": "Nostalgia com cenas de Laborat?rio de Dexter, Samurai Jack e Avatar: A Lenda de Aang.",
       "scenes": [
         {
           "eyebrow": "Desenhos que atravessaram gerações",
@@ -1750,7 +1750,7 @@
           "eyebrow": "Humor que segue funcionando",
           "title": "Laboratório de Dexter",
           "body": "Experimentos, rivalidade e comédia no laboratório mais famoso da infância.",
-          "image": "cover",
+          "image": "laboratorio-dexter.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1763,7 +1763,7 @@
           "eyebrow": "Uma linguagem visual própria",
           "title": "Samurai Jack",
           "body": "Composição, silêncio e ação dão força à narrativa.",
-          "image": "cover",
+          "image": "samurai-jack.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1776,7 +1776,7 @@
           "eyebrow": "Um mundo para revisitar",
           "title": "Avatar: A Lenda de Aang",
           "body": "Personagens e construção de mundo. Conheça os dez desenhos no blog.",
-          "image": "cover",
+          "image": "avatar-aang.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
