@@ -100,7 +100,7 @@ export function fitText(node, maxHeight, maxSize, minSize) {
 /** A reusable scene graph; rendering uses explicit frame time, never wall-clock animation. */
 export async function createScene(spec, root) {
   validateSpec(spec);
-  if(spec.compositionProfile==='diagnostic-207-v1')return createDiagnosticScene(spec,root);
+  if(['diagnostic-207-v1','diagnostic-guide-v1'].includes(spec.compositionProfile))return createDiagnosticScene(spec,root);
   if(spec.compositionProfile==='hardware-product-v1')return createHardwareScene(spec,root);
   if (spec.editorial === 'manual' && spec.compositionProfile !== '196-v5') return createManualScene(spec, root);
   registerFonts(root);

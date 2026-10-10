@@ -1855,24 +1855,24 @@
         "collection": "DENTRO DO SEU SETUP",
         "layout": "guide",
         "tone": "tech",
-        "duration": 35,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_511031.mp3",
         "audioStart": 32,
         "beatStarts": [
           0,
-          7,
-          14,
-          21,
-          28
+          4,
+          8,
+          12,
+          16
         ],
         "scenes": [
           {
             "eyebrow": "Montando um PC?",
             "title": "Evite escolhas isoladas",
             "body": "Uma peça forte não corrige um conjunto mal planejado.",
-            "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-204-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1880,9 +1880,9 @@
             "eyebrow": "Compatibilidade",
             "title": "Confira antes de montar",
             "body": "Socket, memória, espaço e conexões precisam ser compatíveis.",
-            "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/capa.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-204-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1890,9 +1890,9 @@
             "eyebrow": "O orçamento precisa de equilíbrio",
             "title": "Não pense só na GPU",
             "body": "CPU, memória e placa de vídeo precisam acompanhar seu uso.",
-            "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/img-010.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-204-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1900,9 +1900,9 @@
             "eyebrow": "A alimentação do conjunto",
             "title": "Não economize na qualidade",
             "body": "Escolha uma fonte adequada e confiável, além da potência anunciada.",
-            "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/img-013.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-204-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1910,27 +1910,118 @@
             "eyebrow": "Antes de fechar a compra",
             "title": "Revise o conjunto",
             "body": "Compatibilidade, refrigeração e possibilidade de upgrade também contam. Guia no blog.",
-            "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/img-002.webp",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-204-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "steps"
+        "presentation": "steps",
+        "reviewPostId": 204,
+        "compositionProfile": "diagnostic-guide-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-background.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-204-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-204-v2.jpg",
-      "sha256": "0b47582149f68629caf61222fd4d1f28e16e563971b0c7fc4d65f198b8b218c9",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-204-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-204-v3.jpg",
+      "sha256": "3abd813bde8e0688c6c8414cdf42af0c872894c38a68740bd7aaf8c1d1cbb791",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-204-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-204-v1.jpg",
           "sha256": "0dc97a1ef48cce7bc037e6faf619869b9878b08c87eb25beb236b6387f231113"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-204-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-204-v2.jpg",
+          "sha256": "0b47582149f68629caf61222fd4d1f28e16e563971b0c7fc4d65f198b8b218c9",
+          "spec": {
+            "articleId": 24,
+            "articleTitle": "Erros comuns ao montar um PC gamer e como evitar",
+            "category": "dicas",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "guide",
+            "tone": "tech",
+            "duration": 35,
+            "audio": "public/uploads/audio/pixabay_511031.mp3",
+            "audioStart": 32,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21,
+              28
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Montando um PC?",
+                "title": "Evite escolhas isoladas",
+                "body": "Uma peça forte não corrige um conjunto mal planejado.",
+                "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Compatibilidade",
+                "title": "Confira antes de montar",
+                "body": "Socket, memória, espaço e conexões precisam ser compatíveis.",
+                "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O orçamento precisa de equilíbrio",
+                "title": "Não pense só na GPU",
+                "body": "CPU, memória e placa de vídeo precisam acompanhar seu uso.",
+                "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/img-010.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A alimentação do conjunto",
+                "title": "Não economize na qualidade",
+                "body": "Escolha uma fonte adequada e confiável, além da potência anunciada.",
+                "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/img-013.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antes de fechar a compra",
+                "title": "Revise o conjunto",
+                "body": "Compatibilidade, refrigeração e possibilidade de upgrade também contam. Guia no blog.",
+                "image": "public/uploads/posts/erros-comuns-ao-montar-um-pc-gamer-e-como-evitar/images/img-002.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "steps"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "guideRevision": {
+        "reference": "207 v5",
+        "tool": "ImageGen",
+        "singleFixedImage": true,
+        "textsPreserved": true,
+        "audioSourcePreserved": true,
+        "queueChanged": false,
+        "prompts": "storage/correcao-instagram-20261010/guides-imagegen.json"
+      }
     },
     {
       "id": 205,
@@ -2608,23 +2699,23 @@
         "collection": "EM FOCO",
         "layout": "dispatch",
         "tone": "calm",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_10149.mp3",
         "audioStart": 37,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
             "eyebrow": "Windows 11 Home e Pro",
             "title": "Seu PC está no 24H2?",
             "body": "Data de fim do suporte: 13 de outubro de 2026, nas edições Home e Pro.",
-            "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-209-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -2632,9 +2723,9 @@
             "eyebrow": "Confira a sua versão",
             "title": "Abra o comando winver",
             "body": "Verifique versão e edição: o prazo não é igual para todas.",
-            "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-209-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -2642,9 +2733,9 @@
             "eyebrow": "Planeje a atualização",
             "title": "Use o Windows Update",
             "body": "Busque uma versão com suporte oferecida ao seu dispositivo.",
-            "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-209-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -2652,27 +2743,107 @@
             "eyebrow": "Não deixe para depois",
             "title": "Mantenha o sistema atualizado",
             "body": "Veja como conferir sua versão e planejar a atualização no guia do blog.",
-            "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-209-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "steps"
+        "presentation": "steps",
+        "reviewPostId": 209,
+        "compositionProfile": "diagnostic-guide-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-background.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-209-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-209-v2.jpg",
-      "sha256": "dbfec32be3a6c1ebae4b80a043e65c8f3f1d000867e7c5a81e3f446516ed99ea",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-209-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-209-v3.jpg",
+      "sha256": "daa5a01ac9def1ef8e66be31c06ff562aa7fbae51be6de70aa37d5a7256fda2f",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-209-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-209-v1.jpg",
           "sha256": "ad7256522331e9730327962d62799dcb4e91247cf52508d2cb9351d2d81ff12c"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-209-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-209-v2.jpg",
+          "sha256": "dbfec32be3a6c1ebae4b80a043e65c8f3f1d000867e7c5a81e3f446516ed99ea",
+          "spec": {
+            "articleId": 30,
+            "articleTitle": "Windows 11 24H2 Home e Pro: fim do suporte em 13/10/2026",
+            "category": "dicas",
+            "editorial": "manual",
+            "collection": "EM FOCO",
+            "layout": "dispatch",
+            "tone": "calm",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_10149.mp3",
+            "audioStart": 37,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Windows 11 Home e Pro",
+                "title": "Seu PC está no 24H2?",
+                "body": "Data de fim do suporte: 13 de outubro de 2026, nas edições Home e Pro.",
+                "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Confira a sua versão",
+                "title": "Abra o comando winver",
+                "body": "Verifique versão e edição: o prazo não é igual para todas.",
+                "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Planeje a atualização",
+                "title": "Use o Windows Update",
+                "body": "Busque uma versão com suporte oferecida ao seu dispositivo.",
+                "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Não deixe para depois",
+                "title": "Mantenha o sistema atualizado",
+                "body": "Veja como conferir sua versão e planejar a atualização no guia do blog.",
+                "image": "public/uploads/posts/windows-11-24h2-fim-do-suporte-em-13-de-outubro-de-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "steps"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "guideRevision": {
+        "reference": "207 v5",
+        "tool": "ImageGen",
+        "singleFixedImage": true,
+        "textsPreserved": true,
+        "audioSourcePreserved": true,
+        "queueChanged": false,
+        "prompts": "storage/correcao-instagram-20261010/guides-imagegen.json"
+      }
     },
     {
       "id": 210,
@@ -2889,23 +3060,23 @@
         "collection": "DENTRO DO SEU SETUP",
         "layout": "guide",
         "tone": "tech",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_528524.mp3",
         "audioStart": 34,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
             "eyebrow": "Escolhendo uma fonte",
             "title": "Watts não contam tudo",
             "body": "A potência anunciada é só uma parte da escolha.",
-            "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-212-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -2913,9 +3084,9 @@
             "eyebrow": "Antes de olhar o selo",
             "title": "Qualidade e proteções",
             "body": "80 Plus informa eficiência. Não substitui a avaliação do projeto.",
-            "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-212-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -2923,9 +3094,9 @@
             "eyebrow": "Para o seu conjunto",
             "title": "Potência e conectores",
             "body": "Confira os requisitos das peças e as conexões necessárias.",
-            "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-212-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -2933,27 +3104,107 @@
             "eyebrow": "Escolha com informação",
             "title": "Compare modelos e garantia",
             "body": "Veja os critérios para selecionar uma fonte no guia completo.",
-            "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-212-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "steps"
+        "presentation": "steps",
+        "reviewPostId": 212,
+        "compositionProfile": "diagnostic-guide-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-background.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-212-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-212-v2.jpg",
-      "sha256": "930e4eb8add01f8f585b7ecaa39d269cfac08a885cd3416b699ffe1f89e487aa",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-212-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-212-v3.jpg",
+      "sha256": "2ef6977e94c1a9e2b38a828ba7a956effba73e7e1a899163fecb0dcda7e6db31",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-212-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-212-v1.jpg",
           "sha256": "f8f2f298d74c20d88e4849fe16a28c9347af03781dbbd92c9e104667de8a8aeb"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-212-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-212-v2.jpg",
+          "sha256": "930e4eb8add01f8f585b7ecaa39d269cfac08a885cd3416b699ffe1f89e487aa",
+          "spec": {
+            "articleId": 33,
+            "articleTitle": "Como escolher uma fonte para PC: sem cair em marketing",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "guide",
+            "tone": "tech",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_528524.mp3",
+            "audioStart": 34,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Escolhendo uma fonte",
+                "title": "Watts não contam tudo",
+                "body": "A potência anunciada é só uma parte da escolha.",
+                "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antes de olhar o selo",
+                "title": "Qualidade e proteções",
+                "body": "80 Plus informa eficiência. Não substitui a avaliação do projeto.",
+                "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Para o seu conjunto",
+                "title": "Potência e conectores",
+                "body": "Confira os requisitos das peças e as conexões necessárias.",
+                "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Escolha com informação",
+                "title": "Compare modelos e garantia",
+                "body": "Veja os critérios para selecionar uma fonte no guia completo.",
+                "image": "public/uploads/posts/como-escolher-fonte-para-pc/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "steps"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "guideRevision": {
+        "reference": "207 v5",
+        "tool": "ImageGen",
+        "singleFixedImage": true,
+        "textsPreserved": true,
+        "audioSourcePreserved": true,
+        "queueChanged": false,
+        "prompts": "storage/correcao-instagram-20261010/guides-imagegen.json"
+      }
     },
     {
       "id": 213,
@@ -2980,24 +3231,24 @@
         "collection": "DENTRO DO SEU SETUP",
         "layout": "guide",
         "tone": "calm",
-        "duration": 35,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_112369.mp3",
         "audioStart": 32,
         "beatStarts": [
           0,
-          7,
-          14,
-          21,
-          28
+          4,
+          8,
+          12,
+          16
         ],
         "scenes": [
           {
             "eyebrow": "SSD e HD",
             "title": "Como está a saúde?",
             "body": "Ferramentas de diagnóstico ajudam a observar sinais de desgaste.",
-            "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-213-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -3005,9 +3256,9 @@
             "eyebrow": "Leia os indicadores",
             "title": "Verifique o SMART",
             "body": "O CrystalDiskInfo mostra informações e alertas da unidade.",
-            "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-213-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -3015,9 +3266,9 @@
             "eyebrow": "Um status não é uma garantia",
             "title": "Mantenha o backup",
             "body": "Mesmo uma unidade marcada como boa pode falhar.",
-            "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-213-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -3025,9 +3276,9 @@
             "eyebrow": "Se houver alertas",
             "title": "Planeje os próximos passos",
             "body": "Entenda os indicadores antes de agir. Guia completo no blog.",
-            "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-213-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -3035,27 +3286,118 @@
             "eyebrow": "Se houver sinais de falha",
             "title": "Priorize seus arquivos",
             "body": "Preserve cópias antes de procedimentos que possam agravar a perda.",
-            "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-213-guide-v3.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "steps"
+        "presentation": "steps",
+        "reviewPostId": 213,
+        "compositionProfile": "diagnostic-guide-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-background.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-213-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-213-v2.jpg",
-      "sha256": "d0f1a86c3def5b194659ae4d0bf788ea08dd718b6b5072e1e88409ce686cd989",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-213-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-213-v3.jpg",
+      "sha256": "5fc68c5092a3542ef70aabd317e5a39b772cf784d2e6c153e5b6a25536cec637",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-213-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-213-v1.jpg",
           "sha256": "d8306bb9ce5dc4c5c115c7532575bceed8a502d419e2ed509b9751c1ef3b48d1"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-213-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-213-v2.jpg",
+          "sha256": "d0f1a86c3def5b194659ae4d0bf788ea08dd718b6b5072e1e88409ce686cd989",
+          "spec": {
+            "articleId": 34,
+            "articleTitle": "Como verificar a saúde do SSD e do HD antes de perder seus arquivos",
+            "category": "dicas",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "guide",
+            "tone": "calm",
+            "duration": 35,
+            "audio": "public/uploads/audio/pixabay_112369.mp3",
+            "audioStart": 32,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21,
+              28
+            ],
+            "scenes": [
+              {
+                "eyebrow": "SSD e HD",
+                "title": "Como está a saúde?",
+                "body": "Ferramentas de diagnóstico ajudam a observar sinais de desgaste.",
+                "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Leia os indicadores",
+                "title": "Verifique o SMART",
+                "body": "O CrystalDiskInfo mostra informações e alertas da unidade.",
+                "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Um status não é uma garantia",
+                "title": "Mantenha o backup",
+                "body": "Mesmo uma unidade marcada como boa pode falhar.",
+                "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Se houver alertas",
+                "title": "Planeje os próximos passos",
+                "body": "Entenda os indicadores antes de agir. Guia completo no blog.",
+                "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Se houver sinais de falha",
+                "title": "Priorize seus arquivos",
+                "body": "Preserve cópias antes de procedimentos que possam agravar a perda.",
+                "image": "public/uploads/posts/como-verificar-saude-ssd-hd/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "steps"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "guideRevision": {
+        "reference": "207 v5",
+        "tool": "ImageGen",
+        "singleFixedImage": true,
+        "textsPreserved": true,
+        "audioSourcePreserved": true,
+        "queueChanged": false,
+        "prompts": "storage/correcao-instagram-20261010/guides-imagegen.json"
+      }
     },
     {
       "id": 214,

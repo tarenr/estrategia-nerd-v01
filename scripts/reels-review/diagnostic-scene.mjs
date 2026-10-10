@@ -8,13 +8,16 @@ import {manualState} from './scene.mjs';
 // Stable composition for the approved diagnostic design; photos remain inside it.
 export const DIAGNOSTIC_FRAME={x:46,y:758,width:994,height:680};
 export async function createDiagnosticScene(spec,root){
-  if(spec.reviewPostId!==207||spec.presentation!=='steps'||spec.duration!==20||spec.scenes.length!==5||spec.beatStarts.some((t,i)=>t!==i*4))throw new Error('Perfil de diagnóstico fora do escopo aprovado do 207.');
+  const approved207=spec.compositionProfile==='diagnostic-207-v1'&&spec.reviewPostId===207&&spec.scenes.length===5;
+  const approvedGuide=spec.compositionProfile==='diagnostic-guide-v1'&&[204,209,212,213].includes(spec.reviewPostId)&&[4,5].includes(spec.scenes.length)&&new Set(spec.scenes.map(s=>s.image)).size===1;
+  if((!approved207&&!approvedGuide)||spec.presentation!=='steps'||spec.duration!==20||spec.beatStarts.some((t,i)=>t!==i*20/spec.scenes.length))throw new Error('Perfil de diagnóstico fora do escopo aprovado.');
   const font=resolve(root,'resources/reels-konva/fonts/BebasNeue-Regular.ttf');
   if(!existsSync(font))throw new Error('Fonte de hardware indisponível; não substituir a tipografia silenciosamente.');
   FontLibrary.use('EN Diagnostic',font);
   FontLibrary.use('EN Text',resolve(root,'resources/reels-konva/fonts/Inter.ttf'));
   const background=await loadImage(resolve(root,spec.visualStyle.background));
-  const images=await Promise.all(spec.scenes.map(s=>loadImage(resolve(root,s.image))));
+  const imageCache=new Map();
+  const images=await Promise.all(spec.scenes.map(s=>{if(!imageCache.has(s.image))imageCache.set(s.image,loadImage(resolve(root,s.image)));return imageCache.get(s.image);}));
   const stage=new Konva.Stage({width:1080,height:1920,listening:false});
   const layer=new Konva.Layer({listening:false});stage.add(layer);
   layer.add(new Konva.Image({image:background,width:1080,height:1920,listening:false}));
