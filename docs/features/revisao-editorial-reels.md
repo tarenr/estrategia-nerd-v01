@@ -1,3 +1,15 @@
+## Diagnóstico 207 — versão 4, 20 segundos (10/10/2026)
+
+Primeiro Reel do grupo de orientação prática, produzido após aprovação da proposta visual. Preserva os cinco textos, a legenda e a origem/posição inicial da trilha; usa cinco cenas de quatro segundos. As artes ImageGen representam o problema, cabo do monitor, saída de vídeo, inspeção desligada e desconexão da energia. Grafite, ciano, pequenos detalhes em âmbar e marcações de bancada distinguem o diagnóstico da análise de produtos. Não houve revisão editorial nesta etapa.
+
+Perfil restrito a `reviewPostId=207`, `compositionProfile=diagnostic-207-v1`, em `scripts/reels-review/diagnostic-scene.mjs`. A imagem preenche a moldura fixa x=46, y=758, 994×680, sem zoom; título, apoio e chamadas têm posições fixas. O cabeçalho utiliza Inter em negrito e as marcações usam Bebas Neue, fontes já existentes. O primeiro render v3 ficou preservado; a v4 corrige a largura e quebra dos títulos para aproximá-los da proposta aprovada.
+
+Entrega: `public/uploads/reels/correcao-instagram-20261010/reel-207-v4.mp4`, capa `.jpg` e folha `-contact.jpg`. Galeria: `public/uploads/previews/leva02-bloco1-v3/index.html?id=207&v=4`. Fundo e cinco cenas estão em `images/reel-207-v3-background.png` e `images/reel-207-v3-scene-001.png` a `005.png`. Prompts: `storage/correcao-instagram-20261010/diagnostic-207-imagegen.json`; backup: `diagnostic-207-before/`. A v3 é um ensaio técnico, não a versão vigente.
+
+O comando `node scripts/reels-review/diagnostic-207.mjs` usa o renderizador existente, preserva versões anteriores e relê o catálogo depois da renderização para manter alterações concorrentes de outros IDs; recusa sobrescrever mudanças concorrentes no próprio 207. Se a v4 já estiver pronta, verifica duração/hash sem alterar arquivos. A galeria é regenerada pelo mecanismo existente. O perfil do 200 permanece intacto; os demais conteúdos não foram modificados por esta entrega. Banco, fila e publicação permanecem inalterados.
+
+Validação: cinco quadros e capa inspecionados; decodificação integral sem erros; H.264/AAC 1080×1920, 20 segundos; ordem dos átomos `ftyp`, `moov`, `free`, `mdat`, confirmando faststart; testes dos 37 roteiros aprovados e suíte oficial PHP com 17 OK, zero falhas. Player local reproduziu a versão correta com áudio presente e resolução/duração esperadas. A avaliação estética do vídeo completo e a interface nativa móvel do Instagram dependem da próxima validação. Não houve publicação.
+
 ## Hardware 200 — versão 3, 20 segundos (10/10/2026)
 
 Implementação restrita ao Reel 200, após aprovação da proposta visual 03 e do plano completo. Quatro cenas de cinco segundos usam imagens individuais geradas com ImageGen: placa completa, socket/memória, conexões/expansão e planejamento de upgrades. A composição mantém texto acima, foto preenchendo a moldura e chamada abaixo; grafite, ciano, detalhes de circuitos e tipografia Bahnschrift definem esta família de hardware. Não foi aplicada aos demais posts.

@@ -1751,24 +1751,24 @@
         "collection": "DENTRO DO SEU SETUP",
         "layout": "guide",
         "tone": "calm",
-        "duration": 35,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_9503.mp3",
         "audioStart": 25,
         "beatStarts": [
           0,
-          7,
-          14,
-          21,
-          28
+          4,
+          8,
+          12,
+          16
         ],
         "scenes": [
           {
             "eyebrow": "O PC liga, mas não dá vídeo",
             "title": "Comece pelo básico",
             "body": "Evite trocar peças antes de conferir o caminho do sinal.",
-            "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-001.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1776,9 +1776,9 @@
             "eyebrow": "Fora do gabinete",
             "title": "Entrada e cabo do monitor",
             "body": "Verifique a entrada selecionada e a conexão do cabo de vídeo.",
-            "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-002.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1786,9 +1786,9 @@
             "eyebrow": "O conector certo",
             "title": "Onde o cabo está ligado?",
             "body": "Confira a saída usada e se ela corresponde à configuração do PC.",
-            "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-003.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1796,9 +1796,9 @@
             "eyebrow": "Se o problema continuar",
             "title": "Siga um diagnóstico seguro",
             "body": "O guia organiza os próximos testes antes de substituir componentes. Leia no blog.",
-            "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-004.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1806,27 +1806,199 @@
             "eyebrow": "Se o problema continua",
             "title": "Desligue antes de mexer",
             "body": "Siga os próximos testes com segurança; não troque peças por tentativa.",
-            "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-005.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "steps"
+        "presentation": "steps",
+        "reviewPostId": 207,
+        "compositionProfile": "diagnostic-207-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-background.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-207-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-207-v2.jpg",
-      "sha256": "80a06a27cfd81c9d7f9ef8dc981ccbcdc68417aee11dd3a3a18deb2fbc3f6cb4",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-207-v4.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-207-v4.jpg",
+      "sha256": "2b293e0f3902603a049b74378889278fdf07747f24e949aed54d78c1f9f29717",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-207-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-207-v1.jpg",
           "sha256": "14b2acd5d167270b790648b8c90876f1217937212d24d5ecbfbf5de486ac189d"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-207-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-207-v2.jpg",
+          "sha256": "80a06a27cfd81c9d7f9ef8dc981ccbcdc68417aee11dd3a3a18deb2fbc3f6cb4",
+          "spec": {
+            "articleId": 28,
+            "articleTitle": "PC liga, mas não dá vídeo: como diagnosticar sem trocar peças à toa",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "guide",
+            "tone": "calm",
+            "duration": 35,
+            "audio": "public/uploads/audio/pixabay_9503.mp3",
+            "audioStart": 25,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21,
+              28
+            ],
+            "scenes": [
+              {
+                "eyebrow": "O PC liga, mas não dá vídeo",
+                "title": "Comece pelo básico",
+                "body": "Evite trocar peças antes de conferir o caminho do sinal.",
+                "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Fora do gabinete",
+                "title": "Entrada e cabo do monitor",
+                "body": "Verifique a entrada selecionada e a conexão do cabo de vídeo.",
+                "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O conector certo",
+                "title": "Onde o cabo está ligado?",
+                "body": "Confira a saída usada e se ela corresponde à configuração do PC.",
+                "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Se o problema continuar",
+                "title": "Siga um diagnóstico seguro",
+                "body": "O guia organiza os próximos testes antes de substituir componentes. Leia no blog.",
+                "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Se o problema continua",
+                "title": "Desligue antes de mexer",
+                "body": "Siga os próximos testes com segurança; não troque peças por tentativa.",
+                "image": "public/uploads/posts/pc-liga-mas-nao-da-video-checklist-diagnostico/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "steps"
+          }
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-207-v3.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-207-v3.jpg",
+          "sha256": "a185576b778983c61c266682b11fb6080f0548918f850c9c0ab6435e8bd70e99",
+          "spec": {
+            "articleId": 28,
+            "articleTitle": "PC liga, mas não dá vídeo: como diagnosticar sem trocar peças à toa",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "guide",
+            "tone": "calm",
+            "duration": 20,
+            "audio": "public/uploads/audio/pixabay_9503.mp3",
+            "audioStart": 25,
+            "beatStarts": [
+              0,
+              4,
+              8,
+              12,
+              16
+            ],
+            "scenes": [
+              {
+                "eyebrow": "O PC liga, mas não dá vídeo",
+                "title": "Comece pelo básico",
+                "body": "Evite trocar peças antes de conferir o caminho do sinal.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-001.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Fora do gabinete",
+                "title": "Entrada e cabo do monitor",
+                "body": "Verifique a entrada selecionada e a conexão do cabo de vídeo.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-002.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O conector certo",
+                "title": "Onde o cabo está ligado?",
+                "body": "Confira a saída usada e se ela corresponde à configuração do PC.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-003.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Se o problema continuar",
+                "title": "Siga um diagnóstico seguro",
+                "body": "O guia organiza os próximos testes antes de substituir componentes. Leia no blog.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-004.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Se o problema continua",
+                "title": "Desligue antes de mexer",
+                "body": "Siga os próximos testes com segurança; não troque peças por tentativa.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-scene-005.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "steps",
+            "reviewPostId": 207,
+            "compositionProfile": "diagnostic-207-v1",
+            "visualStyle": {
+              "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-207-v3-background.png"
+            }
+          }
         }
       ],
-      "revision": 2
+      "revision": 4,
+      "diagnosticRevision": {
+        "reference": "reel-207-proposta-01.png",
+        "tool": "ImageGen",
+        "prompts": "storage/correcao-instagram-20261010/diagnostic-207-imagegen.json",
+        "textsPreserved": true,
+        "queueChanged": false,
+        "publicationApproved": false
+      }
     },
     {
       "id": 208,
