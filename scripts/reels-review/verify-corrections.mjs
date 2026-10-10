@@ -10,11 +10,17 @@ assert.deepEqual(catalog.cancelled,[191,192,193,194]);assert.equal(catalog.items
 assert.equal(new Set(catalog.items.map(i=>i.id)).size,37);assert.equal(catalog.publicationApproval,false);
 const counts=new Set(catalog.items.map(i=>i.spec.scenes.length));assert.ok(counts.has(3)&&counts.has(4)&&counts.has(5));
 const results=[];
+if(catalog.items.some(i=>i.spec.compositionProfile==='hardware-product-v1')){
+ const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/hardware-200-before/catalog.json'),'utf8'));
+ for(const item of catalog.items){const original=before.items.find(i=>i.id===item.id);if(item.id!==200){assert.deepEqual(item,original,'Outro registro alterado #'+item.id);continue;}for(const key of ['caption','status','scheduled','trackId','articleId','originalSha256'])assert.deepEqual(item[key],original[key]);for(const key of ['audio','audioStart'])assert.deepEqual(item.spec[key],original.spec[key]);assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(new Set(item.spec.scenes.map(s=>s.image)).size,4);item.spec.scenes.forEach((s,n)=>{for(const key of ['title','body','eyebrow'])assert.equal(s[key],original.spec.scenes[n][key]);});assert.ok(item.previousVersions.some(v=>v.sha256===original.sha256&&v.video===original.video));}
+ console.log('PASS: 200 com quatro fotos e 20 s; textos, áudio, versão anterior e demais 36 preservados.');
+}
 if(catalog.avatarRevision){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/avatar-before/corrections-20261010.json'),'utf8'));
  const ids=[196,229,232,234];
  for(const item of catalog.items){
   const original=before.items.find(i=>i.id===item.id);
+  if(item.id===200&&item.spec.compositionProfile==='hardware-product-v1')continue;
   if(!ids.includes(item.id)){assert.deepEqual(item,original,'Registro fora do escopo alterado #'+item.id);continue;}
   const approved196=item.id===196&&item.spec.compositionProfile==='196-v5';assert.equal(item.revision,approved196?5:3);assert.equal(item.avatarReference,true);
   for(const key of ['caption','status','scheduled','articleId','articleSlug','original','originalSha256','trackId'])assert.deepEqual(item[key],original[key],'Campo preservado divergiu: '+key);
@@ -37,7 +43,7 @@ for(const item of catalog.items){
   assert.equal(stage.typography.length,spec.scenes.length);
   assert.ok(stage.typography.every(t=>t.bodySize>=31),'Texto pequeno #'+item.id);
   const images=stage.layer.find('Image');
-  assert.equal(images.length,spec.compositionProfile==='196-v5'?1:imageRuns(spec).length);
+  assert.equal(images.length,spec.compositionProfile==='hardware-product-v1'?2:spec.compositionProfile==='196-v5'?1:imageRuns(spec).length);
   if(imageRuns(spec).length===1){for(const time of spec.beatStarts.slice(1)){
    stage.render(time-.05);const before=images[0].width();stage.render(time+.05);
    assert.equal(images[0].width(),before,'Imagem reiniciou #'+item.id);assert.equal(images[0].getParent().opacity(),1);

@@ -1,3 +1,17 @@
+## Hardware 200 — versão 3, 20 segundos (10/10/2026)
+
+Implementação restrita ao Reel 200, após aprovação da proposta visual 03 e do plano completo. Quatro cenas de cinco segundos usam imagens individuais geradas com ImageGen: placa completa, socket/memória, conexões/expansão e planejamento de upgrades. A composição mantém texto acima, foto preenchendo a moldura e chamada abaixo; grafite, ciano, detalhes de circuitos e tipografia Bahnschrift definem esta família de hardware. Não foi aplicada aos demais posts.
+
+O compositor está em `scripts/reels-review/hardware-scene.mjs`, perfil `hardware-product-v1`. A moldura ocupa x=82, y=764, 916×618, sem faixas internas ou zoom. A fonte utiliza a instalação existente `C:/Windows/Fonts/bahnschrift.ttf`; ausência da fonte interrompe a renderização. O manifesto registra hashes do compositor, fundo e fonte. Os prompts estão em `storage/correcao-instagram-20261010/hardware-200-imagegen.json`.
+
+Vídeo e capa: `public/uploads/reels/correcao-instagram-20261010/reel-200-v3.mp4` e `reel-200-v3.jpg`. Galeria vigente: `public/uploads/previews/leva02-bloco1-v3/index.html?id=200&v=3`. As quatro imagens ficam na subpasta `images`, de `reel-200-v3-scene-001.png` a `004.png`; o fundo é `hardware-product-background-v1.png`. A versão 2 permanece preservada, com referência e hash no catálogo. Backup do catálogo e galeria: `storage/correcao-instagram-20261010/hardware-200-before/`.
+
+Textos, legenda e origem da trilha foram preservados; a duração foi reduzida para 20 segundos conforme o plano. Os outros 36 registros foram comparados integralmente e preservados, incluindo o 196 v5 aprovado pelo usuário e os conteúdos de Diablo. Banco, fila, agendamentos e cancelamentos não receberam alterações.
+
+Validação executada: quatro quadros inspecionados; decodificação integral sem erros; MP4 H.264 1080×1920 com áudio AAC e 20 segundos; testes dos 37 roteiros aprovados; suíte oficial PHP com 17 OK e zero falhas. A página local carregou a nova capa e o player reproduziu o vídeo de 20 segundos. A avaliação do vídeo completo pelo usuário e a validação na interface nativa móvel do Instagram permanecem pendentes. Não houve publicação.
+
+Esta fonte também alimenta a documentação interna em `/local/mudancas/documento?grupo=features&arquivo=revisao-editorial-reels.md`.
+
 ## 196 — versão 5 com composição anterior (10/10/2026)
 
 A primeira cena foi apresentada e recebeu o retorno “Ficou bom”. As quatro cenas usam agora a composição do vídeo anterior: título e apoio acima, moldura central com linhas e detalhes, chamada abaixo. As quatro artes foram adaptadas com ImageGen e salvas em `public/uploads/reels/correcao-instagram-20261010/images/reel-196-v5-scene-001.png` a `004.png`. O cenário ocupa toda a moldura de 840×600, sem faixas laterais; não há zoom da imagem. O perfil `196-v5` reutiliza o compositor existente exclusivamente neste item, mantendo textos, legenda, áudio, 32 segundos e quatro cenas de oito segundos. Os outros 36 itens foram comparados ao catálogo anterior e preservados.

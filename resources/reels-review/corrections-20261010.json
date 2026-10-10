@@ -1003,23 +1003,23 @@
         "collection": "DENTRO DO SEU SETUP",
         "layout": "showcase",
         "tone": "tech",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_259777.mp3",
         "audioStart": 36,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
             "eyebrow": "MSI B650 TOMAHAWK WIFI",
             "title": "A base do conjunto",
             "body": "Uma placa-mãe para conectar as peças da plataforma AM5.",
-            "image": "resources/reels-review/assets/msi-b650.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-200-v3-scene-001.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1027,9 +1027,9 @@
             "eyebrow": "Antes da compra",
             "title": "Confira a compatibilidade",
             "body": "CPU, memória DDR5 e BIOS precisam funcionar juntos.",
-            "image": "resources/reels-review/assets/msi-b650.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-200-v3-scene-002.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1037,9 +1037,9 @@
             "eyebrow": "O que você conecta",
             "title": "Armazenamento e expansão",
             "body": "Avalie as conexões que sua rotina exige, além do nome do chipset.",
-            "image": "resources/reels-review/assets/msi-b650.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-200-v3-scene-003.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           },
@@ -1047,27 +1047,113 @@
             "eyebrow": "Um setup com planejamento",
             "title": "Pense nos próximos upgrades",
             "body": "Conheça os recursos e limites desta placa-mãe no artigo completo.",
-            "image": "resources/reels-review/assets/msi-b650.png",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-200-v3-scene-004.png",
             "framing": {
-              "mode": "contain",
+              "mode": "cover",
               "motion": "still"
             }
           }
         ],
-        "presentation": "product"
+        "presentation": "product",
+        "compositionProfile": "hardware-product-v1",
+        "reviewPostId": 200,
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/hardware-product-background-v1.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-200-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-200-v2.jpg",
-      "sha256": "e76c8b076ba04f9e23d2151c5994c3f3b58356fe17aa2f7486a2716d1562456d",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-200-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-200-v3.jpg",
+      "sha256": "d48db7c96cec9501c9e10ad09734f0bdd03af2e24dfccb344af74e6cadd3c36c",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-200-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-200-v1.jpg",
           "sha256": "e76c8b076ba04f9e23d2151c5994c3f3b58356fe17aa2f7486a2716d1562456d"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-200-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-200-v2.jpg",
+          "sha256": "e76c8b076ba04f9e23d2151c5994c3f3b58356fe17aa2f7486a2716d1562456d",
+          "spec": {
+            "articleId": 20,
+            "articleTitle": "MSI MAG B650 TOMAHAWK WIFI: a base que sustenta um setup de verdade",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "showcase",
+            "tone": "tech",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_259777.mp3",
+            "audioStart": 36,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "MSI B650 TOMAHAWK WIFI",
+                "title": "A base do conjunto",
+                "body": "Uma placa-mãe para conectar as peças da plataforma AM5.",
+                "image": "resources/reels-review/assets/msi-b650.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antes da compra",
+                "title": "Confira a compatibilidade",
+                "body": "CPU, memória DDR5 e BIOS precisam funcionar juntos.",
+                "image": "resources/reels-review/assets/msi-b650.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O que você conecta",
+                "title": "Armazenamento e expansão",
+                "body": "Avalie as conexões que sua rotina exige, além do nome do chipset.",
+                "image": "resources/reels-review/assets/msi-b650.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Um setup com planejamento",
+                "title": "Pense nos próximos upgrades",
+                "body": "Conheça os recursos e limites desta placa-mãe no artigo completo.",
+                "image": "resources/reels-review/assets/msi-b650.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "product"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "hardwareRevision": {
+        "reference": "reel-200-proposta-03.png",
+        "tool": "ImageGen built-in",
+        "prompts": "storage/correcao-instagram-20261010/hardware-200-imagegen.json",
+        "duration": 20,
+        "photoScenes": [
+          "placa completa",
+          "socket AM5 e slots DDR5",
+          "expansão e armazenamento",
+          "planejamento de upgrades"
+        ],
+        "textsPreserved": true,
+        "queueChanged": false,
+        "publicationApproved": false
+      }
     },
     {
       "id": 201,

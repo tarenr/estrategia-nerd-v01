@@ -4,6 +4,7 @@ import { FontLibrary, loadImage } from 'skia-canvas';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createManualScene, validateManualSpec } from '../reels-review/scene.mjs';
+import { createHardwareScene } from '../reels-review/hardware-scene.mjs';
 
 export const WIDTH = 1080;
 export const HEIGHT = 1920;
@@ -98,6 +99,7 @@ export function fitText(node, maxHeight, maxSize, minSize) {
 /** A reusable scene graph; rendering uses explicit frame time, never wall-clock animation. */
 export async function createScene(spec, root) {
   validateSpec(spec);
+  if(spec.compositionProfile==='hardware-product-v1')return createHardwareScene(spec,root);
   if (spec.editorial === 'manual' && spec.compositionProfile !== '196-v5') return createManualScene(spec, root);
   registerFonts(root);
   const theme=THEMES[spec.category] || THEMES.games;
