@@ -1479,7 +1479,7 @@
       "musicSourceId": "12278",
       "audioStart": 33,
       "duration": 28,
-      "note": "Exemplos identificados; nenhuma promessa de que qualquer PC roda os 12 jogos.",
+      "note": "Exemplos identificados com imagens dedicadas de Stardew Valley e Vampire Survivors.",
       "scenes": [
         {
           "eyebrow": "Seu PC é modesto?",
@@ -1498,7 +1498,7 @@
           "eyebrow": "Para uma rotina tranquila",
           "title": "Stardew Valley",
           "body": "Uma das opções de simulação de fazenda da lista.",
-          "image": "cover",
+          "image": "stardew-valley.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
@@ -1511,7 +1511,7 @@
           "eyebrow": "Sessões de ação",
           "title": "Vampire Survivors",
           "body": "Uma opção para partidas de ação com visual simples.",
-          "image": "cover",
+          "image": "vampire-survivors.jpg",
           "framing": {
             "mode": "cover",
             "focus": [
