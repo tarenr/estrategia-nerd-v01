@@ -7,11 +7,16 @@ require __DIR__ . '/backup/EnvLoader.php';
 $root = dirname(__DIR__);
 Scripts\Backup\EnvLoader::load($root . '/.env');
 $config = require $root . '/config/content-sync.php';
-$profile = $config['profiles']['production']['code_deploy'];
 $action = $argv[1] ?? '';
 if (!in_array($action, ['--backup', '--deploy', '--verify'], true)) { throw new RuntimeException('Use --backup, --deploy ou --verify.'); }
+$target = 'production';
+foreach (array_slice($argv, 2) as $argument) {
+    if (!preg_match('/^--target=(stage|production)$/', $argument, $matches)) { throw new RuntimeException('Use --target=stage ou --target=production.'); }
+    $target = $matches[1];
+}
+$profile = $config['profiles'][$target]['code_deploy'];
 $files = ['app/Repositories/PostRepository.php', 'app/Services/Site/PostService.php'];
-$dir = $root . '/storage/review-navigation-20261011';
+$dir = $root . '/storage/review-navigation-20261011' . ($target === 'stage' ? '-stage' : '');
 if (!is_dir($dir)) { mkdir($dir, 0700, true); }
 $ftp = ftp_connect($profile['host'], (int) $profile['port'], 30);
 if ($ftp === false || !ftp_login($ftp, $profile['username'], $profile['password'])) { throw new RuntimeException('FTP indisponível.'); }
@@ -30,6 +35,7 @@ try {
     $remoteRoot = '/' . trim((string) $profile['root'], '/');
     if ($remoteRoot === '/' || str_contains($remoteRoot, '..')) { throw new RuntimeException('Raiz de deploy inválida.'); }
     if (!str_ends_with($remoteRoot, '/_app_core') && ftp_size($ftp, $remoteRoot . '/_app_core/bootstrap.php') >= 0) { $remoteRoot .= '/_app_core'; }
+    if ($target === 'stage' && !preg_match('~/stage(?:/_app_core)?$~', $remoteRoot)) { throw new RuntimeException('Raiz de stage inválida.'); }
     $manifestPath = $dir . '/before.json';
     $manifest = is_file($manifestPath) ? json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR) : ['remoteRoot'=>$remoteRoot,'files'=>[]];
     if ($manifest['remoteRoot'] !== $remoteRoot) { throw new RuntimeException('Raiz mudou desde o backup.'); }

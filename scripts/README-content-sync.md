@@ -102,6 +102,60 @@ Dentro dela:
 
 ## Regras importantes
 
+### Alinhamento de stage em 11/10/2026
+
+`scripts/reels-review/align-stage-20261011.php` usa produção como referência
+para os 33 artigos existentes e acrescenta quatro artigos presentes somente
+no banco local. O destino de escrita é exclusivamente stage. Categorias,
+autores e próximos artigos são remapeados por slug/nome, sem reutilizar IDs
+de outro ambiente. Métricas dos artigos existentes e categorias são preservadas.
+
+```powershell
+C:/xampp/php/php.exe scripts/reels-review/align-stage-20261011.php --inspect
+C:/xampp/php/php.exe scripts/reels-review/align-stage-20261011.php --prepare
+C:/xampp/php/php.exe scripts/migrate.php --target=stage --only=0006_add_post_type.sql
+C:/xampp/php/php.exe scripts/reels-review/align-stage-20261011.php --apply
+C:/xampp/php/php.exe scripts/reels-review/align-stage-20261011.php --verify
+```
+
+O runner aceita `--only=<arquivo.sql>` para selecionar uma única migration;
+sem essa opção, mantém a execução sequencial habitual. Neste alinhamento,
+não executar migrations pendentes de outros módulos. A migration 0006 adiciona
+`posts.tipo_post` de forma idempotente e registra sua aplicação no mecanismo
+oficial de migrations.
+
+O pacote e os backups ficam em `storage/stage-content/alignment-20261011/`:
+`package.json` contém os registros anteriores, schema, referências e hashes;
+os arquivos `original-*.bin` preservam imagens divergentes e `asset-*.bin`
+guardam a mídia de origem. `applied.json` e `verified.json` só são produzidos
+após as respectivas operações. O pacote existente nunca é sobrescrito.
+Mudanças na origem ou edição concorrente no destino interrompem a operação.
+
+Imagens diferentes recebem nomes versionados, sem substituir as antigas.
+As atualizações editoriais ocorrem em transação; uma falha antes do commit
+restaura os dados automaticamente. Após o commit, recuperação exige um plano
+próprio baseado nos registros anteriores do pacote, preservando alterações
+posteriores e métricas. A coluna aditiva e as imagens antigas podem permanecer;
+o script não oferece exclusão automática. Produção, Instagram e agendamentos
+não são alterados.
+
+O complemento de navegação aprovado para stage usa o deploy já existente:
+
+```powershell
+C:/xampp/php/php.exe scripts/review-navigation-deploy.php --backup --target=stage
+C:/xampp/php/php.exe scripts/review-navigation-deploy.php --deploy --target=stage
+C:/xampp/php/php.exe scripts/review-navigation-deploy.php --verify --target=stage
+```
+
+Backup e payload separados em `storage/review-navigation-20261011-stage/`.
+O patch é preparado sobre os dois arquivos remotos, alterando apenas o
+carregamento de tipo de post e a escolha do próximo artigo dos reviews.
+Destinos inválidos e outros tipos mantêm a navegação cronológica. Não repetir
+`--backup` depois do deploy: o estado anterior é imutável. Recuperação, mediante
+autorização própria, restaura apenas esses dois arquivos do backup após conferir
+edições concorrentes. Sem `--target`, o script mantém o comportamento anterior
+de produção; sempre passar `--target=stage` nesta operação.
+
 - a rotina faz `upsert` por slug e historico de slug
 - ela preserva metricas reais da producao, como views, curtidas e comentarios dos posts
 - links sao atualizados pelos campos editoriais, sem sobrescrever dados de monitoramento

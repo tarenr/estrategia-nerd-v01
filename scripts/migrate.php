@@ -22,7 +22,7 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 use App\Support\TargetEnvironmentDatabase;
 
 // 1. Processar argumentos CLI
-$options = getopt('', ['status', 'target::', 'help']);
+$options = getopt('', ['status', 'target::', 'only:', 'help']);
 if (isset($options['help'])) {
     echo <<<HELP
 Uso: php scripts/migrate.php [opcoes]
@@ -30,6 +30,7 @@ Uso: php scripts/migrate.php [opcoes]
 Opcoes:
   --status              Exibe o status de cada migration sem aplicar pendentes.
   --target=<ambiente>   Ambiente alvo: local (padrao), stage ou production.
+  --only=<arquivo.sql> Aplica/consulta somente a migration indicada.
   --help                Exibe esta ajuda.
 
 HELP;
@@ -37,6 +38,12 @@ HELP;
 }
 
 $isStatusOnly = isset($options['status']);
+$only = $options['only'] ?? null;
+if ($only !== null && (!is_string($only) || !preg_match('/^[0-9]{4}_[a-z0-9_]+\.sql$/', $only)
+    || !is_file(dirname(__DIR__) . '/database/migrations/' . $only))) {
+    echo "[ERRO] Migration indicada invalida ou inexistente.\n";
+    exit(1);
+}
 $targetEnv = is_string($options['target'] ?? null) ? trim((string) $options['target']) : 'local';
 if (!in_array($targetEnv, ['local', 'stage', 'production'], true)) {
     echo "[ERRO] Ambiente alvo invalido: '{$targetEnv}'. Use local, stage ou production.\n";
@@ -105,6 +112,9 @@ if (!is_dir($migrationsDir)) {
 $files = glob($migrationsDir . '/*.sql');
 $files = is_array($files) ? $files : [];
 sort($files, SORT_STRING);
+if (is_string($only)) {
+    $files = array_values(array_filter($files, static fn (string $path): bool => basename($path) === $only));
+}
 
 if ($files === []) {
     echo "Nenhuma migration encontrada em database/migrations/.\n";
