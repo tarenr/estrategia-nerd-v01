@@ -6,12 +6,15 @@ import {manualState} from './scene.mjs';
 
 export const COMPARISON_FRAME={x:60,y:880,width:960,height:540};
 export async function createComparisonScene(spec,root){
-  if(spec.reviewPostId!==206||spec.compositionProfile!=='comparison-206-v1'||spec.presentation!=='comparison'||spec.duration!==20||spec.scenes.length!==4||spec.beatStarts.length!==4||spec.beatStarts.some((t,i)=>t!==i*5)||new Set(spec.scenes.map(s=>s.image)).size!==1)throw new Error('Comparativo fora do escopo aprovado do 206.');
+  const groupRevision=[190,210,211].includes(spec.reviewPostId)&&spec.compositionProfile==='comparison-versus-v1';
+  const approved206=spec.reviewPostId===206&&spec.compositionProfile==='comparison-206-v1';
+  if((!groupRevision&&!approved206)||spec.presentation!=='comparison'||spec.duration!==20||spec.scenes.length!==4||spec.beatStarts.length!==4||spec.beatStarts.some((t,i)=>t!==i*5)||new Set(spec.scenes.map(s=>s.image)).size!==1)throw new Error('Comparativo fora do escopo aprovado.');
+  if(groupRevision&&(spec.typographyRevision!=='versus-heavy-v1'||spec.comparison?.length!==2||spec.visualStyle.titleLines?.length!==4))throw new Error('Identidade comparativa incompleta.');
   FontLibrary.use('EN Comparison',resolve(root,'resources/reels-konva/fonts/Inter.ttf'));
-  const strongType=spec.typographyRevision==='206-v4';
+  const strongType=spec.typographyRevision==='206-v4'||groupRevision;
   if(strongType)FontLibrary.use('EN Comparison Heavy','C:/Windows/Fonts/ariblk.ttf');
   const [background,cover]=await Promise.all([loadImage(resolve(root,spec.visualStyle.background)),loadImage(resolve(root,spec.scenes[0].image))]);
-  if(Math.abs(cover.width/cover.height-16/9)>.01)throw new Error('Capa deve preservar a proporção 16:9.');
+  if(approved206&&Math.abs(cover.width/cover.height-16/9)>.01)throw new Error('Capa deve preservar a proporção 16:9.');
   const stage=new Konva.Stage({width:1080,height:1920,listening:false});
   const layer=new Konva.Layer({listening:false});stage.add(layer);
   layer.add(new Konva.Image({image:background,width:1080,height:1920,listening:false}));
@@ -30,15 +33,17 @@ export async function createComparisonScene(spec,root){
     }
     eyebrow.setAttrs({fontStyle:'bold',fill:'#8cecf3',letterSpacing:1,shadowColor:'#000000',shadowBlur:6,shadowOpacity:.8});
   }
-  const titleLines=[['RTX 3050','ou RX 6600?'],['Qual RTX','3050?'],['Jogos e','recursos'],['Compare preços','e modelos']];
+  const titleLines=groupRevision?spec.visualStyle.titleLines:[['RTX 3050','ou RX 6600?'],['Qual RTX','3050?'],['Jogos e','recursos'],['Compare preços','e modelos']];
   const fitLine=(node,max)=>{for(let size=max;size>=76;size-=2){node.fontSize(size);if(node.getTextWidth()<=900&&node.height()<=145)return size;}throw new Error('Título pesado não cabe sem corte.');};
   const body=text('',{x:103,y:655,width:880,fontSize:43,lineHeight:1.2});
-  text('RTX 3050',{x:87,y:826,width:380,fontSize:35,fontStyle:'bold',fill:'#35e2ef',align:'center'});
+  text(groupRevision?spec.comparison[0]:'RTX 3050',{x:87,y:826,width:380,fontSize:35,fontStyle:'bold',fill:'#35e2ef',align:'center'});
   text('VS',{x:490,y:820,width:100,fontSize:44,fontStyle:'bold',align:'center'});
-  text('RX 6600',{x:613,y:826,width:380,fontSize:35,fontStyle:'bold',fill:'#ffc044',align:'center'});
+  text(groupRevision?spec.comparison[1]:'RX 6600',{x:613,y:826,width:380,fontSize:35,fontStyle:'bold',fill:'#ffc044',align:'center'});
   const frame=COMPARISON_FRAME;
-  const photo=new Konva.Image({image:cover,...frame,crop:{x:0,y:0,width:cover.width,height:cover.height},listening:false});layer.add(photo);
-  text('MODELO   ·   PREÇO   ·   SEUS JOGOS',{x:90,y:1513,width:900,fontSize:28,letterSpacing:3,align:'center'});
+  const scale=Math.min(frame.width/cover.width,frame.height/cover.height);
+  const fitted=groupRevision?{x:frame.x+(frame.width-cover.width*scale)/2,y:frame.y+(frame.height-cover.height*scale)/2,width:cover.width*scale,height:cover.height*scale}:frame;
+  const photo=new Konva.Image({image:cover,...fitted,crop:{x:0,y:0,width:cover.width,height:cover.height},listening:false});layer.add(photo);
+  text(groupRevision?spec.visualStyle.criteria:'MODELO   ·   PREÇO   ·   SEUS JOGOS',{x:90,y:1513,width:900,fontSize:28,letterSpacing:3,align:'center'});
   layer.add(new Konva.Rect({x:168,y:1692,width:744,height:112,fill:'#071116',opacity:.94,stroke:'#35e2ef',strokeWidth:2,cornerRadius:12,listening:false}));
   text('Leia o artigo → Link na bio',{x:186,y:1728,width:708,fontSize:38,fontStyle:'bold',align:'center'});
   const progress=new Konva.Line({points:[90,1580,90,1580],stroke:'#35e2ef',strokeWidth:3,listening:false});layer.add(progress);

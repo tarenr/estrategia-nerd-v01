@@ -163,14 +163,14 @@
         "collection": "ESCOLHAS PARA SEU PC",
         "layout": "versus",
         "tone": "tech",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_95436.mp3",
         "audioStart": 31,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -218,20 +218,122 @@
           "16 GB",
           "32 GB"
         ],
-        "presentation": "comparison"
+        "presentation": "comparison",
+        "reviewPostId": 190,
+        "compositionProfile": "comparison-versus-v1",
+        "typographyRevision": "versus-heavy-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-206-v3-background.png",
+          "titleLines": [
+            [
+              "16 GB",
+              "ou 32 GB?"
+            ],
+            [
+              "16 GB: avalie",
+              "seu cenário"
+            ],
+            [
+              "32 GB:",
+              "mais margem"
+            ],
+            [
+              "Capacidade",
+              "não é tudo"
+            ]
+          ],
+          "criteria": "USO · CAPACIDADE · COMPATIBILIDADE"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-190-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-190-v2.jpg",
-      "sha256": "85ac009e27517aad05fdfc76f1e22cc2de517551e1065785e7063032f06bf290",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-190-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-190-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-190-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-190-v1.jpg",
           "sha256": "59d1c132f171fdd9fc48d25d7e3b82cbf81d5462e5d1c1309d36b021cf45e302"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-190-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-190-v2.jpg",
+          "sha256": "85ac009e27517aad05fdfc76f1e22cc2de517551e1065785e7063032f06bf290",
+          "spec": {
+            "articleId": 27,
+            "articleTitle": "16 GB ou 32 GB de RAM em 2026: quanto um PC gamer realmente precisa?",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "ESCOLHAS PARA SEU PC",
+            "layout": "versus",
+            "tone": "tech",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_95436.mp3",
+            "audioStart": 31,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "A dúvida do upgrade",
+                "title": "16 GB ou 32 GB?",
+                "body": "A resposta depende do jogo e do que você mantém aberto.",
+                "image": "public/uploads/posts/16gb-ou-32gb-ram-pc-gamer-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Seu uso decide",
+                "title": "16 GB: avalie seu cenário",
+                "body": "Pode atender jogos e uso mais enxuto. Observe o consumo de memória.",
+                "image": "public/uploads/posts/16gb-ou-32gb-ram-pc-gamer-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Mais espaço para trabalhar",
+                "title": "32 GB: mais margem",
+                "body": "Jogos, navegador e outros programas disputam a mesma RAM.",
+                "image": "public/uploads/posts/16gb-ou-32gb-ram-pc-gamer-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antes de comprar",
+                "title": "Capacidade não é tudo",
+                "body": "Confira compatibilidade, módulos e orçamento. Comparação completa no blog.",
+                "image": "public/uploads/posts/16gb-ou-32gb-ram-pc-gamer-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "comparison": [
+              "16 GB",
+              "32 GB"
+            ],
+            "presentation": "comparison"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "comparisonRevision": {
+        "reference": "206 v4",
+        "singleOriginalCover": true,
+        "textsPreserved": true,
+        "audioSourcePreserved": true,
+        "queueChanged": false
+      },
+      "sha256": "cb3595806e2b95ff5df1c32e9d3bc2d8cedea8051b3b2e28085877a209cbc76f"
     },
     {
       "id": 195,
@@ -3206,14 +3308,14 @@
         "collection": "ESCOLHAS PARA SEU PC",
         "layout": "versus",
         "tone": "tech",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_519731.mp3",
         "audioStart": 30,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -3261,20 +3363,122 @@
           "RTX 5060",
           "RX 9060 XT"
         ],
-        "presentation": "comparison"
+        "presentation": "comparison",
+        "reviewPostId": 210,
+        "compositionProfile": "comparison-versus-v1",
+        "typographyRevision": "versus-heavy-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-206-v3-background.png",
+          "titleLines": [
+            [
+              "RTX 5060",
+              "ou RX 9060 XT?"
+            ],
+            [
+              "Olhe além",
+              "do nome"
+            ],
+            [
+              "Recursos e",
+              "desempenho"
+            ],
+            [
+              "Decida pelo",
+              "conjunto"
+            ]
+          ],
+          "criteria": "MODELO · PREÇO · SEUS JOGOS"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-210-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-210-v2.jpg",
-      "sha256": "ba034a86f3c055d5ae01879562d82e05078bbd6fdafceca5c37315ffd201b915",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-210-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-210-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-210-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-210-v1.jpg",
           "sha256": "ff4770e353a7811546da49da5904d89adc0a32a643690df6ad1fad4487f7ee95"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-210-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-210-v2.jpg",
+          "sha256": "ba034a86f3c055d5ae01879562d82e05078bbd6fdafceca5c37315ffd201b915",
+          "spec": {
+            "articleId": 31,
+            "articleTitle": "RTX 5060 vs RX 9060 XT: qual placa compensa em 1080p",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "ESCOLHAS PARA SEU PC",
+            "layout": "versus",
+            "tone": "tech",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_519731.mp3",
+            "audioStart": 30,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "A disputa em 1080p",
+                "title": "RTX 5060 ou RX 9060 XT?",
+                "body": "A melhor escolha depende de preço, versão e jogos.",
+                "image": "public/uploads/posts/rtx-5060-vs-rx-9060-xt-1080p/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Compare o modelo exato",
+                "title": "Olhe além do nome",
+                "body": "Quantidade de memória e implementação variam entre as placas.",
+                "image": "public/uploads/posts/rtx-5060-vs-rx-9060-xt-1080p/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Na sua biblioteca",
+                "title": "Recursos e desempenho",
+                "body": "Compare testes dos jogos que você usa, com as mesmas configurações.",
+                "image": "public/uploads/posts/rtx-5060-vs-rx-9060-xt-1080p/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Uma compra com contexto",
+                "title": "Decida pelo conjunto",
+                "body": "Considere fonte, monitor e orçamento. Comparação completa no blog.",
+                "image": "public/uploads/posts/rtx-5060-vs-rx-9060-xt-1080p/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "comparison": [
+              "RTX 5060",
+              "RX 9060 XT"
+            ],
+            "presentation": "comparison"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "comparisonRevision": {
+        "reference": "206 v4",
+        "singleOriginalCover": true,
+        "textsPreserved": true,
+        "audioSourcePreserved": true,
+        "queueChanged": false
+      },
+      "sha256": "cd560be5696e26270a78eaf190b9cc1ba41e9ec3c85d2f052851032f76a1d1fb"
     },
     {
       "id": 211,
@@ -3301,14 +3505,14 @@
         "collection": "ESCOLHAS PARA SEU PC",
         "layout": "versus",
         "tone": "tech",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_526520.mp3",
         "audioStart": 44,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -3356,20 +3560,122 @@
           "AM4",
           "AM5"
         ],
-        "presentation": "comparison"
+        "presentation": "comparison",
+        "reviewPostId": 211,
+        "compositionProfile": "comparison-versus-v1",
+        "typographyRevision": "versus-heavy-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-206-v3-background.png",
+          "titleLines": [
+            [
+              "AM4",
+              "ou AM5?"
+            ],
+            [
+              "Reaproveitar",
+              "pode fazer sentido"
+            ],
+            [
+              "AM5 e",
+              "memória DDR5"
+            ],
+            [
+              "Escolha pelo",
+              "orçamento"
+            ]
+          ],
+          "criteria": "CUSTO · COMPATIBILIDADE · UPGRADES"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-211-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-211-v2.jpg",
-      "sha256": "1ac5fd5375a09e0c62b0e8b21ef64510840151c32deee73cac218041d883b8e5",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-211-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-211-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-211-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-211-v1.jpg",
           "sha256": "c9f31b55f94a41a622a757d8c61b9539205b6078dc59d80c598543f7c567ae9d"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-211-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-211-v2.jpg",
+          "sha256": "1ac5fd5375a09e0c62b0e8b21ef64510840151c32deee73cac218041d883b8e5",
+          "spec": {
+            "articleId": 32,
+            "articleTitle": "AM4 ou AM5 em 2026: qual plataforma escolher",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "ESCOLHAS PARA SEU PC",
+            "layout": "versus",
+            "tone": "tech",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_526520.mp3",
+            "audioStart": 44,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Montando ou atualizando?",
+                "title": "AM4 ou AM5?",
+                "body": "A plataforma certa começa no que você já tem.",
+                "image": "public/uploads/posts/am4-ou-am5-em-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Se você já usa AM4",
+                "title": "Reaproveitar pode fazer sentido",
+                "body": "Avalie CPU compatível, BIOS e memória DDR4 existentes.",
+                "image": "public/uploads/posts/am4-ou-am5-em-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Para começar um conjunto novo",
+                "title": "AM5 e memória DDR5",
+                "body": "Compare o custo total e o caminho de upgrades.",
+                "image": "public/uploads/posts/am4-ou-am5-em-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Some todas as peças",
+                "title": "Escolha pelo orçamento",
+                "body": "Não compare só o processador. Veja os cenários completos no blog.",
+                "image": "public/uploads/posts/am4-ou-am5-em-2026/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "comparison": [
+              "AM4",
+              "AM5"
+            ],
+            "presentation": "comparison"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "comparisonRevision": {
+        "reference": "206 v4",
+        "singleOriginalCover": true,
+        "textsPreserved": true,
+        "audioSourcePreserved": true,
+        "queueChanged": false
+      },
+      "sha256": "ee6bf9ac5f0761565533756889e96127188bd86feaad5e72501003c28d4944f0"
     },
     {
       "id": 212,

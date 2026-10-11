@@ -1,3 +1,11 @@
+## Comparativos 190, 210 e 211 — versão 3 seguindo o 206 v4 (11/10/2026)
+
+Aplicação restrita aos três IDs: 190 (16 GB versus 32 GB), 210 (RTX 5060 versus RX 9060 XT) e 211 (AM4 versus AM5). Reutiliza o fundo versus aprovado e a tipografia pesada do 206 v4, com contorno, sombra, gradiente ciano/âmbar e entrada lateral curta. Nomes dos lados, critérios e quebras dos títulos são específicos de cada pauta; as palavras, corpos, legendas, imagens dos artigos e origens/pontos iniciais das trilhas permanecem preservados. Quatro cenas de cinco segundos, 20 segundos totais, 1080×1920 a 30 fps.
+
+Perfil `comparison-versus-v1`, selecionado somente para os IDs [190,210,211], com tipografia `versus-heavy-v1`. A capa permanece inteira e proporcional, sem zoom ou reinício. A imagem 3:2 do 190 é centralizada dentro da moldura 16:9 para preservar seu conteúdo; as capas 210/211 preenchem praticamente toda a área. Não foram gerados produtos nem alterados os artigos. O 206 mantém o perfil anterior; seu catálogo e um quadro renderizado foram comparados com o estado aprovado.
+
+Entregas: `public/uploads/reels/correcao-instagram-20261010/reel-{190,210,211}-v3.mp4`, capas `.jpg`, folhas `-contact.jpg` e manifestos. As duas galerias existentes apontam para os novos endereços; anteriores preservados em disco e `previousVersions`. Backup: `storage/correcao-instagram-20261010/comparison-group-before/`. Banco, fila e demais 34 registros permanecem preservados. Entrega para avaliação visual, sem publicação.
+
 ## Tipografia do comparativo 206 — versão 4 (10/10/2026)
 
 Revisão exclusivamente visual dos títulos: Arial Black do Windows, tamanho ajustado sem cortes, duas linhas com destaques ciano/âmbar, gradiente discreto, contorno escuro e sombra. Cada linha faz uma entrada lateral de 22 pixels durante 0,38 segundo e permanece estável para leitura. A versão é selecionada por `typographyRevision: 206-v4`, exclusivamente no compositor do 206; o desenho da versão 3 permanece disponível.
