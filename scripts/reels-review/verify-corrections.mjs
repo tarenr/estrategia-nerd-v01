@@ -19,9 +19,20 @@ if(catalog.items.some(isTerrorGroup)){
   const old=before.items.find(i=>i.id===item.id);
   if(!isTerrorGroup(item)){assert.deepEqual(item,old,'Registro fora do grupo de terror alterado');continue;}
   for(const key of ['status','scheduled','articleId','articleSlug','articleSha256','original','originalSha256','avatarReference'])assert.deepEqual(item[key],old[key]);
-  assert.deepEqual(item.spec.scenes,old.spec.scenes,'Roteiro/artes alterados');
+  const impact=item.id===231&&item.spec.musicRevision==='terror-impact-v1';
+  if(!impact)assert.deepEqual(item.spec.scenes,old.spec.scenes,'Roteiro/artes alterados');
   const license=JSON.parse(readFileSync(resolve(root,item.musicLicense),'utf8'));
-  assert.equal(item.caption,old.caption+'\n\nMúsica: '+license.credit);assert.equal(item.trackId,null);
+  if(!impact)assert.equal(item.caption,old.caption+'\n\nMúsica: '+license.credit);
+  else{
+   const prior=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-impact-before/catalog.json'),'utf8')),previous=prior.items.find(i=>i.id===231);
+   for(const other of catalog.items.filter(i=>i.id!==231))assert.deepEqual(other,prior.items.find(i=>i.id===other.id),'Registro fora da montagem 231 alterado');
+   assert.deepEqual(item.spec.scenes.map(s=>[s.image,s.framing]),previous.spec.scenes.map(s=>[s.image,s.framing]));
+   const preserved=structuredClone(item.spec);for(const key of ['audio','musicRevision','scenes'])preserved[key]=previous.spec[key];
+   for(const key of ['headlines','subtitles'])preserved.visualStyle[key]=previous.spec.visualStyle[key];assert.deepEqual(preserved,previous.spec);
+   assert.ok(item.caption.endsWith('Música: '+license.credit));assert.ok(item.caption.includes('Demonstração sonora ilustrativa, não áudio original dos jogos.'));
+   assert.ok(item.previousVersions.some(v=>v.video===previous.video&&v.sha256===previous.sha256));
+  }
+  assert.equal(item.trackId,null);
   assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(item.spec.audioStart,0);
   assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
   assert.equal(createHash('sha256').update(readFileSync(resolve(root,license.path))).digest('hex'),license.sha256);
@@ -37,9 +48,21 @@ if(catalog.items.some(isTerrorGroup)){
    let data,channels,rate,bits;for(let p=12;p+8<=wav.length;){const size=wav.readUInt32LE(p+4),kind=wav.toString('ascii',p,p+4);if(kind==='fmt '){assert.equal(wav.readUInt16LE(p+8),1);channels=wav.readUInt16LE(p+10);rate=wav.readUInt32LE(p+12);bits=wav.readUInt16LE(p+22);}if(kind==='data')data=wav.subarray(p+8,p+8+size);p+=8+size+(size%2);}
    assert.equal(channels,2);assert.equal(rate,48000);assert.equal(bits,16);assert.equal(data.length,20*rate*4);
    const peak=(start,end,side)=>{let max=0;for(let f=Math.ceil(start*rate);f<Math.floor(end*rate);f++)max=Math.max(max,Math.abs(data.readInt16LE(f*4+side*2)));return max;};
-   for(const side of [0,1]){assert.equal(peak(10,15,side),0,'Silencio preenchido');assert.ok(peak(1.5,3.5,side)>600);for(const start of demo.anticipation)assert.ok(peak(start,start+.18,side)>1800);}
-   assert.ok(peak(16,16.5,0)>2000);assert.equal(peak(16,16.5,1),0,'Esquerda vazou para direita');
-   assert.ok(peak(18.5,19,1)>2000);assert.equal(peak(18.5,19,0),0,'Direita vazou para esquerda');
+   if(impact){
+    assert.equal(demo.impact.time,runs[2].start);assert.equal(demo.impact.sample,640000);assert.equal(demo.impact.videoFrame,400);
+    assert.equal(demo.musicBedEnds,20);assert.deepEqual(demo.silence,[12.5,20/3*2]);
+    for(const side of [0,1]){
+     assert.equal(peak(12.5,demo.impact.time,side),0,'Pausa curta preenchida');
+     const hit=peak(demo.impact.time,demo.impact.time+.25,side),build=peak(11.5,12.15,side);
+     assert.ok(hit>9000&&hit>2*build,'Impacto sem contraste');assert.ok(peak(0,20,side)<14000,'Impacto ultrapassou limite de pico');
+     for(let t=15;t<19.5;t+=.5)assert.ok(peak(t,t+.5,side)>100,'Musica nao retornou ate o fechamento');
+    }
+    assert.equal(data.readInt16LE(640000*4),0);assert.notEqual(data.readInt16LE(640001*4),0,'Impacto fora de sincronia');
+   }else{
+    for(const side of [0,1]){assert.equal(peak(10,15,side),0,'Silencio preenchido');assert.ok(peak(1.5,3.5,side)>600);for(const start of demo.anticipation)assert.ok(peak(start,start+.18,side)>1800);}
+    assert.ok(peak(16,16.5,0)>2000);assert.equal(peak(16,16.5,1),0,'Esquerda vazou para direita');
+    assert.ok(peak(18.5,19,1)>2000);assert.equal(peak(18.5,19,0),0,'Direita vazou para esquerda');
+   }
   }
   await assert.rejects(()=>createScene({...item.spec,reviewPostId:232},root),/fora do escopo/);
   const stage=await createScene(item.spec,root);
@@ -53,7 +76,7 @@ if(catalog.items.some(isTerrorGroup)){
    if(item.id===231){stage.render(5.2);const first=photo.image();stage.render(6.7);assert.notEqual(photo.image(),first);const second=photo.image();stage.render(10.2);assert.equal(photo.image(),second);stage.render(13.4);const third=photo.image();assert.notEqual(third,second);stage.render(15.2);assert.equal(photo.image(),third);}
   }finally{stage.destroy();}
  }
- console.log('PASS: terror 229/231, imagens igualmente divididas, avatar/roteiros/piloto preservados, silencio e canais esquerdo/direito verificados.');
+ console.log('PASS: terror 229/231, imagens igualmente divididas, avatar/piloto preservados; montagem sonora, pausa, contraste e retomada verificados.');
 }
 if(catalog.items.some(isTerrorRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-230-before/catalog.json'),'utf8'));

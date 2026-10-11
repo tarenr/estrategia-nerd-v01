@@ -6713,7 +6713,7 @@
       "type": "sound",
       "note": "Roteiro individual revisado conforme a pauta.",
       "sources": [],
-      "caption": "🎧 Um ruído pode mudar a cena inteira.\n\nEste Reel usa exemplos sonoros ilustrativos para mostrar antecipação, silêncio e direção. São demonstrações produzidas para a explicação, não áudio original dos jogos.\n\nOuça com fones em volume confortável: de qual lado veio o último som?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
+      "caption": "🎧 O medo começa antes do susto.\n\nTensão crescente, uma pausa curta e um impacto sincronizado mostram como o contraste sonoro muda a cena. Depois, a música retorna e mantém a atmosfera.\n\nDemonstração sonora ilustrativa, não áudio original dos jogos. Ouça em volume confortável.\n\nQual jogo usa o som para mexer com você?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
       "original": "public/uploads/reels/leva02-bloco1/reel-231-revisado.mp4",
       "originalSha256": "65322781e18fa8c1a48ab32634993f80af430a88bbbf0462532737201a23a682",
       "reuse": false,
@@ -6724,7 +6724,7 @@
         "tone": "tech",
         "layout": "guide",
         "collection": "UTILIDADE · SOM NO TERROR",
-        "audio": "resources/reels-review/assets/terror/audio/reel-231-demo-v3.wav",
+        "audio": "resources/reels-review/assets/terror/audio/reel-231-impact-v4.wav",
         "audioStart": 0,
         "footer": "Qual som de jogo ficou na sua memória?",
         "closingLabel": "CONTA NOS COMENTÁRIOS",
@@ -6732,7 +6732,7 @@
           {
             "eyebrow": "Exemplo ilustrativo",
             "title": "Ouça antes de ver",
-            "body": "Um ruído pode mudar a leitura de uma cena.",
+            "body": "Você escuta a ameaça antes de enxergá-la.",
             "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-001.webp",
             "framing": {
               "mode": "contain",
@@ -6740,9 +6740,9 @@
             }
           },
           {
-            "eyebrow": "Antecipação",
-            "title": "O alerta se aproxima",
-            "body": "O sinal repetido faz você esperar alguma coisa.",
+            "eyebrow": "A tensão",
+            "title": "Algo se aproxima",
+            "body": "O ambiente cresce e faz você esperar alguma coisa.",
             "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-002.webp",
             "framing": {
               "mode": "contain",
@@ -6750,9 +6750,9 @@
             }
           },
           {
-            "eyebrow": "O silêncio",
-            "title": "Agora, nada",
-            "body": "A pausa deixa o próximo ruído em destaque.",
+            "eyebrow": "A pausa",
+            "title": "A pausa prepara o susto",
+            "body": "Um instante de silêncio. Então, o impacto.",
             "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
             "framing": {
               "mode": "contain",
@@ -6760,9 +6760,9 @@
             }
           },
           {
-            "eyebrow": "Direção",
-            "title": "Esquerda ou direita?",
-            "body": "Ouça com fones em volume confortável.",
+            "eyebrow": "O contraste",
+            "title": "O medo está no contraste",
+            "body": "A música retorna e mantém a atmosfera.",
             "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
             "framing": {
               "mode": "contain",
@@ -6790,22 +6790,22 @@
           "footer": "OUÇA COM FONES · LINK NA BIO",
           "headlines": [
             "Ouça antes\nde ver",
-            "O alerta\nse aproxima",
-            "Agora,\nnada",
-            "Esquerda\nou direita?"
+            "Algo\nse aproxima",
+            "A pausa prepara\no susto",
+            "O medo está\nno contraste"
           ],
           "subtitles": [
-            "Um ruído muda\na cena inteira.",
-            "A repetição cria\nexpectativa.",
-            "O silêncio aumenta\na tensão.",
-            "O espaço também\nconta a história."
+            "Um som já coloca\nvocê em alerta.",
+            "A tensão cresce.\nVocê espera.",
+            "O silêncio prepara.\nO impacto chega.",
+            "Depois do susto,\no clima continua."
           ]
         },
-        "musicRevision": "terror-group-v1"
+        "musicRevision": "terror-impact-v1"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-231-v3.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v3.jpg",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-231-v4.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v4.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-231-v1.mp4",
@@ -6881,12 +6881,105 @@
           },
           "caption": "🎧 Um ruído pode mudar a cena inteira.\n\nEste Reel usa exemplos sonoros ilustrativos para mostrar antecipação, silêncio e direção. São demonstrações produzidas para a explicação, não áudio original dos jogos.\n\nOuça com fones em volume confortável: de qual lado veio o último som?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
           "trackId": 22
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-231-v3.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v3.jpg",
+          "sha256": "33293df16c5ebf36ad44b825a879c20afab92278b930d5a2375808cb5312d9a6",
+          "spec": {
+            "articleId": 78,
+            "articleTitle": "Como o som cria medo nos jogos: pistas, silêncio e espaço",
+            "tone": "tech",
+            "layout": "guide",
+            "collection": "UTILIDADE · SOM NO TERROR",
+            "audio": "resources/reels-review/assets/terror/audio/reel-231-demo-v3.wav",
+            "audioStart": 0,
+            "footer": "Qual som de jogo ficou na sua memória?",
+            "closingLabel": "CONTA NOS COMENTÁRIOS",
+            "scenes": [
+              {
+                "eyebrow": "Exemplo ilustrativo",
+                "title": "Ouça antes de ver",
+                "body": "Um ruído pode mudar a leitura de uma cena.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-001.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antecipação",
+                "title": "O alerta se aproxima",
+                "body": "O sinal repetido faz você esperar alguma coisa.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-002.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O silêncio",
+                "title": "Agora, nada",
+                "body": "A pausa deixa o próximo ruído em destaque.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Direção",
+                "title": "Esquerda ou direita?",
+                "body": "Ouça com fones em volume confortável.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "editorial": "manual",
+            "duration": 20,
+            "beatStarts": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "category": "games",
+            "presentation": "sound",
+            "reviewPostId": 231,
+            "compositionProfile": "terror-atmosphere-v1",
+            "timingRevision": "terror-group-v1",
+            "visualStyle": {
+              "background": "resources/reels-review/assets/terror/background-230-v1.png",
+              "reference": "resources/reels-review/assets/terror/preview-230-v1.png",
+              "collection": "TERROR · O PODER DO SOM",
+              "footer": "OUÇA COM FONES · LINK NA BIO",
+              "headlines": [
+                "Ouça antes\nde ver",
+                "O alerta\nse aproxima",
+                "Agora,\nnada",
+                "Esquerda\nou direita?"
+              ],
+              "subtitles": [
+                "Um ruído muda\na cena inteira.",
+                "A repetição cria\nexpectativa.",
+                "O silêncio aumenta\na tensão.",
+                "O espaço também\nconta a história."
+              ]
+            },
+            "musicRevision": "terror-group-v1"
+          },
+          "caption": "🎧 Um ruído pode mudar a cena inteira.\n\nEste Reel usa exemplos sonoros ilustrativos para mostrar antecipação, silêncio e direção. São demonstrações produzidas para a explicação, não áudio original dos jogos.\n\nOuça com fones em volume confortável: de qual lado veio o último som?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
+          "trackId": null,
+          "soundDemonstration": "resources/reels-review/assets/terror/audio/reel-231-demo-v3.json"
         }
       ],
-      "revision": 3,
+      "revision": 4,
       "musicLicense": "resources/reels-review/assets/terror/audio/the-house-of-leaves.license.json",
-      "soundDemonstration": "resources/reels-review/assets/terror/audio/reel-231-demo-v3.json",
-      "sha256": "33293df16c5ebf36ad44b825a879c20afab92278b930d5a2375808cb5312d9a6"
+      "soundDemonstration": "resources/reels-review/assets/terror/audio/reel-231-impact-v4.json",
+      "sha256": "ac911de0c636b6726062f7031c0f24037d4da3fae4f85603cfe78b1c10a72daa"
     },
     {
       "id": 232,
