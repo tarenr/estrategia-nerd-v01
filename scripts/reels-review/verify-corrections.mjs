@@ -17,7 +17,14 @@ if(catalog.items.some(isListRevision)){
   const old=before.items.find(i=>i.id===item.id);
   if(!isListRevision(item)){assert.deepEqual(item,old,'Outro registro alterado no Reel 205');continue;}
   for(const key of ['caption','status','scheduled','articleId','trackId'])assert.deepEqual(item[key],old[key]);
-  for(const key of ['audio','audioStart','scenes'])assert.deepEqual(item.spec[key],old.spec[key]);
+  for(const key of ['audio','audioStart'])assert.deepEqual(item.spec[key],old.spec[key]);
+  if(item.chronoRevision){
+   const previous=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/list-205-v3-before/catalog.json'),'utf8'));
+   const v2=previous.items.find(i=>i.id===205),preserved=structuredClone(item.spec);
+   assert.equal(item.spec.scenes[1].image,'public/uploads/reels/correcao-instagram-20261010/images/reel-205-v3-chrono-trigger.png');
+   preserved.scenes[1].image=v2.spec.scenes[1].image;assert.deepEqual(preserved,v2.spec,'Somente a imagem Chrono pode mudar');
+   assert.ok(item.previousVersions.some(v=>v.video===v2.video&&v.sha256===v2.sha256));
+  }else assert.deepEqual(item.spec.scenes,old.spec.scenes);
   assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(item.reuse,false);
   assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
   await assert.rejects(()=>createScene({...item.spec,reviewPostId:215},root),/fora do escopo/);

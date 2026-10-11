@@ -1,3 +1,9 @@
+## Lista 205 — arte aprovada de Chrono Trigger, versão 3 (11/10/2026)
+
+Substituída exclusivamente a imagem da segunda cena pela arte de personagens enviada e aprovada pelo usuário, armazenada em `public/uploads/reels/correcao-instagram-20261010/images/reel-205-v3-chrono-trigger.png`. É uma ilustração dos personagens, não uma captura de gameplay. Exibição inteira e proporcional na moldura central; nenhuma alteração no arquivo do artigo. As outras três cenas, textos, trilha, ponto inicial do áudio, fundo e duração de 20 segundos permanecem preservados.
+
+Nova entrega `reel-205-v3.mp4`, capa, folha de contato e manifesto no diretório existente. Galerias apontam para v3; v2 permanece em disco e `previousVersions`. Backup `storage/correcao-instagram-20261010/list-205-v3-before/catalog.json`. Validação compara o roteiro com v2 permitindo somente a troca dessa imagem, além de preservar os demais registros e verificar leitura, proporção, áudio e decodificação. Sem mudança na fila ou publicação no Instagram.
+
 ## Lista 205 — primeiro vídeo com foto central, versão 2 (11/10/2026)
 
 Reel 205 produzido com a identidade de listas aprovada: fundo editorial neutro em grafite, ciano e âmbar; imagem central como foco; títulos equilibrados e indicador de quatro cenas. O perfil `list-central-v1` está limitado ao 205 nesta entrega. A composição usa as imagens originais do artigo (capa, Chrono Trigger, The Witcher 3 e Baldur's Gate 3), inteiras e proporcionais dentro da moldura, sem zoom ou geração de novas imagens dos jogos. Somente o fundo foi derivado da prévia aprovada por imagegen; fotos e textos são inseridos diretamente pelo compositor.

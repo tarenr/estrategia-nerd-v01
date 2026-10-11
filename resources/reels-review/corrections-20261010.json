@@ -2356,7 +2356,7 @@
             "eyebrow": "Histórias e personagens",
             "title": "Chrono Trigger",
             "body": "Viagem no tempo em um clássico do RPG japonês.",
-            "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/chrono-trigger.jpg",
+            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-205-v3-chrono-trigger.png",
             "framing": {
               "mode": "cover",
               "focus": [
@@ -2405,8 +2405,8 @@
         }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-205-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-205-v2.jpg",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-205-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-205-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-205-v1.mp4",
@@ -2489,10 +2489,104 @@
             ],
             "presentation": "list"
           }
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-205-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-205-v2.jpg",
+          "sha256": "e6568fda2988368f441db750c2d51cedff2cc8eae4d86550ad23642e0330b819",
+          "spec": {
+            "articleId": 25,
+            "articleTitle": "10 jogos que todo fã de RPG precisa jogar antes de morrer",
+            "category": "games",
+            "editorial": "manual",
+            "collection": "CULTURA E JOGOS",
+            "layout": "culture",
+            "tone": "fantasy",
+            "duration": 20,
+            "audio": "public/uploads/audio/pixabay_239599.mp3",
+            "audioStart": 61,
+            "beatStarts": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "scenes": [
+              {
+                "eyebrow": "RPGs que marcaram época",
+                "title": "Qual aventura é a sua?",
+                "body": "A lista reúne dez jogos. Estes são três caminhos para começar.",
+                "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/capa.webp",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Histórias e personagens",
+                "title": "Chrono Trigger",
+                "body": "Viagem no tempo em um clássico do RPG japonês.",
+                "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/chrono-trigger.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Escolhas em um mundo aberto",
+                "title": "The Witcher 3",
+                "body": "Contratos, personagens e decisões em uma fantasia medieval.",
+                "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/the-witcher-3.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Estratégia e liberdade",
+                "title": "Baldur's Gate 3",
+                "body": "Um RPG de escolhas e combate por turnos. Conheça os dez títulos no blog.",
+                "image": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/baldurs-gate-3.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "list",
+            "reviewPostId": 205,
+            "compositionProfile": "list-central-v1",
+            "visualStyle": {
+              "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-205-v2-background.png",
+              "reference": "exec-a3b8711c-3d62-474a-ae10-fedb31008c8c.png",
+              "centralOriginalImages": true
+            }
+          }
         }
       ],
-      "revision": 2,
-      "sha256": "e6568fda2988368f441db750c2d51cedff2cc8eae4d86550ad23642e0330b819"
+      "revision": 3,
+      "chronoRevision": {
+        "source": "Imagem enviada e aprovada pelo usuario",
+        "sourceType": "character-art",
+        "previousImage": "public/uploads/posts/10-jogos-que-todo-fa-de-rpg-precisa-jogar-antes-de-morrer/images/chrono-trigger.jpg"
+      },
+      "sha256": "897584036afe8f07689cd762a4370f1514109d531d7d493d7b554216157a3aaa"
     },
     {
       "id": 206,
