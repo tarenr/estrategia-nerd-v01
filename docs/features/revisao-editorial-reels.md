@@ -1,3 +1,17 @@
+## Saga Diablo — grupo 197, 224, 225, 226 e 227 em 20 segundos (11/10/2026)
+
+Cada roteiro foi avaliado individualmente antes de aplicar o visual aprovado do 195: dualidade Céu/Inferno, moldura gótica, cabeçalhos dourados/marfim e áreas escurecidas para leitura. Os cabeçalhos usam os textos específicos de cada artigo, mantendo títulos, corpos, artes, legendas, trilhas e pontos iniciais do áudio.
+
+- 197: origem com Anu/Tathamet, Guerra Eterna, nascimento de Santuário e humanidade; quatro artes, cinco segundos por arte.
+- 224: conflito, Alto Céu, Inferno Ardente e Santuário; quatro artes, cinco segundos por arte.
+- 225: Imperius, Tyrael, Malthael e Conselho Angiris; quatro artes, cinco segundos por arte.
+- 226: Diablo, Mephisto, Baal e demais Males; quatro artes, cinco segundos por arte.
+- 227: uma arte dos Nefalem permanece durante os vinte segundos, com quatro textos de cinco segundos. A troca de texto não reinicia nem duplica a tomada.
+
+Todos têm 20 segundos, quatro textos de cinco segundos, 1080×1920 a 30 fps, H.264/AAC e faststart. `timingRevision: diablo-group-v1` distribui a duração igualmente pelas imagens distintas na ordem narrativa, independentemente da linha de tempo dos textos. Perfil limitado aos cinco IDs aprovados. Imagens inteiras, proporcionais e sem zoom. O 195 v4 e os demais 31 registros permanecem intactos.
+
+Entregas `reel-{197,224,225,226,227}-v2.mp4`, capas, folhas de contato e manifestos; galerias oficiais atualizadas. v1 e originais preservados em disco e histórico; backup do catálogo em `storage/correcao-instagram-20261010/diablo-group-before/catalog.json`. Avaliação visual individual das cinco folhas de contato e validações de tempos, leitura, proporção, hashes, áudio, decodificação integral, faststart e suíte oficial. Documentação interna usa este mesmo arquivo pelo painel Mudanças. Artigos e fila do Instagram não são alterados nesta entrega.
+
 ## Saga Diablo — 195 v4, textos e imagens com tempos independentes (11/10/2026)
 
 Reel de 20 segundos com quatro textos de cinco segundos, iniciando em 0, 5, 10 e 15 segundos. As três imagens ocupam igualmente o vídeo: Guerra Eterna entre 0 e 6,67 s, Céu/Inferno entre 6,67 e 13,33 s e Santuário entre 13,33 e 20 s. A seleção da imagem ocorre independentemente da troca de texto; em 30 fps, cada tomada tem 200 quadros. Tipografia, fundo, roteiro, trilha e artigo mantêm a composição aprovada da v3. O ajuste está restrito ao 195 com `timingRevision: diablo-195-v4`.

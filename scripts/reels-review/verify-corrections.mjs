@@ -10,10 +10,38 @@ assert.deepEqual(catalog.cancelled,[191,192,193,194]);assert.equal(catalog.items
 assert.equal(new Set(catalog.items.map(i=>i.id)).size,37);assert.equal(catalog.publicationApproval,false);
 const counts=new Set(catalog.items.map(i=>i.spec.scenes.length));assert.ok(counts.has(3)&&counts.has(4)&&counts.has(5));
 const results=[];
-const isDiabloRevision=i=>i.id===195&&i.spec.compositionProfile==='diablo-duality-v1';
+const isDiabloGroup=i=>[197,224,225,226,227].includes(i.id)&&i.spec.timingRevision==='diablo-group-v1';
+const isDiabloRevision=i=>(i.id===195||isDiabloGroup(i))&&i.spec.compositionProfile==='diablo-duality-v1';
+if(catalog.items.some(isDiabloGroup)){
+ const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/diablo-group-before/catalog.json'),'utf8'));
+ for(const item of catalog.items){
+  const old=before.items.find(i=>i.id===item.id);
+  if(!isDiabloGroup(item)){assert.deepEqual(item,old,'Registro fora do grupo Diablo alterado');continue;}
+  for(const key of ['caption','status','scheduled','articleId','articleSha256','trackId','original','originalSha256'])assert.deepEqual(item[key],old[key]);
+  for(const key of ['audio','audioStart','scenes'])assert.deepEqual(item.spec[key],old.spec[key]);
+  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(item.reuse,false);
+  assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
+  const runs=imageRuns(item.spec);assert.equal(runs.length,item.id===227?1:4);
+  for(const run of runs)assert.equal(run.end-run.start,20/runs.length);
+  await assert.rejects(()=>createScene({...item.spec,reviewPostId:208},root),/fora do escopo/);
+  const stage=await createScene(item.spec,root);
+  try{
+   let previous;
+   for(const [n,start] of item.spec.beatStarts.entries()){
+    assert.equal(stage.render(start+.5).index,n);const photo=stage.layer.find('Image')[1],cover=photo.image();
+    assert.deepEqual(photo.crop(),{x:0,y:0,width:cover.width,height:cover.height});
+    assert.ok(Math.abs(photo.width()/photo.height()-cover.width/cover.height)<.00001);
+    if(previous){if(item.id===227)assert.equal(cover,previous);else assert.notEqual(cover,previous);}
+    stage.render(start+4.9);assert.equal(photo.image(),cover);previous=cover;
+   }
+  }finally{stage.destroy();}
+ }
+ console.log('PASS: cinco Diablo com tempos iguais por imagem, textos/audio preservados e demais 32 registros intactos.');
+}
 if(catalog.items.some(isDiabloRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/diablo-195-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isDiabloGroup(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(!isDiabloRevision(item)){assert.deepEqual(item,old,'Outro registro alterado no Diablo 195');continue;}
   for(const key of ['caption','status','scheduled','articleId','trackId'])assert.deepEqual(item[key],old[key]);
@@ -57,7 +85,7 @@ if(catalog.items.some(isDiabloRevision)){
   assert.deepEqual([photo.x(),photo.y(),photo.width(),photo.height()],position,'Arte repetida reiniciou na transicao');
   }finally{stage.destroy();}
  }
- console.log('PASS: Diablo 195; tempos e artes aprovados, roteiros e audio preservados; demais 36 registros intactos.');
+ console.log('PASS: Diablo 195; tempos e artes aprovados, roteiros e audio preservados; registros fora do grupo Diablo preservados.');
 }
 const isListGroup=i=>[215,217,218,219,233].includes(i.id)&&i.spec.compositionProfile==='list-central-v1';
 if(catalog.items.some(isListGroup)){

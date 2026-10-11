@@ -6,13 +6,15 @@ import {manualState} from './scene.mjs';
 
 export const DIABLO_FRAME={x:24,y:665,width:1032,height:585};
 export async function createDiabloScene(spec,root){
-  const independent=spec.timingRevision==='diablo-195-v4';
+  const group=spec.timingRevision==='diablo-group-v1'&&[197,224,225,226,227].includes(spec.reviewPostId);
+  const independent=spec.timingRevision==='diablo-195-v4'||group;
   const revised=spec.typographyRevision==='diablo-195-v3'&&!independent;
   const beats=revised?[0,5,10,12.5]:[0,5,10,15];
-  if(spec.reviewPostId!==195||spec.compositionProfile!=='diablo-duality-v1'||spec.presentation!=='story'||spec.duration!==(revised?15:20)||spec.scenes.length!==4||spec.beatStarts.length!==4||spec.beatStarts.some((t,i)=>t!==beats[i]))throw new Error('Diablo fora do escopo aprovado.');
+  if((spec.reviewPostId!==195&&!group)||spec.compositionProfile!=='diablo-duality-v1'||spec.presentation!=='story'||spec.duration!==(revised?15:20)||spec.scenes.length!==4||spec.beatStarts.length!==4||spec.beatStarts.some((t,i)=>t!==beats[i]))throw new Error('Diablo fora do escopo aprovado.');
   FontLibrary.use('EN Diablo',resolve(root,'resources/reels-konva/fonts/Inter.ttf'));
   FontLibrary.use('EN Diablo Title','C:/Windows/Fonts/georgiab.ttf');
   const [background,...covers]=await Promise.all([spec.visualStyle.background,...spec.scenes.map(s=>s.image)].map(p=>loadImage(resolve(root,p))));
+  const uniqueIndices=spec.scenes.map((s,i)=>i).filter(i=>spec.scenes.findIndex(s=>s.image===spec.scenes[i].image)===i);
   const stage=new Konva.Stage({width:1080,height:1920,listening:false}),layer=new Konva.Layer({listening:false});stage.add(layer);
   const strong=spec.typographyRevision==='diablo-195-v3';
   layer.add(new Konva.Image({image:background,width:1080,height:1920,listening:false}));
@@ -41,12 +43,12 @@ export async function createDiabloScene(spec,root){
     if(active!==state.index){
       active=state.index;const scene=spec.scenes[active];
       const lines=['A GUERRA\nETERNA','CÉU E\nINFERNO','Um mundo entre\nas forças','A guerra\natravessa eras'];
-      header.text(strong?lines[active]:scene.eyebrow);fit(header,235,strong?110:88,52);
+      header.text(strong&&!group?lines[active]:scene.eyebrow);fit(header,235,strong?110:88,52);
       title.text(scene.title);const titleSize=fit(title,135,68,48);
       body.text(scene.body);const bodySize=fit(body,145,39,35);
       typography.push({scene:active,titleSize,bodySize});
     }
-    const imageIndex=independent?Math.min(2,Math.max(0,Math.floor(time*3/spec.duration))):state.index;
+    const imageIndex=group?uniqueIndices[Math.min(uniqueIndices.length-1,Math.max(0,Math.floor(time*uniqueIndices.length/spec.duration)))]:independent?Math.min(2,Math.max(0,Math.floor(time*3/spec.duration))):state.index;
     if(activeImage!==imageIndex){
       activeImage=imageIndex;const cover=covers[imageIndex];
       const scale=Math.min(frame.width/cover.width,frame.height/cover.height);

@@ -1046,7 +1046,7 @@
       "caption": "A Lore Completa de Diablo: Entenda Toda a História do Universo\n\nDescubra a lore completa de Diablo, desde a origem do universo com Anu e Tathamet até a Guerra Eterna, o nascimento de Santuário e o verdadeiro papel da humanidade nesse conflito épico.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
       "original": "public/uploads/reels/diablo-agenda-20261008/diablo-197-a9940dab6a71.mp4",
       "originalSha256": "a9940dab6a716f802d5310fe4680fa0039b644aad10bbabd5cb4968381cbd466",
-      "reuse": true,
+      "reuse": false,
       "trackId": 25,
       "spec": {
         "articleId": 17,
@@ -1056,14 +1056,14 @@
         "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
         "layout": "chronicle",
         "tone": "dark",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_248213.mp3",
         "audioStart": 38,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -1107,12 +1107,91 @@
             }
           }
         ],
-        "presentation": "story"
+        "presentation": "story",
+        "reviewPostId": 197,
+        "compositionProfile": "diablo-duality-v1",
+        "typographyRevision": "diablo-195-v3",
+        "timingRevision": "diablo-group-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-195-v2-background.png",
+          "reference": "exec-944d59e0-0afd-45b5-a189-1a5b8c0e6226.png",
+          "saga": "Diablo",
+          "duality": "Altos Ceus e Infernos Ardentes"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-197-v1.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-197-v1.jpg",
-      "sha256": "a9940dab6a716f802d5310fe4680fa0039b644aad10bbabd5cb4968381cbd466"
+      "video": "uploads/reels/correcao-instagram-20261010/reel-197-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-197-v2.jpg",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-197-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-197-v1.jpg",
+          "sha256": "a9940dab6a716f802d5310fe4680fa0039b644aad10bbabd5cb4968381cbd466",
+          "spec": {
+            "articleId": 17,
+            "articleTitle": "A Lore Completa de Diablo: Entenda Toda a História do Universo",
+            "category": "games",
+            "editorial": "manual",
+            "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+            "layout": "chronicle",
+            "tone": "dark",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_248213.mp3",
+            "audioStart": 38,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Antes de Santuário",
+                "title": "Anu e Tathamet",
+                "body": "Luz e trevas estão na origem desse universo.",
+                "image": "resources/reels-review/assets/diablo/art-16-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Da origem ao conflito",
+                "title": "A Guerra Eterna",
+                "body": "Céu e Inferno passam a disputar poder através das eras.",
+                "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Um refúgio improvável",
+                "title": "Santuário nasce",
+                "body": "Lilith e Inarius criam um refúgio longe do conflito.",
+                "image": "resources/reels-review/assets/diablo/art-04-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O destino da humanidade",
+                "title": "A história chega até nós",
+                "body": "Nefalem, demônios e anjos se cruzam nessa jornada. Explore a lore completa.",
+                "image": "resources/reels-review/assets/diablo/art-13-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "story"
+          }
+        }
+      ],
+      "revision": 2,
+      "sha256": "31331a9e4c1b85447ac73f69648d41001de29ce462d5f0662f3be5275d36f826"
     },
     {
       "id": 198,
@@ -5440,7 +5519,7 @@
       "caption": "O mundo de Diablo: Santuário, Céu e Inferno explicados\n\nExplore o universo sombrio de Diablo e descubra como Santuário se tornou o centro da guerra entre o Alto Céu e o Inferno Ardente. Um guia essencial para entender a base de toda a história da franquia.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
       "original": "public/uploads/reels/diablo-agenda-20261008/diablo-191-10020fb8b266.mp4",
       "originalSha256": "10020fb8b2668c2ed0b6c706f55182dd8c4a4aa2df0febe2948ee87301fa4a1b",
-      "reuse": true,
+      "reuse": false,
       "trackId": 25,
       "spec": {
         "articleId": 11,
@@ -5450,14 +5529,14 @@
         "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
         "layout": "chronicle",
         "tone": "dark",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_248213.mp3",
         "audioStart": 5,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -5501,12 +5580,91 @@
             }
           }
         ],
-        "presentation": "story"
+        "presentation": "story",
+        "reviewPostId": 224,
+        "compositionProfile": "diablo-duality-v1",
+        "typographyRevision": "diablo-195-v3",
+        "timingRevision": "diablo-group-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-195-v2-background.png",
+          "reference": "exec-944d59e0-0afd-45b5-a189-1a5b8c0e6226.png",
+          "saga": "Diablo",
+          "duality": "Altos Ceus e Infernos Ardentes"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-224-v1.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-224-v1.jpg",
-      "sha256": "10020fb8b2668c2ed0b6c706f55182dd8c4a4aa2df0febe2948ee87301fa4a1b"
+      "video": "uploads/reels/correcao-instagram-20261010/reel-224-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-224-v2.jpg",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-224-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-224-v1.jpg",
+          "sha256": "10020fb8b2668c2ed0b6c706f55182dd8c4a4aa2df0febe2948ee87301fa4a1b",
+          "spec": {
+            "articleId": 11,
+            "articleTitle": "O mundo de Diablo: Santuário, Céu e Inferno explicados",
+            "category": "games",
+            "editorial": "manual",
+            "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+            "layout": "chronicle",
+            "tone": "dark",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_248213.mp3",
+            "audioStart": 5,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "O mundo de Diablo",
+                "title": "Uma guerra antes de nós",
+                "body": "Céu e Inferno já lutavam antes de a humanidade existir.",
+                "image": "resources/reels-review/assets/diablo/art-01-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O Alto Céu",
+                "title": "A força da ordem",
+                "body": "Os anjos defendem sua visão de justiça e dever.",
+                "image": "resources/reels-review/assets/diablo/art-02-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O Inferno Ardente",
+                "title": "O domínio do caos",
+                "body": "Os demônios buscam poder e corrupção.",
+                "image": "resources/reels-review/assets/diablo/art-03-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Santuário",
+                "title": "Um refúgio em disputa",
+                "body": "A humanidade vive entre essas forças. Conheça esse mundo no blog.",
+                "image": "resources/reels-review/assets/diablo/art-04-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "story"
+          }
+        }
+      ],
+      "revision": 2,
+      "sha256": "84acc9015ee216549944b27013393840d840144695f36f05127a4baee136b6e8"
     },
     {
       "id": 225,
@@ -5523,7 +5681,7 @@
       "caption": "⚔️ Os Altos Céus não têm uma única visão sobre Santuário.\n\nImperius, Tyrael, Auriel, Itherael e Malthael representam aspectos e escolhas diferentes. Tyrael se aproxima da humanidade; a trajetória de Malthael mostra outro caminho.\n\nQual decisão dos arcanjos mais marcou você em Diablo?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
       "original": "public/uploads/reels/diablo-agenda-20261008/diablo-193-2afa9cae1665.mp4",
       "originalSha256": "2afa9cae16659645e4f049da387703cf2c73ae55460415b750fe3fd1b3529aa1",
-      "reuse": true,
+      "reuse": false,
       "trackId": 24,
       "spec": {
         "articleId": 13,
@@ -5533,14 +5691,14 @@
         "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
         "layout": "chronicle",
         "tone": "celestial",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_239599.mp3",
         "audioStart": 21,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -5584,12 +5742,91 @@
             }
           }
         ],
-        "presentation": "story"
+        "presentation": "story",
+        "reviewPostId": 225,
+        "compositionProfile": "diablo-duality-v1",
+        "typographyRevision": "diablo-195-v3",
+        "timingRevision": "diablo-group-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-195-v2-background.png",
+          "reference": "exec-944d59e0-0afd-45b5-a189-1a5b8c0e6226.png",
+          "saga": "Diablo",
+          "duality": "Altos Ceus e Infernos Ardentes"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-225-v1.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-225-v1.jpg",
-      "sha256": "2afa9cae16659645e4f049da387703cf2c73ae55460415b750fe3fd1b3529aa1"
+      "video": "uploads/reels/correcao-instagram-20261010/reel-225-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-225-v2.jpg",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-225-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-225-v1.jpg",
+          "sha256": "2afa9cae16659645e4f049da387703cf2c73ae55460415b750fe3fd1b3529aa1",
+          "spec": {
+            "articleId": 13,
+            "articleTitle": "Os Arcanjos do Céu: a verdade por trás da luz em Diablo",
+            "category": "games",
+            "editorial": "manual",
+            "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+            "layout": "chronicle",
+            "tone": "celestial",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_239599.mp3",
+            "audioStart": 21,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Os Arcanjos de Diablo",
+                "title": "Imperius: valor",
+                "body": "O comandante do Céu representa a força e a coragem.",
+                "image": "resources/reels-review/assets/diablo/art-09-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Uma escolha difícil",
+                "title": "Tyrael: justiça",
+                "body": "Sua relação com a humanidade desafia a ordem dos Céus.",
+                "image": "resources/reels-review/assets/diablo/art-10-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Da sabedoria à ruptura",
+                "title": "Malthael",
+                "body": "O caminho do antigo Aspecto da Sabedoria mostra que a luz também pode se perder.",
+                "image": "resources/reels-review/assets/diablo/art-11-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O Conselho Angiris",
+                "title": "Cinco forças do Céu",
+                "body": "Auriel e Itherael completam essa história. Conheça os cinco Arcanjos no blog.",
+                "image": "resources/reels-review/assets/diablo/art-12-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "story"
+          }
+        }
+      ],
+      "revision": 2,
+      "sha256": "d807a33a01f5ede424341b82c6e38670df3d4076f7b81e8c6df1f7e2e50db1ab"
     },
     {
       "id": 226,
@@ -5606,7 +5843,7 @@
       "caption": "Os Males do Inferno em Diablo: Quem Realmente Controla o Caos\n\nDescubra quem são os Males do Inferno em Diablo e como cada um deles representa uma forma diferente de destruição, manipulação e poder dentro do universo da franquia.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
       "original": "public/uploads/reels/diablo-agenda-20261008/diablo-192-18f9df4ef964.mp4",
       "originalSha256": "18f9df4ef9646971f9295315a0d808f4d2c473c52efb5480f72b3825b0371269",
-      "reuse": true,
+      "reuse": false,
       "trackId": 25,
       "spec": {
         "articleId": 12,
@@ -5616,14 +5853,14 @@
         "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
         "layout": "chronicle",
         "tone": "dark",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_248213.mp3",
         "audioStart": 29,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -5667,12 +5904,91 @@
             }
           }
         ],
-        "presentation": "story"
+        "presentation": "story",
+        "reviewPostId": 226,
+        "compositionProfile": "diablo-duality-v1",
+        "typographyRevision": "diablo-195-v3",
+        "timingRevision": "diablo-group-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-195-v2-background.png",
+          "reference": "exec-944d59e0-0afd-45b5-a189-1a5b8c0e6226.png",
+          "saga": "Diablo",
+          "duality": "Altos Ceus e Infernos Ardentes"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-226-v1.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-226-v1.jpg",
-      "sha256": "18f9df4ef9646971f9295315a0d808f4d2c473c52efb5480f72b3825b0371269"
+      "video": "uploads/reels/correcao-instagram-20261010/reel-226-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-226-v2.jpg",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-226-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-226-v1.jpg",
+          "sha256": "18f9df4ef9646971f9295315a0d808f4d2c473c52efb5480f72b3825b0371269",
+          "spec": {
+            "articleId": 12,
+            "articleTitle": "Os Males do Inferno em Diablo: Quem Realmente Controla o Caos",
+            "category": "games",
+            "editorial": "manual",
+            "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+            "layout": "chronicle",
+            "tone": "dark",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_248213.mp3",
+            "audioStart": 29,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Os Grandes Males",
+                "title": "Diablo",
+                "body": "O Senhor do Terror transforma o medo em uma arma.",
+                "image": "resources/reels-review/assets/diablo/art-05-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O ódio se espalha",
+                "title": "Mephisto",
+                "body": "O Senhor do Ódio corrompe relações e alimenta conflitos.",
+                "image": "resources/reels-review/assets/diablo/art-06-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Nada permanece",
+                "title": "Baal",
+                "body": "O Senhor da Destruição deixa ruínas em seu caminho.",
+                "image": "resources/reels-review/assets/diablo/art-07-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Além dos três irmãos",
+                "title": "O Inferno tem outros poderes",
+                "body": "Andariel, Duriel, Belial e Azmodan também fazem parte dessa história. Explore no blog.",
+                "image": "resources/reels-review/assets/diablo/art-08-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "story"
+          }
+        }
+      ],
+      "revision": 2,
+      "sha256": "64a74a56583dd9fedcd8af043069e915be429382afdbe5d1dc51c2c049e7db5a"
     },
     {
       "id": 227,
@@ -5689,7 +6005,7 @@
       "caption": "Os Nefalem: o verdadeiro poder por trás da humanidade\n\nNem anjos… nem demônios. Os Nefalem são o elo proibido entre Céu e Inferno — e talvez a maior ameaça (ou esperança) de Santuário.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
       "original": "public/uploads/reels/diablo-agenda-20261008/diablo-194-aaa1a12d0bf2.mp4",
       "originalSha256": "aaa1a12d0bf22c2f4061fb33a628fc2a41ef08ed0b4fea9aaf1a3deb3e37ff58",
-      "reuse": true,
+      "reuse": false,
       "trackId": 25,
       "spec": {
         "articleId": 14,
@@ -5699,14 +6015,14 @@
         "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
         "layout": "chronicle",
         "tone": "dark",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_248213.mp3",
         "audioStart": 53,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -5750,12 +6066,91 @@
             }
           }
         ],
-        "presentation": "story"
+        "presentation": "story",
+        "reviewPostId": 227,
+        "compositionProfile": "diablo-duality-v1",
+        "typographyRevision": "diablo-195-v3",
+        "timingRevision": "diablo-group-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-195-v2-background.png",
+          "reference": "exec-944d59e0-0afd-45b5-a189-1a5b8c0e6226.png",
+          "saga": "Diablo",
+          "duality": "Altos Ceus e Infernos Ardentes"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-227-v1.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-227-v1.jpg",
-      "sha256": "aaa1a12d0bf22c2f4061fb33a628fc2a41ef08ed0b4fea9aaf1a3deb3e37ff58"
+      "video": "uploads/reels/correcao-instagram-20261010/reel-227-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-227-v2.jpg",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-227-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-227-v1.jpg",
+          "sha256": "aaa1a12d0bf22c2f4061fb33a628fc2a41ef08ed0b4fea9aaf1a3deb3e37ff58",
+          "spec": {
+            "articleId": 14,
+            "articleTitle": "Os Nefalem: o verdadeiro poder por trás da humanidade",
+            "category": "games",
+            "editorial": "manual",
+            "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+            "layout": "chronicle",
+            "tone": "dark",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_248213.mp3",
+            "audioStart": 53,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Os Nefalem",
+                "title": "Entre anjos e demônios",
+                "body": "A origem da humanidade de Santuário carrega os dois lados da Guerra Eterna.",
+                "image": "resources/reels-review/assets/diablo/art-13-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Um poder inesperado",
+                "title": "Mais fortes que seus criadores",
+                "body": "Os primeiros Nefalem despertaram um poder que assustou Céu e Inferno.",
+                "image": "resources/reels-review/assets/diablo/art-13-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O poder foi contido",
+                "title": "A herança esquecida",
+                "body": "Ao longo das gerações, esse potencial foi enfraquecido.",
+                "image": "resources/reels-review/assets/diablo/art-13-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A humanidade de Santuário",
+                "title": "A força que ainda existe",
+                "body": "Entenda a origem dos Nefalem e seu papel no universo de Diablo. História no blog.",
+                "image": "resources/reels-review/assets/diablo/art-13-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "story"
+          }
+        }
+      ],
+      "revision": 2,
+      "sha256": "eae29dfdf1736d0c8316dda4fac190a2868c4bd32537ae4894d10279e66f8944"
     },
     {
       "id": 229,
