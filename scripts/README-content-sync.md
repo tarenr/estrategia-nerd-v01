@@ -156,6 +156,33 @@ autorização própria, restaura apenas esses dois arquivos do backup após conf
 edições concorrentes. Sem `--target`, o script mantém o comportamento anterior
 de produção; sempre passar `--target=stage` nesta operação.
 
+### Promoção para produção em 11/10/2026
+
+`scripts/reels-review/promote-production-20261011.php` promove para a produção
+os quatro artigos validados previamente no stage, acompanhados de suas 16 imagens.
+Os 33 artigos existentes de produção são preservados como base operacional, mantendo
+suas métricas reais (`views`, `curtidas`, `comentarios_count`) e status inalterados.
+Categorias e autores são mapeados pelos registros oficiais do banco de produção.
+
+```powershell
+C:/xampp/php/php.exe scripts/reels-review/promote-production-20261011.php --inspect
+C:/xampp/php/php.exe scripts/reels-review/promote-production-20261011.php --prepare
+C:/xampp/php/php.exe scripts/migrate.php --target=production --only=0006_add_post_type.sql
+C:/xampp/php/php.exe scripts/reels-review/promote-production-20261011.php --apply
+C:/xampp/php/php.exe scripts/reels-review/promote-production-20261011.php --verify
+```
+
+A migration 0006 (`posts.tipo_post`) é registrada formalmente com `--only=0006_add_post_type.sql`.
+O pacote e os backups imutáveis ficam em `storage/production-content/promotion-20261011/`:
+`package.json` guarda o estado prévio dos 33 artigos, categorias e schema;
+arquivos `asset-*.bin` preservam a mídia local de origem.
+`applied.json` e `verified.json` registram IDs gerados e confirmação de integridade.
+
+As 16 imagens são enviadas para `uploads/posts/<slug>/images/` via FTP. A inserção dos artigos
+ocorre em transação exclusiva com lock e reconexão pós-FTP; em falha antes do commit, aciona
+rollback automático. Produção passou de 33 para 37 artigos, todos com respostas HTTP 200 nas rotas `/post/<slug>`.
+Instagram e agendamentos não são alterados.
+
 - a rotina faz `upsert` por slug e historico de slug
 - ela preserva metricas reais da producao, como views, curtidas e comentarios dos posts
 - links sao atualizados pelos campos editoriais, sem sobrescrever dados de monitoramento

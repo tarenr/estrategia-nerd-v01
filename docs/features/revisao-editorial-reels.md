@@ -1,3 +1,13 @@
+## Promoção do conteúdo para produção (11/10/2026)
+
+Os quatro artigos validados em stage foram promovidos com sucesso para a produção: terror pela atmosfera (`muito-alem-dos-jumpscares-3-jogos-que-transformam-a-atmosfera-em-verdadeiro-terror`), som e medo (`como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror`), jogos para 30 minutos (`jogos-para-quem-so-tem-30-minutos-por-dia`) e retorno aos jogos (`como-voltar-a-um-jogo-depois-de-meses-sem-jogar`). Produção passou de 33 para 37 artigos. Os 33 artigos existentes de produção foram preservados integralmente, incluindo métricas reais (`views`, `curtidas`, `comentarios_count`), status e dados operacionais. Categorias e autores foram mapeados pelos registros oficiais de produção.
+
+Aplicada formalmente a migration `0006_add_post_type.sql` em produção via `scripts/migrate.php --target=production --only=0006_add_post_type.sql`, confirmando idempotência e registro no histórico oficial. As 16 imagens correspondentes aos quatro novos artigos (`capa.webp`, `img-001.webp`, `img-002.webp`, `img-003.webp`) foram enviadas ao FTP de produção em `uploads/posts/<slug>/images/`.
+
+Operação: `scripts/reels-review/promote-production-20261011.php` (`--inspect`, `--prepare`, `--apply`, `--verify`). Backup prévio imutável e pacote em `storage/production-content/promotion-20261011/` (`package.json`, `applied.json`, `verified.json` e cópias dos assets em `asset-*.bin`). Procedimento documentado em `scripts/README-content-sync.md`. O script reconecta a sessão de banco após o upload FTP para evitar timeout ocioso e executa a inserção em transação com lock e comparação de integridade.
+
+Validação: 37 registros finais confirmados no banco de produção; 16 hashes de imagens remotas validados via FTP; 4 páginas públicas `/post/<slug>` responderam HTTP 200 com capas corretas; 16 imagens públicas responderam HTTP 200 com tamanhos idênticos aos originais. Suíte de testes oficial executada e aprovada: 17 OK, 0 falhas. Forge: tarefas 1187–1190.
+
 ## Alinhamento do conteúdo de stage (11/10/2026)
 
 Produção usada como referência editorial dos 33 artigos existentes, com mais quatro artigos locais: terror pela atmosfera, som e medo, jogos para sessões de 30 minutos e retorno a um jogo após meses. Stage passou de 32 para 37 artigos. Copiado o comparativo publicado RTX 3050 × RX 6600; o rascunho de teste existente foi preservado. Alinhados textos, status, tipos, capas, metadados e próximos passos, incluindo o review independente do 5700X e a imagem adicional da Guerra Eterna.
