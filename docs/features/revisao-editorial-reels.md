@@ -1,3 +1,9 @@
+## Padrão geral — piloto 208 v3 (11/10/2026)
+
+Prévia aprovada pelo usuário: fundo grafite com textura e detalhes âmbar, marca acima, título forte, capa original central e chamada inferior. Perfil general-editorial-v1 inicialmente restrito ao 208. Fundo e prévia em resources/reels-review/assets/general/. Compositor general-scene.mjs reutiliza a seleção de imagens e o enquadramento proporcional existentes.
+
+Vídeo em 20 segundos, quatro textos de cinco segundos. A única capa original permanece contínua durante todo o vídeo, sem recriação, corte ou zoom. Roteiro, legenda, trilha e início do áudio preservados; fades de entrada e fechamento do renderer existentes. Versão anterior preservada. Banco, publicação e agendamento não alterados. Galeria leva02-bloco1-v3 usa reel-208-v3.mp4. Validação do piloto 208: suíte de 37 roteiros aprovada e suíte oficial com 17 OK, 0 falhas; MP4 1080×1920, 30 fps, H.264/AAC, 20 s, 600 quadros, faststart e decodificação integral sem erros. Outros 36 registros/vídeos preservados; documentação interna, galeria e vídeo locais com HTTP 200. Avaliação do vídeo final pelo usuário pendente.
+
 ## Terror — 231 v5 com grito da prévia aprovada (11/10/2026)
 
 ## Reel 231 v7 — tela preta e grito (11/10/2026)

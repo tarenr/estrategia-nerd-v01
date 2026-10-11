@@ -11,11 +11,13 @@ assert.deepEqual(catalog.cancelled,[191,192,193,194]);assert.equal(catalog.items
 assert.equal(new Set(catalog.items.map(i=>i.id)).size,37);assert.equal(catalog.publicationApproval,false);
 const counts=new Set(catalog.items.map(i=>i.spec.scenes.length));assert.ok(counts.has(3)&&counts.has(4)&&counts.has(5));
 const results=[];
+const isGeneral=i=>i.id===208&&i.spec.compositionProfile==='general-editorial-v1';
 const isTerrorGroup=i=>[229,231].includes(i.id)&&i.spec.compositionProfile==='terror-atmosphere-v1'&&i.spec.timingRevision==='terror-group-v1';
 const isTerrorRevision=i=>(i.id===230||isTerrorGroup(i))&&i.spec.compositionProfile==='terror-atmosphere-v1';
 if(catalog.items.some(isTerrorGroup)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-group-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isGeneral(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(!isTerrorGroup(item)){assert.deepEqual(item,old,'Registro fora do grupo de terror alterado');continue;}
   for(const key of ['status','scheduled','articleId','articleSlug','articleSha256','original','originalSha256','avatarReference'])assert.deepEqual(item[key],old[key]);
@@ -27,7 +29,7 @@ if(catalog.items.some(isTerrorGroup)){
   if(!impact)assert.equal(item.caption,old.caption+'\n\nMúsica: '+license.credit);
   else{
    const prior=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-impact-before/catalog.json'),'utf8')),previous=prior.items.find(i=>i.id===231);
-   for(const other of catalog.items.filter(i=>i.id!==231))assert.deepEqual(other,prior.items.find(i=>i.id===other.id),'Registro fora da montagem 231 alterado');
+   for(const other of catalog.items.filter(i=>i.id!==231&&!isGeneral(i)))assert.deepEqual(other,prior.items.find(i=>i.id===other.id),'Registro fora da montagem 231 alterado');
    assert.deepEqual(item.spec.scenes.map(s=>[s.image,s.framing]),previous.spec.scenes.map(s=>[s.image,s.framing]));
    const preserved=structuredClone(item.spec);for(const key of ['audio','musicRevision','scenes'])preserved[key]=previous.spec[key];
    if(blackout)delete preserved.visualStyle.blackout;
@@ -36,7 +38,7 @@ if(catalog.items.some(isTerrorGroup)){
    assert.ok(item.previousVersions.some(v=>v.video===previous.video&&v.sha256===previous.sha256));
    if(scream){
     const baseline=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-scream-before/catalog.json'),'utf8')),v4=baseline.items.find(i=>i.id===231);
-    for(const other of catalog.items.filter(i=>i.id!==231))assert.deepEqual(other,baseline.items.find(i=>i.id===other.id),'Outro registro alterado na troca pelo grito');
+    for(const other of catalog.items.filter(i=>i.id!==231&&!isGeneral(i)))assert.deepEqual(other,baseline.items.find(i=>i.id===other.id),'Outro registro alterado na troca pelo grito');
     const visual=structuredClone(item.spec);visual.audio=v4.spec.audio;visual.musicRevision=v4.spec.musicRevision;if(blackout)delete visual.visualStyle.blackout;assert.deepEqual(visual,v4.spec,'Visual/tempos alterados na troca pelo grito');
     const voice=JSON.parse(readFileSync(resolve(root,item.screamLicense),'utf8'));
     assert.equal(voice.author,'WuxiaScrub');assert.equal(voice.license,'CC0 1.0');assert.equal(voice.userAuditionApproved,true);
@@ -88,7 +90,7 @@ if(catalog.items.some(isTerrorGroup)){
    const photo=stage.layer.find('Image')[1];
    if(blackout){
     const baseline=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-blackout-before/catalog.json'),'utf8'));
-    for(const other of catalog.items.filter(i=>i.id!==231))assert.deepEqual(other,baseline.items.find(i=>i.id===other.id));
+    for(const other of catalog.items.filter(i=>i.id!==231&&!isGeneral(i)))assert.deepEqual(other,baseline.items.find(i=>i.id===other.id));
     const overlay=stage.layer.findOne('.terror-blackout');assert.ok(overlay);assert.equal(stage.layer.findOne('.terror-pulse'),undefined);
     let blackFrames=0;for(let frame=0;frame<600;frame++){stage.render(frame/30);assert.equal(overlay.opacity(),frame>=375&&frame<403?1:0);blackFrames+=overlay.opacity();}assert.equal(blackFrames,28);
     stage.render(400/30);const pixels=stage.layer.getCanvas()._canvas.getContext('2d').getImageData(0,0,1080,1920).data;
@@ -107,6 +109,7 @@ if(catalog.items.some(isTerrorGroup)){
 if(catalog.items.some(isTerrorRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-230-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isGeneral(item))continue;
   if(isTerrorGroup(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(!isTerrorRevision(item)){assert.deepEqual(item,old,'Registro fora do piloto de terror alterado');continue;}
@@ -114,7 +117,7 @@ if(catalog.items.some(isTerrorRevision)){
   assert.deepEqual(item.spec.scenes,old.spec.scenes);
   if(item.spec.musicRevision==='terror-house-of-leaves-v1'){
    const prior=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-audio-before/catalog.json'),'utf8'));
-   for(const other of catalog.items.filter(i=>i.id!==230&&!isTerrorGroup(i)))assert.deepEqual(other,prior.items.find(i=>i.id===other.id));
+   for(const other of catalog.items.filter(i=>i.id!==230&&!isTerrorGroup(i)&&!isGeneral(i)))assert.deepEqual(other,prior.items.find(i=>i.id===other.id));
    const pilot=prior.items.find(i=>i.id===230),license=JSON.parse(readFileSync(resolve(root,item.musicLicense),'utf8'));
    assert.equal(license.title,'The House of Leaves');assert.equal(license.license,'CC BY 4.0');
    assert.equal(createHash('sha256').update(readFileSync(resolve(root,license.path))).digest('hex'),license.sha256);
@@ -157,6 +160,7 @@ const isDiabloRevision=i=>(i.id===195||isDiabloGroup(i))&&i.spec.compositionProf
 if(catalog.items.some(isDiabloGroup)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/diablo-group-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isGeneral(item))continue;
   if(isTerrorRevision(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(!isDiabloGroup(item)){assert.deepEqual(item,old,'Registro fora do grupo Diablo alterado');continue;}
@@ -184,6 +188,7 @@ if(catalog.items.some(isDiabloGroup)){
 if(catalog.items.some(isDiabloRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/diablo-195-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isGeneral(item))continue;
   if(isTerrorRevision(item)||isDiabloGroup(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(!isDiabloRevision(item)){assert.deepEqual(item,old,'Outro registro alterado no Diablo 195');continue;}
@@ -234,6 +239,7 @@ const isListGroup=i=>[215,217,218,219,233].includes(i.id)&&i.spec.compositionPro
 if(catalog.items.some(isListGroup)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/list-group-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isGeneral(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(isTerrorRevision(item)||isDiabloRevision(item))continue;
   if(!isListGroup(item)){assert.deepEqual(item,old,'Outro registro alterado no grupo de listas');continue;}
@@ -260,6 +266,7 @@ const isListRevision=i=>i.id===205&&i.spec.compositionProfile==='list-central-v1
 if(catalog.items.some(isListRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/list-205-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isGeneral(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(isTerrorRevision(item)||isDiabloRevision(item)||isListGroup(item))continue;
   if(!isListRevision(item)){assert.deepEqual(item,old,'Outro registro alterado no Reel 205');continue;}
@@ -291,6 +298,7 @@ const isComparisonGroup=i=>[190,210,211].includes(i.id)&&i.spec.compositionProfi
 if(catalog.items.some(isComparisonGroup)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/comparison-group-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isGeneral(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(isTerrorRevision(item)||isDiabloRevision(item)||isListGroup(item)||isListRevision(item))continue;
   if(!isComparisonGroup(item)){assert.deepEqual(item,old,'Outro registro alterado no grupo de comparativos');continue;}
@@ -310,6 +318,7 @@ const isComparisonRevision=i=>i.id===206&&i.spec.compositionProfile==='compariso
 if(catalog.items.some(isComparisonRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/comparison-206-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isGeneral(item))continue;
   if(isTerrorRevision(item)||isDiabloRevision(item)||isListGroup(item)||isListRevision(item)||isComparisonGroup(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(!isComparisonRevision(item)){assert.deepEqual(item,old,'Outro registro alterado na revisão 206');continue;}
@@ -357,6 +366,7 @@ const isHardwareRevision=i=>[198,199,200,201,202,203].includes(i.id)&&i.spec.com
 if(catalog.items.some(isHardwareRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/hardware-198-203-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isGeneral(item))continue;
   if(isTerrorRevision(item)||isDiabloRevision(item)||isListGroup(item)||isListRevision(item)||isComparisonGroup(item)||isComparisonRevision(item)||isGuideRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
   const original=before.items.find(i=>i.id===item.id);
   if(!isHardwareRevision(item)){assert.deepEqual(item,original,'Outro registro alterado #'+item.id);continue;}
@@ -383,6 +393,7 @@ if(catalog.avatarRevision){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/avatar-before/corrections-20261010.json'),'utf8'));
  const ids=[196,229,232,234];
  for(const item of catalog.items){
+  if(isGeneral(item))continue;
   const original=before.items.find(i=>i.id===item.id);
   if(isTerrorRevision(item)||isDiabloRevision(item)||isListGroup(item)||isListRevision(item)||isComparisonGroup(item)||isComparisonRevision(item)||isGuideRevision(item)||isHardwareRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
   if(!ids.includes(item.id)){assert.deepEqual(item,original,'Registro fora do escopo alterado #'+item.id);continue;}
@@ -398,6 +409,20 @@ if(catalog.avatarRevision){
  }
  console.log('PASS: avatar em quatro Reels; roteiros, áudio, versões anteriores e demais 33 preservados.');
 }
+
+if(catalog.items.some(isGeneral)){
+ const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/general-208-before/catalog.json'),'utf8'));
+ for(const item of catalog.items){
+  const old=before.items.find(i=>i.id===item.id);
+  if(!isGeneral(item)){assert.deepEqual(item,old);continue;}
+  for(const key of ['caption','status','scheduled','articleId','articleSlug','articleSha256','original','originalSha256','trackId'])assert.deepEqual(item[key],old[key]);
+  for(const key of ['scenes','audio','audioStart'])assert.deepEqual(item.spec[key],old.spec[key]);
+  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(imageRuns(item.spec).length,1);
+  assert.ok(item.previousVersions.some(v=>v.sha256===old.sha256&&v.video===old.video));
+  const stage=await createScene(item.spec,root);try{stage.render(2.5);const image=stage.layer.find('Image')[1].image();for(const t of [5.2,10.2,15.2,19.9]){stage.render(t);assert.equal(stage.layer.find('Image')[1].image(),image);}assert.ok(stage.typography.every(t=>t.bodySize>=31));}finally{stage.destroy();}
+ }
+ console.log('PASS: piloto geral 208, capa original continua, textos de 5s, audio e outros 36 preservados.');
+}
 for(const item of catalog.items){
  const spec=item.spec;validateSpec(spec);assert.equal(spec.beatStarts.length,spec.scenes.length);
  assert.equal(manualState(spec,spec.duration-.1).index,spec.scenes.length-1);
@@ -407,7 +432,7 @@ for(const item of catalog.items){
   assert.equal(stage.typography.length,spec.scenes.length);
   assert.ok(stage.typography.every(t=>t.bodySize>=31),'Texto pequeno #'+item.id);
   const images=stage.layer.find('Image');
-  assert.equal(images.length,['hardware-product-v1','diagnostic-207-v1','diagnostic-guide-v1','comparison-206-v1','comparison-versus-v1','list-central-v1','diablo-duality-v1','terror-atmosphere-v1'].includes(spec.compositionProfile)?2:spec.compositionProfile==='196-v5'?1:imageRuns(spec).length);
+  assert.equal(images.length,['hardware-product-v1','diagnostic-207-v1','diagnostic-guide-v1','comparison-206-v1','comparison-versus-v1','list-central-v1','diablo-duality-v1','terror-atmosphere-v1','general-editorial-v1'].includes(spec.compositionProfile)?2:spec.compositionProfile==='196-v5'?1:imageRuns(spec).length);
   if(imageRuns(spec).length===1){for(const time of spec.beatStarts.slice(1)){
    stage.render(time-.05);const before=images[0].width();stage.render(time+.05);
    assert.equal(images[0].width(),before,'Imagem reiniciou #'+item.id);assert.equal(images[0].getParent().opacity(),1);

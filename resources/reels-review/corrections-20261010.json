@@ -3538,14 +3538,14 @@
         "collection": "EM FOCO",
         "layout": "dispatch",
         "tone": "fantasy",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_10376.mp3",
         "audioStart": 45,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -3589,20 +3589,104 @@
             }
           }
         ],
-        "presentation": "story"
+        "presentation": "story",
+        "reviewPostId": 208,
+        "compositionProfile": "general-editorial-v1",
+        "visualStyle": {
+          "background": "resources/reels-review/assets/general/background-v1.png",
+          "reference": "resources/reels-review/assets/general/preview-208-v1.png",
+          "headlines": [
+            "Geralt\nretorna",
+            "Para proprietários\nelegíveis",
+            "Confira a sua\nplataforma",
+            "Volte ao\nCaminho"
+          ],
+          "subtitles": [
+            "The Witcher 3\nem uma nova versão",
+            "O upgrade depende\ndas condições",
+            "Recursos e\ndisponibilidade",
+            "Confira as novidades\nno blog"
+          ]
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-208-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-208-v2.jpg",
-      "sha256": "047de7825ae1b9820c616a56a6df61ce0d963b326bdc70b65384225eacde2160",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-208-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-208-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-208-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-208-v1.jpg",
           "sha256": "5b9383f3ca2bf91125b85030c2633a52c1a2d40f76a2ee668e9935284b12f077"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-208-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-208-v2.jpg",
+          "sha256": "047de7825ae1b9820c616a56a6df61ce0d963b326bdc70b65384225eacde2160",
+          "spec": {
+            "articleId": 29,
+            "articleTitle": "The Witcher 3: Wild Hunt Remastered: novidades e condições do upgrade gratuito",
+            "category": "games",
+            "editorial": "manual",
+            "collection": "EM FOCO",
+            "layout": "dispatch",
+            "tone": "fantasy",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_10376.mp3",
+            "audioStart": 45,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "The Witcher 3 Remastered",
+                "title": "Geralt retorna",
+                "body": "A versão aprimorada foi lançada em 29 de setembro de 2026.",
+                "image": "public/uploads/posts/the-witcher-3-wild-hunt-remastered-chega-gr-atis-dia-29-de-setembro/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Condições do upgrade",
+                "title": "Para proprietários elegíveis",
+                "body": "O upgrade é gratuito dentro do mesmo ecossistema de plataforma.",
+                "image": "public/uploads/posts/the-witcher-3-wild-hunt-remastered-chega-gr-atis-dia-29-de-setembro/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antes de instalar",
+                "title": "Confira a sua plataforma",
+                "body": "Recursos e disponibilidade precisam ser conferidos nos canais oficiais.",
+                "image": "public/uploads/posts/the-witcher-3-wild-hunt-remastered-chega-gr-atis-dia-29-de-setembro/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Acompanhe a atualização",
+                "title": "Volte ao Caminho",
+                "body": "Confira as novidades e as condições do upgrade no artigo completo.",
+                "image": "public/uploads/posts/the-witcher-3-wild-hunt-remastered-chega-gr-atis-dia-29-de-setembro/images/capa.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "story"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "sha256": "f872c71a22a7698a9dadb1440bba3b0c20e890bc693350eeb8b7fc346aab69fc"
     },
     {
       "id": 209,
