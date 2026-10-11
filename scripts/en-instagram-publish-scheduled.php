@@ -22,6 +22,7 @@ require_once __DIR__ . '/../bootstrap.php';
 use App\Repositories\InstagramPostRepository;
 use App\Services\Instagram\AudioReelGeneratorService;
 use App\Services\Instagram\InstagramApiService;
+use App\Services\Instagram\InstagramFeedPublisher;
 use App\Services\Instagram\InstagramPublishConfirmationService;
 
 // ── Configuração de Logs ──────────────────────────────────────────────────────
@@ -40,6 +41,75 @@ function ig_log(string $level, string $message): void
     $line = '[' . date('Y-m-d H:i:s') . '] [' . strtoupper($level) . '] ' . $message . PHP_EOL;
     file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
     echo $line;
+}
+
+/**
+ * Executa outro script PHP do projeto em processo separado (falha ali nunca derruba este agendador).
+ *
+ * @param list<string> $args
+ */
+function ig_run_php(string $script, array $args = []): int
+{
+    $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(dirname(__DIR__) . '/' . $script);
+    foreach ($args as $arg) {
+        $command .= ' ' . escapeshellarg($arg);
+    }
+    $output = [];
+    $code   = 1;
+    exec($command . ' 2>&1', $output, $code);
+    foreach (array_slice($output, -3) as $line) {
+        ig_log($code === 0 ? 'info' : 'error', '[' . basename($script) . '] ' . trim($line));
+    }
+
+    return $code;
+}
+
+/**
+ * Mantém o feed público do site em dia: sincroniza com a Meta (capas, cache e posts apagados) e
+ * envia o resultado para a Producao. Isolado: falha aqui nunca altera o resultado da publicação.
+ * Desativar: criar storage/instagram-feed-publish/auto.disabled.
+ */
+function ig_feed_maintenance(bool $publishedNow): void
+{
+    try {
+        $root = dirname(__DIR__);
+        if (is_file($root . '/storage/instagram-feed-publish/auto.disabled')) {
+            return;
+        }
+
+        $state       = InstagramFeedPublisher::readState($root);
+        $now         = time();
+        $lastSync    = (int) strtotime((string) (((array) ($state['sync'] ?? []))['at'] ?? ''));
+        $lastPublish = (int) strtotime((string) ($state['last_publish_at'] ?? ''));
+        if ($publishedNow) {
+            $lastPublish = $now;
+            $state['last_publish_at'] = date('c', $now);
+        }
+
+        // Sync: logo após publicar, a cada 10 min por 30 min (a Meta demora a listar a mídia nova) e de hora em hora.
+        $due = $publishedNow
+            || ($now - $lastSync) >= 3600
+            || (($now - $lastPublish) <= 1800 && ($now - $lastSync) >= 600);
+        if ($due) {
+            ig_log('info', 'Feed público: sincronizando com a Meta...');
+            $code = ig_run_php('scripts/sync-instagram-feed-assets.php', ['--only-missing']);
+            $state['sync'] = ['at' => date('c'), 'exit' => $code];
+            InstagramFeedPublisher::writeState($root, $state);
+            if ($code !== 0) {
+                ig_log('error', 'Feed público: sync falhou; envio adiado.');
+
+                return;
+            }
+        }
+
+        if (InstagramFeedPublisher::needsPublish($root, 'production')) {
+            ig_log('info', 'Feed público: enviando para a produção...');
+            $code = ig_run_php('scripts/en-instagram-publish-feed.php', ['production']);
+            ig_log($code === 0 ? 'info' : 'warn', 'Feed público: envio ' . ($code === 0 ? 'concluído.' : 'pendente; nova tentativa no próximo ciclo.'));
+        }
+    } catch (Throwable $e) {
+        ig_log('error', 'Feed público: falha na manutenção (' . $e->getMessage() . ').');
+    }
 }
 
 // ── Lock Global de Processo ───────────────────────────────────────────────────
@@ -105,6 +175,7 @@ try {
 
 if (empty($duePosts)) {
     ig_log('info', 'Nenhum post agendado pendente. Saindo.');
+    ig_feed_maintenance(false);
     flock($lock, LOCK_UN);
     fclose($lock);
     exit(0);
@@ -284,6 +355,8 @@ foreach ($duePosts as $post) {
 
 // ── Relatório Final ───────────────────────────────────────────────────────────
 ig_log('info', "=== Fim da execução: {$published} publicados, {$errors} erros, {$pending} aguardando confirmação ===");
+
+ig_feed_maintenance($published > 0);
 
 flock($lock, LOCK_UN);
 fclose($lock);

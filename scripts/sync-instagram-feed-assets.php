@@ -15,7 +15,11 @@ require_once __DIR__ . '/../bootstrap.php';
 
 use App\Repositories\InstagramPostRepository;
 use App\Services\Instagram\InstagramApiService;
+use App\Services\Instagram\InstagramFeedReconciler;
 use App\Services\Site\InstagramFeedService;
+
+// --only-missing: modo automatico; so baixa capas que ainda nao existem em disco (sem rebaixar as ~92 a cada rodada).
+$onlyMissing = in_array('--only-missing', $argv ?? [], true);
 
 /** @var \PDO $pdo */
 $pdo = $GLOBALS['pdo'];
@@ -91,6 +95,23 @@ foreach ($apiItems as $item) {
 }
 echo "Total de posts sincronizados/atualizados no banco: {$upsertCount}\n\n";
 
+echo "=== 2b. Reconciliando posts apagados no Instagram ===\n";
+// A Meta e a fonte da verdade: post "publicado" que sumiu da listagem completa vira "cancelado"
+// e deixa de aparecer no feed (listPublished so devolve status 'publicado').
+$reconcile = InstagramFeedReconciler::findOrphans(
+    $repo->listPublished((int) $account['id'], 100000),
+    array_keys($apiMapByIgId)
+);
+if ($reconcile['aborted'] !== null) {
+    echo "Aviso: " . $reconcile['aborted'] . "\n\n";
+} elseif ($reconcile['orphans'] === []) {
+    echo "Nenhum post publicado ausente da Meta.\n\n";
+} else {
+    $note = '[' . date('Y-m-d H:i:s') . '] Removido do Instagram (ausente da listagem da Meta); status anterior: publicado.';
+    $cancelled = $repo->markRemovedFromInstagram($reconcile['orphans'], $note);
+    echo "Posts cancelados por ausencia na Meta: {$cancelled} (ids: " . implode(', ', $reconcile['orphans']) . ")\n\n";
+}
+
 echo "=== 3. Baixando e persistindo capas em public/assets/instagram-feed/ ===\n";
 $targetDir = base_path('public/assets/instagram-feed');
 if (!is_dir($targetDir)) {
@@ -134,6 +155,12 @@ foreach ($published as $index => $post) {
 
     $num = $index + 1;
     echo sprintf("[%02d/%02d] Post #%d (%s): ", $num, $total, $postId, $post['tipo']);
+
+    if ($onlyMissing && is_file($targetFile) && filesize($targetFile) > 1000) {
+        echo "EXISTENTE (mantido)\n";
+        $reusedCount++;
+        continue;
+    }
 
     // Se já temos a imagem válida em disco e tem mais de 2KB, mantemos ou atualizamos
     if ($imageUrl !== '') {

@@ -418,6 +418,32 @@ final class InstagramPostRepository
     }
 
     /**
+     * Cancela posts publicados que já não existem no Instagram (apagados na plataforma).
+     * Só toca em status 'publicado'; preserva ig_media_id e acrescenta a nota em error_log.
+     *
+     * @param list<int> $ids
+     */
+    public function markRemovedFromInstagram(array $ids, string $note): int
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)));
+        if ($ids === []) {
+            return 0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->pdo->prepare(
+            "UPDATE instagram_posts
+                SET status        = 'cancelado',
+                    error_log     = CONCAT_WS(CHAR(10), NULLIF(error_log, ''), ?),
+                    atualizado_em = NOW()
+              WHERE status = 'publicado' AND id IN ($placeholders)"
+        );
+        $stmt->execute(array_merge([$note], $ids));
+
+        return $stmt->rowCount();
+    }
+
+    /**
      * Marca um post como erro e registra a mensagem.
      */
     public function markError(int $id, string $errorMessage): bool
