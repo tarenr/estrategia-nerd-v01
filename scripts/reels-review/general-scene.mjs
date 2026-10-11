@@ -5,7 +5,7 @@ import {resolve} from 'node:path';
 import {manualState,imageRuns,framingGeometry} from './scene.mjs';
 
 export async function createGeneralScene(spec,root){
-  if(spec.reviewPostId!==208||spec.compositionProfile!=='general-editorial-v1'||spec.duration!==20||spec.scenes.length!==4||spec.beatStarts.some((t,i)=>t!==i*5))throw new Error('Padrão geral fora do escopo aprovado.');
+  if(![208,216,232,234].includes(spec.reviewPostId)||spec.compositionProfile!=='general-editorial-v1'||spec.duration!==20||spec.scenes.length!==4||spec.beatStarts.some((t,i)=>t!==i*5))throw new Error('Padrão geral fora do escopo aprovado.');
   FontLibrary.use('EN General Display','C:/Windows/Fonts/impact.ttf');
   FontLibrary.use('EN General Body',resolve(root,'resources/reels-konva/fonts/Inter.ttf'));
   const runs=imageRuns(spec);
@@ -17,7 +17,7 @@ export async function createGeneralScene(spec,root){
   const text=(value,attrs)=>{const node=new Konva.Text({text:value,fontFamily:'EN General Display',fill:'#f5f0e4',align:'center',shadowColor:'#000',shadowBlur:10,listening:false,...attrs});layer.add(node);return node;};
   const fit=(node,height,max,min)=>{for(let size=max;size>=min;size-=2){node.fontSize(size);if(node.height()<=height)return size;}throw new Error('Texto geral não cabe: '+node.text());};
   text('ESTRATÉGIA\nNERD',{x:90,y:72,width:900,fontSize:43,lineHeight:1.07});
-  text('EM FOCO',{x:90,y:214,width:900,fontFamily:'EN General Body',fontSize:30,fill:'#ffc044'});
+  text(spec.visualStyle.collection??'EM FOCO',{x:90,y:214,width:900,fontFamily:'EN General Body',fontSize:30,fill:'#ffc044'});
   const header=text('',{x:80,y:290,width:920,fontSize:174,lineHeight:1.02});
   const frame={x:54,y:715,width:972,height:546.75};
   layer.add(new Konva.Rect({x:49,y:710,width:982,height:557,stroke:'#c7a66b',strokeWidth:3,listening:false}));
@@ -25,7 +25,7 @@ export async function createGeneralScene(spec,root){
   const subtitle=text('',{x:75,y:1358,width:930,fontSize:85,lineHeight:1.23});
   const body=text('',{x:95,y:1580,width:890,fontFamily:'EN General Body',fontSize:35,lineHeight:1.2});
   layer.add(new Konva.Line({points:[415,1710,665,1710],stroke:'#c7a66b',strokeWidth:3,listening:false}));
-  text('CONFIRA NO BLOG · LINK NA BIO',{x:80,y:1742,width:920,fontFamily:'EN General Body',fontSize:27});
+  text(spec.visualStyle.footer??'CONFIRA NO BLOG · LINK NA BIO',{x:80,y:1742,width:920,fontFamily:'EN General Body',fontSize:27});
   let active=-1,activeImage=-1;const typography=[];
   function render(time){
     const state=manualState(spec,time);

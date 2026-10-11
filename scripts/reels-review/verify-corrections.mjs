@@ -11,7 +11,7 @@ assert.deepEqual(catalog.cancelled,[191,192,193,194]);assert.equal(catalog.items
 assert.equal(new Set(catalog.items.map(i=>i.id)).size,37);assert.equal(catalog.publicationApproval,false);
 const counts=new Set(catalog.items.map(i=>i.spec.scenes.length));assert.ok(counts.has(3)&&counts.has(4)&&counts.has(5));
 const results=[];
-const isGeneral=i=>i.id===208&&i.spec.compositionProfile==='general-editorial-v1';
+const isGeneral=i=>[208,216,232,234].includes(i.id)&&i.spec.compositionProfile==='general-editorial-v1';
 const isTerrorGroup=i=>[229,231].includes(i.id)&&i.spec.compositionProfile==='terror-atmosphere-v1'&&i.spec.timingRevision==='terror-group-v1';
 const isTerrorRevision=i=>(i.id===230||isTerrorGroup(i))&&i.spec.compositionProfile==='terror-atmosphere-v1';
 if(catalog.items.some(isTerrorGroup)){
@@ -411,18 +411,22 @@ if(catalog.avatarRevision){
 }
 
 if(catalog.items.some(isGeneral)){
- const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/general-208-before/catalog.json'),'utf8'));
+ const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/general-package-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
   const old=before.items.find(i=>i.id===item.id);
   if(!isGeneral(item)){assert.deepEqual(item,old);continue;}
-  for(const key of ['caption','status','scheduled','articleId','articleSlug','articleSha256','original','originalSha256','trackId'])assert.deepEqual(item[key],old[key]);
-  for(const key of ['scenes','audio','audioStart'])assert.deepEqual(item.spec[key],old.spec[key]);
-  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(imageRuns(item.spec).length,1);
+  for(const key of ['status','scheduled','articleId','articleSlug','articleSha256','original','originalSha256'])assert.deepEqual(item[key],old[key]);
+  assert.deepEqual(item.spec.scenes.map(s=>[s.image,s.eyebrow,s.title,s.body,s.framing?.region]),old.spec.scenes.map(s=>[s.image,s.eyebrow,s.title,s.body,s.framing?.region]));
+  if(item.id===208){const preserved=structuredClone(item.spec);preserved.audio=old.spec.audio;preserved.audioStart=old.spec.audioStart;delete preserved.musicRevision;assert.deepEqual(preserved,old.spec);assert.equal(item.spec.audio,'public/uploads/audio/pixabay_239599.mp3');assert.equal(item.spec.audioStart,20);assert.equal(item.caption,old.caption);}
+  else if(item.id===216){const license=JSON.parse(readFileSync(resolve(root,item.musicLicense),'utf8'));assert.equal(license.title,'Five Armies');assert.equal(license.license,'CC BY 4.0');assert.equal(license.userApproved,true);assert.equal(item.spec.audio,license.path);assert.equal(item.spec.audioStart,45);assert.equal(createHash('sha256').update(readFileSync(resolve(root,license.path))).digest('hex'),license.sha256);assert.equal(item.caption,old.caption+'\n\nMúsica: '+license.credit);}
+  else{for(const key of ['audio','audioStart'])assert.equal(item.spec[key],old.spec[key]);assert.equal(item.caption,old.caption);assert.equal(item.trackId,old.trackId);}
+  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);const runs=imageRuns(item.spec);assert.equal(runs.length,item.id===208?1:4);for(const run of runs)assert.equal(run.end-run.start,20/runs.length);
   assert.ok(item.previousVersions.some(v=>v.sha256===old.sha256&&v.video===old.video));
-  const stage=await createScene(item.spec,root);try{stage.render(2.5);const image=stage.layer.find('Image')[1].image();for(const t of [5.2,10.2,15.2,19.9]){stage.render(t);assert.equal(stage.layer.find('Image')[1].image(),image);}assert.ok(stage.typography.every(t=>t.bodySize>=31));}finally{stage.destroy();}
+  const stage=await createScene(item.spec,root);try{const photo=stage.layer.find('Image')[1];for(const run of runs){stage.render(run.start+.25);const image=photo.image(),crop=photo.crop();stage.render(run.end-1/30);assert.equal(photo.image(),image);assert.deepEqual(photo.crop(),crop);assert.ok(Math.abs(photo.width()/photo.height()-crop.width/crop.height)<1e-8);}assert.ok(stage.typography.every(t=>t.bodySize>=31));}finally{stage.destroy();}
  }
- console.log('PASS: piloto geral 208, capa original continua, textos de 5s, audio e outros 36 preservados.');
+ console.log('PASS: pacote geral 208/216/232/234; trilhas aprovadas, tempos iguais por imagem, visual208 e outros33 preservados.');
 }
+
 for(const item of catalog.items){
  const spec=item.spec;validateSpec(spec);assert.equal(spec.beatStarts.length,spec.scenes.length);
  assert.equal(manualState(spec,spec.duration-.1).index,spec.scenes.length-1);

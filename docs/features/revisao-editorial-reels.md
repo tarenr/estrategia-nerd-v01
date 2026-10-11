@@ -1,3 +1,11 @@
+## Pacote geral final — 208, 216, 232 e 234 (11/10/2026)
+
+Entregas: reel-208-v4.mp4, reel-216-v2.mp4, reel-232-v4.mp4 e reel-234-v4.mp4, com capas, contatos e manifestos. Validação: 37 roteiros aprovados; suíte oficial com 17 OK e 0 falhas; os quatro MP4s em 1080×1920/30 fps, H.264/AAC, 20 s e 600 quadros, faststart e decodificação integral sem erros. Áudio presente até o fechamento; hash dos quadros decodificados do 208 idêntico ao da versão anterior. Outros 33 registros/vídeos e versões anteriores preservados por comparação de hashes. Evidência: storage/correcao-instagram-20261010/general-package-validation.json.
+
+Trilhas avaliadas pelo usuário antes da aplicação: 208 usa Fantasy Medieval Epic Music a partir de 20 s; 216 usa Five Armies, Kevin MacLeod, a partir de 45 s (CC BY 4.0, crédito na legenda). As músicas existentes de 232 (Sunset Vibes, 15 s) e 234 (The Arcade City, 8 s) foram aprovadas e preservadas. Fonte e licença de Five Armies em resources/reels-review/assets/general/audio/. Não é a trilha original do CS:GO.
+
+O 208 mantém integralmente a composição aprovada, com troca somente sonora. Os três restantes usam o padrão grafite/âmbar e avaliação individual dos textos e artes. O 216 mostra quatro imagens originais do artigo, proporcionais e inteiras; 232 e 234 preservam os quatro painéis das artes existentes, com chamadas de interação próprias em vez de chamada para blog. Cada vídeo dura 20 segundos, com quatro textos de 5 s. Capa única do 208 contínua; quatro imagens/painéis dos demais com 5 s cada. Sem recriação das imagens. Versões anteriores preservadas; sem mudanças de banco, agendamento ou publicação. Avaliação dos novos vídeos pelo usuário pendente.
+
 ## Padrão geral — piloto 208 v3 (11/10/2026)
 
 Prévia aprovada pelo usuário: fundo grafite com textura e detalhes âmbar, marca acima, título forte, capa original central e chamada inferior. Perfil general-editorial-v1 inicialmente restrito ao 208. Fundo e prévia em resources/reels-review/assets/general/. Compositor general-scene.mjs reutiliza a seleção de imagens e o enquadramento proporcional existentes.
