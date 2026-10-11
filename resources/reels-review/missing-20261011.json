@@ -1,13 +1,7 @@
 {
   "version": 1,
   "publicationApproval": false,
-  "pending": [
-    {
-      "articleId": 43,
-      "environment": "production",
-      "reason": "Artigo 43 corrigido em produção como review independente e capa no padrão do blog. Reel ainda não produzido; música Meteor Shower aprovada. Navegação inferior cronológica requer definição de escopo separado."
-    }
-  ],
+  "pending": [],
   "items": [
     {
       "id": 235,
@@ -123,6 +117,108 @@
       "audioSha256": "abcc804f811ac9734283c818fee60432226e476300056b210b4f5811f46bf258",
       "sha256": "3ba05d03892d7b05854cff377e450a1c879d8c0996c65220d4f8609c1be22769",
       "instagramPostId": 243
+    },
+    {
+      "id": 244,
+      "articleId": 43,
+      "title": "AMD Ryzen 7 5700X: review na plataforma AM4",
+      "articleSlug": "amd-ryzen-7-5700x-desempenho-real-no-meu-setup",
+      "originEnvironment": "production",
+      "type": "product",
+      "status": "rascunho",
+      "caption": "Ryzen 7 5700X: oito núcleos e dezesseis threads na plataforma AM4. Antes de um upgrade, confira compatibilidade da placa-mãe e BIOS, DDR4, refrigeração e o custo do conjunto. Review independente, sem resultados de testes próprios. Leia no blog — link na bio.\n\n#EstratégiaNerd #Hardware #Ryzen #AM4 #PCGamer\n\nCapa e composição visual adaptadas da foto de Qurren: https://commons.wikimedia.org/wiki/File:AMD_Ryzen_7_5700X_1.jpg — CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/. Cenário criado com IA; adaptação visual compartilhada sob a mesma licença.",
+      "trackId": 5,
+      "state": "ready",
+      "spec": {
+        "articleId": 43,
+        "articleTitle": "AMD Ryzen 7 5700X: review na plataforma AM4",
+        "category": "hardware",
+        "editorial": "manual",
+        "collection": "DENTRO DO SEU SETUP",
+        "layout": "showcase",
+        "tone": "tech",
+        "duration": 20,
+        "audio": "public/uploads/audio/pixabay_141278.mp3",
+        "audioStart": 20,
+        "beatStarts": [
+          0,
+          5,
+          10,
+          15
+        ],
+        "scenes": [
+          {
+            "eyebrow": "Ryzen 7 5700X",
+            "title": "Oito núcleos. Dezesseis threads.",
+            "body": "Um processador Zen 3 para a plataforma AM4.",
+            "image": "public/uploads/posts/amd-ryzen-7-5700x-desempenho-real-no-meu-setup/images/capa-cenario-45b652ce257b.png",
+            "framing": {
+              "mode": "cover",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Antes do upgrade",
+            "title": "Confira a compatibilidade",
+            "body": "Verifique a placa-mãe, a BIOS exigida e a memória DDR4.",
+            "image": "public/uploads/posts/amd-ryzen-7-5700x-desempenho-real-no-meu-setup/images/capa-cenario-45b652ce257b.png",
+            "framing": {
+              "mode": "cover",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Planeje o conjunto",
+            "title": "Cooler e GPU também contam",
+            "body": "O 5700X não tem vídeo integrado nem cooler na versão boxed.",
+            "image": "public/uploads/posts/amd-ryzen-7-5700x-desempenho-real-no-meu-setup/images/capa-cenario-45b652ce257b.png",
+            "framing": {
+              "mode": "cover",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Uma escolha com contexto",
+            "title": "Vale para o seu PC?",
+            "body": "Compare o custo do upgrade e os programas que você utiliza.",
+            "image": "public/uploads/posts/amd-ryzen-7-5700x-desempenho-real-no-meu-setup/images/capa-cenario-45b652ce257b.png",
+            "framing": {
+              "mode": "cover",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "product",
+        "compositionProfile": "hardware-product-v1",
+        "reviewPostId": 244,
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/hardware-product-background-v1.png"
+        }
+      },
+      "video": "uploads/reels/novos-20261011/reel-244-v1.mp4",
+      "poster": "uploads/reels/novos-20261011/reel-244-v1.jpg",
+      "sources": [
+        {
+          "file": "public/uploads/posts/amd-ryzen-7-5700x-desempenho-real-no-meu-setup/images/capa-cenario-45b652ce257b.png",
+          "sha256": "45b652ce257b5695fcfb002c86e2c30b1d175390ef878bb317c07c23b7ec3668"
+        },
+        {
+          "file": "public/uploads/posts/amd-ryzen-7-5700x-desempenho-real-no-meu-setup/images/capa-cenario-45b652ce257b.png",
+          "sha256": "45b652ce257b5695fcfb002c86e2c30b1d175390ef878bb317c07c23b7ec3668"
+        },
+        {
+          "file": "public/uploads/posts/amd-ryzen-7-5700x-desempenho-real-no-meu-setup/images/capa-cenario-45b652ce257b.png",
+          "sha256": "45b652ce257b5695fcfb002c86e2c30b1d175390ef878bb317c07c23b7ec3668"
+        },
+        {
+          "file": "public/uploads/posts/amd-ryzen-7-5700x-desempenho-real-no-meu-setup/images/capa-cenario-45b652ce257b.png",
+          "sha256": "45b652ce257b5695fcfb002c86e2c30b1d175390ef878bb317c07c23b7ec3668"
+        }
+      ],
+      "audioSha256": "8fa6381631b6ae1c470b5223d36a2625dae208afc3d400cba2fae4fb5f9510b9",
+      "sha256": "36de783a1b807fa1e13dfbee57ffa49ff4cdbcc462bf26f585f717b77d484a6d",
+      "instagramPostId": 244,
+      "visualLicense": "CC BY-SA 4.0"
     }
   ]
 }

@@ -1,6 +1,14 @@
+## Dois Reels faltantes renderizados — 243 e 244 (11/10/2026)
+
+Rascunho local #243: artigo local 80, retorno aos jogos, arquivo reel-235-v1.mp4 (235 identifica a composição). Rascunho local #244: artigo de produção 43, review independente do Ryzen 7 5700X, arquivo reel-244-v1.mp4. Galeria: public/uploads/reels/novos-20261011/gallery.html. Ambos em 20 s, 1080×1920/30 fps, H.264/AAC; quatro textos de 5 s. O artigo 80 usa quatro imagens originais de 5 s; o 5700X usa sua única capa continuamente por 20 s, sem inventar novas fotos de produto.
+
+Trilhas aprovadas antes da renderização: Fantasy Medieval Epic Music para #243 e Meteor Shower para #244, ambas a partir de 20 s. Arte do 5700X corresponde à nova capa do blog no padrão ciano/dourado; fonte real Qurren, composição de cenário por imagegen, licença CC BY-SA 4.0 e crédito na legenda. Tipo independente de review, sem alegações de uso pessoal ou resultados de testes próprios. Manifestos, capas, contatos e hashes no catálogo missing-20261011.json.
+
+Validação dos dois MP4s: decodificação integral, áudio AAC, duração de 20 s, moov antes de mdat, hashes das fontes preservados; 37 vídeos anteriores preservados por SHA-256 e suíte de 37 roteiros aprovada; suíte oficial com 17 OK, 0 falhas. Galeria, documentação interna e arquivos locais HTTP 200. Cadastro idempotente pelos mecanismos oficiais nas tabelas locais instagram_posts/instagram_post_media; chave por ambiente e artigo. Sem agendamento ou publicação. Avaliação visual final dos dois novos Reels pelo usuário pendente. Roteiro do próximo vídeo não altera a pendência de navegação cronológica descrita abaixo.
+
 ## Review 5700X corrigido em produção (11/10/2026)
 
-Artigo 43 mantido publicado como review independente, sem alegações de uso no PC do autor; título, resumo, texto, SEO, tipo review e capa corrigidos. Proximo_post_id=32 aponta para AM4 ou AM5 em 2026. Capa no padrão ciano/dourado em 1200×800, com referência real do 5700X e crédito/licença no artigo. Validação pública e na interface, preservação dos outros artigos e suíte oficial com 17 OK, 0 falhas. Procedimento e recuperação documentados em artes-hardware.md. Reel do 5700X ainda não produzido; música Meteor Shower já aprovada. Botão inferior “Próximo post” segue a regra cronológica e ainda mostra B650; alteração da regra de navegação pendente de escopo próprio.
+Artigo 43 mantido publicado como review independente, sem alegações de uso no PC do autor; título, resumo, texto, SEO, tipo review e capa corrigidos. Proximo_post_id=32 aponta para AM4 ou AM5 em 2026. Capa no padrão ciano/dourado em 1200×800, com referência real do 5700X e crédito/licença no artigo. Validação pública e na interface, preservação dos outros artigos e suíte oficial com 17 OK, 0 falhas. Procedimento e recuperação documentados em artes-hardware.md. Reel do 5700X produzido como rascunho #244 com Meteor Shower aprovada. Botão inferior “Próximo post” segue a regra cronológica e ainda mostra B650; alteração da regra de navegação pendente de escopo próprio.
 
 ## Artigos faltantes — retorno aos jogos (11/10/2026)
 
