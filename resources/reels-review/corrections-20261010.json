@@ -2385,11 +2385,12 @@
         "compositionProfile": "comparison-206-v1",
         "visualStyle": {
           "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-206-v3-background.png"
-        }
+        },
+        "typographyRevision": "206-v4"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-206-v3.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-206-v3.jpg",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-206-v4.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-206-v4.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-206-v1.mp4",
@@ -2465,9 +2466,84 @@
             ],
             "presentation": "comparison"
           }
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-206-v3.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-206-v3.jpg",
+          "sha256": "0b76615def6049b381baf8a4e283012931e3054a51b3bc8634347c04d7582bd9",
+          "spec": {
+            "articleId": 26,
+            "articleTitle": "RTX 3050 vs RX 6600: Qual Vale Mais a Pena em 2026?",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "ESCOLHAS PARA SEU PC",
+            "layout": "versus",
+            "tone": "tech",
+            "duration": 20,
+            "audio": "public/uploads/audio/pixabay_511038.mp3",
+            "audioStart": 40,
+            "beatStarts": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "scenes": [
+              {
+                "eyebrow": "GPUs para Full HD",
+                "title": "RTX 3050 ou RX 6600?",
+                "body": "Compare o modelo exato, o preço e os jogos que você usa.",
+                "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O nome não conta tudo",
+                "title": "Qual RTX 3050?",
+                "body": "As versões de 6 e 8 GB são diferentes. Não trate as duas como a mesma placa.",
+                "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Seu uso muda a escolha",
+                "title": "Jogos e recursos",
+                "body": "Desempenho, consumo e recursos precisam entrar na comparação.",
+                "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antes da compra",
+                "title": "Compare preços e modelos",
+                "body": "A escolha depende da oferta real e da configuração. Veja a análise no blog.",
+                "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "comparison": [
+              "RTX 3050",
+              "RX 6600"
+            ],
+            "presentation": "comparison",
+            "reviewPostId": 206,
+            "compositionProfile": "comparison-206-v1",
+            "visualStyle": {
+              "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-206-v3-background.png"
+            }
+          }
         }
       ],
-      "revision": 3,
+      "revision": 4,
       "comparisonRevision": {
         "approvedPreview": "exec-3e3afa46-1660-42fe-b7c8-a7b0b8455e9e.png",
         "singleOriginalCover": true,
@@ -2475,7 +2551,7 @@
         "audioSourcePreserved": true,
         "queueChanged": false
       },
-      "sha256": "0b76615def6049b381baf8a4e283012931e3054a51b3bc8634347c04d7582bd9"
+      "sha256": "4858f1fe466f97c4c1f9a428931ea3e0d818aa2a9b36ab25ed6dbc9ed3799c48"
     },
     {
       "id": 207,

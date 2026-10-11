@@ -22,6 +22,13 @@ if(catalog.items.some(isComparisonRevision)){
   item.spec.scenes.forEach((s,n)=>{for(const key of ['eyebrow','title','body','image'])assert.equal(s[key],old.spec.scenes[n][key]);});
   assert.equal(new Set(item.spec.scenes.map(s=>s.image)).size,1);
   assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
+  if(item.spec.typographyRevision==='206-v4'){
+   const previous=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/comparison-206-v4-before/catalog.json'),'utf8'));
+   const v3=previous.items.find(i=>i.id===206);
+   const preservedSpec={...item.spec};delete preservedSpec.typographyRevision;
+   assert.deepEqual(preservedSpec,v3.spec,'Alteração visual deve preservar fundo, cenas e áudio');
+   assert.ok(item.previousVersions.some(v=>v.video===v3.video&&v.sha256===v3.sha256));
+  }
   await assert.rejects(()=>createScene({...item.spec,reviewPostId:210},root),/fora do escopo/);
  }
  console.log('PASS: comparativo 206 com capa original, quatro textos e áudio preservados; demais 36 intactos.');

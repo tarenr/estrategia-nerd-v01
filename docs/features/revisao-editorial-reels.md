@@ -1,4 +1,10 @@
-## Comparativo 206 — versão 3 com fundo versus (10/10/2026)
+## Tipografia do comparativo 206 — versão 4 (10/10/2026)
+
+Revisão exclusivamente visual dos títulos: Arial Black do Windows, tamanho ajustado sem cortes, duas linhas com destaques ciano/âmbar, gradiente discreto, contorno escuro e sombra. Cada linha faz uma entrada lateral de 22 pixels durante 0,38 segundo e permanece estável para leitura. A versão é selecionada por `typographyRevision: 206-v4`, exclusivamente no compositor do 206; o desenho da versão 3 permanece disponível.
+
+As palavras e a ordem dos quatro títulos permanecem idênticas; apenas a quebra em linhas muda. Corpo, roteiro, fundo versus, capa original, moldura, trilha, ponto inicial do áudio e duração de 20 segundos foram preservados. Entregas: `reel-206-v4.mp4`, capa, folha de contato e manifesto no diretório existente. A v3 permanece em disco e em `previousVersions`. Galerias apontam para v4, com endereço novo. Backup: `storage/correcao-instagram-20261010/comparison-206-v4-before/catalog.json`. Nenhuma alteração na fila ou publicação.
+
+## Comparativo 206 — histórico da versão 3 com fundo versus (10/10/2026)
 
 Primeiro vídeo do grupo de comparações: RTX 3050 versus RX 6600. A proposta visual aprovada usa confronto ciano/âmbar, metal grafite e um VS em relevo no fundo. O fundo foi preparado com ImageGen a partir da proposta aprovada; os produtos vêm diretamente da `capa.webp` existente no artigo, sem gerar ou substituir as placas. A imagem original permanece inteira, na proporção 16:9, fixa em x=60, y=880, 960×540. Marca, títulos e apoio ficam acima; critérios e chamada ficam abaixo.
 
