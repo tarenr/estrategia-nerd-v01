@@ -272,6 +272,7 @@ C:\xampp\php\php.exe scripts/en-instagram-publish-scheduled.php
    e. Buscar permalink via getMediaDetails()
    f. markPublished() ou markError()
 6. Log mensal em storage/logs/instagram/publish-YYYY-MM.log
+6a. Manutenção do feed público (ig_feed_maintenance, ver "Feed público automático"): sync com a Meta e envio à produção, em processos separados; falha aqui nunca muda o resultado da publicação
 7. Liberar lock de processo
 ```
 
@@ -481,6 +482,69 @@ Regra única, usada nas telas (JavaScript) e no servidor (`InstagramPostReposito
 
 ---
 
+## Feed público automático (v2.12.0)
+
+Antes desta versão, o feed da home em produção só mudava quando alguém rodava o sync no PC local e subia um pacote de deploy. Como a produção não tem tabelas do Instagram, ela lê apenas `config/instagram-feed.json` e as capas `public/assets/instagram-feed/post_{id}.jpg`. Agora esse ciclo é automático.
+
+### Como funciona
+
+```
+Agendador (a cada 5 min) ──► ig_feed_maintenance()
+   1. sync-instagram-feed-assets.php --only-missing   (Meta → banco local → capas → JSON)
+        2b. reconciliação: post 'publicado' ausente da listagem da Meta vira 'cancelado'
+   2. en-instagram-publish-feed.php production        (JSON + capas → FTP → verificação HTTP)
+```
+
+- **Quando o sync roda:** logo após publicar um Reel; a cada 10 min durante 30 min depois dele (a Meta demora a listar a mídia nova); e de hora em hora. `--only-missing` baixa só as capas que ainda não existem em disco (sem `--only-missing`, o script continua rebaixando todas, como antes).
+- **Quando o envio roda:** sempre que o JSON local mudou em relação ao último envio bem-sucedido, ou o último envio falhou (reenvia a cada ciclo até conseguir). Se nada mudou, não toca no FTP.
+- **Só a produção é automática.** Stage é manual: `php scripts/en-instagram-publish-feed.php stage`.
+
+### Reconciliação com a Meta (posts apagados no Instagram)
+
+A Meta é a fonte da verdade. `InstagramFeedReconciler::findOrphans()` compara os `ig_media_id` dos posts `publicado` com a listagem completa da Meta; os ausentes passam a `cancelado` (`InstagramPostRepository::markRemovedFromInstagram`), com a data e o motivo acrescentados em `error_log`. `listPublished()` só devolve `publicado`, então o post sai do feed sozinho. Travas, para nunca cancelar por engano:
+
+| Trava | Regra |
+|---|---|
+| Lista vazia | Nada é cancelado |
+| Lista incompleta | Menos de 50% dos posts rastreados na Meta: nada é cancelado |
+| Teto por execução | Mais que `max(10, 20% dos rastreados)` ausentes: nada é cancelado (revisar manualmente) |
+| Post recente | Publicado há menos de 120 min nunca é cancelado |
+| Sem `ig_media_id` | Nunca é tocado; só `publicado` é alterado |
+
+Reverter um cancelamento indevido: `UPDATE instagram_posts SET status='publicado' WHERE id=<id>` (o `ig_media_id` é preservado).
+
+### Publicador (`scripts/en-instagram-publish-feed.php`)
+
+```bash
+C:\xampp\php\php.exe scripts/en-instagram-publish-feed.php production --dry-run   # só mostra o que enviaria
+C:\xampp\php\php.exe scripts/en-instagram-publish-feed.php production             # envia
+C:\xampp\php\php.exe scripts/en-instagram-publish-feed.php stage --probe           # testa rename no FTP (arquivos descartáveis)
+```
+
+Reaproveita os perfis `code_deploy`/`uploads` de `config/content-sync.php` (nenhuma credencial nova). Lógica em `App\Services\Instagram\InstagramFeedPublisher`:
+
+1. **Valida o JSON local.** 1 a 18 posts, ordem decrescente de data e todo `media_url` sendo `/assets/instagram-feed/post_{id}.jpg` local com mais de 1 KB. `.mp4` ou capa ausente **bloqueia** o envio; o site continua com o feed anterior.
+2. **Capas antes do JSON**, e só as ausentes ou de tamanho diferente no remoto.
+3. **JSON por arquivo temporário + `ftp_rename`** (a hospedagem aceita rename sobre arquivo existente, testado em 11/10/2026). O JSON anterior fica como `instagram-feed.json.bak` no remoto e em `storage/instagram-feed-publish/<alvo>/before-*.json`.
+4. **Verifica por HTTP**: a home responde sem erro, contém a capa do primeiro card e a capa responde 200 como imagem. Se a home responder erro 5xx, **restaura o JSON anterior** automaticamente. Se só a verificação não confirmar (ex.: cache do CDN), o envio fica `unverified` e é tentado de novo no ciclo seguinte.
+
+Escopo remoto restrito a `<core>/config/instagram-feed.json` e `<public>/assets/instagram-feed/`. Raízes: produção `public_html/_app_core` e `public_html/assets/`; stage `public_html/stage/_app_core` e `public_html/stage/assets/`. Nunca toca em código, `.env` ou uploads.
+
+### Operação
+
+| Item | Onde |
+|---|---|
+| Estado do último sync/envio | `storage/instagram-feed-publish/state.json` |
+| Log do publicador | `storage/logs/instagram/feed-publish-YYYY-MM.log` |
+| Log do agendador (inclui as linhas `Feed público:`) | `storage/logs/instagram/publish-YYYY-MM.log` |
+| Desativar o envio automático | criar o arquivo vazio `storage/instagram-feed-publish/auto.disabled` (remover para reativar) |
+| Reenviar manualmente | `php scripts/en-instagram-publish-feed.php production` |
+| Testes isolados (sem banco, rede ou FTP) | `php scripts/verify-instagram-feed-sync.php` |
+
+**Limites conhecidos:** o PC precisa estar ligado e logado (o mesmo requisito da publicação, que também depende do agendador). O FTP é o mesmo já usado pelos deploys (sem TLS). Se o CDN servir o JSON ou as capas em cache, a atualização pode demorar a aparecer no site; o publicador tenta confirmar de novo a cada ciclo.
+
+---
+
 ## Diretriz de Ambientes e Banco de Dados
 
 > **REGRA ARQUITETURAL MANDATÓRIA (Ambiente Único):**
@@ -488,6 +552,7 @@ Regra única, usada nas telas (JavaScript) e no servidor (`InstagramPostReposito
 > 1. **Ambiente estritamente LOCAL:** O módulo Instagram opera com base de dados única no banco **local** (`estrategia-nerd` via `$GLOBALS['pdo']`). A conta do Instagram é uma entidade real unificada (`@estrategia_nerd`), e seus tokens de acesso à Graph API, agendamentos, cron CLI e sincronização com a Meta são centralizados na máquina local.
 > 2. **Isolamento de Produção e Stage:** Os bancos remotos da Hostinger (`u576397693_estrategianerd` e `u576397693_en_stage`) **NÃO** possuem nem devem receber as tabelas do Instagram. Quando o usuário alterna o "Ambiente Alvo" no painel administrativo para inspecionar posts, estatísticas e newsletter de produção ou stage, o `DashboardController` e `DashboardService` continuam consultando o Instagram exclusivamente a partir do `$GLOBALS['pdo']` local.
 > 3. **Transição para Multi-Ambiente no Futuro:** O módulo Instagram só passará a ser multi-ambiente quando for implementada a rotina de exibição do feed/posts do Instagram no site público principal (frontend em produção). Até lá, a separação local é estrita.
+> 4. **Feed público (v2.12.0):** a exibição na produção não torna o módulo multi-ambiente. O banco, o token e a fila continuam só no local; a produção recebe apenas o snapshot `config/instagram-feed.json` e as capas, enviados por FTP pelo publicador (ver "Feed público automático").
 
 ---
 
@@ -539,6 +604,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-10-03 | 2.10.1 | Cross-post x Reels (Tasks #541 e #542): post vinculado do tipo `reels` fica somente leitura pelo blog em qualquer status; o card mostra a capa `.jpg` do vídeo e avisa que o artigo já tem um Reels; o save recusa dentro da transação, sem trocar o vídeo pela arte quadrada. |
 | 2026-10-03 | 2.11.0 | Capa do Reels (Tasks #643 a #645): a publicação de Reels (agendador e "Publicar agora") envia `cover_url` com a capa `.jpg` gerada ao lado do MP4 (`InstagramApiService::reelCoverParams`), em vez de deixar a Meta usar o primeiro quadro (fundo azul nos Reels animados); o agendador registra a capa usada no log. |
 | 2026-10-08 | 2.11.1 | Lista/cards (Tasks #926–928): controle único em `admin-instagram-posts.js`, com eventos delegados e reaplicação após substituição AJAX. Formulário, links, URL explícita (`view=table`/`view=grid`) e preferência local ficam sincronizados. A URL tem prioridade sobre a preferência salva. Quantidades: 8, 16, 24, 32, 48 e Todos. Não altera a fila ou publicações. Lint PHP/JS e suíte obrigatória 17/17 aprovados; homologação interativa aguardando autenticação no painel local. |
+| 2026-10-11 | 2.12.0 | Feed público automático (Tasks #1191 a #1195): a home em produção deixa de depender de sync manual e pacote de deploy. (1) `sync-instagram-feed-assets.php` ganha a reconciliação com a Meta (posts `publicado` ausentes da listagem viram `cancelado`, com travas; `InstagramFeedReconciler` + `InstagramPostRepository::markRemovedFromInstagram`) e o modo `--only-missing`; (2) novo `en-instagram-publish-feed.php` / `InstagramFeedPublisher` envia `config/instagram-feed.json` e as capas por FTP (capas antes do JSON, rename atômico, `.bak`, verificação HTTP, restauração em 5xx); (3) o agendador (`ig_feed_maintenance`) roda sync e envio em processos separados, com interruptor `auto.disabled`; (4) posts #209 e #196, apagados do Instagram, foram cancelados; (5) `scripts/verify-instagram-feed-sync.php` (26 testes isolados) e lint dos arquivos novos em `verify-changes.php`. Lint, PHPStan nível 5 e `verify-changes.php` (22/22) aprovados; envio real validado em Stage e Produção. |
 
 
 
