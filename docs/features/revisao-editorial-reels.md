@@ -1,3 +1,21 @@
+## Agenda revista — dois posts diários e sequência Diablo (11/10/2026)
+
+Grade aprovada: 12h e 19h30, horário de São Paulo. Mantidos Counter-Strike #216 em 11/10 às 19h30 e todos os agendamentos de 12 a 23/10. Com os oito ajustes abaixo, a fila contém 34 horários preenchidos de 12 a 28/10, sem duplicidades. Agendados os três rascunhos aprovados #215/#243/#244; os outros cinco apenas mudaram de data. Cancelados, publicados, mídias, legendas, trilhas e demais registros preservados.
+
+| Data | 12h | 19h30 |
+|---|---|---|
+| 24/10 | #197 Lore completa de Diablo (preservado) | #244 Review Ryzen 7 5700X |
+| 25/10 | #215 Jogos para PC fraco | #243 Retorno aos jogos |
+| 26/10 | #233 Jogos para quem tem 30 minutos | #229 Humor de terror (preservado) |
+| 27/10 | #230 Estilos de terror | #231 Como o som cria medo |
+| 28/10 | #232 Horários do squad | #234 Última partida |
+
+Diablo forma um bloco sem intercalação: #224 Santuário/Céu/Inferno (21/10, 19h30), #225 Arcanjos (22/10, 12h), #226 Males do Inferno (22/10, 19h30), #195 Guerra Eterna (23/10, 12h), #227 Nefalem (23/10, 19h30), #197 Lore completa (24/10, 12h).
+
+Operação local pelo repositório oficial: scripts/reels-review/schedule-approved-20261011.php (--check, --apply, --verify). Backup imutável e evidência em storage/backups/instagram-publish/schedule-20261011. --apply usa o lock compartilhado do publicador, trava os registros e atualiza somente status/agendado_para dos oito IDs, com comparação integral dos outros campos e de todas as mídias antes de commit. Falha provoca rollback; nova execução alinhada não altera o banco. Recuperação mediante autorização: restaurar somente as datas/status desses oito IDs do backup, após conferir que não foram publicados/editados desde então. Não executar rollback genérico da fila. O script não chama a Meta nem publica imediatamente.
+
+Validação: oito alterações aplicadas, 34 horários completos, sequência Diablo conferida, capas disponíveis e nenhum campo fora do escopo alterado; suíte oficial com 17 OK, zero falhas. A grade termina em 28/10; novas datas posteriores dependem de novos conteúdos aprovados.
+
 ## Apontamentos das versões aprovadas sincronizados (11/10/2026)
 
 Os 33 Reels pendentes existentes (32 agendados e rascunho 215) agora usam o vídeo vigente do catálogo corrections-20261010.json, com sua capa JPEG correspondente, legenda revisada e metadados da trilha incorporada. Atualizados instagram_posts (cache pronto, legenda, hashtags e áudio) e instagram_post_media (caminho, dimensões e duração); os dois caminhos apontam para o mesmo MP4 de 20 s. Nenhum vídeo foi renderizado novamente, publicado ou reagendado nesta etapa. Quando a trilha revisada é um arquivo externo incorporado ao MP4, audio_track_id fica nulo e a mídia de vídeo é usada diretamente.
