@@ -2,11 +2,12 @@
 
 Adaptação dos cinco Reels do grupo de produtos de hardware (198, 199, 201, 202 e 203) à identidade visual aprovada do Reel 200 v3 (commit `5e4ac85`). Cada Reel possui 20 segundos exatos (quatro cenas de 5 segundos), formato vertical 1080×1920 @ 30 fps, moldura técnica fixa (x=82, y=764, 916×618), fundo grafite com circuitos e tipografia Bahnschrift.
 
-- **198 (Setup Completo)**: 4 cenas com artes dedicadas ImageGen representando o setup completo, o processador Ryzen 5 7600X no socket AM5, a placa-mãe MSI B850 TOMAHAWK MAX e as memórias Corsair Vengeance DDR5.
-- **199 (Ryzen 5 7600X)**: 4 cenas com artes dedicadas ImageGen representando o processador em destaque (hero), instalação no socket AM5, montagem da refrigeração/pasta térmica e bancada em funcionamento.
-- **201 (RTX 3050 6 GB)**: 4 cenas com artes dedicadas ImageGen destacando a placa compacta sem conector de 8 pinos, detalhe da ventoinha/carcaça, instalação no slot PCIe e setup gamer em operação.
-- **202 (Corsair Vengeance DDR5 32 GB)**: Arte dedicada ImageGen do kit Corsair Vengeance DDR5 32 GB 6000 MHz em bancada escura, preenchendo a moldura sem distorções.
+- **198 (Setup Completo)**: Foto real autêntica da bancada do setup do Estratégia Nerd (`capa.webp` do Artigo 18, 1600×900) preenchendo a moldura de forma contínua nas 4 cenas de 5 segundos, com foco no conjunto de monitores, gabinete gamer real, mousepad da marca e ambiente de gravação.
+- **199 (Ryzen 5 7600X)**: Foto oficial do produto (`capa.webp` do Artigo 19) destacando a embalagem original e o processador AMD Ryzen 5 7600X com o IHS da arquitetura AM5.
+- **201 (RTX 3050 6 GB)**: Foto oficial da placa ZOTAC GAMING GeForce RTX 3050 6 GB (`capa.webp` do Artigo 21) com a caixa e o modelo compacto de dupla ventoinha.
+- **202 (Corsair Vengeance DDR5 32 GB)**: Foto oficial em alta definição dos dois módulos Corsair Vengeance DDR5 (`capa.webp` do Artigo 22).
 - **203 (Kingston NV3 1 TB)**: Arte oficial do Kingston NV3 NVMe M.2 2280 em bancada de testes de alta resolução (1200×800), sem reutilizar referências do modelo anterior NV2.
+- **200 (MSI B650 TOMAHAWK WIFI)**: Sequência aprovada do commit `5e4ac85` com 4 fotos fiéis à placa-mãe B650 real, preservada integralmente sem reutilizar a antiga capa do blog que continha referência à B850.
 
 Compositor: `scripts/reels-review/hardware-scene.mjs` atualizado para autorizar exclusivamente os IDs [198, 199, 200, 201, 202, 203], mantendo o Reel 200 aprovado 100% intacto. Todos os vídeos foram renderizados com `-movflags +faststart` (átomo `moov` posicionado no início, offset 32 antes do `mdat`).
 Vídeos entregues: `public/uploads/reels/correcao-instagram-20261010/reel-{198,199,201,202,203}-v3.mp4` acompanhados de capa `.jpg` e folha de contato `-contact.jpg`. Galeria atualizada: `public/uploads/previews/leva02-bloco1-v3/index.html` e `public/uploads/reels/correcao-instagram-20261010/gallery.html`. Metadados de prompts registrados em `storage/correcao-instagram-20261010/hardware-198-203-imagegen.json`.

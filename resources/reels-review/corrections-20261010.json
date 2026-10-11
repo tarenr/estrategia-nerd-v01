@@ -956,14 +956,15 @@
       "revision": 3,
       "hardwareRevision": {
         "reference": "reel-200-v3 commit 5e4ac85",
-        "tool": "ImageGen built-in",
+        "tool": "Capa oficial do blog (capa.webp)",
         "duration": 20,
         "scenesCount": 4,
         "textsPreserved": true,
         "queueChanged": false,
-        "publicationApproved": false
+        "publicationApproved": false,
+        "sourceImage": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/capa.webp"
       },
-      "sha256": "60aab7c63dda77a80be80c068e6114e2f75cc3b55e8df730b8509691b9707ed7"
+      "sha256": "2d059b5235705cfc480274c4ae623f16c8833386a711ccf769e2bfc10a00e1ee"
     },
     {
       "id": 199,
@@ -1127,14 +1128,15 @@
       "revision": 3,
       "hardwareRevision": {
         "reference": "reel-200-v3 commit 5e4ac85",
-        "tool": "ImageGen built-in",
+        "tool": "Capa oficial do blog (capa.webp)",
         "duration": 20,
         "scenesCount": 4,
         "textsPreserved": true,
         "queueChanged": false,
-        "publicationApproved": false
+        "publicationApproved": false,
+        "sourceImage": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp"
       },
-      "sha256": "11c1ce98144239792f2e89e1ac4bc04974970fd0712858ae1ff01a806fbf67d6"
+      "sha256": "38747f23a380959a371a468ff14970ba55c76183a63ddf87949a5cd734feac61"
     },
     {
       "id": 200,
@@ -1477,14 +1479,15 @@
       "revision": 3,
       "hardwareRevision": {
         "reference": "reel-200-v3 commit 5e4ac85",
-        "tool": "ImageGen built-in",
+        "tool": "Capa oficial do blog (capa.webp)",
         "duration": 20,
         "scenesCount": 4,
         "textsPreserved": true,
         "queueChanged": false,
-        "publicationApproved": false
+        "publicationApproved": false,
+        "sourceImage": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp"
       },
-      "sha256": "4e3fea19a18a6f369a0cac3ee9b3a3baff115df6170faee206c679dad7c3544a"
+      "sha256": "d348f2a8162ae66aecc325818ada82b800cd50c4801cd3aa0c17d38b1f634088"
     },
     {
       "id": 202,
@@ -1648,14 +1651,15 @@
       "revision": 3,
       "hardwareRevision": {
         "reference": "reel-200-v3 commit 5e4ac85",
-        "tool": "ImageGen built-in",
+        "tool": "Capa oficial do blog (capa.webp)",
         "duration": 20,
         "scenesCount": 4,
         "textsPreserved": true,
         "queueChanged": false,
-        "publicationApproved": false
+        "publicationApproved": false,
+        "sourceImage": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp"
       },
-      "sha256": "6e3c5e9880c3659eea271297790b7681883c93716134158e3fd2efd51e084e3f"
+      "sha256": "f6008d5d511ba34d863146043ec9ccace57c6df69f7e6af879c3b872d85ea032"
     },
     {
       "id": 203,
