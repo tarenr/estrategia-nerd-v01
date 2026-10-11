@@ -1,3 +1,11 @@
+## Saga Diablo — A Guerra Eterna 195, versão 2 (11/10/2026)
+
+Primeiro vídeo da saga com identidade exclusiva `diablo-duality-v1`: Altos Céus à esquerda em marfim e dourado, Infernos Ardentes à direita em preto e vermelho, moldura gótica e imagem central. Fundo derivado por imagegen da prévia aprovada; textos e artes existentes são inseridos diretamente pelo compositor. Cada saga futura deverá ter identidade própria; este perfil está restrito ao 195 nesta entrega.
+
+Quatro cenas de cinco segundos, 20 segundos totais, 1080×1920 a 30 fps, H.264/AAC e faststart. Preservados textos, legenda, trilha e ponto inicial do áudio, com duas artes de Diablo existentes inteiras e proporcionais; nenhuma geração de novas imagens centrais, corte ou zoom. A segunda arte permanece fixa quando só muda o texto. Fonte Georgia Bold do Windows identificada com hash no manifesto, junto ao fundo e compositor específicos.
+
+Entrega `public/uploads/reels/correcao-instagram-20261010/reel-195-v2.mp4`, capa, folha de contato e manifesto. Galerias oficiais atualizadas. V1 mantida em disco e `previousVersions`; backup `storage/correcao-instagram-20261010/diablo-195-before/catalog.json`. Demais 36 registros preservados. Validação cobre roteiro, áudio, legibilidade, proporções, continuidade, duração, faststart, decodificação integral e suíte oficial. Sem alteração na agenda, banco ou publicação no Instagram; entregue para avaliação visual.
+
 ## Grupo de listas — 215, 217, 218, 219 e 233 (11/10/2026)
 
 Visual do 205 v3 aprovado aplicado exclusivamente a cinco listas: 215 (jogos para PC fraco), 217 (filmes), 218 (animes), 219 (desenhos) e 233 (jogos para sessões curtas). Reutiliza o fundo neutro existente, moldura central, foto inteira sem distorção, textos equilibrados e indicador de cenas. Cabeçalho de abertura adaptado ao assunto, sem números ou nomes da lista de RPG nos outros vídeos. O 233 mantém o nome de cada jogo acima da foto desde a primeira cena.

@@ -350,7 +350,7 @@
       "caption": "A Guerra Eterna: o conflito que nunca teve fim\n\nMuito antes de Santuário existir, Céu e Inferno já travavam uma guerra sem vitória. A Guerra Eterna não acabou — ela apenas mudou de campo… e agora acontece onde você vive.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
       "original": "public/uploads/reels/diablo-agenda-20261008/diablo-195-ef2665c53780.mp4",
       "originalSha256": "ef2665c5378046d082b99393a5f69e1b822895f3b0d8053406464fa57f2a2dc6",
-      "reuse": true,
+      "reuse": false,
       "trackId": 25,
       "spec": {
         "articleId": 15,
@@ -360,14 +360,14 @@
         "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
         "layout": "chronicle",
         "tone": "dark",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_248213.mp3",
         "audioStart": 12,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -411,12 +411,89 @@
             }
           }
         ],
-        "presentation": "story"
+        "presentation": "story",
+        "reviewPostId": 195,
+        "compositionProfile": "diablo-duality-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-195-v2-background.png",
+          "reference": "exec-944d59e0-0afd-45b5-a189-1a5b8c0e6226.png",
+          "saga": "Diablo",
+          "duality": "Altos Ceus e Infernos Ardentes"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-195-v1.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-195-v1.jpg",
-      "sha256": "ef2665c5378046d082b99393a5f69e1b822895f3b0d8053406464fa57f2a2dc6"
+      "video": "uploads/reels/correcao-instagram-20261010/reel-195-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-195-v2.jpg",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-195-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-195-v1.jpg",
+          "sha256": "ef2665c5378046d082b99393a5f69e1b822895f3b0d8053406464fa57f2a2dc6",
+          "spec": {
+            "articleId": 15,
+            "articleTitle": "A Guerra Eterna: o conflito que nunca teve fim",
+            "category": "games",
+            "editorial": "manual",
+            "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+            "layout": "chronicle",
+            "tone": "dark",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_248213.mp3",
+            "audioStart": 12,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "A Guerra Eterna",
+                "title": "Um conflito sem fim",
+                "body": "Muito antes de Santuário, anjos e demônios já disputavam poder.",
+                "image": "resources/reels-review/assets/diablo/art-14-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Céu e Inferno",
+                "title": "Visões que não se conciliam",
+                "body": "A ordem dos anjos e a dominação dos demônios alimentam essa guerra.",
+                "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Um mundo entre as forças",
+                "title": "Santuário entra na disputa",
+                "body": "O refúgio criado longe do conflito se torna parte dele.",
+                "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A guerra atravessa eras",
+                "title": "E a humanidade paga o preço",
+                "body": "Conheça o conflito que sustenta a história de Diablo. Leia no blog.",
+                "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "story"
+          }
+        }
+      ],
+      "revision": 2,
+      "sha256": "42591f7f831791210c397b9b7c0e3ec6923cd1d084c0f03f8556402b73fc0024"
     },
     {
       "id": 196,
