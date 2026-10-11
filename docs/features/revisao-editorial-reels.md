@@ -1,3 +1,9 @@
+## Saga Diablo — 195 v4, textos e imagens com tempos independentes (11/10/2026)
+
+Reel de 20 segundos com quatro textos de cinco segundos, iniciando em 0, 5, 10 e 15 segundos. As três imagens ocupam igualmente o vídeo: Guerra Eterna entre 0 e 6,67 s, Céu/Inferno entre 6,67 e 13,33 s e Santuário entre 13,33 e 20 s. A seleção da imagem ocorre independentemente da troca de texto; em 30 fps, cada tomada tem 200 quadros. Tipografia, fundo, roteiro, trilha e artigo mantêm a composição aprovada da v3. O ajuste está restrito ao 195 com `timingRevision: diablo-195-v4`.
+
+Entrega `reel-195-v4.mp4`, capa, folha de contato e manifesto; galerias atualizadas para v4 e versões anteriores preservadas. Backup do catálogo em `storage/correcao-instagram-20261010/diablo-195-v4-before/catalog.json`. Testes verificam as trocas independentes das imagens e textos, preservação dos outros 36 registros, proporção, decodificação integral, áudio, duração e faststart. Sem alteração no banco, artigo ou fila do Instagram.
+
 ## Saga Diablo — 195 v3, três imagens em 15 segundos (11/10/2026)
 
 Revisão aprovada após comparação com a prévia: cabeçalhos em duas linhas, marfim/dourado com gradiente, contorno e sombra, áreas escurecidas atrás dos textos e corpo em Georgia Bold claro. Imagens, música e textos preservados, com a terceira arte aprovada de Santuário e da humanidade acrescentada. Cada imagem dura exatamente cinco segundos: 0–5 Guerra Eterna, 5–10 Céu/Inferno e 10–15 Santuário. Os quatro textos iniciam em 0, 5, 10 e 12,5 segundos; a última imagem permanece fixa na mudança dos dois textos finais. A duração de 15 segundos e os blocos de texto de 2,5 segundos estão limitados ao perfil/ID/revisão aprovados, sem alterar os limites dos demais Reels.

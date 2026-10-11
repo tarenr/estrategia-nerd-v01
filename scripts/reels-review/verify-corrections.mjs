@@ -19,17 +19,33 @@ if(catalog.items.some(isDiabloRevision)){
   for(const key of ['caption','status','scheduled','articleId','trackId'])assert.deepEqual(item[key],old[key]);
   for(const key of ['audio','audioStart'])assert.deepEqual(item.spec[key],old.spec[key]);
   const revised=item.spec.typographyRevision==='diablo-195-v3';
+  const independent=item.spec.timingRevision==='diablo-195-v4';
   if(revised){
-   assert.equal(item.spec.duration,15);assert.deepEqual(item.spec.beatStarts,[0,5,10,12.5]);
+   assert.equal(item.spec.duration,independent?20:15);assert.deepEqual(item.spec.beatStarts,independent?[0,5,10,15]:[0,5,10,12.5]);
    item.spec.scenes.forEach((s,n)=>{for(const key of ['eyebrow','title','body'])assert.equal(s[key],old.spec.scenes[n][key]);if(n<2)assert.equal(s.image,old.spec.scenes[n].image);else assert.equal(s.image,'resources/reels-review/assets/diablo/art-santuario-humanidade-mesa-v1.png');});
-   assert.deepEqual(imageRuns(item.spec).map(r=>[r.start,r.end]),[[0,5],[5,10],[10,15]]);
+   assert.deepEqual(imageRuns(item.spec).map(r=>[r.start,r.end]),independent?[[0,20/3],[20/3,40/3],[40/3,20]]:[[0,5],[5,10],[10,15]]);
+   if(independent){
+    const v3=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/diablo-195-v4-before/catalog.json'),'utf8')).items.find(i=>i.id===195);
+    assert.ok(item.previousVersions.some(v=>v.video===v3.video&&v.sha256===v3.sha256));
+    const expected={...v3.spec,duration:20,beatStarts:[0,5,10,15],timingRevision:'diablo-195-v4'};assert.deepEqual(item.spec,expected);
+   }
    const v2=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/diablo-195-v3-before/catalog.json'),'utf8')).items.find(i=>i.id===195);
    assert.ok(item.previousVersions.some(v=>v.video===v2.video&&v.sha256===v2.sha256));
   }else{assert.deepEqual(item.spec.scenes,old.spec.scenes);assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);}
   assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
   await assert.rejects(()=>createScene({...item.spec,reviewPostId:197},root),/fora do escopo|Duração editorial fora/);
   const stage=await createScene(item.spec,root);
-  try{for(const start of item.spec.beatStarts){
+  try{
+   if(independent){
+    const photo=stage.layer.find('Image')[1];stage.render(1);const first=photo.image();
+    assert.equal(stage.render(5.1).index,1);assert.equal(photo.image(),first);
+    stage.render(6.7);const second=photo.image();assert.notEqual(second,first);
+    assert.equal(stage.render(10.1).index,2);assert.equal(photo.image(),second);
+    stage.render(13.4);const third=photo.image();assert.notEqual(third,second);
+    assert.equal(stage.render(15.1).index,3);assert.equal(photo.image(),third);
+    stage.render(19.9);assert.equal(photo.image(),third);
+   }
+   for(const start of item.spec.beatStarts){
    stage.render(start+.1);const photo=stage.layer.find('Image')[1],cover=photo.image();
    assert.ok(Math.abs(photo.width()/photo.height()-cover.width/cover.height)<.00001);
    assert.deepEqual(photo.crop(),{x:0,y:0,width:cover.width,height:cover.height});

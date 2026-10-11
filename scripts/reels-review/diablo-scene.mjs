@@ -6,7 +6,8 @@ import {manualState} from './scene.mjs';
 
 export const DIABLO_FRAME={x:24,y:665,width:1032,height:585};
 export async function createDiabloScene(spec,root){
-  const revised=spec.typographyRevision==='diablo-195-v3';
+  const independent=spec.timingRevision==='diablo-195-v4';
+  const revised=spec.typographyRevision==='diablo-195-v3'&&!independent;
   const beats=revised?[0,5,10,12.5]:[0,5,10,15];
   if(spec.reviewPostId!==195||spec.compositionProfile!=='diablo-duality-v1'||spec.presentation!=='story'||spec.duration!==(revised?15:20)||spec.scenes.length!==4||spec.beatStarts.length!==4||spec.beatStarts.some((t,i)=>t!==beats[i]))throw new Error('Diablo fora do escopo aprovado.');
   FontLibrary.use('EN Diablo',resolve(root,'resources/reels-konva/fonts/Inter.ttf'));
@@ -34,18 +35,22 @@ export async function createDiabloScene(spec,root){
     header.setAttrs({x:170,y:340,width:740,lineHeight:.99});
     body.setAttrs({fontFamily:'EN Diablo Title',fill:'#fff9ea',stroke:'#080403',strokeWidth:1.2,fillAfterStrokeEnabled:true,shadowBlur:8,y:1470});
   }
-  let active=-1;const typography=[];
+  let active=-1,activeImage=-1;const typography=[];
   function render(time){
     const state=manualState(spec,time);
     if(active!==state.index){
-      active=state.index;const scene=spec.scenes[active],cover=covers[active];
+      active=state.index;const scene=spec.scenes[active];
       const lines=['A GUERRA\nETERNA','CÉU E\nINFERNO','Um mundo entre\nas forças','A guerra\natravessa eras'];
       header.text(strong?lines[active]:scene.eyebrow);fit(header,235,strong?110:88,52);
       title.text(scene.title);const titleSize=fit(title,135,68,48);
       body.text(scene.body);const bodySize=fit(body,145,39,35);
+      typography.push({scene:active,titleSize,bodySize});
+    }
+    const imageIndex=independent?Math.min(2,Math.max(0,Math.floor(time*3/spec.duration))):state.index;
+    if(activeImage!==imageIndex){
+      activeImage=imageIndex;const cover=covers[imageIndex];
       const scale=Math.min(frame.width/cover.width,frame.height/cover.height);
       photo.setAttrs({image:cover,x:frame.x+(frame.width-cover.width*scale)/2,y:frame.y+(frame.height-cover.height*scale)/2,width:cover.width*scale,height:cover.height*scale,crop:{x:0,y:0,width:cover.width,height:cover.height}});
-      typography.push({scene:active,titleSize,bodySize});
     }
     const opacity=Math.min(1,Math.max(0,state.local)/.22);for(const n of [header,title,body])n.opacity(opacity);
     layer.draw();return state;
