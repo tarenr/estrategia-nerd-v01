@@ -226,10 +226,11 @@ final class PostRepository
     public function findPublicBySlug(string $slug): ?array
     {
         $nextStepSelect = $this->supportsNextStepColumn() ? 'p.proximo_post_id' : 'NULL AS proximo_post_id';
+        $tipoPostSelect = $this->supportsTipoPostColumn() ? 'p.tipo_post' : 'NULL AS tipo_post';
         $sql = "SELECT p.id, p.titulo, p.slug, p.resumo, p.conteudo, p.imagem_capa, p.imagem_thumb, p.data_publicacao,
                        COALESCE(p.views, 0) AS views, COALESCE(p.curtidas, 0) AS curtidas, COALESCE(p.tempo_leitura, 5) AS tempo_leitura,
                        COALESCE(p.comentarios_count, 0) AS comentarios_count, COALESCE(p.destaque, 0) AS destaque,
-                       p.seo_title, p.seo_description, p.tags, p.autor_id, {$nextStepSelect},
+                       p.seo_title, p.seo_description, p.tags, p.autor_id, {$nextStepSelect}, {$tipoPostSelect},
                        c.id AS categoria_id, c.nome AS categoria_nome, c.slug AS categoria_slug, c.cor AS categoria_cor
                 FROM posts p
                 LEFT JOIN categoria_post c ON c.id = p.categoria_post_id

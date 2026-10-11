@@ -48,6 +48,10 @@ final class PostService
         if (is_array($nextStep) && ((string) ($nextStep['url'] ?? '')) === url('/post/' . (string) ($row['slug'] ?? ''))) {
             $nextStep = null;
         }
+        // Independent reviews follow the configured reading; other posts keep chronology.
+        if (($row['tipo_post'] ?? '') === 'review' && is_array($nextStep)) {
+            $next = array_replace($nextStep, ['direction' => 'proximo']);
+        }
         $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
         $seoTitle = $this->metadataText($post['seo_title']);
         $pageTitle = $seoTitle !== '' ? $seoTitle : $this->metadataText($post['titulo'] . ' | ' . $siteName);
