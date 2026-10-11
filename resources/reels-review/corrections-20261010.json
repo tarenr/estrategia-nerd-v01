@@ -343,7 +343,7 @@
       "originEnvironment": "production",
       "articleId": 15,
       "articleSlug": "a-guerra-eterna-o-conflito-que-nunca-teve-fim",
-      "articleSha256": "93e5ce26dc923d10d86ed8adff3d00570d7db542482015d212a243ba1134542c",
+      "articleSha256": "e07c9e19fd14de14e9be312d5d90ffa732fabd6ae58afa9fffd847e65b7b91f5",
       "type": "story",
       "note": "Duas imagens identificadas; sem reiniciar a arte quando só muda o texto. Artes aprovadas sobre a mesa; imagem inteira e sem zoom de corte. Nova agenda de Diablo: fila #195, 2026-11-05 19:30:00 (Brasília).",
       "sources": [],
@@ -360,14 +360,14 @@
         "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
         "layout": "chronicle",
         "tone": "dark",
-        "duration": 20,
+        "duration": 15,
         "audio": "public/uploads/audio/pixabay_248213.mp3",
         "audioStart": 12,
         "beatStarts": [
           0,
           5,
           10,
-          15
+          12.5
         ],
         "scenes": [
           {
@@ -394,7 +394,7 @@
             "eyebrow": "Um mundo entre as forças",
             "title": "Santuário entra na disputa",
             "body": "O refúgio criado longe do conflito se torna parte dele.",
-            "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+            "image": "resources/reels-review/assets/diablo/art-santuario-humanidade-mesa-v1.png",
             "framing": {
               "mode": "contain",
               "motion": "still"
@@ -404,7 +404,7 @@
             "eyebrow": "A guerra atravessa eras",
             "title": "E a humanidade paga o preço",
             "body": "Conheça o conflito que sustenta a história de Diablo. Leia no blog.",
-            "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+            "image": "resources/reels-review/assets/diablo/art-santuario-humanidade-mesa-v1.png",
             "framing": {
               "mode": "contain",
               "motion": "still"
@@ -419,11 +419,12 @@
           "reference": "exec-944d59e0-0afd-45b5-a189-1a5b8c0e6226.png",
           "saga": "Diablo",
           "duality": "Altos Ceus e Infernos Ardentes"
-        }
+        },
+        "typographyRevision": "diablo-195-v3"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-195-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-195-v2.jpg",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-195-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-195-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-195-v1.mp4",
@@ -490,10 +491,84 @@
             ],
             "presentation": "story"
           }
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-195-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-195-v2.jpg",
+          "sha256": "42591f7f831791210c397b9b7c0e3ec6923cd1d084c0f03f8556402b73fc0024",
+          "spec": {
+            "articleId": 15,
+            "articleTitle": "A Guerra Eterna: o conflito que nunca teve fim",
+            "category": "games",
+            "editorial": "manual",
+            "collection": "DIABLO · HISTÓRIAS DE SANTUÁRIO",
+            "layout": "chronicle",
+            "tone": "dark",
+            "duration": 20,
+            "audio": "public/uploads/audio/pixabay_248213.mp3",
+            "audioStart": 12,
+            "beatStarts": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "scenes": [
+              {
+                "eyebrow": "A Guerra Eterna",
+                "title": "Um conflito sem fim",
+                "body": "Muito antes de Santuário, anjos e demônios já disputavam poder.",
+                "image": "resources/reels-review/assets/diablo/art-14-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Céu e Inferno",
+                "title": "Visões que não se conciliam",
+                "body": "A ordem dos anjos e a dominação dos demônios alimentam essa guerra.",
+                "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Um mundo entre as forças",
+                "title": "Santuário entra na disputa",
+                "body": "O refúgio criado longe do conflito se torna parte dele.",
+                "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A guerra atravessa eras",
+                "title": "E a humanidade paga o preço",
+                "body": "Conheça o conflito que sustenta a história de Diablo. Leia no blog.",
+                "image": "resources/reels-review/assets/diablo/art-15-mesa-v1.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "story",
+            "reviewPostId": 195,
+            "compositionProfile": "diablo-duality-v1",
+            "visualStyle": {
+              "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-195-v2-background.png",
+              "reference": "exec-944d59e0-0afd-45b5-a189-1a5b8c0e6226.png",
+              "saga": "Diablo",
+              "duality": "Altos Ceus e Infernos Ardentes"
+            }
+          }
         }
       ],
-      "revision": 2,
-      "sha256": "42591f7f831791210c397b9b7c0e3ec6923cd1d084c0f03f8556402b73fc0024"
+      "revision": 3,
+      "sha256": "2cae0755ce8efca432cf82a5ca083ea7748ed2e1a3e8eee2613d519ec226b8cd"
     },
     {
       "id": 196,

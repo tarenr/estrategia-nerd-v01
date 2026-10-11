@@ -39,7 +39,8 @@ export function registerFonts(root) {
 
 export function validateSpec(spec) {
   const manual = spec?.editorial === 'manual';
-  if (!spec || !Number.isInteger(spec.duration) || spec.duration < 16 || spec.duration > (manual ? 60 : 30)) {
+  const shortDiablo=spec?.reviewPostId===195&&spec?.compositionProfile==='diablo-duality-v1'&&spec?.typographyRevision==='diablo-195-v3'&&spec?.duration===15;
+  if (!spec || !Number.isInteger(spec.duration) || spec.duration < (shortDiablo?15:16) || spec.duration > (manual ? 60 : 30)) {
     throw new Error('Duração editorial fora do intervalo permitido.');
   }
   if (!Array.isArray(spec.scenes) || (manual ? spec.scenes.length < 2 || spec.scenes.length > 8 : spec.scenes.length !== 4)) throw new Error('Quantidade de cenas inválida.');

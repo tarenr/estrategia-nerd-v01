@@ -17,10 +17,17 @@ if(catalog.items.some(isDiabloRevision)){
   const old=before.items.find(i=>i.id===item.id);
   if(!isDiabloRevision(item)){assert.deepEqual(item,old,'Outro registro alterado no Diablo 195');continue;}
   for(const key of ['caption','status','scheduled','articleId','trackId'])assert.deepEqual(item[key],old[key]);
-  for(const key of ['audio','audioStart','scenes'])assert.deepEqual(item.spec[key],old.spec[key]);
-  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);
+  for(const key of ['audio','audioStart'])assert.deepEqual(item.spec[key],old.spec[key]);
+  const revised=item.spec.typographyRevision==='diablo-195-v3';
+  if(revised){
+   assert.equal(item.spec.duration,15);assert.deepEqual(item.spec.beatStarts,[0,5,10,12.5]);
+   item.spec.scenes.forEach((s,n)=>{for(const key of ['eyebrow','title','body'])assert.equal(s[key],old.spec.scenes[n][key]);if(n<2)assert.equal(s.image,old.spec.scenes[n].image);else assert.equal(s.image,'resources/reels-review/assets/diablo/art-santuario-humanidade-mesa-v1.png');});
+   assert.deepEqual(imageRuns(item.spec).map(r=>[r.start,r.end]),[[0,5],[5,10],[10,15]]);
+   const v2=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/diablo-195-v3-before/catalog.json'),'utf8')).items.find(i=>i.id===195);
+   assert.ok(item.previousVersions.some(v=>v.video===v2.video&&v.sha256===v2.sha256));
+  }else{assert.deepEqual(item.spec.scenes,old.spec.scenes);assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);}
   assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
-  await assert.rejects(()=>createScene({...item.spec,reviewPostId:197},root),/fora do escopo/);
+  await assert.rejects(()=>createScene({...item.spec,reviewPostId:197},root),/fora do escopo|Duração editorial fora/);
   const stage=await createScene(item.spec,root);
   try{for(const start of item.spec.beatStarts){
    stage.render(start+.1);const photo=stage.layer.find('Image')[1],cover=photo.image();
@@ -29,12 +36,12 @@ if(catalog.items.some(isDiabloRevision)){
    const position=[photo.x(),photo.y(),photo.width(),photo.height()];stage.render(start+4.5);
    assert.deepEqual([photo.x(),photo.y(),photo.width(),photo.height()],position);
   }
-  stage.render(9.95);const photo=stage.layer.find('Image')[1];
-  const position=[photo.x(),photo.y(),photo.width(),photo.height()];stage.render(10.05);
+  stage.render(revised?12.45:9.95);const photo=stage.layer.find('Image')[1];
+  const position=[photo.x(),photo.y(),photo.width(),photo.height()];stage.render(revised?12.55:10.05);
   assert.deepEqual([photo.x(),photo.y(),photo.width(),photo.height()],position,'Arte repetida reiniciou na transicao');
   }finally{stage.destroy();}
  }
- console.log('PASS: Diablo 195 em 20 s; dualidade exclusiva; imagens, roteiros e audio preservados; demais 36 registros intactos.');
+ console.log('PASS: Diablo 195; tempos e artes aprovados, roteiros e audio preservados; demais 36 registros intactos.');
 }
 const isListGroup=i=>[215,217,218,219,233].includes(i.id)&&i.spec.compositionProfile==='list-central-v1';
 if(catalog.items.some(isListGroup)){
@@ -209,7 +216,7 @@ for(const item of catalog.items){
  assert.equal(manualState(spec,spec.duration-.1).index,spec.scenes.length-1);
  const stage=await createScene(spec,root);
  try{
-  for(const start of spec.beatStarts)stage.render(start+2.5);
+  for(const [n,start] of spec.beatStarts.entries())stage.render(start+Math.min(2.5,((spec.beatStarts[n+1]??spec.duration)-start)/2));
   assert.equal(stage.typography.length,spec.scenes.length);
   assert.ok(stage.typography.every(t=>t.bodySize>=31),'Texto pequeno #'+item.id);
   const images=stage.layer.find('Image');

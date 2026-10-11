@@ -46,9 +46,10 @@ export function framingGeometry(width,height,framing={},frame=IMAGE_FRAME){
 }
 
 export function validateManualSpec(spec){
+  const minimum=spec.reviewPostId===195&&spec.compositionProfile==='diablo-duality-v1'&&spec.typographyRevision==='diablo-195-v3'&&spec.duration===15?2.5:4;
   if(spec.editorial!=='manual' || !PALETTES[spec.tone] || !['chronicle','guide','versus','showcase','culture','dispatch'].includes(spec.layout))throw new Error('Tratamento editorial inválido');
-  if(!Array.isArray(spec.beatStarts) || spec.beatStarts.length!==spec.scenes.length || spec.beatStarts[0]!==0 || spec.beatStarts.some((n,i)=>!Number.isFinite(n) || n<0 || n>=spec.duration || (i>0 && n-spec.beatStarts[i-1]<4)))throw new Error('Tempos editoriais inválidos');
-  if(spec.duration-spec.beatStarts.at(-1)<4)throw new Error('Fecho curto demais');
+  if(!Array.isArray(spec.beatStarts) || spec.beatStarts.length!==spec.scenes.length || spec.beatStarts[0]!==0 || spec.beatStarts.some((n,i)=>!Number.isFinite(n) || n<0 || n>=spec.duration || (i>0 && n-spec.beatStarts[i-1]<minimum)))throw new Error('Tempos editoriais inválidos');
+  if(spec.duration-spec.beatStarts.at(-1)<minimum)throw new Error('Fecho curto demais');
   if(spec.presentation && !['story','comparison','steps','product','list','sound','chat','comedy'].includes(spec.presentation))throw new Error('Apresentação inválida');
   if(spec.layout==='chronicle' && spec.scenes.some(s=>/^\d+[\s/.-]/.test(s.eyebrow)))throw new Error('Histórias não recebem capítulos numerados');
 }

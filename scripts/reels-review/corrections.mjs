@@ -132,14 +132,14 @@ if(action==='--render'){
   const target=resolve(root,'public',item.video),poster=resolve(root,'public',item.poster);
   if(item.state==='ready'){if(hash(target)!==item.sha256)throw new Error('Vídeo pronto divergiu');continue;}
   console.log('RENDER #'+item.id+' '+item.type+' '+item.spec.scenes.length+' cenas');
-  const stage=await createScene(item.spec,root);try{for(const start of item.spec.beatStarts)stage.render(start+2.5);}finally{stage.destroy();}
+  const stage=await createScene(item.spec,root);try{for(const [n,start] of item.spec.beatStarts.entries())stage.render(start+Math.min(2.5,((item.spec.beatStarts[n+1]??item.spec.duration)-start)/2));}finally{stage.destroy();}
   if(item.reuse){copyFileSync(resolve(root,item.original),target,constants.COPYFILE_EXCL);command('ffmpeg',['-v','error','-n','-ss','2.6','-i',target,'-frames:v','1',poster]);}
   else{
    await renderVideo(item.spec,root,target,{timeoutMs:600000,maxRssBytes:1536*1024**2});
    const stage=await createScene(item.spec,root);try{
     stage.render(2.6);writeFileSync(poster,await stage.layer.getCanvas()._canvas.toBuffer('jpg',{quality:.9}),{flag:'wx'});
     const sheet=new Canvas(item.spec.scenes.length*270,480),ctx=sheet.getContext('2d');
-    for(let i=0;i<item.spec.scenes.length;i++){stage.render(item.spec.beatStarts[i]+2.6);ctx.drawImage(stage.layer.getCanvas()._canvas,i*270,0,270,480);}
+    for(let i=0;i<item.spec.scenes.length;i++){const start=item.spec.beatStarts[i],end=item.spec.beatStarts[i+1]??item.spec.duration;stage.render(start+Math.min(2.6,(end-start)/2));ctx.drawImage(stage.layer.getCanvas()._canvas,i*270,0,270,480);}
     writeFileSync(target.replace('.mp4','-contact.jpg'),await sheet.toBuffer('jpg',{quality:.9}),{flag:'wx'});
    }finally{stage.destroy();}
   }
