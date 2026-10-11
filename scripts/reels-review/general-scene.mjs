@@ -19,8 +19,10 @@ export async function createGeneralScene(spec,root){
   text('ESTRATÉGIA\nNERD',{x:90,y:72,width:900,fontSize:43,lineHeight:1.07});
   text(spec.visualStyle.collection??'EM FOCO',{x:90,y:214,width:900,fontFamily:'EN General Body',fontSize:30,fill:'#ffc044'});
   const header=text('',{x:80,y:290,width:920,fontSize:174,lineHeight:1.02});
-  const frame={x:54,y:715,width:972,height:546.75};
-  layer.add(new Konva.Rect({x:49,y:710,width:982,height:557,stroke:'#c7a66b',strokeWidth:3,listening:false}));
+  const square=spec.visualStyle.frameShape==='square-v1';
+  if(square&&![232,234].includes(spec.reviewPostId))throw new Error('Moldura quadrada fora do escopo aprovado.');
+  const frame=square?{x:266.625,y:715,width:546.75,height:546.75}:{x:54,y:715,width:972,height:546.75};
+  layer.add(new Konva.Rect({name:'general-frame',x:frame.x-5,y:frame.y-5,width:frame.width+10,height:frame.height+10,stroke:'#c7a66b',strokeWidth:3,listening:false}));
   const photo=new Konva.Image({listening:false});layer.add(photo);
   const subtitle=text('',{x:75,y:1358,width:930,fontSize:85,lineHeight:1.23});
   const body=text('',{x:95,y:1580,width:890,fontFamily:'EN General Body',fontSize:35,lineHeight:1.2});

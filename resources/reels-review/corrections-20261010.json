@@ -7655,12 +7655,13 @@
             "A chegada"
           ],
           "collection": "PERRENGUE NERD",
-          "footer": "MARQUE QUEM CHEGA QUANDO TODOS SAÍRAM"
+          "footer": "MARQUE QUEM CHEGA QUANDO TODOS SAÍRAM",
+          "frameShape": "square-v1"
         }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-232-v4.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-232-v4.jpg",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-232-v5.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-232-v5.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-232-v1.mp4",
@@ -7852,11 +7853,123 @@
           },
           "caption": "🎮 O squad tem cinco pessoas e seis horários incompatíveis.\n\nVocê está pronto. Um está no trabalho, outro dormiu. Quando finalmente dá certo para você… a sala já ficou vazia. 😅\n\nQuem do seu grupo sempre chega depois?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
           "trackId": 34
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-232-v4.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-232-v4.jpg",
+          "sha256": "0630cbc0c14cc0d82da6d62785f3d8e99667184e0278ff9ae96f97d841cf6b91",
+          "spec": {
+            "articleId": 0,
+            "articleTitle": "O squad existe. O horário, não.",
+            "tone": "tech",
+            "layout": "chronicle",
+            "collection": "PERRENGUE NERD · CENA FICTÍCIA",
+            "audio": "public/uploads/audio/pixabay_9503.mp3",
+            "audioStart": 15,
+            "footer": "Marque quem chega quando todo mundo saiu.",
+            "closingLabel": "O GRUPO RECONHECE ESSA CENA?",
+            "scenes": [
+              {
+                "eyebrow": "O convite",
+                "title": "Hoje o squad fecha",
+                "body": "Você manda a mensagem e já prepara o controle.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "A primeira resposta",
+                "title": "Ainda estou no trabalho",
+                "body": "Um horário livre não significa que todo mundo pode.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "O silêncio",
+                "title": "Esse já dormiu",
+                "body": "O grupo segue combinando. Um participante saiu da realidade.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "A chegada",
+                "title": "Cheguei! Cadê vocês?",
+                "body": "Quando você consegue entrar, os outros já desligaram.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-232-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              }
+            ],
+            "editorial": "manual",
+            "duration": 20,
+            "beatStarts": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "category": "editorial",
+            "presentation": "chat",
+            "reviewPostId": 232,
+            "compositionProfile": "general-editorial-v1",
+            "visualStyle": {
+              "background": "resources/reels-review/assets/general/background-v1.png",
+              "reference": "resources/reels-review/assets/general/preview-208-v1.png",
+              "headlines": [
+                "Hoje o\nsquad fecha",
+                "Ainda estou\nno trabalho",
+                "Esse já\ndormiu",
+                "Cheguei!\nCadê vocês?"
+              ],
+              "subtitles": [
+                "O convite",
+                "A primeira resposta",
+                "O silêncio",
+                "A chegada"
+              ],
+              "collection": "PERRENGUE NERD",
+              "footer": "MARQUE QUEM CHEGA QUANDO TODOS SAÍRAM"
+            }
+          }
         }
       ],
-      "revision": 4,
+      "revision": 5,
       "avatarReference": true,
-      "sha256": "0630cbc0c14cc0d82da6d62785f3d8e99667184e0278ff9ae96f97d841cf6b91"
+      "sha256": "d4f83e8b2816c47bfd5eb48266215c20337a497439779374fa1bc88ecea49c86"
     },
     {
       "id": 233,
@@ -8170,12 +8283,13 @@
             "O amanhecer"
           ],
           "collection": "PERRENGUE NERD",
-          "footer": "CONTA NOS COMENTÁRIOS"
+          "footer": "CONTA NOS COMENTÁRIOS",
+          "frameShape": "square-v1"
         }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-234-v4.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-234-v4.jpg",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-234-v5.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-234-v5.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-234-v1.mp4",
@@ -8367,11 +8481,123 @@
           },
           "caption": "⏰ “É a última partida.”\n\nPerdeu? Precisa recuperar. Ganhou? Agora embalou. O problema é que o amanhecer não entrou nessa negociação. 😅\n\nQual foi a sua desculpa mais recente para jogar mais uma?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
           "trackId": 15
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-234-v4.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-234-v4.jpg",
+          "sha256": "521ceaecb2a75638fcb443646acc8639dcab3457c34fdd9e6eb7a8972a1ea297",
+          "spec": {
+            "articleId": 0,
+            "articleTitle": "Só mais uma partida",
+            "tone": "tech",
+            "layout": "chronicle",
+            "collection": "PERRENGUE NERD · SÓ MAIS UMA",
+            "audio": "public/uploads/audio/pixabay_519731.mp3",
+            "audioStart": 8,
+            "footer": "Qual jogo te faz negociar com o relógio?",
+            "closingLabel": "CONTA NOS COMENTÁRIOS",
+            "scenes": [
+              {
+                "eyebrow": "A promessa",
+                "title": "É a última partida",
+                "body": "O relógio ainda permite acreditar nessa frase.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "Depois da derrota",
+                "title": "Não posso parar assim",
+                "body": "Agora você precisa recuperar antes de encerrar.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "Depois da vitória",
+                "title": "Agora eu embalo",
+                "body": "Uma vitória vira argumento para jogar de novo.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "O amanhecer",
+                "title": "A manhã não negocia",
+                "body": "O sol apareceu. Seu horário de dormir desapareceu.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-234-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              }
+            ],
+            "editorial": "manual",
+            "duration": 20,
+            "beatStarts": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "category": "editorial",
+            "presentation": "comedy",
+            "reviewPostId": 234,
+            "compositionProfile": "general-editorial-v1",
+            "visualStyle": {
+              "background": "resources/reels-review/assets/general/background-v1.png",
+              "reference": "resources/reels-review/assets/general/preview-208-v1.png",
+              "headlines": [
+                "É a última\npartida",
+                "Não posso\nparar assim",
+                "Agora eu\nembalo",
+                "A manhã\nnão negocia"
+              ],
+              "subtitles": [
+                "A promessa",
+                "Depois da derrota",
+                "Depois da vitória",
+                "O amanhecer"
+              ],
+              "collection": "PERRENGUE NERD",
+              "footer": "CONTA NOS COMENTÁRIOS"
+            }
+          }
         }
       ],
-      "revision": 4,
+      "revision": 5,
       "avatarReference": true,
-      "sha256": "521ceaecb2a75638fcb443646acc8639dcab3457c34fdd9e6eb7a8972a1ea297"
+      "sha256": "3e63637e1eb3306701dea729d0c6e70b2becc80ac97802f11ad7b7d12fdb0f29"
     }
   ],
   "assetProvenance": {

@@ -427,6 +427,14 @@ if(catalog.items.some(isGeneral)){
  console.log('PASS: pacote geral 208/216/232/234; trilhas aprovadas, tempos iguais por imagem, visual208 e outros33 preservados.');
 }
 
+if(catalog.items.some(i=>i.spec.visualStyle?.frameShape==='square-v1')){
+ const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/general-square-before/catalog.json'),'utf8'));
+ for(const item of catalog.items){const old=before.items.find(i=>i.id===item.id);if(![232,234].includes(item.id)){assert.deepEqual(item,old);continue;}
+  const preserved=structuredClone(item.spec);delete preserved.visualStyle.frameShape;assert.deepEqual(preserved,old.spec);assert.equal(item.caption,old.caption);assert.equal(item.trackId,old.trackId);
+  const scene=await createScene(item.spec,root);try{const photo=scene.layer.find('Image')[1],frame=scene.layer.findOne('.general-frame');for(const t of [2.5,7.5,12.5,17.5]){scene.render(t);assert.equal(photo.width(),photo.height());assert.equal(photo.x(),frame.x()+5);assert.equal(photo.y(),frame.y()+5);assert.equal(photo.width(),frame.width()-10);assert.equal(photo.height(),frame.height()-10);const crop=photo.crop();assert.equal(crop.width,crop.height);}}finally{scene.destroy();}
+ }
+ console.log('PASS: 232/234 imagens preenchem moldura quadrada; audio/textos/tempos e outros35 preservados.');
+}
 for(const item of catalog.items){
  const spec=item.spec;validateSpec(spec);assert.equal(spec.beatStarts.length,spec.scenes.length);
  assert.equal(manualState(spec,spec.duration-.1).index,spec.scenes.length-1);

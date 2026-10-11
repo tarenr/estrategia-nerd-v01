@@ -1,3 +1,9 @@
+## Moldura quadrada — 232 e 234 v5 (11/10/2026)
+
+Correção aprovada limitada aos dois vídeos de humor: moldura quadrada central com área de imagem de 546,75 × 546,75 px, em x=266,625/y=715. Cada painel quadrado preenche a área inteira, sem espaços laterais, distorção ou corte adicional. Textos, fundos, fontes, trilhas, legendas e duração preservados. Quatro painéis de cinco segundos em cada Reel de 20 s. Perfil frameShape: square-v1 restrito a 232/234; versões v4 preservadas. Galeria aponta para reel-232-v5.mp4 e reel-234-v5.mp4.
+
+Validação: encaixe exato de todas as oito imagens verificado; MP4s em 1080×1920/30 fps, H.264/AAC, 20 s, 600 quadros, faststart e decodificação integral. Áudio decodificado idêntico à v4 em ambos. Outros 35 registros/vídeos preservados por comparação de hashes. Suíte oficial: 17 OK, 0 falhas. Evidência: storage/correcao-instagram-20261010/general-square-validation.json. Sem alterações no banco, publicação ou agendamento. Avaliação estética final pendente.
+
 ## Pacote geral final — 208, 216, 232 e 234 (11/10/2026)
 
 Entregas: reel-208-v4.mp4, reel-216-v2.mp4, reel-232-v4.mp4 e reel-234-v4.mp4, com capas, contatos e manifestos. Validação: 37 roteiros aprovados; suíte oficial com 17 OK e 0 falhas; os quatro MP4s em 1080×1920/30 fps, H.264/AAC, 20 s e 600 quadros, faststart e decodificação integral sem erros. Áudio presente até o fechamento; hash dos quadros decodificados do 208 idêntico ao da versão anterior. Outros 33 registros/vídeos e versões anteriores preservados por comparação de hashes. Evidência: storage/correcao-instagram-20261010/general-package-validation.json.
