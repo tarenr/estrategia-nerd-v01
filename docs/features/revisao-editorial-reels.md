@@ -1,3 +1,11 @@
+## Terror de atmosfera — piloto 230 v3 (11/10/2026)
+
+Identidade própria aprovada: corredor industrial escuro, névoa, concreto úmido, reflexos vermelhos e moldura metálica. Prévia e fundo sem textos gerados com imagegen a partir da composição aprovada, armazenados em `resources/reels-review/assets/terror/preview-230-v1.png` e `background-230-v1.png`. As fotografias/capturas são os três arquivos originais do artigo, inseridos diretamente pelo compositor; não são recriadas por IA.
+
+Vídeo de vinte segundos, 1080×1920 a 30 fps, com três tomadas de 200 quadros: Silent Hill 2 entre 0 e 6,67 s, Signalis entre 6,67 e 13,33 s e Alan Wake 2 entre 13,33 e 20 s. Imagens inteiras e proporcionais, sem zoom ou distorção. Títulos e corpos originais mantidos; chamadas visuais complementares seguem a prévia. Trilha e ponto inicial preservados. Rótulo de fechamento passa a indicar três jogos, corrigindo o número antigo. Tipografia Impact clara, com contorno e sombra, e identificação específica de cada jogo. Perfil `terror-atmosphere-v1` limitado ao 230.
+
+Entregas `reel-230-v3.mp4`, capa, folha de contato e manifesto com hashes do fundo, renderer, fonte e mídias. Galerias oficiais atualizadas; versões anteriores e demais 36 registros preservados. Backup em `storage/correcao-instagram-20261010/terror-230-before/catalog.json`. O perfil usa desenho explícito por quadro, rasterização CPU para suavização determinística das letras e desativa apenas no próprio layer os redesenhos automáticos da interface. Validações abrangem duração igual por imagem, leitura, proporção, continuidade, determinismo inclusive após trocar cenas e aguardar timers, áudio, faststart, decodificação integral e suíte oficial. Este arquivo alimenta a documentação interna no painel Mudanças. Sem alteração no artigo, banco ou fila do Instagram. Entrega para avaliação visual, sem aprovação de publicação.
+
 ## Saga Diablo — grupo 197, 224, 225, 226 e 227 em 20 segundos (11/10/2026)
 
 Cada roteiro foi avaliado individualmente antes de aplicar o visual aprovado do 195: dualidade Céu/Inferno, moldura gótica, cabeçalhos dourados/marfim e áreas escurecidas para leitura. Os cabeçalhos usam os textos específicos de cada artigo, mantendo títulos, corpos, artes, legendas, trilhas e pontos iniciais do áudio.

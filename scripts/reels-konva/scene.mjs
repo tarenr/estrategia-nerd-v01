@@ -9,6 +9,7 @@ import { createDiagnosticScene } from '../reels-review/diagnostic-scene.mjs';
 import { createComparisonScene } from '../reels-review/comparison-scene.mjs';
 import { createListScene } from '../reels-review/list-scene.mjs';
 import { createDiabloScene } from '../reels-review/diablo-scene.mjs';
+import { createTerrorScene } from '../reels-review/terror-scene.mjs';
 
 export const WIDTH = 1080;
 export const HEIGHT = 1920;
@@ -104,6 +105,7 @@ export function fitText(node, maxHeight, maxSize, minSize) {
 /** A reusable scene graph; rendering uses explicit frame time, never wall-clock animation. */
 export async function createScene(spec, root) {
   validateSpec(spec);
+  if(spec.compositionProfile==='terror-atmosphere-v1')return createTerrorScene(spec,root);
   if(spec.compositionProfile==='diablo-duality-v1')return createDiabloScene(spec,root);
   if(spec.compositionProfile==='list-central-v1')return createListScene(spec,root);
   if(['comparison-206-v1','comparison-versus-v1'].includes(spec.compositionProfile))return createComparisonScene(spec,root);
