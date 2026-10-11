@@ -1,3 +1,11 @@
+## Lista 205 — primeiro vídeo com foto central, versão 2 (11/10/2026)
+
+Reel 205 produzido com a identidade de listas aprovada: fundo editorial neutro em grafite, ciano e âmbar; imagem central como foco; títulos equilibrados e indicador de quatro cenas. O perfil `list-central-v1` está limitado ao 205 nesta entrega. A composição usa as imagens originais do artigo (capa, Chrono Trigger, The Witcher 3 e Baldur's Gate 3), inteiras e proporcionais dentro da moldura, sem zoom ou geração de novas imagens dos jogos. Somente o fundo foi derivado da prévia aprovada por imagegen; fotos e textos são inseridos diretamente pelo compositor.
+
+Quatro cenas de cinco segundos, 20 segundos totais, 1080×1920 a 30 fps, H.264/AAC e faststart. Roteiro, legendas, trilha e ponto inicial do áudio preservados; cabeçalho editorial de abertura identifica a lista de dez jogos. Os três exemplos continuam claramente apresentados como recortes da lista. Entregas: `public/uploads/reels/correcao-instagram-20261010/reel-205-v2.mp4`, capa `.jpg`, folha `-contact.jpg` e manifesto. As duas galerias oficiais apontam para v2.
+
+Versão anterior mantida em disco e `previousVersions`; backup do catálogo em `storage/correcao-instagram-20261010/list-205-before/catalog.json`. Os demais 36 registros, banco e fila de publicação permanecem preservados. Vídeo entregue para avaliação visual, sem publicação no Instagram. Verificações abrangem imagens originais sem corte/distorção, posição fixa por cena, legibilidade, áudio, duração, faststart, decodificação integral e suíte oficial do projeto.
+
 ## Comparativos 190, 210 e 211 — versão 3 seguindo o 206 v4 (11/10/2026)
 
 Aplicação restrita aos três IDs: 190 (16 GB versus 32 GB), 210 (RTX 5060 versus RX 9060 XT) e 211 (AM4 versus AM5). Reutiliza o fundo versus aprovado e a tipografia pesada do 206 v4, com contorno, sombra, gradiente ciano/âmbar e entrada lateral curta. Nomes dos lados, critérios e quebras dos títulos são específicos de cada pauta; as palavras, corpos, legendas, imagens dos artigos e origens/pontos iniciais das trilhas permanecem preservados. Quatro cenas de cinco segundos, 20 segundos totais, 1080×1920 a 30 fps.
