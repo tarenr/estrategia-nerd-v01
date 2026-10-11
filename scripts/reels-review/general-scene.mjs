@@ -5,7 +5,8 @@ import {resolve} from 'node:path';
 import {manualState,imageRuns,framingGeometry} from './scene.mjs';
 
 export async function createGeneralScene(spec,root){
-  if(![208,216,232,234].includes(spec.reviewPostId)||spec.compositionProfile!=='general-editorial-v1'||spec.duration!==20||spec.scenes.length!==4||spec.beatStarts.some((t,i)=>t!==i*5))throw new Error('Padrão geral fora do escopo aprovado.');
+  const returningPlayer=spec.reviewPostId===235&&spec.articleId===80;
+  if((![208,216,232,234].includes(spec.reviewPostId)&&!returningPlayer)||spec.compositionProfile!=='general-editorial-v1'||spec.duration!==20||spec.scenes.length!==4||spec.beatStarts.some((t,i)=>t!==i*5))throw new Error('Padrão geral fora do escopo aprovado.');
   FontLibrary.use('EN General Display','C:/Windows/Fonts/impact.ttf');
   FontLibrary.use('EN General Body',resolve(root,'resources/reels-konva/fonts/Inter.ttf'));
   const runs=imageRuns(spec);

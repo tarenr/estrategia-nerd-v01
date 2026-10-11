@@ -1,3 +1,11 @@
+## Artigos faltantes — retorno aos jogos (11/10/2026)
+
+Artigo local 80, “Como voltar a um jogo depois de meses sem jogar”: Reel de 20 s no padrão geral aprovado, com capa e três imagens originais, sem cortes ou recriação. Cada imagem e bloco de texto ocupa 5 s. Música Fantasy Medieval Epic Music, trecho a partir de 20 s, aprovado pelo usuário. Arquivo reel-235-v1.mp4 em uploads/reels/novos-20261011; 235 identifica a composição, enquanto o rascunho Instagram criado pelo banco é #243. Galeria local: /public/uploads/reels/novos-20261011/gallery.html. Catálogo técnico: resources/reels-review/missing-20261011.json; scripts missing-20261011.mjs (--render, --verify, --gallery) e register-missing-20261011.php (leitura por padrão, --apply para cadastro idempotente local).
+
+Validação executada: 1080×1920, 30 fps, H.264/AAC, 20 s, faststart, decodificação integral, hashes das imagens e trilha; suíte dos 37 roteiros anteriores aprovada e suíte oficial com 17 OK, 0 falhas. Os vídeos anteriores permanecem preservados. Cadastro transacional nas tabelas locais instagram_posts e instagram_post_media, usando o repositório oficial e chave por ambiente/artigo; sem atualização de registros existentes, publicação ou agendamento. Aprovação visual do novo vídeo ainda pendente.
+
+Artigo de produção 43, Ryzen 7 5700X, permanece pendente: sua capa mostra Ryzen 5 série 7000 e o texto afirma que o 5700X é o processador atual. Consulta direta ao Win32_Processor nesta máquina confirmou AMD Ryzen 5 7600X, 6 núcleos e 12 threads, concordando com o artigo principal do setup. Nenhuma alteração feita no artigo ou banco de produção; sua correção editorial exige escopo próprio. Música Meteor Shower aprovada, mas o vídeo não foi produzido para evitar repetir a informação incorreta.
+
 ## Moldura quadrada — 232 e 234 v5 (11/10/2026)
 
 Correção aprovada limitada aos dois vídeos de humor: moldura quadrada central com área de imagem de 546,75 × 546,75 px, em x=266,625/y=715. Cada painel quadrado preenche a área inteira, sem espaços laterais, distorção ou corte adicional. Textos, fundos, fontes, trilhas, legendas e duração preservados. Quatro painéis de cinco segundos em cada Reel de 20 s. Perfil frameShape: square-v1 restrito a 232/234; versões v4 preservadas. Galeria aponta para reel-232-v5.mp4 e reel-234-v5.mp4.

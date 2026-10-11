@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "publicationApproval": false,
+  "pending": [
+    {
+      "articleId": 43,
+      "environment": "production",
+      "reason": "Texto declara 5700X como setup atual, mas Win32_Processor confirmou Ryzen 5 7600X (6 cores, 12 threads). Capa mostra Ryzen 5 7000. Aguarda definição editorial; artigo preservado."
+    }
+  ],
+  "items": [
+    {
+      "id": 235,
+      "articleId": 80,
+      "title": "Como voltar a um jogo depois de meses sem jogar",
+      "articleSlug": "como-voltar-a-um-jogo-depois-de-meses-sem-jogar",
+      "originEnvironment": "local",
+      "type": "steps",
+      "status": "rascunho",
+      "caption": "Seu save ainda espera. Retome o contexto, revise os controles e escolha um objetivo pequeno antes de decidir se precisa recomeçar. Preserve seu progresso e confira o guia no blog — link na bio.\n\n#EstratégiaNerd #Games #Gamer #Dicas #CulturaGeek",
+      "trackId": 24,
+      "state": "ready",
+      "spec": {
+        "articleId": 80,
+        "articleTitle": "Como voltar a um jogo depois de meses sem jogar",
+        "category": "games",
+        "editorial": "manual",
+        "collection": "DE VOLTA AO JOGO",
+        "layout": "chronicle",
+        "tone": "action",
+        "duration": 20,
+        "audio": "public/uploads/audio/pixabay_239599.mp3",
+        "audioStart": 20,
+        "beatStarts": [
+          0,
+          5,
+          10,
+          15
+        ],
+        "scenes": [
+          {
+            "eyebrow": "De volta ao jogo",
+            "title": "Seu save ainda espera",
+            "body": "Antes de recomeçar, descubra onde sua aventura parou.",
+            "image": "public/uploads/posts/como-voltar-a-um-jogo-depois-de-meses-sem-jogar/images/capa.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Proteja o progresso",
+            "title": "Primeiro, preserve o save",
+            "body": "Confira o diário e os objetivos. Evite spoilers da história.",
+            "image": "public/uploads/posts/como-voltar-a-um-jogo-depois-de-meses-sem-jogar/images/img-001.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Recupere o ritmo",
+            "title": "Reaprenda sem pressa",
+            "body": "Revise controles e equipamentos antes de encarar um desafio.",
+            "image": "public/uploads/posts/como-voltar-a-um-jogo-depois-de-meses-sem-jogar/images/img-002.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "Um passo por vez",
+            "title": "Escolha uma meta pequena",
+            "body": "Faça uma atividade curta e anote o próximo objetivo.",
+            "image": "public/uploads/posts/como-voltar-a-um-jogo-depois-de-meses-sem-jogar/images/img-003.webp",
+            "framing": {
+              "mode": "contain",
+              "motion": "still"
+            }
+          }
+        ],
+        "presentation": "story",
+        "reviewPostId": 235,
+        "compositionProfile": "general-editorial-v1",
+        "visualStyle": {
+          "background": "resources/reels-review/assets/general/background-v1.png",
+          "reference": "resources/reels-review/assets/general/preview-208-v1.png",
+          "headlines": [
+            "Seu save\nainda espera",
+            "Primeiro,\npreserve o save",
+            "Reaprenda\nsem pressa",
+            "Escolha uma\nmeta pequena"
+          ],
+          "subtitles": [
+            "Meses sem jogar?",
+            "Retome o contexto",
+            "Uma área segura",
+            "Continue a aventura"
+          ],
+          "collection": "DE VOLTA AO JOGO"
+        }
+      },
+      "video": "uploads/reels/novos-20261011/reel-235-v1.mp4",
+      "poster": "uploads/reels/novos-20261011/reel-235-v1.jpg",
+      "sources": [
+        {
+          "file": "public/uploads/posts/como-voltar-a-um-jogo-depois-de-meses-sem-jogar/images/capa.webp",
+          "sha256": "e1169730b4adcc07a72e10649bb7f8d1aaea9d432566e261f12b8011924360d1"
+        },
+        {
+          "file": "public/uploads/posts/como-voltar-a-um-jogo-depois-de-meses-sem-jogar/images/img-001.webp",
+          "sha256": "37f1492b03e956748b2f3cd3963dc95593ea7ec450aed2eeef1bdc008f0aea5e"
+        },
+        {
+          "file": "public/uploads/posts/como-voltar-a-um-jogo-depois-de-meses-sem-jogar/images/img-002.webp",
+          "sha256": "06b90add070afa3bd6d1526600ecb5c08ceb2a7d8e9097ad7b60160e85e953a8"
+        },
+        {
+          "file": "public/uploads/posts/como-voltar-a-um-jogo-depois-de-meses-sem-jogar/images/img-003.webp",
+          "sha256": "45e696ed4c606787973fcfecb1f4aba0bdab27dda6c2cd941d05012b6540f117"
+        }
+      ],
+      "audioSha256": "abcc804f811ac9734283c818fee60432226e476300056b210b4f5811f46bf258",
+      "sha256": "3ba05d03892d7b05854cff377e450a1c879d8c0996c65220d4f8609c1be22769",
+      "instagramPostId": 243
+    }
+  ]
+}
