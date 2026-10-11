@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { createManualScene, validateManualSpec } from '../reels-review/scene.mjs';
 import { createHardwareScene } from '../reels-review/hardware-scene.mjs';
 import { createDiagnosticScene } from '../reels-review/diagnostic-scene.mjs';
+import { createComparisonScene } from '../reels-review/comparison-scene.mjs';
 
 export const WIDTH = 1080;
 export const HEIGHT = 1920;
@@ -100,6 +101,7 @@ export function fitText(node, maxHeight, maxSize, minSize) {
 /** A reusable scene graph; rendering uses explicit frame time, never wall-clock animation. */
 export async function createScene(spec, root) {
   validateSpec(spec);
+  if(spec.compositionProfile==='comparison-206-v1')return createComparisonScene(spec,root);
   if(['diagnostic-207-v1','diagnostic-guide-v1'].includes(spec.compositionProfile))return createDiagnosticScene(spec,root);
   if(spec.compositionProfile==='hardware-product-v1')return createHardwareScene(spec,root);
   if (spec.editorial === 'manual' && spec.compositionProfile !== '196-v5') return createManualScene(spec, root);

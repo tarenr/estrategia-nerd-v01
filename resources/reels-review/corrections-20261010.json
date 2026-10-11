@@ -2325,14 +2325,14 @@
         "collection": "ESCOLHAS PARA SEU PC",
         "layout": "versus",
         "tone": "tech",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_511038.mp3",
         "audioStart": 40,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -2380,20 +2380,102 @@
           "RTX 3050",
           "RX 6600"
         ],
-        "presentation": "comparison"
+        "presentation": "comparison",
+        "reviewPostId": 206,
+        "compositionProfile": "comparison-206-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-206-v3-background.png"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-206-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-206-v2.jpg",
-      "sha256": "cb78823a0f4153ef75b149ded3a8be8bf639ca5dada26a269fb3ce4dcb01a7ca",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-206-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-206-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-206-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-206-v1.jpg",
           "sha256": "245432517cf7524a5c8d423b95b4902935a8de32e98ae5dd7a39fffdda565224"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-206-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-206-v2.jpg",
+          "sha256": "cb78823a0f4153ef75b149ded3a8be8bf639ca5dada26a269fb3ce4dcb01a7ca",
+          "spec": {
+            "articleId": 26,
+            "articleTitle": "RTX 3050 vs RX 6600: Qual Vale Mais a Pena em 2026?",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "ESCOLHAS PARA SEU PC",
+            "layout": "versus",
+            "tone": "tech",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_511038.mp3",
+            "audioStart": 40,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "GPUs para Full HD",
+                "title": "RTX 3050 ou RX 6600?",
+                "body": "Compare o modelo exato, o preço e os jogos que você usa.",
+                "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O nome não conta tudo",
+                "title": "Qual RTX 3050?",
+                "body": "As versões de 6 e 8 GB são diferentes. Não trate as duas como a mesma placa.",
+                "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Seu uso muda a escolha",
+                "title": "Jogos e recursos",
+                "body": "Desempenho, consumo e recursos precisam entrar na comparação.",
+                "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antes da compra",
+                "title": "Compare preços e modelos",
+                "body": "A escolha depende da oferta real e da configuração. Veja a análise no blog.",
+                "image": "public/uploads/posts/rtx-3050-vs-rx-6600-qual-vale-mais-a-pena-em-2026/images/capa.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "comparison": [
+              "RTX 3050",
+              "RX 6600"
+            ],
+            "presentation": "comparison"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "comparisonRevision": {
+        "approvedPreview": "exec-3e3afa46-1660-42fe-b7c8-a7b0b8455e9e.png",
+        "singleOriginalCover": true,
+        "textsPreserved": true,
+        "audioSourcePreserved": true,
+        "queueChanged": false
+      },
+      "sha256": "0b76615def6049b381baf8a4e283012931e3054a51b3bc8634347c04d7582bd9"
     },
     {
       "id": 207,

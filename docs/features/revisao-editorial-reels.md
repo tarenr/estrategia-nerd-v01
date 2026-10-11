@@ -1,3 +1,11 @@
+## Comparativo 206 — versão 3 com fundo versus (10/10/2026)
+
+Primeiro vídeo do grupo de comparações: RTX 3050 versus RX 6600. A proposta visual aprovada usa confronto ciano/âmbar, metal grafite e um VS em relevo no fundo. O fundo foi preparado com ImageGen a partir da proposta aprovada; os produtos vêm diretamente da `capa.webp` existente no artigo, sem gerar ou substituir as placas. A imagem original permanece inteira, na proporção 16:9, fixa em x=60, y=880, 960×540. Marca, títulos e apoio ficam acima; critérios e chamada ficam abaixo.
+
+O compositor `scripts/reels-review/comparison-scene.mjs` aceita exclusivamente o ID 206, perfil `comparison-206-v1`, quatro cenas de cinco segundos e 20 segundos totais. Roteiro, legenda, trilha e ponto inicial do áudio são preservados. Apenas os textos fazem uma entrada suave; a capa não reinicia, muda ou recebe zoom nas trocas de cena. A primeira cena destaca os dois modelos nas cores de confronto, e as demais usam os títulos originais.
+
+Entregas: `public/uploads/reels/correcao-instagram-20261010/reel-206-v3.mp4`, capa `.jpg`, folha `-contact.jpg` e manifesto `.mp4.manifest.json`. Fundo: `images/reel-206-v3-background.png`. As galerias existentes apontam para v3; o endereço novo evita reutilização da v2 em cache. Backup do catálogo: `storage/correcao-instagram-20261010/comparison-206-before/catalog.json`. Os outros 36 registros, arquivos anteriores, banco e fila permanecem preservados. A aprovação visual do vídeo completo e a autorização para publicação são etapas posteriores.
+
 ## Correção dos Reels 198 e 201 — versão 4 com imagens dos artigos (10/10/2026)
 
 O 198 possui cinco cenas de quatro segundos: setup completo, Ryzen 5 7600X, MSI B650 TOMAHAWK WIFI, RTX 3050 de 6 GB e Corsair Vengeance DDR5. Cada cena usa a imagem existente do artigo correspondente. A placa-mãe usa `capa-corrigida-c9d791d5fe98.webp` do artigo da B650: a antiga `capa.webp` ainda identifica uma B850 e não deve ser reutilizada nesta revisão. O texto da cena foi corrigido para B650 e a cena da GPU foi acrescentada. As demais falas e o áudio foram preservados.

@@ -10,6 +10,22 @@ assert.deepEqual(catalog.cancelled,[191,192,193,194]);assert.equal(catalog.items
 assert.equal(new Set(catalog.items.map(i=>i.id)).size,37);assert.equal(catalog.publicationApproval,false);
 const counts=new Set(catalog.items.map(i=>i.spec.scenes.length));assert.ok(counts.has(3)&&counts.has(4)&&counts.has(5));
 const results=[];
+const isComparisonRevision=i=>i.id===206&&i.spec.compositionProfile==='comparison-206-v1';
+if(catalog.items.some(isComparisonRevision)){
+ const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/comparison-206-before/catalog.json'),'utf8'));
+ for(const item of catalog.items){
+  const old=before.items.find(i=>i.id===item.id);
+  if(!isComparisonRevision(item)){assert.deepEqual(item,old,'Outro registro alterado na revisão 206');continue;}
+  for(const key of ['caption','status','scheduled','articleId','trackId'])assert.deepEqual(item[key],old[key]);
+  for(const key of ['audio','audioStart'])assert.deepEqual(item.spec[key],old.spec[key]);
+  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(item.spec.scenes.length,4);
+  item.spec.scenes.forEach((s,n)=>{for(const key of ['eyebrow','title','body','image'])assert.equal(s[key],old.spec.scenes[n][key]);});
+  assert.equal(new Set(item.spec.scenes.map(s=>s.image)).size,1);
+  assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
+  await assert.rejects(()=>createScene({...item.spec,reviewPostId:210},root),/fora do escopo/);
+ }
+ console.log('PASS: comparativo 206 com capa original, quatro textos e áudio preservados; demais 36 intactos.');
+}
 const isGuideRevision=i=>[204,209,212,213].includes(i.id)&&i.spec.compositionProfile==='diagnostic-guide-v1';
 if(catalog.items.some(isGuideRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/guides-before/catalog.json'),'utf8'));
@@ -37,7 +53,7 @@ const isHardwareRevision=i=>[198,199,200,201,202,203].includes(i.id)&&i.spec.com
 if(catalog.items.some(isHardwareRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/hardware-198-203-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
-  if(isGuideRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
+  if(isComparisonRevision(item)||isGuideRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
   const original=before.items.find(i=>i.id===item.id);
   if(!isHardwareRevision(item)){assert.deepEqual(item,original,'Outro registro alterado #'+item.id);continue;}
   for(const key of ['caption','status','scheduled','trackId','articleId','originalSha256'])assert.deepEqual(item[key],original[key]);
@@ -64,7 +80,7 @@ if(catalog.avatarRevision){
  const ids=[196,229,232,234];
  for(const item of catalog.items){
   const original=before.items.find(i=>i.id===item.id);
-  if(isGuideRevision(item)||isHardwareRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
+  if(isComparisonRevision(item)||isGuideRevision(item)||isHardwareRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
   if(!ids.includes(item.id)){assert.deepEqual(item,original,'Registro fora do escopo alterado #'+item.id);continue;}
   const approved196=item.id===196&&item.spec.compositionProfile==='196-v5';assert.equal(item.revision,approved196?5:3);assert.equal(item.avatarReference,true);
   for(const key of ['caption','status','scheduled','articleId','articleSlug','original','originalSha256','trackId'])assert.deepEqual(item[key],original[key],'Campo preservado divergiu: '+key);
@@ -87,7 +103,7 @@ for(const item of catalog.items){
   assert.equal(stage.typography.length,spec.scenes.length);
   assert.ok(stage.typography.every(t=>t.bodySize>=31),'Texto pequeno #'+item.id);
   const images=stage.layer.find('Image');
-  assert.equal(images.length,['hardware-product-v1','diagnostic-207-v1','diagnostic-guide-v1'].includes(spec.compositionProfile)?2:spec.compositionProfile==='196-v5'?1:imageRuns(spec).length);
+  assert.equal(images.length,['hardware-product-v1','diagnostic-207-v1','diagnostic-guide-v1','comparison-206-v1'].includes(spec.compositionProfile)?2:spec.compositionProfile==='196-v5'?1:imageRuns(spec).length);
   if(imageRuns(spec).length===1){for(const time of spec.beatStarts.slice(1)){
    stage.render(time-.05);const before=images[0].width();stage.render(time+.05);
    assert.equal(images[0].width(),before,'Imagem reiniciou #'+item.id);assert.equal(images[0].getParent().opacity(),1);

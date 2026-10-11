@@ -104,6 +104,7 @@ export async function renderVideo(spec,root,output,{ffmpeg='ffmpeg',ffprobe='ffp
       manualRenderer:spec.editorial==='manual'?{file:'scripts/reels-review/scene.mjs',sha256:sha(resolve(root,'scripts/reels-review/scene.mjs'))}:null,
       hardwareStyle:spec.compositionProfile==='hardware-product-v1'?{renderer:'scripts/reels-review/hardware-scene.mjs',rendererSha256:sha(resolve(root,'scripts/reels-review/hardware-scene.mjs')),background:spec.visualStyle.background,backgroundSha256:sha(resolve(root,spec.visualStyle.background)),font:'C:/Windows/Fonts/bahnschrift.ttf',fontSha256:sha('C:/Windows/Fonts/bahnschrift.ttf')}:null,
       diagnosticStyle:['diagnostic-207-v1','diagnostic-guide-v1'].includes(spec.compositionProfile)?{renderer:'scripts/reels-review/diagnostic-scene.mjs',rendererSha256:sha(resolve(root,'scripts/reels-review/diagnostic-scene.mjs')),background:spec.visualStyle.background,backgroundSha256:sha(resolve(root,spec.visualStyle.background))}:null,
+      comparisonStyle:spec.compositionProfile==='comparison-206-v1'?{renderer:'scripts/reels-review/comparison-scene.mjs',rendererSha256:sha(resolve(root,'scripts/reels-review/comparison-scene.mjs')),background:spec.visualStyle.background,backgroundSha256:sha(resolve(root,spec.visualStyle.background))}:null,
       typography:scene.typography,videoSha256:sha(outputPath),media};
     writeFileSync(outputPath+'.manifest.json',JSON.stringify(manifest,null,2),{flag:'wx'});
     return manifest;
