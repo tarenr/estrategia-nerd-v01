@@ -6164,19 +6164,19 @@
       "type": "comedy",
       "note": "Roteiro individual revisado conforme a pauta.",
       "sources": [],
-      "caption": "🔦 Desliguei o terror. O corredor não recebeu o aviso.\n\nUm casaco no escuro já vira chefe opcional. E o gato escolhe exatamente essa hora para aparecer. 😅\n\nQual jogo deixou sua casa mais assustadora depois?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "caption": "🔦 Desliguei o terror. O corredor não recebeu o aviso.\n\nUm casaco no escuro já vira chefe opcional. E o gato escolhe exatamente essa hora para aparecer. 😅\n\nQual jogo deixou sua casa mais assustadora depois?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
       "original": "public/uploads/reels/leva02-bloco1/reel-229-revisado.mp4",
       "originalSha256": "35ddf1f8d9157df35a65a327b125c67882fbb654ebddb2c08f3e2e1466f2423e",
       "reuse": false,
-      "trackId": 21,
+      "trackId": null,
       "spec": {
         "articleId": 77,
         "articleTitle": "Muito além dos jumpscares: 3 jogos que constroem o medo pela atmosfera",
         "tone": "tech",
         "layout": "showcase",
         "collection": "PERRENGUE NERD · TERROR",
-        "audio": "public/uploads/audio/pixabay_10376.mp3",
-        "audioStart": 5,
+        "audio": "resources/reels-review/assets/terror/audio/the-house-of-leaves.mp3",
+        "audioStart": 0,
         "footer": "Qual jogo te fez olhar para trás?",
         "closingLabel": "CONTA NOS COMENTÁRIOS",
         "scenes": [
@@ -6246,20 +6246,41 @@
           }
         ],
         "editorial": "manual",
-        "duration": 24,
+        "duration": 20,
         "beatStarts": [
           0,
-          6,
-          12,
-          18
+          5,
+          10,
+          15
         ],
         "category": "games",
-        "presentation": "comedy"
+        "presentation": "comedy",
+        "reviewPostId": 229,
+        "compositionProfile": "terror-atmosphere-v1",
+        "timingRevision": "terror-group-v1",
+        "visualStyle": {
+          "background": "resources/reels-review/assets/terror/background-230-v1.png",
+          "reference": "resources/reels-review/assets/terror/preview-230-v1.png",
+          "collection": "PERRENGUE NERD · TERROR",
+          "footer": "QUAL JOGO TE FEZ OLHAR PARA TRÁS?",
+          "headlines": [
+            "O terror acabou.\nSerá?",
+            "A casa ganhou\ndificuldade",
+            "Tem alguma\ncoisa ali",
+            "Era só\no casaco"
+          ],
+          "subtitles": [
+            "Você saiu do jogo.\nO medo ficou.",
+            "Até o corredor\nvirou desafio.",
+            "A lanterna revela.\nO coração dispara.",
+            "O gato garantiu\no último susto."
+          ]
+        },
+        "musicRevision": "terror-group-v1"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-229-v3.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-229-v3.jpg",
-      "sha256": "8f3a1ec80e9c21c97bea147c3549df0e61815cd07577e782817ac7ba32779b45",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-229-v4.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-229-v4.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-229-v1.mp4",
@@ -6357,10 +6378,106 @@
             "category": "games",
             "presentation": "comedy"
           }
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-229-v3.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-229-v3.jpg",
+          "sha256": "8f3a1ec80e9c21c97bea147c3549df0e61815cd07577e782817ac7ba32779b45",
+          "spec": {
+            "articleId": 77,
+            "articleTitle": "Muito além dos jumpscares: 3 jogos que constroem o medo pela atmosfera",
+            "tone": "tech",
+            "layout": "showcase",
+            "collection": "PERRENGUE NERD · TERROR",
+            "audio": "public/uploads/audio/pixabay_10376.mp3",
+            "audioStart": 5,
+            "footer": "Qual jogo te fez olhar para trás?",
+            "closingLabel": "CONTA NOS COMENTÁRIOS",
+            "scenes": [
+              {
+                "eyebrow": "Depois do jogo",
+                "title": "O terror acabou. Será?",
+                "body": "Você desligou o jogo, mas continua em estado de alerta.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "O corredor",
+                "title": "A casa ganhou dificuldade",
+                "body": "Agora você atravessa o corredor como se tivesse perdido o save.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "A sombra",
+                "title": "Tem alguma coisa ali",
+                "body": "O coração acelera. A lanterna aponta para a porta.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              },
+              {
+                "eyebrow": "O alívio",
+                "title": "Era só o casaco",
+                "body": "E o gato apareceu para garantir o susto.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-229-avatar-v3.png",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still",
+                  "region": [
+                    0.5,
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
+                }
+              }
+            ],
+            "editorial": "manual",
+            "duration": 24,
+            "beatStarts": [
+              0,
+              6,
+              12,
+              18
+            ],
+            "category": "games",
+            "presentation": "comedy"
+          },
+          "caption": "🔦 Desliguei o terror. O corredor não recebeu o aviso.\n\nUm casaco no escuro já vira chefe opcional. E o gato escolhe exatamente essa hora para aparecer. 😅\n\nQual jogo deixou sua casa mais assustadora depois?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+          "trackId": 21
         }
       ],
-      "revision": 3,
-      "avatarReference": true
+      "revision": 4,
+      "avatarReference": true,
+      "musicLicense": "resources/reels-review/assets/terror/audio/the-house-of-leaves.license.json",
+      "sha256": "18c2d8c36a200b38e28f557a9b1a69bd098aa70e760443b6f52bcf53a1b3d082"
     },
     {
       "id": 230,
@@ -6596,18 +6713,18 @@
       "type": "sound",
       "note": "Roteiro individual revisado conforme a pauta.",
       "sources": [],
-      "caption": "🎧 Um ruído pode mudar a cena inteira.\n\nEste Reel usa exemplos sonoros ilustrativos para mostrar antecipação, silêncio e direção. São demonstrações produzidas para a explicação, não áudio original dos jogos.\n\nOuça com fones em volume confortável: de qual lado veio o último som?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "caption": "🎧 Um ruído pode mudar a cena inteira.\n\nEste Reel usa exemplos sonoros ilustrativos para mostrar antecipação, silêncio e direção. São demonstrações produzidas para a explicação, não áudio original dos jogos.\n\nOuça com fones em volume confortável: de qual lado veio o último som?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
       "original": "public/uploads/reels/leva02-bloco1/reel-231-revisado.mp4",
       "originalSha256": "65322781e18fa8c1a48ab32634993f80af430a88bbbf0462532737201a23a682",
       "reuse": false,
-      "trackId": 22,
+      "trackId": null,
       "spec": {
         "articleId": 78,
         "articleTitle": "Como o som cria medo nos jogos: pistas, silêncio e espaço",
         "tone": "tech",
         "layout": "guide",
         "collection": "UTILIDADE · SOM NO TERROR",
-        "audio": "public/uploads/reels/correcao-instagram-20261010/audio/reel-231-demo.wav",
+        "audio": "resources/reels-review/assets/terror/audio/reel-231-demo-v3.wav",
         "audioStart": 0,
         "footer": "Qual som de jogo ficou na sua memória?",
         "closingLabel": "CONTA NOS COMENTÁRIOS",
@@ -6654,28 +6771,122 @@
           }
         ],
         "editorial": "manual",
-        "duration": 28,
+        "duration": 20,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "category": "games",
-        "presentation": "sound"
+        "presentation": "sound",
+        "reviewPostId": 231,
+        "compositionProfile": "terror-atmosphere-v1",
+        "timingRevision": "terror-group-v1",
+        "visualStyle": {
+          "background": "resources/reels-review/assets/terror/background-230-v1.png",
+          "reference": "resources/reels-review/assets/terror/preview-230-v1.png",
+          "collection": "TERROR · O PODER DO SOM",
+          "footer": "OUÇA COM FONES · LINK NA BIO",
+          "headlines": [
+            "Ouça antes\nde ver",
+            "O alerta\nse aproxima",
+            "Agora,\nnada",
+            "Esquerda\nou direita?"
+          ],
+          "subtitles": [
+            "Um ruído muda\na cena inteira.",
+            "A repetição cria\nexpectativa.",
+            "O silêncio aumenta\na tensão.",
+            "O espaço também\nconta a história."
+          ]
+        },
+        "musicRevision": "terror-group-v1"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-231-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v2.jpg",
-      "sha256": "dc01956f517e8f8a8e5fe3b6ff2dab196cbb31ba6c9f99474deca308aaf73aef",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-231-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-231-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v1.jpg",
           "sha256": "dc01956f517e8f8a8e5fe3b6ff2dab196cbb31ba6c9f99474deca308aaf73aef"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-231-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v2.jpg",
+          "sha256": "dc01956f517e8f8a8e5fe3b6ff2dab196cbb31ba6c9f99474deca308aaf73aef",
+          "spec": {
+            "articleId": 78,
+            "articleTitle": "Como o som cria medo nos jogos: pistas, silêncio e espaço",
+            "tone": "tech",
+            "layout": "guide",
+            "collection": "UTILIDADE · SOM NO TERROR",
+            "audio": "public/uploads/reels/correcao-instagram-20261010/audio/reel-231-demo.wav",
+            "audioStart": 0,
+            "footer": "Qual som de jogo ficou na sua memória?",
+            "closingLabel": "CONTA NOS COMENTÁRIOS",
+            "scenes": [
+              {
+                "eyebrow": "Exemplo ilustrativo",
+                "title": "Ouça antes de ver",
+                "body": "Um ruído pode mudar a leitura de uma cena.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-001.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antecipação",
+                "title": "O alerta se aproxima",
+                "body": "O sinal repetido faz você esperar alguma coisa.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-002.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O silêncio",
+                "title": "Agora, nada",
+                "body": "A pausa deixa o próximo ruído em destaque.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Direção",
+                "title": "Esquerda ou direita?",
+                "body": "Ouça com fones em volume confortável.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "editorial": "manual",
+            "duration": 28,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "category": "games",
+            "presentation": "sound"
+          },
+          "caption": "🎧 Um ruído pode mudar a cena inteira.\n\nEste Reel usa exemplos sonoros ilustrativos para mostrar antecipação, silêncio e direção. São demonstrações produzidas para a explicação, não áudio original dos jogos.\n\nOuça com fones em volume confortável: de qual lado veio o último som?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+          "trackId": 22
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "musicLicense": "resources/reels-review/assets/terror/audio/the-house-of-leaves.license.json",
+      "soundDemonstration": "resources/reels-review/assets/terror/audio/reel-231-demo-v3.json",
+      "sha256": "33293df16c5ebf36ad44b825a879c20afab92278b930d5a2375808cb5312d9a6"
     },
     {
       "id": 232,

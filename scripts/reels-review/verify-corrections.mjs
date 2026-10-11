@@ -4,24 +4,68 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {createScene,validateSpec} from '../reels-konva/scene.mjs';
-import {imageRuns,manualState} from './scene.mjs';
+import {imageRuns,manualState,framingGeometry} from './scene.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const catalog=JSON.parse(readFileSync(resolve(root,'resources/reels-review/corrections-20261010.json'),'utf8'));
 assert.deepEqual(catalog.cancelled,[191,192,193,194]);assert.equal(catalog.items.length,37);
 assert.equal(new Set(catalog.items.map(i=>i.id)).size,37);assert.equal(catalog.publicationApproval,false);
 const counts=new Set(catalog.items.map(i=>i.spec.scenes.length));assert.ok(counts.has(3)&&counts.has(4)&&counts.has(5));
 const results=[];
-const isTerrorRevision=i=>i.id===230&&i.spec.compositionProfile==='terror-atmosphere-v1';
+const isTerrorGroup=i=>[229,231].includes(i.id)&&i.spec.compositionProfile==='terror-atmosphere-v1'&&i.spec.timingRevision==='terror-group-v1';
+const isTerrorRevision=i=>(i.id===230||isTerrorGroup(i))&&i.spec.compositionProfile==='terror-atmosphere-v1';
+if(catalog.items.some(isTerrorGroup)){
+ const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-group-before/catalog.json'),'utf8'));
+ for(const item of catalog.items){
+  const old=before.items.find(i=>i.id===item.id);
+  if(!isTerrorGroup(item)){assert.deepEqual(item,old,'Registro fora do grupo de terror alterado');continue;}
+  for(const key of ['status','scheduled','articleId','articleSlug','articleSha256','original','originalSha256','avatarReference'])assert.deepEqual(item[key],old[key]);
+  assert.deepEqual(item.spec.scenes,old.spec.scenes,'Roteiro/artes alterados');
+  const license=JSON.parse(readFileSync(resolve(root,item.musicLicense),'utf8'));
+  assert.equal(item.caption,old.caption+'\n\nMúsica: '+license.credit);assert.equal(item.trackId,null);
+  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(item.spec.audioStart,0);
+  assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
+  assert.equal(createHash('sha256').update(readFileSync(resolve(root,license.path))).digest('hex'),license.sha256);
+  const runs=imageRuns(item.spec);assert.equal(runs.length,item.id===229?4:3);
+  for(const run of runs)assert.ok(Math.abs(run.end-run.start-20/runs.length)<1e-10);
+  if(item.id===229){assert.equal(item.spec.audio,license.path);assert.equal(item.avatarReference,true);}
+  else{
+   const demo=JSON.parse(readFileSync(resolve(root,item.soundDemonstration),'utf8'));
+   assert.equal(demo.music,license.path);assert.equal(demo.musicSha256,license.sha256);assert.equal(demo.duration,20);
+   assert.equal(createHash('sha256').update(readFileSync(resolve(root,item.spec.audio))).digest('hex'),demo.sha256);
+   assert.equal(createHash('sha256').update(readFileSync(resolve(root,demo.generator))).digest('hex'),demo.generatorSha256);
+   const wav=readFileSync(resolve(root,item.spec.audio));assert.equal(wav.toString('ascii',0,4),'RIFF');assert.equal(wav.toString('ascii',8,12),'WAVE');
+   let data,channels,rate,bits;for(let p=12;p+8<=wav.length;){const size=wav.readUInt32LE(p+4),kind=wav.toString('ascii',p,p+4);if(kind==='fmt '){assert.equal(wav.readUInt16LE(p+8),1);channels=wav.readUInt16LE(p+10);rate=wav.readUInt32LE(p+12);bits=wav.readUInt16LE(p+22);}if(kind==='data')data=wav.subarray(p+8,p+8+size);p+=8+size+(size%2);}
+   assert.equal(channels,2);assert.equal(rate,48000);assert.equal(bits,16);assert.equal(data.length,20*rate*4);
+   const peak=(start,end,side)=>{let max=0;for(let f=Math.ceil(start*rate);f<Math.floor(end*rate);f++)max=Math.max(max,Math.abs(data.readInt16LE(f*4+side*2)));return max;};
+   for(const side of [0,1]){assert.equal(peak(10,15,side),0,'Silencio preenchido');assert.ok(peak(1.5,3.5,side)>600);for(const start of demo.anticipation)assert.ok(peak(start,start+.18,side)>1800);}
+   assert.ok(peak(16,16.5,0)>2000);assert.equal(peak(16,16.5,1),0,'Esquerda vazou para direita');
+   assert.ok(peak(18.5,19,1)>2000);assert.equal(peak(18.5,19,0),0,'Direita vazou para esquerda');
+  }
+  await assert.rejects(()=>createScene({...item.spec,reviewPostId:232},root),/fora do escopo/);
+  const stage=await createScene(item.spec,root);
+  try{
+   const photo=stage.layer.find('Image')[1];
+   for(const run of runs){
+    stage.render(run.start+.25);const cover=photo.image(),expected=framingGeometry(cover.width,cover.height,run.framing,{width:974,height:498});
+    assert.deepEqual(photo.crop(),expected.crop);assert.equal(photo.width(),expected.width);assert.equal(photo.height(),expected.height);
+    stage.render(run.end-1/30);assert.equal(photo.image(),cover);assert.deepEqual(photo.crop(),expected.crop);
+   }
+   if(item.id===231){stage.render(5.2);const first=photo.image();stage.render(6.7);assert.notEqual(photo.image(),first);const second=photo.image();stage.render(10.2);assert.equal(photo.image(),second);stage.render(13.4);const third=photo.image();assert.notEqual(third,second);stage.render(15.2);assert.equal(photo.image(),third);}
+  }finally{stage.destroy();}
+ }
+ console.log('PASS: terror 229/231, imagens igualmente divididas, avatar/roteiros/piloto preservados, silencio e canais esquerdo/direito verificados.');
+}
 if(catalog.items.some(isTerrorRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-230-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
+  if(isTerrorGroup(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(!isTerrorRevision(item)){assert.deepEqual(item,old,'Registro fora do piloto de terror alterado');continue;}
   for(const key of ['status','scheduled','articleId','articleSha256','original','originalSha256'])assert.deepEqual(item[key],old[key]);
   assert.deepEqual(item.spec.scenes,old.spec.scenes);
   if(item.spec.musicRevision==='terror-house-of-leaves-v1'){
    const prior=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-audio-before/catalog.json'),'utf8'));
-   for(const other of catalog.items.filter(i=>i.id!==230))assert.deepEqual(other,prior.items.find(i=>i.id===other.id));
+   for(const other of catalog.items.filter(i=>i.id!==230&&!isTerrorGroup(i)))assert.deepEqual(other,prior.items.find(i=>i.id===other.id));
    const pilot=prior.items.find(i=>i.id===230),license=JSON.parse(readFileSync(resolve(root,item.musicLicense),'utf8'));
    assert.equal(license.title,'The House of Leaves');assert.equal(license.license,'CC BY 4.0');
    assert.equal(createHash('sha256').update(readFileSync(resolve(root,license.path))).digest('hex'),license.sha256);
@@ -57,7 +101,7 @@ if(catalog.items.some(isTerrorRevision)){
    }
   }finally{stage.destroy();}
  }
- console.log('PASS: terror 230, tres imagens originais igualmente divididas em 20 s; visual preservado, trilha/licenca verificadas e demais 36 registros preservados.');
+ console.log('PASS: piloto 230, tres imagens originais igualmente divididas em 20 s; visual preservado, trilha/licenca verificadas; registros fora do grupo preservados.');
 }
 const isDiabloGroup=i=>[197,224,225,226,227].includes(i.id)&&i.spec.timingRevision==='diablo-group-v1';
 const isDiabloRevision=i=>(i.id===195||isDiabloGroup(i))&&i.spec.compositionProfile==='diablo-duality-v1';

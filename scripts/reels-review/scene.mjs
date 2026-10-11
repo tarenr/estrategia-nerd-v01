@@ -56,6 +56,10 @@ export function validateManualSpec(spec){
 
 // Adjacent identical images are one continuous shot, even as text changes.
 export function imageRuns(spec){
+  if(spec.reviewPostId===231&&spec.compositionProfile==='terror-atmosphere-v1'&&spec.timingRevision==='terror-group-v1'){
+    const images=spec.scenes.filter((s,i)=>spec.scenes.findIndex(other=>other.image===s.image)===i);
+    return images.map((s,i)=>({image:s.image,framing:s.framing,start:i*spec.duration/images.length,end:(i+1)*spec.duration/images.length}));
+  }
   if([197,224,225,226,227].includes(spec.reviewPostId)&&spec.compositionProfile==='diablo-duality-v1'&&spec.timingRevision==='diablo-group-v1'){
     const images=spec.scenes.filter((s,i)=>spec.scenes.findIndex(other=>other.image===s.image)===i);
     return images.map((s,i)=>({image:s.image,framing:s.framing,start:i*spec.duration/images.length,end:(i+1)*spec.duration/images.length}));

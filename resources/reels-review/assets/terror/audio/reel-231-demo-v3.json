@@ -1,0 +1,35 @@
+{
+  "duration": 20,
+  "rate": 48000,
+  "channels": 2,
+  "music": "resources/reels-review/assets/terror/audio/the-house-of-leaves.mp3",
+  "musicSha256": "ceb97d6a0b8553f765a15ba7c4acbfd8e127bce472606a3d3667562247229573",
+  "sha256": "65707226365f9dbacbd5278ed01e1e1568e6b7b5df57d06aa7ec8ddff83dc2c4",
+  "generator": "scripts/reels-review/terror-demo-audio.py",
+  "generatorSha256": "01b47f504650249b5bc38a326ec578efca30a43bbf66fe1381ea228659fd30d4",
+  "illustrative": true,
+  "notOriginalGameAudio": true,
+  "noise": [
+    1.5,
+    3.5
+  ],
+  "anticipation": [
+    5.6,
+    7,
+    8.1,
+    8.9
+  ],
+  "silence": [
+    10,
+    15
+  ],
+  "left": [
+    16,
+    16.5
+  ],
+  "right": [
+    18.5,
+    19
+  ],
+  "musicBedEnds": 10
+}
