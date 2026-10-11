@@ -6374,19 +6374,19 @@
       "type": "comparison",
       "note": "Roteiro individual revisado conforme a pauta.",
       "sources": [],
-      "caption": "👻 Medo também tem estilos.\n\nSilent Hill 2 trabalha a incerteza; Signalis transforma recursos em decisões; Alan Wake 2 aproxima a ameaça de um cotidiano estranho. Três recortes do artigo, sem misturar outra seleção.\n\nQual desses mecanismos mais pega você?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+      "caption": "👻 Medo também tem estilos.\n\nSilent Hill 2 trabalha a incerteza; Signalis transforma recursos em decisões; Alan Wake 2 aproxima a ameaça de um cotidiano estranho. Três recortes do artigo, sem misturar outra seleção.\n\nQual desses mecanismos mais pega você?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
       "original": "public/uploads/reels/leva02-bloco1/reel-230-final.mp4",
       "originalSha256": "ad72eb8440ab351cdb855f6f6eda4189c3ec9746625e3ef61b1f6e3e2d367883",
       "reuse": false,
-      "trackId": 25,
+      "trackId": null,
       "spec": {
         "articleId": 77,
         "articleTitle": "Muito além dos jumpscares: 3 jogos que constroem o medo pela atmosfera",
         "tone": "tech",
         "layout": "guide",
         "collection": "UTILIDADE · TIPOS DE TERROR",
-        "audio": "public/uploads/audio/pixabay_248213.mp3",
-        "audioStart": 6,
+        "audio": "resources/reels-review/assets/terror/audio/the-house-of-leaves.mp3",
+        "audioStart": 0,
         "duration": 20,
         "beatStarts": [
           0,
@@ -6440,11 +6440,12 @@
             "Cada recurso conta.\nCada escolha pesa.",
             "O familiar se torna\numa ameaça."
           ]
-        }
+        },
+        "musicRevision": "terror-house-of-leaves-v1"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-230-v3.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-230-v3.jpg",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-230-v4.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-230-v4.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-230-v1.mp4",
@@ -6507,10 +6508,81 @@
             "category": "games",
             "presentation": "comparison"
           }
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-230-v3.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-230-v3.jpg",
+          "sha256": "b1f3e2b98e3ac7e771123e4672f231751a47a098a4096bbe1be4335dc038b9e0",
+          "spec": {
+            "articleId": 77,
+            "articleTitle": "Muito além dos jumpscares: 3 jogos que constroem o medo pela atmosfera",
+            "tone": "tech",
+            "layout": "guide",
+            "collection": "UTILIDADE · TIPOS DE TERROR",
+            "audio": "public/uploads/audio/pixabay_248213.mp3",
+            "audioStart": 6,
+            "duration": 20,
+            "beatStarts": [
+              0,
+              6.666666666666667,
+              13.333333333333334
+            ],
+            "footer": "Salve para escolher seu próximo jogo.",
+            "closingLabel": "TRÊS JEITOS DE SENTIR MEDO",
+            "scenes": [
+              {
+                "eyebrow": "Silent Hill 2",
+                "title": "A dúvida assusta",
+                "body": "A névoa e o rádio fazem você antecipar o que ainda não vê.",
+                "image": "public/uploads/posts/muito-alem-dos-jumpscares-3-jogos-que-transformam-a-atmosfera-em-verdadeiro-terror/images/img-001.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Signalis",
+                "title": "Cada item é uma escolha",
+                "body": "Gerenciar recursos também faz parte da tensão.",
+                "image": "public/uploads/posts/muito-alem-dos-jumpscares-3-jogos-que-transformam-a-atmosfera-em-verdadeiro-terror/images/img-002.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Alan Wake 2",
+                "title": "O cotidiano fica estranho",
+                "body": "A investigação aproxima o medo de lugares reconhecíveis.",
+                "image": "public/uploads/posts/muito-alem-dos-jumpscares-3-jogos-que-transformam-a-atmosfera-em-verdadeiro-terror/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "editorial": "manual",
+            "category": "games",
+            "presentation": "comparison",
+            "reviewPostId": 230,
+            "compositionProfile": "terror-atmosphere-v1",
+            "visualStyle": {
+              "background": "resources/reels-review/assets/terror/background-230-v1.png",
+              "reference": "resources/reels-review/assets/terror/preview-230-v1.png",
+              "subtitles": [
+                "O medo começa\nantes de você ver.",
+                "Cada recurso conta.\nCada escolha pesa.",
+                "O familiar se torna\numa ameaça."
+              ]
+            }
+          },
+          "caption": "👻 Medo também tem estilos.\n\nSilent Hill 2 trabalha a incerteza; Signalis transforma recursos em decisões; Alan Wake 2 aproxima a ameaça de um cotidiano estranho. Três recortes do artigo, sem misturar outra seleção.\n\nQual desses mecanismos mais pega você?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
+          "trackId": 25
         }
       ],
-      "revision": 3,
-      "sha256": "b1f3e2b98e3ac7e771123e4672f231751a47a098a4096bbe1be4335dc038b9e0"
+      "revision": 4,
+      "musicLicense": "resources/reels-review/assets/terror/audio/the-house-of-leaves.license.json",
+      "sha256": "745b6b06e48e64fa6a203ec31d77a7b9e97727ead4a4aea2d0179d50764ff50c"
     },
     {
       "id": 231,

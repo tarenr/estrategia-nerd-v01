@@ -1,0 +1,29 @@
+{
+  "title": "The House of Leaves",
+  "artist": "Kevin MacLeod",
+  "source": "incompetech",
+  "sourceId": "USUAN1100710",
+  "sourceUrl": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100710",
+  "downloadUrl": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/The%20House%20of%20Leaves.mp3",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "credit": "The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
+  "path": "resources/reels-review/assets/terror/audio/the-house-of-leaves.mp3",
+  "sha256": "ceb97d6a0b8553f765a15ba7c4acbfd8e127bce472606a3d3667562247229573",
+  "duration": 206.208,
+  "themes": [
+    "horror"
+  ],
+  "groupIds": [
+    230,
+    231,
+    229
+  ],
+  "appliedIds": [
+    230
+  ],
+  "audioStart": 0,
+  "auditionConfirmed": false,
+  "basis": "Composer metadata; excerpt awaits user auditory review. Content ID status not independently confirmed.",
+  "checkedAt": "2026-10-11"
+}

@@ -1,3 +1,13 @@
+## Terror de atmosfera — nova trilha do piloto 230 v4 (11/10/2026)
+
+A revisão v4 usa **The House of Leaves**, de Kevin MacLeod, como identidade musical proposta para o grupo 230, 231 e 229. Somente o piloto 230 recebeu a troca; os outros dois serão avaliados individualmente. Trecho inicial de vinte segundos, com fades de entrada de 0,45 s e saída de 0,8 s. A adequação sonora depende da avaliação do usuário; não houve audição confirmada pelo agente nem confirmação independente de Content ID.
+
+Fonte oficial: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100710 . Licença CC BY 4.0, com atribuição obrigatória. Arquivo original e registro de licença/hash em `resources/reels-review/assets/terror/audio/`. Crédito acrescentado à legenda da galeria: “The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.” Esse crédito deve acompanhar qualquer publicação futura.
+
+Visual, imagens, textos na tela e tempos da v3 preservados. A v3 permanece no histórico com seu hash, trilha e legenda anteriores; backup do catálogo em `storage/correcao-instagram-20261010/terror-audio-before/catalog.json`. A fonte de revisão é um arquivo versionado, sem cadastro na biblioteca de áudio do banco: `trackId: null` identifica essa ausência, e `musicLicense` aponta para a proveniência. Nenhum registro do Instagram, agendamento ou aprovação de publicação foi alterado. Para recuperação, selecionar a v3 preservada e seus metadados; manter ambas as mídias.
+
+Validação da v4: 600 quadros em 1080×1920/30 fps, duração de 20,00 s, H.264/AAC, decodificação integral sem erro e átomo `moov` antes de `mdat`. O hash dos quadros decodificados é idêntico ao da v3, comprovando preservação visual integral; o hash do áudio mudou. Pico do áudio final: -13,1 dBFS. Catálogo, licença e preservação dos outros 36 registros passaram; suíte do renderer com 37 roteiros e suíte do projeto com 17 verificações, ambas sem falhas. Galeria com crédito, MP4 e documentação interna responderam HTTP 200 localmente. Evidência em `storage/correcao-instagram-20261010/terror-audio-validation.json`. Reprodução no celular e aprovação sonora continuam a cargo do usuário.
+
 ## Terror de atmosfera — piloto 230 v3 (11/10/2026)
 
 Identidade própria aprovada: corredor industrial escuro, névoa, concreto úmido, reflexos vermelhos e moldura metálica. Prévia e fundo sem textos gerados com imagegen a partir da composição aprovada, armazenados em `resources/reels-review/assets/terror/preview-230-v1.png` e `background-230-v1.png`. As fotografias/capturas são os três arquivos originais do artigo, inseridos diretamente pelo compositor; não são recriadas por IA.

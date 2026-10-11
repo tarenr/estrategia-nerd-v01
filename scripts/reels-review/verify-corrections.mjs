@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 import {createScene,validateSpec} from '../reels-konva/scene.mjs';
 import {imageRuns,manualState} from './scene.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
@@ -16,8 +17,24 @@ if(catalog.items.some(isTerrorRevision)){
  for(const item of catalog.items){
   const old=before.items.find(i=>i.id===item.id);
   if(!isTerrorRevision(item)){assert.deepEqual(item,old,'Registro fora do piloto de terror alterado');continue;}
-  for(const key of ['caption','status','scheduled','articleId','articleSha256','trackId','original','originalSha256'])assert.deepEqual(item[key],old[key]);
-  for(const key of ['audio','audioStart','scenes'])assert.deepEqual(item.spec[key],old.spec[key]);
+  for(const key of ['status','scheduled','articleId','articleSha256','original','originalSha256'])assert.deepEqual(item[key],old[key]);
+  assert.deepEqual(item.spec.scenes,old.spec.scenes);
+  if(item.spec.musicRevision==='terror-house-of-leaves-v1'){
+   const prior=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-audio-before/catalog.json'),'utf8'));
+   for(const other of catalog.items.filter(i=>i.id!==230))assert.deepEqual(other,prior.items.find(i=>i.id===other.id));
+   const pilot=prior.items.find(i=>i.id===230),license=JSON.parse(readFileSync(resolve(root,item.musicLicense),'utf8'));
+   assert.equal(license.title,'The House of Leaves');assert.equal(license.license,'CC BY 4.0');
+   assert.equal(createHash('sha256').update(readFileSync(resolve(root,license.path))).digest('hex'),license.sha256);
+   assert.equal(item.spec.audio,license.path);assert.notEqual(item.spec.audio,pilot.spec.audio);
+   assert.equal(item.spec.audioStart,0);assert.equal(item.trackId,null);
+   assert.equal(item.caption,pilot.caption+'\n\nMúsica: '+license.credit);
+   const visual={...item.spec};delete visual.musicRevision;visual.audio=pilot.spec.audio;visual.audioStart=pilot.spec.audioStart;
+   assert.deepEqual(visual,pilot.spec,'Visual/tempos alterados na troca da trilha');
+   assert.ok(item.previousVersions.some(v=>v.video===pilot.video&&v.sha256===pilot.sha256));
+  }else{
+   assert.equal(item.caption,old.caption);assert.equal(item.trackId,old.trackId);
+   for(const key of ['audio','audioStart'])assert.deepEqual(item.spec[key],old.spec[key]);
+  }
   assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,20/3,40/3]);
   assert.equal(item.spec.closingLabel,'TRÊS JEITOS DE SENTIR MEDO');
   assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
@@ -40,7 +57,7 @@ if(catalog.items.some(isTerrorRevision)){
    }
   }finally{stage.destroy();}
  }
- console.log('PASS: terror 230, tres imagens originais igualmente divididas em 20 s; roteiro/audio e demais 36 registros preservados.');
+ console.log('PASS: terror 230, tres imagens originais igualmente divididas em 20 s; visual preservado, trilha/licenca verificadas e demais 36 registros preservados.');
 }
 const isDiabloGroup=i=>[197,224,225,226,227].includes(i.id)&&i.spec.timingRevision==='diablo-group-v1';
 const isDiabloRevision=i=>(i.id===195||isDiabloGroup(i))&&i.spec.compositionProfile==='diablo-duality-v1';
