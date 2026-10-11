@@ -813,16 +813,17 @@
         "audioStart": 43,
         "beatStarts": [
           0,
-          5,
-          10,
-          15
+          4,
+          8,
+          12,
+          16
         ],
         "scenes": [
           {
             "eyebrow": "Por trás do Estratégia Nerd",
             "title": "O setup em ação",
             "body": "A máquina reúne peças para trabalho, criação e jogos.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-001.png",
+            "image": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/capa.webp",
             "framing": {
               "mode": "cover",
               "motion": "still"
@@ -832,7 +833,7 @@
             "eyebrow": "O cérebro da máquina",
             "title": "Ryzen 5 7600X",
             "body": "O processador faz parte da base usada no dia a dia.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-002.png",
+            "image": "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
             "framing": {
               "mode": "cover",
               "motion": "still"
@@ -840,9 +841,19 @@
           },
           {
             "eyebrow": "A base da plataforma",
-            "title": "MSI B850 TOMAHAWK MAX",
+            "title": "MSI B650 TOMAHAWK WIFI",
             "body": "A placa-mãe conecta os componentes e sustenta a plataforma AM5.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-003.png",
+            "image": "public/uploads/posts/msi-mag-b650-tomahawk-wifi-a-base-que-sustenta-um-setup-de-verdade/images/capa-corrigida-c9d791d5fe98.webp",
+            "framing": {
+              "mode": "cover",
+              "motion": "still"
+            }
+          },
+          {
+            "eyebrow": "A placa de vídeo do setup",
+            "title": "RTX 3050 de 6 GB",
+            "body": "A GPU faz parte do conjunto usado para trabalho, criação e jogos.",
+            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
             "framing": {
               "mode": "cover",
               "motion": "still"
@@ -852,7 +863,7 @@
             "eyebrow": "Espaço para a rotina",
             "title": "32 GB de DDR5",
             "body": "A memória acompanha as tarefas do setup. Veja a configuração completa no blog.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-004.png",
+            "image": "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp",
             "framing": {
               "mode": "cover",
               "motion": "still"
@@ -867,8 +878,8 @@
         }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-198-v3.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-198-v3.jpg",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-198-v4.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-198-v4.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-198-v1.mp4",
@@ -951,20 +962,102 @@
             ],
             "presentation": "product"
           }
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-198-v3.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-198-v3.jpg",
+          "sha256": "2d059b5235705cfc480274c4ae623f16c8833386a711ccf769e2bfc10a00e1ee",
+          "spec": {
+            "articleId": 18,
+            "articleTitle": "O Setup que Sustenta o Estratégia Nerd: A Máquina por Trás de Tudo",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "showcase",
+            "tone": "tech",
+            "duration": 20,
+            "audio": "public/uploads/audio/pixabay_199668.mp3",
+            "audioStart": 43,
+            "beatStarts": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Por trás do Estratégia Nerd",
+                "title": "O setup em ação",
+                "body": "A máquina reúne peças para trabalho, criação e jogos.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-001.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O cérebro da máquina",
+                "title": "Ryzen 5 7600X",
+                "body": "O processador faz parte da base usada no dia a dia.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-002.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A base da plataforma",
+                "title": "MSI B850 TOMAHAWK MAX",
+                "body": "A placa-mãe conecta os componentes e sustenta a plataforma AM5.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-003.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Espaço para a rotina",
+                "title": "32 GB de DDR5",
+                "body": "A memória acompanha as tarefas do setup. Veja a configuração completa no blog.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-198-v3-scene-004.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "product",
+            "compositionProfile": "hardware-product-v1",
+            "reviewPostId": 198,
+            "visualStyle": {
+              "background": "public/uploads/reels/correcao-instagram-20261010/images/hardware-product-background-v1.png"
+            }
+          }
         }
       ],
-      "revision": 3,
+      "revision": 4,
       "hardwareRevision": {
         "reference": "reel-200-v3 commit 5e4ac85",
-        "tool": "Capa oficial do blog (capa.webp)",
+        "tool": "Imagens existentes dos artigos do blog",
         "duration": 20,
-        "scenesCount": 4,
+        "scenesCount": 5,
         "textsPreserved": true,
         "queueChanged": false,
         "publicationApproved": false,
         "sourceImage": "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/capa.webp"
       },
-      "sha256": "2d059b5235705cfc480274c4ae623f16c8833386a711ccf769e2bfc10a00e1ee"
+      "coverRevision": {
+        "sources": [
+          "public/uploads/posts/o-setup-que-sustenta-o-estrategia-nerd-a-maquina-por-tras-de-tudo/images/capa.webp",
+          "public/uploads/posts/amd-ryzen-5-7600x-desempenho-real-no-meu-setup/images/capa.webp",
+          "public/uploads/posts/msi-mag-b650-tomahawk-wifi-a-base-que-sustenta-um-setup-de-verdade/images/capa-corrigida-c9d791d5fe98.webp",
+          "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+          "public/uploads/posts/corsair-vengeance-ddr5-32gb-6000mhz-equilibrio-ideal-para-setups-modernos/images/capa.webp"
+        ],
+        "generatedImages": false,
+        "queueChanged": false
+      },
+      "sha256": "b8b3f3400ae3ff71304497ba69c73a0b133adb636f57ec2b971b7803b56f07a3"
     },
     {
       "id": 199,
@@ -1356,7 +1449,7 @@
             "eyebrow": "RTX 3050 de 6 GB",
             "title": "Uma GPU de entrada",
             "body": "O equilíbrio depende dos jogos, dos ajustes e do preço.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-001.png",
+            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
             "framing": {
               "mode": "cover",
               "motion": "still"
@@ -1366,7 +1459,7 @@
             "eyebrow": "A experiência que importa",
             "title": "Ajuste as expectativas",
             "body": "Resolução e qualidade gráfica mudam o desempenho de cada jogo.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-002.png",
+            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
             "framing": {
               "mode": "cover",
               "motion": "still"
@@ -1376,7 +1469,7 @@
             "eyebrow": "Recursos não são garantias",
             "title": "DLSS e ray tracing",
             "body": "Compatibilidade com um recurso não significa rodar tudo no máximo.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-003.png",
+            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
             "framing": {
               "mode": "cover",
               "motion": "still"
@@ -1386,7 +1479,7 @@
             "eyebrow": "Antes de escolher",
             "title": "Compare o conjunto",
             "body": "Considere preço, alternativas e sua configuração. Análise completa no blog.",
-            "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-004.png",
+            "image": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
             "framing": {
               "mode": "cover",
               "motion": "still"
@@ -1401,8 +1494,8 @@
         }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-201-v3.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-201-v3.jpg",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-201-v4.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-201-v4.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-201-v1.mp4",
@@ -1474,18 +1567,99 @@
             ],
             "presentation": "product"
           }
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-201-v3.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-201-v3.jpg",
+          "sha256": "d348f2a8162ae66aecc325818ada82b800cd50c4801cd3aa0c17d38b1f634088",
+          "spec": {
+            "articleId": 21,
+            "articleTitle": "RTX 3050 6GB: a escolha inteligente para um setup equilibrado",
+            "category": "hardware",
+            "editorial": "manual",
+            "collection": "DENTRO DO SEU SETUP",
+            "layout": "showcase",
+            "tone": "tech",
+            "duration": 20,
+            "audio": "public/uploads/audio/pixabay_303922.mp3",
+            "audioStart": 23,
+            "beatStarts": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "scenes": [
+              {
+                "eyebrow": "RTX 3050 de 6 GB",
+                "title": "Uma GPU de entrada",
+                "body": "O equilíbrio depende dos jogos, dos ajustes e do preço.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-001.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A experiência que importa",
+                "title": "Ajuste as expectativas",
+                "body": "Resolução e qualidade gráfica mudam o desempenho de cada jogo.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-002.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Recursos não são garantias",
+                "title": "DLSS e ray tracing",
+                "body": "Compatibilidade com um recurso não significa rodar tudo no máximo.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-003.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antes de escolher",
+                "title": "Compare o conjunto",
+                "body": "Considere preço, alternativas e sua configuração. Análise completa no blog.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-201-v3-scene-004.png",
+                "framing": {
+                  "mode": "cover",
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "product",
+            "compositionProfile": "hardware-product-v1",
+            "reviewPostId": 201,
+            "visualStyle": {
+              "background": "public/uploads/reels/correcao-instagram-20261010/images/hardware-product-background-v1.png"
+            }
+          }
         }
       ],
-      "revision": 3,
+      "revision": 4,
       "hardwareRevision": {
         "reference": "reel-200-v3 commit 5e4ac85",
-        "tool": "Capa oficial do blog (capa.webp)",
+        "tool": "Imagens existentes dos artigos do blog",
         "duration": 20,
         "scenesCount": 4,
         "textsPreserved": true,
         "queueChanged": false,
         "publicationApproved": false,
         "sourceImage": "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp"
+      },
+      "coverRevision": {
+        "sources": [
+          "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+          "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+          "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp",
+          "public/uploads/posts/rtx-3050-6gb-a-escolha-inteligente-para-um-setup-equilibrado/images/capa.webp"
+        ],
+        "generatedImages": false,
+        "queueChanged": false
       },
       "sha256": "d348f2a8162ae66aecc325818ada82b800cd50c4801cd3aa0c17d38b1f634088"
     },

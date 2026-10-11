@@ -9,7 +9,8 @@ import {manualState} from './scene.mjs';
 export const HARDWARE_FRAME={x:82,y:764,width:916,height:618};
 const ALLOWED_HARDWARE_IDS=[198,199,200,201,202,203];
 export async function createHardwareScene(spec,root){
-  if(!ALLOWED_HARDWARE_IDS.includes(spec.reviewPostId)||spec.presentation!=='product'||spec.duration!==20||spec.scenes.length!==4||spec.beatStarts.some((t,i)=>t!==i*5))throw new Error('Perfil de hardware fora do escopo aprovado.');
+  const fiveSceneSetup=spec.reviewPostId===198&&spec.scenes.length===5;
+  if(!ALLOWED_HARDWARE_IDS.includes(spec.reviewPostId)||spec.presentation!=='product'||spec.duration!==20||(!fiveSceneSetup&&spec.scenes.length!==4)||spec.beatStarts.length!==spec.scenes.length||spec.beatStarts.some((t,i)=>t!==i*20/spec.scenes.length))throw new Error('Perfil de hardware fora do escopo aprovado.');
   const font='C:/Windows/Fonts/bahnschrift.ttf';
   if(!existsSync(font))throw new Error('Fonte de hardware indisponível; não substituir a tipografia silenciosamente.');
   FontLibrary.use('EN Hardware',font);

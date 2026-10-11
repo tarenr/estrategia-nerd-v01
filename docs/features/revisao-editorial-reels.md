@@ -1,4 +1,12 @@
-## Hardware 198, 199, 201, 202 e 203 — versão 3 com identidade aprovada do 200 (10/10/2026)
+## Correção dos Reels 198 e 201 — versão 4 com imagens dos artigos (10/10/2026)
+
+O 198 possui cinco cenas de quatro segundos: setup completo, Ryzen 5 7600X, MSI B650 TOMAHAWK WIFI, RTX 3050 de 6 GB e Corsair Vengeance DDR5. Cada cena usa a imagem existente do artigo correspondente. A placa-mãe usa `capa-corrigida-c9d791d5fe98.webp` do artigo da B650: a antiga `capa.webp` ainda identifica uma B850 e não deve ser reutilizada nesta revisão. O texto da cena foi corrigido para B650 e a cena da GPU foi acrescentada. As demais falas e o áudio foram preservados.
+
+O 201 usa diretamente a `capa.webp` do artigo da RTX 3050 em suas quatro cenas, preservando roteiro, trilha e duração. Não foram geradas imagens. O compositor permite cinco cenas exclusivamente para o 198; os demais perfis de hardware continuam com quatro cenas.
+
+Entregas: `public/uploads/reels/correcao-instagram-20261010/reel-{198,201}-v4.mp4`, capas `.jpg`, folhas `-contact.jpg` e manifestos `.mp4.manifest.json`. A versão 4 tem endereços novos para evitar reutilização dos vídeos v3 em cache. As versões anteriores permanecem em disco e em `previousVersions`. As duas galerias existentes apontam para v4. Os demais Reels, incluindo 200 e 203, e a fila de publicação permanecem preservados.
+
+## Hardware 198, 199, 201, 202 e 203 — histórico da versão 3 com identidade aprovada do 200 (10/10/2026)
 
 Adaptação dos cinco Reels do grupo de produtos de hardware (198, 199, 201, 202 e 203) à identidade visual aprovada do Reel 200 v3 (commit `5e4ac85`). Cada Reel possui 20 segundos exatos (quatro cenas de 5 segundos), formato vertical 1080×1920 @ 30 fps, moldura técnica fixa (x=82, y=764, 916×618), fundo grafite com circuitos e tipografia Bahnschrift.
 

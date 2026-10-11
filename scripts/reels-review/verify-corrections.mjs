@@ -42,12 +42,22 @@ if(catalog.items.some(isHardwareRevision)){
   if(!isHardwareRevision(item)){assert.deepEqual(item,original,'Outro registro alterado #'+item.id);continue;}
   for(const key of ['caption','status','scheduled','trackId','articleId','originalSha256'])assert.deepEqual(item[key],original[key]);
   for(const key of ['audio','audioStart'])assert.deepEqual(item.spec[key],original.spec[key]);
-  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);
-  assert.equal(item.spec.scenes.length,4);
-  item.spec.scenes.forEach((s,n)=>{for(const key of ['title','body','eyebrow'])assert.equal(s[key],original.spec.scenes[n][key]);});
+  const revisedSetup=item.id===198&&item.revision>=4;
+  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,revisedSetup?[0,4,8,12,16]:[0,5,10,15]);
+  assert.equal(item.spec.scenes.length,revisedSetup?5:4);
+  if(revisedSetup){
+   assert.deepEqual(item.spec.scenes.map(s=>s.title),['O setup em ação','Ryzen 5 7600X','MSI B650 TOMAHAWK WIFI','RTX 3050 de 6 GB','32 GB de DDR5']);
+   assert.equal(new Set(item.spec.scenes.map(s=>s.image)).size,5);
+   for(const [n,oldIndex] of [[0,0],[1,1],[2,2],[4,3]])for(const key of ['body','eyebrow'])assert.equal(item.spec.scenes[n][key],original.spec.scenes[oldIndex][key]);
+  }else item.spec.scenes.forEach((s,n)=>{for(const key of ['title','body','eyebrow'])assert.equal(s[key],original.spec.scenes[n][key]);});
+  if(item.coverRevision){
+   assert.deepEqual(item.coverRevision.sources,item.spec.scenes.map(s=>s.image));
+   for(const path of item.coverRevision.sources)assert.ok(path.startsWith('public/uploads/posts/')&&path.endsWith('.webp'),'Usar imagens existentes dos artigos');
+   if(item.id===201)assert.ok(item.spec.scenes.every(s=>s.image==='public/uploads/posts/'+item.articleSlug+'/images/capa.webp'));
+  }
   if(item.id!==200)assert.ok(item.previousVersions.some(v=>v.sha256===original.sha256&&v.video===original.video));
  }
- console.log('PASS: 198–203 com hardware 20 s; textos, áudio, versões anteriores e demais 31 preservados.');
+ console.log('PASS: hardware 20 s; 198 com cinco peças/cenas; 201 com capa do artigo; áudio, versões anteriores e demais registros preservados.');
 }
 if(catalog.avatarRevision){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/avatar-before/corrections-20261010.json'),'utf8'));
