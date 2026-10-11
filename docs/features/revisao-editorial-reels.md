@@ -1,3 +1,7 @@
+## Review 5700X corrigido em produção (11/10/2026)
+
+Artigo 43 mantido publicado como review independente, sem alegações de uso no PC do autor; título, resumo, texto, SEO, tipo review e capa corrigidos. Proximo_post_id=32 aponta para AM4 ou AM5 em 2026. Capa no padrão ciano/dourado em 1200×800, com referência real do 5700X e crédito/licença no artigo. Validação pública e na interface, preservação dos outros artigos e suíte oficial com 17 OK, 0 falhas. Procedimento e recuperação documentados em artes-hardware.md. Reel do 5700X ainda não produzido; música Meteor Shower já aprovada. Botão inferior “Próximo post” segue a regra cronológica e ainda mostra B650; alteração da regra de navegação pendente de escopo próprio.
+
 ## Artigos faltantes — retorno aos jogos (11/10/2026)
 
 Artigo local 80, “Como voltar a um jogo depois de meses sem jogar”: Reel de 20 s no padrão geral aprovado, com capa e três imagens originais, sem cortes ou recriação. Cada imagem e bloco de texto ocupa 5 s. Música Fantasy Medieval Epic Music, trecho a partir de 20 s, aprovado pelo usuário. Arquivo reel-235-v1.mp4 em uploads/reels/novos-20261011; 235 identifica a composição, enquanto o rascunho Instagram criado pelo banco é #243. Galeria local: /public/uploads/reels/novos-20261011/gallery.html. Catálogo técnico: resources/reels-review/missing-20261011.json; scripts missing-20261011.mjs (--render, --verify, --gallery) e register-missing-20261011.php (leitura por padrão, --apply para cadastro idempotente local).

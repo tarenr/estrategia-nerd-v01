@@ -1,5 +1,15 @@
 # Artes B650 e NV3
 
+## Review independente do Ryzen 7 5700X — produção, 11/10/2026
+
+Capa do artigo de produção 43 corrigida para o padrão existente: cenário tecnológico escuro com iluminação ciano/dourada e superfície reflexiva, produto inteiro, sem títulos sobrepostos, 1200×800. Asset: resources/reels-review/assets/5700x-cenario-v1.png. Composição criada pelo imagegen a partir da foto real do 5700X por Qurren (https://commons.wikimedia.org/wiki/File:AMD_Ryzen_7_5700X_1.jpg), adaptada sob CC BY-SA 4.0. Crédito, licença e descrição da adaptação aparecem no próprio artigo. Referência de estilo: capa da B650; prompt preserva o formato AM4, inscrição do modelo e identidade do produto. Não usar inscrições pequenas como fonte técnica.
+
+O título, resumo, conteúdo, metadados e tipo de post foram corrigidos para review independente. Removidas as alegações de uso no setup do autor e os convites à série. Campo proximo_post_id definido como 32 (AM4 ou AM5 em 2026), com link coerente no conteúdo. Endereço e status publicado preservados. Não havia vínculos de entrada apontando para 43; artigos 18–23 da série e o artigo do 7600X preservados. O botão inferior “Próximo post” é uma navegação cronológica diferente do “Próximo passo” editorial: ainda aponta para a B650 pela data original de publicação. Alterar essa regra do site permanece pendente de escopo próprio.
+
+Aplicação: scripts/reels-review/review-5700x-production.php --backup/--apply/--verify, usando PostRepository::updateAdmin e TargetEnvironmentUploads::putFile. Patch: resources/reels-review/review-5700x-20261011.json. Backup de registros e imagens anteriores em storage/editorial-5700x-20261011; validação no mesmo diretório. Reaplicar é idempotente; divergências concorrentes interrompem a operação. Recuperação: usar o registro 43 e as referências de imagem salvos no backup através do editor/repositório oficial, mediante autorização, preservando os arquivos novos e antigos.
+
+Validação: página pública e nova imagem HTTP 200, imagem remota idêntica por SHA-256, conteúdo e próximo passo conferidos na interface; comparação dos campos com backup confirma preservação dos outros artigos. PHP lint aprovado e suíte obrigatória com 17 OK, 0 falhas. Sem alterações no banco local de posts, no Instagram ou nos vídeos.
+
 ## Escopo local aprovado — 8 de outubro de 2026
 
 Capas dos artigos MSI MAG B650 TOMAHAWK WIFI (post local 23) e Kingston NV3 1 TB (post local 26). Artes aprovadas pelo usuário, geradas com imagegen a partir dos produtos oficiais e do estilo dos outros itens: cenário tecnológico escuro, iluminação ciano/dourada, superfície reflexiva, produto inteiro e sem títulos sobrepostos. Dimensões finais 1200 × 800, sem recorte.
