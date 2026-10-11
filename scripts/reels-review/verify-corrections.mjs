@@ -10,11 +10,37 @@ assert.deepEqual(catalog.cancelled,[191,192,193,194]);assert.equal(catalog.items
 assert.equal(new Set(catalog.items.map(i=>i.id)).size,37);assert.equal(catalog.publicationApproval,false);
 const counts=new Set(catalog.items.map(i=>i.spec.scenes.length));assert.ok(counts.has(3)&&counts.has(4)&&counts.has(5));
 const results=[];
+const isListGroup=i=>[215,217,218,219,233].includes(i.id)&&i.spec.compositionProfile==='list-central-v1';
+if(catalog.items.some(isListGroup)){
+ const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/list-group-before/catalog.json'),'utf8'));
+ for(const item of catalog.items){
+  const old=before.items.find(i=>i.id===item.id);
+  if(!isListGroup(item)){assert.deepEqual(item,old,'Outro registro alterado no grupo de listas');continue;}
+  for(const key of ['caption','status','scheduled','articleId','trackId'])assert.deepEqual(item[key],old[key]);
+  for(const key of ['audio','audioStart','scenes'])assert.deepEqual(item.spec[key],old.spec[key]);
+  assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,item.spec.scenes.map((_,n)=>n*20/item.spec.scenes.length));
+  assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
+  await assert.rejects(()=>createScene({...item.spec,reviewPostId:208},root),/fora do escopo/);
+  const stage=await createScene(item.spec,root);
+  try{for(const start of item.spec.beatStarts){
+   stage.render(start+.1);const photo=stage.layer.find('Image')[1],cover=photo.image();
+   assert.ok(Math.abs(photo.width()/photo.height()-cover.width/cover.height)<.00001);
+   assert.ok(Math.abs(photo.x()+photo.width()/2-540)<.00001&&Math.abs(photo.y()+photo.height()/2-890)<.00001);
+   assert.deepEqual(photo.crop(),{x:0,y:0,width:cover.width,height:cover.height});
+   const position=[photo.x(),photo.y(),photo.width(),photo.height()];stage.render(start+3.5);
+   assert.deepEqual([photo.x(),photo.y(),photo.width(),photo.height()],position);
+  }}finally{stage.destroy();}
+ }
+ const stage=await createScene(catalog.items.find(i=>i.id===205).spec,root);
+ try{stage.render(7.5);assert.ok((await stage.layer.getCanvas()._canvas.toBuffer('png')).equals(readFileSync(resolve(root,'storage/correcao-instagram-20261010/list-group-before/205-frame.png'))),'205 aprovado mudou visualmente');}finally{stage.destroy();}
+ console.log('PASS: cinco listas em 20 s; fotos proporcionais e originais; roteiros e audio preservados; 205 identico e demais 32 registros intactos.');
+}
 const isListRevision=i=>i.id===205&&i.spec.compositionProfile==='list-central-v1';
 if(catalog.items.some(isListRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/list-205-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
   const old=before.items.find(i=>i.id===item.id);
+  if(isListGroup(item))continue;
   if(!isListRevision(item)){assert.deepEqual(item,old,'Outro registro alterado no Reel 205');continue;}
   for(const key of ['caption','status','scheduled','articleId','trackId'])assert.deepEqual(item[key],old[key]);
   for(const key of ['audio','audioStart'])assert.deepEqual(item.spec[key],old.spec[key]);
@@ -27,7 +53,7 @@ if(catalog.items.some(isListRevision)){
   }else assert.deepEqual(item.spec.scenes,old.spec.scenes);
   assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(item.reuse,false);
   assert.ok(item.previousVersions.some(v=>v.video===old.video&&v.sha256===old.sha256));
-  await assert.rejects(()=>createScene({...item.spec,reviewPostId:215},root),/fora do escopo/);
+  await assert.rejects(()=>createScene({...item.spec,reviewPostId:208},root),/fora do escopo/);
   const stage=await createScene(item.spec,root);
   try{for(const start of item.spec.beatStarts){
    stage.render(start+.1);const photo=stage.layer.find('Image')[1],cover=photo.image();
@@ -45,7 +71,7 @@ if(catalog.items.some(isComparisonGroup)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/comparison-group-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
   const old=before.items.find(i=>i.id===item.id);
-  if(isListRevision(item))continue;
+  if(isListGroup(item)||isListRevision(item))continue;
   if(!isComparisonGroup(item)){assert.deepEqual(item,old,'Outro registro alterado no grupo de comparativos');continue;}
   for(const key of ['caption','status','scheduled','articleId','trackId'])assert.deepEqual(item[key],old[key]);
   for(const key of ['audio','audioStart','comparison'])assert.deepEqual(item.spec[key],old.spec[key]);
@@ -63,7 +89,7 @@ const isComparisonRevision=i=>i.id===206&&i.spec.compositionProfile==='compariso
 if(catalog.items.some(isComparisonRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/comparison-206-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
-  if(isListRevision(item)||isComparisonGroup(item))continue;
+  if(isListGroup(item)||isListRevision(item)||isComparisonGroup(item))continue;
   const old=before.items.find(i=>i.id===item.id);
   if(!isComparisonRevision(item)){assert.deepEqual(item,old,'Outro registro alterado na revisão 206');continue;}
   for(const key of ['caption','status','scheduled','articleId','trackId'])assert.deepEqual(item[key],old[key]);
@@ -110,7 +136,7 @@ const isHardwareRevision=i=>[198,199,200,201,202,203].includes(i.id)&&i.spec.com
 if(catalog.items.some(isHardwareRevision)){
  const before=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/hardware-198-203-before/catalog.json'),'utf8'));
  for(const item of catalog.items){
-  if(isListRevision(item)||isComparisonGroup(item)||isComparisonRevision(item)||isGuideRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
+  if(isListGroup(item)||isListRevision(item)||isComparisonGroup(item)||isComparisonRevision(item)||isGuideRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
   const original=before.items.find(i=>i.id===item.id);
   if(!isHardwareRevision(item)){assert.deepEqual(item,original,'Outro registro alterado #'+item.id);continue;}
   for(const key of ['caption','status','scheduled','trackId','articleId','originalSha256'])assert.deepEqual(item[key],original[key]);
@@ -137,7 +163,7 @@ if(catalog.avatarRevision){
  const ids=[196,229,232,234];
  for(const item of catalog.items){
   const original=before.items.find(i=>i.id===item.id);
-  if(isListRevision(item)||isComparisonGroup(item)||isComparisonRevision(item)||isGuideRevision(item)||isHardwareRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
+  if(isListGroup(item)||isListRevision(item)||isComparisonGroup(item)||isComparisonRevision(item)||isGuideRevision(item)||isHardwareRevision(item)||item.id===207&&item.spec.compositionProfile==='diagnostic-207-v1')continue;
   if(!ids.includes(item.id)){assert.deepEqual(item,original,'Registro fora do escopo alterado #'+item.id);continue;}
   const approved196=item.id===196&&item.spec.compositionProfile==='196-v5';assert.equal(item.revision,approved196?5:3);assert.equal(item.avatarReference,true);
   for(const key of ['caption','status','scheduled','articleId','articleSlug','original','originalSha256','trackId'])assert.deepEqual(item[key],original[key],'Campo preservado divergiu: '+key);

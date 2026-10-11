@@ -1,3 +1,11 @@
+## Grupo de listas — 215, 217, 218, 219 e 233 (11/10/2026)
+
+Visual do 205 v3 aprovado aplicado exclusivamente a cinco listas: 215 (jogos para PC fraco), 217 (filmes), 218 (animes), 219 (desenhos) e 233 (jogos para sessões curtas). Reutiliza o fundo neutro existente, moldura central, foto inteira sem distorção, textos equilibrados e indicador de cenas. Cabeçalho de abertura adaptado ao assunto, sem números ou nomes da lista de RPG nos outros vídeos. O 233 mantém o nome de cada jogo acima da foto desde a primeira cena.
+
+Todos têm 20 segundos, 1080×1920 a 30 fps, H.264/AAC e faststart. Os quatro primeiros mantêm quatro cenas de cinco segundos; o 233 preserva suas cinco recomendações em cinco cenas de quatro segundos. Imagens, textos das cenas, legendas, trilhas e pontos iniciais do áudio preservados. Nenhuma imagem de jogos, filmes, animes ou desenhos foi gerada nesta replicação. As diferentes proporções são centralizadas na moldura sem cortes, com margens quando necessárias.
+
+Entregas `reel-{215,217,218,219}-v2.mp4` e `reel-233-v3.mp4`, capas, folhas de contato e manifestos no diretório `public/uploads/reels/correcao-instagram-20261010/`. Galerias oficiais atualizadas; versões anteriores preservadas em disco e `previousVersions`. Backup `storage/correcao-instagram-20261010/list-group-before/catalog.json`; quadro do 205 comparado com referência e permanece idêntico. Demais 32 registros preservados. Validação cobre roteiros, áudio, legibilidade, imagens proporcionais/fixas, duração e decodificação integral, além da suíte oficial. Sem alteração no banco, fila ou publicação no Instagram. Entregues para avaliação visual.
+
 ## Lista 205 — arte aprovada de Chrono Trigger, versão 3 (11/10/2026)
 
 Substituída exclusivamente a imagem da segunda cena pela arte de personagens enviada e aprovada pelo usuário, armazenada em `public/uploads/reels/correcao-instagram-20261010/images/reel-205-v3-chrono-trigger.png`. É uma ilustração dos personagens, não uma captura de gameplay. Exibição inteira e proporcional na moldura central; nenhuma alteração no arquivo do artigo. As outras três cenas, textos, trilha, ponto inicial do áudio, fundo e duração de 20 segundos permanecem preservados.

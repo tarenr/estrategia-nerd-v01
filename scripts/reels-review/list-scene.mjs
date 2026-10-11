@@ -6,7 +6,10 @@ import {manualState} from './scene.mjs';
 
 export const LIST_FRAME={x:40,y:590,width:1000,height:600};
 export async function createListScene(spec,root){
-  if(spec.reviewPostId!==205||spec.compositionProfile!=='list-central-v1'||spec.presentation!=='list'||spec.duration!==20||spec.scenes.length!==4||spec.beatStarts.some((t,i)=>t!==i*5))throw new Error('Lista fora do escopo aprovado.');
+  const group=[215,217,218,219,233].includes(spec.reviewPostId);
+  const count=spec.reviewPostId===233?5:4;
+  if((spec.reviewPostId!==205&&!group)||spec.compositionProfile!=='list-central-v1'||spec.presentation!=='list'||spec.duration!==20||spec.scenes.length!==count||spec.beatStarts.length!==count||spec.beatStarts.some((t,i)=>t!==i*20/count))throw new Error('Lista fora do escopo aprovado.');
+  if(group&&typeof spec.visualStyle.openingTitle!=='string')throw new Error('Cabeçalho da lista ausente.');
   FontLibrary.use('EN List',resolve(root,'resources/reels-konva/fonts/Inter.ttf'));
   FontLibrary.use('EN List Display',resolve(root,'resources/reels-konva/fonts/BebasNeue-Regular.ttf'));
   const [background,...covers]=await Promise.all([spec.visualStyle.background,...spec.scenes.map(s=>s.image)].map(p=>loadImage(resolve(root,p))));
@@ -23,7 +26,7 @@ export async function createListScene(spec,root){
   const title=text('',{x:95,y:1275,width:890,fontFamily:'EN List Display',fontSize:76,align:'center',lineHeight:1.05});
   const body=text('',{x:105,y:1400,width:870,fontSize:39,align:'center',lineHeight:1.18});
   layer.add(new Konva.Line({points:[425,1580,655,1580],stroke:'#83908d',strokeWidth:2,listening:false}));
-  const dots=spec.scenes.map((_,i)=>{const d=new Konva.Circle({x:425+i*230/3,y:1580,radius:7,stroke:'#deded8',strokeWidth:1.5,listening:false});layer.add(d);return d;});
+  const dots=spec.scenes.map((_,i)=>{const d=new Konva.Circle({x:425+i*230/(count-1),y:1580,radius:7,stroke:'#deded8',strokeWidth:1.5,listening:false});layer.add(d);return d;});
   const counter=text('',{x:90,y:1610,width:900,fontSize:27,align:'center',fill:'#ffc044'});
   text('LEIA A LISTA COMPLETA · LINK NA BIO',{x:90,y:1700,width:900,fontSize:24,letterSpacing:2,align:'center'});
   let active=-1;const typography=[];
@@ -31,12 +34,12 @@ export async function createListScene(spec,root){
     const state=manualState(spec,time);
     if(active!==state.index){
       active=state.index;const scene=spec.scenes[active],cover=covers[active];
-      header.text(active===0?'10 jogos que todo fã\nde RPG precisa jogar':scene.eyebrow);fit(header,190,78,52);
-      title.text(scene.title);const titleSize=fit(title,100,76,54);
+      header.text(active===0&&spec.reviewPostId!==233?(group?spec.visualStyle.openingTitle:'10 jogos que todo fã\nde RPG precisa jogar'):scene.eyebrow);fit(header,190,78,52);
+      title.text(scene.title);const titleSize=fit(title,group?115:100,76,group?50:54);
       body.text(scene.body);const bodySize=fit(body,145,39,33);
       const scale=Math.min(frame.width/cover.width,frame.height/cover.height);
       photo.setAttrs({image:cover,x:frame.x+(frame.width-cover.width*scale)/2,y:frame.y+(frame.height-cover.height*scale)/2,width:cover.width*scale,height:cover.height*scale,crop:{x:0,y:0,width:cover.width,height:cover.height}});
-      counter.text(String(active+1).padStart(2,'0')+' / 04');dots.forEach((d,i)=>d.fill(i===active?'#ffc044':'#10191c'));
+      counter.text(String(active+1).padStart(2,'0')+' / '+String(count).padStart(2,'0'));dots.forEach((d,i)=>d.fill(i===active?'#ffc044':'#10191c'));
       typography.push({scene:active,titleSize,bodySize});
     }
     const opacity=Math.min(1,Math.max(0,state.local)/.2);for(const node of [header,title,body])node.opacity(opacity);

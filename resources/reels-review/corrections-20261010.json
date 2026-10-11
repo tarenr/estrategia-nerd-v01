@@ -4344,7 +4344,7 @@
       "caption": "12 jogos para PC fraco ou modesto: opções e requisitos\n\nConheça 12 jogos para considerar em um PC fraco ou modesto, com opções grátis e pagas e cuidados com os requisitos de cada título.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek",
       "original": "public/uploads/reels/editorial-202610/reel-215-v3.mp4",
       "originalSha256": "29130b209bea477756c8b00ea2269a9871af3bfe3710ce1e38f5b78a1fb665ea",
-      "reuse": true,
+      "reuse": false,
       "trackId": 42,
       "spec": {
         "articleId": 36,
@@ -4354,14 +4354,14 @@
         "collection": "CULTURA E JOGOS",
         "layout": "culture",
         "tone": "light",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_12278.mp3",
         "audioStart": 33,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -4421,12 +4421,105 @@
             }
           }
         ],
-        "presentation": "list"
+        "presentation": "list",
+        "reviewPostId": 215,
+        "compositionProfile": "list-central-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-205-v2-background.png",
+          "reference": "205 v3 aprovado",
+          "centralOriginalImages": true,
+          "openingTitle": "12 jogos para PC\nfraco ou modesto"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-215-v1.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-215-v1.jpg",
-      "sha256": "29130b209bea477756c8b00ea2269a9871af3bfe3710ce1e38f5b78a1fb665ea"
+      "video": "uploads/reels/correcao-instagram-20261010/reel-215-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-215-v2.jpg",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-215-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-215-v1.jpg",
+          "sha256": "29130b209bea477756c8b00ea2269a9871af3bfe3710ce1e38f5b78a1fb665ea",
+          "spec": {
+            "articleId": 36,
+            "articleTitle": "12 jogos para PC fraco ou modesto: opções e requisitos",
+            "category": "games",
+            "editorial": "manual",
+            "collection": "CULTURA E JOGOS",
+            "layout": "culture",
+            "tone": "light",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_12278.mp3",
+            "audioStart": 33,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Seu PC é modesto?",
+                "title": "Ainda há muito para jogar",
+                "body": "A seleção reúne doze jogos, com estilos e requisitos diferentes.",
+                "image": "public/uploads/posts/12-jogos-leves-pc-fraco-ou-modesto/images/capa.png",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Para uma rotina tranquila",
+                "title": "Stardew Valley",
+                "body": "Uma das opções de simulação de fazenda da lista.",
+                "image": "public/uploads/posts/12-jogos-leves-pc-fraco-ou-modesto/images/stardew-valley.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Sessões de ação",
+                "title": "Vampire Survivors",
+                "body": "Uma opção para partidas de ação com visual simples.",
+                "image": "public/uploads/posts/12-jogos-leves-pc-fraco-ou-modesto/images/vampire-survivors.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Antes de instalar",
+                "title": "Confira os requisitos",
+                "body": "Compare a configuração do seu PC com a ficha atual de cada jogo. Lista completa no blog.",
+                "image": "public/uploads/posts/12-jogos-leves-pc-fraco-ou-modesto/images/capa.png",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "list"
+          }
+        }
+      ],
+      "revision": 2,
+      "sha256": "0f5473f2c9617d61aaf7ccc79be65e05e2d6a73db5570c99e228cec84c2ee12d"
     },
     {
       "id": 216,
@@ -4542,7 +4635,7 @@
       "caption": "10 filmes nerds essenciais que todo geek deveria ver\n\nDe Star Wars a Duna, veja 10 filmes essenciais da cultura geek - clássicos de ficção científica, fantasia e super-heróis que marcaram gerações, com trailer de cada um.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Cinema #Filmes #CulturaGeek #Geek",
       "original": "public/uploads/reels/editorial-202610/reel-217-v3.mp4",
       "originalSha256": "dab1997170030f1eaaa3e629aa76bbb453397a7500589e9bed1fe9b61360caa4",
-      "reuse": true,
+      "reuse": false,
       "trackId": 27,
       "spec": {
         "articleId": 38,
@@ -4552,14 +4645,14 @@
         "collection": "CULTURA E JOGOS",
         "layout": "culture",
         "tone": "cinema",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_610029.mp3",
         "audioStart": 27,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -4619,12 +4712,105 @@
             }
           }
         ],
-        "presentation": "list"
+        "presentation": "list",
+        "reviewPostId": 217,
+        "compositionProfile": "list-central-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-205-v2-background.png",
+          "reference": "205 v3 aprovado",
+          "centralOriginalImages": true,
+          "openingTitle": "10 filmes nerds\nessenciais"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-217-v1.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-217-v1.jpg",
-      "sha256": "dab1997170030f1eaaa3e629aa76bbb453397a7500589e9bed1fe9b61360caa4"
+      "video": "uploads/reels/correcao-instagram-20261010/reel-217-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-217-v2.jpg",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-217-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-217-v1.jpg",
+          "sha256": "dab1997170030f1eaaa3e629aa76bbb453397a7500589e9bed1fe9b61360caa4",
+          "spec": {
+            "articleId": 38,
+            "articleTitle": "10 filmes nerds essenciais que todo geek deveria ver",
+            "category": "",
+            "editorial": "manual",
+            "collection": "CULTURA E JOGOS",
+            "layout": "culture",
+            "tone": "cinema",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_610029.mp3",
+            "audioStart": 27,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Dez filmes para explorar",
+                "title": "Qual universo chama você?",
+                "body": "Ficção científica, fantasia e aventura fazem parte da seleção.",
+                "image": "public/uploads/posts/10-filmes-nerds-essenciais/images/capa.png",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Realidade em questão",
+                "title": "Matrix",
+                "body": "Um dos filmes da lista que convida a desconfiar do mundo ao redor.",
+                "image": "public/uploads/posts/10-filmes-nerds-essenciais/images/matrix.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Uma jornada pela Terra-média",
+                "title": "A Sociedade do Anel",
+                "body": "Fantasia, amizade e uma missão que muda o destino do mundo.",
+                "image": "public/uploads/posts/10-filmes-nerds-essenciais/images/fellowship-of-the-ring.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Aventura através do tempo",
+                "title": "De Volta para o Futuro",
+                "body": "Outro clássico da seleção. Conheça os dez filmes no blog.",
+                "image": "public/uploads/posts/10-filmes-nerds-essenciais/images/back-to-the-future.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "list"
+          }
+        }
+      ],
+      "revision": 2,
+      "sha256": "36e781a0cb7425fb9ad57e5ee153436bc14bd954cbb13a555c7327026d9dd5d7"
     },
     {
       "id": 218,
@@ -4641,7 +4827,7 @@
       "caption": "10 animes essenciais pra quem nunca assistiu nenhum\n\nNunca assistiu anime? Conheça 10 títulos e descubra qual combina com você, do suspense de Death Note à comédia de Spy x Family.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Anime #Animes #CulturaGeek #Geek",
       "original": "public/uploads/reels/editorial-202610/reel-218-v3.mp4",
       "originalSha256": "d4c3bee5200decc2d80f4d379f6e94dd39cef45714f436b94f87104ed2c900c7",
-      "reuse": true,
+      "reuse": false,
       "trackId": 46,
       "spec": {
         "articleId": 39,
@@ -4651,14 +4837,14 @@
         "collection": "CULTURA E JOGOS",
         "layout": "culture",
         "tone": "anime",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_413841.mp3",
         "audioStart": 31,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -4718,12 +4904,105 @@
             }
           }
         ],
-        "presentation": "list"
+        "presentation": "list",
+        "reviewPostId": 218,
+        "compositionProfile": "list-central-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-205-v2-background.png",
+          "reference": "205 v3 aprovado",
+          "centralOriginalImages": true,
+          "openingTitle": "10 animes para\ncomeçar a assistir"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-218-v1.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-218-v1.jpg",
-      "sha256": "d4c3bee5200decc2d80f4d379f6e94dd39cef45714f436b94f87104ed2c900c7"
+      "video": "uploads/reels/correcao-instagram-20261010/reel-218-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-218-v2.jpg",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-218-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-218-v1.jpg",
+          "sha256": "d4c3bee5200decc2d80f4d379f6e94dd39cef45714f436b94f87104ed2c900c7",
+          "spec": {
+            "articleId": 39,
+            "articleTitle": "10 animes essenciais pra quem nunca assistiu nenhum",
+            "category": "",
+            "editorial": "manual",
+            "collection": "CULTURA E JOGOS",
+            "layout": "culture",
+            "tone": "anime",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_413841.mp3",
+            "audioStart": 31,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Nunca assistiu anime?",
+                "title": "Comece pelo seu gosto",
+                "body": "A lista reúne dez títulos. Estes são exemplos de estilos diferentes.",
+                "image": "public/uploads/posts/animes-essenciais-para-iniciantes/images/capa.png",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Se você gosta de suspense",
+                "title": "Death Note",
+                "body": "Um duelo de inteligência e consequências difíceis.",
+                "image": "public/uploads/posts/animes-essenciais-para-iniciantes/images/death-note.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Se prefere humor",
+                "title": "Spy x Family",
+                "body": "Espionagem e convivência familiar em uma comédia de identidades secretas.",
+                "image": "public/uploads/posts/animes-essenciais-para-iniciantes/images/spy-x-family.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Se procura aventura",
+                "title": "Fullmetal Alchemist: Brotherhood",
+                "body": "Dois irmãos em uma jornada de fantasia. Veja as dez indicações no blog.",
+                "image": "public/uploads/posts/animes-essenciais-para-iniciantes/images/fullmetal-alchemist.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "list"
+          }
+        }
+      ],
+      "revision": 2,
+      "sha256": "2b94d3e1374f9b05692fe46d9d9bb4b0ca163c658be7cec35e7d18ebb869c302"
     },
     {
       "id": 219,
@@ -4740,7 +5019,7 @@
       "caption": "10 desenhos dos anos 90 e 2000 que envelheceram bem\n\nNostalgia à parte, esses desenhos dos anos 90 e 2000 continuam bons de assistir hoje. Veja 10 clássicos da TV que resistiram ao tempo.\n\nLeia o artigo completo no blog - link na bio.\n\n#EstratégiaNerd #Nostalgia #Desenhos #CulturaGeek #Geek",
       "original": "public/uploads/reels/editorial-202610/reel-219-v4.mp4",
       "originalSha256": "1be15eec57dac84fea9791f5ed6f56d0dbaf9290248e1710eca8c245e85c124d",
-      "reuse": true,
+      "reuse": false,
       "trackId": 30,
       "spec": {
         "articleId": 40,
@@ -4750,14 +5029,14 @@
         "collection": "CULTURA E JOGOS",
         "layout": "culture",
         "tone": "nostalgia",
-        "duration": 28,
+        "duration": 20,
         "audio": "public/uploads/audio/pixabay_512837.mp3",
         "audioStart": 19,
         "beatStarts": [
           0,
-          7,
-          14,
-          21
+          5,
+          10,
+          15
         ],
         "scenes": [
           {
@@ -4817,12 +5096,105 @@
             }
           }
         ],
-        "presentation": "list"
+        "presentation": "list",
+        "reviewPostId": 219,
+        "compositionProfile": "list-central-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-205-v2-background.png",
+          "reference": "205 v3 aprovado",
+          "centralOriginalImages": true,
+          "openingTitle": "10 desenhos dos anos\n90 e 2000"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-219-v1.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-219-v1.jpg",
-      "sha256": "1be15eec57dac84fea9791f5ed6f56d0dbaf9290248e1710eca8c245e85c124d"
+      "video": "uploads/reels/correcao-instagram-20261010/reel-219-v2.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-219-v2.jpg",
+      "previousVersions": [
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-219-v1.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-219-v1.jpg",
+          "sha256": "1be15eec57dac84fea9791f5ed6f56d0dbaf9290248e1710eca8c245e85c124d",
+          "spec": {
+            "articleId": 40,
+            "articleTitle": "10 desenhos dos anos 90 e 2000 que envelheceram bem",
+            "category": "",
+            "editorial": "manual",
+            "collection": "CULTURA E JOGOS",
+            "layout": "culture",
+            "tone": "nostalgia",
+            "duration": 28,
+            "audio": "public/uploads/audio/pixabay_512837.mp3",
+            "audioStart": 19,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21
+            ],
+            "scenes": [
+              {
+                "eyebrow": "Desenhos que atravessaram gerações",
+                "title": "Além da nostalgia",
+                "body": "A seleção reúne dez séries que ainda rendem boas histórias.",
+                "image": "public/uploads/posts/desenhos-anos-90-2000-que-envelheceram-bem/images/capa.png",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Humor que segue funcionando",
+                "title": "Laboratório de Dexter",
+                "body": "Experimentos, rivalidade e comédia no laboratório mais famoso da infância.",
+                "image": "public/uploads/posts/desenhos-anos-90-2000-que-envelheceram-bem/images/laboratorio-dexter.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Uma linguagem visual própria",
+                "title": "Samurai Jack",
+                "body": "Composição, silêncio e ação dão força à narrativa.",
+                "image": "public/uploads/posts/desenhos-anos-90-2000-que-envelheceram-bem/images/samurai-jack.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Um mundo para revisitar",
+                "title": "Avatar: A Lenda de Aang",
+                "body": "Personagens e construção de mundo. Conheça os dez desenhos no blog.",
+                "image": "public/uploads/posts/desenhos-anos-90-2000-que-envelheceram-bem/images/avatar-aang.jpg",
+                "framing": {
+                  "mode": "cover",
+                  "focus": [
+                    0.5,
+                    0.5
+                  ],
+                  "motion": "still"
+                }
+              }
+            ],
+            "presentation": "list"
+          }
+        }
+      ],
+      "revision": 2,
+      "sha256": "d9d979e98a7e91082617bb5b0ae46032a9f5cdfbf69a18b21456b5a0364a6dfe"
     },
     {
       "id": 224,
@@ -5776,13 +6148,13 @@
         "collection": "UTILIDADE · SESSÕES CURTAS",
         "audio": "public/uploads/audio/pixabay_151007.mp3",
         "audioStart": 5,
-        "duration": 35,
+        "duration": 20,
         "beatStarts": [
           0,
-          7,
-          14,
-          21,
-          28
+          4,
+          8,
+          12,
+          16
         ],
         "footer": "Salve estas ideias para uma noite corrida.",
         "closingLabel": "SESSÃO CURTA NÃO É RUN COMPLETA",
@@ -5840,20 +6212,107 @@
         ],
         "editorial": "manual",
         "category": "dicas",
-        "presentation": "list"
+        "presentation": "list",
+        "reviewPostId": 233,
+        "compositionProfile": "list-central-v1",
+        "visualStyle": {
+          "background": "public/uploads/reels/correcao-instagram-20261010/images/reel-205-v2-background.png",
+          "reference": "205 v3 aprovado",
+          "centralOriginalImages": true,
+          "openingTitle": "Jogos para quem só tem\n30 minutos por dia"
+        }
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-233-v2.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-233-v2.jpg",
-      "sha256": "7d881d6099cedbd99e602ce91db219e6f9936fa2af02bb19d405012fbef20fff",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-233-v3.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-233-v3.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-233-v1.mp4",
           "poster": "uploads/reels/correcao-instagram-20261010/reel-233-v1.jpg",
           "sha256": "7d881d6099cedbd99e602ce91db219e6f9936fa2af02bb19d405012fbef20fff"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-233-v2.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-233-v2.jpg",
+          "sha256": "7d881d6099cedbd99e602ce91db219e6f9936fa2af02bb19d405012fbef20fff",
+          "spec": {
+            "articleId": 79,
+            "articleTitle": "Jogos para quem só tem 30 minutos por dia: escolha pela pausa",
+            "tone": "tech",
+            "layout": "guide",
+            "collection": "UTILIDADE · SESSÕES CURTAS",
+            "audio": "public/uploads/audio/pixabay_151007.mp3",
+            "audioStart": 5,
+            "duration": 35,
+            "beatStarts": [
+              0,
+              7,
+              14,
+              21,
+              28
+            ],
+            "footer": "Salve estas ideias para uma noite corrida.",
+            "closingLabel": "SESSÃO CURTA NÃO É RUN COMPLETA",
+            "scenes": [
+              {
+                "eyebrow": "Balatro",
+                "title": "Uma rodada, não uma promessa",
+                "body": "Pare entre etapas; a sequência completa pode levar mais tempo.",
+                "image": "public/uploads/posts/jogos-para-quem-so-tem-30-minutos-por-dia/images/img-001.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Slay the Spire",
+                "title": "Uma decisão por vez",
+                "body": "Confira o salvamento da versão para continuar depois.",
+                "image": "public/uploads/reels/correcao-instagram-20261010/images/reel-233-img-002.jpg",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Vampire Survivors",
+                "title": "Confira o modo",
+                "body": "A duração muda por modo e estágio; escolha seu ponto de parada.",
+                "image": "public/uploads/posts/12-jogos-leves-pc-fraco-ou-modesto/images/vampire-survivors.jpg",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Celeste",
+                "title": "Um trecho da montanha",
+                "body": "Você pode avançar uma etapa sem terminar o capítulo.",
+                "image": "public/uploads/posts/jogos-para-quem-so-tem-30-minutos-por-dia/images/img-002.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "Hades",
+                "title": "Sair também exige planejar",
+                "body": "Confira como preservar o progresso antes de encerrar.",
+                "image": "public/uploads/posts/jogos-para-quem-so-tem-30-minutos-por-dia/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "editorial": "manual",
+            "category": "dicas",
+            "presentation": "list"
+          }
         }
       ],
-      "revision": 2
+      "revision": 3,
+      "sha256": "d1fc215aa79eb05d37ce3737aecf3d82b55c4be78fc493f719d08554bd9a0af4"
     },
     {
       "id": 234,
