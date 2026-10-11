@@ -29,9 +29,17 @@ export async function createTerrorScene(spec,root){
   const label=text('',{x:pilot?340:110,y:691,width:pilot?400:860,fontFamily:'EN Terror Label',fontSize:30,letterSpacing:5,align:'center',fill:'#fff6e8'});
   const frame=TERROR_FRAME;layer.add(new Konva.Rect({...frame,fill:'#0b0e0d',listening:false}));
   const photo=new Konva.Image({listening:false});layer.add(photo);
+  const pulseConfig=spec.visualStyle.pulse;
+  if(pulseConfig&&(spec.reviewPostId!==231||spec.musicRevision!=='terror-crescendo-v1'||pulseConfig.time!==40/3||pulseConfig.frames!==4))throw new Error('Pulso fora do escopo aprovado.');
+  const pulse=pulseConfig?new Konva.Rect({...frame,name:'terror-pulse',stroke:'#fff2d3',strokeWidth:16,shadowColor:'#fff2d3',shadowBlur:18,shadowOpacity:.7,opacity:0,listening:false}):null;
+  if(pulse)layer.add(pulse);
   const subtitle=text('',{x:85,y:1282,width:910,fontFamily:'EN Terror Display',fontSize:132,lineHeight:.92,align:'center',stroke:'#101310',strokeWidth:2,fillAfterStrokeEnabled:true,shadowBlur:12,shadowOffsetY:4});
   const body=text('',{x:105,y:1545,width:870,fontSize:41,lineHeight:1.2,align:'center'});
   text(spec.visualStyle.footer??'CONHEÇA OS 3 JOGOS · LINK NA BIO',{x:100,y:1760,width:880,fontFamily:'EN Terror Label',fontSize:32,letterSpacing:4,align:'center'});
+  const blackoutConfig=spec.visualStyle.blackout;
+  if(blackoutConfig&&(spec.reviewPostId!==231||spec.musicRevision!=='terror-blackout-v1'||blackoutConfig.start!==12.5||blackoutConfig.end!==403/30))throw new Error('Tela preta fora do escopo aprovado.');
+  const blackout=blackoutConfig?new Konva.Rect({name:'terror-blackout',x:0,y:0,width:1080,height:1920,fill:'#000',opacity:0,listening:false}):null;
+  if(blackout)layer.add(blackout);
   let active=-1,activeImage=-1;const typography=[];
   function render(time){
     const state=manualState(spec,time);
@@ -52,6 +60,8 @@ export async function createTerrorScene(spec,root){
       photo.setAttrs({image:cover,...geometry,x:frame.x+geometry.x,y:frame.y+geometry.y});
     }
     const opacity=Math.min(1,Math.max(0,state.local)/.18);for(const node of [header,label,subtitle,body])node.opacity(opacity);
+    if(pulse){const elapsed=t-pulseConfig.time;pulse.opacity(elapsed>=0&&elapsed<pulseConfig.frames/30?.85*(1-elapsed/(pulseConfig.frames/30)):0);}
+    if(blackout){const frameIndex=Math.floor(t*30+1e-6);blackout.opacity(frameIndex>=375&&frameIndex<403?1:0);}
     layer.draw();return state;
   }
   return {stage,layer,render,typography,destroy:()=>stage.destroy()};

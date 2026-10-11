@@ -1,5 +1,16 @@
 ## Terror — 231 v5 com grito da prévia aprovada (11/10/2026)
 
+## Reel 231 v7 — tela preta e grito (11/10/2026)
+
+Sequência aprovada: crescendo somente da trilha The House of Leaves, corte aos 12,5 s com acabamento anticlíque de 25 ms, tela totalmente preta entre os quadros 375 e 402, grito gravado aprovado no quadro 400 (13,33 s), retorno da imagem no quadro 403 (13,43 s) e retomada musical de 14,15 a 14,8 s até o fechamento. Sem chiado sintético nem pulso na moldura. Duração máxima de 20 s; textos de 5 s e três imagens originais programadas em intervalos iguais, com a interrupção visual indicada. Versões anteriores preservadas.
+
+Fontes licenciadas: Kevin MacLeod, The House of Leaves (CC BY 4.0), e WuxiaScrub, Female high-pitched scream SFX (CC0 1.0). Créditos mantidos na legenda. Demonstração ilustrativa, sem áudio original dos jogos. Não altera publicação, agendamento ou banco Instagram.
+
+Galeria: /public/uploads/previews/leva02-bloco1-v3/index.html?id=231. Vídeo: /public/uploads/reels/correcao-instagram-20261010/reel-231-v7.mp4.
+
+Validação executada: 37 roteiros aprovados; suíte do projeto com 17 OK e 0 falhas; MP4 com 20 s, 600 quadros, H.264/AAC, decodificação integral e faststart. Quadros 375, 399, 400 e 402 confirmados pretos no MP4; quadro 403 com imagem restaurada; pausa com pico zero, grito e retorno musical confirmados. Outros 36 registros/vídeos e versões anteriores preservados por comparação de hashes. Documentação interna, galeria e vídeo responderam HTTP 200.
+
+
 O usuário aprovou a prévia curta com grito gravado, substituindo o impacto sintetizado da v4. A nova fonte de vinte segundos reproduz exatamente a mixagem integral que gerou essa prévia (SHA-256 `7abe10718e17ff7ed1ddf4ecd07684d8265a067ca3bc1471f62cc5773cb19274`). Mantém a preparação sonora até 12,5 s, pausa até 13,33 s, grito na entrada da terceira imagem (quadro 400) e retorno progressivo da música entre 14,15 e 14,8 s, até o fechamento.
 
 Gravação **Female high-pitched scream SFX**, de WuxiaScrub, em https://opengameart.org/content/female-high-pitched-scream-sfx . Licença CC0 1.0, conferida na fonte; trecho da primeira gravação entre 0,082 e 1,32 s. OGG original e registro de licença/hash em `resources/reels-review/assets/terror/audio/wuxiascrub-screams.*`. Crédito voluntário do efeito incluído na legenda de revisão; crédito obrigatório CC BY 4.0 da música de Kevin MacLeod mantido. O grito não é áudio original dos jogos.

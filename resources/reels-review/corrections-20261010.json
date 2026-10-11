@@ -6713,7 +6713,7 @@
       "type": "sound",
       "note": "Roteiro individual revisado conforme a pauta.",
       "sources": [],
-      "caption": "🎧 O medo começa antes do susto.\n\nTensão crescente, uma pausa curta e um grito sincronizado mostram como o contraste sonoro muda a cena. Depois, a música retorna e mantém a atmosfera.\n\nDemonstração sonora ilustrativa, não áudio original dos jogos. Ouça em volume confortável.\n\nQual jogo usa o som para mexer com você?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nEfeito de grito: WuxiaScrub — Female high-pitched scream SFX (OpenGameArt), CC0 1.0.\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
+      "caption": "🎧 O medo começa antes do susto.\n\nMúsica crescendo, uma pausa curta e tela preta e um grito mostram como o contraste sonoro muda a cena. Depois, a música retorna e mantém a atmosfera.\n\nDemonstração sonora ilustrativa, não áudio original dos jogos. Ouça em volume confortável.\n\nQual jogo usa o som para mexer com você?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nEfeito de grito: WuxiaScrub — Female high-pitched scream SFX (OpenGameArt), CC0 1.0.\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
       "original": "public/uploads/reels/leva02-bloco1/reel-231-revisado.mp4",
       "originalSha256": "65322781e18fa8c1a48ab32634993f80af430a88bbbf0462532737201a23a682",
       "reuse": false,
@@ -6724,7 +6724,7 @@
         "tone": "tech",
         "layout": "guide",
         "collection": "UTILIDADE · SOM NO TERROR",
-        "audio": "resources/reels-review/assets/terror/audio/reel-231-scream-v5.wav",
+        "audio": "resources/reels-review/assets/terror/audio/reel-231-blackout-v7.wav",
         "audioStart": 0,
         "footer": "Qual som de jogo ficou na sua memória?",
         "closingLabel": "CONTA NOS COMENTÁRIOS",
@@ -6799,13 +6799,17 @@
             "A tensão cresce.\nVocê espera.",
             "O silêncio prepara.\nO impacto chega.",
             "Depois do susto,\no clima continua."
-          ]
+          ],
+          "blackout": {
+            "start": 12.5,
+            "end": 13.433333333333334
+          }
         },
-        "musicRevision": "terror-scream-v1"
+        "musicRevision": "terror-blackout-v1"
       },
       "state": "ready",
-      "video": "uploads/reels/correcao-instagram-20261010/reel-231-v5.mp4",
-      "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v5.jpg",
+      "video": "uploads/reels/correcao-instagram-20261010/reel-231-v7.mp4",
+      "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v7.jpg",
       "previousVersions": [
         {
           "video": "uploads/reels/correcao-instagram-20261010/reel-231-v1.mp4",
@@ -7067,13 +7071,206 @@
           "caption": "🎧 O medo começa antes do susto.\n\nTensão crescente, uma pausa curta e um impacto sincronizado mostram como o contraste sonoro muda a cena. Depois, a música retorna e mantém a atmosfera.\n\nDemonstração sonora ilustrativa, não áudio original dos jogos. Ouça em volume confortável.\n\nQual jogo usa o som para mexer com você?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
           "trackId": null,
           "soundDemonstration": "resources/reels-review/assets/terror/audio/reel-231-impact-v4.json"
+        },
+        {
+          "video": "uploads/reels/correcao-instagram-20261010/reel-231-v5.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v5.jpg",
+          "sha256": "8778044d3ae609b6451fbd353f76e88b90377cd44a4ae34df3d2435301e94de5",
+          "spec": {
+            "articleId": 78,
+            "articleTitle": "Como o som cria medo nos jogos: pistas, silêncio e espaço",
+            "tone": "tech",
+            "layout": "guide",
+            "collection": "UTILIDADE · SOM NO TERROR",
+            "audio": "resources/reels-review/assets/terror/audio/reel-231-scream-v5.wav",
+            "audioStart": 0,
+            "footer": "Qual som de jogo ficou na sua memória?",
+            "closingLabel": "CONTA NOS COMENTÁRIOS",
+            "scenes": [
+              {
+                "eyebrow": "Exemplo ilustrativo",
+                "title": "Ouça antes de ver",
+                "body": "Você escuta a ameaça antes de enxergá-la.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-001.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A tensão",
+                "title": "Algo se aproxima",
+                "body": "O ambiente cresce e faz você esperar alguma coisa.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-002.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A pausa",
+                "title": "A pausa prepara o susto",
+                "body": "Um instante de silêncio. Então, o impacto.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O contraste",
+                "title": "O medo está no contraste",
+                "body": "A música retorna e mantém a atmosfera.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "editorial": "manual",
+            "duration": 20,
+            "beatStarts": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "category": "games",
+            "presentation": "sound",
+            "reviewPostId": 231,
+            "compositionProfile": "terror-atmosphere-v1",
+            "timingRevision": "terror-group-v1",
+            "visualStyle": {
+              "background": "resources/reels-review/assets/terror/background-230-v1.png",
+              "reference": "resources/reels-review/assets/terror/preview-230-v1.png",
+              "collection": "TERROR · O PODER DO SOM",
+              "footer": "OUÇA COM FONES · LINK NA BIO",
+              "headlines": [
+                "Ouça antes\nde ver",
+                "Algo\nse aproxima",
+                "A pausa prepara\no susto",
+                "O medo está\nno contraste"
+              ],
+              "subtitles": [
+                "Um som já coloca\nvocê em alerta.",
+                "A tensão cresce.\nVocê espera.",
+                "O silêncio prepara.\nO impacto chega.",
+                "Depois do susto,\no clima continua."
+              ]
+            },
+            "musicRevision": "terror-scream-v1"
+          },
+          "caption": "🎧 O medo começa antes do susto.\n\nTensão crescente, uma pausa curta e um grito sincronizado mostram como o contraste sonoro muda a cena. Depois, a música retorna e mantém a atmosfera.\n\nDemonstração sonora ilustrativa, não áudio original dos jogos. Ouça em volume confortável.\n\nQual jogo usa o som para mexer com você?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nEfeito de grito: WuxiaScrub — Female high-pitched scream SFX (OpenGameArt), CC0 1.0.\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
+          "trackId": null,
+          "soundDemonstration": "resources/reels-review/assets/terror/audio/reel-231-scream-v5.json",
+          "screamLicense": "resources/reels-review/assets/terror/audio/wuxiascrub-screams.license.json"
+        },
+        {
+          "revision": 6,
+          "video": "uploads/reels/correcao-instagram-20261010/reel-231-v6.mp4",
+          "poster": "uploads/reels/correcao-instagram-20261010/reel-231-v6.jpg",
+          "sha256": "3ee10d0de8340f78e09ffa9cc7a42ffc0f2a9ee532388e0a0def9fc00b167f6d",
+          "spec": {
+            "articleId": 78,
+            "articleTitle": "Como o som cria medo nos jogos: pistas, silêncio e espaço",
+            "tone": "tech",
+            "layout": "guide",
+            "collection": "UTILIDADE · SOM NO TERROR",
+            "audio": "resources/reels-review/assets/terror/audio/reel-231-crescendo-v6.wav",
+            "audioStart": 0,
+            "footer": "Qual som de jogo ficou na sua memória?",
+            "closingLabel": "CONTA NOS COMENTÁRIOS",
+            "scenes": [
+              {
+                "eyebrow": "Exemplo ilustrativo",
+                "title": "Ouça antes de ver",
+                "body": "Você escuta a ameaça antes de enxergá-la.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-001.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A tensão",
+                "title": "Algo se aproxima",
+                "body": "O ambiente cresce e faz você esperar alguma coisa.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-002.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "A pausa",
+                "title": "A pausa prepara o susto",
+                "body": "Um instante de silêncio. Então, o impacto.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              },
+              {
+                "eyebrow": "O contraste",
+                "title": "O medo está no contraste",
+                "body": "A música retorna e mantém a atmosfera.",
+                "image": "public/uploads/posts/como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror/images/img-003.webp",
+                "framing": {
+                  "mode": "contain",
+                  "motion": "still"
+                }
+              }
+            ],
+            "editorial": "manual",
+            "duration": 20,
+            "beatStarts": [
+              0,
+              5,
+              10,
+              15
+            ],
+            "category": "games",
+            "presentation": "sound",
+            "reviewPostId": 231,
+            "compositionProfile": "terror-atmosphere-v1",
+            "timingRevision": "terror-group-v1",
+            "visualStyle": {
+              "background": "resources/reels-review/assets/terror/background-230-v1.png",
+              "reference": "resources/reels-review/assets/terror/preview-230-v1.png",
+              "collection": "TERROR · O PODER DO SOM",
+              "footer": "OUÇA COM FONES · LINK NA BIO",
+              "headlines": [
+                "Ouça antes\nde ver",
+                "Algo\nse aproxima",
+                "A pausa prepara\no susto",
+                "O medo está\nno contraste"
+              ],
+              "subtitles": [
+                "Um som já coloca\nvocê em alerta.",
+                "A tensão cresce.\nVocê espera.",
+                "O silêncio prepara.\nO impacto chega.",
+                "Depois do susto,\no clima continua."
+              ],
+              "pulse": {
+                "time": 13.333333333333334,
+                "frames": 4
+              }
+            },
+            "musicRevision": "terror-crescendo-v1"
+          },
+          "caption": "🎧 O medo começa antes do susto.\n\nMúsica crescendo, uma pausa curta e um grito com pulso de luz na moldura mostram como o contraste sonoro muda a cena. Depois, a música retorna e mantém a atmosfera.\n\nDemonstração sonora ilustrativa, não áudio original dos jogos. Ouça em volume confortável.\n\nQual jogo usa o som para mexer com você?\n\n#EstratégiaNerd #Games #Gamer #CulturaGeek #Geek\n\nEfeito de grito: WuxiaScrub — Female high-pitched scream SFX (OpenGameArt), CC0 1.0.\n\nMúsica: The House of Leaves — Kevin MacLeod (incompetech.com). Licença CC BY 4.0: https://creativecommons.org/licenses/by/4.0/. Trecho editado para 20 segundos, com fades.",
+          "trackId": null,
+          "soundDemonstration": "resources/reels-review/assets/terror/audio/reel-231-crescendo-v6.json",
+          "screamLicense": "resources/reels-review/assets/terror/audio/wuxiascrub-screams.license.json"
         }
       ],
-      "revision": 5,
+      "revision": 7,
       "musicLicense": "resources/reels-review/assets/terror/audio/the-house-of-leaves.license.json",
-      "soundDemonstration": "resources/reels-review/assets/terror/audio/reel-231-scream-v5.json",
+      "soundDemonstration": "resources/reels-review/assets/terror/audio/reel-231-blackout-v7.json",
       "screamLicense": "resources/reels-review/assets/terror/audio/wuxiascrub-screams.license.json",
-      "sha256": "8778044d3ae609b6451fbd353f76e88b90377cd44a4ae34df3d2435301e94de5"
+      "sha256": "2631d48d3ac1764b833b3403e98924dc106663619c841f548135fe6999129888"
     },
     {
       "id": 232,

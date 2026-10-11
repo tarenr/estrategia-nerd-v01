@@ -1,0 +1,50 @@
+{
+  "duration": 20,
+  "rate": 48000,
+  "channels": 2,
+  "music": "resources/reels-review/assets/terror/audio/the-house-of-leaves.mp3",
+  "musicSha256": "ceb97d6a0b8553f765a15ba7c4acbfd8e127bce472606a3d3667562247229573",
+  "screamLicense": "resources/reels-review/assets/terror/audio/wuxiascrub-screams.license.json",
+  "screamSource": "resources/reels-review/assets/terror/audio/wuxiascrub-screams.ogg",
+  "screamSha256": "9f9b64086cba7873adb20ef9e3bc14596f8041cc62ece191a1afb6d0b8d5a209",
+  "sha256": "faa76c06a875898918ba0a220f8c1c123adc3f5e5c1b401cf3a386c5428439c5",
+  "generator": "scripts/reels-review/terror-crescendo-audio.py",
+  "generatorSha256": "2d1b0502d729603afc274f73e9da6ebb4f98ce95df264cf7151ff885bd0290fd",
+  "illustrative": true,
+  "notOriginalGameAudio": true,
+  "approvedScreamExcerptMatched": true,
+  "addedNoise": false,
+  "musicGain": {
+    "start": 0.55,
+    "end": 2.0,
+    "ramp": [
+      1,
+      12.15
+    ],
+    "fadeToPause": [
+      12.15,
+      12.5
+    ]
+  },
+  "silence": [
+    12.5,
+    13.333333333333334
+  ],
+  "impact": {
+    "time": 13.333333333333334,
+    "sample": 640000,
+    "videoFrame": 400,
+    "type": "recorded scream",
+    "end": 14.571333333333333
+  },
+  "musicReturn": [
+    14.15,
+    14.8
+  ],
+  "musicBedEnds": 20,
+  "sourceEndFade": [
+    19.2,
+    20
+  ],
+  "peakBound": 0.44
+}
