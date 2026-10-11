@@ -135,7 +135,7 @@
   const sectionTargets = siteNavLinks
     .map((link) => link.getAttribute('data-site-section') || '')
     .filter((key, index, keys) => key !== '' && keys.indexOf(key) === index)
-    .map((key) => ({ key, element: document.getElementById(key === 'hero' ? 'home' : key) }))
+    .map((key) => ({ key, element: document.getElementById(key === 'hero' ? 'home' : key === 'instagram' ? 'instagram-feed' : key) }))
     .filter((item) => item.element);
 
   const getNavOffset = () => {
