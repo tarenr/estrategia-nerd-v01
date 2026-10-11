@@ -19,7 +19,8 @@ if(catalog.items.some(isTerrorGroup)){
   const old=before.items.find(i=>i.id===item.id);
   if(!isTerrorGroup(item)){assert.deepEqual(item,old,'Registro fora do grupo de terror alterado');continue;}
   for(const key of ['status','scheduled','articleId','articleSlug','articleSha256','original','originalSha256','avatarReference'])assert.deepEqual(item[key],old[key]);
-  const impact=item.id===231&&item.spec.musicRevision==='terror-impact-v1';
+  const scream=item.id===231&&item.spec.musicRevision==='terror-scream-v1';
+  const impact=item.id===231&&(item.spec.musicRevision==='terror-impact-v1'||scream);
   if(!impact)assert.deepEqual(item.spec.scenes,old.spec.scenes,'Roteiro/artes alterados');
   const license=JSON.parse(readFileSync(resolve(root,item.musicLicense),'utf8'));
   if(!impact)assert.equal(item.caption,old.caption+'\n\nMúsica: '+license.credit);
@@ -31,6 +32,16 @@ if(catalog.items.some(isTerrorGroup)){
    for(const key of ['headlines','subtitles'])preserved.visualStyle[key]=previous.spec.visualStyle[key];assert.deepEqual(preserved,previous.spec);
    assert.ok(item.caption.endsWith('Música: '+license.credit));assert.ok(item.caption.includes('Demonstração sonora ilustrativa, não áudio original dos jogos.'));
    assert.ok(item.previousVersions.some(v=>v.video===previous.video&&v.sha256===previous.sha256));
+   if(scream){
+    const baseline=JSON.parse(readFileSync(resolve(root,'storage/correcao-instagram-20261010/terror-scream-before/catalog.json'),'utf8')),v4=baseline.items.find(i=>i.id===231);
+    for(const other of catalog.items.filter(i=>i.id!==231))assert.deepEqual(other,baseline.items.find(i=>i.id===other.id),'Outro registro alterado na troca pelo grito');
+    const visual=structuredClone(item.spec);visual.audio=v4.spec.audio;visual.musicRevision=v4.spec.musicRevision;assert.deepEqual(visual,v4.spec,'Visual/tempos alterados na troca pelo grito');
+    const voice=JSON.parse(readFileSync(resolve(root,item.screamLicense),'utf8'));
+    assert.equal(voice.author,'WuxiaScrub');assert.equal(voice.license,'CC0 1.0');assert.equal(voice.userAuditionApproved,true);
+    assert.equal(createHash('sha256').update(readFileSync(resolve(root,voice.path))).digest('hex'),voice.sha256);
+    assert.equal(createHash('sha256').update(readFileSync(resolve(root,item.spec.audio))).digest('hex'),voice.approvedMixedSha256,'Mix divergiu da previa aprovada');
+    assert.ok(item.caption.includes('Efeito de grito: WuxiaScrub'));assert.ok(item.previousVersions.some(v=>v.video===v4.video&&v.sha256===v4.sha256));
+   }
   }
   assert.equal(item.trackId,null);
   assert.equal(item.spec.duration,20);assert.deepEqual(item.spec.beatStarts,[0,5,10,15]);assert.equal(item.spec.audioStart,0);
@@ -44,6 +55,11 @@ if(catalog.items.some(isTerrorGroup)){
    assert.equal(demo.music,license.path);assert.equal(demo.musicSha256,license.sha256);assert.equal(demo.duration,20);
    assert.equal(createHash('sha256').update(readFileSync(resolve(root,item.spec.audio))).digest('hex'),demo.sha256);
    assert.equal(createHash('sha256').update(readFileSync(resolve(root,demo.generator))).digest('hex'),demo.generatorSha256);
+   if(scream){
+    assert.equal(demo.screamLicense,item.screamLicense);assert.equal(demo.approvedPreviewMatched,true);assert.equal(demo.impact.type,'recorded scream');
+    assert.equal(createHash('sha256').update(readFileSync(resolve(root,demo.screamSource))).digest('hex'),demo.screamSha256);
+    assert.equal(createHash('sha256').update(readFileSync(resolve(root,demo.bed))).digest('hex'),demo.bedSha256);
+   }
    const wav=readFileSync(resolve(root,item.spec.audio));assert.equal(wav.toString('ascii',0,4),'RIFF');assert.equal(wav.toString('ascii',8,12),'WAVE');
    let data,channels,rate,bits;for(let p=12;p+8<=wav.length;){const size=wav.readUInt32LE(p+4),kind=wav.toString('ascii',p,p+4);if(kind==='fmt '){assert.equal(wav.readUInt16LE(p+8),1);channels=wav.readUInt16LE(p+10);rate=wav.readUInt32LE(p+12);bits=wav.readUInt16LE(p+22);}if(kind==='data')data=wav.subarray(p+8,p+8+size);p+=8+size+(size%2);}
    assert.equal(channels,2);assert.equal(rate,48000);assert.equal(bits,16);assert.equal(data.length,20*rate*4);
@@ -53,7 +69,7 @@ if(catalog.items.some(isTerrorGroup)){
     assert.equal(demo.musicBedEnds,20);assert.deepEqual(demo.silence,[12.5,20/3*2]);
     for(const side of [0,1]){
      assert.equal(peak(12.5,demo.impact.time,side),0,'Pausa curta preenchida');
-     const hit=peak(demo.impact.time,demo.impact.time+.25,side),build=peak(11.5,12.15,side);
+     const hit=peak(demo.impact.time,scream?demo.impact.end:demo.impact.time+.25,side),build=peak(11.5,12.15,side);
      assert.ok(hit>9000&&hit>2*build,'Impacto sem contraste');assert.ok(peak(0,20,side)<14000,'Impacto ultrapassou limite de pico');
      for(let t=15;t<19.5;t+=.5)assert.ok(peak(t,t+.5,side)>100,'Musica nao retornou ate o fechamento');
     }
