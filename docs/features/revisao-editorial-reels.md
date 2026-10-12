@@ -1,3 +1,13 @@
+## Alinhamento dos vínculos de Instagram para posts de produção (11/10/2026)
+
+Auditados e alinhados os vínculos entre os 35 posts reais do blog em produção e os seus respectivos Reels na tabela local `instagram_posts` (ignorados os rascunhos de teste #44 e #45). Todos os 35 posts reais passaram a responder com vínculo ativo no painel administrativo (`BlogCrosspostService::linkedBlogPosts('production')`):
+- Os 4 novos artigos promovidos (IDs 46 a 49) foram vinculados aos seus respectivos Reels agendados: #46 a #229 e #230; #47 a #231; #48 a #233; e #49 a #243, configurando as chaves de idempotência correspondentes.
+- Os 6 artigos antigos que exibiam ausência de vínculo no painel de produção por usarem chaves legadas (IDs 25, 36, 37, 38, 39 e 40) receberam a chave oficial de produção vinculada aos seus Reels agendados (#205, #215, #216, #217, #218 e #219).
+- A sequência ativa de Diablo (IDs 11, 12, 13 e 14) teve o vínculo direcionado aos Reels agendados vigentes (#224, #226, #225 e #227), isolando os registros cancelados antigos (#191–#194).
+- O post #30 (Windows) teve o vínculo direcionado ao Reel republicado #246 (preservando o histórico de #209).
+
+Operação transacional: `scripts/reels-review/align-instagram-links-20261011.php` (`--inspect`, `--prepare`, `--apply`, `--verify`). Backup imutável em `storage/backups/instagram-publish/links-alignment-20261011/before.json` (136 registros). Validação: 35/35 posts reais com vínculo ativo; suíte de testes oficial aprovada com 22 OK, 0 falhas. Forge: tarefas 1200–1202.
+
 ## Promoção do conteúdo para produção (11/10/2026)
 
 Os quatro artigos validados em stage foram promovidos com sucesso para a produção: terror pela atmosfera (`muito-alem-dos-jumpscares-3-jogos-que-transformam-a-atmosfera-em-verdadeiro-terror`), som e medo (`como-o-som-cria-medo-nos-jogos-a-ciencia-por-tras-da-atmosfera-de-terror`), jogos para 30 minutos (`jogos-para-quem-so-tem-30-minutos-por-dia`) e retorno aos jogos (`como-voltar-a-um-jogo-depois-de-meses-sem-jogar`). Produção passou de 33 para 37 artigos. Os 33 artigos existentes de produção foram preservados integralmente, incluindo métricas reais (`views`, `curtidas`, `comentarios_count`), status e dados operacionais. Categorias e autores foram mapeados pelos registros oficiais de produção.
