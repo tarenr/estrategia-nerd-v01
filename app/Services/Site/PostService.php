@@ -914,11 +914,11 @@ final class PostService
                 ];
 
                 if ($isSpecial) {
-                    $rules['height'] = '30rem';
-                    $rules['max-height'] = '30rem';
-                    $rules['object-fit'] = 'contain';
+                    $rules['height'] = 'auto';
+                    $rules['max-height'] = '36rem';
+                    $rules['object-fit'] = 'cover';
                     $rules['box-sizing'] = 'border-box';
-                    $rules['padding'] = '1rem';
+                    $rules['padding'] = '0';
                     $rules['background'] = 'rgba(2, 6, 23, 0.18)';
                 } else {
                     $rules['height'] = 'auto';

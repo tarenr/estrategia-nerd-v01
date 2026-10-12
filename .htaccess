@@ -20,7 +20,8 @@ RewriteRule ^public/ - [L]
 # Trilha Cloud Journey servida como HTML estatico.
 RewriteRule ^cloud-journey(?:/.*)?$ - [L]
 
-# Assets e uploads continuam servidos pela pasta publica.
+# Assets e uploads continuam servidos pela pasta publica (incluindo caminhos relativos em /admin/).
+RewriteRule ^admin/(assets|uploads)/(.*)$ public/$1/$2 [L]
 RewriteRule ^(assets|uploads)/(.*)$ public/$1/$2 [L]
 RewriteRule ^(favicon\.ico|robots\.txt|sitemap\.xml)$ public/$1 [L]
 
