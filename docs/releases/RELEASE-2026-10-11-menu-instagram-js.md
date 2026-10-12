@@ -8,15 +8,15 @@ Entram:
 Ficam fora:
 - Qualquer outro arquivo: o envio e de UM arquivo, `assets/js/site-home.js`. Nenhum PHP, view, CSS, `.env` ou banco
 - O pacote tecnico completo `code_2026-10-11_20-53-43_dd0d11c` (228 arquivos, tudo desde o commit bed2001): gerado so para inspecao, NAO aplicado em nenhum ambiente
-- Producao: aguardando aprovacao apos a homologacao em Stage
 
 Origem validada: local (navegador desktop e mobile 375 px) -> Stage (navegador)
 Paridade local -> stage: validada (hash do arquivo identico, SHA-256 86181542d538...)
-Paridade stage -> producao: pendente (producao ainda serve a versao anterior, SHA-256 809cdfe27a49..., 31739 bytes)
+Paridade stage -> producao: validada (mesmo SHA-256 86181542d538..., 31780 bytes; antes, producao servia 809cdfe27a49..., 31739 bytes)
 
 Backup necessario: sim (do arquivo)
 Backup usado:
 - Stage: `storage/menu-instagram-js-deploy/stage/site-home.before.js` (copia da versao anterior, 31739 bytes, hash conferido antes do envio)
+- Producao: `storage/menu-instagram-js-deploy/production/site-home.before.js` (idem, 31739 bytes)
 
 Banco precisa rodar script: nao
 Mudanca de schema: nao
@@ -35,11 +35,12 @@ Causa:
 
 Pacotes aplicados:
 - Stage: envio direto de 1 arquivo por `scripts/menu-instagram-js-deploy.php --deploy --target=stage` (so aplica se o remoto for exatamente a versao anterior, por hash; arquivo temporario + rename; hash conferido apos a troca)
-- Producao: nenhum ainda
+- Producao: envio direto de 1 arquivo por `scripts/menu-instagram-js-deploy.php --deploy --target=production`, apos aprovacao do usuario e homologacao em Stage (mesmas travas)
 
 Commits locais:
 - dd0d11c fix(site): marcar o item Instagram do menu ao rolar ate o feed (correcao)
-- commit deste registro (script de deploy pontual e documentacao)
+- 097128f chore(deploy): script pontual para publicar o site-home.js do menu e registrar a release
+- commit do registro da publicacao em producao
 
 Checklist pre-deploy usado:
 - /docs/checklists/pre-deploy.md (no que se aplica a envio de um unico arquivo estatico: estado remoto lido antes por hash, backup do arquivo, suite local aprovada)
@@ -48,7 +49,7 @@ Checklist pos-deploy usado:
 - /docs/checklists/post-deploy.md (home 200, JS servido pela home com o hash esperado, menu testado no navegador)
 
 Rollback associado:
-- `C:\xampp\php\php.exe scripts/menu-instagram-js-deploy.php --rollback --target=stage` (restaura a copia guardada; mesma trava por hash)
+- `C:\xampp\php\php.exe scripts/menu-instagram-js-deploy.php --rollback --target=stage|production` (restaura a copia guardada; mesma trava por hash)
 
 Validacoes realizadas:
 - Bug reproduzido no navegador local antes da correcao: com o feed na tela, o menu marcava `blog`
@@ -57,12 +58,14 @@ Validacoes realizadas:
 - scripts/verify-changes.php: 22 OK, 0 falhas
 - Script de deploy: recusa sem `--target`, recusa `--deploy` sem backup, `--deploy` repetido devolve "ja aplicado" (idempotente)
 - Stage: `--verify` aprovado (hash remoto, home 200, JS servido pela home com o hash esperado, secao `#instagram-feed` presente) e teste no navegador (topo -> hero; Sobre; Blog; Instagram -> instagram; Newsletter)
-- Producao confirmada INTOCADA apos o envio ao Stage (continua com o JS de 31739 bytes)
+- Producao confirmada INTOCADA apos o envio ao Stage; depois da aprovacao, aplicada
+- Producao: `--backup` (hash da versao anterior conferido), `--deploy`, `--verify` aprovado (hash remoto, home 200, JS servido pela home com o hash esperado, secao `#instagram-feed`), `--deploy` repetido devolveu "ja aplicado"
+- Producao no navegador: Blog -> blog; feed do Instagram -> instagram; Newsletter -> newsletter; home e /blog em 200; feed com #216 e #246 no topo
 
 Limitacoes e pendencias:
-- Producao pendente de aprovacao: `php scripts/menu-instagram-js-deploy.php --backup --target=production`, depois `--deploy` e `--verify`
+- Rollback da producao: `php scripts/menu-instagram-js-deploy.php --rollback --target=production`
 - O painel de testes do navegador nao dispara `requestAnimationFrame` nem eventos de rolagem sem renderizacao; a verificacao da rolagem foi feita intercalando capturas de tela (que forcam a renderizacao). O clique real no item foi validado sem essa limitacao
 - Se o Cloudflare guardar o JS antigo em cache, o visitante pode demorar a receber o novo; o endereco do JS tem `?v=` (filemtime), o que renova o cache na troca
 
 Status:
-- Implantada em Stage; Producao aguardando aprovacao
+- Implantada com sucesso em Stage e Producao
