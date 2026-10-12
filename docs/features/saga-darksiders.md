@@ -7,12 +7,12 @@ Saga de 6 capítulos no formato da saga do Diablo: artigo de blog com narração
 | Item | Estado |
 |---|---|
 | Artigo (blog) | Rascunho no banco **local**, post #82, slug `o-mundo-de-darksiders-ceu-inferno-e-o-equilibrio`, categoria `games`. Nada em stage ou produção. |
-| Narração do blog | `nar-001.mp3`, 43,4 s, no bloco `en-audio-block`. |
-| Música de fundo do blog | `amb-001.mp3`, 107 s, atributo `data-audio-ambiente`. |
-| Reel | v2 em MP4 1080×1920, 30 fps, 26 s, narração + trilha, com capa JPG. v1 preservado; **não** foi criado registro na fila do Instagram. |
-| Revisão visual | Livro, fundo e três artes restantes aprovados pelo usuário. Quadros do v2 inspecionados e folha de contato apresentada; aprovação do vídeo final ainda não registrada. |
+| Narração do blog | Voz original preservada; player usa `narracao-mix-v3.mp3`, 46 s, com música incorporada. |
+| Música de fundo do blog | `Caves of Dawn` (Pixabay 10376), mixada com a voz. Sem `data-audio-ambiente`, evitando duplicação. |
+| Reel | v3 em MP4 1080×1920, 30 fps, 26 s, narração + trilha nova, com capa JPG. v1 e v2 preservados; **não** foi criado registro na fila do Instagram. |
+| Revisão visual | Gravuras e fundo baseados nas referências do jogo fornecidas pelo usuário. Impasse, Conselho, guerra e fundo aprovados; uso da arte dos selos autorizado na atualização. Quadros do v3 inspecionados; vídeo final aguarda avaliação do usuário. |
 | Revisão auditiva | Narração aprovada pelo usuário. Nesta execução houve somente medição técnica do áudio, sem escuta do Reel. |
-| Imagens do artigo | Capa com o impasse e imagem do corpo com o Conselho, ambas em livro antigo. Backups das imagens anteriores preservados. |
+| Imagens do artigo | Capa com o impasse e quatro gravuras no corpo: impasse, guerra, Conselho e selos. Backups preservados. |
 
 ## Narração (ElevenLabs)
 
@@ -28,13 +28,43 @@ Formato dos textos: uma frase curta por linha, reticências nas pausas e linha e
 
 ## Música de fundo
 
+### Atual — v3
+
+Faixa **Caves of Dawn**, de GuilhermeBernardes, Pixabay id 10376, já disponível na biblioteca local em `public/uploads/audio/pixabay_10376.mp3`. Seleção aprovada pelo usuário com base nos metadados de instrumental/orquestral/ambiente sombrio; não houve escuta pela IA. Fontes: [página da faixa](https://pixabay.com/music/ambient-caves-of-dawn-10376/) e [licença Pixabay](https://pixabay.com/service/license-summary/), consultadas em 12/10/2026.
+
+O pedido de tentar uma trilha do jogo foi pesquisado: a [política de vídeos da THQ Nordic](https://thqnordic.com/legal/video-policy) permite vídeos com seu conteúdo, mas restringe distribuição de assets isolados. Não foi encontrada autorização específica para extrair a OST e usá-la também no player do blog. A alternativa Pixabay foi apresentada e aprovada; nenhuma OST foi extraída, comprada ou usada.
+
+Mixagens novas, preservando os MP3 de voz e a trilha original:
+
+- Reel: `public/uploads/reels/saga-darksiders-cap01/audio-v3/audio-mix-reel-v3.mp3`, 26 s.
+- Blog: `audio-v3/narracao-mix-blog-v3.mp3`, 46 s, na pasta do capítulo; cópia em `public/uploads/posts/o-mundo-de-darksiders-ceu-inferno-e-o-equilibrio/audio/narracao-mix-v3.mp3`.
+- Música a partir de 0 s, ganho 0,18; voz com atraso 400 ms; fade musical de entrada 0,7 s e saída 1,5 s. Compressão acionada pela voz: threshold 0,025, ratio 6, attack 40 ms, release 500 ms; `amix normalize=0` e limitador `limit=0.89:level=false`. MP3 estéreo 44,1 kHz, 192 kbps.
+- Configuração e origem registradas em `verification-v3/music-selection.json`. O player aponta somente para a mixagem, sem carregar a antiga música em paralelo ou referenciar uma nova faixa isolada.
+
+### Histórico — v1 e v2
+
 Faixa **Dark Fantasy Ambient (Dungeon Synth)**, de DeusLower, Pixabay id 248213, do grupo `epic` da biblioteca (`docs/IMP-032-faixas-pixabay.json`), arquivo `public/uploads/audio/pixabay_248213.mp3`. É a mesma faixa que os Reels do Diablo usam no catálogo atual.
 
-Licença conforme o manifesto: Pixabay Content License, uso comercial e edição permitidos, sem atribuição obrigatória, **proibido redistribuir a faixa isolada**. O artigo serve a trilha como arquivo separado (`amb-001.mp3`), igual ao padrão do artigo do Diablo. Se isso for considerado redistribuição isolada, o caminho é entregar uma versão editada (recorte, fade ou mixagem).
+Licença conforme o manifesto: Pixabay Content License, uso comercial e edição permitidos, sem atribuição obrigatória, **proibido redistribuir a faixa isolada**. O artigo anteriormente referenciava a trilha separada (`amb-001.mp3`), igual ao padrão do artigo do Diablo. Esse arquivo foi preservado, mas deixou de ser usado no player do capítulo 1 com a mixagem v3.
 
 A escolha foi feita pelo título e pelo grupo, **sem audição**. Alternativas da mesma biblioteca: "Caves of Dawn" (10376) e "Best Dramatic Music" (136824).
 
 ## Reel
+
+### Atual — v3 com referências da gameplay
+
+As artes v2 foram substituídas após o usuário apontar falta de fidelidade à franquia, especialmente no Conselho. A etapa v3 usou capturas e modelos do jogo fornecidos pelo usuário para anjos, demônios e as três cabeças de pedra; concept art não foi usada como referência final desses modelos. O acabamento foi corrigido para desenho em tinta/hachuras sobre papel aparente, com pigmentos discretos, evitando aparência de captura impressa. Personagens variados, sem tropas clonadas. Os selos seguem a disposição circular de sete formas quadradas luminosas na cena final de *Darksiders Genesis*, redesenhadas como gravura; fissuras representam artisticamente sua ruptura, e não reproduzem literalmente um quadro do jogo.
+
+- Amostras finais: `amostras-v3/livro-impasse-gravura-v3.png`, `livro-guerra-gravura-v3.png`, `livro-conselho-gravura-v3.png`, `livro-selos-gravura-v3.png` e `fundo-reel-gameplay-v3.png`.
+- Artes utilizadas pelo vídeo: cópias em `images-v3/cena-1.png` até `cena-4.png` e `images-v3/fundo.png` na pasta do capítulo.
+- Spec `spec-reel-cap01-v3.json`, mesmo perfil `darksiders-chronicle-v1`, duração 26 s e pausas [0, 5.5, 10.1, 17]. Código e perfis existentes não alterados nesta etapa.
+- Entrega: `reel-cap01-v3.mp4`, `reel-cap01-v3.jpg` e manifesto gerado pelo pipeline. A pasta `verification-v3/` contém hashes, registros locais do artigo e quadros extraídos.
+
+```sh
+node scripts/reels-konva/editorial.mjs --spec public/uploads/reels/saga-darksiders-cap01/spec-reel-cap01-v3.json --output public/uploads/reels/saga-darksiders-cap01/reel-cap01-v3.mp4 --ffmpeg ffmpeg --ffprobe ffprobe
+```
+
+### Histórico — v1
 
 - Mixagem: `public/uploads/reels/saga-darksiders-cap01/audio-mix-reel.mp3`. A trilha (início em 12 s, volume 0,22) entra por baixo da narração (atraso de 0,4 s), com limitador. Média −21,8 dB, pico −4,5 dB.
 - Spec: `spec-reel-cap01-v1.json` na mesma pasta. Padrão `editorial: manual`, layout `chronicle`, tom `dark`, quatro cenas, `beatStarts` [0, 5,5, 10,1, 17,0] alinhados às pausas da fala (medidas com `silencedetect`).
@@ -72,9 +102,34 @@ Observação: o botão do player mantém o texto "Ouvir narracao" (sem acento), 
 
 Em 12/10/2026, `scripts/en-blog-draft.php` atualizou as imagens do post #82 a partir de um payload montado com os campos atuais do próprio rascunho. A capa recebeu `images-v2/cena-1.png`; o corpo recebeu `images-v2/cena-3.png`. Todos os campos do registro, inclusive conteúdo, caminhos de áudio e status, foram comparados antes/depois e permaneceram iguais. As imagens antigas estão em `public/uploads/posts/o-mundo-de-darksiders-ceu-inferno-e-o-equilibrio/images/capa-v1-pre-book.png` e `img-001-v1-pre-book.png`; rollback: copiá-las de volta para `capa.png` e `img-001.png`. O texto alternativo anterior foi preservado com o conteúdo; ele ainda menciona selos na cena do Conselho.
 
+Na atualização v3, também em 12/10/2026, o mesmo script oficial inseriu as **quatro imagens no corpo**:
+
+| Arquivo | Posição e conteúdo |
+|---|---|
+| `capa.png` | Impasse, capa do artigo. |
+| `img-001.png` | Impasse, após a abertura e antes de "Um impasse que ninguém consegue vencer". |
+| `img-002.png` | Guerra, após a seção do impasse e antes de "O Conselho: a terceira força". |
+| `img-003.png` | Três cabeças de pedra, após a seção do Conselho e antes de "O Equilíbrio: uma trégua com nome bonito". |
+| `img-004.png` | Sete selos, após "Sete selos mantêm a paz" e antes de "O que vem depois". |
+
+Alt e legendas foram atualizados para as imagens reais. A imagem anterior do Conselho foi retirada do HTML; não há duplicação do bloco antigo. O player agora usa `narracao-mix-v3.mp3` e não possui `data-audio-ambiente`. A comparação normalizada do HTML, descontando figuras e atributos de áudio, confirmou preservação do texto narrativo; todos os outros campos do registro permaneceram iguais, inclusive status de rascunho.
+
+Backups da etapa anterior: `images/capa-v2-before-v3.png` e `images/img-001-v2-before-v3.png` na pasta do post. Snapshot antes/depois e payload local: `verification-v3/post-82-before.json`, `post-82-after.json`, `post-82-update.json`. Para rollback, restaurar o registro a partir do snapshot usando o script existente e restaurar as duas imagens pelos backups; não é necessário apagar as novas mídias sem referência. Voz, mixagem antiga, áudios antigos do artigo e Reels v1/v2 foram preservados por hash.
+
 O snapshot do registro e o payload da atualização ficam somente no ambiente local, em `verification-v2/post-82-before.json` e `post-82-images-v2.json`, fora do commit. A primeira tentativa foi bloqueada pelo sandbox; a retomada autorizada funcionou sem alterar serviços, permissões ou credenciais.
 
 ## Testes executados
+
+Verificações do v3 em 12/10/2026:
+
+- `C:\xampp\php\php.exe scripts/verify-changes.php`: 23 verificações aprovadas, zero falhas, status `APROVADO COM SUCESSO!`.
+- `node --test scripts/reels-konva/verify.mjs` com `EN_KONVA_PILOT=public/uploads/reels/saga-darksiders-cap01/verification-v2/regression-pilot.mp4`: 14 testes aprovados, zero falhas. Piloto de regressão já gerado com o código atual; pipeline não alterado nesta etapa.
+- Reel v3: decodificação integral sem erros; H.264, 1080×1920, 30 fps; AAC 48 kHz; duração 26,000 s. `volumedetect`: média −23,4 dB, pico −5,7 dB.
+- Mixagem do blog: 46,000 s, média −22,8 dB, pico −4,9 dB. A voz foi reutilizada, não regenerada; não houve escuta pela IA.
+- Quadros em 2, 7,5, 12,1 e 19 s inspecionados na folha de contato `verification-v3/folha-contato.jpg`.
+- Post #82: quatro imagens, capa e mixagem corretas por hash; ausência de placeholders e de segunda faixa no player; texto narrativo e campos fora do conteúdo preservados.
+- Cinco imagens do post e mixagem responderam HTTP 200 no Apache local, com MIME `image/png` e `audio/mpeg`.
+- Reels v1/v2, mixagem antiga, narrações originais, música fonte e áudios antigos do artigo com SHA-256 preservado.
 
 Verificações do v2 em 12/10/2026:
 
@@ -113,6 +168,8 @@ Verificações da entrega inicial (v1):
 
 Para repetir o **visual v2** nos capítulos 2 a 6, reutilizar `darksiders-chronicle-v1`, o fundo e uma referência do livro aprovado, gerando artes distintas para cada cena. Criar uma nova spec e novas saídas por capítulo; manter `editorial: manual`, `layout: chronicle`, `tone: dark`, `presentation: story` e `visualStyle.background`. Adaptar `beatStarts` à narração existente de cada capítulo: começar em zero, mínimo de 4 s entre cenas e mínimo de 4 s no fecho. Duração inteira dentro dos limites do pipeline; áudio deve cobrir `audioStart + duration`. Validar o encaixe de todos os textos antes do render, extrair quadros e verificar áudio, formato, decodificação e hashes. Nenhum capítulo seguinte foi produzido nesta entrega.
 
+Para a continuidade, usar as referências **v3**, e não as artes genéricas v2. Primeiro conferir aparência pela gameplay; converter em desenho de livro antigo com hachuras e papel visível, preservando anatomia e equipamento. Variar os personagens de uma mesma facção. Mostrar uma arte por vez e aguardar avaliação. Inserir todas as imagens planejadas no artigo com alt/legendas correspondentes. Para a música, preservar a voz, verificar licença e entregar mixagem única no blog; validar níveis e mostrar a reprodução ao usuário, sem afirmar escuta não realizada.
+
 ## Documentação oficial e acompanhamento
 
 Este arquivo é a fonte oficial exibida em **Base Técnica → Mudanças**: `LocalDocsController::changesViewData()` carrega os documentos de `docs/features/`, e `KnowledgeHubController` usa esses dados na aba `mudancas`. Não há registro paralelo de conteúdo para atualizar; README: N/A.
@@ -124,3 +181,5 @@ Forge, projeto 4: tarefas existentes #1213 (testes) e #1214 (documentação) reu
 Push do código e artefatos para o GitHub foi autorizado pelo usuário na retomada. Isso não publica o artigo, não sincroniza o banco e não agenda o Reel. Não houve publicação em stage/produção nem registro em `instagram_posts`.
 
 O commit desta entrega inclui o perfil novo, seu registro no pipeline e este documento. Mídias, specs, backups e evidências em `public/uploads/` continuam locais, conforme o `.gitignore` existente; não houve alteração dessa política nem inclusão forçada de uploads no Git. O piloto de regressão e payloads temporários também permanecem fora do commit.
+
+Na etapa v3 foram reutilizadas/reabertas #1211 (música), #1222 (imagens e Reel), #1213 (testes) e #1214 (documentação), evitando duplicidades. O commit v3 atualiza esta fonte oficial; código do renderizador e do player não precisaram de alteração. Mídias e dados do post seguem apenas no ambiente local; push de documentação não equivale a publicação/sincronização do conteúdo.
