@@ -9,6 +9,7 @@ import { createDiagnosticScene } from '../reels-review/diagnostic-scene.mjs';
 import { createComparisonScene } from '../reels-review/comparison-scene.mjs';
 import { createListScene } from '../reels-review/list-scene.mjs';
 import { createDiabloScene } from '../reels-review/diablo-scene.mjs';
+import { createDarksidersScene } from '../reels-review/darksiders-scene.mjs';
 import { createGeneralScene } from '../reels-review/general-scene.mjs';
 import { createTerrorScene } from '../reels-review/terror-scene.mjs';
 
@@ -106,6 +107,7 @@ export function fitText(node, maxHeight, maxSize, minSize) {
 /** A reusable scene graph; rendering uses explicit frame time, never wall-clock animation. */
 export async function createScene(spec, root) {
   validateSpec(spec);
+  if(spec.compositionProfile==='darksiders-chronicle-v1')return createDarksidersScene(spec,root);
   if(spec.compositionProfile==='general-editorial-v1')return createGeneralScene(spec,root);
   if(spec.compositionProfile==='terror-atmosphere-v1')return createTerrorScene(spec,root);
   if(spec.compositionProfile==='diablo-duality-v1')return createDiabloScene(spec,root);
