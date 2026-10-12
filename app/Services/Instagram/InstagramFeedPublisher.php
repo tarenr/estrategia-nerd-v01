@@ -58,7 +58,7 @@ final class InstagramFeedPublisher
      * Valida o feed local antes de qualquer envio.
      *
      * @param array<string,mixed> $feed
-     * @return array{errors: list<string>, covers: list<string>}
+     * @return array{errors: list<string>, covers: list<string>, avatar: bool}
      */
     public static function validateFeed(array $feed, string $publicRoot): array
     {
@@ -66,7 +66,21 @@ final class InstagramFeedPublisher
         $covers = [];
         $posts = $feed['posts'] ?? null;
         if (!is_array($posts) || $posts === []) {
-            return ['errors' => ['Feed sem posts.'], 'covers' => []];
+            return ['errors' => ['Feed sem posts.'], 'covers' => [], 'avatar' => false];
+        }
+
+        // Foto de perfil: caminho local (arquivo precisa existir) ou URL http(s) de fallback; o resto e invalido.
+        $picture = (string) ($feed['profile_picture'] ?? '');
+        $avatar = false;
+        if (preg_match(InstagramProfileAvatar::PUBLIC_PATTERN, $picture) === 1) {
+            $avatarFile = InstagramProfileAvatar::file($publicRoot);
+            if (!is_file($avatarFile) || (int) filesize($avatarFile) < InstagramProfileAvatar::MIN_BYTES) {
+                $errors[] = 'Foto de perfil local ausente ou menor que 1 KB.';
+            } else {
+                $avatar = true;
+            }
+        } elseif ($picture !== '' && preg_match('#^https?://#i', $picture) !== 1) {
+            $errors[] = 'profile_picture invalido (' . $picture . ').';
         }
         if (count($posts) > self::MAX_POSTS) {
             $errors[] = 'Feed com mais de ' . self::MAX_POSTS . ' posts.';
@@ -102,7 +116,7 @@ final class InstagramFeedPublisher
             }
         }
 
-        return ['errors' => $errors, 'covers' => $errors === [] ? $covers : []];
+        return ['errors' => $errors, 'covers' => $errors === [] ? $covers : [], 'avatar' => $errors === [] && $avatar];
     }
 
     // ── Estado local (compartilhado com o agendador) ─────────────────────────
@@ -213,14 +227,26 @@ final class InstagramFeedPublisher
                 }
             }
 
-            if ($remoteBytes !== '' && hash('sha256', $remoteBytes) === $result['hash'] && $missing === []) {
+            // Foto de perfil local: sobe quando o tamanho difere ou quando a versao (?v=) no JSON remoto mudou.
+            $uploadAvatar = false;
+            $localAvatar = InstagramProfileAvatar::file($this->projectRoot . '/public');
+            $remoteAvatar = $this->publicRoot . '/' . self::COVER_DIR_REL . '/profile.jpg';
+            if ($validation['avatar']) {
+                $remoteFeed = json_decode($remoteBytes, true);
+                $remotePicture = is_array($remoteFeed) ? (string) ($remoteFeed['profile_picture'] ?? '') : '';
+                $uploadAvatar = @ftp_size($this->conn(), $remoteAvatar) !== (int) filesize($localAvatar)
+                    || $remotePicture !== (string) ($feed['profile_picture'] ?? '');
+            }
+
+            if ($remoteBytes !== '' && hash('sha256', $remoteBytes) === $result['hash'] && $missing === [] && !$uploadAvatar) {
                 return ['status' => 'unchanged', 'message' => 'Remoto ja esta igual ao local.'] + $result;
             }
             if ($dryRun) {
-                $message = 'Dry-run: enviaria ' . count($missing) . ' capa(s) [' . implode(', ', $missing) . '] e '
+                $message = 'Dry-run: enviaria ' . count($missing) . ' capa(s) [' . implode(', ', $missing) . '], '
+                    . ($uploadAvatar ? 'a foto de perfil' : 'sem foto de perfil') . ' e '
                     . ($remoteBytes === $bytes ? 'manteria' : 'trocaria') . ' o JSON.';
 
-                return ['status' => 'dry-run', 'message' => $message, 'uploaded' => count($missing)] + $result;
+                return ['status' => 'dry-run', 'message' => $message, 'uploaded' => count($missing) + ($uploadAvatar ? 1 : 0)] + $result;
             }
 
             // Evidencia local do estado remoto anterior e .bak remoto (nunca antes de validar o feed).
@@ -241,6 +267,11 @@ final class InstagramFeedPublisher
                 );
                 $result['uploaded']++;
                 ($this->log)('capa enviada: ' . $cover);
+            }
+            if ($uploadAvatar) {
+                $this->putFile($remoteAvatar, $localAvatar);
+                $result['uploaded']++;
+                ($this->log)('foto de perfil enviada: profile.jpg');
             }
 
             $this->replaceJson($remoteJson, $bytes);
@@ -403,15 +434,25 @@ final class InstagramFeedPublisher
             && $coverResponse['size'] >= self::MIN_COVER_BYTES;
         $homeOk = $home['code'] === 200 && str_contains($home['body'], $cover);
 
-        if ($homeOk && $coverOk) {
-            return ['ok' => true, 'fatal' => false, 'message' => 'Home e capa do primeiro card verificadas.'];
+        // Foto de perfil local: tambem precisa responder 200 como imagem.
+        $picture = (string) ($feed['profile_picture'] ?? '');
+        $avatarOk = true;
+        if (preg_match(InstagramProfileAvatar::PUBLIC_PATTERN, $picture) === 1) {
+            $avatarResponse = $this->httpGet($base . $picture);
+            $avatarOk = $avatarResponse['code'] === 200
+                && str_starts_with($avatarResponse['type'], 'image/')
+                && $avatarResponse['size'] >= InstagramProfileAvatar::MIN_BYTES;
+        }
+
+        if ($homeOk && $coverOk && $avatarOk) {
+            return ['ok' => true, 'fatal' => false, 'message' => 'Home, capa do primeiro card e foto de perfil verificadas.'];
         }
 
         return [
             'ok' => false,
             'fatal' => false,
             'message' => 'Verificacao HTTP pendente (home ' . $home['code'] . ', primeiro card '
-                . ($homeOk ? 'ok' : 'ausente') . ', capa ' . $coverResponse['code'] . ').',
+                . ($homeOk ? 'ok' : 'ausente') . ', capa ' . $coverResponse['code'] . ', foto de perfil ' . ($avatarOk ? 'ok' : 'falhou') . ').',
         ];
     }
 

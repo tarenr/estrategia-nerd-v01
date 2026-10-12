@@ -77,6 +77,7 @@ $criticalFiles = [
     'app/Services/Instagram/InstagramApiService.php',
     'app/Services/Instagram/InstagramFeedReconciler.php',
     'app/Services/Instagram/InstagramFeedPublisher.php',
+    'app/Services/Instagram/InstagramProfileAvatar.php',
     'scripts/en-instagram-publish-feed.php',
     'scripts/en-instagram-publish-scheduled.php',
     'scripts/sync-instagram-feed-assets.php',

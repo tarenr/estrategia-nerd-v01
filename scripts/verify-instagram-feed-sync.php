@@ -13,10 +13,12 @@ declare(strict_types=1);
 
 use App\Services\Instagram\InstagramFeedPublisher;
 use App\Services\Instagram\InstagramFeedReconciler;
+use App\Services\Instagram\InstagramProfileAvatar;
 
 if (PHP_SAPI !== 'cli') { exit(1); }
 $root = dirname(__DIR__);
 require_once $root . '/app/Services/Instagram/InstagramFeedReconciler.php';
+require_once $root . '/app/Services/Instagram/InstagramProfileAvatar.php';
 require_once $root . '/app/Services/Instagram/InstagramFeedPublisher.php';
 
 $passed = 0; $failed = 0;
@@ -87,6 +89,43 @@ $many = [];
 for ($i = 0; $i < 19; $i++) { $many[] = $post(1, '/assets/instagram-feed/post_1.jpg', sprintf('2026-09-%02d 10:00:00', 28 - $i % 28)); }
 $check('mais de 18 posts é recusado', $v($feed($many))['errors'] !== []);
 $check('caminho fora da pasta de capas é recusado', $v($feed([$post(1, '/assets/instagram-feed/../../.env', '2026-10-01 10:00:00')]))['errors'] !== []);
+
+// ── Foto de perfil ───────────────────────────────────────────────────────────
+$okPost = $post(1, '/assets/instagram-feed/post_1.jpg', '2026-10-01 10:00:00');
+$withPic = static fn (string $picture): array => $feed([$okPost]) + ['profile_picture' => $picture];
+$noisyJpeg = static function (int $size = 120): string {
+    $img = imagecreatetruecolor($size, $size);
+    for ($x = 0; $x < $size; $x++) { for ($y = 0; $y < $size; $y++) { imagesetpixel($img, $x, $y, imagecolorallocate($img, random_int(0, 255), random_int(0, 255), random_int(0, 255))); } }
+    ob_start(); imagejpeg($img, null, 90); imagedestroy($img);
+
+    return (string) ob_get_clean();
+};
+$jpeg = $noisyJpeg();
+$avatarFile = InstagramProfileAvatar::file($tmp);
+
+$check('foto: sem profile_picture e aceito (sem foto local)', $v($feed([$okPost]))['errors'] === [] && $v($feed([$okPost]))['avatar'] === false);
+$check('foto: URL https de fallback e aceita', $v($withPic('https://scontent.example/foto.jpg'))['errors'] === []);
+$check('foto: caminho local sem arquivo e recusado', $v($withPic('/assets/instagram-feed/profile.jpg?v=0123abcd'))['errors'] !== []);
+file_put_contents($avatarFile, 'x');
+$check('foto: arquivo local menor que 1 KB e recusado', $v($withPic('/assets/instagram-feed/profile.jpg?v=0123abcd'))['errors'] !== []);
+$check('foto: caminho invalido (fora da pasta) e recusado', $v($withPic('/assets/../.env'))['errors'] !== []);
+$check('foto: caminho local com versao invalida e recusado', $v($withPic('/assets/instagram-feed/profile.jpg?v=ZZZ'))['errors'] !== []);
+$check('foto: save recusa conteudo que nao e imagem', InstagramProfileAvatar::save(str_repeat('a', 5000), $avatarFile) === false);
+$png = (static function (): string { $i = imagecreatetruecolor(120, 120); ob_start(); imagepng($i); imagedestroy($i); return (string) ob_get_clean(); })();
+$check('foto: save recusa PNG (so JPEG)', InstagramProfileAvatar::save($png . str_repeat("\0", 2000), $avatarFile) === false);
+$check('foto: save recusa JPEG pequeno demais', InstagramProfileAvatar::save(substr($jpeg, 0, 500), $avatarFile) === false);
+$check('foto: save grava JPEG valido e nao deixa .tmp', InstagramProfileAvatar::save($jpeg, $avatarFile) === true && is_file($avatarFile) && !is_file($avatarFile . '.tmp') && filesize($avatarFile) === strlen($jpeg));
+$publicPath = InstagramProfileAvatar::publicPath($tmp);
+$check('foto: publicPath traz ?v= do conteudo e casa com o padrao aceito', $publicPath !== null && preg_match(InstagramProfileAvatar::PUBLIC_PATTERN, $publicPath) === 1 && str_ends_with($publicPath, substr(md5($jpeg), 0, 8)));
+$good = $v($withPic((string) $publicPath));
+$check('foto: caminho local com arquivo valido e aceito e marca avatar=true', $good['errors'] === [] && $good['avatar'] === true);
+$check('foto: isFresh dentro e fora da janela de 24 h', InstagramProfileAvatar::isFresh($avatarFile, 86400) === true && InstagramProfileAvatar::isFresh($avatarFile, 86400, time() + 90000) === false);
+$check('foto: save falho preserva a foto anterior', (static function () use ($avatarFile, $jpeg): bool { InstagramProfileAvatar::save('lixo', $avatarFile); return is_file($avatarFile) && filesize($avatarFile) === strlen($jpeg); })());
+$check('foto: perfil completo exige username e foto', InstagramProfileAvatar::isCompleteProfile(['username' => 'a', 'profile_picture_url' => 'https://x/y.jpg']) === true
+    && InstagramProfileAvatar::isCompleteProfile(['username' => '', 'profile_picture_url' => 'https://x/y.jpg']) === false
+    && InstagramProfileAvatar::isCompleteProfile(['username' => 'a', 'profile_picture_url' => '']) === false
+    && InstagramProfileAvatar::isCompleteProfile([]) === false);
+$check('foto: sem arquivo local, publicPath devolve null (fallback para a URL do banco)', InstagramProfileAvatar::publicPath($tmp . '/inexistente') === null);
 
 foreach (glob($tmp . '/assets/instagram-feed/*') ?: [] as $file) { unlink($file); }
 rmdir($tmp . '/assets/instagram-feed'); rmdir($tmp . '/assets'); rmdir($tmp);

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Services\Site;
 
 use App\Repositories\InstagramPostRepository;
+use App\Services\Instagram\InstagramProfileAvatar;
 use Throwable;
 
 final class InstagramFeedService
@@ -96,7 +97,9 @@ final class InstagramFeedService
 
         return [
             'username' => (string) ($account['username'] ?? 'estrategia_nerd'),
-            'profile_picture' => (string) ($account['profile_picture'] ?? ''),
+            // A URL da Meta vence em ~14 dias; com a foto local (sync) o feed aponta para o arquivo.
+            'profile_picture' => InstagramProfileAvatar::publicPath(base_path('public'))
+                ?? (string) ($account['profile_picture'] ?? ''),
             'followers_count' => (int) ($account['followers_count'] ?? 0),
             'media_count' => (int) ($account['media_count'] ?? count($items)),
             'profile_url' => 'https://www.instagram.com/' . (string) ($account['username'] ?? 'estrategia_nerd'),

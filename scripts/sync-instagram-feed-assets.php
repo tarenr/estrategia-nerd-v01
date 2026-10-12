@@ -16,6 +16,7 @@ require_once __DIR__ . '/../bootstrap.php';
 use App\Repositories\InstagramPostRepository;
 use App\Services\Instagram\InstagramApiService;
 use App\Services\Instagram\InstagramFeedReconciler;
+use App\Services\Instagram\InstagramProfileAvatar;
 use App\Services\Site\InstagramFeedService;
 
 // --only-missing: modo automatico; so baixa capas que ainda nao existem em disco (sem rebaixar as ~92 a cada rodada).
@@ -94,6 +95,42 @@ foreach ($apiItems as $item) {
     $upsertCount++;
 }
 echo "Total de posts sincronizados/atualizados no banco: {$upsertCount}\n\n";
+
+echo "=== 2a. Atualizando o perfil (seguidores, midias e foto) ===\n";
+// A URL da foto vence em ~14 dias: a foto e guardada em arquivo local. Falha aqui nunca derruba o sync dos posts.
+try {
+    $avatarFile = base_path('public' . InstagramProfileAvatar::REL_PATH);
+    $profile = $api->getProfile();
+    if (!InstagramProfileAvatar::isCompleteProfile($profile)) {
+        echo "Aviso: perfil incompleto devolvido pela Meta; banco e foto mantidos.\n\n";
+    } else {
+        $repo->syncAccount((int) $account['id'], $profile);
+        echo "Perfil atualizado: " . (int) ($profile['followers_count'] ?? 0) . " seguidores, " . (int) ($profile['media_count'] ?? 0) . " midias.\n";
+
+        if ($onlyMissing && InstagramProfileAvatar::isFresh($avatarFile, 86400)) {
+            echo "Foto de perfil local recente (mantida).\n\n";
+        } else {
+            $ch = curl_init((string) $profile['profile_picture_url']);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT        => 20,
+                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) EstrategiaNerd/1.0',
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+            $avatarBytes = curl_exec($ch);
+            $avatarCode  = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($avatarCode === 200 && is_string($avatarBytes) && InstagramProfileAvatar::save($avatarBytes, $avatarFile)) {
+                echo "Foto de perfil salva em public" . InstagramProfileAvatar::REL_PATH . " (" . round(strlen($avatarBytes) / 1024, 1) . " KB).\n\n";
+            } else {
+                echo "Aviso: foto de perfil nao baixada (HTTP {$avatarCode} ou imagem invalida); foto anterior mantida.\n\n";
+            }
+        }
+    }
+} catch (\Throwable $e) {
+    echo "Aviso: perfil nao atualizado (" . $e->getMessage() . "); posts seguem normalmente.\n\n";
+}
 
 echo "=== 2b. Reconciliando posts apagados no Instagram ===\n";
 // A Meta e a fonte da verdade: post "publicado" que sumiu da listagem completa vira "cancelado"

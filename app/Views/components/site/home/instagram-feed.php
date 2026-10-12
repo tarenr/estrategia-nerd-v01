@@ -8,6 +8,9 @@ if ($feed === null || empty($feed['posts'])) {
 
 $username = (string) ($feed['username'] ?? 'estrategia_nerd');
 $profilePic = (string) ($feed['profile_picture'] ?? '');
+if ($profilePic !== '' && !str_starts_with($profilePic, 'http://') && !str_starts_with($profilePic, 'https://')) {
+    $profilePic = url($profilePic);
+}
 $profileUrl = (string) ($feed['profile_url'] ?? 'https://www.instagram.com/' . $username);
 $followers = (int) ($feed['followers_count'] ?? 0);
 $allPosts = (array) ($feed['posts'] ?? []);
