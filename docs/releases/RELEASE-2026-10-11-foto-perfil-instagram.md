@@ -13,21 +13,22 @@ Ficam fora:
 - Schema ou dados dos bancos remotos
 - Layout do card (nenhuma mudanca visual)
 
-Origem validada: local (navegador) -> Stage (navegador)
+Origem validada: local (navegador) -> Stage (navegador) -> Producao (navegador)
 Paridade local -> stage: validada (view com o mesmo hash; JSON e `profile.jpg` identicos; reexecucao do publicador devolve `unchanged`)
-Paridade stage -> producao: PENDENTE (a producao ainda tem a view anterior e a URL expirada da Meta)
+Paridade stage -> producao: validada (mesma view, mesma foto e mesmo JSON do Stage)
 
 Backup necessario: sim (do arquivo de codigo)
 Backup usado:
 - Stage: `storage/feed-avatar-view-deploy/stage/instagram-feed.before.php` (view anterior, hash conferido antes do envio)
 - Stage: `config/instagram-feed.json.bak` remoto e `storage/instagram-feed-publish/stage/before-*.json` local (JSON anterior)
+- Producao: `storage/feed-avatar-view-deploy/production/instagram-feed.before.php` (view anterior), `config/instagram-feed.json.bak` remoto e `storage/instagram-feed-publish/production/before-*.json` local
 
 Banco precisa rodar script: nao
 Mudanca de schema: nao
 Mudanca de dados: sim, somente no banco LOCAL (`estrategia-nerd`, tabela `instagram_accounts`): `syncAccount` atualizou seguidores, `media_count` (92 -> 95), foto e `synced_at`. Bancos remotos nao foram tocados.
 
 Rotas criticas afetadas:
-- / (Home publica, card de perfil da secao do Instagram), em Stage; Producao pendente
+- / (Home publica, card de perfil da secao do Instagram), em Stage e Producao
 
 Arquivos principais:
 - app/Services/Instagram/InstagramProfileAvatar.php (novo)
@@ -45,7 +46,7 @@ Causa:
 
 Pacotes aplicados:
 - Stage: view enviada por `scripts/feed-avatar-view-deploy.php --deploy --target=stage` (so aplica se o remoto for exatamente a versao anterior, por hash); JSON e `profile.jpg` enviados por `scripts/en-instagram-publish-feed.php stage`
-- Producao: nenhum ainda
+- Producao: view por `scripts/feed-avatar-view-deploy.php --deploy --target=production` (mesmas travas), depois JSON e `profile.jpg` por `scripts/en-instagram-publish-feed.php production`, apos aprovacao do usuario e homologacao em Stage
 
 Commits locais:
 - ver historico da branch main (commits de 2026-10-11 com escopo "instagram")
@@ -69,13 +70,15 @@ Validacoes realizadas:
 - Local no navegador: avatar carregado (1080x1080), card correto e item "Instagram" marcado no menu
 - Script da view: recusa sem `--target`, recusa `--deploy` sem backup
 - Stage: view v2.12.2 (`--verify` aprovado); dry-run mostrou 0 capas, foto de perfil e troca do JSON; envio real aprovado com verificacao HTTP (home, capa do primeiro card e foto de perfil); reexecucao devolveu `unchanged`; avatar no navegador com `src` ja prefixado por `/stage` pela view (1080x1080, carregado)
-- Producao confirmada INTOCADA: ainda serve a URL expirada da Meta e `profile.jpg` responde 404 la
+- Producao: view v2.12.2 (`--verify` aprovado, home e /blog em 200); dry-run mostrou 0 capas, foto de perfil e troca do JSON; envio real com verificacao HTTP; reexecucao devolveu `unchanged`; a pagina nao referencia mais a URL da Meta (fbcdn); foto servida pelo proprio dominio (200, image/jpeg, 166991 bytes)
+- Producao no navegador: avatar carregado (1080x1080) com `src` em `/assets/instagram-feed/profile.jpg?v=3c64b435`; primeiro card #216; item "Instagram" marcado no menu
+- Ciclo automatico do agendador (apos remover o interruptor): execucao normal sem sync nem envio (nada vencido); com o sync forcado a ficar vencido, rodou o sync, o JSON mudou (o #216 foi de 1 para 2 curtidas, igual a Meta) e o publicador enviou a Producao sozinho com verificacao aprovada
 
 Limitacoes e pendencias:
-- Producao pendente de aprovacao: `php scripts/feed-avatar-view-deploy.php --backup|--deploy|--verify --target=production`, depois `php scripts/en-instagram-publish-feed.php production`; a ordem importa (view antes do JSON)
-- O interruptor `storage/instagram-feed-publish/auto.disabled` esta LIGADO desde o inicio deste trabalho, para o agendador nao enviar o JSON novo a producao antes da aprovacao. Ate ser removido, o feed publico automatico (v2.12.0) fica pausado. Remover o arquivo depois de publicar em producao
+- Ordem usada em producao: view antes do JSON (a view antiga ja serviria o caminho absoluto, mas sem a trava por hash)
+- O interruptor `storage/instagram-feed-publish/auto.disabled` ficou LIGADO durante o trabalho (o feed automatico da v2.12.0 ficou pausado e os contadores de curtidas e comentarios na producao ficaram parados no snapshot das 20:35) e foi REMOVIDO apos a publicacao em producao: o feed automatico voltou a rodar
 - A URL da foto na Meta e re-baixada a cada 24 h (modo automatico); se a Meta devolver algo que nao seja JPEG, a foto anterior e mantida e o aviso aparece no log do agendador
 - O pacote tecnico de 228 arquivos foi excluido: nunca aplicado (`applied_targets` vazio); o ultimo pacote aplicado continua `code_2026-09-29_21-28-04_bed2001`
 
 Status:
-- Implantada em Stage; Producao aguardando aprovacao
+- Implantada com sucesso em Stage e Producao
