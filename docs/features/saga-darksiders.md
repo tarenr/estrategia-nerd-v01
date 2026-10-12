@@ -120,6 +120,25 @@ O snapshot do registro e o payload da atualização ficam somente no ambiente lo
 
 ## Testes executados
 
+### Entrega v4 — imagens leves e música mais presente (12/10/2026)
+
+O rascunho local #82 agora usa `capa.webp` e `img-001.webp` a `img-004.webp` na mesma pasta `uploads/posts/o-mundo-de-darksiders-ceu-inferno-e-o-equilibrio/images/`. Conversão via FFmpeg/libwebp, qualidade 82, 1280×720. Os cinco arquivos somavam 17.724.313 bytes; agora somam 1.495.392 bytes, redução de 91,56%. Os PNGs originais foram preservados. As quatro posições, legendas, textos alternativos e todo o texto do artigo permanecem iguais.
+
+A trilha aprovada, “Caves of Dawn”, passou de ganho 0,18 para 0,2852808 (+4 dB) nas duas mixagens. Voz, atraso de 400 ms, ducking (threshold 0,025; ratio 6; attack 40 ms; release 500 ms), fades e limitador foram preservados. Esse aumento se aplica à música; o nível total é dominado pela narração. Não houve escuta pela IA nem regeneração da voz.
+
+- Blog: `audio/narracao-mix-v4.mp3`, 46 s, média −22,8 dB e pico −4,9 dB. O player usa somente essa mixagem, sem segunda faixa de ambiente.
+- Reel: `public/uploads/reels/saga-darksiders-cap01/reel-cap01-v4.mp4`, gerado com `spec-reel-cap01-v4.json` e `audio-v4/audio-mix-reel-v4.mp3`. As artes PNG v3 foram mantidas como fontes de alta qualidade para o vídeo.
+- Reel validado: 26 s, 1080×1920, 30 fps, H.264/AAC 48 kHz, decodificação integral sem erros, média −23,3 dB e pico −5,8 dB. Sem clipping nos níveis medidos.
+- WebPs inspecionados em folha de contato e Conselho em tamanho integral; quadros das quatro cenas do vídeo também inspecionados. Detalhes do desenho e composição preservados.
+- Suíte PHP: 23 aprovações, zero falhas. Pipeline Node: 14 aprovações, zero falhas, usando o piloto de regressão v2 documentado abaixo.
+- Links HTTPS do Reel, mixagem do blog e cinco WebPs: HTTP 200 e MIME correto, acessíveis pelo túnel `https://nerd.tfr-info.com.br`.
+- Comparação do registro antes/depois: somente caminhos das imagens, capa/thumb e nome da mixagem alterados. Rascunho preservado; quatro imagens no corpo; nenhum placeholder ou áudio duplicado.
+- Hashes dos PNGs, áudios anteriores, narrações originais e Reels anteriores preservados.
+
+Evidências em `verification-v4/`: snapshots `post-82-before.json` e `post-82-after.json`, payload `post-82-update.json`, `original-hashes.json`, `technical-verification.json` e folhas de contato. Rollback: restaurar no registro apenas os caminhos anteriores conforme snapshot; os arquivos v3 continuam presentes. Não é necessário excluir as mídias v4. Não houve publicação ou agendamento.
+
+As tarefas existentes do Forge #1211, #1222, #1213 e #1214 foram reutilizadas para esta entrega. A documentação oficial continua neste arquivo; nenhuma alteração no renderizador ou player foi necessária. Uploads e evidências continuam locais e ignorados pelo Git.
+
 Verificações do v3 em 12/10/2026:
 
 - `C:\xampp\php\php.exe scripts/verify-changes.php`: 23 verificações aprovadas, zero falhas, status `APROVADO COM SUCESSO!`.
