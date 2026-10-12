@@ -202,3 +202,36 @@ Push do código e artefatos para o GitHub foi autorizado pelo usuário na retoma
 O commit desta entrega inclui o perfil novo, seu registro no pipeline e este documento. Mídias, specs, backups e evidências em `public/uploads/` continuam locais, conforme o `.gitignore` existente; não houve alteração dessa política nem inclusão forçada de uploads no Git. O piloto de regressão e payloads temporários também permanecem fora do commit.
 
 Na etapa v3 foram reutilizadas/reabertas #1211 (música), #1222 (imagens e Reel), #1213 (testes) e #1214 (documentação), evitando duplicidades. O commit v3 atualiza esta fonte oficial; código do renderizador e do player não precisaram de alteração. Mídias e dados do post seguem apenas no ambiente local; push de documentação não equivale a publicação/sincronização do conteúdo.
+
+---
+
+## Capítulo 2: Os Nephilim (Produzido em 12/10/2026)
+
+### Estado da entrega
+- **Artigo (blog):** Rascunho no banco local, post #83, slug `os-nephilim-a-raca-proibida-de-darksiders`, categoria `games`. 4 imagens no corpo (`img-001.webp` a `img-004.webp`) e capa (`capa.webp`).
+- **Narração do blog:** Voz Cornelius (Eleven Multilingual v2), 48,56 s, mixada com a trilha *Caves of Dawn* (Pixabay 10376, ganho 0,285, ducking e limiter, duração 51 s) em `uploads/posts/os-nephilim-a-raca-proibida-de-darksiders/audio/nar-001.mp3`.
+- **Reel:** v1 em MP4 1080×1920, 30 fps, 26 s, gerado com perfil `darksiders-chronicle-v1` em `uploads/reels/saga-darksiders-cap02/reel-cap02-v1.mp4`.
+- **Ilustrações:** 4 gravuras no estilo de livro antigo em nanquim/hachuras sobre pergaminho:
+  1. Criação dos Nephilim por Lilith a partir de cinzas celestiais e abissais.
+  2. Absalom com sua armadura oficial e machado de guerra liderando a horda dos Nephilim.
+  3. Os Quatro Cavaleiros no massacre do Éden.
+  4. Morte contemplando o amuleto das almas no Éden diante de Absalom derrotado.
+- **Áudios originais:** Preservados em `conteudo-planejado/saga-darksiders/cap-02-os-nephilim/audio/`.
+
+---
+
+## Capítulo 3: Os Quatro Cavaleiros (Produzido em 12/10/2026)
+
+### Estado da entrega
+- **Artigo (blog):** Rascunho no banco local, post #84, slug `os-quatro-cavaleiros-de-darksiders`, categoria `games`. 4 imagens no corpo (`img-001.webp` a `img-004.webp`) e capa (`capa.webp`).
+- **Narração do blog:** Voz Cornelius (Eleven Multilingual v2), 44,33 s, mixada com a trilha *Caves of Dawn* (Pixabay 10376, ganho 0,285, ducking e limiter, duração 50 s) em `uploads/posts/os-quatro-cavaleiros-de-darksiders/audio/nar-001.mp3`.
+- **Reel:** v1 em MP4 1080×1920, 30 fps, 26 s, gerado com perfil `darksiders-chronicle-v1` em `uploads/reels/saga-darksiders-cap03/reel-cap03-v1.mp4`.
+- **Ilustrações:** 4 gravuras no estilo de livro antigo em nanquim/hachuras sobre pergaminho aberto com velas e penas, com fidelidade canônica rigorosa aos designs de Joe Madureira e gameplay:
+  1. Os Quatro Cavaleiros reunidos em formação épica diante do Conselho das Cinzas.
+  2. Morte (máscara óssea esculpida, peito atlético nu com correias, cabelos negros soltos, foices duplas, SEM capuz de ceifador) e Guerra (capuz vermelho, olhos cianos, armadura colossal e Chaoseater) em combate conjunto.
+  3. Fúria (armadura negra pontiaguda, rabo de cavalo flamejante magenta e chicote Scorn) e Conflito (máscara metálica lisa, sobretudo longo de couro e pistolas gêmeas Mercy e Redemption disparando) em ação letal.
+  4. A vigília dos Quatro Cavaleiros no desfiladeiro cósmico observando o Sétimo Selo intacto nos céus tempestuosos.
+- **Áudios originais:** Preservados em `conteudo-planejado/saga-darksiders/cap-03-os-quatro-cavaleiros/audio/`.
+- **Página de prévia mobile:** `public/uploads/previews/darksiders-cap03/index.html` (com player HTML5 do Reel e player de áudio do blog).
+
+
