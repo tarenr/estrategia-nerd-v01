@@ -72,14 +72,17 @@ pular etapas.
 ## Checklist minimo por post
 
 - [ ] Titulo e resumo definidos
-- [ ] Conteudo revisado (sem erros factuais ou de portugues)
+- [ ] Conteudo longo (~1.000 palavras) revisado com HTML rico (`<h2>`, listas, tabelas, FAQ e YouTube embed verificado)
+- [ ] Links oficiais de download/loja adicionados para jogos citados (Steam, Battle.net, Riot, Epic Games)
 - [ ] SEO (meta title, meta description, slug) revisado
-- [ ] Imagem de capa e imagens de apoio geradas/aprovadas
-- [ ] Categoria correta
+- [ ] Imagem de capa (16:9 WebP) e imagens de apoio geradas/aprovadas
+- [ ] Categoria correta atribuida e validada no banco (`categoria_id` e `categoria_post_id` NAO nulos)
+- [ ] Reels de Instagram gerados via Konva/Skia Smart Canvas engine (`scripts/reels-konva/`) com `-movflags +faststart` e trilha unica
 - [ ] Rascunho salvo no banco local
 - [ ] Paridade local -> stage validada
 - [ ] Aprovacao explicita para publicar em producao
 - [ ] Publicado em producao
+
 
 ## Lista de posts desta leva
 

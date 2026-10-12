@@ -174,5 +174,31 @@ Para assegurar coesão editorial e máxima tração cruzada sem riscos de links 
 - **Sanitização de Títulos:** Títulos do blog são desprovidos de marcações wiki `[[` e `]]` na camada de serviço antes da exibição no calendário.
 - **Ações Rápidas:** Cada card possui menu de contexto com atalho direto de edição, além de navegação temporal com atalho "Hoje", seletor rápido de ambiente e botão "+ Adicionar agendamento" com opções dedicadas para Blog e Instagram.
 
+---
 
+## 10. Diretrizes de Qualidade Editorial e Prevenção de Erros de IA
 
+Esta seção estabelece regras mandatórias para a produção automotiva/assistida por IA de conteúdo do blog e mídias sociais, corrigindo falhas recorrentes identificadas no projeto:
+
+### 10.1. Extensão e Estrutura dos Artigos do Blog
+- **Profundidade Térmica (~1.000 palavras):** Artigos de blog nunca devem ser resumos superficiais de 300–400 palavras. Devem ter em média ~1.000 palavras, contextualizando minuciosamente o tema.
+- **Formatação Rica em HTML:** Utilizar cabeçalhos `<h2>` bem estruturados, listas (`<ul>`/`<ol>`), tabelas explicativas (`<table>`) quando couber, vídeos do YouTube incorporados em contêineres responsivos (`<div class="ratio ratio-16x9"><iframe ...></iframe></div>`) e blocos de FAQ ao final (`<div class="content-block content-block-faq">`).
+
+### 10.2. Atribuição Obrigatória de Categorias no Banco de Dados
+- **Zero Categorias Nulas (`categoria_id` / `categoria_post_id`):** O campo de categoria nunca pode ser mantido como `NULL` na tabela `posts` ou em relacionamentos de categoria.
+- **Mapeamento Explícito de IDs:** Todos os rascunhos e scripts de importação (`ContentSyncManager.php`, `en-blog-draft.php`) devem forçar o vínculo correto (ex.: Games=3, Dicas=5, Cultura Geek=4, Hardware=2, Gadgets=1, Lifestyle=6) para garantir que as postagens sejam listadas nas páginas de categoria do site principal.
+
+### 10.3. Motor de Renderização Konva/Skia para Instagram Reels
+- **Proibição de FFmpeg Full-Bleed Genérico:** Vídeos em formato Reel/Shorts do Instagram NUNCA devem ser gerados esticando imagens em tela cheia via scripts FFmpeg primários.
+- **Uso do Node.js Konva Smart Canvas Engine:** Toda renderização de Reel deve utilizar o pipeline oficial Node.js (`scripts/reels-konva/` / `scripts/reels-review/`), posicionando imagens dentro do `IMAGE_FRAME` (908x511), com cabeçalho de categoria, título em fonte serifada padronizada, rodapé de marca e overlay visual refinado.
+
+### 10.4. Otimização de Vídeo e Streaming Móvel (`-movflags +faststart`)
+- **Cabeno Moov Atom no Início (`+faststart`):** Todo renderizador ou conversor de MP4 (FFmpeg) DEVE incluir a flag `-movflags +faststart`. Isso move os metadados do cabeçalho do arquivo para o início, permitindo reprodução instantânea no Safari Mobile, Chrome e via túnel Cloudflare sem travamentos de streaming.
+
+### 10.5. Verificação de Permissão de Embed em Vídeos do YouTube
+- **Validação Previa de Iframe:** Antes de incorporar vídeos do YouTube nos artigos do blog, é obrigatório verificar se o vídeo permite incorporação em sites externos (`embeddable`), prevenindo telas pretas com erro "Vídeo indisponível" no portal.
+
+### 10.6. Links Oficiais de Download e Lojas Digitais de Games
+- **Lojas e Distribuidores Oficiais de Primeira Linha:** Sempre que um artigo do blog listar ou recomendar jogos, é mandatório fornecer links oficiais e seguros de aquisição/download (ex.: Valve/Steam, Epic Games Store, Riot Games Client, Microsoft Store/Minecraft.net).
+- **Centralização da Franquia Diablo na Battle.net:** Todos os títulos da série Diablo (Diablo IV, Diablo II: Resurrected, Diablo III, Diablo Immortal e Battle.net Desktop) devem apontar exclusivamente para o ecossistema oficial da Blizzard na Battle.net (`shop.battle.net` / `blizzard.com`).
+- **Segurança e Higiene de Links Externos:** Todo hiperlink externo inserido nos artigos deve conter obrigatoriamente os atributos `target="_blank" rel="noopener noreferrer"`, preservando o contexto de leitura e isolando as janelas de navegação contra vulnerabilidades de *tabnabbing*.
