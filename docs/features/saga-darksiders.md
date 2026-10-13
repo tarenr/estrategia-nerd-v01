@@ -234,4 +234,15 @@ Na etapa v3 foram reutilizadas/reabertas #1211 (música), #1222 (imagens e Reel)
 - **Áudios originais:** Preservados em `conteudo-planejado/saga-darksiders/cap-03-os-quatro-cavaleiros/audio/`.
 - **Página de prévia mobile:** `public/uploads/previews/darksiders-cap03/index.html` (com player HTML5 do Reel e player de áudio do blog).
 
+---
+
+## Capítulo 4: O Apocalipse Antecipado (Em produção em 13/10/2026)
+
+### Estado da entrega
+- **Artigo (blog):** Roteiro e artigo completo em HTML salvos em `conteudo-planejado/saga-darksiders/cap-04-o-apocalipse-antecipado/` (`conteudo.html` e `narracao-blog.txt`).
+- **Tema:** A conspiração dos seis selos de Abaddon, a queda da Terra moderna, o genocídio da humanidade, Guerra cavalgando solitário sem a quebra do Sétimo Selo, a derrota para Straga e o julgamento no Conselho com The Watcher.
+- **Foco de entrega:** Post do Blog ilustrado com gravuras em livro antigo e narração oficial com trilha sonora (sem post de Instagram e sem vídeo Reel nesta etapa, conforme alinhamento com o usuário).
+- **Próximos passos:** Geração do áudio no ElevenLabs (Cornelius, ~45s), geração das 4 gravuras medievais e cadastro do rascunho Post #85.
+
+
 

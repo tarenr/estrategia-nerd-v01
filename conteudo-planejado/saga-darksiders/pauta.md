@@ -7,7 +7,7 @@ Saga de 6 capítulos no mesmo formato da saga do Diablo (`docs/features/agenda-d
 | 1 | O mundo de Darksiders (Céu, Inferno, o Conselho e o Equilíbrio) | Piloto aprovado (rascunho local #82) |
 | 2 | Os Nephilim | Produzido (rascunho local #83, Reel v1) |
 | 3 | Os Quatro Cavaleiros | Produzido (rascunho local #84, Reel v1) |
-| 4 | O Apocalipse antecipado (Guerra, os Selos e Abaddon) | Pendente |
+| 4 | O Apocalipse antecipado (Guerra, os Selos e Abaddon) | Em produção (artigo pronto, aguardando áudio e imagens) |
 | 5 | A jornada de Morte (Árvore da Vida, Absalom e a Corrupção) | Pendente |
 | 6 | Fúria, Estrago e a lore completa | Pendente |
 
