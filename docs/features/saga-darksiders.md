@@ -236,13 +236,25 @@ Na etapa v3 foram reutilizadas/reabertas #1211 (música), #1222 (imagens e Reel)
 
 ---
 
-## Capítulo 4: O Apocalipse Antecipado (Em produção em 13/10/2026)
+## Capítulo 4: O Apocalipse Antecipado (Produzido em 13/10/2026)
 
 ### Estado da entrega
-- **Artigo (blog):** Roteiro e artigo completo em HTML salvos em `conteudo-planejado/saga-darksiders/cap-04-o-apocalipse-antecipado/` (`conteudo.html` e `narracao-blog.txt`).
-- **Tema:** A conspiração dos seis selos de Abaddon, a queda da Terra moderna, o genocídio da humanidade, Guerra cavalgando solitário sem a quebra do Sétimo Selo, a derrota para Straga e o julgamento no Conselho com The Watcher.
-- **Foco de entrega:** Post do Blog ilustrado com gravuras em livro antigo e narração oficial com trilha sonora (sem post de Instagram e sem vídeo Reel nesta etapa, conforme alinhamento com o usuário).
-- **Próximos passos:** Geração do áudio no ElevenLabs (Cornelius, ~45s), geração das 4 gravuras medievais e cadastro do rascunho Post #85.
+- **Artigo (blog):** Rascunho no banco local, post #85, slug `o-apocalipse-antecipado-de-darksiders`, categoria `games`. 4 imagens no corpo (`img-001.webp` a `img-004.webp`) e capa (`capa.webp`), formato WebP 1280×720 (q82).
+- **Narração do blog:** Voz Cornelius (Eleven Multilingual v2, 23,72 s), mixada com a trilha oficial *Caves of Dawn* (Pixabay 10376, ganho 0,285, ducking, limiter, duração 27,5 s) em `uploads/posts/o-apocalipse-antecipado-de-darksiders/audio/nar-001.mp3`. Áudios originais preservados em `conteudo-planejado/saga-darksiders/cap-04-o-apocalipse-antecipado/audio/`.
+- **Foco de entrega:** Artigo completo no blog com áudio narrado e gravuras medievais (sem Reel e sem post para o Instagram, conforme alinhamento com o usuário).
+- **Ilustrações:** 4 gravuras no estilo de livro antigo em nanquim/hachuras sobre pergaminho aberto com velas e penas, com fidelidade canônica rigorosa aos designs de Joe Madureira e gameplay:
+  1. **Cena 1 (A Queda da Terra):** Chuva de meteoros sobre arranha-céus modernos e colisão das tropas da Hellguard (anjos em armaduras góticas de mármore e ouro com asas mecânicas de lâminas afiadas) contra a Legião Demoníaca (demônio colossal com garras de osso acorrentadas e demônios de pedra).
+  2. **Cena 2 (O Confronto de Titãs):** O arcanjo Abaddon em investida aérea com espada flamejante contra o colossal general demônio Straga em rocha vulcânica e veios de lava em plena cidade humana.
+  3. **Cena 3 (A Solidão de Guerra):** Guerra em pose dinâmica sobre o corcel fantasma Ruin empinando em chamas vivas (reprodução fiel da arte oficial de Joe Madureira), com a Tremor Gauntlet, Chaoseater e capuz carmesim nas ruínas solitárias da metrópole.
+  4. **Cena 4 (O Julgamento e o Vigia):** As três colossais cabeças de pedra do Conselho das Cinzas (*The Charred Council*) julgando Guerra acorrentado, com The Watcher oficial de Joe Madureira (entidade esguia de sombra flamejante, couraça segmentada, cauda ectoplasmática e fitas rúnicas) atado ao seu braço.
+- **Página de prévia mobile:** `public/uploads/previews/darksiders-cap04/index.html` (com cards das 4 cenas em alta definição e links diretos).
+- **Suíte de testes:** 23 verificações aprovadas, 0 falhas (`scripts/verify-changes.php`).
+
+---
+
+## Próximo Capítulo no Radar:
+- **Capítulo 5: A Jornada de Morte (Darksiders II):** A busca solitária de Morte para ressuscitar a humanidade e limpar o nome de Guerra diante da Árvore da Vida e do Poço das Almas.
+
 
 
 
