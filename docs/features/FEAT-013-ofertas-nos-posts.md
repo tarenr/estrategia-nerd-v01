@@ -77,6 +77,16 @@ Validado stage: sim
 - Clique real de teste gravado como post-48 (apagado em seguida pelo id); 2 origens com SQL redirecionaram sem gravar.
 - Limpeza em simulacao: stage 0 linhas (nada a fazer), producao 106.
 
+Validado producao: sim (14/10/2026)
+- Backup antes: tecnico BT-PROD-20261014-010238 (676 arquivos) + banco BS-PROD-20261013-220056 + copia dos 8 arquivos em `storage/deploy-central-nerd-ofertas-20261014-production/before`.
+- Deploy dos 8 arquivos tirados da stage, conferidos por hash; paridade stage = producao (8 arquivos identicos).
+- Site no ar: home, blog e Central Nerd 200; posts com o bloco e ofertas diferentes a cada visita, origem post-{id}.
+- Filtro: 2 chamadas com SQL na origem redirecionaram e o total ficou em 361.
+- Limpeza: 106 linhas apagadas (export `storage/logs/limpeza-cliques/link_clicks-scanner-production-20261014-010856.json`); total 361 -> 255; 0 restantes do scanner.
+- verify-changes.php: 0 falhas (dashboard alvo producao com o quadro "Cliques vindos dos posts").
+
+Commit: fa363a4 (codigo e documentacao).
+
 Observacoes:
 - Para mudar quais ofertas aparecem num tipo de post: trocar a prateleira da oferta no admin de Links ou ajustar `CATEGORY_SHELVES`.
 - Um clique de teste (origem post-64) ficou no banco local.
