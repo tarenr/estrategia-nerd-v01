@@ -50,7 +50,6 @@ return [
     ['POST', '/admin/upload-post-imagem', [\App\Controllers\Admin\PostsController::class, 'uploadInlineImage'], 'auth'],
     ['POST', '/admin/copiar-post-imagem-biblioteca', [\App\Controllers\Admin\PostsController::class, 'copyInlineImageFromLibrary'], 'auth'],
     ['POST', '/admin/copiar-post-midia-biblioteca', [\App\Controllers\Admin\PostsController::class, 'copyLibraryMediaToPost'], 'auth'],
-    ['POST', '/admin/limpar-post-imagens-orfas', [\App\Controllers\Admin\PostsController::class, 'cleanupOrphanImages'], 'auth'],
     ['POST', '/admin/limpar-post-arquivos-orfos', [\App\Controllers\Admin\PostsController::class, 'cleanupOrphanFiles'], 'auth'],
     ['GET',  '/admin/excluir-post',  [\App\Controllers\Admin\PostsController::class, 'deleteConfirm'], 'auth'],
     ['POST', '/admin/excluir-post',  [\App\Controllers\Admin\PostsController::class, 'destroy'], 'auth'],
