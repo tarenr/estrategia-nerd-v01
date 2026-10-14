@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Site;
 
 use App\Services\Site\BackupService;
-use App\Services\Site\DropboxBackupService;
+use App\Services\Site\GoogleDriveBackupService;
 use App\Support\Csrf;
 use App\Support\EnvironmentGuard;
 use App\Support\Session;
@@ -94,7 +94,7 @@ final class BackupToolsController
 
         $action = strtolower(trim((string) ($_POST['action'] ?? '')));
         $service = $this->service();
-        $longCloudAction = in_array($action, ['dropbox_upload_latest', 'dropbox_upload_backup'], true);
+        $longCloudAction = in_array($action, ['google_drive_upload_latest', 'google_drive_upload_backup'], true);
         $longLocalAction = in_array($action, ['run', 'verify', 'restore'], true);
         $successMessage = null;
 
@@ -108,22 +108,11 @@ final class BackupToolsController
                     $profile = strtolower(trim((string) ($_POST['profile'] ?? 'local')));
                     $includeUploads = in_array(strtolower(trim((string) ($_POST['include_uploads'] ?? '0'))), ['1', 'true', 'on', 'yes'], true);
                     $manifest = $service->run($profile, $this->normalizeProgressId($_POST['progress_id'] ?? null), $includeUploads);
-                    $cloudNotice = '';
-
-                    if ($this->cloudService()->autoUploadEnabled()) {
-                        try {
-                            $cloudResult = $this->cloudService()->uploadBackup($this->manager(), (string) ($manifest['backup_id'] ?? ''));
-                            $cloudNotice = sprintf(' Backup enviado para o Dropbox em %s.', (string) ($cloudResult['destination'] ?? '/'));
-                        } catch (\Throwable $cloudException) {
-                            $cloudNotice = ' Backup gerado, mas o envio automatico para Dropbox falhou: ' . $cloudException->getMessage();
-                        }
-                    }
-
+                    // Envio para a nuvem fica com a rotina diaria (EstrategiaNerd-BackupDiario) ou com o botao "Enviar nuvem".
                     $successMessage = sprintf(
-                        'Backup %s %s concluido com sucesso.%s',
+                        'Backup %s %s concluido com sucesso.',
                         (string) ($manifest['backup_id'] ?? ''),
-                        $includeUploads ? 'com uploads' : 'sem uploads',
-                        $cloudNotice
+                        $includeUploads ? 'com uploads' : 'sem uploads'
                     );
                     break;
 
@@ -166,45 +155,25 @@ final class BackupToolsController
                     $successMessage = sprintf('Restore completo concluido do backup %s (%s).', (string) ($result['backup_id'] ?? ''), (string) ($result['scope'] ?? 'all'));
                     break;
 
-                case 'dropbox_connect':
-                    $oauthState = bin2hex(random_bytes(24));
-                    Session::put('backup_tools_dropbox_oauth_state', $oauthState);
-                    Session::put('backup_tools_dropbox_oauth_redirect', $redirectTarget ?? url('/local/backup?backup_secao=nuvem'));
-                    header('Location: ' . $this->cloudService()->authorizationUrl($oauthState));
-                    exit;
-
-                case 'dropbox_disconnect':
-                    $this->cloudService()->disconnect();
-                    $successMessage = 'Conexao com Dropbox removida.';
-                    break;
-
-                case 'dropbox_auto_upload':
-                    $enabled = in_array(strtolower(trim((string) ($_POST['enabled'] ?? '0'))), ['1', 'true', 'on', 'yes'], true);
-                    $this->cloudService()->setAutoUpload($enabled);
-                    $successMessage = $enabled
-                        ? 'Envio automatico para Dropbox ativado.'
-                        : 'Envio automatico para Dropbox desativado.';
-                    break;
-
-                case 'dropbox_upload_latest':
+                case 'google_drive_upload_latest':
                     $cloudUpload = $this->cloudService()->uploadLatest($this->manager(), $this->normalizeProgressId($_POST['progress_id'] ?? null));
-                    $successMessage = sprintf('Ultimo backup enviado ao Dropbox em %s.', (string) ($cloudUpload['destination'] ?? '/'));
+                    $successMessage = sprintf('Ultimo backup enviado ao Google Drive em %s.', (string) ($cloudUpload['destination'] ?? '/'));
                     break;
 
-                case 'dropbox_upload_backup':
+                case 'google_drive_upload_backup':
                     $backupId = $this->normalizeOptionalId($_POST['backup_id'] ?? '');
                     if ($backupId === null) {
-                        throw new \RuntimeException('Selecione um backup valido para enviar ao Dropbox.');
+                        throw new \RuntimeException('Selecione um backup valido para enviar ao Google Drive.');
                     }
 
                     $cloudUpload = $this->cloudService()->uploadBackup($this->manager(), $backupId, $this->normalizeProgressId($_POST['progress_id'] ?? null));
-                    $successMessage = sprintf('Backup %s enviado ao Dropbox em %s.', $backupId, (string) ($cloudUpload['destination'] ?? '/'));
+                    $successMessage = sprintf('Backup %s enviado ao Google Drive em %s.', $backupId, (string) ($cloudUpload['destination'] ?? '/'));
                     break;
 
-                case 'dropbox_delete_backup':
+                case 'google_drive_delete_backup':
                     $backupId = $this->normalizeOptionalId($_POST['backup_id'] ?? '');
                     if ($backupId === null) {
-                        throw new \RuntimeException('Selecione um backup valido para remover do Dropbox.');
+                        throw new \RuntimeException('Selecione um backup valido para remover do Google Drive.');
                     }
 
                     $cloudDelete = $this->cloudService()->deleteBackup(
@@ -212,7 +181,7 @@ final class BackupToolsController
                         $backupId,
                         (string) ($_POST['delete_confirmation'] ?? '')
                     );
-                    $successMessage = sprintf('Backup %s removido do Dropbox em %s.', $backupId, (string) ($cloudDelete['destination'] ?? '/'));
+                    $successMessage = sprintf('Backup %s removido do Google Drive em %s.', $backupId, (string) ($cloudDelete['destination'] ?? '/'));
                     break;
 
                 default:
@@ -244,43 +213,6 @@ final class BackupToolsController
                 'redirect_url' => $redirectTarget ?? url('/local/backup?backup_secao=nuvem'),
                 'message' => $successMessage ?? 'Rotina executada com sucesso.',
             ]);
-        }
-
-        $this->redirect($redirectTarget);
-    }
-
-    public function dropboxCallback(): void
-    {
-        $this->ensureLocalOnly();
-
-        $redirectTarget = (string) Session::pull('backup_tools_dropbox_oauth_redirect', url('/local/backup?backup_secao=nuvem'));
-        $expectedState = (string) Session::pull('backup_tools_dropbox_oauth_state', '');
-        $incomingState = trim((string) ($_GET['state'] ?? ''));
-        $error = trim((string) ($_GET['error'] ?? ''));
-        $description = trim((string) ($_GET['error_description'] ?? ''));
-
-        if ($error !== '') {
-            $this->flash('error', 'Dropbox recusou a autorizacao: ' . ($description !== '' ? $description : $error));
-            $this->redirect($redirectTarget);
-        }
-
-        if ($expectedState === '' || $incomingState === '' || !hash_equals($expectedState, $incomingState)) {
-            $this->flash('error', 'Falha ao validar o retorno OAuth do Dropbox.');
-            $this->redirect($redirectTarget);
-        }
-
-        $code = trim((string) ($_GET['code'] ?? ''));
-        if ($code === '') {
-            $this->flash('error', 'Dropbox nao retornou um codigo de autorizacao.');
-            $this->redirect($redirectTarget);
-        }
-
-        try {
-            $account = $this->cloudService()->completeAuthorization($code);
-            $accountName = (string) ($account['account_name'] ?? 'Conta Dropbox');
-            $this->flash('success', sprintf('Dropbox conectado com sucesso: %s.', $accountName));
-        } catch (\Throwable $exception) {
-            $this->flash('error', $exception->getMessage());
         }
 
         $this->redirect($redirectTarget);
@@ -332,7 +264,7 @@ final class BackupToolsController
             ],
             'nuvem' => [
                 'label' => 'Nuvem',
-                'description' => 'Dropbox e automacao.',
+                'description' => 'Google Drive: envios e historico.',
             ],
         ];
     }
@@ -424,11 +356,11 @@ final class BackupToolsController
         return $config;
     }
 
-    private function cloudService(): DropboxBackupService
+    private function cloudService(): GoogleDriveBackupService
     {
         /** @var array<string, mixed> $config */
         $config = require base_path('config/backup-cloud.php');
-        return new DropboxBackupService($config);
+        return new GoogleDriveBackupService($config);
     }
 
     private function redirect(?string $target = null): void

@@ -28,7 +28,7 @@ $gdriveConnected = (bool) ($gdriveCloud['connected'] ?? false);
 $gdriveAutoEnabled = (bool) ($gdriveCloud['auto_upload_enabled'] ?? false);
 $gdrivePending = is_array($gdriveCloud['pending'] ?? null) ? $gdriveCloud['pending'] : [];
 // "Editorial" na pagina inteira (cards, tabela, historico) agora reflete o Google
-// Drive - o Dropbox nao cobre mais conteudo editorial, so backup sistemico.
+// Drive (unico provedor de nuvem; o Dropbox foi removido no IMP-033).
 $editorialCloud = $gdriveCloud;
 $editorialItems = $gdriveItems;
 $cloudFlash = is_array($cloud_flash ?? null) ? $cloud_flash : null;
@@ -641,19 +641,19 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
                           <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-xs font-black text-emerald-100 transition hover:border-emerald-300 hover:bg-emerald-500/20">Verificar</button>
                         </form>
                         <?php if (($row['status'] ?? '') === 'Enviado'): ?>
-                          <form method="POST" action="<?= url('/local/backup') ?>" class="cloud-action-form rounded-xl border border-rose-400/25 bg-rose-500/5 p-2" data-progress-title="Excluindo backup da nuvem" data-progress-message="Solicitando remocao segura do backup selecionado no Dropbox." data-progress-stage="Exclusao Dropbox">
+                          <form method="POST" action="<?= url('/local/backup') ?>" class="cloud-action-form rounded-xl border border-rose-400/25 bg-rose-500/5 p-2" data-progress-title="Excluindo backup da nuvem" data-progress-message="Solicitando remocao segura do backup selecionado no Google Drive." data-progress-stage="Exclusao Google Drive">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudHistoryReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                            <input type="hidden" name="action" value="dropbox_delete_backup">
+                            <input type="hidden" name="action" value="google_drive_delete_backup">
                             <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($row['id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                             <input type="text" name="delete_confirmation" placeholder="Confirmar ID para excluir" class="w-full rounded-lg border border-slate-700 bg-slate-950/80 px-2 py-2 text-xs text-white outline-none focus:border-rose-400">
                             <button type="submit" class="mt-2 inline-flex w-full items-center justify-center rounded-lg border border-rose-400/30 bg-transparent px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/10">Excluir da nuvem</button>
                           </form>
                         <?php else: ?>
-                          <form method="POST" action="<?= url('/local/backup') ?>" class="cloud-action-form inline-flex" data-progress-title="Enviando backup para nuvem" data-progress-message="Validando conexao Dropbox e preparando o backup selecionado para envio." data-progress-stage="Envio para nuvem">
+                          <form method="POST" action="<?= url('/local/backup') ?>" class="cloud-action-form inline-flex" data-progress-title="Enviando backup para nuvem" data-progress-message="Validando conexao com o Google Drive e preparando o backup selecionado para envio." data-progress-stage="Envio para nuvem">
                             <?= Csrf::field() ?>
                             <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudHistoryReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                            <input type="hidden" name="action" value="dropbox_upload_backup">
+                            <input type="hidden" name="action" value="google_drive_upload_backup">
                             <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($row['id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                             <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-sky-400/35 bg-sky-500/10 px-3 py-2 text-xs font-black text-sky-100 transition hover:border-sky-300 hover:bg-sky-500/20">Enviar nuvem</button>
                           </form>
@@ -908,7 +908,7 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
       }
 
       var actionName = String((form.querySelector('input[name="action"]') || {}).value || '');
-      if (actionName === 'dropbox_connect' || actionName === 'google_drive_connect') {
+      if (actionName === 'google_drive_connect') {
         showModal(form);
         return;
       }
@@ -1047,14 +1047,14 @@ $initialCloudTab = (string) ($_GET['cloud_tab'] ?? '') === 'history' || isset($_
           stage: 'Verificacao'
         });
         html += sent
-          ? deleteForm(systemActionUrl, { action: 'dropbox_delete_backup', backup_id: id }, 'Excluir da nuvem', {
+          ? deleteForm(systemActionUrl, { action: 'google_drive_delete_backup', backup_id: id }, 'Excluir da nuvem', {
             title: 'Excluindo backup da nuvem',
-            message: 'Solicitando remocao segura do backup selecionado no Dropbox.',
-            stage: 'Exclusao Dropbox'
+            message: 'Solicitando remocao segura do backup selecionado no Google Drive.',
+            stage: 'Exclusao Google Drive'
           })
-          : postForm(systemActionUrl, { action: 'dropbox_upload_backup', backup_id: id }, actionButton('Enviar nuvem', 'upload'), null, {
+          : postForm(systemActionUrl, { action: 'google_drive_upload_backup', backup_id: id }, actionButton('Enviar nuvem', 'upload'), null, {
             title: 'Enviando backup para nuvem',
-            message: 'Validando conexao Dropbox e preparando o backup selecionado para envio.',
+            message: 'Validando conexao com o Google Drive e preparando o backup selecionado para envio.',
             stage: 'Envio para nuvem'
           });
       } else {

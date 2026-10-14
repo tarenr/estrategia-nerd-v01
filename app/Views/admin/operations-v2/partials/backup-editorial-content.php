@@ -139,7 +139,7 @@ foreach ($items as $item) {
 }
 
 $validCount = count(array_filter($items, static fn(array $item): bool => (bool) ($item['is_valid'] ?? false)));
-$cloudCount = count(array_filter($items, static fn(array $item): bool => (bool) ($item['cloud_uploaded'] ?? false)));
+$cloudCount = count(array_filter($items, static fn(array $item): bool => (bool) ($item['cloud_uploaded_gdrive'] ?? false)));
 $productionCount = count(array_filter($items, static fn(array $item): bool => strtolower((string) ($item['source_profile'] ?? '')) === 'production'));
 
 $alerts = [];
@@ -173,7 +173,7 @@ $badgeClass = static function (string $tone): string {
 };
 
 $rowStatus = static function (array $item): array {
-    if ((bool) ($item['cloud_uploaded'] ?? false)) {
+    if ((bool) ($item['cloud_uploaded_gdrive'] ?? false)) {
         return ['label' => 'Nuvem', 'tone' => 'cloud'];
     }
     if ((bool) ($item['is_valid'] ?? false)) {
@@ -566,10 +566,10 @@ $buildActionForm = static function (string $action, array $hidden, string $butto
                         'Conferindo manifesto, JSONs e uploads do pacote selecionado.',
                         'Verificacao editorial'
                     ) ?>
-                    <?php if (!(bool) ($item['cloud_uploaded'] ?? false)): ?>
-                      <form method="POST" action="<?= url('/admin/central-operacional-v2/backup-em-nuvem') ?>" class="editorial-action-form" data-progress-title="Enviando pacote editorial" data-progress-message="Validando conexao Dropbox e preparando o pacote selecionado para envio." data-progress-stage="Envio para nuvem">
+                    <?php if (!(bool) ($item['cloud_uploaded_gdrive'] ?? false)): ?>
+                      <form method="POST" action="<?= url('/admin/central-operacional-v2/backup-em-nuvem') ?>" class="editorial-action-form" data-progress-title="Enviando pacote editorial" data-progress-message="Validando conexao com o Google Drive e preparando o pacote selecionado para envio." data-progress-stage="Envio para nuvem">
                         <?= Csrf::field() ?>
-                        <input type="hidden" name="action" value="dropbox_upload_editorial_package">
+                        <input type="hidden" name="action" value="google_drive_upload_editorial_package">
                         <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($redirectTo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                         <input type="hidden" name="package_id" value="<?= htmlspecialchars((string) ($item['package_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                         <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-sky-400/35 bg-sky-500/10 px-3 py-2 text-xs font-black text-sky-100 transition hover:border-sky-300 hover:bg-sky-500/20">Enviar nuvem</button>

@@ -45,7 +45,7 @@ Dentro dela:
 - `system-files.zip`
 - `manifest.json`
 
-Quando enviado para o Dropbox, a pasta remota recebe os mesmos quatro arquivos.
+Quando enviado para o Google Drive (`Estrategia Nerd - Backups de Conteudo/Sistema/<Local|Stage|Producao>/<BACKUP_ID>`), a pasta remota recebe os mesmos arquivos.
 
 ## Arquivos do sistema
 
@@ -62,8 +62,8 @@ Uploads continuam separados em `uploads.zip`.
 - `verify` revalida o ultimo backup (ou um ID especifico)
 - `mark-uploaded` atualiza o `manifest.json` do backup depois que voce enviar manualmente para a nuvem
 - `delete-local` remove um backup da pasta local somente quando o ID e repetido como confirmacao
-- Envios para Dropbox registram destino, quantidade de arquivos e tamanho total enviado
-- Backups ja enviados para Dropbox nao devem ser reenviados
+- Envios para o Google Drive (`upload-cloud` ou botoes do painel local) registram destino, quantidade de arquivos e tamanho total enviado
+- Backups ja enviados para a nuvem nao sao reenviados (o envio recusa backup ja marcado como enviado)
 
 ## Restore
 

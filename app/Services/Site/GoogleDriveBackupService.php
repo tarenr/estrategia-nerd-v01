@@ -258,6 +258,68 @@ final class GoogleDriveBackupService
     }
 
     /**
+     * Dados da secao "Nuvem" do backup sistemico (conexao, espaco e backups ja enviados).
+     *
+     * @return array<string, mixed>
+     */
+    public function getPanelData(BackupManager $manager, int $page = 1, int $perPage = 5): array
+    {
+        $state = $this->readState();
+        $connected = $this->isConnectedState($state);
+        $spaceUsage = $connected ? $this->spaceUsage($state) : [
+            'available' => false,
+            'message' => 'Conecte a conta do Google Drive para consultar o espaco disponivel.',
+        ];
+        $page = max(1, $page);
+        $perPage = max(5, min(50, $perPage));
+        $allUploads = [];
+
+        foreach ((array) ($manager->status(false, null, 0)['items'] ?? []) as $item) {
+            if (!is_array($item) || ($item['cloud_uploaded'] ?? false) !== true) {
+                continue;
+            }
+
+            $uploadedBytes = $this->uploadedBackupBytes($item);
+            $allUploads[] = [
+                'backup_id' => (string) ($item['backup_id'] ?? ''),
+                'profile_label' => $this->profileLabel((string) ($item['profile'] ?? '')),
+                'profile' => (string) ($item['profile'] ?? ''),
+                'cloud_uploaded_at' => (string) ($item['cloud_uploaded_at'] ?? ''),
+                'cloud_destination' => (string) ($item['cloud_destination'] ?? ''),
+                'cloud_provider' => (string) ($item['cloud_provider'] ?? ''),
+                'cloud_uploaded_size_bytes' => $uploadedBytes,
+                'cloud_uploaded_size' => $uploadedBytes > 0 ? $this->formatBytes($uploadedBytes) : '-',
+                'cloud_uploaded_files_count' => (int) ($item['cloud_uploaded_files_count'] ?? 0),
+            ];
+        }
+
+        $totalUploads = count($allUploads);
+        $pages = max(1, (int) ceil($totalUploads / $perPage));
+        $page = min($page, $pages);
+
+        return [
+            'backup_cloud' => [
+                'provider' => 'Google Drive',
+                'configured' => $this->isConfigured(),
+                'connected' => $connected,
+                'account_email' => (string) ($state['account_email'] ?? ''),
+                'account_name' => (string) ($state['account_name'] ?? ''),
+                'connected_at' => (string) ($state['connected_at'] ?? ''),
+                'root_folder_name' => $this->rootFolderName(),
+                'last_upload' => is_array($state['last_upload'] ?? null) ? $state['last_upload'] : null,
+                'space_usage' => $spaceUsage,
+            ],
+            'backup_cloud_recent_uploads' => array_slice($allUploads, ($page - 1) * $perPage, $perPage),
+            'backup_cloud_pagination' => [
+                'total' => $totalUploads,
+                'page' => $page,
+                'per_page' => $perPage,
+                'pages' => $pages,
+            ],
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function uploadLatest(BackupManager $manager, ?string $progressId = null): array
@@ -1168,6 +1230,21 @@ final class GoogleDriveBackupService
         }
 
         return $decoded;
+    }
+
+    /**
+     * @param array<string, mixed> $backup
+     */
+    private function uploadedBackupBytes(array $backup): int
+    {
+        $cloudBytes = (int) ($backup['cloud_uploaded_size_bytes'] ?? 0);
+        if ($cloudBytes > 0) {
+            return $cloudBytes;
+        }
+
+        return max(0, (int) ($backup['database']['size_bytes'] ?? 0)
+            + (int) ($backup['uploads']['size_bytes'] ?? 0)
+            + (int) ($backup['system_files']['size_bytes'] ?? 0));
     }
 
     private function formatBytes(int $bytes): string

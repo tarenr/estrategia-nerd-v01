@@ -8,7 +8,6 @@ use App\Controllers\Site\BackupToolsController;
 use App\Controllers\Site\ContentSyncToolsController;
 use App\Controllers\Site\SearchConsoleMonitorController;
 use App\Services\Admin\Presenters\OperationsV2Presenter;
-use App\Services\Site\DropboxBackupService;
 use App\Services\Site\GoogleDriveBackupService;
 use App\Support\Csrf;
 use App\Support\Session;
@@ -239,7 +238,7 @@ final class OperationsV2Controller
             ],
             'backup-nuvem' => [
                 'label' => 'Backup em Nuvem',
-                'description' => 'Dropbox para backups sistêmicos e editoriais.',
+                'description' => 'Google Drive para backups sistêmicos e editoriais.',
                 'status' => 'em-leitura',
                 'href' => url('/admin/central-operacional-v2/backup-em-nuvem'),
             ],
@@ -372,65 +371,7 @@ final class OperationsV2Controller
                 return;
             }
 
-            if ($action === 'dropbox_editorial_auto_upload') {
-                $enabled = in_array(strtolower(trim((string) ($_POST['enabled'] ?? '0'))), ['1', 'true', 'on', 'yes'], true);
-                $this->cloudService()->setEditorialAutoUpload($enabled);
-                $this->cloudFlash('success', $enabled
-                    ? 'Envio automatico editorial ativado.'
-                    : 'Envio automatico editorial desativado.'
-                );
-                if ($respondJson) {
-                    $this->json([
-                        'ok' => true,
-                        'redirect_url' => $redirect,
-                        'message' => $enabled
-                            ? 'Envio automatico editorial ativado.'
-                            : 'Envio automatico editorial desativado.',
-                    ]);
-                    return;
-                }
-
-                $this->redirect($redirect);
-                return;
-            }
-
-            if ($action === 'dropbox_upload_editorial_latest') {
-                $result = $this->cloudService()->uploadLatestEditorial($this->contentManager(), $this->normalizeProgressId($_POST['progress_id'] ?? null));
-            } elseif ($action === 'dropbox_upload_editorial_package') {
-                $packageId = trim((string) ($_POST['package_id'] ?? ''));
-                if ($packageId === '') {
-                    throw new \RuntimeException('Selecione um pacote editorial para enviar.');
-                }
-
-                $result = $this->cloudService()->uploadEditorialPackage($this->contentManager(), $packageId, $this->normalizeProgressId($_POST['progress_id'] ?? null));
-            } elseif ($action === 'dropbox_delete_editorial_package') {
-                $packageId = trim((string) ($_POST['package_id'] ?? ''));
-                if ($packageId === '') {
-                    throw new \RuntimeException('Selecione um pacote editorial para remover do Dropbox.');
-                }
-
-                $result = $this->cloudService()->deleteEditorialPackage(
-                    $this->contentManager(),
-                    $packageId,
-                    (string) ($_POST['delete_confirmation'] ?? '')
-                );
-            } else {
-                throw new \RuntimeException('Ação inválida para Backup em Nuvem.');
-            }
-
-            if ($action === 'dropbox_delete_editorial_package') {
-                $this->cloudFlash('success', sprintf(
-                    'Pacote editorial %s removido do Dropbox em %s.',
-                    (string) ($result['package_id'] ?? ''),
-                    (string) ($result['destination'] ?? '/')
-                ));
-            } else {
-                $this->cloudFlash('success', sprintf(
-                    'Pacote editorial %s enviado ao Dropbox em %s.',
-                    (string) ($result['package_id'] ?? ''),
-                    (string) ($result['destination'] ?? '/')
-                ));
-            }
+            throw new \RuntimeException('Ação inválida para Backup em Nuvem.');
         } catch (\Throwable $exception) {
             $this->cloudFlash('error', $exception->getMessage());
             if ($respondJson) {
@@ -443,15 +384,6 @@ final class OperationsV2Controller
             }
         }
 
-        if ($respondJson) {
-            $this->json([
-                'ok' => true,
-                'redirect_url' => $redirect,
-                'message' => 'Rotina de nuvem concluida.',
-            ]);
-            return;
-        }
-
         $this->redirect($redirect);
     }
 
@@ -461,11 +393,6 @@ final class OperationsV2Controller
             'type' => $type,
             'message' => $message,
         ]);
-    }
-
-    private function cloudService(): DropboxBackupService
-    {
-        return new DropboxBackupService(require base_path('config/backup-cloud.php'));
     }
 
     private function googleDriveCloudService(): GoogleDriveBackupService

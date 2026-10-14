@@ -320,7 +320,7 @@ $sectionUrl = static function (string $section) use ($backupBaseUrl, $usesPretty
 
             const payload = await response.json();
             setModalState({
-              title: payload.title || 'Enviando backup para Dropbox',
+              title: payload.title || 'Enviando backup para o Google Drive',
               message: payload.message || 'Processando rotina na nuvem.',
               stage: payload.stage || payload.status || 'Processando',
               percent: payload.percent || 18,
@@ -434,7 +434,7 @@ $sectionUrl = static function (string $section) use ($backupBaseUrl, $usesPretty
               signal: currentCloudController.signal,
             });
 
-            const payload = await readActionResponse(response, 'Nao foi possivel concluir o envio para Dropbox.');
+            const payload = await readActionResponse(response, 'Nao foi possivel concluir o envio para o Google Drive.');
             stopProgressPolling();
 
             setModalState({
@@ -449,7 +449,7 @@ $sectionUrl = static function (string $section) use ($backupBaseUrl, $usesPretty
             stopProgressPolling();
             setModalState({
               title: 'Falha no envio',
-              message: error?.message || 'Nao foi possivel concluir o envio para Dropbox.',
+              message: error?.message || 'Nao foi possivel concluir o envio para o Google Drive.',
               stage: 'Erro',
               percent: 100,
             });

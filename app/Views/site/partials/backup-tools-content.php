@@ -504,10 +504,10 @@ $historySummary = [
                       </form>
 
                       <?php if (!$isCloudBackup): ?>
-                        <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form" data-backup-cloud-async="true" data-progress-title="Enviando backup para nuvem" data-progress-message="Validando conexao Dropbox e preparando o backup escolhido para envio." data-progress-stage="Preparando envio">
+                        <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form" data-backup-cloud-async="true" data-progress-title="Enviando backup para nuvem" data-progress-message="Validando conexao com o Google Drive e preparando o backup escolhido para envio." data-progress-stage="Preparando envio">
                           <?= Csrf::field() ?>
                           <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($currentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                          <input type="hidden" name="action" value="dropbox_upload_backup">
+                          <input type="hidden" name="action" value="google_drive_upload_backup">
                           <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                           <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-200 transition hover:bg-sky-500/20">Enviar nuvem</button>
                         </form>
@@ -579,7 +579,7 @@ $historySummary = [
             aria-pressed="true"
           >
             <div class="font-orbitron text-sm font-bold tracking-wide">Conexao e envio</div>
-            <div class="mt-1 text-xs text-slate-300">Conta conectada, automacao e disparo manual.</div>
+            <div class="mt-1 text-xs text-slate-300">Conta conectada, rotina diaria e envio manual.</div>
           </button>
           <button
             type="button"
@@ -588,7 +588,7 @@ $historySummary = [
             aria-pressed="false"
           >
             <div class="font-orbitron text-sm font-bold tracking-wide">Historico de envios</div>
-            <div class="mt-1 text-xs text-slate-400">Backups ja enviados e destino no Dropbox.</div>
+            <div class="mt-1 text-xs text-slate-400">Backups ja enviados e destino no Google Drive.</div>
           </button>
         </div>
       </div>
@@ -597,8 +597,8 @@ $historySummary = [
         <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
           <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h2 class="font-orbitron text-lg font-bold text-white">Dropbox para backup de ambiente</h2>
-            <p class="mt-2 text-sm leading-7 text-slate-400">Conecte uma conta do Dropbox para enviar automaticamente os backups de ambiente dos perfis local, stage e producao. O envio continua guardando a copia local do backup.</p>
+              <h2 class="font-orbitron text-lg font-bold text-white">Google Drive para backup de ambiente</h2>
+            <p class="mt-2 text-sm leading-7 text-slate-400">Os backups de ambiente (local, stage e producao) vao para o Google Drive. A rotina diaria <code class="font-mono text-slate-300">EstrategiaNerd-BackupDiario</code> (21:30) envia automaticamente; aqui da para enviar ou excluir manualmente. A copia local continua guardada.</p>
           </div>
           <span class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold <?= ($backupCloud['connected'] ?? false) ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200' : 'border-amber-400/40 bg-amber-500/10 text-amber-200' ?>"><?= ($backupCloud['connected'] ?? false) ? 'Conectado' : 'Desconectado' ?></span>
         </div>
@@ -606,31 +606,29 @@ $historySummary = [
         <?php if (!($backupCloud['configured'] ?? false)): ?>
           <div class="mt-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
             <div class="font-semibold">Configuracao pendente</div>
-            <p class="mt-2 leading-7">Preencha <code class="font-mono text-amber-50">BACKUP_DROPBOX_APP_KEY</code> e <code class="font-mono text-amber-50">BACKUP_DROPBOX_APP_SECRET</code> no <code class="font-mono text-amber-50">.env</code>. O callback sugerido para cadastrar no Dropbox e:</p>
-            <div class="mt-3 rounded-xl border border-amber-400/20 bg-slate-950/70 px-3 py-2 font-mono text-xs text-amber-50"><?= htmlspecialchars((string) ($backupCloud['redirect_uri'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-            <p class="mt-3 text-xs text-amber-100/80">Scopes recomendados: <?= htmlspecialchars((string) ($backupCloud['recommended_scopes'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+            <p class="mt-2 leading-7">Preencha <code class="font-mono text-amber-50">BACKUP_GOOGLE_DRIVE_CLIENT_ID</code> e <code class="font-mono text-amber-50">BACKUP_GOOGLE_DRIVE_CLIENT_SECRET</code> no <code class="font-mono text-amber-50">.env</code> e conecte a conta na tela Backup em Nuvem.</p>
           </div>
         <?php else: ?>
           <div class="mt-5 grid gap-4 md:grid-cols-2">
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Conta</div>
               <?php if ($backupCloud['connected'] ?? false): ?>
-                <div class="mt-3 font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($backupCloud['account_name'] ?? 'Conta Dropbox'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
+                <div class="mt-3 font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) (($backupCloud['account_name'] ?? '') !== '' ? $backupCloud['account_name'] : 'Conta Google'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 <div class="mt-1 text-sm text-slate-400"><?= htmlspecialchars((string) ($backupCloud['account_email'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                 <div class="mt-4 grid gap-2 text-sm">
                   <div class="flex items-center justify-between"><span class="text-slate-500">Conectado em</span><span><?= htmlspecialchars((string) ($backupCloud['connected_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
-                  <div class="flex items-center justify-between"><span class="text-slate-500">Destino raiz</span><span class="max-w-[12rem] truncate" title="<?= htmlspecialchars((string) ($backupCloud['remote_root'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars((string) ($backupCloud['remote_root'] ?? '/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+                  <div class="flex items-center justify-between gap-3"><span class="text-slate-500">Pasta raiz</span><span class="max-w-[14rem] truncate" title="<?= htmlspecialchars((string) ($backupCloud['root_folder_name'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars((string) ($backupCloud['root_folder_name'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
                 </div>
               <?php else: ?>
-                <div class="mt-3 font-rajdhani text-2xl font-bold text-white">Dropbox pronto para conectar</div>
-                <div class="mt-1 text-sm text-slate-400">Depois de autorizar, os backups completos poderao ser enviados manualmente ou automaticamente.</div>
+                <div class="mt-3 font-rajdhani text-2xl font-bold text-white">Google Drive desconectado</div>
+                <div class="mt-1 text-sm text-slate-400">Conecte a conta na tela Backup em Nuvem para voltar a enviar.</div>
               <?php endif; ?>
             </div>
 
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Automacao</div>
-              <div class="mt-3 font-rajdhani text-2xl font-bold text-white"><?= ($backupCloud['auto_upload_enabled'] ?? false) ? 'Ativa' : 'Manual' ?></div>
-              <div class="mt-1 text-sm text-slate-400">Quando ativa, todo novo backup completo tenta subir automaticamente para o Dropbox logo apos ser gerado.</div>
+              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Envio automatico</div>
+              <div class="mt-3 font-rajdhani text-2xl font-bold text-white">Rotina diaria</div>
+              <div class="mt-1 text-sm text-slate-400">A tarefa do Windows EstrategiaNerd-BackupDiario gera e envia os backups de stage e producao todo dia as 21:30.</div>
               <?php if (is_array($backupCloud['last_upload'] ?? null)): ?>
                 <div class="mt-4 rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-3 text-xs text-slate-300">Ultimo envio: <span class="font-semibold text-white"><?= htmlspecialchars((string) (($backupCloud['last_upload']['backup_id'] ?? '-') . ' em ' . ($backupCloud['last_upload']['uploaded_at'] ?? '-')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
               <?php endif; ?>
@@ -639,7 +637,7 @@ $historySummary = [
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 md:col-span-2">
               <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Espaco Dropbox</div>
+                  <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Espaco Google Drive</div>
                   <div class="mt-3 font-rajdhani text-2xl font-bold text-white">
                     <?php if (($cloudSpaceUsage['available'] ?? false) === true): ?>
                       <?= htmlspecialchars((string) ($cloudSpaceUsage['free'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> livres
@@ -648,9 +646,9 @@ $historySummary = [
                     <?php endif; ?>
                   </div>
                 </div>
-                <?php if (($cloudSpaceUsage['available'] ?? false) === true): ?>
+                <?php if (($cloudSpaceUsage['available'] ?? false) === true && ($cloudSpaceUsage['percent_used'] ?? null) !== null): ?>
                   <span class="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-100">
-                    <?= htmlspecialchars((string) ($cloudSpaceUsage['percent_used'] ?? '0'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>% usado
+                    <?= htmlspecialchars((string) $cloudSpaceUsage['percent_used'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>% usado
                   </span>
                 <?php endif; ?>
               </div>
@@ -662,7 +660,7 @@ $historySummary = [
                 </div>
                 <div class="mt-4 grid gap-2 text-sm md:grid-cols-3">
                   <div class="flex items-center justify-between gap-3 md:block"><span class="text-slate-500">Usado</span><span class="font-semibold text-white md:mt-1 md:block"><?= htmlspecialchars((string) ($cloudSpaceUsage['used'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
-                  <div class="flex items-center justify-between gap-3 md:block"><span class="text-slate-500">Total</span><span class="font-semibold text-white md:mt-1 md:block"><?= htmlspecialchars((string) ($cloudSpaceUsage['allocated'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
+                  <div class="flex items-center justify-between gap-3 md:block"><span class="text-slate-500">Total</span><span class="font-semibold text-white md:mt-1 md:block"><?= htmlspecialchars((string) ($cloudSpaceUsage['limit'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
                   <div class="flex items-center justify-between gap-3 md:block"><span class="text-slate-500">Livre</span><span class="font-semibold text-white md:mt-1 md:block"><?= htmlspecialchars((string) ($cloudSpaceUsage['free'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
                 </div>
               <?php else: ?>
@@ -671,61 +669,37 @@ $historySummary = [
             </div>
           </div>
 
-          <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <?php if (!($backupCloud['connected'] ?? false)): ?>
-              <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Conectando Dropbox" data-progress-message="Estamos abrindo a autorizacao segura do Dropbox para vincular a conta." data-progress-stage="Dropbox OAuth" data-progress-steps="Validando configuracao local|Preparando autorizacao OAuth|Abrindo permissao no Dropbox">
+          <div class="mt-5 grid gap-4 md:grid-cols-2">
+            <?php if ($backupCloud['connected'] ?? false): ?>
+              <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-backup-cloud-async="true" data-progress-title="Enviando ultimo backup" data-progress-message="Validando conexao com o Google Drive e preparando o envio do backup mais recente." data-progress-stage="Preparando envio">
                 <?= Csrf::field() ?>
                 <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                <input type="hidden" name="action" value="dropbox_connect">
-                <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Conectar conta</p>
-                <p class="mt-2 text-sm text-slate-400">Inicia o OAuth com refresh token para permitir envio automatico em background.</p>
-                <button type="submit" class="mt-4 inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Conectar Dropbox</button>
-              </form>
-            <?php else: ?>
-              <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-backup-cloud-async="true" data-progress-title="Enviando ultimo backup" data-progress-message="Validando conexao Dropbox e preparando o envio do backup mais recente." data-progress-stage="Preparando envio">
-                <?= Csrf::field() ?>
-                <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                <input type="hidden" name="action" value="dropbox_upload_latest">
+                <input type="hidden" name="action" value="google_drive_upload_latest">
                 <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Enviar ultimo backup</p>
                 <p class="mt-2 text-sm text-slate-400">Usa o backup mais recente disponivel e envia manifesto, banco, sistema e uploads quando existirem.</p>
                 <div class="mt-auto pt-4">
                   <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:border-sky-300 hover:bg-sky-500/20">Enviar agora</button>
                 </div>
               </form>
-
-              <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Atualizando automacao" data-progress-message="Estamos salvando a politica de envio automatico dos backups." data-progress-stage="Automacao Dropbox" data-progress-steps="Lendo conexao atual|Atualizando preferencia de automacao|Salvando estado local">
-                <?= Csrf::field() ?>
-                <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                <input type="hidden" name="action" value="dropbox_auto_upload">
-                <input type="hidden" name="enabled" value="<?= ($backupCloud['auto_upload_enabled'] ?? false) ? '0' : '1' ?>">
-                <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Envio automatico</p>
-                <p class="mt-2 text-sm text-slate-400"><?= ($backupCloud['auto_upload_enabled'] ?? false) ? 'Desative se quiser controlar manualmente cada envio.' : 'Ative para enviar cada novo backup automaticamente apos a geracao.' ?></p>
-                <div class="mt-auto pt-4">
-                  <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300 hover:bg-emerald-500/20"><?= ($backupCloud['auto_upload_enabled'] ?? false) ? 'Desativar automacao' : 'Ativar automacao' ?></button>
-                </div>
-              </form>
-
-              <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4" data-progress-title="Desconectando Dropbox" data-progress-message="Estamos removendo a vinculacao local com a conta do Dropbox." data-progress-stage="Dropbox" data-progress-steps="Lendo conexao atual|Removendo tokens locais|Finalizando desconexao">
-                <?= Csrf::field() ?>
-                <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                <input type="hidden" name="action" value="dropbox_disconnect">
-                <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Desconectar</p>
-                <p class="mt-2 text-sm text-slate-400">Remove os tokens locais e desliga a automacao sem apagar os backups ja enviados.</p>
-                <div class="mt-auto pt-4">
-                  <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-200 transition hover:border-rose-300 hover:bg-rose-500/20">Desconectar</button>
-                </div>
-              </form>
             <?php endif; ?>
+
+            <div class="flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <p class="font-orbitron text-xs uppercase tracking-[0.2em] text-cyan-300/80">Gerenciar conexao</p>
+              <p class="mt-2 text-sm text-slate-400">Conectar ou desconectar a conta do Google Drive fica na tela Backup em Nuvem da Central Operacional.</p>
+              <div class="mt-auto pt-4">
+                <a href="<?= htmlspecialchars(url('/admin/central-operacional-v2/backup-em-nuvem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">Abrir Backup em Nuvem</a>
+              </div>
+            </div>
           </div>
 
           <?php if ($backupCloud['connected'] ?? false): ?>
             <div class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <h3 class="font-orbitron text-sm font-bold text-white">Enviar backup especifico</h3>
               <?php if ($pendingCloudItems !== []): ?>
-                <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form mt-4 grid gap-4 md:grid-cols-[1fr_auto]" data-backup-cloud-async="true" data-progress-title="Enviando backup selecionado" data-progress-message="Validando conexao Dropbox e preparando o backup escolhido para envio." data-progress-stage="Preparando envio">
+                <form method="POST" action="<?= url('/local/backup') ?>" class="backup-action-form mt-4 grid gap-4 md:grid-cols-[1fr_auto]" data-backup-cloud-async="true" data-progress-title="Enviando backup selecionado" data-progress-message="Validando conexao com o Google Drive e preparando o backup escolhido para envio." data-progress-stage="Preparando envio">
                   <?= Csrf::field() ?>
                   <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                  <input type="hidden" name="action" value="dropbox_upload_backup">
+                  <input type="hidden" name="action" value="google_drive_upload_backup">
                   <select name="backup_id" class="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400">
                     <?php foreach ($pendingCloudItems as $item): ?>
                       <option value="<?= htmlspecialchars((string) ($item['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"><?= htmlspecialchars((string) (($item['backup_id'] ?? '') . ' - ' . ($item['profile_label'] ?? 'Backup')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
@@ -745,26 +719,26 @@ $historySummary = [
 
         <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
           <h2 class="font-orbitron text-lg font-bold text-white">Resumo rapido</h2>
-          <p class="mt-2 text-sm leading-7 text-slate-400">Este bloco resume o estado da conexao, da automacao e o ultimo envio conhecido da conta Dropbox vinculada.</p>
+          <p class="mt-2 text-sm leading-7 text-slate-400">Este bloco resume o estado da conexao com o Google Drive, a rotina diaria e o ultimo envio conhecido.</p>
 
           <div class="mt-5 grid gap-4">
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Conexao</div>
               <div class="mt-2 font-rajdhani text-2xl font-bold text-white"><?= ($backupCloud['connected'] ?? false) ? 'Conta conectada' : 'Aguardando conexao' ?></div>
-              <div class="mt-1 text-sm text-slate-400"><?= ($backupCloud['connected'] ?? false) ? 'A conta do Dropbox ja esta pronta para envio manual ou automatico.' : 'Conecte a conta para habilitar envio de backups para a nuvem.' ?></div>
+              <div class="mt-1 text-sm text-slate-400"><?= ($backupCloud['connected'] ?? false) ? 'A conta do Google Drive esta pronta para envio manual e para a rotina diaria.' : 'Conecte a conta na tela Backup em Nuvem para habilitar o envio.' ?></div>
             </div>
 
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Automacao</div>
-              <div class="mt-2 font-rajdhani text-2xl font-bold text-white"><?= ($backupCloud['auto_upload_enabled'] ?? false) ? 'Ativa' : 'Manual' ?></div>
-              <div class="mt-1 text-sm text-slate-400"><?= ($backupCloud['auto_upload_enabled'] ?? false) ? 'Todo novo backup completo tenta subir para o Dropbox logo apos a geracao.' : 'Os envios sao disparados manualmente a partir desta subaba.' ?></div>
+              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Envio automatico</div>
+              <div class="mt-2 font-rajdhani text-2xl font-bold text-white">Rotina diaria (21:30)</div>
+              <div class="mt-1 text-sm text-slate-400">EstrategiaNerd-BackupDiario envia os backups de stage e producao; envios avulsos ficam nesta subaba.</div>
             </div>
 
             <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Espaco Dropbox</div>
+              <div class="text-xs uppercase tracking-[0.2em] text-slate-500">Espaco Google Drive</div>
               <?php if (($cloudSpaceUsage['available'] ?? false) === true): ?>
                 <div class="mt-2 font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars((string) ($cloudSpaceUsage['free'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-                <div class="mt-1 text-sm text-slate-400"><?= htmlspecialchars((string) ($cloudSpaceUsage['used'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> usados de <?= htmlspecialchars((string) ($cloudSpaceUsage['allocated'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>.</div>
+                <div class="mt-1 text-sm text-slate-400"><?= htmlspecialchars((string) ($cloudSpaceUsage['used'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> usados de <?= htmlspecialchars((string) ($cloudSpaceUsage['limit'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>.</div>
               <?php else: ?>
                 <div class="mt-2 font-rajdhani text-2xl font-bold text-white">Indisponivel</div>
                 <div class="mt-1 text-sm text-slate-400"><?= htmlspecialchars((string) ($cloudSpaceUsage['message'] ?? 'Conecte a conta para consultar a cota.'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
@@ -789,7 +763,7 @@ $historySummary = [
       <div data-cloud-tab-panel="historico" class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6" style="display:none;">
         <h2 class="font-orbitron text-lg font-bold text-white">Historico de envios</h2>
         <?php if ($backupCloudRecentUploads === []): ?>
-          <p class="mt-4 text-sm text-slate-400">Nenhum backup enviado para o Dropbox ainda.</p>
+          <p class="mt-4 text-sm text-slate-400">Nenhum backup enviado para o Google Drive ainda.</p>
         <?php else: ?>
           <div class="mt-4 space-y-3">
             <?php foreach ($backupCloudRecentUploads as $upload): ?>
@@ -799,7 +773,7 @@ $historySummary = [
                     <div class="font-semibold text-white"><?= htmlspecialchars((string) ($upload['backup_id'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                     <div class="mt-1 text-xs text-slate-500"><?= htmlspecialchars((string) ($upload['profile_label'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
                   </div>
-                  <span class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200"><?= htmlspecialchars((string) ($upload['cloud_provider'] ?? 'Dropbox'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                  <span class="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200"><?= htmlspecialchars(($upload['cloud_provider'] ?? '') === 'google_drive' ? 'Google Drive' : (string) (($upload['cloud_provider'] ?? '') !== '' ? $upload['cloud_provider'] : 'Nuvem'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
                 </div>
                 <div class="mt-3 grid gap-2 text-sm text-slate-300">
                   <div class="flex items-center justify-between gap-4"><span class="text-slate-500">Enviado em</span><span><?= htmlspecialchars((string) ($upload['cloud_uploaded_at'] ?? '-'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></div>
@@ -809,13 +783,13 @@ $historySummary = [
                 <form method="POST" action="<?= url('/local/backup') ?>" class="mt-4 grid gap-3 rounded-2xl border border-rose-500/20 bg-rose-500/5 p-3 md:grid-cols-[1fr_auto] md:items-end">
                   <?= Csrf::field() ?>
                   <input type="hidden" name="redirect_to" value="<?= htmlspecialchars($cloudCurrentReturnTarget, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                  <input type="hidden" name="action" value="dropbox_delete_backup">
+                  <input type="hidden" name="action" value="google_drive_delete_backup">
                   <input type="hidden" name="backup_id" value="<?= htmlspecialchars((string) ($upload['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                   <label class="block">
                     <span class="text-xs uppercase tracking-[0.2em] text-rose-200/70">Confirmar exclusao</span>
                     <input type="text" name="delete_confirmation" placeholder="<?= htmlspecialchars((string) ($upload['backup_id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none focus:border-rose-400">
                   </label>
-                  <button type="submit" class="inline-flex items-center justify-center rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20">Excluir do Dropbox</button>
+                  <button type="submit" class="inline-flex items-center justify-center rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-100 transition hover:border-rose-300 hover:bg-rose-500/20">Excluir do Google Drive</button>
                 </form>
               </div>
             <?php endforeach; ?>
