@@ -36,7 +36,14 @@ final class LinkRedirectService
             return ['ok' => true, 'target_url' => $targetUrl];
         }
 
-        $origin = $this->sanitizeOrigin((string) ($query['origem'] ?? ''));
+        // Origens reais sao curtas e simples (ex.: central-gadgets, post-12); qualquer outra coisa
+        // (aspas, espacos, parenteses, SQL de scanner) redireciona normalmente sem contar o clique.
+        $rawOrigin = trim((string) ($query['origem'] ?? ''));
+        if ($rawOrigin !== '' && preg_match('/^[a-z0-9:_-]{1,60}$/i', $rawOrigin) !== 1) {
+            return ['ok' => true, 'target_url' => $targetUrl];
+        }
+
+        $origin = $this->sanitizeOrigin($rawOrigin);
         $referer = trim((string) ($server['HTTP_REFERER'] ?? ''));
         $sessionId = session_id();
         if ($sessionId === '') {

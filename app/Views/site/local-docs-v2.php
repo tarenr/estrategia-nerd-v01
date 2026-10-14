@@ -33,6 +33,7 @@ $docSections = [
     'evolucao' => '14. Evolucao tecnica',
     'governanca' => '15. Governanca da documentacao',
     'instagram' => '16. Instagram e Reels',
+    'central-nerd' => '17. Central Nerd e cliques',
 ];
 $docSection = strtolower(trim((string) ($_GET['docs_secao'] ?? 'identidade')));
 if (!array_key_exists($docSection, $docSections)) {
@@ -481,7 +482,7 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
           </div>
         </section>
 
-        <section id="evolucao" data-doc-panel="evolucao" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'evolucao' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">14) Evolucao tecnica</h2><div class="doc-card doc-example mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Versao inicial do portal editorial e dashboard admin.</li><li>Criacao da Central Nerd como pagina de conversao.</li><li>Adicao da rotina local de backup com restore controlado.</li><li>Implementacao da sincronizacao de conteudo/codigo com paridade.</li><li>Refino dos hubs tecnicos no admin local com navegacao assincrona.</li><li>Modal operacional de Conteudo com progresso real e rastreabilidade de aplicacao de pacotes.</li><li>Modal operacional de Backup e Restore com progresso real para backup, verificacao e restore.</li><li>Integracao Dropbox/Nuvem para backup de ambiente (substituida pelo Google Drive no IMP-023).</li><li>Reforco de preflight, documentacao interna, governanca de releases e bloqueio por origem aprovada.</li><li>Modulo Instagram (FEAT-010): contas, fila de posts, publicacao agendada, confirmacao na Meta, cross-post Blog → Instagram e feed publico automatico na home.</li><li>Reels: Smart Canvas, Konva (reels-konva), biblioteca de trilhas (IMP-032) e Reels em tipografia cinetica com a skill motionmaxxing (reels-motionmaxxing).</li><li>Central Operacional V2 (backups sistemico/editorial, nuvem, observabilidade, Hostinger API, SEO tecnico) e Central Tecnica (Base de Conhecimento).</li><li>Backup diario automatico com Google Drive (IMP-023) e prova de restauracao em banco temporario (<code>verify-backup-restore.php</code>).</li><li>Afiliados e links (IMP-027 a IMP-031), monitoramento de links e Search Console.</li><li>Qualidade: PHPStan nivel 5 e suite <code>verify-changes.php</code>; Cloudflare Access na frente do admin.</li><li>Tarefas somente no Forge; documentacao central com guia proprio (<code>docs/governanca/documentacao-central.md</code>).</li></ul></div></section>
+        <section id="evolucao" data-doc-panel="evolucao" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'evolucao' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">14) Evolucao tecnica</h2><div class="doc-card doc-example mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Versao inicial do portal editorial e dashboard admin.</li><li>Criacao da Central Nerd como pagina de conversao.</li><li>Adicao da rotina local de backup com restore controlado.</li><li>Implementacao da sincronizacao de conteudo/codigo com paridade.</li><li>Refino dos hubs tecnicos no admin local com navegacao assincrona.</li><li>Modal operacional de Conteudo com progresso real e rastreabilidade de aplicacao de pacotes.</li><li>Modal operacional de Backup e Restore com progresso real para backup, verificacao e restore.</li><li>Integracao Dropbox/Nuvem para backup de ambiente (substituida pelo Google Drive no IMP-023).</li><li>Reforco de preflight, documentacao interna, governanca de releases e bloqueio por origem aprovada.</li><li>Modulo Instagram (FEAT-010): contas, fila de posts, publicacao agendada, confirmacao na Meta, cross-post Blog → Instagram e feed publico automatico na home.</li><li>Reels: Smart Canvas, Konva (reels-konva), biblioteca de trilhas (IMP-032) e Reels em tipografia cinetica com a skill motionmaxxing (reels-motionmaxxing).</li><li>Central Operacional V2 (backups sistemico/editorial, nuvem, observabilidade, Hostinger API, SEO tecnico) e Central Tecnica (Base de Conhecimento).</li><li>Backup diario automatico com Google Drive (IMP-023) e prova de restauracao em banco temporario (<code>verify-backup-restore.php</code>).</li><li>Afiliados e links (IMP-027 a IMP-031), monitoramento de links e Search Console.</li><li>Ofertas relacionadas no fim dos posts com rastreio por post e filtro de cliques falsos (FEAT-013).</li><li>Qualidade: PHPStan nivel 5 e suite <code>verify-changes.php</code>; Cloudflare Access na frente do admin.</li><li>Tarefas somente no Forge; documentacao central com guia proprio (<code>docs/governanca/documentacao-central.md</code>).</li></ul></div></section>
 
         <section id="governanca" data-doc-panel="governanca" class="doc-panel rounded-3xl border border-fuchsia-500/20 bg-slate-900/80 p-6" <?= $docSection === 'governanca' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-fuchsia-200">15) Governanca da documentacao</h2><p class="mt-3 text-sm leading-7 text-slate-300">Esta pagina e a documentacao principal local do portal. Toda mudanca estrutural, operacional, de release ou de deploy deve atualizar esta base no mesmo ciclo de trabalho.</p><div class="mt-4 rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/10 p-4 text-sm text-fuchsia-50"><p class="mb-2">Guia obrigatorio para qualquer IA ou pessoa: <code>docs/governanca/documentacao-central.md</code> (qual arquivo alimenta cada area da Central Tecnica, quando atualizar e como validar). Citado no <code>AGENTS.md</code>.</p><ol class="list-decimal space-y-1 pl-5"><li>Atualizar a secao impactada da documentacao principal na mesma tarefa da alteracao.</li><li>Revisar compatibilidade com `docs/CODEX-REGRAS-PERMANENTES.txt`.</li><li>Revisar tambem `docs/governanca/priorizacao-tecnica.md` quando a alteracao mudar risco, prioridade ou criterio de execucao.</li><li>Atualizar feature/release/checklist/rollback quando a alteracao exigir.</li><li>Executar preflight antes de qualquer empacotamento e <code>verify-changes.php</code> antes de concluir.</li><li>Conferir a pagina renderizada (rotas <code>/local/*</code>) depois de editar.</li><li>Registrar a tarefa e concluir no Forge (projeto Estrategia Nerd) so depois da validacao.</li><li>Revisao mensal: tarefa recorrente no Forge.</li></ol></div></section>
 
@@ -534,6 +535,37 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
                 <li>Padrao aprovado (out/2026): imagem do post inteira na moldura, texto como foco com animacao que representa o sentido, fontes ligadas ao tema, som escolhido. Detalhes: <code>docs/features/reels-motionmaxxing.md</code>.</li>
                 <li>Renderers do sistema: <code>KonvaReelRenderer</code>, <code>EditorialMotionReelRenderer</code>, <code>SmartCanvasRenderer</code>; trilhas em <code>public/uploads/audio</code> (IMP-032).</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+        <section id="central-nerd" data-doc-panel="central-nerd" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'central-nerd' ? '' : 'hidden' ?>>
+          <h2 class="font-orbitron text-xl font-bold text-cyan-200">17) Central Nerd e cliques</h2>
+          <div class="doc-card mt-4">
+            <p class="doc-label">Como funciona</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
+              <li>Pagina <code>/central-nerd</code> (<code>CentralController</code> / <code>CentralService</code>) lista as ofertas da tabela <code>links</code>, agrupadas por prateleira (<code>subgrupo_publico</code>).</li>
+              <li>Todo botao de oferta passa por <code>/link/{slug}?origem=...</code>: <code>LinkRedirectService::resolve</code> registra o clique em <code>link_clicks</code> (<code>LinkClickRepository::registerClick</code>) e redireciona para a loja.</li>
+              <li>Origens em uso: <code>central-{prateleira}</code>, <code>central-destaque</code>, <code>central-cupons</code> e <code>post-{id}</code> (ofertas no fim dos artigos).</li>
+            </ul>
+          </div>
+          <div class="mt-4 grid gap-4 xl:grid-cols-2">
+            <div class="doc-card">
+              <p class="doc-label">Ofertas no fim dos posts (FEAT-013)</p>
+              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
+                <li><code>RelatedOffersService</code> monta a lista da categoria (prateleiras ligadas a categoria do post + produtos com palavra em comum com titulo/tags) e <strong>sorteia 3 a cada visita</strong>, sem repetir no bloco. Mapa: hardware &rarr; PC Gamer Inicial/Intermediario/Topo e Upgrade Monstro; games &rarr; Setup Gamer/Action Figures; cultura-geek &rarr; Action Figures/Gadgets; gadgets &rarr; Gadgets/Setup Gamer; dicas &rarr; Setup Estrategia Nerd/Setup Gamer.</li>
+                <li>Os produtos vem sempre do banco do proprio ambiente (producao le os produtos de producao); o clique em <code>/link/{slug}</code> e resolvido no mesmo banco. A pagina do post sai com <code>Cache-Control: no-store</code>, entao o sorteio vale por visita.</li>
+                <li>Sem campo novo no banco: para mudar o que aparece, ajustar a prateleira da oferta no admin de Links ou o mapa <code>CATEGORY_SHELVES</code>.</li>
+                <li>Bloco so aparece com a secao Central Nerd ativa e com ao menos 1 oferta; erro no banco nao quebra o artigo.</li>
+                <li>Dashboard: quadro "Cliques vindos dos posts" (<code>LinkClickRepository::topPostsByRange</code>).</li>
+              </ul>
+            </div>
+            <div class="doc-card doc-alert">
+              <p class="doc-label">Cliques falsos (scanner)</p>
+              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
+                <li>Scanners de SQL injection chamavam <code>/link/...?origem=</code> com SQL na origem. Nao havia risco (consulta parametrizada), mas os cliques inflavam as estatisticas (106 de 361 em producao ate 12/10/2026).</li>
+                <li>Desde a FEAT-013, origem com caractere fora de <code>[a-z0-9:_-]</code> (espaco, aspas, parenteses) redireciona normalmente e <strong>nao conta</strong> o clique. User-agents de robo ja eram ignorados.</li>
+                <li>Limpeza dos registros antigos: export JSON em <code>storage/logs/limpeza-cliques/</code> antes de apagar; rollback = reimportar o JSON.</li>
               </ul>
             </div>
           </div>

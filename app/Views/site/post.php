@@ -250,6 +250,44 @@ $renderHighlightedTitle = static function (string $value): string {
               </form>
             </div>
 
+            <?php $postOffers = is_array($post_offers ?? null) ? $post_offers : []; ?>
+            <?php if ($postOffers !== []): ?>
+              <section class="mt-8 rounded-2xl border border-cyan-500/20 bg-slate-900/45 p-5" aria-label="Ofertas relacionadas">
+                <p class="text-sm text-slate-300 mb-3">Ofertas relacionadas da Central Nerd:</p>
+                <div class="central-link-list">
+                  <?php foreach ($postOffers as $offer): ?>
+                    <?php
+                    $offerTitle = trim((string) ($offer['titulo'] ?? ''));
+                    $offerDescription = trim((string) ($offer['descricao'] ?? ''));
+                    $offerImage = trim((string) ($offer['imagem'] ?? ''));
+                    $offerBadge = trim((string) ($offer['selo'] ?? ''));
+                    ?>
+                    <article class="central-link-card central-link-card-product">
+                      <a href="<?= htmlspecialchars((string) ($offer['tracked_url'] ?? '#'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer sponsored" class="central-bio-card central-bio-card-link">
+                        <span class="central-bio-media <?= $offerImage === '' ? 'central-bio-media-fallback' : '' ?>">
+                          <?php if ($offerImage !== ''): ?>
+                            <img src="<?= htmlspecialchars($offerImage, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($offerTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" loading="lazy">
+                          <?php else: ?>
+                            <span><?= htmlspecialchars(mb_substr($offerTitle !== '' ? $offerTitle : 'O', 0, 1), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                          <?php endif; ?>
+                        </span>
+                        <span class="central-bio-copy">
+                          <?php if ($offerBadge !== ''): ?><span class="central-bio-badge"><?= htmlspecialchars($offerBadge, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?>
+                          <span class="central-bio-title"><?= htmlspecialchars($offerTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                          <?php if ($offerDescription !== ''): ?><span class="central-bio-description"><?= htmlspecialchars($offerDescription, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span><?php endif; ?>
+                        </span>
+                        <span class="central-bio-arrow" aria-hidden="true">
+                          <svg viewBox="0 0 20 20" fill="none">
+                            <path d="M6.5 10h7m0 0-2.8-2.8M13.5 10l-2.8 2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </span>
+                      </a>
+                    </article>
+                  <?php endforeach; ?>
+                </div>
+              </section>
+            <?php endif; ?>
+
             <?php if ($postNextLinks !== []): ?>
               <div class="mt-8 rounded-2xl border border-cyan-500/20 bg-slate-900/45 p-5">
                 <p class="text-sm text-slate-300 mb-3">Próximo passo:</p>

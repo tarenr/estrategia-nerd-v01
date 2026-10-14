@@ -377,6 +377,25 @@ final class LinkRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function listActiveProductsForPosts(int $limit = 120): array
+    {
+        $limit = max(1, min(200, $limit));
+        $stmt = $this->pdo->prepare('
+            SELECT id, titulo, slug, url, tipo, promocao, subgrupo_publico, descricao, selo, imagem, posicao, destaque
+            FROM links
+            WHERE status = "ativo"
+              AND tipo = "produto"
+              AND slug <> ""
+              AND (expira_em IS NULL OR expira_em >= NOW())
+            ORDER BY destaque DESC, posicao ASC, id DESC
+            LIMIT :limit
+        ');
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function nextAvailableSlug(string $baseSlug, ?int $ignoreId = null): string
     {
         $baseSlug = trim($baseSlug);

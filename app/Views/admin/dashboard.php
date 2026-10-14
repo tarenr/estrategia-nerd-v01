@@ -888,6 +888,40 @@ $categoryChartData = [
           </div>
         <?php endif; ?>
       </div>
+
+      <div class="dashboard-link-list">
+        <div class="dashboard-link-list-head">
+          <div class="dashboard-link-list-title">Cliques vindos dos posts</div>
+          <div class="dashboard-link-list-meta">Ofertas clicadas no fim dos artigos, por post</div>
+        </div>
+
+        <?php if (empty($top_posts_link_clicks ?? [])): ?>
+          <div class="dashboard-link-empty">Ainda nao ha cliques em ofertas vindos dos posts neste periodo.</div>
+        <?php else: ?>
+          <div class="dashboard-link-stack">
+            <?php foreach (($top_posts_link_clicks ?? []) as $topPost): ?>
+              <?php $topPostSlug = trim((string) ($topPost['slug'] ?? '')); ?>
+              <?php $topPostHref = $topPostSlug !== '' ? dashboard_public_url($targetPublicBaseUrl, 'post/' . rawurlencode($topPostSlug)) : ''; ?>
+              <div class="dashboard-link-row">
+                <div class="dashboard-link-copy">
+                  <div class="dashboard-link-title">
+                    <?php if ($topPostHref !== ''): ?>
+                      <a href="<?= e($topPostHref) ?>" target="_blank" rel="noopener noreferrer"><?= e(preg_replace('/\[\[(.*?)\]\]/u', '$1', (string) ($topPost['titulo'] ?? 'Post')) ?? '') ?></a>
+                    <?php else: ?>
+                      <span><?= e((string) ($topPost['titulo'] ?? 'Post')) ?></span>
+                    <?php endif; ?>
+                  </div>
+                  <div class="dashboard-link-subtitle">origem post-<?= (int) ($topPost['id'] ?? 0) ?></div>
+                </div>
+                <div class="dashboard-link-metric">
+                  <strong><?= fmt((int) ($topPost['total_clicks'] ?? 0)) ?></strong>
+                  <span>cliques</span>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+      </div>
     </div>
 
     <div class="admin-panel">

@@ -6,8 +6,10 @@ namespace App\Controllers\Site;
 
 use App\Repositories\ComentarioRepository;
 use App\Repositories\EstatisticaRepository;
+use App\Repositories\LinkRepository;
 use App\Repositories\PostRepository;
 use App\Services\Site\PostService;
+use App\Services\Site\RelatedOffersService;
 use App\Support\Csrf;
 use App\Support\View;
 
@@ -40,6 +42,10 @@ final class PostController
                 exit;
             }
         }
+
+        $viewModel['post_offers'] = site_section_public_active('central_nerd')
+            ? $this->offersService()->forPost(is_array($viewModel['post'] ?? null) ? $viewModel['post'] : [])
+            : [];
 
         View::render('site/post', $viewModel);
     }
@@ -149,6 +155,14 @@ final class PostController
     private function blogPublicActive(): bool
     {
         return site_section_public_active('blog');
+    }
+
+    private function offersService(): RelatedOffersService
+    {
+        /** @var \PDO $pdo */
+        $pdo = $GLOBALS['pdo'];
+
+        return new RelatedOffersService(new LinkRepository($pdo));
     }
 
     private function service(): PostService

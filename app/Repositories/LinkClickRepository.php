@@ -133,6 +133,32 @@ final class LinkClickRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    public function topPostsByRange(string $start, string $end, int $limit = 5): array
+    {
+        $limit = max(1, min(10, $limit));
+
+        $stmt = $this->pdo->prepare('
+            SELECT p.id,
+                   p.titulo,
+                   p.slug,
+                   COUNT(*) AS total_clicks,
+                   MAX(lc.clicked_at) AS last_click_at
+            FROM link_clicks lc
+            INNER JOIN posts p ON p.id = CAST(SUBSTRING(lc.origem, 6) AS UNSIGNED)
+            WHERE lc.origem LIKE "post-%"
+              AND lc.clicked_at BETWEEN :start_at AND :end_at
+            GROUP BY p.id, p.titulo, p.slug
+            ORDER BY total_clicks DESC, last_click_at DESC, p.titulo ASC
+            LIMIT :limit
+        ');
+        $stmt->bindValue('start_at', $start . ' 00:00:00');
+        $stmt->bindValue('end_at', $end . ' 23:59:59');
+        $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     public function seriesByRange(string $start, string $end): array
     {
         $stmt = $this->pdo->prepare('

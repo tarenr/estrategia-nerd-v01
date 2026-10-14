@@ -159,6 +159,12 @@ final class DashboardService
         $linkClicksHoje = (int) $this->linkClicks->countToday();
         $topLinksClicks = $this->linkClicks->topLinksByRange($start, $end, 5);
         $linkSectionClicks = $this->linkClicks->sectionBreakdownByRange($start, $end);
+        try {
+            $topPostsLinkClicks = $this->linkClicks->topPostsByRange($start, $end, 5);
+        } catch (Throwable $e) {
+            error_log('[DashboardService] cliques vindos dos posts: ' . $e->getMessage());
+            $topPostsLinkClicks = [];
+        }
         $linkClicksSeries = $this->linkClicksSeriesByRange($start, $end);
         $topCategoriasViews = $this->categorias->listWithAggregates();
         usort($topCategoriasViews, static function (array $a, array $b): int {
@@ -211,6 +217,7 @@ final class DashboardService
             'link_clicks_hoje' => $linkClicksHoje,
             'top_links_clicks' => $topLinksClicks,
             'link_section_clicks' => $linkSectionClicks,
+            'top_posts_link_clicks' => $topPostsLinkClicks,
             'link_clicks_series' => $linkClicksSeries,
             'top_categorias_views' => $topCategoriasViews,
 

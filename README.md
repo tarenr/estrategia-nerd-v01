@@ -65,6 +65,7 @@ Consulte [AGENTS.md](file:///C:/Users/WINDOWS/Projects/estrategia-nerd/AGENTS.md
 - **Matomo Analytics:** Monitoramento auto-hospedado de tráfego, audiência e métricas do portal (`MATOMO_URL`).
 - **Google Drive API:** Destino de nuvem do backup diário (`EstrategiaNerd-BackupDiario`, IMP-023); o Dropbox foi descontinuado e ficou como legado. Prova de restauração sem tocar nos ambientes: `C:\xampp\php\php.exe scripts/verify-backup-restore.php <local|stage|production>`.
 - **Reels do Instagram:** publicação agendada a cada 5 minutos (`EstrategiaNerd-InstagramPublicarAgendados`) e Reels em tipografia cinética produzidos com a skill motionmaxxing ([docs/features/reels-motionmaxxing.md](docs/features/reels-motionmaxxing.md)).
+- **Central Nerd e afiliados:** ofertas em `/central-nerd`; cliques por `/link/{slug}?origem=...` (`link_clicks`). O fim de cada post mostra 3 ofertas da categoria do post, sorteadas a cada visita, com origem `post-{id}`, e origens fora do padrão (scanners) não são contadas ([docs/features/FEAT-013-ofertas-nos-posts.md](docs/features/FEAT-013-ofertas-nos-posts.md)).
 - **Meta / Instagram Graph API:** Automação de publicação de mídias e instagram cards (`/admin/instagram`).
 - **FTP Deploy / Sync:** Sincronização de conteúdo e deploy entre ambientes Local, Stage e Produção.
 
