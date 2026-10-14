@@ -62,7 +62,13 @@ A suíte executa de forma encadeada e automatizada:
 - **Suíte de Testes Geral:** `C:\xampp\php\php.exe scripts/verify-changes.php`
 - **Smoke Tests:** `C:\xampp\php\php.exe scripts/smoke-test.php local`
 
-## 5. Downloads de trilhas — aprendizado obrigatório (IMP-032)
+## 5. Documentação central (obrigatória)
+
+Toda alteração do sistema atualiza, **na mesma tarefa**, a documentação central exibida em **Central Técnica → Base de Conhecimento**. Siga `docs/governanca/documentacao-central.md`: ele diz qual arquivo alimenta cada área (Documentação Técnica, Regras, Histórico, Procedimentos, Padrões, FAQ), quando atualizar cada uma e como validar na página renderizada. Um `.md` em `docs/features/` não substitui atualizar as páginas centrais afetadas. Alteração sem a documentação atualizada não está concluída.
+
+Tarefas ficam **somente no Forge** (projeto Estratégia Nerd). Itens de baixa prioridade ficam em `docs/governanca/backlog-baixa-prioridade.md`.
+
+## 6. Downloads de trilhas — aprendizado obrigatório (IMP-032)
 
 Antes de retomar downloads de músicas do Pixabay, ler `docs/features/IMP-032.md`, especialmente "Erros observados e orientação para IAs". Não repetir o ciclo de abrir abas, clicar em Recarregar e pedir ao usuário cliques por faixa: a automação foi testada e não salvou novos MP3s. Não atribuir a causa a permissões de múltiplos downloads sem evidência. Confirmar sucesso pelo arquivo completo, duração, codec e hash; a tela de erro e o estado anterior do arquivo não comprovam o resultado da ação atual.
 

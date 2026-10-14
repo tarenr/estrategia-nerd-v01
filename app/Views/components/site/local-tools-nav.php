@@ -37,7 +37,7 @@ $items = [
     [
         'id' => 'backlog',
         'label' => 'Backlog',
-        'description' => 'Evolucao tecnica por fases',
+        'description' => 'Tarefas no Forge e baixa prioridade',
         'href' => url('/local/backlog'),
     ],
 ];
