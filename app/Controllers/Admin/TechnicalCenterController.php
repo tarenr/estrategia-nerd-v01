@@ -234,6 +234,57 @@ final class TechnicalCenterController
                             'Rollback automático em caso de falha de integridade',
                         ],
                     ],
+                    [
+                        'title' => 'Publicação Agendada do Instagram',
+                        'status' => 'Ativo',
+                        'tone' => 'success',
+                        'items' => [
+                            'Tarefa EstrategiaNerd-InstagramPublicarAgendados (a cada 5 min) roda scripts/en-instagram-publish-scheduled.php',
+                            'Conferir o log storage/logs/instagram/publish-AAAA-MM.log depois de cada horário (12:00 e 19:30)',
+                            'Vídeo e capa .jpg de mesmo nome precisam responder 200 no endereço público (INSTAGRAM_PUBLIC_MEDIA_URL)',
+                        ],
+                    ],
+                    [
+                        'title' => 'Troca de Vídeo de Reel Agendado',
+                        'status' => 'Ativo',
+                        'tone' => 'success',
+                        'items' => [
+                            'Copiar novo .mp4 + capa .jpg (vN seguinte) para public/uploads/reels, sem sobrescrever',
+                            'Atualizar video_rendered_path e instagram_post_media.caminho em transação, só se ainda agendado com o vídeo antigo',
+                            'Validar readyVideoPath, reelCoverParams, URL pública e verify-changes.php; vídeo antigo fica para rollback',
+                            'Passo a passo: Documentação Técnica, seção 16',
+                        ],
+                    ],
+                    [
+                        'title' => 'Produção de Reels (motionmaxxing)',
+                        'status' => 'Ativo',
+                        'tone' => 'success',
+                        'items' => [
+                            'Plano aprovado antes, piloto primeiro e replicação só após aprovação',
+                            'Gerar, renderizar e medir: gates G0–G5, selfTest e área segura do texto',
+                            'Detalhes, padrões e fontes: docs/features/reels-motionmaxxing.md',
+                        ],
+                    ],
+                    [
+                        'title' => 'Prova de Restauração de Backup',
+                        'status' => 'Ativo',
+                        'tone' => 'success',
+                        'items' => [
+                            'php scripts/verify-backup-restore.php <local|stage|production> [ID]',
+                            'Confere SHA-256, CRC de todos os arquivos dos zips e importa o banco em banco temporário apagado no fim',
+                            'Nunca restaura por cima de um ambiente real; relatório em storage/logs/backup-restore-check',
+                        ],
+                    ],
+                    [
+                        'title' => 'Atualização da Documentação Central',
+                        'status' => 'Regra Ativa',
+                        'tone' => 'success',
+                        'items' => [
+                            'Toda alteração atualiza a área afetada na mesma tarefa',
+                            'Guia: docs/governanca/documentacao-central.md (citado no AGENTS.md)',
+                            'Validar na página renderizada e concluir a tarefa no Forge; revisão mensal recorrente',
+                        ],
+                    ],
                 ],
                 'copy_blocks' => [
                     [
@@ -467,6 +518,35 @@ TEXT,
                             'Vídeos prontos (render_status=ready) não podem permanecer em rascunho',
                         ],
                     ],
+                    [
+                        'title' => 'Padrão Visual dos Reels',
+                        'status' => 'Regra Ativa',
+                        'tone' => 'success',
+                        'items' => [
+                            'Imagem do post inteira e legível na moldura; sem zoom repetido nem escurecer a ponto de não reconhecer',
+                            'Texto é o foco: animação que representa o sentido da palavra, não só aparecer ou deslizar',
+                            'Fontes ligadas ao tema e combinando (hardware: Orbitron + Rajdhani; anime: Dela Gothic One + Rajdhani; Diablo: Cinzel + Cormorant Garamond)',
+                            'Som escolhido para o tema; sem impactos sintéticos',
+                        ],
+                    ],
+                    [
+                        'title' => 'Área Segura do Texto nos Reels',
+                        'status' => 'Regra Ativa',
+                        'tone' => 'success',
+                        'items' => [
+                            'Só para texto: Y 170 a 1540; entre Y 970 e 1790 até X 925; margem X 72',
+                            'Medir no navegador e relatar os números; imagem pode ficar sob os ícones',
+                        ],
+                    ],
+                    [
+                        'title' => 'Nomes e Camadas (código novo)',
+                        'status' => 'Regra Ativa',
+                        'tone' => 'success',
+                        'items' => [
+                            'Sufixos aceitos em app/Services: Service, Renderer, Publisher, Presenter, Reconciler, Fitter, Exception',
+                            'SQL no Repository; ao mexer em service com SQL direto, mover para o repository na mesma tarefa',
+                        ],
+                    ],
                 ],
             ],
             'estruturas-posts' => [
@@ -578,6 +658,41 @@ TEXT,
                             'A regra ativa dá precedência total a slugs diretos e limpa redirecionamentos obsoletos.',
                         ],
                     ],
+                    [
+                        'title' => 'Como trocar o vídeo de um Reel já agendado?',
+                        'status' => 'Respondido',
+                        'tone' => 'success',
+                        'items' => [
+                            'Copiar o novo vídeo e a capa .jpg de mesmo nome e atualizar a fila em transação (Documentação Técnica, seção 16).',
+                            'Sem a capa, o publicador bloqueia o envio; o vídeo antigo fica na pasta para rollback.',
+                        ],
+                    ],
+                    [
+                        'title' => 'Onde o texto de um Reel pode ficar?',
+                        'status' => 'Respondido',
+                        'tone' => 'success',
+                        'items' => [
+                            'Entre Y 170 e 1540; na faixa Y 970–1790 até X 925 (coluna de ícones); margem lateral X 72.',
+                            'A imagem pode ficar sob os ícones; só o texto precisa da área segura.',
+                        ],
+                    ],
+                    [
+                        'title' => 'Onde ficam as tarefas e o backlog?',
+                        'status' => 'Respondido',
+                        'tone' => 'success',
+                        'items' => [
+                            'Somente no Forge, projeto Estratégia Nerd.',
+                            'Itens de baixa prioridade: docs/governanca/backlog-baixa-prioridade.md.',
+                        ],
+                    ],
+                    [
+                        'title' => 'Como provar que um backup restaura?',
+                        'status' => 'Respondido',
+                        'tone' => 'success',
+                        'items' => [
+                            'php scripts/verify-backup-restore.php <ambiente> — usa banco temporário e não toca nos ambientes reais.',
+                        ],
+                    ],
                 ],
             ],
             default => [],
@@ -610,8 +725,8 @@ TEXT,
             'cards' => [
                 [
                     'label' => 'Backlog',
-                    'value' => '7 seções',
-                    'hint' => 'Planejamento técnico por fases',
+                    'value' => 'No Forge',
+                    'hint' => 'Tarefas somente no Forge; baixa prioridade em docs/governanca',
                     'icon' => 'fa-solid fa-list-check',
                     'tone' => 'info',
                     'href' => url('/admin/central-tecnica/base-conhecimento/backlog'),

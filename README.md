@@ -47,6 +47,12 @@ C:\xampp\php\php.exe scripts/smoke-test.php local
 
 ---
 
+## Documentação central e tarefas
+
+A documentação oficial fica na Central Técnica do admin (Base de Conhecimento). Toda alteração do sistema a atualiza na mesma tarefa, seguindo [docs/governanca/documentacao-central.md](docs/governanca/documentacao-central.md). Tarefas ficam somente no Forge (projeto Estratégia Nerd); itens de baixa prioridade ficam em [docs/governanca/backlog-baixa-prioridade.md](docs/governanca/backlog-baixa-prioridade.md).
+
+---
+
 ## Diretrizes de Desenvolvimento
 Consulte [AGENTS.md](file:///C:/Users/WINDOWS/Projects/estrategia-nerd/AGENTS.md) e [docs/governanca/DIRETRIZES-DE-QUALIDADE-E-TESTES.md](file:///C:/Users/WINDOWS/Projects/estrategia-nerd/docs/governanca/DIRETRIZES-DE-QUALIDADE-E-TESTES.md) para convenções de ambiente, código defensivo e regras mandatórias.
 
@@ -57,7 +63,8 @@ Consulte [AGENTS.md](file:///C:/Users/WINDOWS/Projects/estrategia-nerd/AGENTS.md
 - **Cloudflare Tunnel:** Acesso externo seguro (`https://nerd.tfr-info.com.br`) com proteção de borda.
 - **Hostinger API:** Integração de hospedagem, domínios e zonas DNS.
 - **Matomo Analytics:** Monitoramento auto-hospedado de tráfego, audiência e métricas do portal (`MATOMO_URL`).
-- **Dropbox & Google Drive APIs:** Destinos automatizados de redundância para rotinas de backup local.
+- **Google Drive API:** Destino de nuvem do backup diário (`EstrategiaNerd-BackupDiario`, IMP-023); o Dropbox foi descontinuado e ficou como legado. Prova de restauração sem tocar nos ambientes: `C:\xampp\php\php.exe scripts/verify-backup-restore.php <local|stage|production>`.
+- **Reels do Instagram:** publicação agendada a cada 5 minutos (`EstrategiaNerd-InstagramPublicarAgendados`) e Reels em tipografia cinética produzidos com a skill motionmaxxing ([docs/features/reels-motionmaxxing.md](docs/features/reels-motionmaxxing.md)).
 - **Meta / Instagram Graph API:** Automação de publicação de mídias e instagram cards (`/admin/instagram`).
 - **FTP Deploy / Sync:** Sincronização de conteúdo e deploy entre ambientes Local, Stage e Produção.
 

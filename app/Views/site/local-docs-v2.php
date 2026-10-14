@@ -8,7 +8,7 @@ $projectVersion = trim((string) ($project_version ?? 'local'));
 $generatedAt = trim((string) ($generated_at ?? date('Y-m-d H:i:s')));
 $projectName = (string) config('app.name', 'Estrategia Nerd');
 $projectType = 'Portal editorial + conversao';
-$projectStack = 'PHP (MVC leve), MySQL, Tailwind (CDN)';
+$projectStack = 'PHP 8.2 (MVC leve), MySQL/MariaDB, Tailwind (arquivo local tailwind.min.css), FontAwesome 6, Node + Chrome (render dos Reels)';
 $projectEnvironment = 'Local / homologacao operacional';
 $projectOwner = (string) ($_ENV['PROJECT_OWNER'] ?? 'Taren');
 $projectScope = 'Documentacao interna, backup, validacao local, stage e governanca de deploy';
@@ -26,12 +26,13 @@ $docSections = [
     'padrao-codigo' => '7. Padrao de codigo e nomenclatura',
     'deploy' => '8. Deploy operacional',
     'backup' => '9. Backup e restore',
-    'dropbox' => '10. Dropbox e backup em nuvem',
+    'dropbox' => '10. Backup em nuvem (Google Drive)',
     'ambiente' => '11. Configuracao de ambiente',
     'governanca-releases' => '12. Governanca de releases',
     'diagnostico' => '13. Erros comuns e diagnostico',
     'evolucao' => '14. Evolucao tecnica',
     'governanca' => '15. Governanca da documentacao',
+    'instagram' => '16. Instagram e Reels',
 ];
 $docSection = strtolower(trim((string) ($_GET['docs_secao'] ?? 'identidade')));
 if (!array_key_exists($docSection, $docSections)) {
@@ -109,17 +110,49 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
         </section>
 
         <section id="rotas-principais" data-doc-panel="rotas-principais" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'rotas-principais' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">3) Rotas principais do sistema</h2>
-          <div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Rota</th><th>Controller</th><th>Metodo</th></tr></thead><tbody>
-            <tr class="doc-row"><td class="text-white">/</td><td class="text-slate-300">HomeController</td><td class="text-slate-400">index</td></tr>
-            <tr class="doc-row"><td class="text-white">/blog</td><td class="text-slate-300">BlogController</td><td class="text-slate-400">index</td></tr>
-            <tr class="doc-row"><td class="text-white">/post/{slug}</td><td class="text-slate-300">PostController</td><td class="text-slate-400">show</td></tr>
-            <tr class="doc-row"><td class="text-white">/central-nerd</td><td class="text-slate-300">CentralController</td><td class="text-slate-400">index</td></tr>
-            <tr class="doc-row"><td class="text-white">/admin</td><td class="text-slate-300">DashboardController</td><td class="text-slate-400">index</td></tr>
-            <tr class="doc-row"><td class="text-white">/local/backup</td><td class="text-slate-300">BackupToolsController</td><td class="text-slate-400">index / handle</td></tr>
-            <tr class="doc-row"><td class="text-white">/local/conteudo</td><td class="text-slate-300">ContentSyncToolsController</td><td class="text-slate-400">index / handle</td></tr>
-            <tr class="doc-row"><td class="text-white">/local/documentacao</td><td class="text-slate-300">LocalDocsController</td><td class="text-slate-400">index</td></tr>
-          </tbody></table></div>
+          <h2 class="font-orbitron text-xl font-bold text-cyan-200">3) Rotas do sistema (geradas de config/routes.php)</h2>
+          <?php
+          // A tabela e montada a partir do proprio config/routes.php: nunca fica desatualizada.
+          $routeGroups = [];
+          $routeDefinitions = is_file(base_path('config/routes.php')) ? (array) require base_path('config/routes.php') : [];
+          foreach ($routeDefinitions as $routeDefinition) {
+              if (!is_array($routeDefinition) || count($routeDefinition) < 3) {
+                  continue;
+              }
+              $routePath = (string) $routeDefinition[1];
+              $segments = array_values(array_filter(explode('/', $routePath), static fn (string $part): bool => $part !== ''));
+              $first = $segments[0] ?? '';
+              $second = $segments[1] ?? '';
+              if ($first === 'admin') {
+                  $known = ['instagram', 'central-operacional-v2', 'central-tecnica', 'base-tecnica', 'midia', 'links', 'newsletter', 'usuarios', 'testes', 'health', 'auditoria-geral', 'home-e-menus'];
+                  $groupName = in_array($second, $known, true) ? 'Admin: /admin/' . $second : 'Admin: posts, categorias, comentarios e demais';
+              } elseif ($first === 'local') {
+                  $groupName = 'Local: /local (somente neste PC)';
+              } elseif ($first === 'api') {
+                  $groupName = 'API: /api';
+              } else {
+                  $groupName = 'Publico (site)';
+              }
+              $handler = $routeDefinition[2];
+              $handlerLabel = is_array($handler) ? (substr(strrchr('\\' . (string) $handler[0], '\\'), 1) . '::' . (string) ($handler[1] ?? '')) : (string) $handler;
+              $middleware = $routeDefinition[3] ?? null;
+              $accessLabel = $middleware === null ? 'livre' : (is_array($middleware) ? implode(', ', array_map('strval', $middleware)) : (string) $middleware);
+              $routeGroups[$groupName][] = [(string) $routeDefinition[0], $routePath, $handlerLabel, $accessLabel];
+          }
+          ksort($routeGroups);
+          $routeTotal = array_sum(array_map('count', $routeGroups));
+          ?>
+          <p class="mt-2 text-sm leading-7 text-slate-300"><?= (int) $routeTotal ?> rotas registradas, agrupadas por modulo. Coluna "Acesso": <code>auth</code> exige login; <code>capability:*</code> exige a permissao do perfil; <code>livre</code> e publico (rotas <code>/local</code> livres ainda passam por <code>ensureLocalOnly</code>/<code>EnvironmentGuard</code> no controller).</p>
+          <?php foreach ($routeGroups as $groupName => $groupRoutes): ?>
+            <details class="doc-card mt-3">
+              <summary class="cursor-pointer text-sm font-semibold text-white"><?= htmlspecialchars($groupName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> <span class="text-slate-400">(<?= count($groupRoutes) ?>)</span></summary>
+              <div class="mt-3 overflow-x-auto"><table class="doc-table"><thead><tr><th>Metodo</th><th>Rota</th><th>Controller::metodo</th><th>Acesso</th></tr></thead><tbody>
+                <?php foreach ($groupRoutes as [$routeMethod, $routePathLabel, $routeHandler, $routeAccess]): ?>
+                  <tr class="doc-row"><td class="text-slate-400"><?= htmlspecialchars($routeMethod, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td><td class="text-white"><?= htmlspecialchars($routePathLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td><td class="text-slate-300"><?= htmlspecialchars($routeHandler, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td><td class="text-slate-400"><?= htmlspecialchars($routeAccess, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
+                <?php endforeach; ?>
+              </tbody></table></div>
+            </details>
+          <?php endforeach; ?>
         </section>
 
         <section id="pastas" data-doc-panel="pastas" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'pastas' ? '' : 'hidden' ?>>
@@ -139,9 +172,9 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
 
         <section id="regras-dev" data-doc-panel="regras-dev" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'regras-dev' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">5) Regras de desenvolvimento</h2><div class="doc-card doc-rule mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Controller nao acessa banco diretamente.</li><li>Service concentra regra de negocio e coerencia entre modulos.</li><li>Repository concentra acesso a dados.</li><li>View nao carrega regra de negocio complexa.</li><li>Scripts locais sao para operacao controlada.</li><li>Hotfix em producao deve voltar para local/stage no mesmo ciclo.</li><li>Toda alteracao funcional deve atualizar esta documentacao.</li></ul></div></section>
 
-        <section id="seguranca" data-doc-panel="seguranca" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'seguranca' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">6) Seguranca do sistema</h2><div class="doc-card doc-alert mt-4"><p class="doc-label">Alerta critico</p><p class="mt-2 text-sm text-amber-100">Todo deploy deve garantir que rotas e arquivos internos nao fiquem expostos publicamente.</p></div><ul class="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-300"><li>Rotas locais (`/local/*` e `/dev`) devem ficar restritas ao ambiente local.</li><li>`.env` nao pode ser servido pelo web server.</li><li>Upload deve validar tipo, MIME, extensao e tamanho.</li><li>Sessao administrativa e formularios sensiveis devem usar CSRF.</li><li>`public/index.php` e `public/.htaccess` sao arquivos criticos e exigem validacao separada.</li><li>Uploads nao devem permitir execucao de scripts no servidor web.</li></ul></section>
+        <section id="seguranca" data-doc-panel="seguranca" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'seguranca' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">6) Seguranca do sistema</h2><div class="doc-card doc-alert mt-4"><p class="doc-label">Alerta critico</p><p class="mt-2 text-sm text-amber-100">Todo deploy deve garantir que rotas e arquivos internos nao fiquem expostos publicamente.</p></div><ul class="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-300"><li>Rotas locais (`/local/*` e `/dev`) devem ficar restritas ao ambiente local.</li><li>`.env` nao pode ser servido pelo web server.</li><li>Upload deve validar tipo, MIME, extensao e tamanho.</li><li>Sessao administrativa e formularios sensiveis devem usar CSRF.</li><li>`public/index.php` e `public/.htaccess` sao arquivos criticos e exigem validacao separada.</li><li>Uploads nao devem permitir execucao de scripts no servidor web (<code>public/uploads/.htaccess</code> bloqueia PHP).</li><li>O site publico (<code>https://nerd.tfr-info.com.br</code>) e servido desta maquina via Cloudflare Tunnel; <code>/admin</code> e <code>/local/*</code> exigem o login do <strong>Cloudflare Access</strong> (<code>CF_ACCESS_TEAM_DOMAIN</code>, <code>CF_ACCESS_AUD</code>).</li><li>Controllers locais chamam <code>ensureLocalOnly()</code> ou <code>EnvironmentGuard::requireLocal()</code>: aceitam so localhost, CLI ou LAN privada quando <code>ALLOW_LAN_ACCESS=true</code>.</li><li>Rotas admin usam o middleware <code>auth</code> e, quando sensiveis, <code>capability:*</code> (perfil); todas as rotas POST validam <code>Csrf::validate</code>.</li><li><code>APP_DEBUG</code> e falso por padrao (<code>config/app.php</code>).</li></ul></section>
 
-        <section id="padrao-codigo" data-doc-panel="padrao-codigo" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'padrao-codigo' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">7) Padrao de codigo e nomenclatura</h2><div class="doc-card doc-rule mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Classes em PascalCase.</li><li>Metodos em camelCase.</li><li>Controllers terminam com `Controller`.</li><li>Services terminam com `Service`.</li><li>Repositories terminam com `Repository`.</li><li>Variaveis devem ser descritivas.</li><li>Nome de arquivo deve refletir responsabilidade.</li></ul></div></section>
+        <section id="padrao-codigo" data-doc-panel="padrao-codigo" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'padrao-codigo' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">7) Padrao de codigo e nomenclatura</h2><div class="doc-card doc-rule mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Classes em PascalCase.</li><li>Metodos em camelCase.</li><li>Controllers terminam com `Controller`.</li><li>Services terminam com `Service`.</li><li>Repositories terminam com `Repository`.</li><li>Classes de apoio em <code>app/Services</code> podem usar sufixos que descrevem o papel: `Renderer`, `Publisher`, `Presenter`, `Reconciler`, `Fitter`, `Exception`.</li><li>Codigo novo: SQL fica no Repository. Ao alterar um service que ja consulta o banco direto, mover o SQL para o repository na mesma tarefa.</li><li>Variaveis devem ser descritivas.</li><li>Nome de arquivo deve refletir responsabilidade.</li></ul></div></section>
 
         <section id="deploy" data-doc-panel="deploy" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'deploy' ? '' : 'hidden' ?>>
           <h2 class="font-orbitron text-xl font-bold text-cyan-200">8) Deploy operacional (codigo e conteudo)</h2>
@@ -294,86 +327,61 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
               <li>Se a verificacao falhar, nao reutilizar o backup ate corrigir a integridade.</li>
             </ul>
           </div>
+          <div class="doc-card doc-rule mt-4">
+            <p class="doc-label">Rotina diaria e teste de restauracao</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
+              <li>A tarefa agendada do Windows <code>EstrategiaNerd-BackupDiario</code> (21:30) roda <code>scripts/backup/Invoke-DailyBackup.ps1</code>: backup sistemico de local, stage e producao (<code>scripts/backup.php run</code>) e exportacao editorial de local e producao, enviando tudo ao Google Drive (secao 10). Log: <code>storage/logs/daily-backup-AAAA-MM.log</code>.</li>
+              <li>Pasta local: <code>BACKUP_ROOT</code> (hoje <code>E:\Taren\Documents\Backup\Estrategia Nerd</code>), com <code>01-local</code>, <code>02-stage</code>, <code>03-prod</code> e <code>04-logs</code>; retencao por <code>BACKUP_RETENTION</code> (padrao 14).</li>
+              <li>O restore oficial so restaura <strong>por cima</strong> de local, stage ou producao. Para provar que um backup e restauravel sem tocar em nada, use <code>php scripts/verify-backup-restore.php &lt;local|stage|production&gt; [BACKUP_ID] [--skip-uploads]</code>: confere os SHA-256 do manifesto, le todos os arquivos dos zips conferindo o CRC e importa o <code>database.sql</code> em um banco temporario <code>en_restore_check_*</code>, que e apagado no fim. Relatorio em <code>storage/logs/backup-restore-check/</code>.</li>
+              <li>Ultima prova (13/10/2026): producao <code>BS-PROD-20261013-220056</code> (19 tabelas, 288 arquivos de sistema, 242 uploads) e local <code>BS-LOCAL-20261013-213002</code> (25 tabelas, 3.396 arquivos de sistema, 4.022 uploads) restauraveis, sem divergencias.</li>
+            </ul>
+          </div>
         </section>
 
         <section id="dropbox" data-doc-panel="dropbox" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'dropbox' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">10) Dropbox e backup em nuvem</h2>
+          <h2 class="font-orbitron text-xl font-bold text-cyan-200">10) Backup em nuvem (Google Drive)</h2>
           <div class="doc-card doc-rule mt-4">
-            <p class="doc-label">Objetivo</p>
-            <p class="mt-2 text-sm text-slate-200">A rotina de nuvem envia o backup de ambiente ja validado para o Dropbox sem remover a copia local. Ela existe para ampliar recuperacao, retenção e seguranca operacional fora da maquina local.</p>
+            <p class="doc-label">Situacao atual (IMP-023)</p>
+            <p class="mt-2 text-sm text-slate-200">Desde o IMP-023 o destino de nuvem dos backups e o <strong>Google Drive</strong> (mesma conta do backup editorial). O Dropbox foi descontinuado: o codigo (<code>DropboxBackupService</code>) continua no repositorio como legado, mas nao e mais usado pela rotina. A copia local continua sendo a principal; a nuvem e a copia fora da maquina.</p>
           </div>
           <div class="mt-4 grid gap-4 xl:grid-cols-2">
             <div class="doc-card">
-              <p class="doc-label">O que sobe</p>
+              <p class="doc-label">O que sobe e para onde</p>
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li><code>manifest.json</code> do backup</li>
-                <li><code>database.sql</code> do ambiente</li>
-                <li><code>uploads.zip</code> do ambiente</li>
-                <li><code>system-files.zip</code> com arquivos do sistema</li>
-                <li>Metadados locais de envio e confirmacao</li>
+                <li>Sistemico: <code>manifest.json</code>, <code>database.sql</code>, <code>uploads.zip</code> e <code>system-files.zip</code> em <code>Estrategia Nerd - Backups de Conteudo/Sistema/&lt;Local|Stage|Producao&gt;/&lt;BACKUP_ID&gt;</code>.</li>
+                <li>Editorial (pacotes de conteudo): <code>Estrategia Nerd - Backups de Conteudo/&lt;Local|Producao&gt;/&lt;PACOTE&gt;</code>.</li>
+                <li>O manifesto local registra <code>cloud_provider = google_drive</code>, destino, id remoto e arquivos enviados.</li>
               </ul>
             </div>
             <div class="doc-card">
-              <p class="doc-label">Modos de uso</p>
+              <p class="doc-label">Como operar</p>
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Conexao OAuth com a conta Dropbox</li>
-                <li>Envio manual do ultimo backup</li>
-                <li>Envio manual de backup especifico</li>
-                <li>Envio automatico logo apos gerar backup</li>
-                <li>Consulta de espaco usado, total e livre pela API do Dropbox</li>
-                <li>Exclusao controlada de backup remoto com confirmacao pelo ID</li>
+                <li>Automatico: rotina diaria <code>EstrategiaNerd-BackupDiario</code> (secao 9).</li>
+                <li>Manual: <code>php scripts/backup.php upload-cloud latest</code> (sistemico) e <code>php scripts/content-sync.php upload-cloud latest</code> (editorial).</li>
+                <li>Pelo admin: <code>/admin/central-operacional-v2/backup-em-nuvem</code> (envio, historico e exclusao controlada).</li>
+                <li>Servico: <code>app/Services/Site/GoogleDriveBackupService.php</code>; configuracao em <code>config/backup-cloud.php</code> (secao <code>google_drive</code>).</li>
               </ul>
             </div>
           </div>
-          <div class="doc-card doc-example mt-4">
-            <p class="doc-label">Estrutura remota</p>
-            <pre class="mt-2 overflow-x-auto text-xs leading-6 text-slate-200"><code>/Estrategia Nerd/backups-ambiente/local/{BACKUP_ID}
-/Estrategia Nerd/backups-ambiente/stage/{BACKUP_ID}
-/Estrategia Nerd/backups-ambiente/production/{BACKUP_ID}</code></pre>
-            <p class="mt-3 text-sm text-slate-300">Cada pasta de backup remoto recebe o manifesto, o dump do banco, o zip de uploads e o zip dos arquivos do sistema do ambiente correspondente.</p>
-          </div>
           <div class="doc-card mt-4">
-            <p class="doc-label">Historico e rastreabilidade</p>
-            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-              <li>A subaba <strong>Nuvem</strong> separa <strong>Conexao e envio</strong> de <strong>Historico de envios</strong>.</li>
-              <li>O manifesto local passa a registrar provedor, destino remoto, horario e status do envio.</li>
-              <li>Ao concluir, a confirmacao permanece na propria tela da nuvem, sem jogar o usuario para fora do contexto.</li>
-              <li>O painel consulta <code>users/get_space_usage</code> para exibir cota total, uso atual e espaco livre da conta conectada.</li>
-              <li>O historico de envios mostra o tamanho total do pacote enviado para apoiar controle de consumo da nuvem.</li>
-              <li>A exclusao usa <code>files/delete_v2</code>, exige <code>files.metadata.write</code> e remove somente a pasta remota registrada no manifesto do backup.</li>
-              <li>A modal do envio mostra etapas reais, incluindo pasta remota, manifesto, banco, uploads, arquivos do sistema e gravacao do historico local.</li>
-            </ul>
-          </div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Passo a passo - primeira conexao</p>
+            <p class="doc-label">Conexao (OAuth)</p>
             <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
-              <li>Criar o app no Dropbox com acesso <strong>App folder</strong>.</li>
-              <li>Configurar <code>BACKUP_DROPBOX_APP_KEY</code>, <code>BACKUP_DROPBOX_APP_SECRET</code> e <code>BACKUP_DROPBOX_REDIRECT_URI</code>.</li>
-              <li>Marcar os scopes necessarios de arquivos e metadados.</li>
-              <li>Conectar a conta pela subaba `Nuvem` e confirmar que o painel saiu de "Configuracao pendente".</li>
-            </ol>
-          </div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Passo a passo - envio</p>
-            <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
-              <li>Garantir que existe um backup valido no ambiente desejado.</li>
-              <li>Usar `Enviar ultimo backup` ou escolher um backup especifico.</li>
-              <li>Acompanhar manifesto, banco, uploads, arquivos do sistema e finalizacao do historico pela modal de progresso real.</li>
-              <li>Conferir o item novo no `Historico de envios` com destino e horario.</li>
+              <li>Variaveis no <code>.env</code> local: <code>BACKUP_GOOGLE_DRIVE_CLIENT_*</code>, <code>BACKUP_GOOGLE_DRIVE_REDIRECT_*</code> e <code>BACKUP_GOOGLE_DRIVE_EDITORIAL_FOLDER</code> (somente nomes aqui; valores ficam no <code>.env</code> e na copia central de credenciais).</li>
+              <li>Callback local da autorizacao: <code>/local/backup/google-drive/callback</code>.</li>
+              <li>Se o token expirar ou a permissao mudar, reconectar pela pagina Backup em Nuvem.</li>
             </ol>
           </div>
           <div class="doc-card doc-alert mt-4">
             <p class="doc-label">Cuidados</p>
             <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
-              <li>Dropbox complementa o backup local; nao substitui a copia local nem o restore controlado.</li>
-              <li>Credenciais OAuth e tokens devem ficar apenas no ambiente local, nunca em codigo versionado.</li>
-              <li>Se mudar permissao do app no Dropbox, a conta pode precisar reconectar para renovar os scopes.</li>
-              <li>Para remover backup remoto, digitar o ID exato do backup; a rotina bloqueia destinos fora da raiz configurada.</li>
+              <li>A nuvem complementa o backup local; nao substitui a copia local nem o restore controlado.</li>
+              <li>A rotina roda nesta maquina Windows (faz o FTP-pull de stage/producao): se ela ficar desligada, nao ha backup novo de stage/producao. Conferir o log diario.</li>
+              <li>Credenciais OAuth e tokens ficam apenas no ambiente local, nunca em codigo versionado.</li>
             </ul>
           </div>
         </section>
 
-        <section id="ambiente" data-doc-panel="ambiente" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'ambiente' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">11) Configuracoes de ambiente (.env)</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Variavel</th><th>Finalidade</th><th>Obs</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">APP_ENV / APP_DEBUG / APP_URL</td><td class="text-slate-300">Controle de ambiente, debug e URL base.</td><td class="text-slate-400">Producao deve estar com debug desligado.</td></tr><tr class="doc-row"><td class="text-white">DB_HOST / DB_PORT / DB_DATABASE / DB_USERNAME / DB_PASSWORD</td><td class="text-slate-300">Conexao principal do sistema.</td><td class="text-slate-400">Nao versionar segredo real.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_PRODUCTION_*</td><td class="text-slate-300">Acesso remoto para backup de producao.</td><td class="text-slate-400">Obrigatorio para backup remoto.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_DROPBOX_APP_KEY / BACKUP_DROPBOX_APP_SECRET</td><td class="text-slate-300">Credenciais OAuth do app Dropbox.</td><td class="text-slate-400">Devem ficar apenas no `.env` local.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_DROPBOX_REDIRECT_URI</td><td class="text-slate-300">Callback local da autorizacao.</td><td class="text-slate-400">Precisa bater exatamente com o app no Dropbox.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_DROPBOX_REMOTE_ROOT</td><td class="text-slate-300">Raiz remota do backup em nuvem.</td><td class="text-slate-400">Base da estrutura `local / stage / production`.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_CURRENT_SOURCE</td><td class="text-slate-300">Identifica a origem atual da operacao (`local`, `stage`, etc.).</td><td class="text-slate-400">Usado para travar publish inseguro.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_APPROVED_PACKAGE_SOURCE</td><td class="text-slate-300">Origem autorizada para pacote de producao.</td><td class="text-slate-400">Padrao recomendado: `stage`.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_LABEL</td><td class="text-slate-300">Nome humano da stage oficial.</td><td class="text-slate-400">Ex.: `estrategia-nerd-stage`.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_DB_*</td><td class="text-slate-300">Banco remoto da stage para homologacao.</td><td class="text-slate-400">Nao reaproveitar credencial de producao.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_FTP_*</td><td class="text-slate-300">Uploads remotos da stage.</td><td class="text-slate-400">Mantem midias e banco homologados no mesmo ambiente.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_CODE_*</td><td class="text-slate-300">Deploy tecnico dedicado da stage.</td><td class="text-slate-400">Separar raiz tecnica da stage da raiz de producao.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_PRODUCTION_*</td><td class="text-slate-300">Sync de conteudo e deploy de codigo.</td><td class="text-slate-400">Separar dados de conteudo e codigo.</td></tr></tbody></table></div><p class="mt-3 text-sm text-slate-300">Seguranca: `.env` nao pode ser commitado com credencial real. Usar `.env.example` como referencia limpa.</p></section>
+        <section id="ambiente" data-doc-panel="ambiente" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'ambiente' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">11) Configuracoes de ambiente (.env)</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Variavel</th><th>Finalidade</th><th>Obs</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">APP_ENV / APP_DEBUG / APP_URL</td><td class="text-slate-300">Controle de ambiente, debug e URL base.</td><td class="text-slate-400">Producao deve estar com debug desligado.</td></tr><tr class="doc-row"><td class="text-white">DB_HOST / DB_PORT / DB_DATABASE / DB_USERNAME / DB_PASSWORD</td><td class="text-slate-300">Conexao principal do sistema.</td><td class="text-slate-400">Nao versionar segredo real.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_PRODUCTION_*</td><td class="text-slate-300">Acesso remoto para backup de producao.</td><td class="text-slate-400">Obrigatorio para backup remoto.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_ROOT / BACKUP_RETENTION / BACKUP_MYSQL_BINARY / BACKUP_MYSQLDUMP_BINARY</td><td class="text-slate-300">Pasta local dos backups, retencao e binarios do MySQL.</td><td class="text-slate-400">Usados pela rotina diaria e por verify-backup-restore.php.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_GOOGLE_DRIVE_CLIENT_* / BACKUP_GOOGLE_DRIVE_REDIRECT_* / BACKUP_GOOGLE_DRIVE_EDITORIAL_FOLDER</td><td class="text-slate-300">OAuth e pasta do backup em nuvem (Google Drive).</td><td class="text-slate-400">Somente no .env local.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_DROPBOX_*</td><td class="text-slate-300">Legado (Dropbox descontinuado no IMP-023).</td><td class="text-slate-400">Nao usado pela rotina atual.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_STAGE_SYSTEM_* / BACKUP_PRODUCTION_SYSTEM_*</td><td class="text-slate-300">FTP dos arquivos do sistema de stage/producao para o backup.</td><td class="text-slate-400">Separado do FTP de uploads.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_CURRENT_SOURCE</td><td class="text-slate-300">Identifica a origem atual da operacao (`local`, `stage`, etc.).</td><td class="text-slate-400">Usado para travar publish inseguro.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_APPROVED_PACKAGE_SOURCE</td><td class="text-slate-300">Origem autorizada para pacote de producao.</td><td class="text-slate-400">Padrao recomendado: `stage`.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_LABEL</td><td class="text-slate-300">Nome humano da stage oficial.</td><td class="text-slate-400">Ex.: `estrategia-nerd-stage`.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_DB_*</td><td class="text-slate-300">Banco remoto da stage para homologacao.</td><td class="text-slate-400">Nao reaproveitar credencial de producao.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_FTP_*</td><td class="text-slate-300">Uploads remotos da stage.</td><td class="text-slate-400">Mantem midias e banco homologados no mesmo ambiente.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_CODE_*</td><td class="text-slate-300">Deploy tecnico dedicado da stage.</td><td class="text-slate-400">Separar raiz tecnica da stage da raiz de producao.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_PRODUCTION_*</td><td class="text-slate-300">Sync de conteudo e deploy de codigo.</td><td class="text-slate-400">Separar dados de conteudo e codigo.</td></tr><tr class="doc-row"><td class="text-white">CF_ACCESS_TEAM_DOMAIN / CF_ACCESS_AUD / ALLOW_LAN_ACCESS</td><td class="text-slate-300">Cloudflare Access e acesso por LAN as rotas locais.</td><td class="text-slate-400">Ver secao 6.</td></tr><tr class="doc-row"><td class="text-white">INSTAGRAM_PUBLIC_MEDIA_URL</td><td class="text-slate-300">Endereco publico de onde a Meta baixa videos e capas.</td><td class="text-slate-400">Nao pode ser localhost.</td></tr><tr class="doc-row"><td class="text-white">GEMINI_API_KEY / GEMINI_TEXT_MODEL / GEMINI_TEXT_MODEL_FALLBACK</td><td class="text-slate-300">Legendas geradas no cross-post Blog → Instagram.</td><td class="text-slate-400">Somente no .env.</td></tr><tr class="doc-row"><td class="text-white">MATOMO_URL / MATOMO_SITE_ID</td><td class="text-slate-300">Analytics do portal.</td><td class="text-slate-400">Matomo em conta separada (IMP-022).</td></tr><tr class="doc-row"><td class="text-white">GOOGLE_SEARCH_CONSOLE_CLIENT_* / _REFRESH_* / _SITE_*</td><td class="text-slate-300">Monitoramento de SEO (<code>/local/monitoramento</code> e seo-tecnico).</td><td class="text-slate-400">OAuth local.</td></tr><tr class="doc-row"><td class="text-white">HOSTINGER_API_* / HOSTINGER_API_BASE_*</td><td class="text-slate-300">Painel Hostinger API na Central Operacional V2.</td><td class="text-slate-400">Somente no .env.</td></tr><tr class="doc-row"><td class="text-white">SHOPEE_APP_* / SHOPEE_SUB_ID_DEFAULT</td><td class="text-slate-300">Afiliados Shopee (IMP-029).</td><td class="text-slate-400">Somente no .env.</td></tr><tr class="doc-row"><td class="text-white">NERDOPS_STATS_TOKEN</td><td class="text-slate-300">Leitura de estatisticas pelo NERD // OPS.</td><td class="text-slate-400">Token; nunca versionar.</td></tr><tr class="doc-row"><td class="text-white">SMOKE_* / AUTOMATED_TEST_*</td><td class="text-slate-300">Usuarios e alvos dos testes automatizados.</td><td class="text-slate-400">Contas de teste restritas.</td></tr></tbody></table></div><p class="mt-3 text-sm text-slate-300">Seguranca: `.env` nao pode ser commitado com credencial real. Usar `.env.example` como referencia limpa.</p></section>
 
         <section id="governanca-releases" data-doc-panel="governanca-releases" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'governanca-releases' ? '' : 'hidden' ?>>
           <h2 class="font-orbitron text-xl font-bold text-cyan-200">12) Governanca oficial de releases</h2>
@@ -428,9 +436,13 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
               Nada sobe sem ID, documentacao minima, teste minimo, impacto conhecido, origem validada e paridade confirmada.
             </p>
           </div>
+          <div class="doc-card doc-rule mt-4">
+            <p class="doc-label">Validacao obrigatoria antes de concluir ou commitar</p>
+            <p class="mt-2 text-sm text-slate-200"><code>C:\xampp\php\php.exe scripts/verify-changes.php</code> precisa terminar em <strong>APROVADO COM SUCESSO! (0 FALHAS)</strong> (lint, PHPStan nivel 5, dashboard nos 3 ambientes e modulo Instagram). A documentacao central afetada tambem precisa estar atualizada (secao 15).</p>
+          </div>
         </section>
 
-        <section id="diagnostico" data-doc-panel="diagnostico" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'diagnostico' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">13) Erros comuns e diagnostico rapido</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Problema</th><th>Possivel causa</th><th>Acao recomendada</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">Imagem nao aparece</td><td class="text-slate-300">Path quebrado ou arquivo fora de uploads.</td><td class="text-slate-400">Revisar referencia no banco e em `public/uploads`.</td></tr><tr class="doc-row"><td class="text-white">Capa pesada degradando o site</td><td class="text-slate-300">Capa do artigo salva em PNG de alto peso (~2 a 3 MB).</td><td class="text-slate-400">Obrigatorio converter para WebP (~150-250 KB) e apontar `posts.imagem_capa` para `capa.webp`.</td></tr><tr class="doc-row"><td class="text-white">Colisao de slugs no sync de posts</td><td class="text-slate-300">Post no destino capturado por historico antigo de outro post do lote.</td><td class="text-slate-400">Reivindicacao direta tem precedencia absoluta; limpar redirecionamentos obsoletos em `post_slug_history`.</td></tr><tr class="doc-row"><td class="text-white">Post ou Reel preso em rascunho</td><td class="text-slate-300">Item movido para rascunho para ajuste de midia e esquecido sem reagendamento.</td><td class="text-slate-400">Revisao so termina quando o status volta para `agendado` com data e horario validos.</td></tr><tr class="doc-row"><td class="text-white">Post agendado posterior ao fato</td><td class="text-slate-300">Falta de checagem do prazo do evento (ex.: fim de suporte).</td><td class="text-slate-400">Conteudo com deadline deve ser agendado com 1 a 3 dias de antecedencia do fato, nunca depois.</td></tr><tr class="doc-row"><td class="text-white">Rota nao carrega</td><td class="text-slate-300">Regra em `config/routes.php`, `public/index.php` ou `.htaccess` incorreta.</td><td class="text-slate-400">Rodar preflight e validar entrada publica.</td></tr><tr class="doc-row"><td class="text-white">Conteudo nao sincroniza</td><td class="text-slate-300">Pacote invalido, lock ativo ou alvo remoto incompleto.</td><td class="text-slate-400">Verificar manifesto, lock e credenciais `CONTENT_SYNC_PRODUCTION_*`.</td></tr><tr class="doc-row"><td class="text-white">Pacote falha na validacao</td><td class="text-slate-300">JSON ausente, upload faltando ou manifesto inconsistente.</td><td class="text-slate-400">Executar verificacao do pacote e revisar arquivos referenciados.</td></tr><tr class="doc-row"><td class="text-white">Dropbox falha no envio</td><td class="text-slate-300">Scope ausente, redirect URI divergente ou token invalido.</td><td class="text-slate-400">Revisar app no Dropbox, scopes, callback e reconectar a conta.</td></tr><tr class="doc-row"><td class="text-white">Texto com acentuacao quebrada</td><td class="text-slate-300">Arquivo salvo com encoding invalido ou scanner gerando falso-positivo.</td><td class="text-slate-400">Usar o scanner estrito por bytes de continuacao UTF-8 (`scripts/preflight-encoding.php`).</td></tr></tbody></table></div>
+        <section id="diagnostico" data-doc-panel="diagnostico" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'diagnostico' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">13) Erros comuns e diagnostico rapido</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Problema</th><th>Possivel causa</th><th>Acao recomendada</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">Imagem nao aparece</td><td class="text-slate-300">Path quebrado ou arquivo fora de uploads.</td><td class="text-slate-400">Revisar referencia no banco e em `public/uploads`.</td></tr><tr class="doc-row"><td class="text-white">Capa pesada degradando o site</td><td class="text-slate-300">Capa do artigo salva em PNG de alto peso (~2 a 3 MB).</td><td class="text-slate-400">Obrigatorio converter para WebP (~150-250 KB) e apontar `posts.imagem_capa` para `capa.webp`.</td></tr><tr class="doc-row"><td class="text-white">Colisao de slugs no sync de posts</td><td class="text-slate-300">Post no destino capturado por historico antigo de outro post do lote.</td><td class="text-slate-400">Reivindicacao direta tem precedencia absoluta; limpar redirecionamentos obsoletos em `post_slug_history`.</td></tr><tr class="doc-row"><td class="text-white">Post ou Reel preso em rascunho</td><td class="text-slate-300">Item movido para rascunho para ajuste de midia e esquecido sem reagendamento.</td><td class="text-slate-400">Revisao so termina quando o status volta para `agendado` com data e horario validos.</td></tr><tr class="doc-row"><td class="text-white">Post agendado posterior ao fato</td><td class="text-slate-300">Falta de checagem do prazo do evento (ex.: fim de suporte).</td><td class="text-slate-400">Conteudo com deadline deve ser agendado com 1 a 3 dias de antecedencia do fato, nunca depois.</td></tr><tr class="doc-row"><td class="text-white">Rota nao carrega</td><td class="text-slate-300">Regra em `config/routes.php`, `public/index.php` ou `.htaccess` incorreta.</td><td class="text-slate-400">Rodar preflight e validar entrada publica.</td></tr><tr class="doc-row"><td class="text-white">Conteudo nao sincroniza</td><td class="text-slate-300">Pacote invalido, lock ativo ou alvo remoto incompleto.</td><td class="text-slate-400">Verificar manifesto, lock e credenciais `CONTENT_SYNC_PRODUCTION_*`.</td></tr><tr class="doc-row"><td class="text-white">Pacote falha na validacao</td><td class="text-slate-300">JSON ausente, upload faltando ou manifesto inconsistente.</td><td class="text-slate-400">Executar verificacao do pacote e revisar arquivos referenciados.</td></tr><tr class="doc-row"><td class="text-white">Dropbox falha no envio</td><td class="text-slate-300">Scope ausente, redirect URI divergente ou token invalido.</td><td class="text-slate-400">Revisar app no Dropbox, scopes, callback e reconectar a conta.</td></tr><tr class="doc-row"><td class="text-white">Texto com acentuacao quebrada</td><td class="text-slate-300">Arquivo salvo com encoding invalido ou scanner gerando falso-positivo.</td><td class="text-slate-400">Usar o scanner estrito por bytes de continuacao UTF-8 (`scripts/preflight-encoding.php`).</td></tr><tr class="doc-row"><td class="text-white">Reel bloqueado: "Capa do Reel ausente ou invalida"</td><td class="text-slate-300">Falta o <code>.jpg</code> com o mesmo nome do <code>.mp4</code>.</td><td class="text-slate-400">Gerar a capa JPEG ao lado do video; nunca publicar sem capa (<code>scripts/verify-reel-cover.php</code>).</td></tr><tr class="doc-row"><td class="text-white">Reel publicado com o video antigo</td><td class="text-slate-300">A fila aponta para outro arquivo em <code>video_rendered_path</code>.</td><td class="text-slate-400">Seguir o procedimento de troca de video (secao 16).</td></tr><tr class="doc-row"><td class="text-white">Render dos Reels derruba o Chrome ao capturar quadro em PNG</td><td class="text-slate-300">Fundo muito detalhado deixa a captura PNG grande demais.</td><td class="text-slate-400">Renderizar o video (JPEG) e extrair os quadros do proprio video.</td></tr><tr class="doc-row"><td class="text-white">Backup gerado, mas sem prova de restore</td><td class="text-slate-300">O restore oficial so restaura por cima de um ambiente real.</td><td class="text-slate-400">Usar <code>scripts/verify-backup-restore.php</code> (banco temporario).</td></tr><tr class="doc-row"><td class="text-white">Acentos corrompidos em tarefas do Forge</td><td class="text-slate-300">Texto enviado pelo shell em codificacao errada.</td><td class="text-slate-400">Enviar o JSON a partir de arquivo UTF-8 (<code>curl.exe --data-binary @arquivo.json</code>).</td></tr></tbody></table></div>
           <div class="mt-4 grid gap-4 xl:grid-cols-2 lg:grid-cols-2">
             <div class="doc-card">
               <p class="doc-label">Troubleshooting - posts & reels</p>
@@ -438,7 +450,7 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
                 <li>Reels revisados devem retornar imediatamente para <code>agendado</code> com <code>render_status = ready</code>.</li>
                 <li>Verificar prazos: noticias e encerramentos de suporte nunca saem apos a data limite.</li>
                 <li>Grade oficial do canal: 2 publicacoes diarias nos horarios de pico (<strong>12:00</strong> e <strong>19:30</strong>).</li>
-                <li>Todas as capas do blog devem ser salvas no padrao WebP otimizado (~150-250 KB).</li>
+                <li>Todas as capas do blog devem ser salvas no padrao WebP otimizado (~150-250 KB).</li><li>Texto de Reel so dentro da area segura do Instagram (secao 16); imagem pode ficar sob os icones.</li><li>Video de Reel: capa <code>.jpg</code> com o mesmo nome, ao lado do <code>.mp4</code> em <code>public/uploads/reels/...</code>.</li>
               </ul>
             </div>
             <div class="doc-card">
@@ -469,9 +481,63 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
           </div>
         </section>
 
-        <section id="evolucao" data-doc-panel="evolucao" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'evolucao' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">14) Evolucao tecnica</h2><div class="doc-card doc-example mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Versao inicial do portal editorial e dashboard admin.</li><li>Criacao da Central Nerd como pagina de conversao.</li><li>Adicao da rotina local de backup com restore controlado.</li><li>Implementacao da sincronizacao de conteudo/codigo com paridade.</li><li>Refino dos hubs tecnicos no admin local com navegacao assincrona.</li><li>Modal operacional de Conteudo com progresso real e rastreabilidade de aplicacao de pacotes.</li><li>Modal operacional de Backup e Restore com progresso real para backup, verificacao e restore.</li><li>Integracao Dropbox/Nuvem para backup de ambiente, com OAuth, envio manual, envio automatico e historico paginado.</li><li>Reforco de preflight, documentacao interna, governanca de releases e bloqueio por origem aprovada.</li></ul></div></section>
+        <section id="evolucao" data-doc-panel="evolucao" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'evolucao' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">14) Evolucao tecnica</h2><div class="doc-card doc-example mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Versao inicial do portal editorial e dashboard admin.</li><li>Criacao da Central Nerd como pagina de conversao.</li><li>Adicao da rotina local de backup com restore controlado.</li><li>Implementacao da sincronizacao de conteudo/codigo com paridade.</li><li>Refino dos hubs tecnicos no admin local com navegacao assincrona.</li><li>Modal operacional de Conteudo com progresso real e rastreabilidade de aplicacao de pacotes.</li><li>Modal operacional de Backup e Restore com progresso real para backup, verificacao e restore.</li><li>Integracao Dropbox/Nuvem para backup de ambiente (substituida pelo Google Drive no IMP-023).</li><li>Reforco de preflight, documentacao interna, governanca de releases e bloqueio por origem aprovada.</li><li>Modulo Instagram (FEAT-010): contas, fila de posts, publicacao agendada, confirmacao na Meta, cross-post Blog → Instagram e feed publico automatico na home.</li><li>Reels: Smart Canvas, Konva (reels-konva), biblioteca de trilhas (IMP-032) e Reels em tipografia cinetica com a skill motionmaxxing (reels-motionmaxxing).</li><li>Central Operacional V2 (backups sistemico/editorial, nuvem, observabilidade, Hostinger API, SEO tecnico) e Central Tecnica (Base de Conhecimento).</li><li>Backup diario automatico com Google Drive (IMP-023) e prova de restauracao em banco temporario (<code>verify-backup-restore.php</code>).</li><li>Afiliados e links (IMP-027 a IMP-031), monitoramento de links e Search Console.</li><li>Qualidade: PHPStan nivel 5 e suite <code>verify-changes.php</code>; Cloudflare Access na frente do admin.</li><li>Tarefas somente no Forge; documentacao central com guia proprio (<code>docs/governanca/documentacao-central.md</code>).</li></ul></div></section>
 
-        <section id="governanca" data-doc-panel="governanca" class="doc-panel rounded-3xl border border-fuchsia-500/20 bg-slate-900/80 p-6" <?= $docSection === 'governanca' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-fuchsia-200">15) Governanca da documentacao</h2><p class="mt-3 text-sm leading-7 text-slate-300">Esta pagina e a documentacao principal local do portal. Toda mudanca estrutural, operacional, de release ou de deploy deve atualizar esta base no mesmo ciclo de trabalho.</p><div class="mt-4 rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/10 p-4 text-sm text-fuchsia-50"><ol class="list-decimal space-y-1 pl-5"><li>Atualizar a secao impactada da documentacao principal.</li><li>Revisar compatibilidade com `docs/CODEX-REGRAS-PERMANENTES.txt`.</li><li>Revisar tambem `docs/governanca/priorizacao-tecnica.md` quando a alteracao mudar risco, prioridade ou criterio de execucao.</li><li>Atualizar feature/release/checklist/rollback quando a alteracao exigir.</li><li>Executar preflight antes de qualquer empacotamento.</li><li>Registrar observacao operacional no fechamento da tarefa.</li></ol></div></section>
+        <section id="governanca" data-doc-panel="governanca" class="doc-panel rounded-3xl border border-fuchsia-500/20 bg-slate-900/80 p-6" <?= $docSection === 'governanca' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-fuchsia-200">15) Governanca da documentacao</h2><p class="mt-3 text-sm leading-7 text-slate-300">Esta pagina e a documentacao principal local do portal. Toda mudanca estrutural, operacional, de release ou de deploy deve atualizar esta base no mesmo ciclo de trabalho.</p><div class="mt-4 rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/10 p-4 text-sm text-fuchsia-50"><p class="mb-2">Guia obrigatorio para qualquer IA ou pessoa: <code>docs/governanca/documentacao-central.md</code> (qual arquivo alimenta cada area da Central Tecnica, quando atualizar e como validar). Citado no <code>AGENTS.md</code>.</p><ol class="list-decimal space-y-1 pl-5"><li>Atualizar a secao impactada da documentacao principal na mesma tarefa da alteracao.</li><li>Revisar compatibilidade com `docs/CODEX-REGRAS-PERMANENTES.txt`.</li><li>Revisar tambem `docs/governanca/priorizacao-tecnica.md` quando a alteracao mudar risco, prioridade ou criterio de execucao.</li><li>Atualizar feature/release/checklist/rollback quando a alteracao exigir.</li><li>Executar preflight antes de qualquer empacotamento e <code>verify-changes.php</code> antes de concluir.</li><li>Conferir a pagina renderizada (rotas <code>/local/*</code>) depois de editar.</li><li>Registrar a tarefa e concluir no Forge (projeto Estrategia Nerd) so depois da validacao.</li><li>Revisao mensal: tarefa recorrente no Forge.</li></ol></div></section>
+
+        <section id="instagram" data-doc-panel="instagram" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'instagram' ? '' : 'hidden' ?>>
+          <h2 class="font-orbitron text-xl font-bold text-cyan-200">16) Instagram e Reels</h2>
+          <div class="doc-card doc-rule mt-4">
+            <p class="doc-label">Visao geral (FEAT-010)</p>
+            <p class="mt-2 text-sm text-slate-200">Modulo de ambiente unico: tokens, fila e cache ficam <strong>somente no MySQL local</strong> (<code>$GLOBALS['pdo']</code>), nas tabelas <code>instagram_accounts</code>, <code>instagram_posts</code>, <code>instagram_post_media</code>, <code>instagram_insights_cache</code> e <code>instagram_audio_tracks</code>. Tela: <code>/admin/instagram</code>. Documento completo: <code>docs/features/FEAT-010.md</code>.</p>
+          </div>
+          <div class="mt-4 grid gap-4 xl:grid-cols-2">
+            <div class="doc-card">
+              <p class="doc-label">Publicacao agendada</p>
+              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
+                <li>Tarefa do Windows <code>EstrategiaNerd-InstagramPublicarAgendados</code> (a cada 5 min) roda <code>scripts/en-instagram-publish-scheduled.php</code>.</li>
+                <li>Grade: 12:00 e 19:30. Lock atomico <code>agendado</code> → <code>publicando</code>; confirmacao na Meta antes de marcar publicado.</li>
+                <li>Log: <code>storage/logs/instagram/publish-AAAA-MM.log</code>.</li>
+                <li>A Meta baixa video e capa de <code>INSTAGRAM_PUBLIC_MEDIA_URL</code> (hoje <code>https://nerd.tfr-info.com.br</code>, servido por esta maquina).</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <p class="doc-label">Qual video sai</p>
+              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
+                <li>Reel com trilha: usa <code>instagram_posts.video_rendered_path</code> quando <code>render_status = ready</code> e o arquivo existe; senao, regenera pelo renderer editorial (Konva) com a trilha cadastrada.</li>
+                <li>A capa <code>.jpg</code> com o mesmo nome do <code>.mp4</code> e obrigatoria; sem ela o envio e bloqueado.</li>
+                <li>Feed publico da home: <code>scripts/en-instagram-publish-feed.php</code>; para pausar sem apagar nada, criar <code>storage/instagram-feed-publish/auto.disabled</code>.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="doc-card mt-4">
+            <p class="doc-label">Trocar o video de um Reel ja agendado</p>
+            <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
+              <li>Copiar o novo <code>.mp4</code> (H.264 + AAC, 1080x1920, 30 fps) e a capa <code>.jpg</code> de mesmo nome para <code>public/uploads/reels/&lt;lote&gt;/</code>, com a proxima versao (<code>reel-&lt;id&gt;-vN</code>), sem sobrescrever arquivos.</li>
+              <li>Em uma transacao, atualizar <code>instagram_posts.video_rendered_path</code> (mantendo <code>render_status = ready</code>) e <code>instagram_post_media.caminho</code> da linha de video, so se o post ainda estiver <code>agendado</code>, sem <code>creation_id</code>/<code>ig_media_id</code> e com o video antigo. O script usado em 13/10/2026 (com <code>--rollback</code>) fica em <code>scratch/reels-motionmaxxing/swap-posts.php</code> (pasta local, nao versionada).</li>
+              <li>Validar: reler o post, rodar <code>AudioReelGeneratorService::readyVideoPath</code> e <code>InstagramApiService::reelCoverParams</code>, abrir o endereco publico do video/capa (HTTP 200) e rodar <code>verify-changes.php</code>.</li>
+              <li>Os videos antigos continuam na pasta para rollback.</li>
+            </ol>
+          </div>
+          <div class="mt-4 grid gap-4 xl:grid-cols-2">
+            <div class="doc-card doc-alert">
+              <p class="doc-label">Area segura do texto (Reels 1080x1920)</p>
+              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
+                <li>Vale so para <strong>texto</strong>; imagem e fundo podem ficar sob os icones.</li>
+                <li>Nenhum texto acima de Y 170 nem abaixo de Y 1540.</li>
+                <li>Entre Y 970 e 1790 (coluna de icones), texto ate X 925; margem lateral minima X 72.</li>
+                <li>Medir no navegador com o texto assentado; letras em movimento podem passar por instantes.</li>
+              </ul>
+            </div>
+            <div class="doc-card">
+              <p class="doc-label">Producao de Reels</p>
+              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
+                <li>Padrao aprovado (out/2026): imagem do post inteira na moldura, texto como foco com animacao que representa o sentido, fontes ligadas ao tema, som escolhido. Detalhes: <code>docs/features/reels-motionmaxxing.md</code>.</li>
+                <li>Renderers do sistema: <code>KonvaReelRenderer</code>, <code>EditorialMotionReelRenderer</code>, <code>SmartCanvasRenderer</code>; trilhas em <code>public/uploads/audio</code> (IMP-032).</li>
+              </ul>
+            </div>
+          </div>
+        </section>
       </div>
     </article>
   </div>

@@ -164,6 +164,10 @@ Tambem validar:
 - comportamentos previamente corrigidos
 - status HTTP correto nas rotas publicas criticas
 
+Validacao automatizada obrigatoria antes de concluir ou commitar:
+  C:\xampp\php\php.exe scripts/verify-changes.php
+  Resultado exigido: APROVADO COM SUCESSO! (0 FALHAS)
+
 Se nao testar, a alteracao nao esta completa.
 
 ============================================================
@@ -205,13 +209,17 @@ Em producao, NAO usar:
 - Controllers terminam com Controller
 - Services terminam com Service
 - Repositories terminam com Repository
+- Classes de apoio em app/Services podem usar sufixos que descrevem o papel:
+  Renderer, Publisher, Presenter, Reconciler, Fitter, Exception
+- Codigo novo: SQL fica no Repository. Ao alterar um service que ja
+  consulta o banco direto, mover esse SQL para o repository na mesma tarefa
 
 - Nomes devem ser descritivos
 - Arquivo deve refletir responsabilidade
 - Alteracao deve ser a menor necessaria para resolver o problema
 
 ============================================================
-10. COMPORTAMENTO OBRIGATORIO DO CODEX
+10. COMPORTAMENTO OBRIGATORIO DOS AGENTES DE IA (CODEX, CLAUDE, OPENCODE E OUTROS)
 ============================================================
 
 Voce nao e um executor livre.
@@ -410,3 +418,19 @@ Para garantir que incidentes ocorridos anteriormente nao se repitam:
 
 6. VALIDACAO ESTRITA DE ENCODING UTF-8:
    - Toda verificacao de integridade de arquivos de texto deve utilizar o verificador estrito baseado em bytes de continuacao (`scripts/preflight-encoding.php`), evitando falsos-positivos em caracteres acentuados legitimos (ex.: "NAO").
+
+7. REELS: AREA SEGURA DO TEXTO, CAPA E TROCA DE VIDEO:
+   - Em Reels 1080x1920, TEXTO so dentro da area segura do Instagram: nada acima de Y 170 nem abaixo de Y 1540; entre Y 970 e 1790 (coluna de icones) o texto vai ate X 925; margem lateral minima X 72. Imagem e fundo podem ficar sob os icones.
+   - A area segura deve ser MEDIDA no navegador com o texto assentado; relatar os numeros.
+   - Todo video de Reel precisa da capa .jpg com o mesmo nome, ao lado do .mp4. Sem capa, o envio e bloqueado (nunca contornar).
+   - Trocar o video de um Reel agendado so em transacao, apenas se o post estiver "agendado", sem creation_id/ig_media_id e com o video antigo esperado; nunca sobrescrever o arquivo antigo (ele e o rollback). Procedimento: Documentacao Tecnica, secao 16.
+
+============================================================
+18. DOCUMENTACAO CENTRAL E TAREFAS (OBRIGATORIO)
+============================================================
+
+- Toda alteracao do sistema atualiza, NA MESMA TAREFA, a documentacao central exibida em Central Tecnica > Base de Conhecimento.
+- Guia obrigatorio: docs/governanca/documentacao-central.md (qual arquivo alimenta cada area, quando atualizar e como validar na pagina renderizada).
+- Criar um .md em docs/features registra a entrega, mas NAO substitui atualizar as paginas centrais afetadas.
+- Tarefas ficam SOMENTE no Forge (projeto Estrategia Nerd), com prefixo [Assunto] - Descricao. Itens de baixa prioridade ficam em docs/governanca/backlog-baixa-prioridade.md.
+- Alteracao sem documentacao central atualizada e validada NAO esta concluida.
