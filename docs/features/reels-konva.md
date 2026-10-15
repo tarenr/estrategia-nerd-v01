@@ -1,6 +1,12 @@
-# Reels Konva — padrão editorial local com som
+# Reels Konva — padrão editorial local com som (LEGADO / DESCONTINUADO)
 
-## Integração editorial v2
+> [!WARNING]
+> **DOCUMENTAÇÃO HISTÓRICA / MOTOR LEGADO DESCONTINUADO**
+> O motor Canvas/Skia `reels-konva` foi **substituído oficialmente em 13/10/2026 pela feature `FEAT-REELS-MOTION` (skill `motionmaxxing`)**.
+> Reels produzidos no Konva foram reprovados pelo usuário por falta de animação nos textos (slides estáticos estilo PowerPoint).
+> **Padrão vigente e mandatório:** Consulte exclusivamente [`docs/features/reels-motionmaxxing.md`](file:///c:/Users/WINDOWS/Projects/estrategia-nerd/docs/features/reels-motionmaxxing.md).
+
+## Integração editorial v2 (Histórico)
 
 O plano aprovado em 07/10/2026 inclui tornar Konva o padrão dos próximos Reels editoriais do blog e substituir os 26 agendados. O modelo conserva o visual do piloto aprovado: quatro cenas, tipografia local, molduras, movimento de imagem, entrada de texto, partículas e progresso. As paletas identificam hardware, games, dicas e cultura nerd. Os textos usam título e trechos do resumo do próprio artigo, além de chamadas genéricas para leitura; não há geração paga de imagens nem de fatos.
 

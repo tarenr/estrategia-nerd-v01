@@ -188,9 +188,9 @@ Esta seção estabelece regras mandatórias para a produção automotiva/assisti
 - **Zero Categorias Nulas (`categoria_id` / `categoria_post_id`):** O campo de categoria nunca pode ser mantido como `NULL` na tabela `posts` ou em relacionamentos de categoria.
 - **Mapeamento Explícito de IDs:** Todos os rascunhos e scripts de importação (`ContentSyncManager.php`, `en-blog-draft.php`) devem forçar o vínculo correto (ex.: Games=3, Dicas=5, Cultura Geek=4, Hardware=2, Gadgets=1, Lifestyle=6) para garantir que as postagens sejam listadas nas páginas de categoria do site principal.
 
-### 10.3. Motor de Renderização Konva/Skia para Instagram Reels
-- **Proibição de FFmpeg Full-Bleed Genérico:** Vídeos em formato Reel/Shorts do Instagram NUNCA devem ser gerados esticando imagens em tela cheia via scripts FFmpeg primários.
-- **Uso do Node.js Konva Smart Canvas Engine:** Toda renderização de Reel deve utilizar o pipeline oficial Node.js (`scripts/reels-konva/` / `scripts/reels-review/`), posicionando imagens dentro do `IMAGE_FRAME` (908x511), com cabeçalho de categoria, título em fonte serifada padronizada, rodapé de marca e overlay visual refinado.
+### 10.3. Padrão Oficial de Renderização de Reels: Motionmaxxing
+- **Proibição de Slides Estáticos ("Estilo PowerPoint"):** Vídeos em formato Reel/Shorts do Instagram NUNCA devem ser gerados como apresentações de slides com textos e imagens estáticas congeladas (o motor Canvas/Skia legado em `scripts/reels-konva/` foi reprovado e descontinuado para novos lançamentos).
+- **Padrão Obrigatório Motionmaxxing:** Toda produção oficial de Reel deve utilizar a skill `motionmaxxing` (`C:\Users\WINDOWS\.claude\skills\motionmaxxing` e diretrizes em `docs/features/reels-motionmaxxing.md`), gerando tipografia cinética animada letra por letra com sentido (ex.: luz e ordem, brasa e fogo, tinta e pergaminho), moldura central com deriva lenta contínua (pan cinematográfico) da imagem do post, fontes ligadas ao tema (`Cinzel`, `Cormorant Garamond`, `Orbitron`, `Dela Gothic One`), e renderização via Chrome Headless com shutter de 180°, subframes e granulação cinematográfica.
 
 ### 10.4. Otimização de Vídeo e Streaming Móvel (`-movflags +faststart`)
 - **Cabeno Moov Atom no Início (`+faststart`):** Todo renderizador ou conversor de MP4 (FFmpeg) DEVE incluir a flag `-movflags +faststart`. Isso move os metadados do cabeçalho do arquivo para o início, permitindo reprodução instantânea no Safari Mobile, Chrome e via túnel Cloudflare sem travamentos de streaming.

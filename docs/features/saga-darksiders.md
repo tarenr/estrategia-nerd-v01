@@ -51,7 +51,15 @@ A escolha foi feita pelo título e pelo grupo, **sem audição**. Alternativas d
 
 ## Reel
 
-### Atual — v3 com referências da gameplay
+> [!IMPORTANT]
+> **Padrão Oficial dos Reels da Saga: Migração Mandatória para Motionmaxxing (15/10/2026)**
+> Os testes e versões preliminares renderizados com o motor legado Canvas/Skia (`scripts/reels-konva/editorial.mjs`) foram **descontinuados e reprovados** por falta de animação nos textos (comportamento estático "estilo PowerPoint", sem tipografia cinética).
+> Conforme alinhamento oficial e diretrizes em `docs/features/reels-motionmaxxing.md`, toda a produção de Reels da Saga Darksiders (Capítulos 1 a 6) utilizará exclusivamente a skill **`motionmaxxing`** (`C:\Users\WINDOWS\.claude\skills\motionmaxxing`), aplicando:
+> 1. **Tipografia Cinética:** Palavras como foco central em `Cinzel` e `Cormorant Garamond`, animadas letra por letra com representação de sentido (luz e ordem celestial, brasa viva infernal e nanquim de pena no pergaminho).
+> 2. **Deriva Lenta da Imagem:** Moldura com pan cinematográfico contínuo sobre a gravura aprovada, sem congelamentos.
+> 3. **Renderização de Estúdio:** Chrome Headless com shutter de 180°, subframes (8x) e granulação orgânica de filme.
+
+### Histórico Legado — v3 (Konva descontinuado)
 
 As artes v2 foram substituídas após o usuário apontar falta de fidelidade à franquia, especialmente no Conselho. A etapa v3 usou capturas e modelos do jogo fornecidos pelo usuário para anjos, demônios e as três cabeças de pedra; concept art não foi usada como referência final desses modelos. O acabamento foi corrigido para desenho em tinta/hachuras sobre papel aparente, com pigmentos discretos, evitando aparência de captura impressa. Personagens variados, sem tropas clonadas. Os selos seguem a disposição circular de sete formas quadradas luminosas na cena final de *Darksiders Genesis*, redesenhadas como gravura; fissuras representam artisticamente sua ruptura, e não reproduzem literalmente um quadro do jogo.
 

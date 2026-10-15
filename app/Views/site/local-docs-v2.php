@@ -507,7 +507,7 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
             <div class="doc-card">
               <p class="doc-label">Qual video sai</p>
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Reel com trilha: usa <code>instagram_posts.video_rendered_path</code> quando <code>render_status = ready</code> e o arquivo existe; senao, regenera pelo renderer editorial (Konva) com a trilha cadastrada.</li>
+                <li>Reel oficial: todo Reel deve ser pré-renderizado via <strong>Motionmaxxing</strong> (HTML/GSAP com Chrome Headless e tipografia cinética), preenchendo <code>instagram_posts.video_rendered_path</code> com <code>render_status = ready</code>. O antigo gerador Konva de slides estáticos foi descontinuado.</li>
                 <li>A capa <code>.jpg</code> com o mesmo nome do <code>.mp4</code> e obrigatoria; sem ela o envio e bloqueado.</li>
                 <li>Feed publico da home: <code>scripts/en-instagram-publish-feed.php</code>; para pausar sem apagar nada, criar <code>storage/instagram-feed-publish/auto.disabled</code>.</li>
               </ul>
@@ -537,7 +537,7 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
               <p class="doc-label">Producao de Reels</p>
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
                 <li>Padrao aprovado (out/2026): imagem do post inteira na moldura, texto como foco com animacao que representa o sentido, fontes ligadas ao tema, som escolhido. Detalhes: <code>docs/features/reels-motionmaxxing.md</code>.</li>
-                <li>Renderers do sistema: <code>KonvaReelRenderer</code>, <code>EditorialMotionReelRenderer</code>, <code>SmartCanvasRenderer</code>; trilhas em <code>public/uploads/audio</code> (IMP-032).</li>
+                <li>Motor oficial: <strong>Motionmaxxing</strong> (<code>C:\Users\WINDOWS\.claude\skills\motionmaxxing</code>), gerando tipografia cinética, interpolação de sentido e moldura com deriva lenta. Motores legados baseados em Canvas/Skia (<code>KonvaReelRenderer</code> / <code>scripts/reels-konva/</code>) foram descontinuados para novas publicações por falta de animação.</li>
                 <li>Tempo de render medido em 14/10/2026 (1080x1920, 20 s, <code>--shutter 180 --subframes 8 --grain 0.03</code>): cerca de 9 a 10 min por video. Ate 3 renders ao mesmo tempo levam o mesmo tempo de 1 (3 videos de 20 s: 657,7 s contra ~656 s sozinho; lote real de 3 filmes: CPU media 44%, pico 100%, RAM livre minima 3,3 GB). Em trecho de 5 s, 4, 5 e 6 renders juntos levaram 175, 178 e 177 s (RAM livre minima 3,4, 2,7 e 1,3 GB); 4 e a sugestao pratica e 6 o maximo, ainda sem aprovacao como padrao.</li>
                 <li>Rascunho para conferir layout: sem shutter leva ~21 s para 5 s de video; <code>--scale 0.5</code> com shutter ganha so ~27%. Com 4 sub-frames o tempo cai pela metade (SSIM 0,992 contra 8), mas o padrao continua em 8.</li>
                 <li>No Windows definir <code>CHROME_PATH</code> (o <code>render.mjs</code> so procura caminhos de Mac e Linux), por exemplo <code>C:\Program Files\Google\Chrome\Application\chrome.exe</code>. O render em paralelo sai um pouco diferente do render sozinho (SSIM 0,985 a 0,99), mas iguais entre si; o render sozinho e deterministico.</li>

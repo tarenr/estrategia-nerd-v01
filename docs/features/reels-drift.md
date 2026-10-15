@@ -1,6 +1,8 @@
-# Piloto de Reels com Drift
+# Piloto de Reels com Drift (HISTÓRICO / NÃO UTILIZADO)
 
-Teste isolado aprovado em 07/10/2026, usando o artigo 17, **A Lore Completa de Diablo**. Não integra o publicador: Konva continua sendo o gerador editorial. Nenhum cadastro, agendamento, site ou publicação na Meta foi alterado.
+> [!WARNING]
+> **DOCUMENTAÇÃO DE TESTE HISTÓRICO**
+> Este teste preliminar de drift foi superado pela implementação oficial da skill **`motionmaxxing`** (`docs/features/reels-motionmaxxing.md`), que é o padrão mandatório para todos os Reels do site.
 
 ## Ambiente e origem
 
