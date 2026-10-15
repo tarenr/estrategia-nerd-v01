@@ -58,6 +58,8 @@ Quando enviado para o Google Drive (`Estrategia Nerd - Backups de Conteudo/Siste
 
 ## Arquivos do sistema
 
+Para manter o backup do sistema enxuto (~25 MB em vez de >500 MB), `BackupManager` exclui automaticamente diretórios transitórios, caches e rascunhos de desenvolvimento: `scratch/`, `tmp/`, `conteudo-planejado/`, `resources/reels-review/`, `.codegraph/`, `appflowy-cloud/`, `notion-import/`, `.claude/`, alem dos ja excluidos `.git/`, `node_modules/`, `storage/`, `vendor/` e `public/uploads/`.
+
 Em ambientes FTP que usam `public_html/_app_core`, a rotina detecta
 `_app_core/bootstrap.php` e usa `_app_core` como raiz tecnica do sistema.
 Isso evita que o backup completo da producao inclua duplicidades da raiz

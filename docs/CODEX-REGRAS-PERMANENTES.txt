@@ -429,6 +429,7 @@ Para garantir que incidentes ocorridos anteriormente nao se repitam:
 8. BACKUP LOCAL DO ESTRATEGIA NERD:
    - Local sem --no-uploads so aos domingos; BACKUP_RETENTION 7; pasta BACKUP_ROOT em C:\Users\WINDOWS\ProjectBackup\estrategia-nerd.
    - Os uploads diarios dependem de o backup geral (restic) cobrir estrategia-nerd/public/uploads.
+   - system-files.zip exclui pastas transitorias (scratch, tmp, conteudo-planejado, reels-review, etc.), mantendo o zip em ~25 MB.
    - Pasta de backup sem manifest.json fica fora da retencao (deve ser removida a mao se necessario).
 
 ============================================================

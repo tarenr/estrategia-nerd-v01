@@ -24,6 +24,14 @@ final class BackupManager
         'storage',
         'public/uploads',
         'vendor',
+        'scratch',
+        'tmp',
+        'conteudo-planejado',
+        'resources/reels-review',
+        '.codegraph',
+        'appflowy-cloud',
+        'notion-import',
+        '.claude',
     ];
     private const SYSTEM_FILE_EXCLUDED_PREFIXES = [
         '.git/',
@@ -31,6 +39,14 @@ final class BackupManager
         'storage/',
         'public/uploads/',
         'vendor/',
+        'scratch/',
+        'tmp/',
+        'conteudo-planejado/',
+        'resources/reels-review/',
+        '.codegraph/',
+        'appflowy-cloud/',
+        'notion-import/',
+        '.claude/',
     ];
     private const SYSTEM_FILE_EXCLUDED_SEGMENTS = [
         'uploads',

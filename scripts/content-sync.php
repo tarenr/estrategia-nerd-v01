@@ -153,7 +153,7 @@ try {
             echo '  php scripts/content-sync.php verify [package_id|latest]' . PHP_EOL;
             echo '  php scripts/content-sync.php apply [package_id|latest] [local|production] --force' . PHP_EOL;
             echo '  php scripts/content-sync.php apply-code [package_id|latest] [stage|production] --force' . PHP_EOL;
-            echo '  php scripts/content-sync.php upload-cloud [package_id|latest]' . PHP_EOL;
+            echo '  php scripts/content-sync.php upload-cloud [package_id|latest|local|production]' . PHP_EOL;
             exit(0);
     }
 } catch (Throwable $exception) {

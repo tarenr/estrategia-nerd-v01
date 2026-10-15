@@ -77,7 +77,7 @@ foreach ($profile in @('local', 'stage', 'production')) {
 
 foreach ($profile in @('local', 'production')) {
     $null = Invoke-Step "Exportacao editorial ($profile)" @('scripts\content-sync.php', 'export', $profile)
-    $null = Invoke-Step "Upload editorial ($profile) para Google Drive" @('scripts\content-sync.php', 'upload-cloud', 'latest')
+    $null = Invoke-Step "Upload editorial ($profile) para Google Drive" @('scripts\content-sync.php', 'upload-cloud', $profile)
 }
 
 if (-not $SomenteMostrarComandos) { Write-Log '=== Rotina diaria de backup concluida ===' }

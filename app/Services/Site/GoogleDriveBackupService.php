@@ -1018,11 +1018,31 @@ final class GoogleDriveBackupService
         $items = (array) ($manager->status()['items'] ?? []);
         $requested = strtolower(trim((string) $packageId));
         if ($requested === '' || $requested === 'latest') {
+            foreach ($items as $item) {
+                if (is_array($item) && !($item['cloud_uploaded_gdrive'] ?? false)) {
+                    return $item;
+                }
+            }
             return is_array($items[0] ?? null) ? $items[0] : null;
         }
 
+        if (in_array($requested, ['local', 'production', 'stage'], true)) {
+            $fallback = null;
+            foreach ($items as $item) {
+                if (is_array($item) && strtolower((string) ($item['source_profile'] ?? '')) === $requested) {
+                    if (!($item['cloud_uploaded_gdrive'] ?? false)) {
+                        return $item;
+                    }
+                    if ($fallback === null) {
+                        $fallback = $item;
+                    }
+                }
+            }
+            return $fallback;
+        }
+
         foreach ($items as $item) {
-            if (is_array($item) && (string) ($item['package_id'] ?? '') === $packageId) {
+            if (is_array($item) && strcasecmp((string) ($item['package_id'] ?? ''), (string) $packageId) === 0) {
                 return $item;
             }
         }
