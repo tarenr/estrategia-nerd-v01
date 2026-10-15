@@ -257,7 +257,7 @@ Na etapa v3 foram reutilizadas/reabertas #1211 (música), #1222 (imagens e Reel)
 ### Estado da entrega
 - **Artigo (blog):** Rascunho no banco local, post #87, slug `a-jornada-de-morte-em-darksiders`, categoria `games`. 4 imagens no corpo (`img-001.webp` a `img-004.webp`) e capa (`capa.webp`), formato WebP 1280×720 (q82) padronizado.
 - **Foco de entrega:** Artigo completo no blog com gravuras medievais e bloco de áudio narrado (sem Reel e sem post para o Instagram, conforme alinhamento com o usuário).
-- **Narração do blog:** Texto preparado e validado em `conteudo-planejado/saga-darksiders/cap-05-a-jornada-de-morte/narracao-blog.txt` (~24s de fala). Pasta oficial de áudio configurada em `uploads/posts/a-jornada-de-morte-em-darksiders/audio/`. Trilha sonora oficial alinhada: *Caves of Dawn* (Pixabay 10376).
+- **Narração do blog:** Voz Cornelius (Eleven Multilingual v2, 40,07 s), mixada com a trilha oficial *Caves of Dawn* (Pixabay 10376, ganho 0,285, ducking automático via sidechain, limiter e fade-out, duração 43,5 s) em `uploads/posts/a-jornada-de-morte-em-darksiders/audio/nar-001.mp3`. Áudios originais e mixados preservados em `conteudo-planejado/saga-darksiders/cap-05-a-jornada-de-morte/audio/`.
 - **Referências oficiais do usuário:** Catalogadas em `conteudo-planejado/saga-darksiders/referencias-oficiais/` (`morte-busto-mascara.png`, `morte-corpo-inteiro-armadura.png`, `morte-foices-duplas.png`, `morte-despair-estatua.png`).
 - **Ilustrações:** 4 gravuras no estilo de livro antigo em nanquim/hachuras sobre pergaminho aberto com velas e penas, com fidelidade canônica estrita às referências oficiais fornecidas pelo usuário:
   1. **Cena 1 (A Partida em Desespero):** Morte montado no corcel fantasma Despair (chamas verde-ciano/turquesa, costelas e ossos aparentes, sem capuz de tecido, máscara de marfim esculpida com olhos âmbar e fendas de chamas, cabelos negros longos soltos, foice Harvester e o corvo Dust voando) diante da colossal Árvore da Vida.
@@ -269,8 +269,31 @@ Na etapa v3 foram reutilizadas/reabertas #1211 (música), #1222 (imagens e Reel)
 
 ---
 
-## Próximo Capítulo no Radar:
-- **Capítulo 6: A Fúria do Equilíbrio (Darksiders III):** A missão clandestina de Fúria na Terra pós-apocalíptica para caçar os Sete Pecados Capitais e desvendar a conspiração no coração do Conselho das Cinzas.
+## Capítulo 6: A Fúria do Equilíbrio (Produzido em 15/10/2026)
+
+### Estado da entrega
+- **Artigo (blog):** Rascunho no banco local, post #89, slug `a-furia-do-equilibrio-em-darksiders`, categoria `games`. 4 imagens no corpo (`img-001.webp` a `img-004.webp`) e capa (`capa.webp`), formato WebP 1280×720 (q82) padronizado.
+- **Foco de entrega:** Artigo completo no blog com gravuras medievais e bloco de áudio narrado (sem Reel e sem post para o Instagram, conforme alinhamento com o usuário).
+- **Narração do blog:** Voz Cornelius (Eleven Multilingual v2, 44,98 s), mixada com a trilha oficial *Caves of Dawn* (Pixabay 10376, ganho 0,285, ducking automático via sidechain, limiter e fade-out, duração 48,5 s) em `uploads/posts/a-furia-do-equilibrio-em-darksiders/audio/nar-001.mp3`. Áudios originais e mixados preservados em `conteudo-planejado/saga-darksiders/cap-06-a-furia-do-equilibrio/audio/`.
+- **Referências oficiais do usuário:** Catalogadas em `conteudo-planejado/saga-darksiders/referencias-oficiais/` (`charred-council-oficial.png`, `strife-corpo-inteiro.png`, `strife-joe-mad.png`, `strife-estatua.png`, `strife-sketch-mad.png`).
+- **Ilustrações:** 4 gravuras no estilo de livro antigo em nanquim/hachuras sobre pergaminho aberto com velas e penas, com fidelidade canônica estrita às referências oficiais fornecidas pelo usuário:
+  1. **Cena 1 (A Audiência de Fúria e o Chicote Scorn):** Fúria em sua armadura negra pontiaguda de placas afiadas com rabo de cavalo flamejante magenta/violeta ondulando, empunhando o chicote de lâminas segmentadas *Scorn* diante das três cabeças colossais de rocha vulcânica do Conselho das Cinzas (*The Charred Council*), com olhos triangulares de lava e bocas abertas em fornalhas concêntricas de magma ardente.
+  2. **Cena 2 (O Combate nas Ruínas da Terra):** Fúria em salto acrobático desferindo golpes de chicote com faíscas arcanas contra a titânica abominação do pecado Ira (*Wrath*) em pesada armadura de ferro espinhoso e espadas gigantescas, entre arranha-céus desmoronando e escombros da metrópole terrena.
+  3. **Cena 3 (A Revelação da Traição):** Fúria de pé em choque e indignação ao presenciar a falsa Vigia desmascarar sua verdadeira forma como a macabra feiticeira esquelética Inveja (*Envy*), erguendo no alto o *Talismã dos Pecados* incandescente que libera feixes e espíritos das abominações aprisionadas em magia esmeralda e dourada.
+  4. **Cena 4 (A Protetora da Humanidade e a Guarda de Conflito):** Fúria guiando com nobreza os humanos sobreviventes em direção ao portal luminoso de refúgio, enquanto o quarto Cavaleiro, Conflito (*Strife* oficial de Joe Madureira), monta guarda vigilante com sua máscara biomecânica branca, cabelos negros espetados, lenço e capa roxa esfarrapada esvoaçante, armadura muscular segmentada, bandoleira de balas e suas lendárias pistolas gêmeas *Mercy* e *Redemption* fumegantes.
+- **Página de prévia mobile:** `public/uploads/previews/darksiders-cap06/index.html` (com cards das 4 cenas em alta definição, layout responsivo e links diretos).
+- **Suíte de testes:** 23 verificações aprovadas, 0 falhas (`scripts/verify-changes.php`).
+
+---
+
+## Conclusão da Saga Darksiders (6 Capítulos Finalizados):
+A saga completa de 6 capítulos está 100% produzida e catalogada no ecossistema local do Estratégia Nerd:
+1. **Capítulo 1:** *O mundo de Darksiders: Céu, Inferno e o Equilíbrio explicados* (Post #82)
+2. **Capítulo 2:** *Os Nephilim: a raça proibida de Darksiders explicada* (Post #83)
+3. **Capítulo 3:** *Os Quatro Cavaleiros: quem são os executores do Equilíbrio em Darksiders* (Post #84)
+4. **Capítulo 4:** *O Apocalipse Antecipado: a conspiração que condenou a Terra em Darksiders* (Post #85)
+5. **Capítulo 5:** *A Jornada de Morte: o sacrifício do primogênito em Darksiders II* (Post #87)
+6. **Capítulo 6:** *A Fúria do Equilíbrio: a caçada aos Sete Pecados em Darksiders III* (Post #89)
 
 
 
