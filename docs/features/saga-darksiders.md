@@ -252,8 +252,25 @@ Na etapa v3 foram reutilizadas/reabertas #1211 (música), #1222 (imagens e Reel)
 
 ---
 
+## Capítulo 5: A Jornada de Morte (Produzido em 15/10/2026)
+
+### Estado da entrega
+- **Artigo (blog):** Rascunho no banco local, post #87, slug `a-jornada-de-morte-em-darksiders`, categoria `games`. 4 imagens no corpo (`img-001.webp` a `img-004.webp`) e capa (`capa.webp`), formato WebP 1280×720 (q82) padronizado.
+- **Foco de entrega:** Artigo completo no blog com gravuras medievais e bloco de áudio narrado (sem Reel e sem post para o Instagram, conforme alinhamento com o usuário).
+- **Narração do blog:** Texto preparado e validado em `conteudo-planejado/saga-darksiders/cap-05-a-jornada-de-morte/narracao-blog.txt` (~24s de fala). Pasta oficial de áudio configurada em `uploads/posts/a-jornada-de-morte-em-darksiders/audio/`. Trilha sonora oficial alinhada: *Caves of Dawn* (Pixabay 10376).
+- **Referências oficiais do usuário:** Catalogadas em `conteudo-planejado/saga-darksiders/referencias-oficiais/` (`morte-busto-mascara.png`, `morte-corpo-inteiro-armadura.png`, `morte-foices-duplas.png`, `morte-despair-estatua.png`).
+- **Ilustrações:** 4 gravuras no estilo de livro antigo em nanquim/hachuras sobre pergaminho aberto com velas e penas, com fidelidade canônica estrita às referências oficiais fornecidas pelo usuário:
+  1. **Cena 1 (A Partida em Desespero):** Morte montado no corcel fantasma Despair (chamas verde-ciano/turquesa, costelas e ossos aparentes, sem capuz de tecido, máscara de marfim esculpida com olhos âmbar e fendas de chamas, cabelos negros longos soltos, foice Harvester e o corvo Dust voando) diante da colossal Árvore da Vida.
+  2. **Cena 2 (O Flagelo da Corrupção):** Morte em salto acrobático desferindo golpes letais com foices duplas curvas de combate contra a Corrupção nas Terras da Forja (viscoso lodo negro com cristais pontiagudos amarelos e dourados incandescentes incrustados em um golem de pedra).
+  3. **Cena 3 (O Julgamento dos Reis Caídos):** Morte de pé, altivo e desafiador no Reino dos Mortos perante o colossal Rei dos Ossos (*Lord of Bones*), em seu Trono Eterno esculpido em milhares de crânios humanos e ossos sob navios espectrais flutuantes.
+  4. **Cena 4 (O Sacrifício Supremo no Poço das Almas):** Morte saltando de peito aberto no vórtice de energia primordial do Poço das Almas (*Well of Souls*), com o amuleto das almas no peito rachando e liberando feixes luminosos esmeralda/dourados para ressuscitar a humanidade e redimir seu irmão Guerra.
+- **Página de prévia mobile:** `public/uploads/previews/darksiders-cap05/index.html` (com cards das 4 cenas em alta definição, layout responsivo e links diretos).
+- **Suíte de testes:** 23 verificações aprovadas, 0 falhas (`scripts/verify-changes.php`).
+
+---
+
 ## Próximo Capítulo no Radar:
-- **Capítulo 5: A Jornada de Morte (Darksiders II):** A busca solitária de Morte para ressuscitar a humanidade e limpar o nome de Guerra diante da Árvore da Vida e do Poço das Almas.
+- **Capítulo 6: A Fúria do Equilíbrio (Darksiders III):** A missão clandestina de Fúria na Terra pós-apocalíptica para caçar os Sete Pecados Capitais e desvendar a conspiração no coração do Conselho das Cinzas.
 
 
 
