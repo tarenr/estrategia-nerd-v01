@@ -21,6 +21,12 @@ final class ContentSyncManager
     ];
     private const PROGRESS_TITLE = 'Executando rotina de conteudo';
 
+    /** Validade do cache da lista de pacotes de conteudo (a leitura na pasta de backup e lenta). */
+    private const PACKAGES_CACHE_TTL = 300;
+
+    /** @var array<string, array<int, array<string, mixed>>> */
+    private static array $packagesMemo = [];
+
     private array $columnSupportCache = [];
     private OperationLogger $logger;
 
@@ -498,6 +504,7 @@ final class ContentSyncManager
         if (is_dir($directory)) {
             throw new RuntimeException('Nao foi possivel remover completamente a pasta local do pacote editorial.');
         }
+        $this->flushPackagesCache();
 
         $this->logOperation(
             'pacote_conteudo_exclusao_local',
@@ -1877,6 +1884,7 @@ final class ContentSyncManager
     private function writeManifest(string $packageDir, array $manifest): void
     {
         $this->writeJson($packageDir . DIRECTORY_SEPARATOR . 'manifest.json', $manifest);
+        $this->flushPackagesCache();
     }
 
     private function writeJson(string $path, array $payload): void
@@ -2284,7 +2292,34 @@ final class ContentSyncManager
         return null;
     }
 
+    /**
+     * Lista de pacotes de conteudo. Memoriza na requisicao e guarda em arquivo (por PACKAGES_CACHE_TTL
+     * segundos, enquanto pastas e manifest.json nao mudarem), porque verifyPackageDirectory() em cada
+     * pacote da pasta de backup leva alguns segundos. O resultado e o mesmo de scanAllPackages().
+     *
+     * @return array<int, array<string, mixed>>
+     */
     private function allPackages(): array
+    {
+        $memoKey = sha1(implode('|', $this->packageSearchRoots()));
+        if (isset(self::$packagesMemo[$memoKey])) {
+            return self::$packagesMemo[$memoKey];
+        }
+
+        $fingerprint = $this->packagesFingerprint();
+        $items = $this->readPackagesCache($fingerprint);
+        if ($items === null) {
+            $items = $this->scanAllPackages();
+            $this->writePackagesCache($fingerprint, $items);
+        }
+
+        return self::$packagesMemo[$memoKey] = $items;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function packageDirectories(): array
     {
         $dirs = [];
         foreach ($this->packageSearchRoots() as $root) {
@@ -2294,6 +2329,94 @@ final class ContentSyncManager
         }
         $dirs = array_values(array_unique($dirs));
         rsort($dirs);
+
+        return $dirs;
+    }
+
+    private function packagesFingerprint(): string
+    {
+        $parts = ['v1'];
+        foreach ($this->packageDirectories() as $dir) {
+            $manifestPath = $dir . DIRECTORY_SEPARATOR . 'manifest.json';
+            $parts[] = $dir . '|' . (is_file($manifestPath) ? filemtime($manifestPath) . '|' . filesize($manifestPath) : '-');
+        }
+
+        return sha1(implode("\n", $parts));
+    }
+
+    private function packagesCachePath(): string
+    {
+        return dirname(__DIR__, 2) . '/storage/cache/content-sync-packages.json';
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function readPackagesCache(string $fingerprint): ?array
+    {
+        try {
+            $path = $this->packagesCachePath();
+            if (!is_file($path)) {
+                return null;
+            }
+            $data = json_decode((string) file_get_contents($path), true);
+            if (!is_array($data)
+                || ($data['fingerprint'] ?? '') !== $fingerprint
+                || (time() - (int) ($data['saved_at'] ?? 0)) >= self::PACKAGES_CACHE_TTL
+                || !is_array($data['items'] ?? null)) {
+                return null;
+            }
+
+            return array_values($data['items']);
+        } catch (\Throwable $exception) {
+            error_log('[ContentSyncManager] cache de pacotes ilegivel: ' . $exception->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $items
+     */
+    private function writePackagesCache(string $fingerprint, array $items): void
+    {
+        try {
+            $path = $this->packagesCachePath();
+            $dir = dirname($path);
+            if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) {
+                return;
+            }
+            $json = json_encode(
+                ['fingerprint' => $fingerprint, 'saved_at' => time(), 'items' => $items],
+                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+            );
+            if (is_string($json)) {
+                file_put_contents($path, $json, LOCK_EX);
+            }
+        } catch (\Throwable $exception) {
+            error_log('[ContentSyncManager] cache de pacotes nao gravado: ' . $exception->getMessage());
+        }
+    }
+
+    private function flushPackagesCache(): void
+    {
+        self::$packagesMemo = [];
+        try {
+            $path = $this->packagesCachePath();
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        } catch (\Throwable) {
+            // sem cache a leitura segue normal
+        }
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function scanAllPackages(): array
+    {
+        $dirs = $this->packageDirectories();
         $items = [];
         foreach ($dirs as $dir) {
             $manifestPath = $dir . DIRECTORY_SEPARATOR . 'manifest.json';
