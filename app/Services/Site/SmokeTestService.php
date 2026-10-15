@@ -353,7 +353,7 @@ final class SmokeTestService
         if ($environment === 'local') {
             $pages[] = ['Central Operacional', '/admin/central-operacional', ['Central Operacional']];
             $pages[] = ['Base Tecnica', '/admin/base-tecnica', ['documentacao', 'mudancas']];
-            $pages[] = ['Backup e Restore', '/admin/central-operacional?aba=backup-restore', ['Backup']];
+            $pages[] = ['Backup e Restore', '/admin/central-operacional-v2/backup-sistemico', ['Backup']];
         }
 
         foreach ($pages as [$name, $path, $fragments]) {
