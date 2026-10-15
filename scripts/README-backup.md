@@ -20,6 +20,7 @@ A rotina de conteudo fica separada em `scripts/content-sync.php` e deve ser usad
 
 ```bash
 php scripts/backup.php run local
+php scripts/backup.php run local --no-uploads
 php scripts/backup.php run stage
 php scripts/backup.php run production
 php scripts/backup.php status
@@ -35,15 +36,23 @@ php scripts/backup.php restore latest local all --force
 Cada execucao cria uma pasta em:
 
 ```text
-D:\Taren\Documents\Backup\Estratégia Nerd\03-prod\dados\BS-PROD-AAAAMMDD-HHMMSS
+<BACKUP_ROOT>\03-prod\dados\BS-PROD-AAAAMMDD-HHMMSS
 ```
+
+Desde 15/10/2026 o `BACKUP_ROOT` e `C:\Users\WINDOWS\ProjectBackup\estrategia-nerd` (antes ficava em `E:\Taren\Documents\Backup\Estratégia Nerd`, que foi mantida intacta como copia). `BACKUP_RETENTION` define quantos backups cada ambiente guarda (hoje 7; era 14 ate 15/10/2026). A retencao so conta e apaga backups com `manifest.json`; uma pasta sem manifesto (backup interrompido) fica fora da contagem e precisa ser removida a mao.
 
 Dentro dela:
 
 - `database.sql`
-- `uploads.zip`
+- `uploads.zip` (nao existe nos backups feitos com `--no-uploads`)
 - `system-files.zip`
 - `manifest.json`
+
+### Rotina diaria (`scripts/backup/Invoke-DailyBackup.ps1`)
+
+- Ambiente **local**: de segunda a sabado roda com `--no-uploads` (so banco e arquivos do sistema); aos **domingos** roda completo, com `uploads.zip`. O dia e decidido por `[DayOfWeek]` numerico (domingo = 0), sem depender do idioma do Windows. Os uploads ja sao cobertos todo dia pelo backup geral (restic, pasta `Projects`). Se a rodada de domingo falhar, o log registra `ALERTA`.
+- **Stage** e **producao**: sempre completos.
+- Para testar sem executar nada nem enviar ao Drive: `powershell -File scripts\backup\Invoke-DailyBackup.ps1 -DiaDaSemana 0 -SomenteMostrarComandos` (0 = domingo ... 6 = sabado).
 
 Quando enviado para o Google Drive (`Estrategia Nerd - Backups de Conteudo/Sistema/<Local|Stage|Producao>/<BACKUP_ID>`), a pasta remota recebe os mesmos arquivos.
 
@@ -112,10 +121,10 @@ tecnico existe.
 
 ## Retencao
 
-Por padrao, o script mantem os ultimos `14` backups locais.
+Por padrao, o codigo mantem os ultimos `14` backups locais, mas desde 15/10/2026 o valor configurado no `.env` e `7`. A retencao so conta e apaga backups que possuem `manifest.json`; pastas sem manifesto (originadas de backups interrompidos) ficam fora da contagem e precisam ser removidas a mao.
 
 Voce pode ajustar com:
 
 ```text
-BACKUP_RETENTION=14
+BACKUP_RETENTION=7
 ```

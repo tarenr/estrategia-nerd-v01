@@ -21,7 +21,7 @@ $parseCsv = static function (string $value): array {
 };
 
 return [
-    'backup_root' => $_ENV['BACKUP_ROOT'] ?? 'D:\\Taren\\Documents\\Backup\\Estratégia Nerd',
+    'backup_root' => $_ENV['BACKUP_ROOT'] ?? 'C:\\Users\\WINDOWS\\ProjectBackup\\estrategia-nerd',
     'retention' => max(1, (int) ($_ENV['BACKUP_RETENTION'] ?? 14)),
     'mysqldump_binary' => $_ENV['BACKUP_MYSQLDUMP_BINARY'] ?? 'C:\\xampp\\mysql\\bin\\mysqldump.exe',
     'mysql_binary' => $_ENV['BACKUP_MYSQL_BINARY'] ?? 'C:\\xampp\\mysql\\bin\\mysql.exe',

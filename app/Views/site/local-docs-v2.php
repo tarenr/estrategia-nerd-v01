@@ -332,7 +332,8 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
             <p class="doc-label">Rotina diaria e teste de restauracao</p>
             <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
               <li>A tarefa agendada do Windows <code>EstrategiaNerd-BackupDiario</code> (21:30) roda <code>scripts/backup/Invoke-DailyBackup.ps1</code>: backup sistemico de local, stage e producao (<code>scripts/backup.php run</code>) e exportacao editorial de local e producao, enviando tudo ao Google Drive (secao 10). Log: <code>storage/logs/daily-backup-AAAA-MM.log</code>.</li>
-              <li>Pasta local: <code>BACKUP_ROOT</code> (hoje <code>E:\Taren\Documents\Backup\Estrategia Nerd</code>), com <code>01-local</code>, <code>02-stage</code>, <code>03-prod</code> e <code>04-logs</code>; retencao por <code>BACKUP_RETENTION</code> (padrao 14).</li>
+              <li>Pasta local: <code>BACKUP_ROOT</code> (hoje <code>C:\Users\WINDOWS\ProjectBackup\estrategia-nerd</code>; ate 15/10/2026 era <code>E:\Taren\Documents\Backup\Estrategia Nerd</code>, mantida como copia), com <code>01-local</code>, <code>02-stage</code>, <code>03-prod</code> e <code>04-logs</code>; retencao por <code>BACKUP_RETENTION</code> (hoje 7; era 14 ate 15/10/2026).</li>
+              <li>Backup diario (<code>scripts/backup/Invoke-DailyBackup.ps1</code>, 21:30): o ambiente local roda <code>--no-uploads</code> de segunda a sabado e completo (com <code>uploads.zip</code>) aos domingos, porque os uploads ja ficam no backup geral (restic); stage e producao sempre completos. Teste sem executar: <code>-DiaDaSemana 0..6 -SomenteMostrarComandos</code>.</li>
               <li>O restore oficial so restaura <strong>por cima</strong> de local, stage ou producao. Para provar que um backup e restauravel sem tocar em nada, use <code>php scripts/verify-backup-restore.php &lt;local|stage|production&gt; [BACKUP_ID] [--skip-uploads]</code>: confere os SHA-256 do manifesto, le todos os arquivos dos zips conferindo o CRC e importa o <code>database.sql</code> em um banco temporario <code>en_restore_check_*</code>, que e apagado no fim. Relatorio em <code>storage/logs/backup-restore-check/</code>.</li>
               <li>Ultima prova (13/10/2026): producao <code>BS-PROD-20261013-220056</code> (19 tabelas, 288 arquivos de sistema, 242 uploads) e local <code>BS-LOCAL-20261013-213002</code> (25 tabelas, 3.396 arquivos de sistema, 4.022 uploads) restauraveis, sem divergencias.</li>
             </ul>
@@ -451,13 +452,14 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
                 <li>Reels revisados devem retornar imediatamente para <code>agendado</code> com <code>render_status = ready</code>.</li>
                 <li>Verificar prazos: noticias e encerramentos de suporte nunca saem apos a data limite.</li>
                 <li>Grade oficial do canal: 2 publicacoes diarias nos horarios de pico (<strong>12:00</strong> e <strong>19:30</strong>).</li>
-                <li>Todas as capas do blog devem ser salvas no padrao WebP otimizado (~150-250 KB).</li><li>Texto de Reel so dentro da area segura do Instagram (secao 16); imagem pode ficar sob os icones.</li><li>Video de Reel: capa <code>.jpg</code> com o mesmo nome, ao lado do <code>.mp4</code> em <code>public/uploads/reels/...</code>.</li>
+                <li>Todas as capas do blog devem ser salvas no padrao WebP otimizado (~150-250 KB).</li><li>Texto de Reel so dentro da area segura do Instagram (secao 16); imagem pode ficar sob os icones.</li><li>Video de Reel: padrao <code>public/uploads/posts/&lt;slug&gt;/reels/reel.mp4</code> com <code>reel.jpg</code> e <code>capa.jpg</code> ao lado (varios Reels no post: <code>reels/reel-&lt;id&gt;/</code>), versoes antigas em <code>reels/anteriores/</code> (ver secao 16).</li>
               </ul>
             </div>
             <div class="doc-card">
               <p class="doc-label">Troubleshooting - sincronizacao de conteudo</p>
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
                 <li>Checar origem real do pacote e destino aplicado (nunca gerar pacote de producao a partir do local).</li>
+                <li>Central Operacional lenta (~12 s) ou com timeout no <code>smoke-test.php</code>: a causa era <code>ContentSyncManager::allPackages()</code> verificar cada pacote da pasta de backup (disco externo) tres vezes por abertura. Hoje a lista e memorizada na requisicao e guardada em <code>storage/cache/content-sync-packages.json</code> (valida por 5 min enquanto as pastas e os <code>manifest.json</code> nao mudarem; <code>writeManifest()</code> e a exclusao de pacote limpam o cache). Primeira abertura apos o prazo: ~4 s. Para forcar a releitura, apagar esse arquivo.</li>
                 <li>Sincronizador isola IDs ja reivindicados para impedir que posts distintos colidam no mesmo ID de destino.</li>
                 <li>Validar integridade de todos os slugs com <code>assertAppliedPostIntegrity</code> antes do commit da transacao.</li>
                 <li>Em caso de falha, o rollback automatico protege o banco de dados de producao.</li>
@@ -514,10 +516,11 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
           <div class="doc-card mt-4">
             <p class="doc-label">Trocar o video de um Reel ja agendado</p>
             <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
-              <li>Copiar o novo <code>.mp4</code> (H.264 + AAC, 1080x1920, 30 fps) e a capa <code>.jpg</code> de mesmo nome para <code>public/uploads/reels/&lt;lote&gt;/</code>, com a proxima versao (<code>reel-&lt;id&gt;-vN</code>), sem sobrescrever arquivos.</li>
-              <li>Em uma transacao, atualizar <code>instagram_posts.video_rendered_path</code> (mantendo <code>render_status = ready</code>) e <code>instagram_post_media.caminho</code> da linha de video, so se o post ainda estiver <code>agendado</code>, sem <code>creation_id</code>/<code>ig_media_id</code> e com o video antigo. O script usado em 13/10/2026 (com <code>--rollback</code>) fica em <code>scratch/reels-motionmaxxing/swap-posts.php</code> (pasta local, nao versionada).</li>
+              <li>Padrao de arquivos (nome fixo, como as capas de artigos): <code>public/uploads/posts/&lt;slug&gt;/reels/reel.mp4</code> com <code>reel.jpg</code> e <code>capa.jpg</code> ao lado; post com mais de um Reel usa <code>reels/reel-&lt;id&gt;/reel.mp4</code>. O banco aponta sempre para esse nome fixo.</li>
+              <li>Antes de trocar, so se o post estiver <code>agendado</code> e sem <code>creation_id</code>/<code>ig_media_id</code>: mover o <code>reel.mp4</code>, o <code>reel.jpg</code> e o <code>capa.jpg</code> atuais para <code>reels/anteriores/</code>, com data e hash no nome (<code>reel-AAAAMMDD-&lt;hash8&gt;.mp4</code>). Eles sao o rollback.</li>
+              <li>Copiar o novo <code>.mp4</code> (H.264 + AAC, 1080x1920, 30 fps) para <code>reel.mp4</code> e a capa para <code>reel.jpg</code> e <code>capa.jpg</code>; conferir hash e duracao. Como o caminho no banco nao muda, nao ha UPDATE; se um dia precisar mudar <code>instagram_posts.video_rendered_path</code> e <code>instagram_post_media.caminho</code>, fazer em transacao, mantendo <code>render_status = ready</code>.</li>
               <li>Validar: reler o post, rodar <code>AudioReelGeneratorService::readyVideoPath</code> e <code>InstagramApiService::reelCoverParams</code>, abrir o endereco publico do video/capa (HTTP 200) e rodar <code>verify-changes.php</code>.</li>
-              <li>Os videos antigos continuam na pasta para rollback.</li>
+              <li>Rollback: voltar os arquivos de <code>reels/anteriores/</code> para <code>reel.mp4</code>, <code>reel.jpg</code> e <code>capa.jpg</code>.</li>
             </ol>
           </div>
           <div class="mt-4 grid gap-4 xl:grid-cols-2">
@@ -535,6 +538,9 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
               <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
                 <li>Padrao aprovado (out/2026): imagem do post inteira na moldura, texto como foco com animacao que representa o sentido, fontes ligadas ao tema, som escolhido. Detalhes: <code>docs/features/reels-motionmaxxing.md</code>.</li>
                 <li>Renderers do sistema: <code>KonvaReelRenderer</code>, <code>EditorialMotionReelRenderer</code>, <code>SmartCanvasRenderer</code>; trilhas em <code>public/uploads/audio</code> (IMP-032).</li>
+                <li>Tempo de render medido em 14/10/2026 (1080x1920, 20 s, <code>--shutter 180 --subframes 8 --grain 0.03</code>): cerca de 9 a 10 min por video. Ate 3 renders ao mesmo tempo levam o mesmo tempo de 1 (3 videos de 20 s: 657,7 s contra ~656 s sozinho; lote real de 3 filmes: CPU media 44%, pico 100%, RAM livre minima 3,3 GB). Em trecho de 5 s, 4, 5 e 6 renders juntos levaram 175, 178 e 177 s (RAM livre minima 3,4, 2,7 e 1,3 GB); 4 e a sugestao pratica e 6 o maximo, ainda sem aprovacao como padrao.</li>
+                <li>Rascunho para conferir layout: sem shutter leva ~21 s para 5 s de video; <code>--scale 0.5</code> com shutter ganha so ~27%. Com 4 sub-frames o tempo cai pela metade (SSIM 0,992 contra 8), mas o padrao continua em 8.</li>
+                <li>No Windows definir <code>CHROME_PATH</code> (o <code>render.mjs</code> so procura caminhos de Mac e Linux), por exemplo <code>C:\Program Files\Google\Chrome\Application\chrome.exe</code>. O render em paralelo sai um pouco diferente do render sozinho (SSIM 0,985 a 0,99), mas iguais entre si; o render sozinho e deterministico.</li>
               </ul>
             </div>
           </div>

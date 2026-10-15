@@ -199,7 +199,14 @@ final class TechnicalCenterController
                         'title' => 'Backups e Restore',
                         'status' => 'Em organização',
                         'tone' => 'warning',
-                        'items' => ['Separar sistêmico de editorial', 'Registrar pacote e ambiente', 'Validar antes de qualquer restore'],
+                        'items' => [
+                            'Separar sistêmico de editorial',
+                            'Registrar pacote e ambiente',
+                            'Validar antes de qualquer restore',
+                            'Rotina diária das 21:30: local sem uploads seg-sáb e completo aos domingos; stage e produção completos',
+                            'Retenção 7 por ambiente (BACKUP_RETENTION) e pasta C:\Users\WINDOWS\ProjectBackup\estrategia-nerd',
+                            'Uploads cobertos diariamente pelo backup geral (restic, 20:00)',
+                        ],
                     ],
                     [
                         'title' => 'Deploy Técnico',
@@ -249,9 +256,9 @@ final class TechnicalCenterController
                         'status' => 'Ativo',
                         'tone' => 'success',
                         'items' => [
-                            'Copiar novo .mp4 + capa .jpg (vN seguinte) para public/uploads/reels, sem sobrescrever',
-                            'Atualizar video_rendered_path e instagram_post_media.caminho em transação, só se ainda agendado com o vídeo antigo',
-                            'Validar readyVideoPath, reelCoverParams, URL pública e verify-changes.php; vídeo antigo fica para rollback',
+                            'Padrão de arquivos (nome fixo, como as capas): public/uploads/posts/<slug>/reels/reel.mp4 + reel.jpg + capa.jpg; vários Reels no post: reels/reel-<id>/',
+                            'Só se ainda agendado: mover os arquivos atuais para reels/anteriores/ (data e hash no nome) e copiar o novo vídeo e a capa com o nome fixo; o caminho no banco não muda',
+                            'Validar readyVideoPath, reelCoverParams, URL pública e verify-changes.php; rollback = devolver de reels/anteriores/',
                             'Passo a passo: Documentação Técnica, seção 16',
                         ],
                     ],
@@ -262,6 +269,7 @@ final class TechnicalCenterController
                         'items' => [
                             'Plano aprovado antes, piloto primeiro e replicação só após aprovação',
                             'Gerar, renderizar e medir: gates G0–G5, selfTest e área segura do texto',
+                            'Tempo medido (14/10/2026): ~9–10 min por vídeo de 20 s; até 3 renders em paralelo levam o mesmo tempo de 1 (lote real de 3: CPU média 44%, RAM livre mín. 3,3 GB). No Windows, definir CHROME_PATH',
                             'Detalhes, padrões e fontes: docs/features/reels-motionmaxxing.md',
                         ],
                     ],

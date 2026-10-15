@@ -17,9 +17,9 @@ if ($stageCodeRootDefault === '' || $stageCodeRootDefault === $stageUploadsRoot)
 }
 
 return [
-    'package_root' => $_ENV['CONTENT_SYNC_ROOT'] ?? ($_ENV['BACKUP_ROOT'] ?? 'D:\\Taren\\Documents\\Backup\\Estratégia Nerd'),
+    'package_root' => $_ENV['CONTENT_SYNC_ROOT'] ?? ($_ENV['BACKUP_ROOT'] ?? 'C:\\Users\\WINDOWS\\ProjectBackup\\estrategia-nerd'),
     'legacy_package_root' => dirname(__DIR__) . '/storage/content-sync',
-    'code_package_root' => $_ENV['CONTENT_SYNC_CODE_ROOT'] ?? (($_ENV['BACKUP_ROOT'] ?? 'D:\\Taren\\Documents\\Backup\\Estratégia Nerd') . '\\01-local\\codigo'),
+    'code_package_root' => $_ENV['CONTENT_SYNC_CODE_ROOT'] ?? (($_ENV['BACKUP_ROOT'] ?? 'C:\\Users\\WINDOWS\\ProjectBackup\\estrategia-nerd') . '\\01-local\\codigo'),
     'legacy_code_package_root' => dirname(__DIR__) . '/storage/code-sync',
     'seven_zip_binary' => $_ENV['CONTENT_SYNC_7ZIP_BINARY'] ?? 'C:\\Program Files\\7-Zip\\7z.exe',
     'deployment_policy' => [

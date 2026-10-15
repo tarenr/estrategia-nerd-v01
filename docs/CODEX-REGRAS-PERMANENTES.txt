@@ -423,7 +423,13 @@ Para garantir que incidentes ocorridos anteriormente nao se repitam:
    - Em Reels 1080x1920, TEXTO so dentro da area segura do Instagram: nada acima de Y 170 nem abaixo de Y 1540; entre Y 970 e 1790 (coluna de icones) o texto vai ate X 925; margem lateral minima X 72. Imagem e fundo podem ficar sob os icones.
    - A area segura deve ser MEDIDA no navegador com o texto assentado; relatar os numeros.
    - Todo video de Reel precisa da capa .jpg com o mesmo nome, ao lado do .mp4. Sem capa, o envio e bloqueado (nunca contornar).
-   - Trocar o video de um Reel agendado so em transacao, apenas se o post estiver "agendado", sem creation_id/ig_media_id e com o video antigo esperado; nunca sobrescrever o arquivo antigo (ele e o rollback). Procedimento: Documentacao Tecnica, secao 16.
+   - PADRAO DE ARQUIVOS DO REEL (igual ao das capas de artigos: nome fixo, versao atual): public/uploads/posts/<slug>/reels/reel.mp4, com reel.jpg e capa.jpg ao lado; post com mais de um Reel usa reels/reel-<id>/reel.mp4. O caminho no banco (instagram_posts.video_rendered_path e instagram_post_media.caminho) aponta sempre para esse nome fixo.
+   - Trocar o video de um Reel agendado so se o post estiver "agendado", sem creation_id/ig_media_id; nunca perder o arquivo antigo (ele e o rollback): antes de colocar o novo, mover reel.mp4, reel.jpg e capa.jpg atuais para reels/anteriores/ com data e hash no nome (ex.: reel-AAAAMMDD-<hash8>.mp4). Se o caminho no banco precisar mudar, so em transacao e com o caminho antigo esperado. Procedimento: Documentacao Tecnica, secao 16.
+
+8. BACKUP LOCAL DO ESTRATEGIA NERD:
+   - Local sem --no-uploads so aos domingos; BACKUP_RETENTION 7; pasta BACKUP_ROOT em C:\Users\WINDOWS\ProjectBackup\estrategia-nerd.
+   - Os uploads diarios dependem de o backup geral (restic) cobrir estrategia-nerd/public/uploads.
+   - Pasta de backup sem manifest.json fica fora da retencao (deve ser removida a mao se necessario).
 
 ============================================================
 18. DOCUMENTACAO CENTRAL E TAREFAS (OBRIGATORIO)
