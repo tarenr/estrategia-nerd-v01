@@ -59,3 +59,4 @@ As rotas `/local/*` só abrem no próprio PC (`ensureLocalOnly`) e, pelo endere�
 | `scripts/smoke-test.php local` | smoke das rotas principais |
 | `scripts/verify-backup-restore.php <local\|stage\|production> [ID] [--skip-uploads]` | prova que um backup é restaurável sem tocar nos ambientes reais (checksums, CRC de todos os arquivos dos zips e importação do banco em um banco temporário que é apagado no fim) |
 | `scripts/verify-reel-cover.php` e demais `verify-*` | verificações específicas por módulo |
+| Login de teste da IA (conta `teste`, admin, **somente no banco local**) | conferir telas do admin por login real. Usuário e senha ficam no `credenciais.md` (cofre central, fora do Git); não existe na stage nem na produção. Para desativar: `UPDATE usuarios SET status = 'inativo' WHERE id = 0`. Em testes por script, ler a senha do arquivo sem imprimir (Forge #1294) |

@@ -88,6 +88,39 @@ Pasta: `public/uploads/reels/correcao-instagram-20261010/`. A troca foi feita em
 - #201 e #218: na fila com as versões novas.
 - Série Diablo (#224, #225, #226, #195, #227, #197): piloto #224 aprovado (com brasa) e som sombrio aprovado; configuração e medidas dos outros 5 prontas; falta renderizar os 5, revisar e trocar na fila. Os Reels de hardware e de anime servem de padrão para os próximos posts do mesmo tipo.
 
+## 9. Reel #200 corrigido em 14/10/2026 (Forge #1291)
+
+- O vídeo B650 novo (`film-200-v3`) está em `uploads/posts/msi-mag-b650-tomahawk-wifi/reels/reel-v2.mp4` e `reel-v2.jpg` (hashes iguais aos de `final.mp4` e `final.jpg`). O `reel.mp4` antigo ficou no lugar, para rollback. `instagram_posts` 200 e `instagram_post_media` 131 apontam para o `reel-v2.mp4` (feito em transação), e a legenda não cita mais a B850.
+- O #200 ficou em `rascunho` até o usuário autorizar a publicação; depois voltou a `agendado` (com `render_status = ready`) e foi publicado pelo cron em 14/10/2026 às 17:12, com o `reel-v2.mp4`: https://www.instagram.com/reel/DefNnpjCJai/ (`ig_media_id` 17895055548681149).
+- Um primeiro passo, feito antes, sobrescreveu o `reel.mp4` antigo e não atualizou `instagram_post_media`; foi desfeito (arquivo antigo restaurado a partir de `storage/reel-200-20261014/`, fora do Git).
+
+## 11. Padrão de arquivos dos Reels (15/10/2026)
+
+- **Como as capas de artigos:** nome fixo, versão atual. `public/uploads/posts/<slug>/reels/reel.mp4`, com `reel.jpg` e `capa.jpg` ao lado. Post com mais de um Reel: `reels/reel-<id>/reel.mp4`. O banco (`video_rendered_path` e `instagram_post_media.caminho`) aponta sempre para esse nome.
+- **Versões anteriores:** vão para `reels/anteriores/` (`reel-AAAAMMDD-<hash8>.mp4` e `.jpg`, `capa-AAAAMMDD-<hash8>.jpg`) antes de colocar a nova; são o rollback.
+- Substitui a orientação anterior de `reel-<id>-vN` em `uploads/reels/<lote>/`. Os Reels em `uploads/reels/...` (geradores, todos cancelados) e o #200 (publicado, com `reel-v2.mp4`) ficam como estão.
+- Aplicado em 15/10/2026 aos Reels #202, #203, #204, #190 e #207 (Forge #1293): vídeos dos filmes `film-202-v1`, `film-203-v1`, `film-204-v1`, `film-190-v1` e `film-207-v1`, com hashes iguais aos de `final.mp4`/`final.jpg`. Backup em `storage/reels-troca-20261015/` (fora do Git). Os registros do banco não mudaram (o caminho já era esse); todos seguem `agendado` nos mesmos horários.
+
+## 10. Tempos de render (medidos em 14/10/2026)
+
+| Medição | Resultado |
+|---|---|
+| Vídeo de 20 s, 1080x1920, `--shutter 180 --subframes 8 --grain 0.03` | cerca de 9 a 10 min |
+| 3 renders de 20 s ao mesmo tempo | 657,7 s, igual a 1 sozinho (~656 s) |
+| Lote real de 3 filmes (#200 B650, #202, #203) | ~9,5 min no total; CPU média 44% (pico 100%); RAM livre mínima 3,3 GB |
+| Lote real de 2 filmes (#202, #203) | CPU média 32%; RAM livre mínima 4,4 GB |
+| Lote A (#204, #190, #207) | 9 min 41 s a 9 min 50 s para os três |
+| Trecho de 5 s: 1 render | ~164 s |
+| Trecho de 5 s: 4, 5 e 6 renders juntos | 175, 178 e 177 s; RAM livre mínima 3,4, 2,7 e 1,3 GB |
+| Rascunho sem shutter (trecho de 5 s) | ~21 s |
+| 4 sub-frames (trecho de 5 s) | ~82 s (SSIM 0,992 contra 8 sub-frames) |
+| `--scale 0.5` com shutter | só ~27% mais rápido |
+
+- Sugestão prática: 4 renders ao mesmo tempo, 6 no máximo. **Ainda sem aprovação como padrão.** Padrão de sub-frames segue em 8.
+- No Windows definir `CHROME_PATH` (o `render.mjs` só procura caminhos de Mac e Linux).
+- O render em paralelo difere do render sozinho (SSIM 0,985 a 0,99), mas os renders em paralelo são iguais entre si.
+- Origem dos números: tarefas do Forge 1265, 1266 e 1273 e os arquivos `lote-a-start.txt` e `done.txt` do Lote A.
+
 ## Validação
 
 - Gates e selfTest registrados por vídeo nas tarefas do Forge; área segura medida em cada um.
