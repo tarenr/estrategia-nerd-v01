@@ -42,8 +42,17 @@ function is_sidebar_active(string $current, string $target): bool
     $current = norm_sidebar_path($current);
     $target = norm_sidebar_path($target);
 
-    if ($target === '/admin') {
-        return $current === '/admin';
+    // Rotas raiz que possuem sub-rotas irmas no menu exigem correspondencia exata
+    // para evitar que fiquem marcadas simultaneamente com seus itens filhos
+    $exactMatchRoutes = [
+        '/',
+        '/admin',
+        '/admin/central-operacional-v2',
+        '/admin/central-tecnica/base-conhecimento',
+    ];
+
+    if (in_array($target, $exactMatchRoutes, true)) {
+        return $current === $target;
     }
 
     return $current === $target || str_starts_with($current . '/', $target . '/');

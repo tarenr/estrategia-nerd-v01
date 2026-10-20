@@ -10,90 +10,82 @@ $rulesBody = trim((string) ($rules_body ?? ''));
 ?>
 <section class="<?= $adminEmbed ? 'text-slate-100' : 'min-h-screen bg-slate-950 px-4 py-8 text-slate-100' ?>">
   <style>
-    .doc-card { border: 1px solid rgba(51, 65, 85, 0.9); background: rgba(2, 6, 23, 0.65); border-radius: 1rem; padding: 1rem; }
-    .doc-label { font-family: Orbitron, ui-sans-serif, system-ui; font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(148, 163, 184, 0.95); }
-    .doc-rule { border: 1px solid rgba(34, 211, 238, 0.25); background: rgba(8, 47, 73, 0.45); }
-    .doc-alert { border: 1px solid rgba(251, 191, 36, 0.28); background: rgba(120, 53, 15, 0.28); }
-    .doc-strong { border: 1px solid rgba(244, 114, 182, 0.25); background: rgba(80, 7, 36, 0.24); }
-    .doc-pre { white-space: pre-wrap; word-break: break-word; font-size: 0.82rem; line-height: 1.65; color: rgba(226, 232, 240, 0.96); }
+    .rules-card { border-radius: 1rem; padding: 1.15rem 1.25rem; font-size: 0.875rem; line-height: 1.55rem; }
+    .rules-callout-danger { border: 1px solid rgba(244, 63, 94, 0.35); background: rgba(136, 19, 55, 0.25); color: #fecdd3; }
+    .rules-callout-warn { border: 1px solid rgba(245, 158, 11, 0.35); background: rgba(120, 53, 15, 0.25); color: #fde68a; }
+    .rules-callout-info { border: 1px solid rgba(6, 182, 212, 0.35); background: rgba(8, 47, 73, 0.25); color: #bae6fd; }
+    .rules-callout-success { border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(6, 78, 59, 0.25); color: #a7f3d0; }
+    .doc-pre { white-space: pre-wrap; word-break: break-word; font-family: monospace; font-size: 0.8rem; line-height: 1.6; color: #cbd5e1; }
   </style>
 
   <div class="<?= $adminEmbed ? 'space-y-6' : 'mx-auto max-w-7xl space-y-6' ?>">
-    <?php if (!$embedMode): ?>
+    <?php if (!$embedMode && !$adminEmbed): ?>
       <?php \App\Support\View::component('site/local-tools-nav', ['active' => 'rules']); ?>
+      <header class="rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_35px_rgba(6,182,212,0.06)]">
+        <p class="font-orbitron text-xs uppercase tracking-[0.3em] text-cyan-300/70">Regras Permanentes</p>
+        <h1 class="mt-2 font-orbitron text-2xl font-black tracking-tight text-white md:text-3xl text-balance">Política Operacional Obrigatória do Projeto</h1>
+        <p class="mt-2.5 max-w-4xl text-sm leading-relaxed text-slate-300">Regras permanentes de arquitetura, paridade, segurança e disciplina operacional do Estratégia Nerd.</p>
+      </header>
     <?php endif; ?>
 
-    <header class="rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_40px_rgba(6,182,212,0.08)]">
-      <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Regras Permanentes</p>
-      <h1 class="mt-2 font-orbitron text-3xl font-black tracking-tight text-white">Politica operacional obrigatoria do projeto</h1>
-      <p class="mt-3 max-w-5xl text-sm leading-7 text-slate-300">
-        Esta pagina concentra as regras permanentes de arquitetura, deploy, seguranca e disciplina operacional.
-        O objetivo e impedir atalho inseguro, reduzir retrabalho e manter `local`, `stage` e `producao` sob governanca real.
-      </p>
-      <div class="mt-5 grid gap-3 md:grid-cols-3">
-        <div class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
-          <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Versao de referencia</p>
-          <p class="mt-1 font-rajdhani text-2xl font-bold text-white"><?= htmlspecialchars($projectVersion, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+    <!-- 4 Regras de Ouro em Destaque Visual -->
+    <div>
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="font-orbitron text-xs font-black uppercase tracking-[0.2em] text-slate-400">As 4 Regras de Maior Peso</h2>
+        <span class="rounded-full border border-rose-500/30 bg-rose-950/60 px-2 py-0.5 font-mono text-[10px] font-bold text-rose-300">Bloqueio Absoluto</span>
+      </div>
+
+      <div class="mt-4 grid gap-4 md:grid-cols-2">
+        <div class="rules-card rules-callout-danger">
+          <div class="flex items-center gap-2 font-bold text-rose-200">
+            <i class="fa-solid fa-ban text-xs"></i>
+            <span>1. Trava Atômica de Origem (Stage &rarr; Produção)</span>
+          </div>
+          <p class="mt-2 text-xs leading-relaxed text-rose-100">
+            É <strong>terminantemente proibido</strong> publicar código ou pacotes de conteúdo em produção a partir do ambiente local. Pacotes de produção devem nascer exclusivamente da <code class="font-mono text-white">estrategia-nerd-stage</code> validada.
+          </p>
         </div>
-        <div class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
-          <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Atualizado em</p>
-          <p class="mt-1 text-sm text-slate-200"><?= htmlspecialchars($generatedAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+
+        <div class="rules-card rules-callout-warn">
+          <div class="flex items-center gap-2 font-bold text-amber-200">
+            <i class="fa-solid fa-lock text-xs"></i>
+            <span>2. Isolamento do Módulo Instagram (Local-Only)</span>
+          </div>
+          <p class="mt-2 text-xs leading-relaxed text-amber-100">
+            Tokens da Meta Graph API v21.0, fila de postagens e credenciais residem exclusivamente no MySQL local (<code class="font-mono text-white">$GLOBALS['pdo']</code>). Nunca trafegam para o banco remoto de produção.
+          </p>
         </div>
-        <div class="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
-          <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Regra de maior peso</p>
-          <p class="mt-1 text-sm text-slate-200">Pacote de producao so nasce da `stage` validada.</p>
+
+        <div class="rules-card rules-callout-info">
+          <div class="flex items-center gap-2 font-bold text-cyan-200">
+            <i class="fa-solid fa-eye-slash text-xs"></i>
+            <span>3. Bloqueio Anti-Indexação da Stage (Noindex)</span>
+          </div>
+          <p class="mt-2 text-xs leading-relaxed text-cyan-100">
+            Com <code class="font-mono text-white">APP_ENV=stage</code>, o <code class="font-mono text-white">bootstrap.php</code> envia compulsoriamente <code class="font-mono text-white">X-Robots-Tag: noindex, nofollow</code> para proteger a autoridade de busca e impedir conteúdo duplicado.
+          </p>
+        </div>
+
+        <div class="rules-card rules-callout-success">
+          <div class="flex items-center gap-2 font-bold text-emerald-200">
+            <i class="fa-solid fa-shield-check text-xs"></i>
+            <span>4. Suíte Obrigatória Pré-Commit (Zero Falhas)</span>
+          </div>
+          <p class="mt-2 text-xs leading-relaxed text-emerald-100">
+            Nenhuma alteração é commitada sem aprovação total de <code class="font-mono text-white">verify-changes.php</code> (lint, PHPStan Nível 5, renderizações multi-ambiente do dashboard e Instagram com 0 erros).
+          </p>
         </div>
       </div>
-    </header>
+    </div>
 
-    <section class="grid gap-6 xl:grid-cols-[1.05fr_1.95fr]">
-      <aside class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
-        <h2 class="font-orbitron text-base font-bold text-white">Leitura rapida</h2>
-        <div class="mt-4 space-y-3">
-          <div class="doc-card doc-alert">
-            <p class="doc-label">Bloqueio absoluto</p>
-            <p class="mt-2 text-sm text-amber-100">Se a origem do pacote nao for `stage`, a publicacao em producao deve parar.</p>
-          </div>
-          <div class="doc-card doc-rule">
-            <p class="doc-label">Teste em producao</p>
-            <p class="mt-2 text-sm text-slate-100">Producao recebe apenas validacao minima de sanidade, nunca teste exploratorio.</p>
-          </div>
-          <div class="doc-card doc-strong">
-            <p class="doc-label">Paridade obrigatoria</p>
-            <p class="mt-2 text-sm text-fuchsia-100">Toda correcao publicada deve ser reproduzida em `stage` e `local` antes de encerrar a tarefa.</p>
-          </div>
-        </div>
-      </aside>
-
-      <div class="space-y-6">
-        <section class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">Melhorias aplicadas nas regras</h2>
-          <div class="mt-4 grid gap-3 md:grid-cols-2">
-            <div class="doc-card doc-rule">
-              <p class="doc-label">Promocao entre ambientes</p>
-              <p class="mt-2 text-sm text-slate-100">O fluxo agora deixa explicito que `local` desenvolve, `stage` valida e so a `stage` pode virar origem de pacote para `producao`.</p>
-            </div>
-            <div class="doc-card doc-rule">
-              <p class="doc-label">Teste em producao</p>
-              <p class="mt-2 text-sm text-slate-100">As regras reforcam que producao nao e laboratorio. Ali so entra smoke curto e verificacao minima pos-publicacao.</p>
-            </div>
-            <div class="doc-card doc-rule">
-              <p class="doc-label">Saida operacional</p>
-              <p class="mt-2 text-sm text-slate-100">Foi reforcado o registro de `backup_id`, `package_id`, origem real do pacote e validacao executada antes de encerrar qualquer deploy.</p>
-            </div>
-            <div class="doc-card doc-rule">
-              <p class="doc-label">Automacao util</p>
-              <p class="mt-2 text-sm text-slate-100">As regras agora incentivam automatizar preflight, origem do pacote, validacao de rotas e bloqueios sem substituir criterio humano.</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">Texto oficial em vigor</h2>
-          <div class="doc-card mt-4">
-            <pre class="doc-pre"><?= htmlspecialchars($rulesBody, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></pre>
-          </div>
-        </section>
+    <!-- Texto Oficial do Codex Preservado na Íntegra -->
+    <section class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-sm">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-orbitron text-sm font-bold text-white">Texto Oficial do Codex em Vigor</h3>
+        <span class="font-mono text-xs text-slate-500">docs/CODEX-REGRAS-PERMANENTES.txt</span>
+      </div>
+      <div class="mt-4 max-h-[600px] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 p-4">
+        <pre class="doc-pre"><?= htmlspecialchars($rulesBody, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></pre>
       </div>
     </section>
   </div>

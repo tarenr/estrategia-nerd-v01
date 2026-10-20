@@ -6,114 +6,229 @@ $embedMode = (bool) ($embed_mode ?? false);
 $adminEmbed = (bool) ($admin_embed ?? false);
 $projectVersion = trim((string) ($project_version ?? 'local'));
 $generatedAt = trim((string) ($generated_at ?? date('Y-m-d H:i:s')));
-$projectName = (string) config('app.name', 'Estrategia Nerd');
-$projectType = 'Portal editorial + conversao';
-$projectStack = 'PHP 8.2 (MVC leve), MySQL/MariaDB, Tailwind (arquivo local tailwind.min.css), FontAwesome 6, Node + Chrome (render dos Reels)';
-$projectEnvironment = 'Local / homologacao operacional';
+$projectName = (string) config('app.name', 'Estratégia Nerd');
+$projectType = 'Portal editorial geek + conversão de afiliados + automação de mídia';
+$projectStack = 'PHP 8.2 (MVC leve customizado), MySQL/MariaDB, Tailwind CSS local, FontAwesome 6, Node.js + Chrome (Motionmaxxing), Playwright (OneTake), WebGPU/Dawn (Framefields)';
+$projectEnvironment = 'Local / homologação operacional';
 $projectOwner = (string) ($_ENV['PROJECT_OWNER'] ?? 'Taren');
-$projectScope = 'Documentacao interna, backup, validacao local, stage e governanca de deploy';
+$projectScope = 'Documentação interna, backup sistêmico/editorial, validação local, stage e governança de releases';
 $currentSource = strtolower(trim((string) ($_ENV['CONTENT_SYNC_CURRENT_SOURCE'] ?? 'local')));
 $approvedSource = strtolower(trim((string) ($_ENV['CONTENT_SYNC_APPROVED_PACKAGE_SOURCE'] ?? 'stage')));
 $stageLabel = trim((string) ($_ENV['CONTENT_SYNC_STAGE_LABEL'] ?? 'estrategia-nerd-stage'));
 $productionAllowed = $currentSource !== '' && $approvedSource !== '' && $currentSource === $approvedSource;
-$docSections = [
-    'identidade' => '1. Identidade do projeto',
-    'arquitetura' => '2. Arquitetura tecnica',
-    'rotas-principais' => '3. Rotas principais do sistema',
-    'pastas' => '4. Responsabilidade de pastas',
-    'regras-dev' => '5. Regras de desenvolvimento',
-    'seguranca' => '6. Seguranca do sistema',
-    'padrao-codigo' => '7. Padrao de codigo e nomenclatura',
-    'deploy' => '8. Deploy operacional',
-    'backup' => '9. Backup e restore',
-    'dropbox' => '10. Backup em nuvem (Google Drive)',
-    'ambiente' => '11. Configuracao de ambiente',
-    'governanca-releases' => '12. Governanca de releases',
-    'diagnostico' => '13. Erros comuns e diagnostico',
-    'evolucao' => '14. Evolucao tecnica',
-    'governanca' => '15. Governanca da documentacao',
-    'instagram' => '16. Instagram e Reels',
-    'central-nerd' => '17. Central Nerd e cliques',
+
+$docGroups = [
+    'Fundamentos & Arquitetura' => [
+        'identidade' => ['label' => '1. Identidade do projeto', 'icon' => 'fa-solid fa-cube'],
+        'arquitetura' => ['label' => '2. Arquitetura técnica (MVC)', 'icon' => 'fa-solid fa-sitemap'],
+        'rotas-principais' => ['label' => '3. Rotas do sistema', 'icon' => 'fa-solid fa-route'],
+        'pastas' => ['label' => '4. Responsabilidade de pastas', 'icon' => 'fa-solid fa-folder-tree'],
+        'padrao-codigo' => ['label' => '5. Padrão de código e nomenclatura', 'icon' => 'fa-solid fa-code'],
+    ],
+    'Operação & Infraestrutura' => [
+        'deploy' => ['label' => '6. Deploy operacional e paridade', 'icon' => 'fa-solid fa-rocket'],
+        'backup' => ['label' => '7. Backup e restore', 'icon' => 'fa-solid fa-database'],
+        'dropbox' => ['label' => '8. Backup em nuvem (Google Drive)', 'icon' => 'fa-brands fa-google-drive'],
+        'ambiente' => ['label' => '9. Configurações de ambiente (.env)', 'icon' => 'fa-solid fa-sliders'],
+        'seguranca' => ['label' => '10. Segurança do sistema', 'icon' => 'fa-solid fa-shield-halved'],
+    ],
+    'Módulos & Negócio' => [
+        'instagram' => ['label' => '11. Instagram & Reels (Motores)', 'icon' => 'fa-brands fa-instagram'],
+        'central-nerd' => ['label' => '12. Central Nerd & Afiliados', 'icon' => 'fa-solid fa-cart-shopping'],
+        'regras-dev' => ['label' => '13. Regras de desenvolvimento', 'icon' => 'fa-solid fa-gavel'],
+    ],
+    'Governança & Diagnóstico' => [
+        'governanca-releases' => ['label' => '14. Governança oficial de releases', 'icon' => 'fa-solid fa-clipboard-check'],
+        'diagnostico' => ['label' => '15. Erros comuns e diagnóstico', 'icon' => 'fa-solid fa-triangle-exclamation'],
+        'evolucao' => ['label' => '16. Evolução técnica do portal', 'icon' => 'fa-solid fa-timeline'],
+        'governanca' => ['label' => '17. Governança da documentação', 'icon' => 'fa-solid fa-book-bookmark'],
+    ],
 ];
+
+// Lista ordenada de chaves para navegação sequencial
+$allSectionKeys = [];
+$docSections = [];
+foreach ($docGroups as $groupItems) {
+    foreach ($groupItems as $secKey => $secData) {
+        $allSectionKeys[] = $secKey;
+        $docSections[$secKey] = $secData['label'];
+    }
+}
+
 $docSection = strtolower(trim((string) ($_GET['docs_secao'] ?? 'identidade')));
 if (!array_key_exists($docSection, $docSections)) {
     $docSection = 'identidade';
 }
-$docsBaseUrl = $adminEmbed ? url('/admin/base-tecnica?aba=documentacao') : url('/local/documentacao');
+
+$currentIndex = array_search($docSection, $allSectionKeys, true);
+if ($currentIndex === false) {
+    $currentIndex = 0;
+}
+$prevSection = $currentIndex > 0 ? $allSectionKeys[$currentIndex - 1] : null;
+$nextSection = $currentIndex < count($allSectionKeys) - 1 ? $allSectionKeys[$currentIndex + 1] : null;
+
+$docsBaseUrl = $adminEmbed ? url('/admin/central-tecnica/base-conhecimento/documentacao') : url('/local/documentacao');
 $docsSectionUrl = static function (string $section) use ($docsBaseUrl): string {
     $separator = str_contains($docsBaseUrl, '?') ? '&' : '?';
     return $docsBaseUrl . $separator . 'docs_secao=' . rawurlencode($section);
 };
 $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arquivo=priorizacao-tecnica.md&redirect_to=' . rawurlencode($docsSectionUrl('governanca-releases')));
+$echoSeriesDocUrl = url('/local/mudancas/documento?grupo=governanca&arquivo=molde-serie-echo.md&redirect_to=' . rawurlencode($docsSectionUrl('instagram')));
+$videoDirectionDocUrl = url('/local/mudancas/documento?grupo=governanca&arquivo=guia-direcao-audiovisual-ia.md&redirect_to=' . rawurlencode($docsSectionUrl('instagram')));
 ?>
 <section class="<?= $adminEmbed ? 'text-slate-100' : 'min-h-screen bg-slate-950 px-4 py-8 text-slate-100' ?>">
   <style>
-    .doc-card { border: 1px solid rgba(51, 65, 85, 0.9); background: rgba(2, 6, 23, 0.65); border-radius: 1rem; padding: 1rem; }
-    .doc-label { font-family: Orbitron, ui-sans-serif, system-ui; font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(148, 163, 184, 0.95); }
-    .doc-rule { border: 1px solid rgba(34, 211, 238, 0.25); background: rgba(8, 47, 73, 0.45); }
-    .doc-alert { border: 1px solid rgba(251, 191, 36, 0.28); background: rgba(120, 53, 15, 0.28); }
-    .doc-example { border: 1px solid rgba(192, 132, 252, 0.26); background: rgba(59, 7, 100, 0.23); }
-    .doc-table { min-width: 100%; border-collapse: separate; border-spacing: 0 0.55rem; font-size: 0.875rem; }
-    .doc-table th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(100, 116, 139, 1); padding: 0.5rem 0.75rem; }
-    .doc-table td { padding: 0.7rem 0.75rem; vertical-align: top; }
-    .doc-row { border: 1px solid rgba(51, 65, 85, 0.95); background: rgba(2, 6, 23, 0.7); }
+    .doc-callout { border-radius: 1rem; padding: 1.15rem 1.25rem; font-size: 0.875rem; line-height: 1.55rem; }
+    .doc-callout-info { border: 1px solid rgba(6, 182, 212, 0.35); background: rgba(8, 47, 73, 0.35); color: #bae6fd; }
+    .doc-callout-warn { border: 1px solid rgba(245, 158, 11, 0.35); background: rgba(120, 53, 15, 0.3); color: #fde68a; }
+    .doc-callout-danger { border: 1px solid rgba(244, 63, 94, 0.35); background: rgba(136, 19, 55, 0.3); color: #fecdd3; }
+    .doc-callout-success { border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(6, 78, 59, 0.3); color: #a7f3d0; }
+    .doc-step-badge { display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; border-radius: 0.55rem; font-family: monospace; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+    .doc-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; }
+    .doc-table th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.16em; color: #94a3b8; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(51, 65, 85, 0.7); background: rgba(2, 6, 23, 0.6); }
+    .doc-table td { padding: 0.85rem 1rem; border-bottom: 1px solid rgba(30, 41, 59, 0.6); vertical-align: top; }
+    .doc-table tr:hover td { background: rgba(30, 41, 59, 0.35); }
     .doc-panel[hidden] { display: none; }
   </style>
-  <div class="<?= $adminEmbed ? 'space-y-6' : 'mx-auto max-w-7xl space-y-6' ?>">
-    <?php if (!$embedMode): ?>
+
+  <div class="<?= $adminEmbed ? 'space-y-4' : 'mx-auto max-w-7xl space-y-6' ?>">
+    <?php if (!$embedMode && !$adminEmbed): ?>
       <?php \App\Support\View::component('site/local-tools-nav', ['active' => 'docs']); ?>
+      <header class="rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_35px_rgba(6,182,212,0.06)]">
+        <p class="font-orbitron text-xs uppercase tracking-[0.3em] text-cyan-300/70">Documentação Central Interna</p>
+        <h1 class="mt-2 font-orbitron text-2xl font-black tracking-tight text-white md:text-3xl text-balance">Base Técnica Operacional — <?= htmlspecialchars($projectName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h1>
+        <p class="mt-2.5 max-w-4xl text-sm leading-relaxed text-slate-300">Referência técnica oficial para desenvolvimento, deploy, paridade de ambientes, backups em nuvem e motores visuais.</p>
+      </header>
     <?php endif; ?>
 
-    <header class="rounded-3xl border border-cyan-500/20 bg-slate-900/80 p-6 shadow-[0_0_40px_rgba(6,182,212,0.08)]">
-      <p class="font-orbitron text-xs uppercase tracking-[0.35em] text-cyan-300/70">Documentacao Interna Local</p>
-      <h1 class="mt-2 font-orbitron text-3xl font-black tracking-tight text-white">Base Tecnica Operacional - <?= htmlspecialchars($projectName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></h1>
-      <p class="mt-3 max-w-4xl text-sm leading-7 text-slate-300">Painel de referencia tecnica para desenvolvimento, manutencao, backup, deploy e operacao editorial. Esta documentacao e interna/local e deve evoluir junto com o sistema e com as regras permanentes do portal.</p>
-    </header>
+    <!-- Seletor Compacto no Mobile / Telas Pequenas (ocupa apenas 46px no topo, sem empilhar botões!) -->
+    <div class="lg:hidden rounded-2xl border border-slate-800 bg-slate-900/90 p-3 shadow-sm">
+      <div class="flex items-center gap-2.5">
+        <label for="docSectionSelect" class="font-orbitron text-[10px] font-black uppercase tracking-wider text-slate-400 shrink-0">Seção Ativa:</label>
+        <select id="docSectionSelect" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-semibold text-white outline-none focus:border-cyan-400">
+          <?php foreach ($docGroups as $groupTitle => $groupItems): ?>
+            <optgroup label="<?= htmlspecialchars($groupTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+              <?php foreach ($groupItems as $secKey => $secData): ?>
+                <option value="<?= htmlspecialchars($secKey, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" <?= $secKey === $docSection ? 'selected' : '' ?>><?= htmlspecialchars($secData['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></option>
+              <?php endforeach; ?>
+            </optgroup>
+          <?php endforeach; ?>
+        </select>
+      </div>
+    </div>
 
-    <article class="grid gap-6 xl:grid-cols-[0.92fr_2fr]">
-      <aside class="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
-        <h2 class="font-orbitron text-base font-bold text-white">Indice</h2>
-        <nav class="mt-4 grid gap-2 text-sm" data-doc-nav>
-          <?php foreach ($docSections as $sectionKey => $sectionLabel): ?>
-            <?php $isActive = $sectionKey === $docSection; ?>
-            <a
-              href="<?= htmlspecialchars($docsSectionUrl($sectionKey), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
-              data-doc-trigger="<?= htmlspecialchars($sectionKey, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
-              class="block rounded-xl border px-3 py-2 transition <?= $isActive ? 'border-cyan-300/70 bg-cyan-500/15 text-cyan-100 shadow-[0_0_20px_rgba(34,211,238,0.12)]' : 'border-slate-700 bg-slate-950/70 text-slate-300 hover:border-cyan-400/60 hover:bg-cyan-500/10 hover:text-white' ?>"
-              aria-current="<?= $isActive ? 'page' : 'false' ?>"
-            ><?= htmlspecialchars($sectionLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a>
+    <!-- Layout Dividido Lado a Lado no Desktop (Sidebar Sticky de 280px à Esquerda + Conteúdo Imediato à Direita) -->
+    <div class="flex flex-col lg:flex-row gap-6 items-start">
+
+      <!-- Barra Lateral Desktop (Sticky e Compacta) -->
+      <aside class="hidden lg:block w-72 shrink-0 sticky top-4 rounded-3xl border border-slate-800/90 bg-slate-900/80 p-5 shadow-sm">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="font-orbitron text-xs font-black uppercase tracking-[0.2em] text-slate-400">Sumário da Base</h2>
+          <span class="rounded-full border border-cyan-500/30 bg-cyan-950/60 px-2 py-0.5 font-mono text-[10px] font-bold text-cyan-300">17 seções</span>
+        </div>
+
+        <nav class="mt-4 space-y-4 text-sm" data-doc-nav>
+          <?php foreach ($docGroups as $groupTitle => $groupItems): ?>
+            <div>
+              <p class="font-orbitron text-[9px] font-black uppercase tracking-[0.18em] text-slate-500"><?= htmlspecialchars($groupTitle, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></p>
+              <div class="mt-1.5 grid gap-1">
+                <?php foreach ($groupItems as $sectionKey => $sectionData): ?>
+                  <?php $isActive = $sectionKey === $docSection; ?>
+                  <a
+                    href="<?= htmlspecialchars($docsSectionUrl($sectionKey), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    data-doc-trigger="<?= htmlspecialchars($sectionKey, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
+                    class="flex items-center gap-2.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition <?= $isActive ? 'border-cyan-400/50 bg-cyan-500/15 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.12)]' : 'border-slate-800/70 bg-slate-950/50 text-slate-300 hover:border-slate-700 hover:bg-slate-800/50 hover:text-white' ?>"
+                    aria-current="<?= $isActive ? 'page' : 'false' ?>"
+                  >
+                    <i class="<?= htmlspecialchars($sectionData['icon'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> text-[10px] <?= $isActive ? 'text-cyan-300' : 'text-slate-500' ?>" aria-hidden="true"></i>
+                    <span class="truncate"><?= htmlspecialchars($sectionData['label'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                  </a>
+                <?php endforeach; ?>
+              </div>
+            </div>
           <?php endforeach; ?>
         </nav>
       </aside>
 
-      <div class="space-y-6">
-        <section id="identidade" data-doc-panel="identidade" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'identidade' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">1) Identidade do projeto</h2>
-          <div class="doc-card doc-rule mt-4"><p class="doc-label">Visao geral</p><p class="mt-2 text-sm text-slate-200">Esta base e interna/local, com foco em confiabilidade operacional, paridade entre ambientes e evolucao controlada do sistema.</p></div>
-          <div class="mt-4 overflow-x-auto"><table class="doc-table"><tbody>
-            <tr class="doc-row"><td class="text-slate-500">Projeto</td><td class="text-white"><?= htmlspecialchars($projectName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
-            <tr class="doc-row"><td class="text-slate-500">Tipo</td><td class="text-white"><?= htmlspecialchars($projectType, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
-            <tr class="doc-row"><td class="text-slate-500">Stack</td><td class="text-white"><?= htmlspecialchars($projectStack, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
-            <tr class="doc-row"><td class="text-slate-500">Ambiente</td><td class="text-white"><?= htmlspecialchars($projectEnvironment, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
-            <tr class="doc-row"><td class="text-slate-500">Responsavel</td><td class="text-white"><?= htmlspecialchars($projectOwner, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
-            <tr class="doc-row"><td class="text-slate-500">Versao</td><td class="text-white"><?= htmlspecialchars($projectVersion, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
-            <tr class="doc-row"><td class="text-slate-500">Ultima atualizacao</td><td class="text-white"><?= htmlspecialchars($generatedAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
-            <tr class="doc-row"><td class="text-slate-500">Escopo</td><td class="text-white"><?= htmlspecialchars($projectScope, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
-          </tbody></table></div>
+      <!-- Área de Conteúdo das Seções (Começa Imediatamente no Topo da Tela!) -->
+      <div class="flex-1 min-w-0 space-y-6">
+
+        <!-- 1. IDENTIDADE DO PROJETO -->
+        <section id="identidade" data-doc-panel="identidade" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'identidade' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-cube text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">1) Identidade do Projeto</h2>
+              <p class="text-xs text-slate-400">Diretrizes gerais, stack tecnológica e governança de escopo.</p>
+            </div>
+          </div>
+
+          <div class="doc-callout doc-callout-info mt-4">
+            <p class="font-semibold text-cyan-100">Visão Geral & Filosofia Técnica</p>
+            <p class="mt-1">Esta documentação interna centraliza as diretrizes operacionais de código, deploys controlados, testes de integridade, paridade de ambientes e rotinas do portal Estratégia Nerd.</p>
+          </div>
+
+          <div class="mt-5 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/70">
+            <table class="doc-table">
+              <tbody>
+                <tr><td class="w-1/3 font-semibold text-slate-400">Nome Oficial</td><td class="font-bold text-white"><?= htmlspecialchars($projectName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
+                <tr><td class="font-semibold text-slate-400">Natureza</td><td class="text-slate-200"><?= htmlspecialchars($projectType, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
+                <tr><td class="font-semibold text-slate-400">Stack Tecnológica</td><td class="text-slate-200"><?= htmlspecialchars($projectStack, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
+                <tr><td class="font-semibold text-slate-400">Ambientes</td><td class="text-slate-200"><span class="rounded bg-slate-800 px-2 py-0.5 text-xs font-mono text-cyan-300">Local</span> &rarr; <span class="rounded bg-slate-800 px-2 py-0.5 text-xs font-mono text-amber-300"><?= htmlspecialchars($stageLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span> &rarr; <span class="rounded bg-slate-800 px-2 py-0.5 text-xs font-mono text-emerald-300">Produção</span></td></tr>
+                <tr><td class="font-semibold text-slate-400">Responsável</td><td class="text-white"><?= htmlspecialchars($projectOwner, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
+                <tr><td class="font-semibold text-slate-400">Versão / Tag</td><td class="font-mono text-xs text-slate-300"><?= htmlspecialchars($projectVersion, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
+                <tr><td class="font-semibold text-slate-400">Última Leitura</td><td class="text-slate-300"><?= htmlspecialchars($generatedAt, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
+                <tr><td class="font-semibold text-slate-400">Escopo Governança</td><td class="text-slate-300"><?= htmlspecialchars($projectScope, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
+              </tbody>
+            </table>
+          </div>
         </section>
 
-        <section id="arquitetura" data-doc-panel="arquitetura" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'arquitetura' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">2) Arquitetura tecnica</h2>
-          <p class="mt-2 text-sm leading-7 text-slate-300">Arquitetura MVC leve com separacao entre orquestracao (Controller), regra de negocio (Service), acesso a dados (Repository), persistencia (Database) e renderizacao (View).</p>
-          <div class="doc-card doc-rule mt-4"><p class="doc-label">Fluxo base</p><pre class="mt-2 overflow-x-auto text-xs leading-6 text-slate-200"><code>Request -> Router -> Controller -> Service -> Repository -> Database
-                                                -> ViewModel -> View -> Response</code></pre></div>
-          <div class="doc-card doc-example mt-4"><p class="doc-label">ViewModel</p><ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Nasce no Service para preparar dados de exibicao.</li><li>Evita dependencia direta da View com Repository/SQL.</li><li>Nao deve concentrar regra de negocio pesada.</li></ul></div>
+        <!-- 2. ARQUITETURA TÉCNICA -->
+        <section id="arquitetura" data-doc-panel="arquitetura" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'arquitetura' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-sitemap text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">2) Arquitetura Técnica (MVC)</h2>
+              <p class="text-xs text-slate-400">Separação rigorosa de responsabilidades e orquestração de camadas.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+            <p class="font-orbitron text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Fluxo Canônico da Requisição</p>
+            <pre class="mt-2 overflow-x-auto text-xs leading-relaxed text-cyan-300 font-mono"><code>Request &rarr; Router &rarr; Controller &rarr; Service &rarr; Repository &rarr; Database (PDO)
+                                       &rarr; ViewModel &rarr; View (HTML) &rarr; Response</code></pre>
+          </div>
+
+          <div class="mt-5 grid gap-4 md:grid-cols-2">
+            <div class="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-4">
+              <h3 class="font-semibold text-white flex items-center gap-2"><i class="fa-solid fa-layer-group text-xs text-cyan-400"></i> Orquestração (Controllers & Services)</h3>
+              <ul class="mt-2 space-y-1.5 text-xs text-slate-300">
+                <li>&bull; <strong class="text-white">Controller:</strong> Apenas valida requisições HTTP, despacha para Services e devolve Views/JSON. <em>Proibido executar SQL direto.</em></li>
+                <li>&bull; <strong class="text-white">Service:</strong> Concentra regras de negócio, integrações, validação cruzada e geração de ViewModels.</li>
+              </ul>
+            </div>
+            <div class="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-4">
+              <h3 class="font-semibold text-white flex items-center gap-2"><i class="fa-solid fa-database text-xs text-cyan-400"></i> Persistência & Exibição</h3>
+              <ul class="mt-2 space-y-1.5 text-xs text-slate-300">
+                <li>&bull; <strong class="text-white">Repository:</strong> Centraliza queries SQL seguras (`prepare`/`execute`), paginação e mapeamento.</li>
+                <li>&bull; <strong class="text-white">ViewModel & View:</strong> ViewModels preparam os dados no Service. Views contêm apenas renderização visual, sem queries complexas.</li>
+              </ul>
+            </div>
+          </div>
         </section>
 
-        <section id="rotas-principais" data-doc-panel="rotas-principais" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'rotas-principais' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">3) Rotas do sistema (geradas de config/routes.php)</h2>
+        <!-- 3. ROTAS DO SISTEMA -->
+        <section id="rotas-principais" data-doc-panel="rotas-principais" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'rotas-principais' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-route text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">3) Rotas do Sistema</h2>
+              <p class="text-xs text-slate-400">Tabela de rotas gerada dinamicamente a partir de <code>config/routes.php</code>.</p>
+            </div>
+          </div>
+
           <?php
-          // A tabela e montada a partir do proprio config/routes.php: nunca fica desatualizada.
           $routeGroups = [];
           $routeDefinitions = is_file(base_path('config/routes.php')) ? (array) require base_path('config/routes.php') : [];
           foreach ($routeDefinitions as $routeDefinition) {
@@ -126,13 +241,13 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
               $second = $segments[1] ?? '';
               if ($first === 'admin') {
                   $known = ['instagram', 'central-operacional-v2', 'central-tecnica', 'base-tecnica', 'midia', 'links', 'newsletter', 'usuarios', 'testes', 'health', 'auditoria-geral', 'home-e-menus'];
-                  $groupName = in_array($second, $known, true) ? 'Admin: /admin/' . $second : 'Admin: posts, categorias, comentarios e demais';
+                  $groupName = in_array($second, $known, true) ? 'Admin: /admin/' . $second : 'Admin: posts, categorias, comentários e demais';
               } elseif ($first === 'local') {
-                  $groupName = 'Local: /local (somente neste PC)';
+                  $groupName = 'Local: /local (somente neste PC via EnvironmentGuard)';
               } elseif ($first === 'api') {
                   $groupName = 'API: /api';
               } else {
-                  $groupName = 'Publico (site)';
+                  $groupName = 'Público (Portal do Leitor)';
               }
               $handler = $routeDefinition[2];
               $handlerLabel = is_array($handler) ? (substr(strrchr('\\' . (string) $handler[0], '\\'), 1) . '::' . (string) ($handler[1] ?? '')) : (string) $handler;
@@ -143,472 +258,591 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
           ksort($routeGroups);
           $routeTotal = array_sum(array_map('count', $routeGroups));
           ?>
-          <p class="mt-2 text-sm leading-7 text-slate-300"><?= (int) $routeTotal ?> rotas registradas, agrupadas por modulo. Coluna "Acesso": <code>auth</code> exige login; <code>capability:*</code> exige a permissao do perfil; <code>livre</code> e publico (rotas <code>/local</code> livres ainda passam por <code>ensureLocalOnly</code>/<code>EnvironmentGuard</code> no controller).</p>
-          <?php foreach ($routeGroups as $groupName => $groupRoutes): ?>
-            <details class="doc-card mt-3">
-              <summary class="cursor-pointer text-sm font-semibold text-white"><?= htmlspecialchars($groupName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?> <span class="text-slate-400">(<?= count($groupRoutes) ?>)</span></summary>
-              <div class="mt-3 overflow-x-auto"><table class="doc-table"><thead><tr><th>Metodo</th><th>Rota</th><th>Controller::metodo</th><th>Acesso</th></tr></thead><tbody>
-                <?php foreach ($groupRoutes as [$routeMethod, $routePathLabel, $routeHandler, $routeAccess]): ?>
-                  <tr class="doc-row"><td class="text-slate-400"><?= htmlspecialchars($routeMethod, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td><td class="text-white"><?= htmlspecialchars($routePathLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td><td class="text-slate-300"><?= htmlspecialchars($routeHandler, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td><td class="text-slate-400"><?= htmlspecialchars($routeAccess, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td></tr>
-                <?php endforeach; ?>
-              </tbody></table></div>
-            </details>
-          <?php endforeach; ?>
-        </section>
 
-        <section id="pastas" data-doc-panel="pastas" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'pastas' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">4) Responsabilidade de cada pasta</h2>
-          <div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Diretorio</th><th>Responsabilidade</th><th>Regra de uso</th></tr></thead><tbody>
-            <tr class="doc-row"><td class="text-white">app/Controllers</td><td class="text-slate-300">Entrada HTTP, validacao basica, dispatch e resposta.</td><td class="text-slate-400">Nao conter SQL direto.</td></tr>
-            <tr class="doc-row"><td class="text-white">app/Services</td><td class="text-slate-300">Regra de negocio, composicao de repositorios e view model.</td><td class="text-slate-400">Evitar dependencia de camada de view.</td></tr>
-            <tr class="doc-row"><td class="text-white">app/Repositories</td><td class="text-slate-300">Acesso ao MySQL (queries, filtros e agregacoes).</td><td class="text-slate-400">Nao renderizar HTML e nao responder HTTP.</td></tr>
-            <tr class="doc-row"><td class="text-white">app/Views</td><td class="text-slate-300">Layouts, paginas e componentes.</td><td class="text-slate-400">Sem regra complexa de negocio.</td></tr>
-            <tr class="doc-row"><td class="text-white">config</td><td class="text-slate-300">Rotas e configuracoes de app, banco, backup e content-sync.</td><td class="text-slate-400">Nao incluir segredo fixo versionado.</td></tr>
-            <tr class="doc-row"><td class="text-white">public/assets</td><td class="text-slate-300">CSS, JS e recursos estaticos da interface.</td><td class="text-slate-400">Arquivos publicos criticos pedem validacao separada.</td></tr>
-            <tr class="doc-row"><td class="text-white">public/uploads</td><td class="text-slate-300">Midias editoriais e de campanha.</td><td class="text-slate-400">Limpeza apenas por rotina segura.</td></tr>
-            <tr class="doc-row"><td class="text-white">scripts</td><td class="text-slate-300">Rotinas de operacao local.</td><td class="text-slate-400">Executar com contexto, confirmacao e evidencias.</td></tr>
-            <tr class="doc-row"><td class="text-white">storage</td><td class="text-slate-300">Artefatos locais: backups e pacotes.</td><td class="text-slate-400">Nao publicar diretamente para web.</td></tr>
-          </tbody></table></div>
-        </section>
+          <p class="mt-4 text-xs text-slate-300">Total de <strong class="text-white"><?= (int) $routeTotal ?></strong> rotas registradas. O acesso <code class="font-mono text-cyan-300">auth</code> exige login autenticado; <code class="font-mono text-amber-300">capability:*</code> exige perfil específico; <code class="font-mono text-slate-400">livre</code> é público (sendo que rotas <code>/local/*</code> são bloqueadas fora de localhost/LAN).</p>
 
-        <section id="regras-dev" data-doc-panel="regras-dev" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'regras-dev' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">5) Regras de desenvolvimento</h2><div class="doc-card doc-rule mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Controller nao acessa banco diretamente.</li><li>Service concentra regra de negocio e coerencia entre modulos.</li><li>Repository concentra acesso a dados.</li><li>View nao carrega regra de negocio complexa.</li><li>Scripts locais sao para operacao controlada.</li><li>Hotfix em producao deve voltar para local/stage no mesmo ciclo.</li><li>Toda alteracao funcional deve atualizar esta documentacao.</li></ul></div></section>
-
-        <section id="seguranca" data-doc-panel="seguranca" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'seguranca' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">6) Seguranca do sistema</h2><div class="doc-card doc-alert mt-4"><p class="doc-label">Alerta critico</p><p class="mt-2 text-sm text-amber-100">Todo deploy deve garantir que rotas e arquivos internos nao fiquem expostos publicamente.</p></div><ul class="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-300"><li>Rotas locais (`/local/*` e `/dev`) devem ficar restritas ao ambiente local.</li><li>`.env` nao pode ser servido pelo web server.</li><li>Upload deve validar tipo, MIME, extensao e tamanho.</li><li>Sessao administrativa e formularios sensiveis devem usar CSRF.</li><li>`public/index.php` e `public/.htaccess` sao arquivos criticos e exigem validacao separada.</li><li>Uploads nao devem permitir execucao de scripts no servidor web (<code>public/uploads/.htaccess</code> bloqueia PHP).</li><li>O site publico (<code>https://nerd.tfr-info.com.br</code>) e servido desta maquina via Cloudflare Tunnel; <code>/admin</code> e <code>/local/*</code> exigem o login do <strong>Cloudflare Access</strong> (<code>CF_ACCESS_TEAM_DOMAIN</code>, <code>CF_ACCESS_AUD</code>).</li><li>Controllers locais chamam <code>ensureLocalOnly()</code> ou <code>EnvironmentGuard::requireLocal()</code>: aceitam so localhost, CLI ou LAN privada quando <code>ALLOW_LAN_ACCESS=true</code>.</li><li>Rotas admin usam o middleware <code>auth</code> e, quando sensiveis, <code>capability:*</code> (perfil); todas as rotas POST validam <code>Csrf::validate</code>.</li><li><code>APP_DEBUG</code> e falso por padrao (<code>config/app.php</code>).</li></ul></section>
-
-        <section id="padrao-codigo" data-doc-panel="padrao-codigo" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'padrao-codigo' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">7) Padrao de codigo e nomenclatura</h2><div class="doc-card doc-rule mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Classes em PascalCase.</li><li>Metodos em camelCase.</li><li>Controllers terminam com `Controller`.</li><li>Services terminam com `Service`.</li><li>Repositories terminam com `Repository`.</li><li>Classes de apoio em <code>app/Services</code> podem usar sufixos que descrevem o papel: `Renderer`, `Publisher`, `Presenter`, `Reconciler`, `Fitter`, `Exception`.</li><li>Codigo novo: SQL fica no Repository. Ao alterar um service que ja consulta o banco direto, mover o SQL para o repository na mesma tarefa.</li><li>Variaveis devem ser descritivas.</li><li>Nome de arquivo deve refletir responsabilidade.</li></ul></div></section>
-
-        <section id="deploy" data-doc-panel="deploy" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'deploy' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">8) Deploy operacional (codigo e conteudo)</h2>
-          <div class="doc-card <?= $productionAllowed ? 'doc-rule' : 'doc-alert' ?> mt-4"><p class="doc-label">Politica atual</p><p class="mt-2 text-sm <?= $productionAllowed ? 'text-slate-100' : 'text-amber-100' ?>">Origem atual: <strong><?= htmlspecialchars($currentSource, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong>. Origem aprovada para pacote de producao: <strong><?= htmlspecialchars($approvedSource, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong> (<?= htmlspecialchars($stageLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>).</p><p class="mt-2 text-sm <?= $productionAllowed ? 'text-slate-300' : 'text-amber-100' ?>"><?= $productionAllowed ? 'Este ambiente esta autorizado para gerar/publicar pacote de producao.' : 'Este ambiente nao pode publicar em producao. O local continua valido para desenvolvimento, teste e validacao.' ?></p></div>
-          <ol class="mt-4 list-decimal space-y-1 pl-5 text-sm text-slate-300"><li>Alteracao no ambiente local</li><li>Teste local</li><li>Aplicar a mesma mudanca na stage (`<?= htmlspecialchars($stageLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>`)</li><li>Teste em stage</li><li>Registrar alteracao (commit/log)</li><li>Backup obrigatorio</li><li>Gerar pacote apenas da stage</li><li>Publicar em producao</li><li>Executar pos-check e restaurar paridade</li></ol>
-          <div class="doc-card doc-rule mt-4"><p class="doc-label">Rastreabilidade operacional</p><p class="mt-2 text-sm text-slate-200">A Central Operacional passou a mostrar o destino dos pacotes aplicados. Em Conteudo, a tela exibe "Ultimas aplicacoes editoriais" e "Ultimos deploys tecnicos", deixando explicito qual pacote foi para stage, producao ou local e em qual horario.</p></div>
-          <div class="mt-4 grid gap-4 xl:grid-cols-2">
-            <div class="doc-card">
-              <p class="doc-label">Quando usar</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Deploy tecnico: alteracoes em controllers, services, repositories, views, config ou assets do sistema.</li>
-                <li>Deploy editorial: sincronizacao de posts, categorias, links, configuracoes publicas e uploads referenciados.</li>
-                <li>Promocao para producao: apenas apos validacao em stage e backup valido.</li>
-              </ul>
-            </div>
-            <div class="doc-card">
-              <p class="doc-label">Evidencias esperadas</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li><code>package_id</code> registrado</li>
-                <li><code>backup_id</code> associado ao ciclo</li>
-                <li>Destino final visivel em "Ultimas aplicacoes" ou "Ultimos deploys"</li>
-                <li>Pos-check sem erro critico em login, admin e rotas publicas afetadas</li>
-              </ul>
-            </div>
-          </div>
-          <div class="doc-card doc-example mt-4"><p class="doc-label">Checklist minimo antes de empacotar</p><ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Executar `php scripts/preflight-check.php`.</li><li>Confirmar origem atual x origem aprovada.</li><li>Validar `public/index.php` e `public/.htaccess`.</li><li>Conferir rotas criticas, assets, uploads e encoding.</li><li>Garantir pacote sem dados ficticios e sem artefatos locais.</li></ul></div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Runbook rapido - conteudo editorial</p>
-            <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
-              <li>Gerar pacote da origem correta (`stage` ou `producao`, conforme o fluxo).</li>
-              <li>Executar verificacao do pacote e confirmar manifesto, JSONs e uploads.</li>
-              <li>Aplicar no destino controlado (`local`, `stage` ou `producao`).</li>
-              <li>Conferir o bloco de ultimas aplicacoes para validar origem, destino e horario.</li>
-              <li>Se houver falha, revisar lock, credenciais, manifesto e uploads referenciados antes de repetir.</li>
-            </ol>
-          </div>
-          <div class="mt-4 grid gap-4 xl:grid-cols-2">
-            <div class="doc-card">
-              <p class="doc-label">Conteudo editorial - fluxos oficiais</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li><strong>Stage -> Local</strong>: espelho de homologacao para validacao interna.</li>
-                <li><strong>Stage -> Producao</strong>: promocao oficial de conteudo homologado.</li>
-                <li><strong>Producao -> Stage</strong>: restauracao de paridade da homologacao.</li>
-                <li><strong>Producao -> Local</strong>: espelho do que esta publicado de fato.</li>
-              </ul>
-            </div>
-            <div class="doc-card">
-              <p class="doc-label">Conteudo editorial - pre-requisitos</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Origem correta escolhida antes de gerar o pacote.</li>
-                <li>Uploads da origem acessiveis e consistentes.</li>
-                <li>Manifesto valido, com contagem coerente de posts, categorias, links e midias.</li>
-                <li>Destino sem lock ativo e com credenciais correspondentes.</li>
-              </ul>
-            </div>
-          </div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Conteudo editorial - o que conferir depois</p>
-            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-              <li>Ultimo pacote da origem atualizado na tela.</li>
-              <li>Destino correto registrado em <strong>Ultimas aplicacoes editoriais</strong>.</li>
-              <li>Posts, categorias, links e uploads visiveis no ambiente alvo.</li>
-              <li>Sem divergencia entre pacote aplicado e ambiente exibido no painel.</li>
-            </ul>
-          </div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Runbook rapido - codigo tecnico</p>
-            <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
-              <li>Rodar preflight e lint basico dos arquivos alterados.</li>
-              <li>Gerar pacote tecnico da origem aprovada.</li>
-              <li>Associar backup tecnico correspondente.</li>
-              <li>Aplicar no destino e acompanhar a rotina pelo progresso real da modal.</li>
-              <li>Registrar a entrega em feature/release e validar o deploy tecnico exibido na Central.</li>
-            </ol>
-          </div>
-          <div class="mt-4 grid gap-4 xl:grid-cols-2">
-            <div class="doc-card">
-              <p class="doc-label">Codigo tecnico - o que entra no pacote</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Controllers, services, repositories e support do sistema.</li>
-                <li>Views e componentes administrativos/publicos.</li>
-                <li>Arquivos de configuracao, scripts operacionais e assets tecnicos.</li>
-                <li>Nunca incluir segredos locais, temporarios ou dados ficticios.</li>
-              </ul>
-            </div>
-            <div class="doc-card">
-              <p class="doc-label">Codigo tecnico - validacao minima</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Lint dos arquivos PHP alterados.</li>
-                <li>Preflight sem erro critico.</li>
-                <li>Rotas criticas e login/admin validos no alvo.</li>
-                <li>Deploy visivel em <strong>Ultimos deploys tecnicos</strong>.</li>
-              </ul>
-            </div>
-          </div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Codigo tecnico - rollback dirigido</p>
-            <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
-              <li>Congelar novos deploys tecnicos e editoriais.</li>
-              <li>Identificar o ultimo pacote tecnico estavel e o backup associado.</li>
-              <li>Restaurar o ambiente somente se o pacote estavel nao resolver sozinho.</li>
-              <li>Revalidar login, admin, homepage e rota critica afetada.</li>
-            </ol>
-          </div>
-          <div class="doc-card doc-example mt-4"><p class="doc-label">Rollback e hotfix</p><ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200"><li>Interromper novas publicacoes.</li><li>Restaurar ultimo backup valido.</li><li>Reaplicar pacote tecnico estavel.</li><li>Validar paginas criticas e dashboard.</li><li>Replicar hotfix em stage/local antes de encerrar a tarefa.</li></ol></div>
-        </section>
-
-        <section id="backup" data-doc-panel="backup" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'backup' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">9) Backup e restore</h2><div class="doc-card doc-rule mt-4"><p class="doc-label">Visao geral</p><p class="mt-2 text-sm text-slate-200">Backup e etapa obrigatoria antes de qualquer deploy ou restore em ambiente sensivel.</p></div><ul class="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-300"><li>Inclui dump do banco, pacote de uploads, pacote de arquivos do sistema e manifesto de integridade.</li><li>Deve ser executado antes de deploy, restore ou mudanca estrutural.</li><li>Producao usa credenciais `BACKUP_PRODUCTION_*` para DB remoto, FTP de uploads e FTP dos arquivos do sistema.</li><li>Restore so deve ocorrer com confirmacao explicita e backup anterior preservado.</li><li>A modal de Backup e Restore agora acompanha as etapas reais da rotina: exportacao do banco, coleta de uploads, coleta dos arquivos do sistema, compactacao, verificacao e restore completo.</li><li>O envio para nuvem continua sendo uma trilha separada, na subaba `Nuvem`, e envia o backup completo para o Google Drive.</li></ul>
-          <div class="mt-4 grid gap-4 xl:grid-cols-2">
-            <div class="doc-card">
-              <p class="doc-label">Tipos de acao</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li><strong>Backup de ambiente</strong>: gera novo backup completo de banco + uploads + arquivos do sistema.</li>
-                <li><strong>Verificar ultimo</strong>: checa integridade do manifesto, banco, uploads e arquivos do sistema do ultimo backup.</li>
-                <li><strong>Restore completo</strong>: recompoe o ambiente com banco + uploads + arquivos do sistema de um backup escolhido.</li>
-              </ul>
-            </div>
-            <div class="doc-card">
-              <p class="doc-label">Ambientes cobertos</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li><strong>Local</strong>: ambiente de desenvolvimento e validacao interna.</li>
-                <li><strong>Stage</strong>: homologacao operacional e comparacao com producao.</li>
-                <li><strong>Producao</strong>: recovery remoto, com maior criticidade e confirmacoes mais fortes.</li>
-              </ul>
-            </div>
-          </div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Passo a passo - backup</p>
-            <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
-              <li>Escolher o ambiente correto e confirmar que a rotina nao esta travada por outra operacao.</li>
-              <li>Executar o backup e acompanhar na modal as etapas de banco, uploads, arquivos do sistema, compactacao e manifesto.</li>
-              <li>Confirmar o novo <code>backup_id</code> no resumo e no historico paginado.</li>
-              <li>Executar `Verificar ultimo` se o backup for entrar em ciclo critico de deploy ou restore.</li>
-            </ol>
-          </div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Passo a passo - restore</p>
-            <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
-              <li>Preservar um backup anterior do estado atual antes de restaurar.</li>
-              <li>Escolher o <code>backup_id</code> correto e confirmar o destino exato.</li>
-              <li>Acompanhar a rotina pelas etapas reais de restore do banco, extracao, restore de uploads e restore dos arquivos do sistema.</li>
-              <li>Executar validacao funcional minima do ambiente apos concluir.</li>
-            </ol>
-          </div>
-          <div class="doc-card doc-alert mt-4">
-            <p class="doc-label">Cuidados</p>
-            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
-              <li>Restore completo sobrescreve banco, uploads e arquivos do sistema do destino.</li>
-              <li>Nao usar restore para "testar" fluxo em producao.</li>
-              <li>Se a verificacao falhar, nao reutilizar o backup ate corrigir a integridade.</li>
-            </ul>
-          </div>
-          <div class="doc-card doc-rule mt-4">
-            <p class="doc-label">Rotina diaria e teste de restauracao</p>
-            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-              <li>A tarefa agendada do Windows <code>EstrategiaNerd-BackupDiario</code> (21:30) roda <code>scripts/backup/Invoke-DailyBackup.ps1</code>: backup sistemico de local, stage e producao (<code>scripts/backup.php run</code>) e exportacao editorial de local e producao, enviando tudo ao Google Drive (secao 10). Log: <code>storage/logs/daily-backup-AAAA-MM.log</code>.</li>
-              <li>Pasta local: <code>BACKUP_ROOT</code> (hoje <code>C:\Users\WINDOWS\ProjectBackup\estrategia-nerd</code>; ate 15/10/2026 era <code>E:\Taren\Documents\Backup\Estrategia Nerd</code>, mantida como copia), com <code>01-local</code>, <code>02-stage</code>, <code>03-prod</code> e <code>04-logs</code>; retencao por <code>BACKUP_RETENTION</code> (hoje 7; era 14 ate 15/10/2026).</li>
-              <li>Backup diario (<code>scripts/backup/Invoke-DailyBackup.ps1</code>, 21:30): o ambiente local roda <code>--no-uploads</code> de segunda a sabado e completo (com <code>uploads.zip</code>) aos domingos, porque os uploads ja ficam no backup geral (restic); stage e producao sempre completos. Teste sem executar: <code>-DiaDaSemana 0..6 -SomenteMostrarComandos</code>.</li>
-              <li>Tamanho enxuto do sistema: <code>system-files.zip</code> exclui automaticamente pastas transitorias (<code>scratch/</code>, <code>tmp/</code>, <code>conteudo-planejado/</code>, <code>resources/reels-review/</code>, <code>.codegraph/</code>, <code>appflowy-cloud/</code>, <code>notion-import/</code> e <code>.claude/</code>), mantendo o zip em cerca de 25 MB (em vez de >500 MB).</li>
-              <li>O restore oficial so restaura <strong>por cima</strong> de local, stage ou producao. Para provar que um backup e restauravel sem tocar em nada, use <code>php scripts/verify-backup-restore.php &lt;local|stage|production&gt; [BACKUP_ID] [--skip-uploads]</code>: confere os SHA-256 do manifesto, le todos os arquivos dos zips conferindo o CRC e importa o <code>database.sql</code> em um banco temporario <code>en_restore_check_*</code>, que e apagado no fim. Relatorio em <code>storage/logs/backup-restore-check/</code>.</li>
-              <li>Ultima prova (13/10/2026): producao <code>BS-PROD-20261013-220056</code> (19 tabelas, 288 arquivos de sistema, 242 uploads) e local <code>BS-LOCAL-20261013-213002</code> (25 tabelas, 3.396 arquivos de sistema, 4.022 uploads) restauraveis, sem divergencias.</li>
-            </ul>
+          <div class="mt-4 space-y-3">
+            <?php foreach ($routeGroups as $groupName => $groupRoutes): ?>
+              <details class="group rounded-2xl border border-slate-800 bg-slate-950/60 p-4 transition open:border-cyan-500/30">
+                <summary class="flex cursor-pointer items-center justify-between text-xs font-semibold text-white">
+                  <span><?= htmlspecialchars($groupName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                  <span class="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-mono text-slate-400"><?= count($groupRoutes) ?> rotas</span>
+                </summary>
+                <div class="mt-3 overflow-x-auto">
+                  <table class="doc-table">
+                    <thead>
+                      <tr><th>Método</th><th>Rota</th><th>Handler (Controller::Ação)</th><th>Acesso</th></tr>
+                    </thead>
+                    <tbody>
+                      <?php foreach ($groupRoutes as [$routeMethod, $routePathLabel, $routeHandler, $routeAccess]): ?>
+                        <tr>
+                          <td><span class="rounded px-2 py-0.5 font-mono text-[10px] font-bold <?= $routeMethod === 'POST' ? 'bg-cyan-950 text-cyan-300 border border-cyan-800' : 'bg-slate-800 text-slate-300' ?>"><?= htmlspecialchars($routeMethod, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span></td>
+                          <td class="font-mono text-xs text-white"><?= htmlspecialchars($routePathLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                          <td class="text-xs text-slate-300"><?= htmlspecialchars($routeHandler, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                          <td class="text-[11px] text-slate-400"><?= htmlspecialchars($routeAccess, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></td>
+                        </tr>
+                      <?php endforeach; ?>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            <?php endforeach; ?>
           </div>
         </section>
 
-        <section id="dropbox" data-doc-panel="dropbox" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'dropbox' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">10) Backup em nuvem (Google Drive)</h2>
-          <div class="doc-card doc-rule mt-4">
-            <p class="doc-label">Situacao atual (IMP-023)</p>
-            <p class="mt-2 text-sm text-slate-200">Desde o IMP-023 o destino de nuvem dos backups e o <strong>Google Drive</strong> (mesma conta do backup editorial). No IMP-033 o Dropbox foi removido de vez: servico, acoes, rota de retorno e configuracao saíram do codigo, e as telas de backup do painel (Backup Sistemico, Backup em Nuvem e Backup Editorial) passaram a enviar e excluir no Google Drive. A copia local continua sendo a principal; a nuvem e a copia fora da maquina.</p>
-          </div>
-          <div class="mt-4 grid gap-4 xl:grid-cols-2">
-            <div class="doc-card">
-              <p class="doc-label">O que sobe e para onde</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Sistemico: <code>manifest.json</code>, <code>database.sql</code>, <code>uploads.zip</code> e <code>system-files.zip</code> em <code>Estrategia Nerd - Backups de Conteudo/Sistema/&lt;Local|Stage|Producao&gt;/&lt;BACKUP_ID&gt;</code>.</li>
-                <li>Editorial (pacotes de conteudo): <code>Estrategia Nerd - Backups de Conteudo/&lt;Local|Producao&gt;/&lt;PACOTE&gt;</code>.</li>
-                <li>O manifesto local registra <code>cloud_provider = google_drive</code>, destino, id remoto e arquivos enviados.</li>
-              </ul>
-            </div>
-            <div class="doc-card">
-              <p class="doc-label">Como operar</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Automatico: rotina diaria <code>EstrategiaNerd-BackupDiario</code> (secao 9).</li>
-                <li>Manual: <code>php scripts/backup.php upload-cloud latest</code> (sistemico) e <code>php scripts/content-sync.php upload-cloud latest</code> (editorial).</li>
-                <li>Pelo painel (so local; em stage/producao o admin da 404): <code>/admin/central-operacional-v2/backup-em-nuvem</code> (conexao, envio, historico e exclusao controlada) e <code>/local/backup?backup_secao=nuvem</code> (enviar ultimo, enviar especifico e excluir da nuvem). Os botoes usam as acoes <code>google_drive_upload_latest</code>, <code>google_drive_upload_backup</code> e <code>google_drive_delete_backup</code>; a exclusao exige digitar o ID do backup.</li>
-                <li>Servico: <code>app/Services/Site/GoogleDriveBackupService.php</code>; configuracao em <code>config/backup-cloud.php</code> (secao <code>google_drive</code>).</li>
-              </ul>
+        <!-- 4. RESPONSABILIDADE DE PASTAS -->
+        <section id="pastas" data-doc-panel="pastas" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'pastas' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-folder-tree text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">4) Responsabilidade de Pastas</h2>
+              <p class="text-xs text-slate-400">Organização e regras de governança dos diretórios do repositório.</p>
             </div>
           </div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Conexao (OAuth)</p>
-            <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
-              <li>Variaveis no <code>.env</code> local: <code>BACKUP_GOOGLE_DRIVE_CLIENT_*</code>, <code>BACKUP_GOOGLE_DRIVE_REDIRECT_*</code> e <code>BACKUP_GOOGLE_DRIVE_EDITORIAL_FOLDER</code> (somente nomes aqui; valores ficam no <code>.env</code> e na copia central de credenciais).</li>
-              <li>Callback local da autorizacao: <code>/local/backup/google-drive/callback</code>.</li>
-              <li>Se o token expirar ou a permissao mudar, reconectar pela pagina Backup em Nuvem.</li>
-            </ol>
-          </div>
-          <div class="doc-card doc-alert mt-4">
-            <p class="doc-label">Cuidados</p>
-            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
-              <li>A nuvem complementa o backup local; nao substitui a copia local nem o restore controlado.</li>
-              <li>A rotina roda nesta maquina Windows (faz o FTP-pull de stage/producao): se ela ficar desligada, nao ha backup novo de stage/producao. Conferir o log diario.</li>
-              <li>Credenciais OAuth e tokens ficam apenas no ambiente local, nunca em codigo versionado.</li>
-            </ul>
-          </div>
-        </section>
 
-        <section id="ambiente" data-doc-panel="ambiente" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'ambiente' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">11) Configuracoes de ambiente (.env)</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Variavel</th><th>Finalidade</th><th>Obs</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">APP_ENV / APP_DEBUG / APP_URL</td><td class="text-slate-300">Controle de ambiente, debug e URL base.</td><td class="text-slate-400">Producao deve estar com debug desligado.</td></tr><tr class="doc-row"><td class="text-white">DB_HOST / DB_PORT / DB_DATABASE / DB_USERNAME / DB_PASSWORD</td><td class="text-slate-300">Conexao principal do sistema.</td><td class="text-slate-400">Nao versionar segredo real.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_PRODUCTION_*</td><td class="text-slate-300">Acesso remoto para backup de producao.</td><td class="text-slate-400">Obrigatorio para backup remoto.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_ROOT / BACKUP_RETENTION / BACKUP_MYSQL_BINARY / BACKUP_MYSQLDUMP_BINARY</td><td class="text-slate-300">Pasta local dos backups, retencao e binarios do MySQL.</td><td class="text-slate-400">Usados pela rotina diaria e por verify-backup-restore.php.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_GOOGLE_DRIVE_CLIENT_* / BACKUP_GOOGLE_DRIVE_REDIRECT_* / BACKUP_GOOGLE_DRIVE_EDITORIAL_FOLDER</td><td class="text-slate-300">OAuth e pasta do backup em nuvem (Google Drive).</td><td class="text-slate-400">Somente no .env local.</td></tr><tr class="doc-row"><td class="text-white">BACKUP_STAGE_SYSTEM_* / BACKUP_PRODUCTION_SYSTEM_*</td><td class="text-slate-300">FTP dos arquivos do sistema de stage/producao para o backup.</td><td class="text-slate-400">Separado do FTP de uploads.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_CURRENT_SOURCE</td><td class="text-slate-300">Identifica a origem atual da operacao (`local`, `stage`, etc.).</td><td class="text-slate-400">Usado para travar publish inseguro.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_APPROVED_PACKAGE_SOURCE</td><td class="text-slate-300">Origem autorizada para pacote de producao.</td><td class="text-slate-400">Padrao recomendado: `stage`.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_LABEL</td><td class="text-slate-300">Nome humano da stage oficial.</td><td class="text-slate-400">Ex.: `estrategia-nerd-stage`.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_DB_*</td><td class="text-slate-300">Banco remoto da stage para homologacao.</td><td class="text-slate-400">Nao reaproveitar credencial de producao.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_FTP_*</td><td class="text-slate-300">Uploads remotos da stage.</td><td class="text-slate-400">Mantem midias e banco homologados no mesmo ambiente.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_STAGE_CODE_*</td><td class="text-slate-300">Deploy tecnico dedicado da stage.</td><td class="text-slate-400">Separar raiz tecnica da stage da raiz de producao.</td></tr><tr class="doc-row"><td class="text-white">CONTENT_SYNC_PRODUCTION_*</td><td class="text-slate-300">Sync de conteudo e deploy de codigo.</td><td class="text-slate-400">Separar dados de conteudo e codigo.</td></tr><tr class="doc-row"><td class="text-white">CF_ACCESS_TEAM_DOMAIN / CF_ACCESS_AUD / ALLOW_LAN_ACCESS</td><td class="text-slate-300">Cloudflare Access e acesso por LAN as rotas locais.</td><td class="text-slate-400">Ver secao 6.</td></tr><tr class="doc-row"><td class="text-white">INSTAGRAM_PUBLIC_MEDIA_URL</td><td class="text-slate-300">Endereco publico de onde a Meta baixa videos e capas.</td><td class="text-slate-400">Nao pode ser localhost.</td></tr><tr class="doc-row"><td class="text-white">GEMINI_API_KEY / GEMINI_TEXT_MODEL / GEMINI_TEXT_MODEL_FALLBACK</td><td class="text-slate-300">Legendas geradas no cross-post Blog → Instagram.</td><td class="text-slate-400">Somente no .env.</td></tr><tr class="doc-row"><td class="text-white">MATOMO_URL / MATOMO_SITE_ID</td><td class="text-slate-300">Analytics do portal.</td><td class="text-slate-400">Matomo em conta separada (IMP-022).</td></tr><tr class="doc-row"><td class="text-white">GOOGLE_SEARCH_CONSOLE_CLIENT_* / _REFRESH_* / _SITE_*</td><td class="text-slate-300">Monitoramento de SEO (<code>/local/monitoramento</code> e seo-tecnico).</td><td class="text-slate-400">OAuth local.</td></tr><tr class="doc-row"><td class="text-white">HOSTINGER_API_* / HOSTINGER_API_BASE_*</td><td class="text-slate-300">Painel Hostinger API na Central Operacional V2.</td><td class="text-slate-400">Somente no .env.</td></tr><tr class="doc-row"><td class="text-white">SHOPEE_APP_* / SHOPEE_SUB_ID_DEFAULT</td><td class="text-slate-300">Afiliados Shopee (IMP-029).</td><td class="text-slate-400">Somente no .env.</td></tr><tr class="doc-row"><td class="text-white">NERDOPS_STATS_TOKEN</td><td class="text-slate-300">Leitura de estatisticas pelo NERD // OPS.</td><td class="text-slate-400">Token; nunca versionar.</td></tr><tr class="doc-row"><td class="text-white">SMOKE_* / AUTOMATED_TEST_*</td><td class="text-slate-300">Usuarios e alvos dos testes automatizados.</td><td class="text-slate-400">Contas de teste restritas.</td></tr></tbody></table></div><p class="mt-3 text-sm text-slate-300">Seguranca: `.env` nao pode ser commitado com credencial real. Usar `.env.example` como referencia limpa.</p></section>
-
-        <section id="governanca-releases" data-doc-panel="governanca-releases" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'governanca-releases' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">12) Governanca oficial de releases</h2>
-          <div class="doc-card doc-rule mt-4">
-            <p class="doc-label">Objetivo</p>
-            <p class="mt-2 text-sm text-slate-200">
-              Toda alteracao relevante do EN deve ter rastreabilidade, documentacao minima, teste minimo, impacto conhecido, origem validada e paridade entre ambientes.
-            </p>
-          </div>
-          <div class="mt-4 overflow-x-auto">
+          <div class="mt-4 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/70">
             <table class="doc-table">
               <thead>
-                <tr><th>Diretorio</th><th>Responsabilidade</th><th>Uso oficial</th></tr>
+                <tr><th>Diretório</th><th>Responsabilidade Primária</th><th>Regra Estrita de Uso</th></tr>
               </thead>
               <tbody>
-                <tr class="doc-row"><td class="text-white">docs/features</td><td class="text-slate-300">Documento de cada feature, fix, melhoria ou hotfix.</td><td class="text-slate-400">Usar um arquivo por entrega com ID oficial.</td></tr>
-                <tr class="doc-row"><td class="text-white">docs/releases</td><td class="text-slate-300">Documento de cada release.</td><td class="text-slate-400">Registrar o que entra, o que fica fora e o estado do deploy.</td></tr>
-                <tr class="doc-row"><td class="text-white">docs/checklists</td><td class="text-slate-300">Checklist pre e pos deploy.</td><td class="text-slate-400">Obrigatorio em toda publicacao controlada.</td></tr>
-                <tr class="doc-row"><td class="text-white">docs/rollback</td><td class="text-slate-300">Roteiro de retorno controlado.</td><td class="text-slate-400">Toda release deve saber como voltar.</td></tr>
-                <tr class="doc-row"><td class="text-white">docs/templates</td><td class="text-slate-300">Modelos oficiais do EN.</td><td class="text-slate-400">Base para features, releases, rollback e prompt operacional.</td></tr>
-                <tr class="doc-row"><td class="text-white">docs/governanca</td><td class="text-slate-300">Diretrizes oficiais de risco, execucao e prioridade tecnica.</td><td class="text-slate-400">Usar para orientar backlog, execucao e revisoes periodicas.</td></tr>
+                <tr><td class="font-mono text-xs text-white">app/Controllers</td><td class="text-slate-300">Entrada HTTP, validação básica de payload, dispatch e resposta.</td><td class="text-xs text-rose-300">Proibido conter SQL direto ou chamadas a banco.</td></tr>
+                <tr><td class="font-mono text-xs text-white">app/Services</td><td class="text-slate-300">Regras de negócio, cálculos, composição de repositórios e ViewModels.</td><td class="text-xs text-slate-400">Evitar acoplamento com classes de request/response.</td></tr>
+                <tr><td class="font-mono text-xs text-white">app/Repositories</td><td class="text-slate-300">Centralização de consultas PDO ao MySQL.</td><td class="text-xs text-rose-300">Nunca renderizar HTML nem enviar headers HTTP.</td></tr>
+                <tr><td class="font-mono text-xs text-white">app/Views</td><td class="text-slate-300">Templates Blade-like, páginas e componentes visuais.</td><td class="text-xs text-slate-400">Proibido lógica de negócio pesada ou queries.</td></tr>
+                <tr><td class="font-mono text-xs text-white">config</td><td class="text-slate-300">Rotas e configurações de app, banco, backup e content-sync.</td><td class="text-xs text-rose-300">Nunca versionar senhas ou segredos reais.</td></tr>
+                <tr><td class="font-mono text-xs text-white">public/assets</td><td class="text-slate-300">CSS estático compilado, JS e ícones.</td><td class="text-xs text-slate-400">Alterações exigem validação de cache de navegadores.</td></tr>
+                <tr><td class="font-mono text-xs text-white">public/uploads</td><td class="text-slate-300">Mídias editoriais, capas WebP e arquivos de Reels.</td><td class="text-xs text-slate-400">PHP bloqueado via <code>.htaccess</code>. Limpeza segura.</td></tr>
+                <tr><td class="font-mono text-xs text-white">scripts</td><td class="text-slate-300">Rotinas operacionais CLI, crons e testes automatizados.</td><td class="text-xs text-slate-400">Executar sempre via PHP oficial (`C:\xampp\php\php.exe`).</td></tr>
+                <tr><td class="font-mono text-xs text-white">storage</td><td class="text-slate-300">Artefatos locais, caches, logs e manifestos temporários.</td><td class="text-xs text-rose-300">Nunca expor diretamente ao servidor web.</td></tr>
               </tbody>
             </table>
           </div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Diretriz oficial</p>
-            <div class="mt-2 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p class="text-sm text-slate-100">A matriz oficial de risco e execucao tecnica do projeto esta registrada em <code>docs/governanca/priorizacao-tecnica.md</code>.</p>
-                <p class="mt-1 text-sm text-slate-300">Esse documento organiza criterios, blocos criticos e evidencias minimas para orientar backlog, operacao e validacao de entregas.</p>
+        </section>
+
+        <!-- 5. PADRÃO DE CÓDIGO E NOMENCLATURA -->
+        <section id="padrao-codigo" data-doc-panel="padrao-codigo" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'padrao-codigo' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-code text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">5) Padrão de Código e Nomenclatura</h2>
+              <p class="text-xs text-slate-400">Convenções inegociáveis para legibilidade e análise estática PHPStan nível 5.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider">Convenções de Arquivo & Classe</h3>
+              <ul class="mt-3 space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><i class="fa-solid fa-check text-cyan-400 mt-0.5"></i> <span><strong>Classes:</strong> Formato <code class="font-mono text-cyan-300">PascalCase</code>.</span></li>
+                <li class="flex items-start gap-2"><i class="fa-solid fa-check text-cyan-400 mt-0.5"></i> <span><strong>Métodos:</strong> Formato <code class="font-mono text-cyan-300">camelCase</code>.</span></li>
+                <li class="flex items-start gap-2"><i class="fa-solid fa-check text-cyan-400 mt-0.5"></i> <span><strong>Sufixos Obrigatórios:</strong> <code class="font-mono text-slate-200">Controller</code>, <code class="font-mono text-slate-200">Service</code>, <code class="font-mono text-slate-200">Repository</code>.</span></li>
+                <li class="flex items-start gap-2"><i class="fa-solid fa-check text-cyan-400 mt-0.5"></i> <span><strong>Subclasses especializadas:</strong> Usam sufixos descritivos (<code class="font-mono text-slate-200">Renderer</code>, <code class="font-mono text-slate-200">Publisher</code>, <code class="font-mono text-slate-200">Reconciler</code>).</span></li>
+              </ul>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider">Regras de Implementação</h3>
+              <ul class="mt-3 space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><i class="fa-solid fa-check text-cyan-400 mt-0.5"></i> <span><strong>Declaração Estrita:</strong> Todo arquivo PHP inicia com <code class="font-mono text-cyan-300">&lt;?php declare(strict_types=1);</code>.</span></li>
+                <li class="flex items-start gap-2"><i class="fa-solid fa-check text-cyan-400 mt-0.5"></i> <span><strong>Isolamento de SQL:</strong> Código novo sempre concentra SQL no Repository. Ao alterar service legado que faz query direta, migrar o SQL para o repository.</span></li>
+                <li class="flex items-start gap-2"><i class="fa-solid fa-check text-cyan-400 mt-0.5"></i> <span><strong>PHPStan Level 5:</strong> Tipagem completa de parâmetros, retornos e PHPDoc em arrays multidimensionais.</span></li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. DEPLOY OPERACIONAL E PARIDADE -->
+        <section id="deploy" data-doc-panel="deploy" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'deploy' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-rocket text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">6) Deploy Operacional e Paridade</h2>
+              <p class="text-xs text-slate-400">Fluxo controlado de promoção, travas atômicas e otimização de pacotes.</p>
+            </div>
+          </div>
+
+          <div class="doc-callout <?= $productionAllowed ? 'doc-callout-info' : 'doc-callout-warn' ?> mt-4">
+            <p class="font-semibold">Política Atual de Deploy</p>
+            <p class="mt-1">Origem atual: <strong class="font-mono text-white"><?= htmlspecialchars($currentSource, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong> &bull; Origem aprovada para pacotes de produção: <strong class="font-mono text-white"><?= htmlspecialchars($approvedSource, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong> (<?= htmlspecialchars($stageLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>).</p>
+            <p class="mt-1 text-xs"><?= $productionAllowed ? 'Este ambiente possui autorização para gerar/publicar pacote de produção.' : 'Trava ativa: este ambiente NÃO pode publicar diretamente em produção. O fluxo exige promoção prévia para Stage.' ?></p>
+          </div>
+
+          <div class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+            <h3 class="font-orbitron text-xs font-black uppercase tracking-wider text-slate-300">Fluxo Canônico de Publicação (9 Etapas)</h3>
+            <div class="mt-4 grid gap-3 md:grid-cols-3">
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                <span class="doc-step-badge bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">1</span>
+                <p class="mt-2 text-xs font-bold text-white">Desenvolvimento Local</p>
+                <p class="text-[11px] text-slate-400">Alteração e validação inicial nos testes locais.</p>
               </div>
-              <a href="<?= htmlspecialchars($technicalPriorityDocUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="inline-flex items-center justify-center rounded-2xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/20">
-                Abrir diretriz
-              </a>
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                <span class="doc-step-badge bg-amber-500/20 text-amber-300 border border-amber-500/30">2</span>
+                <p class="mt-2 text-xs font-bold text-white">Aplicação em Stage</p>
+                <p class="text-[11px] text-slate-400">Replicação na homologação (<?= htmlspecialchars($stageLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>).</p>
+              </div>
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                <span class="doc-step-badge bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">3</span>
+                <p class="mt-2 text-xs font-bold text-white">Promoção para Produção</p>
+                <p class="text-[11px] text-slate-400">Backup obrigatório, pacote gerado da stage e pós-check.</p>
+              </div>
             </div>
           </div>
-          <div class="doc-card doc-example mt-4">
-            <p class="doc-label">Campos obrigatorios</p>
-            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-              <li>Impacto em producao: baixo, medio ou alto</li>
-              <li>Afeta rotas criticas: sim ou nao</li>
-              <li>Mudanca de schema: sim ou nao</li>
-              <li>Mudanca de dados: sim ou nao</li>
-              <li>Origem validada: estrategia-nerd-stage</li>
-              <li>Paridade local -> stage: validada ou nao validada</li>
-              <li>Paridade stage -> pacote: validada ou nao validada</li>
-            </ul>
-          </div>
-          <div class="doc-card doc-alert mt-4">
-            <p class="doc-label">Regra de ouro</p>
-            <p class="mt-2 text-sm text-amber-100">
-              Nada sobe sem ID, documentacao minima, teste minimo, impacto conhecido, origem validada e paridade confirmada.
-            </p>
-          </div>
-          <div class="doc-card doc-rule mt-4">
-            <p class="doc-label">Validacao obrigatoria antes de concluir ou commitar</p>
-            <p class="mt-2 text-sm text-slate-200"><code>C:\xampp\php\php.exe scripts/verify-changes.php</code> precisa terminar em <strong>APROVADO COM SUCESSO! (0 FALHAS)</strong> (lint, PHPStan nivel 5, dashboard nos 3 ambientes e modulo Instagram). A documentacao central afetada tambem precisa estar atualizada (secao 15).</p>
+
+          <div class="doc-callout doc-callout-info mt-4">
+            <p class="font-semibold text-cyan-100 flex items-center gap-2"><i class="fa-solid fa-bolt text-xs"></i> Performance da Central Operacional (IMP-034)</p>
+            <p class="mt-1">A leitura de pacotes de conteúdo em disco de backup agora utiliza cache em <code class="font-mono text-cyan-200">storage/cache/content-sync-packages.json</code> com validade de 5 minutos. Isso reduziu o tempo de abertura do painel de ~12s para ~4s, com invalidação automática a cada novo pacote gerado.</p>
           </div>
         </section>
 
-        <section id="diagnostico" data-doc-panel="diagnostico" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'diagnostico' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">13) Erros comuns e diagnostico rapido</h2><div class="mt-4 overflow-x-auto"><table class="doc-table"><thead><tr><th>Problema</th><th>Possivel causa</th><th>Acao recomendada</th></tr></thead><tbody><tr class="doc-row"><td class="text-white">Imagem nao aparece</td><td class="text-slate-300">Path quebrado ou arquivo fora de uploads.</td><td class="text-slate-400">Revisar referencia no banco e em `public/uploads`.</td></tr><tr class="doc-row"><td class="text-white">Capa pesada degradando o site</td><td class="text-slate-300">Capa do artigo salva em PNG de alto peso (~2 a 3 MB).</td><td class="text-slate-400">Obrigatorio converter para WebP (~150-250 KB) e apontar `posts.imagem_capa` para `capa.webp`.</td></tr><tr class="doc-row"><td class="text-white">Colisao de slugs no sync de posts</td><td class="text-slate-300">Post no destino capturado por historico antigo de outro post do lote.</td><td class="text-slate-400">Reivindicacao direta tem precedencia absoluta; limpar redirecionamentos obsoletos em `post_slug_history`.</td></tr><tr class="doc-row"><td class="text-white">Post ou Reel preso em rascunho</td><td class="text-slate-300">Item movido para rascunho para ajuste de midia e esquecido sem reagendamento.</td><td class="text-slate-400">Revisao so termina quando o status volta para `agendado` com data e horario validos.</td></tr><tr class="doc-row"><td class="text-white">Post agendado posterior ao fato</td><td class="text-slate-300">Falta de checagem do prazo do evento (ex.: fim de suporte).</td><td class="text-slate-400">Conteudo com deadline deve ser agendado com 1 a 3 dias de antecedencia do fato, nunca depois.</td></tr><tr class="doc-row"><td class="text-white">Rota nao carrega</td><td class="text-slate-300">Regra em `config/routes.php`, `public/index.php` ou `.htaccess` incorreta.</td><td class="text-slate-400">Rodar preflight e validar entrada publica.</td></tr><tr class="doc-row"><td class="text-white">Conteudo nao sincroniza</td><td class="text-slate-300">Pacote invalido, lock ativo ou alvo remoto incompleto.</td><td class="text-slate-400">Verificar manifesto, lock e credenciais `CONTENT_SYNC_PRODUCTION_*`.</td></tr><tr class="doc-row"><td class="text-white">Pacote falha na validacao</td><td class="text-slate-300">JSON ausente, upload faltando ou manifesto inconsistente.</td><td class="text-slate-400">Executar verificacao do pacote e revisar arquivos referenciados.</td></tr><tr class="doc-row"><td class="text-white">Google Drive falha no envio</td><td class="text-slate-300">Token expirado ou revogado, conta desconectada ou callback divergente.</td><td class="text-slate-400">Reconectar em Backup em Nuvem e conferir <code>BACKUP_GOOGLE_DRIVE_*</code> (secao 10).</td></tr><tr class="doc-row"><td class="text-white">Texto com acentuacao quebrada</td><td class="text-slate-300">Arquivo salvo com encoding invalido ou scanner gerando falso-positivo.</td><td class="text-slate-400">Usar o scanner estrito por bytes de continuacao UTF-8 (`scripts/preflight-encoding.php`).</td></tr><tr class="doc-row"><td class="text-white">Reel bloqueado: "Capa do Reel ausente ou invalida"</td><td class="text-slate-300">Falta o <code>.jpg</code> com o mesmo nome do <code>.mp4</code>.</td><td class="text-slate-400">Gerar a capa JPEG ao lado do video; nunca publicar sem capa (<code>scripts/verify-reel-cover.php</code>).</td></tr><tr class="doc-row"><td class="text-white">Reel publicado com o video antigo</td><td class="text-slate-300">A fila aponta para outro arquivo em <code>video_rendered_path</code>.</td><td class="text-slate-400">Seguir o procedimento de troca de video (secao 16).</td></tr><tr class="doc-row"><td class="text-white">Render dos Reels derruba o Chrome ao capturar quadro em PNG</td><td class="text-slate-300">Fundo muito detalhado deixa a captura PNG grande demais.</td><td class="text-slate-400">Renderizar o video (JPEG) e extrair os quadros do proprio video.</td></tr><tr class="doc-row"><td class="text-white">Backup gerado, mas sem prova de restore</td><td class="text-slate-300">O restore oficial so restaura por cima de um ambiente real.</td><td class="text-slate-400">Usar <code>scripts/verify-backup-restore.php</code> (banco temporario).</td></tr><tr class="doc-row"><td class="text-white">Acentos corrompidos em tarefas do Forge</td><td class="text-slate-300">Texto enviado pelo shell em codificacao errada.</td><td class="text-slate-400">Enviar o JSON a partir de arquivo UTF-8 (<code>curl.exe --data-binary @arquivo.json</code>).</td></tr></tbody></table></div>
-          <div class="mt-4 grid gap-4 xl:grid-cols-2 lg:grid-cols-2">
-            <div class="doc-card">
-              <p class="doc-label">Troubleshooting - posts & reels</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Reels revisados devem retornar imediatamente para <code>agendado</code> com <code>render_status = ready</code>.</li>
-                <li>Verificar prazos: noticias e encerramentos de suporte nunca saem apos a data limite.</li>
-                <li>Grade oficial do canal: 2 publicacoes diarias nos horarios de pico (<strong>12:00</strong> e <strong>19:30</strong>).</li>
-                <li>Todas as capas do blog devem ser salvas no padrao WebP otimizado (~150-250 KB).</li><li>Texto de Reel so dentro da area segura do Instagram (secao 16); imagem pode ficar sob os icones.</li><li>Video de Reel: padrao <code>public/uploads/posts/&lt;slug&gt;/reels/reel.mp4</code> com <code>reel.jpg</code> e <code>capa.jpg</code> ao lado (varios Reels no post: <code>reels/reel-&lt;id&gt;/</code>), versoes antigas em <code>reels/anteriores/</code> (ver secao 16).</li>
+        <!-- 7. BACKUP E RESTORE -->
+        <section id="backup" data-doc-panel="backup" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'backup' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-database text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">7) Backup e Restore Sistêmico</h2>
+              <p class="text-xs text-slate-400">Rotina diária, retenção, política de uploads e validação sem risco.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider">Rotina Diária (21:30)</h3>
+              <ul class="mt-3 space-y-2 text-xs text-slate-300">
+                <li class="flex items-start gap-2"><i class="fa-solid fa-clock text-cyan-400 mt-0.5"></i> <span><strong>Agendamento:</strong> Tarefa do Windows <code class="font-mono text-cyan-300">EstrategiaNerd-BackupDiario</code> roda <code class="font-mono text-slate-200">Invoke-DailyBackup.ps1</code>.</span></li>
+                <li class="flex items-start gap-2"><i class="fa-solid fa-folder text-cyan-400 mt-0.5"></i> <span><strong>Diretório Base:</strong> <code class="font-mono text-slate-200">C:\Users\WINDOWS\ProjectBackup\estrategia-nerd</code> (pastas <code class="font-mono text-slate-400">01-local</code>, <code class="font-mono text-slate-400">02-stage</code>, <code class="font-mono text-slate-400">03-prod</code>, <code class="font-mono text-slate-400">04-logs</code>).</span></li>
+                <li class="flex items-start gap-2"><i class="fa-solid fa-box-archive text-cyan-400 mt-0.5"></i> <span><strong>Retenção:</strong> 7 backups por ambiente (<code class="font-mono text-slate-200">BACKUP_RETENTION=7</code>).</span></li>
+                <li class="flex items-start gap-2"><i class="fa-solid fa-image text-cyan-400 mt-0.5"></i> <span><strong>Política de Uploads:</strong> Local roda <code class="font-mono text-amber-300">--no-uploads</code> de seg a sáb (já cobertos pelo restic geral) e completo aos domingos. Stage e Prod sempre completos.</span></li>
               </ul>
             </div>
-            <div class="doc-card">
-              <p class="doc-label">Troubleshooting - sincronizacao de conteudo</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Checar origem real do pacote e destino aplicado (nunca gerar pacote de producao a partir do local).</li>
-                <li>Central Operacional lenta (~12 s) ou com timeout no <code>smoke-test.php</code>: a causa era <code>ContentSyncManager::allPackages()</code> verificar cada pacote da pasta de backup (disco externo) tres vezes por abertura. Hoje a lista e memorizada na requisicao e guardada em <code>storage/cache/content-sync-packages.json</code> (valida por 5 min enquanto as pastas e os <code>manifest.json</code> nao mudarem; <code>writeManifest()</code> e a exclusao de pacote limpam o cache). Primeira abertura apos o prazo: ~4 s. Para forcar a releitura, apagar esse arquivo.</li>
-                <li>Sincronizador isola IDs ja reivindicados para impedir que posts distintos colidam no mesmo ID de destino.</li>
-                <li>Validar integridade de todos os slugs com <code>assertAppliedPostIntegrity</code> antes do commit da transacao.</li>
-                <li>Em caso de falha, o rollback automatico protege o banco de dados de producao.</li>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider">Prova de Restauração em Sandbox</h3>
+              <p class="mt-2 text-xs text-slate-300">Para garantir que os backups são restauráveis sem afetar as bases de dados em uso:</p>
+              <div class="mt-3 rounded-xl border border-slate-800 bg-slate-900/90 p-2.5 font-mono text-[11px] text-cyan-300">
+                php scripts/verify-backup-restore.php &lt;local|stage|production&gt; [ID]
+              </div>
+              <p class="mt-2 text-[11px] text-slate-400">Valida SHA-256 do manifesto, CRC de todos os zips e importa o banco em uma base temporária isolada (<code class="font-mono text-slate-300">en_restore_check_*</code>), que é descartada automaticamente.</p>
+            </div>
+          </div>
+
+          <div class="doc-callout doc-callout-warn mt-4">
+            <p class="font-semibold">Regra de Ouro do Restore</p>
+            <p class="mt-1">O restore oficial sobrescreve completamente o banco de dados, uploads e arquivos de sistema do destino. <em>Nunca execute restore sem antes gerar e validar um backup do estado imediatamente anterior.</em></p>
+          </div>
+        </section>
+
+        <!-- 8. BACKUP EM NUVEM (GOOGLE DRIVE) -->
+        <section id="dropbox" data-doc-panel="dropbox" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'dropbox' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-brands fa-google-drive text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">8) Backup em Nuvem (Google Drive)</h2>
+              <p class="text-xs text-slate-400">Consolidação oficial do Google Drive como destino externo (IMP-023 / IMP-033).</p>
+            </div>
+          </div>
+
+          <div class="doc-callout doc-callout-info mt-4">
+            <p class="font-semibold text-cyan-100">Destino Oficial e Expurgamento do Dropbox (IMP-033)</p>
+            <p class="mt-1">O Google Drive é o único provedor de nuvem do portal. No IMP-033 o Dropbox foi 100% removido das telas e do código. O manifesto registra <code class="font-mono text-cyan-200">cloud_provider = google_drive</code>, e a pasta remota oficial é <code class="font-mono text-cyan-200">Estrategia Nerd - Backups de Conteudo/Sistema/&lt;Ambiente&gt;/&lt;ID&gt;</code>.</p>
+          </div>
+
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider">Operação Via Terminal (CLI)</h3>
+              <ul class="mt-3 space-y-2 text-xs text-slate-300">
+                <li><strong class="text-white">Envio Sistêmico:</strong> <code class="font-mono text-cyan-300">php scripts/backup.php upload-cloud latest</code></li>
+                <li><strong class="text-white">Envio Editorial:</strong> <code class="font-mono text-cyan-300">php scripts/content-sync.php upload-cloud latest</code></li>
               </ul>
             </div>
-            <div class="doc-card">
-              <p class="doc-label">Troubleshooting - backup & restore</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Checar <code>backup_root</code> e perfil do ambiente antes de qualquer deploy.</li>
-                <li>Confirmar manifesto, <code>database.sql</code>, <code>uploads.zip</code> e <code>system-files.zip</code>.</li>
-                <li>Se a verificacao falhar, nao usar o backup no restore nem envia-lo ao Google Drive.</li>
-              </ul>
-            </div>
-            <div class="doc-card">
-              <p class="doc-label">Troubleshooting - codigo & deploy</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Rodar preflight e lint antes de reaplicar pacote tecnico.</li>
-                <li>Conferir backup tecnico associado e ultimo deploy tecnico visivel na Central.</li>
-                <li>Se o problema persistir, restaurar pacote estavel antes de novo hotfix.</li>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider">Operação Pelo Painel Local</h3>
+              <ul class="mt-3 space-y-2 text-xs text-slate-300">
+                <li><strong class="text-white">Central Operacional V2:</strong> <code class="font-mono text-slate-200">/admin/central-operacional-v2/backup-em-nuvem</code></li>
+                <li><strong class="text-white">Central de Backup:</strong> <code class="font-mono text-slate-200">/local/backup?backup_secao=nuvem</code></li>
+                <li class="text-[11px] text-slate-400">Exclusões remotas exigem confirmação explícita digitando o ID do backup.</li>
               </ul>
             </div>
           </div>
         </section>
 
-        <section id="evolucao" data-doc-panel="evolucao" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'evolucao' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-cyan-200">14) Evolucao tecnica</h2><div class="doc-card doc-example mt-4"><ul class="list-disc space-y-1 pl-5 text-sm text-slate-200"><li>Versao inicial do portal editorial e dashboard admin.</li><li>Criacao da Central Nerd como pagina de conversao.</li><li>Adicao da rotina local de backup com restore controlado.</li><li>Implementacao da sincronizacao de conteudo/codigo com paridade.</li><li>Refino dos hubs tecnicos no admin local com navegacao assincrona.</li><li>Modal operacional de Conteudo com progresso real e rastreabilidade de aplicacao de pacotes.</li><li>Modal operacional de Backup e Restore com progresso real para backup, verificacao e restore.</li><li>Integracao Dropbox/Nuvem para backup de ambiente (substituida pelo Google Drive no IMP-023; Dropbox removido do codigo e das telas no IMP-033).</li><li>Reforco de preflight, documentacao interna, governanca de releases e bloqueio por origem aprovada.</li><li>Modulo Instagram (FEAT-010): contas, fila de posts, publicacao agendada, confirmacao na Meta, cross-post Blog → Instagram e feed publico automatico na home.</li><li>Reels: Smart Canvas, Konva (reels-konva), biblioteca de trilhas (IMP-032) e Reels em tipografia cinetica com a skill motionmaxxing (reels-motionmaxxing).</li><li>Central Operacional V2 (backups sistemico/editorial, nuvem, observabilidade, Hostinger API, SEO tecnico) e Central Tecnica (Base de Conhecimento).</li><li>Backup diario automatico com Google Drive (IMP-023) e prova de restauracao em banco temporario (<code>verify-backup-restore.php</code>).</li><li>Afiliados e links (IMP-027 a IMP-031), monitoramento de links e Search Console.</li><li>Ofertas relacionadas no fim dos posts com rastreio por post e filtro de cliques falsos (FEAT-013).</li><li>Qualidade: PHPStan nivel 5 e suite <code>verify-changes.php</code>; Cloudflare Access na frente do admin.</li><li>Tarefas somente no Forge; documentacao central com guia proprio (<code>docs/governanca/documentacao-central.md</code>).</li></ul></div></section>
-
-        <section id="governanca" data-doc-panel="governanca" class="doc-panel rounded-3xl border border-fuchsia-500/20 bg-slate-900/80 p-6" <?= $docSection === 'governanca' ? '' : 'hidden' ?>><h2 class="font-orbitron text-xl font-bold text-fuchsia-200">15) Governanca da documentacao</h2><p class="mt-3 text-sm leading-7 text-slate-300">Esta pagina e a documentacao principal local do portal. Toda mudanca estrutural, operacional, de release ou de deploy deve atualizar esta base no mesmo ciclo de trabalho.</p><div class="mt-4 rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/10 p-4 text-sm text-fuchsia-50"><p class="mb-2">Guia obrigatorio para qualquer IA ou pessoa: <code>docs/governanca/documentacao-central.md</code> (qual arquivo alimenta cada area da Central Tecnica, quando atualizar e como validar). Citado no <code>AGENTS.md</code>.</p><ol class="list-decimal space-y-1 pl-5"><li>Atualizar a secao impactada da documentacao principal na mesma tarefa da alteracao.</li><li>Revisar compatibilidade com `docs/CODEX-REGRAS-PERMANENTES.txt`.</li><li>Revisar tambem `docs/governanca/priorizacao-tecnica.md` quando a alteracao mudar risco, prioridade ou criterio de execucao.</li><li>Atualizar feature/release/checklist/rollback quando a alteracao exigir.</li><li>Executar preflight antes de qualquer empacotamento e <code>verify-changes.php</code> antes de concluir.</li><li>Conferir a pagina renderizada (rotas <code>/local/*</code>) depois de editar.</li><li>Registrar a tarefa e concluir no Forge (projeto Estrategia Nerd) so depois da validacao.</li><li>Revisao mensal: tarefa recorrente no Forge.</li></ol></div></section>
-
-        <section id="instagram" data-doc-panel="instagram" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'instagram' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">16) Instagram e Reels</h2>
-          <div class="doc-card doc-rule mt-4">
-            <p class="doc-label">Visao geral (FEAT-010)</p>
-            <p class="mt-2 text-sm text-slate-200">Modulo de ambiente unico: tokens, fila e cache ficam <strong>somente no MySQL local</strong> (<code>$GLOBALS['pdo']</code>), nas tabelas <code>instagram_accounts</code>, <code>instagram_posts</code>, <code>instagram_post_media</code>, <code>instagram_insights_cache</code> e <code>instagram_audio_tracks</code>. Tela: <code>/admin/instagram</code>. Documento completo: <code>docs/features/FEAT-010.md</code>.</p>
-          </div>
-          <div class="mt-4 grid gap-4 xl:grid-cols-2">
-            <div class="doc-card">
-              <p class="doc-label">Publicacao agendada</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Tarefa do Windows <code>EstrategiaNerd-InstagramPublicarAgendados</code> (a cada 5 min) roda <code>scripts/en-instagram-publish-scheduled.php</code>.</li>
-                <li>Grade: 12:00 e 19:30. Lock atomico <code>agendado</code> → <code>publicando</code>; confirmacao na Meta antes de marcar publicado.</li>
-                <li>Log: <code>storage/logs/instagram/publish-AAAA-MM.log</code>.</li>
-                <li>A Meta baixa video e capa de <code>INSTAGRAM_PUBLIC_MEDIA_URL</code> (hoje <code>https://nerd.tfr-info.com.br</code>, servido por esta maquina).</li>
-              </ul>
-            </div>
-            <div class="doc-card">
-              <p class="doc-label">Qual video sai</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Reel oficial: todo Reel deve ser pré-renderizado via <strong>Motionmaxxing</strong> (HTML/GSAP com Chrome Headless e tipografia cinética), preenchendo <code>instagram_posts.video_rendered_path</code> com <code>render_status = ready</code>. O antigo gerador Konva de slides estáticos foi descontinuado.</li>
-                <li>A capa <code>.jpg</code> com o mesmo nome do <code>.mp4</code> e obrigatoria; sem ela o envio e bloqueado.</li>
-                <li>Feed publico da home: <code>scripts/en-instagram-publish-feed.php</code>; para pausar sem apagar nada, criar <code>storage/instagram-feed-publish/auto.disabled</code>.</li>
-              </ul>
+        <!-- 9. CONFIGURAÇÕES DE AMBIENTE (.ENV) -->
+        <section id="ambiente" data-doc-panel="ambiente" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'ambiente' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-sliders text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">9) Configurações de Ambiente (.env)</h2>
+              <p class="text-xs text-slate-400">Dicionário de variáveis oficiais (apenas nomes e finalidades; segredos preservados).</p>
             </div>
           </div>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Trocar o video de um Reel ja agendado</p>
-            <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-200">
-              <li>Padrao de arquivos (nome fixo, como as capas de artigos): <code>public/uploads/posts/&lt;slug&gt;/reels/reel.mp4</code> com <code>reel.jpg</code> e <code>capa.jpg</code> ao lado; post com mais de um Reel usa <code>reels/reel-&lt;id&gt;/reel.mp4</code>. O banco aponta sempre para esse nome fixo.</li>
-              <li>Antes de trocar, so se o post estiver <code>agendado</code> e sem <code>creation_id</code>/<code>ig_media_id</code>: mover o <code>reel.mp4</code>, o <code>reel.jpg</code> e o <code>capa.jpg</code> atuais para <code>reels/anteriores/</code>, com data e hash no nome (<code>reel-AAAAMMDD-&lt;hash8&gt;.mp4</code>). Eles sao o rollback.</li>
-              <li>Copiar o novo <code>.mp4</code> (H.264 + AAC, 1080x1920, 30 fps) para <code>reel.mp4</code> e a capa para <code>reel.jpg</code> e <code>capa.jpg</code>; conferir hash e duracao. Como o caminho no banco nao muda, nao ha UPDATE; se um dia precisar mudar <code>instagram_posts.video_rendered_path</code> e <code>instagram_post_media.caminho</code>, fazer em transacao, mantendo <code>render_status = ready</code>.</li>
-              <li>Validar: reler o post, rodar <code>AudioReelGeneratorService::readyVideoPath</code> e <code>InstagramApiService::reelCoverParams</code>, abrir o endereco publico do video/capa (HTTP 200) e rodar <code>verify-changes.php</code>.</li>
-              <li>Rollback: voltar os arquivos de <code>reels/anteriores/</code> para <code>reel.mp4</code>, <code>reel.jpg</code> e <code>capa.jpg</code>.</li>
+
+          <div class="mt-4 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/70">
+            <table class="doc-table">
+              <thead>
+                <tr><th>Chave</th><th>Finalidade</th><th>Observação Operacional</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="font-mono text-xs text-cyan-300">APP_ENV / APP_DEBUG / APP_URL</td><td class="text-slate-300">Definição do ambiente ativo, modo debug e URL base.</td><td class="text-xs text-rose-300">Em produção e stage `APP_DEBUG` deve ser estritamente false.</td></tr>
+                <tr><td class="font-mono text-xs text-cyan-300">DB_HOST / DB_PORT / DB_DATABASE / DB_USER...</td><td class="text-slate-300">Conexão principal PDO do ambiente atual.</td><td class="text-xs text-slate-400">Utiliza UTF8MB4. Credenciais nunca versionadas.</td></tr>
+                <tr><td class="font-mono text-xs text-cyan-300">BACKUP_ROOT / BACKUP_RETENTION</td><td class="text-slate-300">Diretório local oficial dos backups e limite de retenção.</td><td class="text-xs text-slate-400">Padrão: `C:\Users\WINDOWS\ProjectBackup\estrategia-nerd` e 7 cópias.</td></tr>
+                <tr><td class="font-mono text-xs text-cyan-300">BACKUP_GOOGLE_DRIVE_CLIENT_*</td><td class="text-slate-300">Credenciais OAuth para sincronização de backups no Drive.</td><td class="text-xs text-slate-400">Configurado em `config/backup-cloud.php`. Somente no local.</td></tr>
+                <tr><td class="font-mono text-xs text-cyan-300">CONTENT_SYNC_CURRENT_SOURCE</td><td class="text-slate-300">Origem atual do ambiente (`local`, `stage`, etc.).</td><td class="text-xs text-amber-300">Trava operacional de integridade.</td></tr>
+                <tr><td class="font-mono text-xs text-cyan-300">CONTENT_SYNC_APPROVED_PACKAGE_SOURCE</td><td class="text-slate-300">Origem obrigatória aceita para pacotes de produção.</td><td class="text-xs text-emerald-300">Valor oficial: `stage`.</td></tr>
+                <tr><td class="font-mono text-xs text-cyan-300">INSTAGRAM_PUBLIC_MEDIA_URL</td><td class="text-slate-300">URL pública de onde a Meta baixa vídeos e capas dos Reels.</td><td class="text-xs text-slate-400">Deve responder HTTP 200 externamente (Cloudflare Tunnel).</td></tr>
+                <tr><td class="font-mono text-xs text-cyan-300">GEMINI_API_KEY / GEMINI_TEXT_MODEL...</td><td class="text-slate-300">Geração de legendas em cross-posts Blog &rarr; Instagram.</td><td class="text-xs text-slate-400">Somente no `.env` local.</td></tr>
+                <tr><td class="font-mono text-xs text-cyan-300">MATOMO_URL / MATOMO_SITE_ID</td><td class="text-slate-300">Analytics de audiência e tráfego auto-hospedado.</td><td class="text-xs text-slate-400">Configurado no IMP-022.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 10. SEGURANÇA DO SISTEMA -->
+        <section id="seguranca" data-doc-panel="seguranca" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'seguranca' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-shield-halved text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">10) Segurança do Sistema</h2>
+              <p class="text-xs text-slate-400">Proteção de borda, isolamento de rotas e mitigação de vulnerabilidades.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-lock text-cyan-400"></i> Proteção de Borda & Acesso</h3>
+              <ul class="mt-3 space-y-2 text-xs text-slate-300">
+                <li>&bull; <strong class="text-white">Cloudflare Access:</strong> O admin e as rotas de sistema exigem login institucional na camada de borda do Cloudflare Tunnel.</li>
+                <li>&bull; <strong class="text-white">Bloqueio Local:</strong> As rotas <code>/local/*</code> executam <code>EnvironmentGuard::requireLocal()</code>, aceitando apenas localhost, CLI ou LAN privada autorizada.</li>
+                <li>&bull; <strong class="text-white">CSRF Obrigatório:</strong> Toda requisição POST no admin valida token anti-CSRF unificado.</li>
+              </ul>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-eye-slash text-cyan-400"></i> Bloqueio SEO na Stage</h3>
+              <ul class="mt-3 space-y-2 text-xs text-slate-300">
+                <li>&bull; <strong class="text-white">Noindex Garantido:</strong> Com <code class="font-mono text-cyan-300">APP_ENV=stage</code>, o <code class="font-mono text-slate-200">bootstrap.php</code> envia automaticamente o header <code class="font-mono text-amber-300">X-Robots-Tag: noindex, nofollow</code> em todas as respostas HTTP.</li>
+                <li>&bull; <strong class="text-white">Uploads Protegidos:</strong> Em <code class="font-mono text-slate-200">public/uploads/.htaccess</code> a execução direta de scripts PHP é expressamente revogada.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 11. INSTAGRAM & REELS -->
+        <section id="instagram" data-doc-panel="instagram" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'instagram' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-brands fa-instagram text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">11) Instagram & Reels (Motores de Vídeo)</h2>
+              <p class="text-xs text-slate-400">Arquitetura local-only, publicação agendada, múltiplos Reels e motores visuais.</p>
+            </div>
+          </div>
+
+          <div class="doc-callout doc-callout-info mt-4">
+            <p class="font-semibold text-cyan-100">Arquitetura Local-Only (FEAT-010)</p>
+            <p class="mt-1">Tokens da Meta Graph API v21.0, fila de agendamento e cache de insights residem exclusivamente no MySQL local (<code class="font-mono text-cyan-200">$GLOBALS['pdo']</code>). A conta @estrategia_nerd é unificada e não trafega para o banco remoto de produção.</p>
+          </div>
+
+          <div class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+            <h3 class="font-orbitron text-xs font-black uppercase tracking-wider text-slate-300">Motores de Renderização de Vídeo</h3>
+            <div class="mt-3 grid gap-3 md:grid-cols-3">
+              <div class="rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-3.5">
+                <span class="rounded bg-cyan-900/80 px-2 py-0.5 text-[10px] font-bold text-cyan-300 uppercase">Oficial</span>
+                <p class="mt-2 text-xs font-bold text-white">Motionmaxxing</p>
+                <p class="mt-1 text-[11px] text-slate-300 leading-relaxed">Tipografia cinética animada com GSAP/HTML capturada via Chrome Headless. Padrão para artigos e vídeos informativos.</p>
+              </div>
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3.5">
+                <span class="rounded bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-300 uppercase">Sequencial</span>
+                <p class="mt-2 text-xs font-bold text-white">OneTake</p>
+                <p class="mt-1 text-[11px] text-slate-300 leading-relaxed">Planos-sequência contínuos via Playwright em Python com motion blur real (180&deg;) e áudio procedural. Ideal para teasers e lançamentos.</p>
+              </div>
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3.5">
+                <span class="rounded bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-300 uppercase">GPU Nativo</span>
+                <p class="mt-2 text-xs font-bold text-white">Framefields</p>
+                <p class="mt-1 text-[11px] text-slate-300 leading-relaxed">Motor acelerado por hardware via WebGPU/Dawn (Node 22+) sem overhead de navegador, com suporte a 3D e BeatGrid musical.</p>
+              </div>
+            </div>
+            <p class="mt-3 text-[11px] text-slate-400 italic">* O motor legado Konva/Canvas de slides estáticos foi formalmente descontinuado.</p>
+          </div>
+
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider">Múltiplos Reels por Post (IMP-035 & IMP-037)</h3>
+              <p class="mt-2 text-xs text-slate-300 leading-relaxed">Um mesmo artigo pode ter vários Reels vinculados. No editor do post, o método <code class="font-mono text-cyan-300">findLinkedReels</code> lista todos os vídeos relacionados. Múltiplos vídeos usam pastas padronizadas <code class="font-mono text-slate-200">public/uploads/posts/&lt;slug&gt;/reels/reel-&lt;id&gt;/</code>.</p>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider">Biblioteca de Trilhas (IMP-036)</h3>
+              <p class="mt-2 text-xs text-slate-300 leading-relaxed">A seleção de áudio conta com busca em tempo real por título/artista e seletor de paginação (5, 10, 20 ou 50 por página) diretamente no modal de criação e edição de postagens.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 rounded-2xl border border-cyan-500/30 bg-slate-950/70 p-5">
+            <h3 class="font-orbitron text-xs font-black uppercase tracking-wider text-slate-300">Série de Vídeos do Echo (Molde)</h3>
+            <p class="mt-2 text-xs text-slate-300 leading-relaxed">Os vídeos em que o Echo apresenta seguem um molde com três partes separadas: o que é <strong class="text-white">igual em todo vídeo</strong> (Echo sem braços nem pernas e com a boca acompanhando a voz, 1080x1920, área segura, ordem com aprovação em cada etapa, conferências técnicas), o que <strong class="text-white">se decide em cada vídeo</strong> com o usuário (cenários, fonte e posição da legenda, música, efeitos, capa, horário) e os <strong class="text-white">erros já cometidos</strong>, com causa e prevenção. Também traz como os cenários aprovados foram feitos (Canvas 2D em 6+ camadas, objetos do assunto, textura, luz, semente fixa) e o nível mínimo de detalhe de cenário e animação.</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <a href="<?= htmlspecialchars($echoSeriesDocUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="rounded-lg border border-cyan-500/40 bg-cyan-950/30 px-3 py-1.5 text-[11px] font-semibold text-cyan-200 hover:bg-cyan-900/40">Abrir o molde da série</a>
+              <a href="<?= htmlspecialchars($videoDirectionDocUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-[11px] font-semibold text-slate-200 hover:bg-slate-800">Guia de direção audiovisual</a>
+            </div>
+            <p class="mt-3 text-[11px] text-slate-400">Skills: <code class="font-mono text-cyan-300">video-echo-serie</code> (produção) e <code class="font-mono text-cyan-300">agendar-reel-instagram</code> (fila). Referência completa: Manifesto Estratégia Nerd v12 (<code class="font-mono text-slate-200">scratch/manifesto-10-10/README.md</code>).</p>
+          </div>
+
+          <div class="doc-callout doc-callout-warn mt-4">
+            <p class="font-semibold">Área Segura do Instagram (1080x1920)</p>
+            <p class="mt-1 text-xs">Todo texto e elemento de leitura deve permanecer estritamente entre <strong class="text-white">Y: 170 e Y: 1540</strong>, com margem direita em <strong class="text-white">X: 925</strong> para não ser encoberto pela coluna lateral de botões do app (curtir, comentar e compartilhar).</p>
+          </div>
+        </section>
+
+        <!-- 12. CENTRAL NERD E AFILIADOS -->
+        <section id="central-nerd" data-doc-panel="central-nerd" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'central-nerd' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-cart-shopping text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">12) Central Nerd & Afiliados</h2>
+              <p class="text-xs text-slate-400">Rastreamento de conversão, ofertas contextuais em posts e filtro anti-scanner.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider">Ofertas nos Artigos (FEAT-013)</h3>
+              <p class="mt-2 text-xs text-slate-300 leading-relaxed">Ao final de cada artigo do blog, o <code class="font-mono text-cyan-300">RelatedOffersService</code> mapeia ofertas contextuais da categoria (hardware, games, gadgets) e sorteia 3 produtos a cada visita com cabeçalho <code class="font-mono text-slate-200">no-store</code>, rastreando a conversão com a tag <code class="font-mono text-slate-200">post-{id}</code>.</p>
+            </div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <h3 class="font-semibold text-white text-xs uppercase tracking-wider">Filtro de Cliques Falsos</h3>
+              <p class="mt-2 text-xs text-slate-300 leading-relaxed">Scanners automáticos que injetam SQL em parâmetros de origem são neutralizados: origens que contenham caracteres fora de <code class="font-mono text-cyan-300">[a-z0-9:_-]</code> são redirecionadas normalmente mas <strong>não computam clique</strong> no banco de dados, protegendo a integridade das métricas.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 13. REGRAS DE DESENVOLVIMENTO -->
+        <section id="regras-dev" data-doc-panel="regras-dev" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'regras-dev' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-gavel text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">13) Regras de Desenvolvimento</h2>
+              <p class="text-xs text-slate-400">Diretrizes de sustentabilidade de código e disciplina de manutenção.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-2.5">
+            <div class="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-3.5 text-xs text-slate-300">
+              <span class="doc-step-badge bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">1</span>
+              <div><strong class="text-white">Controller Não Acessa Banco:</strong> Toda persistência ou consulta deve passar obrigatoriamente pela camada de Repository.</div>
+            </div>
+            <div class="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-3.5 text-xs text-slate-300">
+              <span class="doc-step-badge bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">2</span>
+              <div><strong class="text-white">Services Concentram Regra de Negócio:</strong> Mantenha a coerência entre módulos e isolamento de efeitos colaterais.</div>
+            </div>
+            <div class="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-3.5 text-xs text-slate-300">
+              <span class="doc-step-badge bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">3</span>
+              <div><strong class="text-white">Hotfixes em Produção:</strong> Qualquer hotfix aplicado em ambiente de produção deve ser retroalimentado para Local e Stage no mesmo ciclo.</div>
+            </div>
+            <div class="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-3.5 text-xs text-slate-300">
+              <span class="doc-step-badge bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">4</span>
+              <div><strong class="text-white">Atualização Simultânea da Documentação:</strong> Nenhuma alteração funcional é considerada concluída sem atualizar a documentação central na mesma tarefa.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 14. GOVERNANÇA DE RELEASES -->
+        <section id="governanca-releases" data-doc-panel="governanca-releases" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'governanca-releases' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-clipboard-check text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">14) Governança Oficial de Releases</h2>
+              <p class="text-xs text-slate-400">Matriz de risco, rastreabilidade e critérios obrigatórios de aceitação.</p>
+            </div>
+          </div>
+
+          <div class="doc-callout doc-callout-info mt-4">
+            <p class="font-semibold text-cyan-100">Matriz Oficial de Risco</p>
+            <p class="mt-1">As diretrizes oficiais de risco e execução técnica do projeto estão registradas em <code class="font-mono text-cyan-200">docs/governanca/priorizacao-tecnica.md</code>. Toda entrega deve registrar impacto, paridade confirmada e plano de rollback.</p>
+          </div>
+
+          <div class="mt-5 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+            <h3 class="font-orbitron text-xs font-black uppercase tracking-wider text-slate-300">Suíte Obrigatória de Pré-Commit / Conclusão</h3>
+            <p class="mt-1 text-xs text-slate-400">Nenhum commit é permitido sem que a suíte termine em aprovação total:</p>
+            <div class="mt-3 rounded-xl border border-slate-800 bg-slate-900/90 p-3 font-mono text-xs text-emerald-300">
+              C:\xampp\php\php.exe scripts/verify-changes.php
+            </div>
+            <p class="mt-2 text-xs text-slate-400">Valida lint PHP, PHPStan nível 5 (0 erros tolerados), renderização do dashboard nos 3 ambientes e integridade do módulo Instagram.</p>
+          </div>
+        </section>
+
+        <!-- 15. ERROS COMUNS E DIAGNÓSTICO -->
+        <section id="diagnostico" data-doc-panel="diagnostico" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'diagnostico' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-triangle-exclamation text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">15) Erros Comuns e Diagnóstico Rápido</h2>
+              <p class="text-xs text-slate-400">Guia de troubleshooting direto para os problemas operacionais mais frequentes.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/70">
+            <table class="doc-table">
+              <thead>
+                <tr><th>Sintoma / Problema</th><th>Causa Raiz Mais Provável</th><th>Ação Recomendada</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="font-semibold text-rose-300">Central Operacional lenta (~12s)</td><td class="text-slate-300">Varredura repetida de pacotes em disco externo sem cache.</td><td class="text-xs text-cyan-300">Limpar ou aguardar o cache em <code class="font-mono text-slate-200">storage/cache/content-sync-packages.json</code> (IMP-034).</td></tr>
+                <tr><td class="font-semibold text-rose-300">Capa do artigo pesada degradando o site</td><td class="text-slate-300">Upload de PNG não otimizado (~2 a 3 MB).</td><td class="text-xs text-cyan-300">Converter obrigatoriamente para WebP (~150-250 KB) e atualizar <code class="font-mono text-slate-200">posts.imagem_capa</code>.</td></tr>
+                <tr><td class="font-semibold text-rose-300">Reel bloqueado: "Capa ausente ou inválida"</td><td class="text-slate-300">Ausência do arquivo `.jpg` com o mesmo nome do `.mp4`.</td><td class="text-xs text-cyan-300">Gerar a capa JPEG ao lado do vídeo; nunca agendar sem capa (<code class="font-mono text-slate-200">scripts/verify-reel-cover.php</code>).</td></tr>
+                <tr><td class="font-semibold text-rose-300">Erro de sincronização no Google Drive</td><td class="text-slate-300">Token OAuth expirado ou callback divergente.</td><td class="text-xs text-cyan-300">Acessar Backup em Nuvem no painel e reautenticar a conta Google Drive.</td></tr>
+                <tr><td class="font-semibold text-rose-300">Acentos corrompidos em tarefas do Forge</td><td class="text-slate-300">Envio de JSON pelo terminal sem codificação UTF-8 explícita.</td><td class="text-xs text-cyan-300">Enviar payload JSON a partir de arquivo ou via <code class="font-mono text-slate-200">ConvertTo-Json</code> no PowerShell.</td></tr>
+                <tr><td class="font-semibold text-rose-300">Reel publicado com vídeo antigo</td><td class="text-slate-300">Caminho em <code class="font-mono text-slate-200">video_rendered_path</code> divergente.</td><td class="text-xs text-cyan-300">Mover versão anterior para <code class="font-mono text-slate-200">reels/anteriores/</code> antes de sobrescrever <code class="font-mono text-slate-200">reel.mp4</code>.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 16. EVOLUÇÃO TÉCNICA -->
+        <section id="evolucao" data-doc-panel="evolucao" class="doc-panel rounded-3xl border border-slate-800/90 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'evolucao' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-slate-800/80 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><i class="fa-solid fa-timeline text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-white text-balance">16) Evolução Técnica do Portal</h2>
+              <p class="text-xs text-slate-400">Linha do tempo consolidada de marcos e entregas estruturais.</p>
+            </div>
+          </div>
+
+          <div class="mt-5 space-y-3">
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <span class="rounded bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5 font-mono text-[10px] font-bold">Outubro / 2026</span>
+              <p class="mt-2 text-xs font-bold text-white">Motores de Vídeo, Otimizações & Governança de Mídia</p>
+              <ul class="mt-2 space-y-1 text-xs text-slate-300">
+                <li>&bull; <strong>IMP-037 & Motores:</strong> Consolidação oficial de Motionmaxxing (tipografia cinética), OneTake (Playwright) e Framefields (WebGPU); descontinuação do Konva.</li>
+                <li>&bull; <strong>IMP-035 & IMP-036:</strong> Suporte a múltiplos Reels por post de blog e busca/paginação na biblioteca local de áudios.</li>
+                <li>&bull; <strong>IMP-034:</strong> Cache de pacotes de conteúdo na Central Operacional (`content-sync-packages.json`).</li>
+                <li>&bull; <strong>FEAT-013:</strong> Bloco de ofertas contextuais nos posts do blog e filtro anti-scanner de SQL.</li>
+                <li>&bull; <strong>IMP-033:</strong> Remoção definitiva do Dropbox em favor do Google Drive API.</li>
+              </ul>
+            </div>
+
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <span class="rounded bg-slate-800 text-slate-300 px-2 py-0.5 font-mono text-[10px] font-bold">Setembro / 2026</span>
+              <p class="mt-2 text-xs font-bold text-white">Automação Meta, Backup Diário & Qualidade</p>
+              <ul class="mt-2 space-y-1 text-xs text-slate-300">
+                <li>&bull; <strong>FEAT-010:</strong> Módulo Instagram Graph API v21.0 local-only, fila agendada e publicação atômica.</li>
+                <li>&bull; <strong>Rotina Diária de Backup:</strong> Windows Task Scheduler às 21:30 e prova de restauração em sandbox temporário (`verify-backup-restore.php`).</li>
+                <li>&bull; <strong>Qualidade:</strong> PHPStan nível 5 obrigatório e suíte `verify-changes.php`.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 17. GOVERNANÇA DA DOCUMENTAÇÃO -->
+        <section id="governanca" data-doc-panel="governanca" class="doc-panel rounded-3xl border border-fuchsia-500/25 bg-slate-900/85 p-6 shadow-sm" <?= $docSection === 'governanca' ? '' : 'hidden' ?>>
+          <div class="flex items-center gap-2.5 border-b border-fuchsia-500/20 pb-4">
+            <span class="flex h-8 w-8 items-center justify-center rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300"><i class="fa-solid fa-book-bookmark text-xs"></i></span>
+            <div>
+              <h2 class="font-orbitron text-xl font-bold text-fuchsia-100 text-balance">17) Governança da Documentação Central</h2>
+              <p class="text-xs text-slate-400">Regra máxima: alteração sem documentação atualizada é uma alteração incompleta.</p>
+            </div>
+          </div>
+
+          <div class="mt-4 rounded-2xl border border-fuchsia-500/30 bg-fuchsia-950/20 p-4 text-xs text-fuchsia-100">
+            <p class="font-bold text-fuchsia-200">Guia Obrigatório para Qualquer IA ou Desenvolvedor</p>
+            <p class="mt-1">Consulte sempre <code class="font-mono text-white">docs/governanca/documentacao-central.md</code> (definido na tarefa Forge #1253). Ele especifica qual arquivo alimenta cada área da Central Técnica.</p>
+            <ol class="mt-3 list-decimal space-y-1 pl-4 text-slate-300">
+              <li>Atualizar a seção correspondente desta documentação na mesma tarefa da alteração.</li>
+              <li>Revisar compatibilidade com <code class="font-mono text-slate-200">docs/CODEX-REGRAS-PERMANENTES.txt</code>.</li>
+              <li>Rodar a suíte <code class="font-mono text-slate-200">verify-changes.php</code> e conferir a página renderizada antes de concluir.</li>
+              <li>Registrar e concluir tarefas exclusivamente no painel local <strong>The Forge</strong>.</li>
             </ol>
           </div>
-          <div class="mt-4 grid gap-4 xl:grid-cols-2">
-            <div class="doc-card doc-alert">
-              <p class="doc-label">Area segura do texto (Reels 1080x1920)</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
-                <li>Vale so para <strong>texto</strong>; imagem e fundo podem ficar sob os icones.</li>
-                <li>Nenhum texto acima de Y 170 nem abaixo de Y 1540.</li>
-                <li>Entre Y 970 e 1790 (coluna de icones), texto ate X 925; margem lateral minima X 72.</li>
-                <li>Medir no navegador com o texto assentado; letras em movimento podem passar por instantes.</li>
-              </ul>
-            </div>
-            <div class="doc-card">
-              <p class="doc-label">Producao de Reels</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li>Padrao aprovado (out/2026): imagem do post inteira na moldura, texto como foco com animacao que representa o sentido, fontes ligadas ao tema, som escolhido. Detalhes: <code>docs/features/reels-motionmaxxing.md</code>.</li>
-                <li>Motor oficial: <strong>Motionmaxxing</strong> (<code>C:\Users\WINDOWS\.claude\skills\motionmaxxing</code>), gerando tipografia cinética, interpolação de sentido e moldura com deriva lenta. Motores legados baseados em Canvas/Skia (<code>KonvaReelRenderer</code> / <code>scripts/reels-konva/</code>) foram descontinuados para novas publicações por falta de animação.</li>
-                <li>Tempo de render medido em 14/10/2026 (1080x1920, 20 s, <code>--shutter 180 --subframes 8 --grain 0.03</code>): cerca de 9 a 10 min por video. Ate 3 renders ao mesmo tempo levam o mesmo tempo de 1 (3 videos de 20 s: 657,7 s contra ~656 s sozinho; lote real de 3 filmes: CPU media 44%, pico 100%, RAM livre minima 3,3 GB). Em trecho de 5 s, 4, 5 e 6 renders juntos levaram 175, 178 e 177 s (RAM livre minima 3,4, 2,7 e 1,3 GB); 4 e a sugestao pratica e 6 o maximo, ainda sem aprovacao como padrao.</li>
-                <li>Rascunho para conferir layout: sem shutter leva ~21 s para 5 s de video; <code>--scale 0.5</code> com shutter ganha so ~27%. Com 4 sub-frames o tempo cai pela metade (SSIM 0,992 contra 8), mas o padrao continua em 8.</li>
-                <li>No Windows definir <code>CHROME_PATH</code> (o <code>render.mjs</code> so procura caminhos de Mac e Linux), por exemplo <code>C:\Program Files\Google\Chrome\Application\chrome.exe</code>. O render em paralelo sai um pouco diferente do render sozinho (SSIM 0,985 a 0,99), mas iguais entre si; o render sozinho e deterministico.</li>
-              </ul>
-            </div>
-          </div>
         </section>
-        <section id="central-nerd" data-doc-panel="central-nerd" class="doc-panel rounded-3xl border border-slate-800 bg-slate-900/80 p-6" <?= $docSection === 'central-nerd' ? '' : 'hidden' ?>>
-          <h2 class="font-orbitron text-xl font-bold text-cyan-200">17) Central Nerd e cliques</h2>
-          <div class="doc-card mt-4">
-            <p class="doc-label">Como funciona</p>
-            <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-              <li>Pagina <code>/central-nerd</code> (<code>CentralController</code> / <code>CentralService</code>) lista as ofertas da tabela <code>links</code>, agrupadas por prateleira (<code>subgrupo_publico</code>).</li>
-              <li>Todo botao de oferta passa por <code>/link/{slug}?origem=...</code>: <code>LinkRedirectService::resolve</code> registra o clique em <code>link_clicks</code> (<code>LinkClickRepository::registerClick</code>) e redireciona para a loja.</li>
-              <li>Origens em uso: <code>central-{prateleira}</code>, <code>central-destaque</code>, <code>central-cupons</code> e <code>post-{id}</code> (ofertas no fim dos artigos).</li>
-            </ul>
+
+        <!-- Rodapé com Navegação Sequencial (← Anterior / Próxima →) -->
+        <div class="flex items-center justify-between border-t border-slate-800 pt-4" data-doc-pager>
+          <div>
+            <?php if ($prevSection !== null): ?>
+              <a href="<?= htmlspecialchars($docsSectionUrl($prevSection), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-pager-prev class="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:border-cyan-400/40 hover:text-white">
+                <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                <span data-pager-prev-label><?= htmlspecialchars($docSections[$prevSection] ?? 'Anterior', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+              </a>
+            <?php else: ?>
+              <span class="inline-block"></span>
+            <?php endif; ?>
           </div>
-          <div class="mt-4 grid gap-4 xl:grid-cols-2">
-            <div class="doc-card">
-              <p class="doc-label">Ofertas no fim dos posts (FEAT-013)</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                <li><code>RelatedOffersService</code> monta a lista da categoria (prateleiras ligadas a categoria do post + produtos com palavra em comum com titulo/tags) e <strong>sorteia 3 a cada visita</strong>, sem repetir no bloco. Mapa: hardware &rarr; PC Gamer Inicial/Intermediario/Topo e Upgrade Monstro; games &rarr; Setup Gamer/Action Figures; cultura-geek &rarr; Action Figures/Gadgets; gadgets &rarr; Gadgets/Setup Gamer; dicas &rarr; Setup Estrategia Nerd/Setup Gamer.</li>
-                <li>Os produtos vem sempre do banco do proprio ambiente (producao le os produtos de producao); o clique em <code>/link/{slug}</code> e resolvido no mesmo banco. A pagina do post sai com <code>Cache-Control: no-store</code>, entao o sorteio vale por visita.</li>
-                <li>Sem campo novo no banco: para mudar o que aparece, ajustar a prateleira da oferta no admin de Links ou o mapa <code>CATEGORY_SHELVES</code>.</li>
-                <li>Bloco so aparece com a secao Central Nerd ativa e com ao menos 1 oferta; erro no banco nao quebra o artigo.</li>
-                <li>Dashboard: quadro "Cliques vindos dos posts" (<code>LinkClickRepository::topPostsByRange</code>).</li>
-              </ul>
-            </div>
-            <div class="doc-card doc-alert">
-              <p class="doc-label">Cliques falsos (scanner)</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-100">
-                <li>Scanners de SQL injection chamavam <code>/link/...?origem=</code> com SQL na origem. Nao havia risco (consulta parametrizada), mas os cliques inflavam as estatisticas (106 de 361 em producao ate 12/10/2026).</li>
-                <li>Desde a FEAT-013, origem com caractere fora de <code>[a-z0-9:_-]</code> (espaco, aspas, parenteses) redireciona normalmente e <strong>nao conta</strong> o clique. User-agents de robo ja eram ignorados.</li>
-                <li>Limpeza dos registros antigos: export JSON em <code>storage/logs/limpeza-cliques/</code> antes de apagar; rollback = reimportar o JSON.</li>
-              </ul>
-            </div>
+          <div>
+            <?php if ($nextSection !== null): ?>
+              <a href="<?= htmlspecialchars($docsSectionUrl($nextSection), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" data-pager-next class="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:border-cyan-400/40 hover:text-white">
+                <span data-pager-next-label><?= htmlspecialchars($docSections[$nextSection] ?? 'Próxima', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></span>
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </a>
+            <?php endif; ?>
           </div>
-        </section>
+        </div>
+
       </div>
-    </article>
+    </div>
   </div>
+
   <script>
     (() => {
+      const sectionKeys = <?= json_encode($allSectionKeys, JSON_UNESCAPED_SLASHES) ?>;
+      const sectionLabels = <?= json_encode($docSections, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
       const nav = document.querySelector('[data-doc-nav]');
-      if (!nav) {
-        return;
-      }
-
-      const triggers = Array.from(nav.querySelectorAll('[data-doc-trigger]'));
+      const mobileSelect = document.getElementById('docSectionSelect');
+      const triggers = nav ? Array.from(nav.querySelectorAll('[data-doc-trigger]')) : [];
       const panels = Array.from(document.querySelectorAll('[data-doc-panel]'));
-      if (triggers.length === 0 || panels.length === 0) {
-        return;
-      }
+      const prevBtn = document.querySelector('[data-pager-prev]');
+      const nextBtn = document.querySelector('[data-pager-next]');
+      const prevLabel = document.querySelector('[data-pager-prev-label]');
+      const nextLabel = document.querySelector('[data-pager-next-label]');
+
+      const updatePager = (target) => {
+        const idx = sectionKeys.indexOf(target);
+        if (idx === -1) return;
+
+        if (prevBtn) {
+          if (idx > 0) {
+            const pKey = sectionKeys[idx - 1];
+            prevBtn.style.display = 'inline-flex';
+            prevBtn.dataset.docTrigger = pKey;
+            prevBtn.href = '?docs_secao=' + encodeURIComponent(pKey);
+            if (prevLabel) prevLabel.textContent = sectionLabels[pKey] || 'Anterior';
+          } else {
+            prevBtn.style.display = 'none';
+          }
+        }
+
+        if (nextBtn) {
+          if (idx < sectionKeys.length - 1) {
+            const nKey = sectionKeys[idx + 1];
+            nextBtn.style.display = 'inline-flex';
+            nextBtn.dataset.docTrigger = nKey;
+            nextBtn.href = '?docs_secao=' + encodeURIComponent(nKey);
+            if (nextLabel) nextLabel.textContent = sectionLabels[nKey] || 'Próxima';
+          } else {
+            nextBtn.style.display = 'none';
+          }
+        }
+      };
 
       const activate = (target, push = true) => {
         triggers.forEach((trigger) => {
           const active = trigger.dataset.docTrigger === target;
-          trigger.classList.toggle('border-cyan-300/70', active);
+          trigger.classList.toggle('border-cyan-400/50', active);
           trigger.classList.toggle('bg-cyan-500/15', active);
           trigger.classList.toggle('text-cyan-100', active);
-          trigger.classList.toggle('shadow-[0_0_20px_rgba(34,211,238,0.12)]', active);
-          trigger.classList.toggle('border-slate-700', !active);
-          trigger.classList.toggle('bg-slate-950/70', !active);
+          trigger.classList.toggle('shadow-[0_0_18px_rgba(34,211,238,0.12)]', active);
+          trigger.classList.toggle('border-slate-800/70', !active);
+          trigger.classList.toggle('bg-slate-950/50', !active);
           trigger.classList.toggle('text-slate-300', !active);
           trigger.setAttribute('aria-current', active ? 'page' : 'false');
+          const icon = trigger.querySelector('i');
+          if (icon) {
+            icon.classList.toggle('text-cyan-300', active);
+            icon.classList.toggle('text-slate-500', !active);
+          }
         });
 
         panels.forEach((panel) => {
           panel.hidden = panel.dataset.docPanel !== target;
         });
+
+        if (mobileSelect && mobileSelect.value !== target) {
+          mobileSelect.value = target;
+        }
+
+        updatePager(target);
 
         if (push) {
           const next = new URL(window.location.href);
@@ -621,6 +855,24 @@ $technicalPriorityDocUrl = url('/local/mudancas/documento?grupo=governanca&arqui
         trigger.addEventListener('click', (event) => {
           event.preventDefault();
           activate(trigger.dataset.docTrigger || 'identidade', true);
+        });
+      });
+
+      if (mobileSelect) {
+        mobileSelect.addEventListener('change', () => {
+          activate(mobileSelect.value || 'identidade', true);
+        });
+      }
+
+      [prevBtn, nextBtn].forEach((btn) => {
+        if (!btn) return;
+        btn.addEventListener('click', (event) => {
+          event.preventDefault();
+          const target = btn.dataset.docTrigger;
+          if (target) {
+            activate(target, true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         });
       });
 

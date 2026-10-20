@@ -27,29 +27,24 @@ $isPlanned = $contentHtml === '';
       ],
   ]); ?>
 
-  <div class="rounded-3xl border border-slate-800 bg-slate-900/70 p-2">
-    <div class="grid gap-2 md:grid-cols-4">
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Modo</div>
-        <div class="mt-2 text-sm font-black text-white">Somente Leitura</div>
-      </div>
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Fonte</div>
-        <div class="mt-2 text-sm font-black text-white"><?= htmlspecialchars($source, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
-      </div>
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Status</div>
-        <div class="mt-2">
-          <?php View::component('admin/v2/status-badge', [
-              'label' => (string) ($current['status'] ?? 'Planejado'),
-              'tone' => (string) ($current['tone'] ?? 'neutral'),
-          ]); ?>
-        </div>
-      </div>
-      <div class="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3">
-        <div class="font-orbitron text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Última Leitura</div>
-        <div class="mt-2 text-sm font-black text-white"><?= date('d/m/Y H:i:s') ?></div>
-      </div>
+  <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/60 px-4 py-2.5 text-xs">
+    <div class="flex flex-wrap items-center gap-4">
+      <span class="flex items-center gap-1.5 text-slate-400">
+        <span class="font-orbitron text-[9px] uppercase tracking-wider text-slate-500">Fonte:</span>
+        <strong class="font-medium text-slate-200"><?= htmlspecialchars($source, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></strong>
+      </span>
+      <span class="hidden h-3 w-px bg-slate-800 sm:inline-block"></span>
+      <span class="flex items-center gap-1.5 text-slate-400">
+        <span class="font-orbitron text-[9px] uppercase tracking-wider text-slate-500">Modo:</span>
+        <span class="text-slate-300">Somente Leitura</span>
+      </span>
+    </div>
+    <div class="flex items-center gap-3">
+      <?php View::component('admin/v2/status-badge', [
+          'label' => (string) ($current['status'] ?? 'Disponível'),
+          'tone' => (string) ($current['tone'] ?? 'success'),
+      ]); ?>
+      <span class="font-mono text-[11px] text-slate-500"><?= date('d/m/Y H:i') ?></span>
     </div>
   </div>
 
