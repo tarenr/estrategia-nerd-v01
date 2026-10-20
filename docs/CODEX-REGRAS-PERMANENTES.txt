@@ -441,3 +441,13 @@ Para garantir que incidentes ocorridos anteriormente nao se repitam:
 - Criar um .md em docs/features registra a entrega, mas NAO substitui atualizar as paginas centrais afetadas.
 - Tarefas ficam SOMENTE no Forge (projeto Estrategia Nerd), com prefixo [Assunto] - Descricao. Itens de baixa prioridade ficam em docs/governanca/backlog-baixa-prioridade.md.
 - Alteracao sem documentacao central atualizada e validada NAO esta concluida.
+
+============================================================
+19. STAGE NUNCA PODE SER INDEXADA (OBRIGATORIO)
+============================================================
+
+- A stage (estrategianerd.com.br/stage/) e ambiente de teste e nao pode aparecer em buscadores.
+- Com APP_ENV=stage, o bootstrap.php envia X-Robots-Tag: noindex, nofollow em toda resposta web, e o /robots.txt da stage devolve Disallow: /.
+- O robots.txt que o Google le e o da raiz do dominio (producao): por isso o cabecalho da stage e a protecao real. Nao remover.
+- Qualquer deploy de bootstrap.php ou SeoController.php para a stage deve preservar esse bloqueio (conferir com curl -I https://estrategianerd.com.br/stage/).
+- O noindex nao remove o que ja foi indexado: remocao e feita manualmente no Search Console.

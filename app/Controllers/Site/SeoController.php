@@ -7,6 +7,7 @@ use App\Repositories\CategoriaPostRepository;
 use App\Repositories\PostRepository;
 use App\Services\Site\SitemapCacheService;
 use App\Services\Site\SitemapService;
+use App\Support\EnvironmentManager;
 use PDO;
 
 final class SeoController
@@ -25,6 +26,14 @@ final class SeoController
             '',
             'Sitemap: ' . url('/sitemap.xml'),
         ];
+
+        if (EnvironmentManager::current() === 'stage') {
+            // Stage nunca entra em buscadores.
+            $lines = [
+                'User-agent: *',
+                'Disallow: /',
+            ];
+        }
 
         echo implode("\n", $lines) . "\n";
     }

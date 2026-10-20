@@ -161,6 +161,12 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// A stage fica sob o dominio publico (/stage/) e o robots.txt valido e o da raiz: o bloqueio de indexacao
+// precisa ir em cada resposta. Producao e local nao sao afetados.
+if (PHP_SAPI !== 'cli' && strtolower(trim((string) ($GLOBALS['config']['app']['env'] ?? 'production'))) === 'stage' && !headers_sent()) {
+    header('X-Robots-Tag: noindex, nofollow', true);
+}
+
 /*
 |--------------------------------------------------------------------------
 | 7. Criar conexao PDO
