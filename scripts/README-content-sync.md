@@ -189,6 +189,41 @@ Instagram e agendamentos não são alterados.
 - uploads sao enviados apenas para os arquivos incluidos no pacote
 - a rotina nao remove conteudo que exista so na producao
 
+### Saga Darksiders na stage em 15/10/2026
+
+`scripts/reels-review/stage-darksiders-20261015.php` publica somente na **stage** os seis artigos da saga Darksiders (origem: banco e `public/uploads/posts/<slug>/` locais), com as 30 imagens e os 6 áudios de narração. Produção, Instagram e agendamentos não são alterados; os outros artigos da stage não são tocados.
+
+```powershell
+C:/xampp/php/php.exe scripts/reels-review/stage-darksiders-20261015.php --inspect
+C:/xampp/php/php.exe scripts/reels-review/stage-darksiders-20261015.php --prepare
+C:/xampp/php/php.exe scripts/reels-review/stage-darksiders-20261015.php --apply
+C:/xampp/php/php.exe scripts/reels-review/stage-darksiders-20261015.php --verify
+```
+
+- Os seis slugs são fixos no script. `--prepare` recusa se algum já existir na stage e grava o pacote imutável em `storage/stage-content/darksiders-20261015/` (estado anterior da stage, os 36 arquivos e o fingerprint da origem). `--apply` envia por FTP (só destino `/stage/uploads`), reconecta, reconfere a origem e insere os seis artigos numa transação com lock; `--verify` confere o banco e os hashes remotos.
+- Decisões do usuário: o #87 (A Jornada de Morte) estava com `categoria_post_id = 0` no local e entrou na stage na categoria `games`, sem alterar o local; os seis entram como `rascunho`, igual ao local, então a rota pública `/post/<slug>` da stage responde 404 até serem publicados.
+- Resultado: IDs 50 a 55 na stage (38 → 44 artigos), 36 hashes remotos conferidos, imagens e áudios com HTTP 200 em `https://estrategianerd.com.br/stage/uploads/posts/<slug>/...`.
+- Publicação (15/10/2026): `--publish` trocou o status dos IDs 50 a 55 para `publicado` (transação, aborta se não afetar exatamente 6 linhas); `--unpublish` volta para `rascunho`. Validação: 6 páginas `/stage/post/<slug>` com HTTP 200 e `X-Robots-Tag: noindex, nofollow`, 36 arquivos com 200, `/blog/games` lista os 6, sitemap da stage lista os 6, sem rolagem lateral em 375 px e sem imagem quebrada.
+- Bloqueio de indexação da stage: `scripts/stage-noindex-deploy.php` (`--backup`, `--deploy`, `--verify`) enviou só `bootstrap.php` (patch sobre a versão remota, que difere da local) e `SeoController.php`; backups em `storage/stage-noindex-20261015/before/`. Regra registrada em `docs/CODEX-REGRAS-PERMANENTES.txt` (seção 19) e na Documentação Técnica (Segurança).
+- Recuperação (exige autorização própria): remover os seis artigos pelos IDs de `applied.json` e os arquivos listados no pacote; nenhuma remoção automática foi implementada.
+
+### Promoção da Saga Darksiders para produção em 15/10/2026
+
+`scripts/reels-review/promote-darksiders-production-20261015.php` promove para a **produção** os seis artigos da saga Darksiders validados na stage, acompanhados de seus 36 assets (30 imagens e 6 áudios de narração). Os 39 artigos existentes de produção são rigorosamente preservados, mantendo suas métricas operacionais reais intactas.
+
+```powershell
+C:/xampp/php/php.exe scripts/reels-review/promote-darksiders-production-20261015.php --inspect
+C:/xampp/php/php.exe scripts/reels-review/promote-darksiders-production-20261015.php --prepare
+C:/xampp/php/php.exe scripts/reels-review/promote-darksiders-production-20261015.php --apply
+C:/xampp/php/php.exe scripts/reels-review/promote-darksiders-production-20261015.php --verify
+```
+
+- Pacote e backups imutáveis salvos em `storage/production-content/darksiders-20261015/` (`package.json`, `asset-*.bin`, `applied.json`, `verified.json`).
+- Os 36 assets foram enviados para `/domains/estrategianerd.com.br/public_html/uploads/posts/<slug>/...` via FTP, com conferência remota de SHA-256.
+- A inserção ocorreu em transação atômica com lock exclusivo de tabela (`FOR UPDATE`); produção passou de 39 para 45 artigos (IDs gerados: 52 a 57).
+- Validação completa: 45 artigos conferidos, 36 hashes remotos validados via FTP e todas as 6 rotas públicas `/post/<slug>` e 36 assets remotos retornando HTTP 200 OK.
+- Agendamento da saga (15/10/2026): executado por `scripts/reels-review/apply-darksiders-schedule-20261015.php`, configurando os 6 artigos do blog em produção como `agendado` sequencial de 29/10 a 03/11/2026 às 12:00 e cadastrando os 6 Reels correspondentes na fila do Instagram para as mesmas datas às 19:30 (IDs 11242 a 11247). As rotas públicas respondem HTTP 404 até suas respectivas datas de liberação.
+
 ## Interface local
 
 Tambem existe uma interface fora do admin em:

@@ -6,10 +6,10 @@ Saga de 6 capítulos no formato da saga do Diablo: artigo de blog com narração
 
 | Item | Estado |
 |---|---|
-| Artigo (blog) | Rascunho no banco **local**, post #82, slug `o-mundo-de-darksiders-ceu-inferno-e-o-equilibrio`, categoria `games`. Nada em stage ou produção. |
+| Artigo (blog) | 6 capítulos em **produção** (IDs 52 a 57) com status `agendado` sequencial de 29/10 a 03/11/2026 às 12:00. |
 | Narração do blog | Voz original preservada; player usa `narracao-mix-v3.mp3`, 46 s, com música incorporada. |
 | Música de fundo do blog | `Caves of Dawn` (Pixabay 10376), mixada com a voz. Sem `data-audio-ambiente`, evitando duplicação. |
-| Reel | v3 em MP4 1080×1920, 30 fps, 26 s, narração + trilha nova, com capa JPG. v1 e v2 preservados; **não** foi criado registro na fila do Instagram. |
+| Reel | 6 Reels Motionmaxxing concluídos e cadastrados na fila do **Instagram** como `agendado` para as mesmas datas (29/10 a 03/11/2026) às 19:30 (IDs 11242 a 11247). |
 | Revisão visual | Gravuras e fundo baseados nas referências do jogo fornecidas pelo usuário. Impasse, Conselho, guerra e fundo aprovados; uso da arte dos selos autorizado na atualização. Quadros do v3 inspecionados; vídeo final aguarda avaliação do usuário. |
 | Revisão auditiva | Narração aprovada pelo usuário. Nesta execução houve somente medição técnica do áudio, sem escuta do Reel. |
 | Imagens do artigo | Capa com o impasse e quatro gravuras no corpo: impasse, guerra, Conselho e selos. Backups preservados. |
@@ -58,6 +58,20 @@ A escolha foi feita pelo título e pelo grupo, **sem audição**. Alternativas d
 > 1. **Tipografia Cinética:** Palavras como foco central em `Cinzel` e `Cormorant Garamond`, animadas letra por letra com representação de sentido (luz e ordem celestial, brasa viva infernal e nanquim de pena no pergaminho).
 > 2. **Deriva Lenta da Imagem:** Moldura com pan cinematográfico contínuo sobre a gravura aprovada, sem congelamentos.
 > 3. **Renderização de Estúdio:** Chrome Headless com shutter de 180°, subframes (8x) e granulação orgânica de filme.
+
+### Reels Motionmaxxing — estado (15/10/2026)
+
+- **Cap. 1:** `scratch/reels-motionmaxxing/gen-darksiders-cap01.py` (cortes em 165/303/510, ajustados à mão). Saída publicada em `public/uploads/reels/reel-cap01-motion.mp4`. Acabamento: eyebrow âmbar com `letter-spacing .16em`, moldura dourada na ilustração e fusão cruzada de 12 frames entre as ilustrações.
+- **Caps 2 a 6:** `scratch/reels-motionmaxxing/gen-darksiders-saga.py <cap>` (derivado do gerador do cap. 1, que permanece intacto). A configuração de cada capítulo fica no dicionário `CHAPTERS`; as larguras dos textos (medidas no navegador) ficam em `widths-capNN.json`. Cada capítulo usa a pasta `film-darksiders-capNN/` (runtime, fontes, `bg.png` do livro e as `cena-1..4` do capítulo copiadas como `art-01..04.jpg`).
+- **Áudio de cada reel:** voz `narracao-reel.mp3` do capítulo (atraso de 0,4 s, ganho 1,25) e trilha *Caves of Dawn* (`storage/imports/IMP-032/guilhermebernardes-caves-of-dawn-10376.mp3`, ganho 0,18, fade de entrada de 0,7 s e saída de 1,5 s) com compressão acionada pela voz (`sidechaincompress` threshold 0,025, ratio 6, attack 40 ms, release 500 ms), `amix normalize=0`, `alimiter` 0,89 e duração fixa de 26 s.
+- **Render:** `node ~/.claude/skills/motionmaxxing/scripts/render.mjs index.html reel-capNN-motion.mp4 --audio audio-mix.wav` dentro da pasta do filme (780 frames, 30 fps). O modo `--still` do `render.mjs` falhou com "connection closed" nesta máquina; usar o render de vídeo e extrair quadros com ffmpeg.
+- **Publicados:** `reel-cap01-motion.mp4` a `reel-cap06-motion.mp4` com suas respectivas capas JPEG (`reel-cap01-motion.jpg` a `reel-cap06-motion.jpg`, 1080x1920) em `public/uploads/reels/` (26 s, 780 frames). Cortes em frames: cap. 2 = 207/360/525, cap. 3 = 138/300/459, cap. 4 = 177/366/543, cap. 5 = 210/360/516, cap. 6 = 186/354/510, tirados das pausas da narração. As capas foram extraídas no assentamento da Cena 1 via ffmpeg atendendo aos requisitos da Meta Graph API v21.0. Os reels v1 antigos dos caps 2 e 3 foram preservados.
+- **Narração dos caps 4 a 6 (15/10/2026):** textos curtos em `cap-0N-*/narracao-reel.txt` e voz em `cap-0N-*/audio/narracao-reel.mp3`, gerada no ElevenLabs (Cornelius, Multilingual v2, speed 0,85, stability 0,6, similarity 0,75, style 0,25, MP3 128 kbps; 23,7 s e cerca de 270 créditos por capítulo). Só foram medidos duração, nível e pausas; a escuta final é do usuário.
+- **Chamada final (15/10/2026):** todos os 6 reels fecham, a partir do frame 690, com "A história completa está no / ESTRATÉGIA NERD / link na bio" (Y 1328–1520, dentro da área segura); o apoio da última cena sai em fade antes. O bloco `CTA_AT` está no fim dos dois geradores (`gen-darksiders-cap01.py` e `gen-darksiders-saga.py`).
+- **Artigos na stage (15/10/2026):** os seis artigos (#82, #83, #84, #85, #87 e #89 do local) foram publicados **só na stage** como rascunho (IDs 50 a 55), com 30 imagens e 6 áudios, pelo script `scripts/reels-review/stage-darksiders-20261015.php` (detalhes em `scripts/README-content-sync.md`). O #87 entrou na categoria `games` (no local está com `categoria_post_id = 0`; não corrigido). Nada em produção.
+- **Publicados na stage (15/10/2026):** os seis artigos ficaram `publicado` na stage (IDs 50 a 55), validados por HTTP (páginas, imagens, áudio, listagem, sitemap) e em 375 px. A stage passou a enviar `X-Robots-Tag: noindex, nofollow` (ver `docs/CODEX-REGRAS-PERMANENTES.txt`, seção 19).
+- **Agendamento Sequencial (15/10/2026):** os seis artigos em produção foram configurados como `agendado` para publicação sequencial diária de 29/10 a 03/11/2026 às 12:00 (IDs 52 a 57). Simultaneamente, os seis Reels correspondentes (`reel-cap01-motion.mp4` a `reel-cap06-motion.mp4`) foram cadastrados na fila do Instagram como `agendado` para as mesmas datas às 19:30 (IDs locais 11242 a 11247), vinculados aos IDs do blog de produção. Enquanto aguardam a liberação do cron nas respectivas datas, as rotas públicas respondem HTTP 404 para visitantes. Operação executada por `scripts/reels-review/apply-darksiders-schedule-20261015.php`.
+- **Medição de textos:** as larguras de títulos e linhas de apoio de cada capítulo foram medidas no navegador (Cinzel 700 a 100 px com `.02em`; Cormorant Garamond 600). Títulos acima de 936 px ao tamanho final (116 px) precisam ser encurtados (ex.: "da humanidade" virou "humano" no cap. 5).
 
 ### Histórico Legado — v3 (Konva descontinuado)
 
