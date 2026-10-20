@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0">
+  <title>Echo // Reel Dia do TI v3 transições</title>
+  <style>
+    @font-face {
+      font-family: 'Orbitron';
+      src: url('../fonts/orbitron-700-latin.woff2') format('woff2');
+      font-weight: 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('../fonts/JetBrainsMono.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #060c12;
+      font-family: 'Orbitron', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #stage {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+    }
+    #main-canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1080px;
+      height: 1920px;
+      z-index: 1;
+    }
+    #echo-canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="main-canvas" width="1080" height="1920"></canvas>
+    <canvas id="echo-canvas" width="1400" height="1400"></canvas>
+    <img id="logo-img" src="../refs/logo-symbol.png" style="display:none;" />
+  </div>
+
+  <script>
+    // Congelar performance.now() para determinismo estrito no OneTake
+    window.__simTimeMs = 0;
+    window.performance.now = function() {
+      return window.__simTimeMs;
+    };
+  </script>
+
+  <!-- Scripts relativos à pasta v3 -->
+  <script src="../vendor/robo-roupas.js"></script>
+  <script src="../vendor/robo-roupas-echo.js"></script>
+  <script src="../vendor/robo-motor.js"></script>
+  <script src="../vendor/echo-director.js"></script>
+  <script src="../boca.js"></script>
+  <script src="../cenas.js"></script>
+  <script src="cenas_anim.js"></script>
+
+  <script src="trans.js"></script>
+</body>
+</html>

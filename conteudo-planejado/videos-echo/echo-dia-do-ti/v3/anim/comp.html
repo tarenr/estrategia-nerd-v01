@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0">
+  <title>Echo // Reel Dia do TI v3 Composição Animada</title>
+  <style>
+    @font-face {
+      font-family: 'Orbitron';
+      src: url('../fonts/orbitron-700-latin.woff2') format('woff2');
+      font-weight: 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('../fonts/JetBrainsMono.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #060c12;
+      font-family: 'Orbitron', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #stage {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+    }
+    #main-canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1080px;
+      height: 1920px;
+      z-index: 1;
+    }
+    #echo-canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="main-canvas" width="1080" height="1920"></canvas>
+    <canvas id="echo-canvas" width="1400" height="1400"></canvas>
+    <img id="logo-img" src="../refs/logo-symbol.png" style="display:none;" />
+  </div>
+
+  <script>
+    // Congelar performance.now() para determinismo estrito no OneTake
+    window.__simTimeMs = 0;
+    window.performance.now = function() {
+      return window.__simTimeMs;
+    };
+  </script>
+
+  <!-- Scripts relativos à pasta v3 -->
+  <script src="../vendor/robo-roupas.js"></script>
+  <script src="../vendor/robo-roupas-echo.js"></script>
+  <script src="../vendor/robo-motor.js"></script>
+  <script src="../vendor/echo-director.js"></script>
+  <script src="../boca.js"></script>
+  <script src="../cenas.js"></script>
+  <script src="cenas_anim.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      const mainCanvas = document.getElementById('main-canvas');
+      const ctx = mainCanvas.getContext('2d');
+      const echoCanvas = document.getElementById('echo-canvas');
+      const logoImg = document.getElementById('logo-img');
+
+      // Metadados para o render.py do OneTake
+      window.__meta = {
+        dur: 17.0,
+        fps: 30,
+        width: 1080,
+        height: 1920
+      };
+
+      // Inicializar o diretor
+      const director = new EchoDirectorTI(echoCanvas, { size: 1000 });
+      director.render = function() {
+        this.bot.draw();
+      };
+      window.director = director;
+      window.robo = director.bot;
+
+      // Promessa de prontidão: aguarda fontes carregadas e logo decodificado
+      window.__ready = (async function() {
+        // Forçar carregamento explícito das fontes tipográficas antes do primeiro frame
+        await Promise.all([
+          document.fonts.load("bold 48px 'Orbitron'"),
+          document.fonts.load("bold 34px 'Orbitron'"),
+          document.fonts.load("bold 24px 'Orbitron'"),
+          document.fonts.load("bold 20px 'JetBrains Mono'"),
+          document.fonts.load("16px 'JetBrains Mono'"),
+          document.fonts.ready
+        ]);
+
+        if (!logoImg.complete) {
+          await new Promise((resolve) => {
+            logoImg.onload = resolve;
+            logoImg.onerror = resolve; // não travar se falhar
+          });
+        }
+        console.log("Composição comp.html pronta para renderização determinística.");
+        return true;
+      })();
+
+      // Função determinística pura chamada pelo OneTake quadro a quadro
+      window.__seek = async function(t) {
+        // Congela o relógio no tempo exato deste frame
+        window.__simTimeMs = t * 1000.0;
+
+        // Reset completo do estado do bot para garantir determinismo absoluto independente da ordem dos frames
+        if (window.director) {
+          const b = window.director.bot;
+          b.waveSide = 0;
+          b.s.hands = 0;
+          b.s.tilt = 0;
+          b.s.yaw = 0;
+          b.s.pitch = 0;
+          b.s.roll = 0;
+          b.col = window.director.colCyan;
+          b.colT = window.director.colCyan;
+          b.eyeOv = null;
+          b.look.x = 0;
+          b.look.y = 0;
+          b.s.mouthOpen = 0;
+          b.t0 = 0;
+        }
+
+        ctx.clearRect(0, 0, 1080, 1920);
+
+        // Obter valor de boca sincronizado quadro a quadro
+        const frameIdx = Math.round(t * 30);
+        let mouthValue = 0.0;
+        if (window.BOCA_DADOS && frameIdx >= 0 && frameIdx < window.BOCA_DADOS.length) {
+          mouthValue = window.BOCA_DADOS[frameIdx];
+        }
+
+        // Selecionar e desenhar a cena correspondente com base no tempo absoluto do vídeo
+        if (t < 2.30) {
+          CenasAnimTI.animCena01(ctx, t, director, echoCanvas, mouthValue);
+        } else if (t < 3.30) {
+          CenasAnimTI.animCena02(ctx, t, director, echoCanvas, mouthValue);
+        } else if (t < 4.20) {
+          CenasAnimTI.animCena03(ctx, t, director, echoCanvas, mouthValue);
+        } else if (t < 4.90) {
+          CenasAnimTI.animCena04(ctx, t, director, echoCanvas, mouthValue);
+        } else if (t < 7.40) {
+          CenasAnimTI.animCena05(ctx, t, director, echoCanvas, mouthValue);
+        } else if (t < 8.60) {
+          CenasAnimTI.animCena06(ctx, t, director, echoCanvas, mouthValue);
+        } else if (t < 9.10) {
+          CenasAnimTI.animCena07(ctx, t, director, echoCanvas, mouthValue);
+        } else if (t < 10.70) {
+          CenasAnimTI.animCena08(ctx, t, director, echoCanvas, mouthValue);
+        } else if (t < 13.10) {
+          CenasAnimTI.animCena09(ctx, t, director, echoCanvas, mouthValue);
+        } else {
+          CenasAnimTI.animCena10(ctx, t, director, echoCanvas, logoImg, mouthValue);
+        }
+
+        return true;
+      };
+
+    })();
+  </script>
+</body>
+</html>

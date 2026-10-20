@@ -1,0 +1,647 @@
+{
+ "modelo": "whisper base",
+ "audio": "locucao-guia.wav",
+ "texto": "Na internet, qualquer opinião virou análise, e o axismo ganhou cara de conteúdo. Videos intermináveis, comparativos sem contexto, histórias pela metade. Quem joga e acompanha a tecnologia merece informação que realmente ajude a entender e decidir. No estratégia nerd, vamos além da superfície. No hardware, analisamos o desempenho que você realmente sente. Nos jogos, exploramos histórias, mecânicas e detalhes que passam despercebidos. E no cotidiano gamer, transformamos informação em escolhas práticas, sem desperdissar seu tempo, nem seu dinheiro. Nosso método é simples. Questionar, investigar, comparar fontes e explicar com clareza. Porque uma boa análise não elimina a opinião. Ela mostra de onde vem as conclusões. Querem entender antes de escolher? Estrateja a nerd. Nada de axismo. só estratégia. Assé se o link na bio e siga o perfil.",
+ "palavras": [
+  {
+   "palavra": "Na",
+   "ini": 0.0,
+   "fim": 0.18
+  },
+  {
+   "palavra": "internet,",
+   "ini": 0.18,
+   "fim": 0.7
+  },
+  {
+   "palavra": "qualquer",
+   "ini": 1.1,
+   "fim": 1.46
+  },
+  {
+   "palavra": "opinião",
+   "ini": 1.46,
+   "fim": 1.98
+  },
+  {
+   "palavra": "virou",
+   "ini": 1.98,
+   "fim": 2.32
+  },
+  {
+   "palavra": "análise,",
+   "ini": 2.32,
+   "fim": 2.94
+  },
+  {
+   "palavra": "e",
+   "ini": 3.28,
+   "fim": 3.44
+  },
+  {
+   "palavra": "o",
+   "ini": 3.44,
+   "fim": 3.52
+  },
+  {
+   "palavra": "axismo",
+   "ini": 3.52,
+   "fim": 4.08
+  },
+  {
+   "palavra": "ganhou",
+   "ini": 4.08,
+   "fim": 4.44
+  },
+  {
+   "palavra": "cara",
+   "ini": 4.44,
+   "fim": 4.86
+  },
+  {
+   "palavra": "de",
+   "ini": 4.86,
+   "fim": 5.02
+  },
+  {
+   "palavra": "conteúdo.",
+   "ini": 5.02,
+   "fim": 5.56
+  },
+  {
+   "palavra": "Videos",
+   "ini": 6.1,
+   "fim": 6.36
+  },
+  {
+   "palavra": "intermináveis,",
+   "ini": 6.36,
+   "fim": 7.46
+  },
+  {
+   "palavra": "comparativos",
+   "ini": 7.84,
+   "fim": 8.4
+  },
+  {
+   "palavra": "sem",
+   "ini": 8.4,
+   "fim": 8.64
+  },
+  {
+   "palavra": "contexto,",
+   "ini": 8.64,
+   "fim": 9.26
+  },
+  {
+   "palavra": "histórias",
+   "ini": 9.68,
+   "fim": 10.16
+  },
+  {
+   "palavra": "pela",
+   "ini": 10.16,
+   "fim": 10.42
+  },
+  {
+   "palavra": "metade.",
+   "ini": 10.42,
+   "fim": 11.04
+  },
+  {
+   "palavra": "Quem",
+   "ini": 11.5,
+   "fim": 11.66
+  },
+  {
+   "palavra": "joga",
+   "ini": 11.66,
+   "fim": 12.14
+  },
+  {
+   "palavra": "e",
+   "ini": 12.14,
+   "fim": 12.24
+  },
+  {
+   "palavra": "acompanha",
+   "ini": 12.24,
+   "fim": 12.7
+  },
+  {
+   "palavra": "a",
+   "ini": 12.7,
+   "fim": 12.78
+  },
+  {
+   "palavra": "tecnologia",
+   "ini": 12.78,
+   "fim": 13.32
+  },
+  {
+   "palavra": "merece",
+   "ini": 13.32,
+   "fim": 13.92
+  },
+  {
+   "palavra": "informação",
+   "ini": 13.92,
+   "fim": 14.32
+  },
+  {
+   "palavra": "que",
+   "ini": 14.32,
+   "fim": 14.76
+  },
+  {
+   "palavra": "realmente",
+   "ini": 14.76,
+   "fim": 15.28
+  },
+  {
+   "palavra": "ajude",
+   "ini": 15.28,
+   "fim": 15.82
+  },
+  {
+   "palavra": "a",
+   "ini": 15.82,
+   "fim": 15.94
+  },
+  {
+   "palavra": "entender",
+   "ini": 15.94,
+   "fim": 16.36
+  },
+  {
+   "palavra": "e",
+   "ini": 16.36,
+   "fim": 16.72
+  },
+  {
+   "palavra": "decidir.",
+   "ini": 16.72,
+   "fim": 17.32
+  },
+  {
+   "palavra": "No",
+   "ini": 17.7,
+   "fim": 17.84
+  },
+  {
+   "palavra": "estratégia",
+   "ini": 17.84,
+   "fim": 18.38
+  },
+  {
+   "palavra": "nerd,",
+   "ini": 18.38,
+   "fim": 18.64
+  },
+  {
+   "palavra": "vamos",
+   "ini": 19.08,
+   "fim": 19.26
+  },
+  {
+   "palavra": "além",
+   "ini": 19.26,
+   "fim": 19.7
+  },
+  {
+   "palavra": "da",
+   "ini": 19.7,
+   "fim": 19.9
+  },
+  {
+   "palavra": "superfície.",
+   "ini": 19.9,
+   "fim": 20.54
+  },
+  {
+   "palavra": "No",
+   "ini": 20.96,
+   "fim": 21.08
+  },
+  {
+   "palavra": "hardware,",
+   "ini": 21.08,
+   "fim": 21.48
+  },
+  {
+   "palavra": "analisamos",
+   "ini": 21.84,
+   "fim": 22.3
+  },
+  {
+   "palavra": "o",
+   "ini": 22.3,
+   "fim": 22.46
+  },
+  {
+   "palavra": "desempenho",
+   "ini": 22.46,
+   "fim": 22.96
+  },
+  {
+   "palavra": "que",
+   "ini": 22.96,
+   "fim": 23.12
+  },
+  {
+   "palavra": "você",
+   "ini": 23.12,
+   "fim": 23.36
+  },
+  {
+   "palavra": "realmente",
+   "ini": 23.36,
+   "fim": 23.96
+  },
+  {
+   "palavra": "sente.",
+   "ini": 23.96,
+   "fim": 24.58
+  },
+  {
+   "palavra": "Nos",
+   "ini": 24.58,
+   "fim": 25.06
+  },
+  {
+   "palavra": "jogos,",
+   "ini": 25.06,
+   "fim": 25.46
+  },
+  {
+   "palavra": "exploramos",
+   "ini": 25.82,
+   "fim": 26.28
+  },
+  {
+   "palavra": "histórias,",
+   "ini": 26.28,
+   "fim": 26.9
+  },
+  {
+   "palavra": "mecânicas",
+   "ini": 27.2,
+   "fim": 27.7
+  },
+  {
+   "palavra": "e",
+   "ini": 27.7,
+   "fim": 28.0
+  },
+  {
+   "palavra": "detalhes",
+   "ini": 28.0,
+   "fim": 28.54
+  },
+  {
+   "palavra": "que",
+   "ini": 28.54,
+   "fim": 28.66
+  },
+  {
+   "palavra": "passam",
+   "ini": 28.66,
+   "fim": 29.06
+  },
+  {
+   "palavra": "despercebidos.",
+   "ini": 29.06,
+   "fim": 29.98
+  },
+  {
+   "palavra": "E",
+   "ini": 30.36,
+   "fim": 30.44
+  },
+  {
+   "palavra": "no",
+   "ini": 30.44,
+   "fim": 30.52
+  },
+  {
+   "palavra": "cotidiano",
+   "ini": 30.52,
+   "fim": 31.0
+  },
+  {
+   "palavra": "gamer,",
+   "ini": 31.0,
+   "fim": 31.36
+  },
+  {
+   "palavra": "transformamos",
+   "ini": 31.74,
+   "fim": 32.3
+  },
+  {
+   "palavra": "informação",
+   "ini": 32.3,
+   "fim": 32.98
+  },
+  {
+   "palavra": "em",
+   "ini": 32.98,
+   "fim": 33.28
+  },
+  {
+   "palavra": "escolhas",
+   "ini": 33.28,
+   "fim": 33.68
+  },
+  {
+   "palavra": "práticas,",
+   "ini": 33.68,
+   "fim": 34.34
+  },
+  {
+   "palavra": "sem",
+   "ini": 34.64,
+   "fim": 34.88
+  },
+  {
+   "palavra": "desperdissar",
+   "ini": 34.88,
+   "fim": 35.52
+  },
+  {
+   "palavra": "seu",
+   "ini": 35.52,
+   "fim": 35.72
+  },
+  {
+   "palavra": "tempo,",
+   "ini": 35.72,
+   "fim": 36.1
+  },
+  {
+   "palavra": "nem",
+   "ini": 36.34,
+   "fim": 36.44
+  },
+  {
+   "palavra": "seu",
+   "ini": 36.44,
+   "fim": 36.64
+  },
+  {
+   "palavra": "dinheiro.",
+   "ini": 36.64,
+   "fim": 37.02
+  },
+  {
+   "palavra": "Nosso",
+   "ini": 37.46,
+   "fim": 37.7
+  },
+  {
+   "palavra": "método",
+   "ini": 37.7,
+   "fim": 37.98
+  },
+  {
+   "palavra": "é",
+   "ini": 37.98,
+   "fim": 38.1
+  },
+  {
+   "palavra": "simples.",
+   "ini": 38.1,
+   "fim": 38.5
+  },
+  {
+   "palavra": "Questionar,",
+   "ini": 38.98,
+   "fim": 39.5
+  },
+  {
+   "palavra": "investigar,",
+   "ini": 39.86,
+   "fim": 40.46
+  },
+  {
+   "palavra": "comparar",
+   "ini": 40.98,
+   "fim": 41.26
+  },
+  {
+   "palavra": "fontes",
+   "ini": 41.26,
+   "fim": 41.82
+  },
+  {
+   "palavra": "e",
+   "ini": 41.82,
+   "fim": 42.1
+  },
+  {
+   "palavra": "explicar",
+   "ini": 42.1,
+   "fim": 42.54
+  },
+  {
+   "palavra": "com",
+   "ini": 42.54,
+   "fim": 42.84
+  },
+  {
+   "palavra": "clareza.",
+   "ini": 42.84,
+   "fim": 43.48
+  },
+  {
+   "palavra": "Porque",
+   "ini": 43.8,
+   "fim": 44.06
+  },
+  {
+   "palavra": "uma",
+   "ini": 44.06,
+   "fim": 44.22
+  },
+  {
+   "palavra": "boa",
+   "ini": 44.22,
+   "fim": 44.54
+  },
+  {
+   "palavra": "análise",
+   "ini": 44.54,
+   "fim": 45.08
+  },
+  {
+   "palavra": "não",
+   "ini": 45.08,
+   "fim": 45.44
+  },
+  {
+   "palavra": "elimina",
+   "ini": 45.44,
+   "fim": 46.02
+  },
+  {
+   "palavra": "a",
+   "ini": 46.02,
+   "fim": 46.1
+  },
+  {
+   "palavra": "opinião.",
+   "ini": 46.1,
+   "fim": 46.52
+  },
+  {
+   "palavra": "Ela",
+   "ini": 46.88,
+   "fim": 47.02
+  },
+  {
+   "palavra": "mostra",
+   "ini": 47.02,
+   "fim": 47.44
+  },
+  {
+   "palavra": "de",
+   "ini": 47.44,
+   "fim": 47.74
+  },
+  {
+   "palavra": "onde",
+   "ini": 47.74,
+   "fim": 48.02
+  },
+  {
+   "palavra": "vem",
+   "ini": 48.02,
+   "fim": 48.32
+  },
+  {
+   "palavra": "as",
+   "ini": 48.32,
+   "fim": 48.58
+  },
+  {
+   "palavra": "conclusões.",
+   "ini": 48.58,
+   "fim": 49.12
+  },
+  {
+   "palavra": "Querem",
+   "ini": 49.62,
+   "fim": 49.86
+  },
+  {
+   "palavra": "entender",
+   "ini": 49.86,
+   "fim": 50.22
+  },
+  {
+   "palavra": "antes",
+   "ini": 50.22,
+   "fim": 50.56
+  },
+  {
+   "palavra": "de",
+   "ini": 50.56,
+   "fim": 50.76
+  },
+  {
+   "palavra": "escolher?",
+   "ini": 50.76,
+   "fim": 51.1
+  },
+  {
+   "palavra": "Estrateja",
+   "ini": 51.58,
+   "fim": 52.22
+  },
+  {
+   "palavra": "a",
+   "ini": 52.22,
+   "fim": 52.32
+  },
+  {
+   "palavra": "nerd.",
+   "ini": 52.32,
+   "fim": 52.56
+  },
+  {
+   "palavra": "Nada",
+   "ini": 53.1,
+   "fim": 53.28
+  },
+  {
+   "palavra": "de",
+   "ini": 53.28,
+   "fim": 53.48
+  },
+  {
+   "palavra": "axismo.",
+   "ini": 53.48,
+   "fim": 53.94
+  },
+  {
+   "palavra": "só",
+   "ini": 53.94,
+   "fim": 54.52
+  },
+  {
+   "palavra": "estratégia.",
+   "ini": 54.52,
+   "fim": 55.28
+  },
+  {
+   "palavra": "Assé",
+   "ini": 55.62,
+   "fim": 55.88
+  },
+  {
+   "palavra": "se",
+   "ini": 55.88,
+   "fim": 56.02
+  },
+  {
+   "palavra": "o",
+   "ini": 56.02,
+   "fim": 56.08
+  },
+  {
+   "palavra": "link",
+   "ini": 56.08,
+   "fim": 56.24
+  },
+  {
+   "palavra": "na",
+   "ini": 56.24,
+   "fim": 56.4
+  },
+  {
+   "palavra": "bio",
+   "ini": 56.4,
+   "fim": 56.58
+  },
+  {
+   "palavra": "e",
+   "ini": 56.58,
+   "fim": 56.9
+  },
+  {
+   "palavra": "siga",
+   "ini": 56.9,
+   "fim": 57.24
+  },
+  {
+   "palavra": "o",
+   "ini": 57.24,
+   "fim": 57.28
+  },
+  {
+   "palavra": "perfil.",
+   "ini": 57.28,
+   "fim": 57.64
+  }
+ ]
+}

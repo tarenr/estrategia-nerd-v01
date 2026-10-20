@@ -1,0 +1,72 @@
+{
+  "C01": {
+    "cena": "C01",
+    "tVideo": 1.43,
+    "bocaValor": 0.993,
+    "echoLarguraVisivelPx": 990,
+    "cabecaLarguraPx": 990
+  },
+  "C02": {
+    "cena": "C02",
+    "tVideo": 2.8,
+    "bocaValor": 0,
+    "echoLarguraVisivelPx": 600,
+    "cabecaLarguraPx": 600
+  },
+  "C03": {
+    "cena": "C03",
+    "tVideo": 3.75,
+    "bocaValor": 0,
+    "echoLarguraVisivelPx": 649,
+    "cabecaLarguraPx": 649
+  },
+  "C04": {
+    "cena": "C04",
+    "tVideo": 4.55,
+    "bocaValor": 0.15,
+    "echoLarguraVisivelPx": 616,
+    "cabecaLarguraPx": 616
+  },
+  "C05": {
+    "cena": "C05",
+    "tVideo": 6.15,
+    "bocaValor": 0.2,
+    "echoLarguraVisivelPx": 819,
+    "cabecaLarguraPx": 819
+  },
+  "C06": {
+    "cena": "C06",
+    "tVideo": 7.83,
+    "bocaValor": 0.692,
+    "echoLarguraVisivelPx": 893,
+    "cabecaLarguraPx": 893
+  },
+  "C07": {
+    "cena": "C07",
+    "tVideo": 8.85,
+    "bocaValor": 0,
+    "echoLarguraVisivelPx": 614,
+    "cabecaLarguraPx": 614
+  },
+  "C08": {
+    "cena": "C08",
+    "tVideo": 9.9,
+    "bocaValor": 0.35,
+    "echoLarguraVisivelPx": 604,
+    "cabecaLarguraPx": 604
+  },
+  "C09": {
+    "cena": "C09",
+    "tVideo": 12.73,
+    "bocaValor": 0.995,
+    "echoLarguraVisivelPx": 612,
+    "cabecaLarguraPx": 612
+  },
+  "C10": {
+    "cena": "C10",
+    "tVideo": 13.33,
+    "bocaValor": 0.944,
+    "echoLarguraVisivelPx": 606,
+    "cabecaLarguraPx": 606
+  }
+}

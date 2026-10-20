@@ -1,0 +1,409 @@
+{
+ "audio": "locucao-guia.wav",
+ "modelo": "whisper base (grafia pode errar; vale o que se ouve)",
+ "silencios_ffmpeg": [
+  {
+   "ini": 37.08,
+   "dur": 0.387
+  },
+  {
+   "ini": 38.675,
+   "dur": 0.321
+  },
+  {
+   "ini": 39.586,
+   "dur": 0.278
+  },
+  {
+   "ini": 40.568,
+   "dur": 0.304
+  },
+  {
+   "ini": 43.533,
+   "dur": 0.355
+  },
+  {
+   "ini": 46.557,
+   "dur": 0.35
+  },
+  {
+   "ini": 49.316,
+   "dur": 0.405
+  },
+  {
+   "ini": 51.213,
+   "dur": 0.389
+  },
+  {
+   "ini": 52.725,
+   "dur": 0.317
+  },
+  {
+   "ini": 53.986,
+   "dur": 0.258
+  },
+  {
+   "ini": 55.276,
+   "dur": 0.341
+  },
+  {
+   "ini": 57.669,
+   "dur": 2.331
+  }
+ ],
+ "roteiro_antigo_do_script": {
+  "ato_04 (37–51 s no script)": "Nosso método é simples: questionar, investigar, comparar fontes e explicar com clareza. Porque uma boa análise não elimina a opinião. Ela mostra de onde vêm as conclusões.",
+  "ato_05 (51–60 s no script)": "Quer entender antes de escolher? Estratégia Nerd. Nada de achismo. Só estratégia. Siga o portal."
+ },
+ "cues": [
+  {
+   "id": "cue_01",
+   "frase": "Nosso método é simples.",
+   "ini": 37.46,
+   "fim": 38.5,
+   "pausa_depois_s": 0.321,
+   "palavras": [
+    {
+     "palavra": "Nosso",
+     "ini": 37.46,
+     "fim": 37.7
+    },
+    {
+     "palavra": "método",
+     "ini": 37.7,
+     "fim": 37.98
+    },
+    {
+     "palavra": "é",
+     "ini": 37.98,
+     "fim": 38.1
+    },
+    {
+     "palavra": "simples.",
+     "ini": 38.1,
+     "fim": 38.5
+    }
+   ]
+  },
+  {
+   "id": "cue_02",
+   "frase": "Questionar,",
+   "ini": 38.98,
+   "fim": 39.5,
+   "pausa_depois_s": 0.278,
+   "palavras": [
+    {
+     "palavra": "Questionar,",
+     "ini": 38.98,
+     "fim": 39.5
+    }
+   ]
+  },
+  {
+   "id": "cue_03",
+   "frase": "investigar,",
+   "ini": 39.86,
+   "fim": 40.46,
+   "pausa_depois_s": 0.304,
+   "palavras": [
+    {
+     "palavra": "investigar,",
+     "ini": 39.86,
+     "fim": 40.46
+    }
+   ]
+  },
+  {
+   "id": "cue_04",
+   "frase": "comparar fontes e explicar com clareza.",
+   "ini": 40.98,
+   "fim": 43.48,
+   "pausa_depois_s": 0.355,
+   "palavras": [
+    {
+     "palavra": "comparar",
+     "ini": 40.98,
+     "fim": 41.26
+    },
+    {
+     "palavra": "fontes",
+     "ini": 41.26,
+     "fim": 41.82
+    },
+    {
+     "palavra": "e",
+     "ini": 41.82,
+     "fim": 42.1
+    },
+    {
+     "palavra": "explicar",
+     "ini": 42.1,
+     "fim": 42.54
+    },
+    {
+     "palavra": "com",
+     "ini": 42.54,
+     "fim": 42.84
+    },
+    {
+     "palavra": "clareza.",
+     "ini": 42.84,
+     "fim": 43.48
+    }
+   ]
+  },
+  {
+   "id": "cue_05",
+   "frase": "Porque uma boa análise não elimina a opinião.",
+   "ini": 43.8,
+   "fim": 46.52,
+   "pausa_depois_s": 0.35,
+   "palavras": [
+    {
+     "palavra": "Porque",
+     "ini": 43.8,
+     "fim": 44.06
+    },
+    {
+     "palavra": "uma",
+     "ini": 44.06,
+     "fim": 44.22
+    },
+    {
+     "palavra": "boa",
+     "ini": 44.22,
+     "fim": 44.54
+    },
+    {
+     "palavra": "análise",
+     "ini": 44.54,
+     "fim": 45.08
+    },
+    {
+     "palavra": "não",
+     "ini": 45.08,
+     "fim": 45.44
+    },
+    {
+     "palavra": "elimina",
+     "ini": 45.44,
+     "fim": 46.02
+    },
+    {
+     "palavra": "a",
+     "ini": 46.02,
+     "fim": 46.1
+    },
+    {
+     "palavra": "opinião.",
+     "ini": 46.1,
+     "fim": 46.52
+    }
+   ]
+  },
+  {
+   "id": "cue_06",
+   "frase": "Ela mostra de onde vem as conclusões.",
+   "ini": 46.88,
+   "fim": 49.12,
+   "pausa_depois_s": 0.405,
+   "palavras": [
+    {
+     "palavra": "Ela",
+     "ini": 46.88,
+     "fim": 47.02
+    },
+    {
+     "palavra": "mostra",
+     "ini": 47.02,
+     "fim": 47.44
+    },
+    {
+     "palavra": "de",
+     "ini": 47.44,
+     "fim": 47.74
+    },
+    {
+     "palavra": "onde",
+     "ini": 47.74,
+     "fim": 48.02
+    },
+    {
+     "palavra": "vem",
+     "ini": 48.02,
+     "fim": 48.32
+    },
+    {
+     "palavra": "as",
+     "ini": 48.32,
+     "fim": 48.58
+    },
+    {
+     "palavra": "conclusões.",
+     "ini": 48.58,
+     "fim": 49.12
+    }
+   ]
+  },
+  {
+   "id": "cue_07",
+   "frase": "Querem entender antes de escolher?",
+   "ini": 49.62,
+   "fim": 51.1,
+   "pausa_depois_s": 0.389,
+   "palavras": [
+    {
+     "palavra": "Querem",
+     "ini": 49.62,
+     "fim": 49.86
+    },
+    {
+     "palavra": "entender",
+     "ini": 49.86,
+     "fim": 50.22
+    },
+    {
+     "palavra": "antes",
+     "ini": 50.22,
+     "fim": 50.56
+    },
+    {
+     "palavra": "de",
+     "ini": 50.56,
+     "fim": 50.76
+    },
+    {
+     "palavra": "escolher?",
+     "ini": 50.76,
+     "fim": 51.1
+    }
+   ]
+  },
+  {
+   "id": "cue_08",
+   "frase": "Estrateja a nerd.",
+   "ini": 51.58,
+   "fim": 52.56,
+   "pausa_depois_s": 0.317,
+   "palavras": [
+    {
+     "palavra": "Estrateja",
+     "ini": 51.58,
+     "fim": 52.22
+    },
+    {
+     "palavra": "a",
+     "ini": 52.22,
+     "fim": 52.32
+    },
+    {
+     "palavra": "nerd.",
+     "ini": 52.32,
+     "fim": 52.56
+    }
+   ]
+  },
+  {
+   "id": "cue_09",
+   "frase": "Nada de axismo.",
+   "ini": 53.1,
+   "fim": 53.94,
+   "pausa_depois_s": 0.258,
+   "palavras": [
+    {
+     "palavra": "Nada",
+     "ini": 53.1,
+     "fim": 53.28
+    },
+    {
+     "palavra": "de",
+     "ini": 53.28,
+     "fim": 53.48
+    },
+    {
+     "palavra": "axismo.",
+     "ini": 53.48,
+     "fim": 53.94
+    }
+   ]
+  },
+  {
+   "id": "cue_10",
+   "frase": "só estratégia.",
+   "ini": 53.94,
+   "fim": 55.28,
+   "pausa_depois_s": 0.341,
+   "palavras": [
+    {
+     "palavra": "só",
+     "ini": 53.94,
+     "fim": 54.52
+    },
+    {
+     "palavra": "estratégia.",
+     "ini": 54.52,
+     "fim": 55.28
+    }
+   ]
+  },
+  {
+   "id": "cue_11",
+   "frase": "Assé se o link na bio e siga o perfil.",
+   "ini": 55.62,
+   "fim": 57.64,
+   "pausa_depois_s": 2.331,
+   "palavras": [
+    {
+     "palavra": "Assé",
+     "ini": 55.62,
+     "fim": 55.88
+    },
+    {
+     "palavra": "se",
+     "ini": 55.88,
+     "fim": 56.02
+    },
+    {
+     "palavra": "o",
+     "ini": 56.02,
+     "fim": 56.08
+    },
+    {
+     "palavra": "link",
+     "ini": 56.08,
+     "fim": 56.24
+    },
+    {
+     "palavra": "na",
+     "ini": 56.24,
+     "fim": 56.4
+    },
+    {
+     "palavra": "bio",
+     "ini": 56.4,
+     "fim": 56.58
+    },
+    {
+     "palavra": "e",
+     "ini": 56.58,
+     "fim": 56.9
+    },
+    {
+     "palavra": "siga",
+     "ini": 56.9,
+     "fim": 57.24
+    },
+    {
+     "palavra": "o",
+     "ini": 57.24,
+     "fim": 57.28
+    },
+    {
+     "palavra": "perfil.",
+     "ini": 57.28,
+     "fim": 57.64
+    }
+   ]
+  }
+ ]
+}

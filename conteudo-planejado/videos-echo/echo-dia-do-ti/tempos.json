@@ -1,0 +1,81 @@
+{
+  "modo": "medido",
+  "offset_video": 2.8,
+  "audio_total_duration": 15.072625,
+  "video_total_duration": 20.5,
+  "frases": [
+    {
+      "id": 1,
+      "texto": "Ei, você aí do TI!",
+      "inicio_audio": 0.00,
+      "fim_audio": 1.71,
+      "legendas": [
+        { "texto": "Ei, você aí do TI!", "inicio_audio": 0.00, "fim_audio": 1.71 }
+      ]
+    },
+    {
+      "id": 2,
+      "texto": "Que formata, configura, faz backup...",
+      "inicio_audio": 2.08,
+      "fim_audio": 4.83,
+      "legendas": [
+        { "texto": "Que formata, configura, faz backup...", "inicio_audio": 2.08, "fim_audio": 4.83 }
+      ]
+    },
+    {
+      "id": 3,
+      "texto": "e resolve quase tudo com: já tentou reiniciar?",
+      "inicio_audio": 5.20,
+      "fim_audio": 8.38,
+      "legendas": [
+        { "texto": "e resolve quase tudo com:", "inicio_audio": 5.20, "fim_audio": 7.00 },
+        { "texto": "já tentou reiniciar?", "inicio_audio": 7.30, "fim_audio": 8.38 }
+      ]
+    },
+    {
+      "id": 4,
+      "texto": "Hoje o dia é seu.",
+      "inicio_audio": 8.84,
+      "fim_audio": 10.29,
+      "legendas": [
+        { "texto": "Hoje o dia é seu.", "inicio_audio": 8.84, "fim_audio": 10.29 }
+      ]
+    },
+    {
+      "id": 5,
+      "texto": "Feliz dia do profissional de TI!",
+      "inicio_audio": 10.53,
+      "fim_audio": 12.66,
+      "comemoracao": true,
+      "legendas": [
+        { "texto": "Feliz dia do profissional de TI!", "inicio_audio": 10.53, "fim_audio": 12.66 }
+      ]
+    },
+    {
+      "id": 6,
+      "texto": "Um abraço do Estratégia Nerd.",
+      "inicio_audio": 12.98,
+      "fim_audio": 14.88,
+      "legendas": [
+        { "texto": "Um abraço do Estratégia Nerd.", "inicio_audio": 12.98, "fim_audio": 14.88 }
+      ]
+    }
+  ],
+  "speaking_intervals_audio": [
+    [0.00, 1.71],
+    [2.08, 4.83],
+    [5.20, 7.00],
+    [7.30, 8.38],
+    [8.84, 10.29],
+    [10.53, 12.66],
+    [12.98, 14.88]
+  ],
+  "apagao_audio": {
+    "inicio": 7.8,
+    "duracao": 0.4
+  },
+  "fecho_video": {
+    "inicio": 17.8,
+    "duracao": 2.7
+  }
+}

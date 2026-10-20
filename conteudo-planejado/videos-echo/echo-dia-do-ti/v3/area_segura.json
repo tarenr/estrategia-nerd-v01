@@ -1,0 +1,98 @@
+{
+  "C01": {
+    "cena": "C01",
+    "texto": "EI, VOCÊ AÍ / DO TI!",
+    "x0": 394,
+    "y0": 187,
+    "x1": 687,
+    "y1": 305,
+    "largura": 293,
+    "altura": 118
+  },
+  "C02": {
+    "cena": "C02",
+    "texto": "FORMATA",
+    "x0": 406,
+    "y0": 224,
+    "x1": 673,
+    "y1": 277,
+    "largura": 267,
+    "altura": 53
+  },
+  "C03": {
+    "cena": "C03",
+    "texto": "CONFIGURA",
+    "x0": 383,
+    "y0": 224,
+    "x1": 695,
+    "y1": 277,
+    "largura": 312,
+    "altura": 53
+  },
+  "C04": {
+    "cena": "C04",
+    "texto": "FAZ BACKUP",
+    "x0": 365,
+    "y0": 224,
+    "x1": 716,
+    "y1": 277,
+    "largura": 351,
+    "altura": 53
+  },
+  "C05": {
+    "cena": "C05",
+    "texto": "E RESOLVE QUASE / TUDO COM…",
+    "x0": 288,
+    "y0": 196,
+    "x1": 791,
+    "y1": 305,
+    "largura": 503,
+    "altura": 109
+  },
+  "C06": {
+    "cena": "C06",
+    "texto": "JÁ TENTOU / REINICIAR?",
+    "x0": 383,
+    "y0": 187,
+    "x1": 695,
+    "y1": 305,
+    "largura": 312,
+    "altura": 118
+  },
+  "C07": {
+    "cena": "C07",
+    "texto": null,
+    "caixa": null,
+    "observacao": "Sem texto na tela (apagão total)"
+  },
+  "C08": {
+    "cena": "C08",
+    "texto": "HOJE O DIA / É SEU!",
+    "x0": 388,
+    "y0": 196,
+    "x1": 691,
+    "y1": 305,
+    "largura": 303,
+    "altura": 109
+  },
+  "C09": {
+    "cena": "C09",
+    "texto": "FELIZ DIA DO / PROFISSIONAL DE TI!",
+    "x0": 269,
+    "y0": 196,
+    "x1": 811,
+    "y1": 305,
+    "largura": 542,
+    "altura": 109
+  },
+  "C10": {
+    "cena": "C10",
+    "texto": "UM ABRAÇO DO / ESTRATÉGIA NERD!",
+    "x0": 285,
+    "y0": 196,
+    "x1": 795,
+    "y1": 305,
+    "largura": 510,
+    "altura": 109
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "audio_file": "v3/assets/audio/locucao-guia.wav",
+  "master_duration_s": 60.000000,
+  "sample_rate_hz": 48000,
+  "fps": 60.0,
+  "samples_per_frame": 800,
+  "scope_18s": {
+    "start_frame": 0,
+    "end_frame": 1080,
+    "duration_s": 18.000000,
+    "cues": [
+      {
+        "id": "cue_01",
+        "sentence": "Na internet, qualquer opinião virou análise.",
+        "start_s": 0.00,
+        "end_s": 3.03,
+        "pause_end_s": 3.37,
+        "start_frame": 0,
+        "speech_end_frame": 182,
+        "cut_end_frame": 202,
+        "key_moments": {
+          "card_entrance": "frame 15 (0.25s)",
+          "statement_highlight": "frame 55 (0.92s - 'opinião')",
+          "badge_analise_appears": "frame 95 (1.58s - 'análise')",
+          "reading_hold": "frames 105-180 (1.25s estável)"
+        }
+      },
+      {
+        "id": "cue_02",
+        "sentence": "E o achismo ganhou cara de conteúdo.",
+        "start_s": 3.37,
+        "end_s": 5.66,
+        "pause_end_s": 6.06,
+        "start_frame": 202,
+        "speech_end_frame": 340,
+        "cut_end_frame": 364,
+        "key_moments": {
+          "achismo_title_slam": "frame 215 (3.58s - 'achismo')",
+          "tag_sem_base": "frame 250 (4.16s - 'cara de conteúdo')",
+          "reading_hold": "frames 250-335 (1.42s estável)",
+          "carry_transition": "frames 335-364 (fatiamento de checagem)"
+        }
+      },
+      {
+        "id": "cue_03",
+        "sentence": "Vídeos intermináveis, comparativos sem contexto, histórias pela metade.",
+        "start_s": 6.06,
+        "end_s": 11.11,
+        "pause_end_s": 11.55,
+        "start_frame": 364,
+        "speech_end_frame": 667,
+        "cut_end_frame": 693,
+        "key_moments": {
+          "symptom_1_videos_interminaveis": "frames 370-465 (6.17s a 7.75s)",
+          "symptom_2_comparativos_sem_contexto": "frames 465-570 (7.75s a 9.50s)",
+          "symptom_3_historias_pela_metade": "frames 570-667 (9.50s a 11.11s)"
+        }
+      },
+      {
+        "id": "cue_04",
+        "sentence": "Quem joga e acompanha tecnologia merece informação que realmente ajude a entender e decidir.",
+        "start_s": 11.55,
+        "end_s": 17.33,
+        "pause_end_s": 17.78,
+        "start_frame": 693,
+        "speech_end_frame": 1040,
+        "cut_end_frame": 1080,
+        "key_moments": {
+          "hardware_reveal": "frame 705 (11.75s - 'Quem joga e acompanha tecnologia')",
+          "telemetry_graph_draw": "frames 750-930 (12.50s a 15.50s - 'informação que ajude a entender')",
+          "decision_flow": "frames 930-1040 (15.50s a 17.33s - 'e decidir')",
+          "carry_to_act3": "frames 1040-1080 (17.33s a 18.00s)"
+        }
+      }
+    ]
+  }
+}

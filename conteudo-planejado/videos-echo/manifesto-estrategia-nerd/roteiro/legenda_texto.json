@@ -1,0 +1,1205 @@
+{
+ "fonte_tempos": "whisper_palavras_locucao.json",
+ "blocos": [
+  {
+   "ini": 0.0,
+   "fim": 1.1,
+   "palavras": [
+    {
+     "p": "Na",
+     "ini": 0.0,
+     "fim": 0.18,
+     "destaque": false
+    },
+    {
+     "p": "internet,",
+     "ini": 0.18,
+     "fim": 0.7,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 1.1,
+   "fim": 1.46,
+   "palavras": [
+    {
+     "p": "qualquer",
+     "ini": 1.1,
+     "fim": 1.46,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 1.46,
+   "fim": 2.32,
+   "palavras": [
+    {
+     "p": "opinião",
+     "ini": 1.46,
+     "fim": 1.98,
+     "destaque": true
+    },
+    {
+     "p": "virou",
+     "ini": 1.98,
+     "fim": 2.32,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 2.32,
+   "fim": 3.28,
+   "palavras": [
+    {
+     "p": "análise.",
+     "ini": 2.32,
+     "fim": 2.94,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 3.28,
+   "fim": 4.08,
+   "palavras": [
+    {
+     "p": "E",
+     "ini": 3.28,
+     "fim": 3.44,
+     "destaque": false
+    },
+    {
+     "p": "o",
+     "ini": 3.44,
+     "fim": 3.52,
+     "destaque": false
+    },
+    {
+     "p": "achismo",
+     "ini": 3.52,
+     "fim": 4.08,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 4.08,
+   "fim": 4.86,
+   "palavras": [
+    {
+     "p": "ganhou",
+     "ini": 4.08,
+     "fim": 4.44,
+     "destaque": false
+    },
+    {
+     "p": "cara",
+     "ini": 4.44,
+     "fim": 4.86,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 4.86,
+   "fim": 6.1,
+   "palavras": [
+    {
+     "p": "de",
+     "ini": 4.86,
+     "fim": 5.02,
+     "destaque": false
+    },
+    {
+     "p": "conteúdo.",
+     "ini": 5.02,
+     "fim": 5.56,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 6.1,
+   "fim": 6.36,
+   "palavras": [
+    {
+     "p": "Vídeos",
+     "ini": 6.1,
+     "fim": 6.36,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 6.36,
+   "fim": 7.84,
+   "palavras": [
+    {
+     "p": "intermináveis,",
+     "ini": 6.36,
+     "fim": 7.46,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 7.84,
+   "fim": 8.4,
+   "palavras": [
+    {
+     "p": "comparativos",
+     "ini": 7.84,
+     "fim": 8.4,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 8.4,
+   "fim": 9.68,
+   "palavras": [
+    {
+     "p": "sem",
+     "ini": 8.4,
+     "fim": 8.64,
+     "destaque": false
+    },
+    {
+     "p": "contexto,",
+     "ini": 8.64,
+     "fim": 9.26,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 9.68,
+   "fim": 10.42,
+   "palavras": [
+    {
+     "p": "histórias",
+     "ini": 9.68,
+     "fim": 10.16,
+     "destaque": false
+    },
+    {
+     "p": "pela",
+     "ini": 10.16,
+     "fim": 10.42,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 10.42,
+   "fim": 11.5,
+   "palavras": [
+    {
+     "p": "metade.",
+     "ini": 10.42,
+     "fim": 11.04,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 11.5,
+   "fim": 12.14,
+   "palavras": [
+    {
+     "p": "Quem",
+     "ini": 11.5,
+     "fim": 11.66,
+     "destaque": false
+    },
+    {
+     "p": "joga",
+     "ini": 11.66,
+     "fim": 12.14,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 12.14,
+   "fim": 12.78,
+   "palavras": [
+    {
+     "p": "e",
+     "ini": 12.14,
+     "fim": 12.24,
+     "destaque": false
+    },
+    {
+     "p": "acompanha",
+     "ini": 12.24,
+     "fim": 12.7,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 12.78,
+   "fim": 13.32,
+   "palavras": [
+    {
+     "p": "tecnologia",
+     "ini": 12.78,
+     "fim": 13.32,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 13.32,
+   "fim": 13.92,
+   "palavras": [
+    {
+     "p": "merece",
+     "ini": 13.32,
+     "fim": 13.92,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 13.92,
+   "fim": 14.76,
+   "palavras": [
+    {
+     "p": "informação",
+     "ini": 13.92,
+     "fim": 14.32,
+     "destaque": false
+    },
+    {
+     "p": "que",
+     "ini": 14.32,
+     "fim": 14.76,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 14.76,
+   "fim": 15.28,
+   "palavras": [
+    {
+     "p": "realmente",
+     "ini": 14.76,
+     "fim": 15.28,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 15.28,
+   "fim": 15.82,
+   "palavras": [
+    {
+     "p": "ajude",
+     "ini": 15.28,
+     "fim": 15.82,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 15.82,
+   "fim": 16.36,
+   "palavras": [
+    {
+     "p": "a",
+     "ini": 15.82,
+     "fim": 15.94,
+     "destaque": false
+    },
+    {
+     "p": "entender",
+     "ini": 15.94,
+     "fim": 16.36,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 16.36,
+   "fim": 17.7,
+   "palavras": [
+    {
+     "p": "e",
+     "ini": 16.36,
+     "fim": 16.72,
+     "destaque": false
+    },
+    {
+     "p": "decidir.",
+     "ini": 16.72,
+     "fim": 17.32,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 17.7,
+   "fim": 18.38,
+   "palavras": [
+    {
+     "p": "No",
+     "ini": 17.7,
+     "fim": 17.84,
+     "destaque": false
+    },
+    {
+     "p": "Estratégia",
+     "ini": 17.84,
+     "fim": 18.38,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 18.38,
+   "fim": 19.08,
+   "palavras": [
+    {
+     "p": "Nerd,",
+     "ini": 18.38,
+     "fim": 18.64,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 19.08,
+   "fim": 19.7,
+   "palavras": [
+    {
+     "p": "vamos",
+     "ini": 19.08,
+     "fim": 19.26,
+     "destaque": false
+    },
+    {
+     "p": "além",
+     "ini": 19.26,
+     "fim": 19.7,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 19.7,
+   "fim": 20.96,
+   "palavras": [
+    {
+     "p": "da",
+     "ini": 19.7,
+     "fim": 19.9,
+     "destaque": false
+    },
+    {
+     "p": "superfície.",
+     "ini": 19.9,
+     "fim": 20.54,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 20.96,
+   "fim": 21.84,
+   "palavras": [
+    {
+     "p": "No",
+     "ini": 20.96,
+     "fim": 21.08,
+     "destaque": false
+    },
+    {
+     "p": "hardware,",
+     "ini": 21.08,
+     "fim": 21.48,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 21.84,
+   "fim": 22.3,
+   "palavras": [
+    {
+     "p": "analisamos",
+     "ini": 21.84,
+     "fim": 22.3,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 22.3,
+   "fim": 22.96,
+   "palavras": [
+    {
+     "p": "o",
+     "ini": 22.3,
+     "fim": 22.46,
+     "destaque": false
+    },
+    {
+     "p": "desempenho",
+     "ini": 22.46,
+     "fim": 22.96,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 22.96,
+   "fim": 23.36,
+   "palavras": [
+    {
+     "p": "que",
+     "ini": 22.96,
+     "fim": 23.12,
+     "destaque": false
+    },
+    {
+     "p": "você",
+     "ini": 23.12,
+     "fim": 23.36,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 23.36,
+   "fim": 23.96,
+   "palavras": [
+    {
+     "p": "realmente",
+     "ini": 23.36,
+     "fim": 23.96,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 23.96,
+   "fim": 24.58,
+   "palavras": [
+    {
+     "p": "sente.",
+     "ini": 23.96,
+     "fim": 24.58,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 24.58,
+   "fim": 25.82,
+   "palavras": [
+    {
+     "p": "Nos",
+     "ini": 24.58,
+     "fim": 25.06,
+     "destaque": false
+    },
+    {
+     "p": "jogos,",
+     "ini": 25.06,
+     "fim": 25.46,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 25.82,
+   "fim": 26.28,
+   "palavras": [
+    {
+     "p": "exploramos",
+     "ini": 25.82,
+     "fim": 26.28,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 26.28,
+   "fim": 27.2,
+   "palavras": [
+    {
+     "p": "histórias,",
+     "ini": 26.28,
+     "fim": 26.9,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 27.2,
+   "fim": 27.7,
+   "palavras": [
+    {
+     "p": "mecânicas",
+     "ini": 27.2,
+     "fim": 27.7,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 27.7,
+   "fim": 28.66,
+   "palavras": [
+    {
+     "p": "e",
+     "ini": 27.7,
+     "fim": 28.0,
+     "destaque": false
+    },
+    {
+     "p": "detalhes",
+     "ini": 28.0,
+     "fim": 28.54,
+     "destaque": false
+    },
+    {
+     "p": "que",
+     "ini": 28.54,
+     "fim": 28.66,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 28.66,
+   "fim": 29.06,
+   "palavras": [
+    {
+     "p": "passam",
+     "ini": 28.66,
+     "fim": 29.06,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 29.06,
+   "fim": 30.36,
+   "palavras": [
+    {
+     "p": "despercebidos.",
+     "ini": 29.06,
+     "fim": 29.98,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 30.36,
+   "fim": 31.0,
+   "palavras": [
+    {
+     "p": "E",
+     "ini": 30.36,
+     "fim": 30.44,
+     "destaque": false
+    },
+    {
+     "p": "no",
+     "ini": 30.44,
+     "fim": 30.52,
+     "destaque": false
+    },
+    {
+     "p": "cotidiano",
+     "ini": 30.52,
+     "fim": 31.0,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 31.0,
+   "fim": 31.74,
+   "palavras": [
+    {
+     "p": "gamer,",
+     "ini": 31.0,
+     "fim": 31.36,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 31.74,
+   "fim": 32.3,
+   "palavras": [
+    {
+     "p": "transformamos",
+     "ini": 31.74,
+     "fim": 32.3,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 32.3,
+   "fim": 32.98,
+   "palavras": [
+    {
+     "p": "informação",
+     "ini": 32.3,
+     "fim": 32.98,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 32.98,
+   "fim": 33.68,
+   "palavras": [
+    {
+     "p": "em",
+     "ini": 32.98,
+     "fim": 33.28,
+     "destaque": false
+    },
+    {
+     "p": "escolhas",
+     "ini": 33.28,
+     "fim": 33.68,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 33.68,
+   "fim": 34.64,
+   "palavras": [
+    {
+     "p": "práticas,",
+     "ini": 33.68,
+     "fim": 34.34,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 34.64,
+   "fim": 34.88,
+   "palavras": [
+    {
+     "p": "sem",
+     "ini": 34.64,
+     "fim": 34.88,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 34.88,
+   "fim": 35.52,
+   "palavras": [
+    {
+     "p": "desperdiçar",
+     "ini": 34.88,
+     "fim": 35.52,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 35.52,
+   "fim": 36.44,
+   "palavras": [
+    {
+     "p": "seu",
+     "ini": 35.52,
+     "fim": 35.72,
+     "destaque": false
+    },
+    {
+     "p": "tempo",
+     "ini": 35.72,
+     "fim": 36.1,
+     "destaque": false
+    },
+    {
+     "p": "nem",
+     "ini": 36.34,
+     "fim": 36.44,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 36.44,
+   "fim": 37.46,
+   "palavras": [
+    {
+     "p": "seu",
+     "ini": 36.44,
+     "fim": 36.64,
+     "destaque": false
+    },
+    {
+     "p": "dinheiro.",
+     "ini": 36.64,
+     "fim": 37.02,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 37.46,
+   "fim": 37.98,
+   "palavras": [
+    {
+     "p": "Nosso",
+     "ini": 37.46,
+     "fim": 37.7,
+     "destaque": false
+    },
+    {
+     "p": "método",
+     "ini": 37.7,
+     "fim": 37.98,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 37.98,
+   "fim": 38.98,
+   "palavras": [
+    {
+     "p": "é",
+     "ini": 37.98,
+     "fim": 38.1,
+     "destaque": false
+    },
+    {
+     "p": "simples:",
+     "ini": 38.1,
+     "fim": 38.5,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 38.98,
+   "fim": 39.86,
+   "palavras": [
+    {
+     "p": "questionar,",
+     "ini": 38.98,
+     "fim": 39.5,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 39.86,
+   "fim": 40.98,
+   "palavras": [
+    {
+     "p": "investigar,",
+     "ini": 39.86,
+     "fim": 40.46,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 40.98,
+   "fim": 41.26,
+   "palavras": [
+    {
+     "p": "comparar",
+     "ini": 40.98,
+     "fim": 41.26,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 41.26,
+   "fim": 41.82,
+   "palavras": [
+    {
+     "p": "fontes",
+     "ini": 41.26,
+     "fim": 41.82,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 41.82,
+   "fim": 42.84,
+   "palavras": [
+    {
+     "p": "e",
+     "ini": 41.82,
+     "fim": 42.1,
+     "destaque": false
+    },
+    {
+     "p": "explicar",
+     "ini": 42.1,
+     "fim": 42.54,
+     "destaque": true
+    },
+    {
+     "p": "com",
+     "ini": 42.54,
+     "fim": 42.84,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 42.84,
+   "fim": 43.8,
+   "palavras": [
+    {
+     "p": "clareza.",
+     "ini": 42.84,
+     "fim": 43.48,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 43.8,
+   "fim": 44.54,
+   "palavras": [
+    {
+     "p": "Porque",
+     "ini": 43.8,
+     "fim": 44.06,
+     "destaque": false
+    },
+    {
+     "p": "uma",
+     "ini": 44.06,
+     "fim": 44.22,
+     "destaque": false
+    },
+    {
+     "p": "boa",
+     "ini": 44.22,
+     "fim": 44.54,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 44.54,
+   "fim": 45.44,
+   "palavras": [
+    {
+     "p": "análise",
+     "ini": 44.54,
+     "fim": 45.08,
+     "destaque": true
+    },
+    {
+     "p": "não",
+     "ini": 45.08,
+     "fim": 45.44,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 45.44,
+   "fim": 46.02,
+   "palavras": [
+    {
+     "p": "elimina",
+     "ini": 45.44,
+     "fim": 46.02,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 46.02,
+   "fim": 46.88,
+   "palavras": [
+    {
+     "p": "a",
+     "ini": 46.02,
+     "fim": 46.1,
+     "destaque": false
+    },
+    {
+     "p": "opinião.",
+     "ini": 46.1,
+     "fim": 46.52,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 46.88,
+   "fim": 47.44,
+   "palavras": [
+    {
+     "p": "Ela",
+     "ini": 46.88,
+     "fim": 47.02,
+     "destaque": false
+    },
+    {
+     "p": "mostra",
+     "ini": 47.02,
+     "fim": 47.44,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 47.44,
+   "fim": 48.32,
+   "palavras": [
+    {
+     "p": "de",
+     "ini": 47.44,
+     "fim": 47.74,
+     "destaque": false
+    },
+    {
+     "p": "onde",
+     "ini": 47.74,
+     "fim": 48.02,
+     "destaque": false
+    },
+    {
+     "p": "vêm",
+     "ini": 48.02,
+     "fim": 48.32,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 48.32,
+   "fim": 49.62,
+   "palavras": [
+    {
+     "p": "as",
+     "ini": 48.32,
+     "fim": 48.58,
+     "destaque": false
+    },
+    {
+     "p": "conclusões.",
+     "ini": 48.58,
+     "fim": 49.12,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 49.62,
+   "fim": 50.22,
+   "palavras": [
+    {
+     "p": "Quer",
+     "ini": 49.62,
+     "fim": 49.86,
+     "destaque": false
+    },
+    {
+     "p": "entender",
+     "ini": 49.86,
+     "fim": 50.22,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 50.22,
+   "fim": 50.56,
+   "palavras": [
+    {
+     "p": "antes",
+     "ini": 50.22,
+     "fim": 50.56,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 50.56,
+   "fim": 51.58,
+   "palavras": [
+    {
+     "p": "de",
+     "ini": 50.56,
+     "fim": 50.76,
+     "destaque": false
+    },
+    {
+     "p": "escolher?",
+     "ini": 50.76,
+     "fim": 51.1,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 51.58,
+   "fim": 52.32,
+   "palavras": [
+    {
+     "p": "Estratégia",
+     "ini": 51.58,
+     "fim": 52.32,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 52.32,
+   "fim": 53.1,
+   "palavras": [
+    {
+     "p": "Nerd.",
+     "ini": 52.32,
+     "fim": 52.56,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 53.1,
+   "fim": 53.28,
+   "palavras": [
+    {
+     "p": "Nada",
+     "ini": 53.1,
+     "fim": 53.28,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 53.28,
+   "fim": 53.94,
+   "palavras": [
+    {
+     "p": "de",
+     "ini": 53.28,
+     "fim": 53.48,
+     "destaque": false
+    },
+    {
+     "p": "achismo.",
+     "ini": 53.48,
+     "fim": 53.94,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 53.94,
+   "fim": 55.62,
+   "palavras": [
+    {
+     "p": "Só",
+     "ini": 53.94,
+     "fim": 54.52,
+     "destaque": false
+    },
+    {
+     "p": "estratégia.",
+     "ini": 54.52,
+     "fim": 55.28,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 55.62,
+   "fim": 56.24,
+   "palavras": [
+    {
+     "p": "Acesse",
+     "ini": 55.62,
+     "fim": 56.02,
+     "destaque": false
+    },
+    {
+     "p": "o",
+     "ini": 56.02,
+     "fim": 56.08,
+     "destaque": false
+    },
+    {
+     "p": "link",
+     "ini": 56.08,
+     "fim": 56.24,
+     "destaque": true
+    }
+   ]
+  },
+  {
+   "ini": 56.24,
+   "fim": 57.24,
+   "palavras": [
+    {
+     "p": "na",
+     "ini": 56.24,
+     "fim": 56.4,
+     "destaque": false
+    },
+    {
+     "p": "bio",
+     "ini": 56.4,
+     "fim": 56.58,
+     "destaque": true
+    },
+    {
+     "p": "e",
+     "ini": 56.58,
+     "fim": 56.9,
+     "destaque": false
+    },
+    {
+     "p": "siga",
+     "ini": 56.9,
+     "fim": 57.24,
+     "destaque": false
+    }
+   ]
+  },
+  {
+   "ini": 57.24,
+   "fim": 58.24,
+   "palavras": [
+    {
+     "p": "o",
+     "ini": 57.24,
+     "fim": 57.28,
+     "destaque": false
+    },
+    {
+     "p": "perfil.",
+     "ini": 57.28,
+     "fim": 57.64,
+     "destaque": true
+    }
+   ]
+  }
+ ]
+}

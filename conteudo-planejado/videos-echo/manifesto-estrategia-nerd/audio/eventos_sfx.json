@@ -1,0 +1,275 @@
+[
+  {
+    "t": 0.25,
+    "tipo": "wood + bubble",
+    "descricao": "Entrada do card de hardware na praça (escala 0.96 -> 1.00)",
+    "gain": 0.28,
+    "pan": -0.2
+  },
+  {
+    "t": 0.68,
+    "tipo": "wood + bubble",
+    "descricao": "Choque e desaceleração do card da GPU em foco",
+    "gain": 0.32,
+    "pan": -0.05
+  },
+  {
+    "t": 3.4,
+    "tipo": "wood + bubble",
+    "descricao": "Dobra do card anterior para ficha do ACHISMO",
+    "gain": 0.26,
+    "pan": 0.0
+  },
+  {
+    "t": 3.96,
+    "tipo": "foley vidro + wood",
+    "descricao": "Impacto duro do carimbo TOP na GPU (choque da notícia da GPU)",
+    "gain": 0.3,
+    "pan": 0.15
+  },
+  {
+    "t": 6.08,
+    "tipo": "wood + bubble",
+    "descricao": "Entrada do primeiro módulo de sintomas (Vídeos intermináveis)",
+    "gain": 0.28,
+    "pan": -0.15
+  },
+  {
+    "t": 6.16,
+    "tipo": "foley estilhaços",
+    "descricao": "Quebra e descarte da publicação da GPU saindo de quadro",
+    "gain": 0.24,
+    "pan": -0.35
+  },
+  {
+    "t": 9.5,
+    "tipo": "wood + bubble",
+    "descricao": "Entrada do card Histórias pela metade (lore cortada)",
+    "gain": 0.25,
+    "pan": 0.15
+  },
+  {
+    "t": 12.24,
+    "tipo": "air",
+    "descricao": "Windup do Echo pegando os cartões da praça para arremesso",
+    "gain": 0.24,
+    "pan": 0.1
+  },
+  {
+    "t": 12.73,
+    "tipo": "foley vidro (burst + shards)",
+    "descricao": "Arremesso do Echo: vidro quebra fora da tela (pan=-0.72, susto do Echo)",
+    "gain": 0.68,
+    "pan": -0.72
+  },
+  {
+    "t": 13.45,
+    "tipo": "wood + bubble",
+    "descricao": "Echo traz a publicação oficial do Estratégia Nerd",
+    "gain": 0.28,
+    "pan": 0.2
+  },
+  {
+    "t": 18.05,
+    "tipo": "air (whoosh)",
+    "descricao": "Transição de cena: folha editorial -> setup gamer no quarto",
+    "gain": 0.32,
+    "pan": -0.2
+  },
+  {
+    "t": 20.6,
+    "tipo": "air (whoosh)",
+    "descricao": "Abertura da moldura: zoom mergulhando no jogo de corrida",
+    "gain": 0.36,
+    "pan": 0.0
+  },
+  {
+    "t": 20.96,
+    "tipo": "motor acelerando",
+    "descricao": "Início da aceleração do carro esportivo ao pôr do sol",
+    "gain": 0.52,
+    "pan": 0.0
+  },
+  {
+    "t": 21.88,
+    "tipo": "troca de marcha / engasgo",
+    "descricao": "Microstutter / troca de marcha sincronizada ao sacolejo visual",
+    "gain": 0.48,
+    "pan": 0.0
+  },
+  {
+    "t": 24.05,
+    "tipo": "arrancada final",
+    "descricao": "Carro passa por baixo da câmera saindo acelerado",
+    "gain": 0.5,
+    "pan": 0.0
+  },
+  {
+    "t": 24.5,
+    "tipo": "air (whoosh)",
+    "descricao": "Transição de cena: saída da rodovia -> torre e bola mística do RPG",
+    "gain": 0.34,
+    "pan": 0.0
+  },
+  {
+    "t": 27.75,
+    "tipo": "wood (clique alavanca)",
+    "descricao": "Echo aciona a alavanca dourada do mecanismo ancestral",
+    "gain": 0.35,
+    "pan": 0.1
+  },
+  {
+    "t": 28.0,
+    "tipo": "engrenagem RPG",
+    "descricao": "Início do giro da engrenagem com cliques metálicos ritmados e rangido",
+    "gain": 0.5,
+    "pan": 0.25
+  },
+  {
+    "t": 29.95,
+    "tipo": "air (whoosh)",
+    "descricao": "Fechamento da moldura do RPG e recuo da câmera para o quarto",
+    "gain": 0.32,
+    "pan": 0.0
+  },
+  {
+    "t": 33.2,
+    "tipo": "air (whoosh)",
+    "descricao": "Zoom da câmera no menu de configurações gráficas do jogo",
+    "gain": 0.28,
+    "pan": 0.1
+  },
+  {
+    "t": 39.0,
+    "tipo": "wood + glass (C5)",
+    "descricao": "Card 1 do Método: Questionar (tique + nota C5)",
+    "gain": 0.32,
+    "pan": -0.25
+  },
+  {
+    "t": 39.86,
+    "tipo": "wood + glass (D5)",
+    "descricao": "Card 2 do Método: Investigar (tique + nota D5)",
+    "gain": 0.32,
+    "pan": -0.1
+  },
+  {
+    "t": 40.98,
+    "tipo": "wood + glass (E5)",
+    "descricao": "Card 3 do Método: Comparar (tique + nota E5)",
+    "gain": 0.32,
+    "pan": 0.05
+  },
+  {
+    "t": 42.1,
+    "tipo": "wood + glass (G5)",
+    "descricao": "Card 4 do Método: Concluir (tique + nota G5)",
+    "gain": 0.34,
+    "pan": 0.2
+  },
+  {
+    "t": 43.5,
+    "tipo": "air (whoosh)",
+    "descricao": "Echo levanta da cadeira para apontar o monitor",
+    "gain": 0.28,
+    "pan": -0.1
+  },
+  {
+    "t": 46.6,
+    "tipo": "air (whoosh)",
+    "descricao": "Zoom dinâmico da câmera aproximando do monitor",
+    "gain": 0.3,
+    "pan": 0.15
+  },
+  {
+    "t": 48.58,
+    "tipo": "glass (ding)",
+    "descricao": "A caixa de CONCLUSÃO acende em ciano no monitor",
+    "gain": 0.36,
+    "pan": 0.0
+  },
+  {
+    "t": 49.2,
+    "tipo": "air (whoosh reverso)",
+    "descricao": "Câmera recua do monitor para enquadrar o Echo",
+    "gain": 0.28,
+    "pan": 0.0
+  },
+  {
+    "t": 49.7,
+    "tipo": "bubble",
+    "descricao": "Ponto de interrogação (?) surge na tela do monitor",
+    "gain": 0.3,
+    "pan": 0.1
+  },
+  {
+    "t": 51.1,
+    "tipo": "air (whoosh)",
+    "descricao": "Echo retorna suavemente para a cadeira gamer",
+    "gain": 0.26,
+    "pan": -0.1
+  },
+  {
+    "t": 51.6,
+    "tipo": "glass + sub",
+    "descricao": "Entrada do card com a marca Estratégia Nerd",
+    "gain": 0.28,
+    "pan": 0.0
+  },
+  {
+    "t": 53.15,
+    "tipo": "wood (clique mouse)",
+    "descricao": "Primeiro clique físico do mouse pelo Echo",
+    "gain": 0.28,
+    "pan": 0.25
+  },
+  {
+    "t": 53.35,
+    "tipo": "air (arranhão/risco)",
+    "descricao": "Traço vermelho rasgando/cortando a palavra ACHISMO",
+    "gain": 0.3,
+    "pan": 0.1
+  },
+  {
+    "t": 53.95,
+    "tipo": "wood (clique mouse) + glass",
+    "descricao": "Segundo clique do mouse e marca reaparece",
+    "gain": 0.28,
+    "pan": 0.25
+  },
+  {
+    "t": 54.8,
+    "tipo": "wood (clique mouse)",
+    "descricao": "Terceiro clique físico do mouse pelo Echo",
+    "gain": 0.28,
+    "pan": 0.25
+  },
+  {
+    "t": 56.08,
+    "tipo": "bubble",
+    "descricao": "Surge o badge LINK NA BIO",
+    "gain": 0.26,
+    "pan": 0.0
+  },
+  {
+    "t": 56.58,
+    "tipo": "bubble",
+    "descricao": "Surge o handle @estrategia_nerd",
+    "gain": 0.26,
+    "pan": 0.0
+  },
+  {
+    "t": 57.7,
+    "tipo": "bubble",
+    "descricao": "Echo acena em despedida",
+    "gain": 0.2,
+    "pan": -0.1
+  },
+  {
+    "t": 58.5,
+    "tipo": "glass (acorde final)",
+    "descricao": "Fecho harmônico com acorde de vidro estéreo",
+    "gain": 0.26,
+    "pan": 0.0
+  }
+]

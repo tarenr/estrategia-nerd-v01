@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0">
+  <title>Echo // Quadros de Estilo Dia do TI v3</title>
+  <style>
+    @font-face {
+      font-family: 'Orbitron';
+      src: url('fonts/orbitron-700-latin.woff2') format('woff2');
+      font-weight: 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('fonts/JetBrainsMono.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #060c12;
+      font-family: 'Orbitron', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #stage {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+    }
+    #main-canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1080px;
+      height: 1920px;
+      z-index: 1;
+    }
+    #echo-canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="main-canvas" width="1080" height="1920"></canvas>
+    <canvas id="echo-canvas" width="1400" height="1400"></canvas>
+    <img id="logo-img" src="refs/logo-symbol.png" style="display:none;" />
+  </div>
+
+  <!-- Scripts locais e relativos à pasta v3 -->
+  <script src="vendor/robo-roupas.js"></script>
+  <script src="vendor/robo-roupas-echo.js"></script>
+  <script src="vendor/robo-motor.js"></script>
+  <script src="vendor/echo-director.js"></script>
+  <script src="boca.js"></script>
+  <script src="cenas.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      const mainCanvas = document.getElementById('main-canvas');
+      const ctx = mainCanvas.getContext('2d');
+      const echoCanvas = document.getElementById('echo-canvas');
+      const logoImg = document.getElementById('logo-img');
+
+      // Inicializar o diretor com o canvas do robô
+      const director = new EchoDirectorTI(echoCanvas, { size: 1000 });
+      director.render = function() {
+        this.bot.draw();
+      };
+      window.director = director;
+      window.robo = director.bot;
+
+      // Medição precisa de pixels não transparentes em um canvas
+      function measureVisiblePixels(cv, yMin = 0, yMax = cv.height) {
+        const c = cv.getContext('2d');
+        const imgData = c.getImageData(0, yMin, cv.width, yMax - yMin);
+        const data = imgData.data;
+        let minX = cv.width, maxX = 0;
+        let minY = cv.height, maxY = 0;
+        let found = false;
+
+        const w = cv.width;
+        const h = yMax - yMin;
+
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const alpha = data[(y * w + x) * 4 + 3];
+            if (alpha > 15) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+              found = true;
+            }
+          }
+        }
+
+        if (!found) return { width: 0, height: 0, minX: 0, maxX: 0 };
+        return {
+          width: maxX - minX + 1,
+          height: maxY - minY + 1,
+          minX, maxX, minY: minY + yMin, maxY: maxY + yMin
+        };
+      }
+
+      // Medição da largura da cabeça (parte superior do canvas do robô)
+      function measureHeadWidth(cv) {
+        const headH = Math.round(cv.height * 0.55);
+        const m = measureVisiblePixels(cv, 0, headH);
+        return m.width;
+      }
+
+      // Função global assíncrona chamada pelo Chrome headless
+      window.renderQuadro = async function(key) {
+        console.log(`Renderizando cena ${key}...`);
+        await document.fonts.ready;
+
+        ctx.clearRect(0, 0, 1080, 1920);
+
+        let tVideo = 0;
+        let mouthValue = 0;
+        let textBox = null;
+
+        switch(key) {
+          case 'C01':
+            tVideo = 1.43;
+            mouthValue = window.BOCA_DADOS ? window.BOCA_DADOS[Math.round(tVideo * 30)] : 0.993;
+            textBox = CenasTI.desenharCena01(ctx, tVideo, director, echoCanvas, mouthValue);
+            break;
+
+          case 'C02':
+            tVideo = 2.80;
+            mouthValue = 0.0;
+            textBox = CenasTI.desenharCena02(ctx, tVideo, director, echoCanvas, mouthValue);
+            break;
+
+          case 'C03':
+            tVideo = 3.75;
+            mouthValue = 0.0;
+            textBox = CenasTI.desenharCena03(ctx, tVideo, director, echoCanvas, mouthValue);
+            break;
+
+          case 'C04':
+            tVideo = 4.55;
+            mouthValue = 0.15;
+            textBox = CenasTI.desenharCena04(ctx, tVideo, director, echoCanvas, mouthValue);
+            break;
+
+          case 'C05':
+            tVideo = 6.15;
+            mouthValue = 0.20;
+            textBox = CenasTI.desenharCena05(ctx, tVideo, director, echoCanvas, mouthValue);
+            break;
+
+          case 'C06':
+            tVideo = 7.83;
+            mouthValue = window.BOCA_DADOS ? window.BOCA_DADOS[Math.round(tVideo * 30)] : 0.692;
+            textBox = CenasTI.desenharCena06(ctx, tVideo, director, echoCanvas, mouthValue);
+            break;
+
+          case 'C07':
+            tVideo = 8.85;
+            mouthValue = 0.0;
+            textBox = CenasTI.desenharCena07(ctx, tVideo, director, echoCanvas, mouthValue);
+            break;
+
+          case 'C08':
+            tVideo = 9.90;
+            mouthValue = 0.35;
+            textBox = CenasTI.desenharCena08(ctx, tVideo, director, echoCanvas, mouthValue);
+            break;
+
+          case 'C09':
+            tVideo = 12.73;
+            mouthValue = window.BOCA_DADOS ? window.BOCA_DADOS[Math.round(tVideo * 30)] : 0.995;
+            textBox = CenasTI.desenharCena09(ctx, tVideo, director, echoCanvas, mouthValue);
+            break;
+
+          case 'C10':
+            tVideo = 13.33;
+            mouthValue = window.BOCA_DADOS ? window.BOCA_DADOS[Math.round(tVideo * 30)] : 0.944;
+            textBox = CenasTI.desenharCena10(ctx, tVideo, director, echoCanvas, logoImg, mouthValue);
+            break;
+
+          default:
+            throw new Error(`Cena desconhecida: ${key}`);
+        }
+
+        // Medir o robô no canvas do Echo
+        const mEcho = measureVisiblePixels(echoCanvas);
+        const headW = measureHeadWidth(echoCanvas);
+
+        return {
+          key,
+          tVideo,
+          mouthValue,
+          echoVisibleWidth: mEcho.width,
+          headWidth: headW,
+          textBox
+        };
+      };
+
+      console.log('quadros.html pronto para renderização com Orbitron e JetBrains Mono.');
+    })();
+  </script>
+</body>
+</html>
