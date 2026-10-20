@@ -195,9 +195,15 @@ final class PostsService
                     $mediaRel = (string) ($ig['media_caminho'] ?? '');
                     $thumb = $mediaRel;
                     if (preg_match('/\.mp4$/i', $mediaRel)) {
-                        $jpg = preg_replace('/\.mp4$/i', '.jpg', $mediaRel);
-                        if (is_string($jpg) && is_file(base_path('public/' . ltrim($jpg, '/\\')))) {
-                            $thumb = $jpg;
+                        $dirRel = dirname(ltrim($mediaRel, '/\\'));
+                        $capaRel = ($dirRel === '.' || $dirRel === '/' ? '' : $dirRel . '/') . 'capa.jpg';
+                        if (is_file(base_path('public/' . $capaRel))) {
+                            $thumb = $capaRel;
+                        } else {
+                            $jpg = preg_replace('/\.mp4$/i', '.jpg', $mediaRel);
+                            if (is_string($jpg) && is_file(base_path('public/' . ltrim($jpg, '/\\')))) {
+                                $thumb = $jpg;
+                            }
                         }
                     }
 

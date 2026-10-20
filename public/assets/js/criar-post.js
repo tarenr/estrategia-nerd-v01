@@ -238,10 +238,29 @@
   function normalizeMediaUrl(value) {
     var raw = String(value || "").trim();
     if (!raw) return "";
-    if (/^https?:\/\//i.test(raw)) return raw;
-    if (raw.indexOf("//") === 0) return window.location.protocol + raw;
 
     var base = appBasePath();
+
+    var uploadsIdx = raw.indexOf("/uploads/");
+    if (uploadsIdx !== -1) {
+      var subPath = raw.slice(uploadsIdx);
+      return window.location.origin + (base !== "" ? base : "") + subPath;
+    }
+    if (raw.indexOf("uploads/") === 0) {
+      return window.location.origin + (base !== "" ? base : "") + "/" + raw;
+    }
+
+    if (/^https?:\/\//i.test(raw)) {
+      if (window.location.protocol === "https:" && raw.indexOf("http://") === 0) {
+        var withoutProto = raw.slice(7);
+        if (withoutProto.indexOf(window.location.host) === 0) {
+          return "https://" + withoutProto;
+        }
+      }
+      return raw;
+    }
+    if (raw.indexOf("//") === 0) return window.location.protocol + raw;
+
     if (raw.charAt(0) === "/") {
       if (base !== "" && raw.indexOf(base + "/") !== 0) {
         return window.location.origin + base + raw;
@@ -523,7 +542,8 @@
     var pathEl = byId("postMediaPreviewPath");
     if (!src || !panel || !image) return;
 
-    image.src = src || "";
+    var normalizedSrc = normalizeMediaUrl(src);
+    image.src = normalizedSrc || "";
     if (titleEl) titleEl.textContent = title || "Preview da imagem";
     if (pathEl) pathEl.textContent = path || "";
     panel.classList.remove("hidden");
@@ -601,10 +621,14 @@
     });
 
     document.querySelectorAll("[data-media-preview-open]").forEach(function (trigger) {
-      trigger.addEventListener("click", function () {
-        var src = trigger.getAttribute("data-media-preview-src") || "";
-        var title = trigger.getAttribute("data-media-preview-title") || "Preview da imagem";
-        var path = trigger.getAttribute("data-media-preview-path") || "";
+      trigger.addEventListener("click", function (event) {
+        var btn = (event && event.target && typeof event.target.closest === "function")
+          ? event.target.closest("[data-media-preview-open]")
+          : trigger;
+        var targetEl = btn || trigger;
+        var src = targetEl.getAttribute("data-media-preview-src") || "";
+        var title = targetEl.getAttribute("data-media-preview-title") || "Preview da imagem";
+        var path = targetEl.getAttribute("data-media-preview-path") || "";
         window.abrirPreviewMidiaPost(src, title, path);
       });
     });

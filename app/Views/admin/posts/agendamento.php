@@ -65,10 +65,16 @@ $resolveThumbUrl = static function (?string $path): string {
     }
     if (preg_match('#\.mp4(\?.*)?$#i', $path)) {
         $clean = preg_replace('#\?.*$#', '', $path);
+        $cleanDir = dirname(ltrim($clean, '/\\'));
+        $standardRel = ($cleanDir === '.' || $cleanDir === '/' ? '' : $cleanDir . '/') . 'capa.jpg';
+        if (is_file(base_path('public/' . $standardRel))) {
+            return url('/' . $standardRel);
+        }
         $jpg = preg_replace('#\.mp4$#i', '.jpg', $clean);
         if (is_string($jpg) && is_file(base_path('public/' . ltrim($jpg, '/\\')))) {
             return url('/' . ltrim($jpg, '/\\'));
         }
+        return '';
     }
     return url('/' . ltrim($path, '/\\'));
 };
@@ -170,6 +176,19 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
         </a>
       </div>
 
+      <!-- Mini-Legenda de Status -->
+      <div class="hidden sm:inline-flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px]">
+        <span class="inline-flex items-center gap-1.5 font-medium text-slate-300" title="Posts já publicados (borda contínua)">
+          <i class="fa-solid fa-check text-emerald-400 text-[10px]"></i>
+          <span>Publicado</span>
+        </span>
+        <span class="text-slate-700">|</span>
+        <span class="inline-flex items-center gap-1.5 font-medium text-slate-300" title="Posts agendados para publicação futura (borda tracejada)">
+          <i class="fa-regular fa-clock text-amber-300 text-[10px]"></i>
+          <span>Agendado</span>
+        </span>
+      </div>
+
       <!-- Filtros Interativos por Plataforma (Botões com Indicadores de Ícones) -->
       <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800" data-platform-filter-group>
         <button type="button" data-schedule-filter="all" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-800 text-white shadow cursor-pointer" title="Mostrar todas as plataformas">
@@ -210,7 +229,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
         <!-- Dias do mês anterior -->
         <?php for ($i = 0; $i < $startWeekday; $i++): ?>
           <?php $prevDayNumber = $prevMonthStartDay + $i; ?>
-          <div class="schedule-day-cell rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none overflow-hidden" style="min-height: 200px; height: 200px;">
+          <div class="schedule-day-cell rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none" style="min-height: 220px;">
             <div class="text-xs font-bold text-slate-500 mb-1"><?= $prevDayNumber ?></div>
           </div>
         <?php endfor; ?>
@@ -221,8 +240,8 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
             $dayEvents = $eventsByDay[$day] ?? [];
             $isToday = $isCurrentMonth && $day === $today;
           ?>
-          <div class="schedule-day-cell rounded-xl border <?= $isToday ? 'border-cyan-400/50 bg-cyan-950/10 shadow-[inset_0_0_15px_rgba(6,182,212,0.05)]' : 'border-slate-800/80 bg-slate-900/40' ?> p-2 flex flex-col justify-start transition-colors overflow-hidden" style="min-height: 200px; height: 200px;" data-schedule-day>
-            <div class="flex items-center justify-between mb-1 shrink-0">
+          <div class="schedule-day-cell rounded-xl border <?= $isToday ? 'border-cyan-400/50 bg-cyan-950/10 shadow-[inset_0_0_15px_rgba(6,182,212,0.05)]' : 'border-slate-800/80 bg-slate-900/40' ?> p-2 flex flex-col justify-start transition-colors relative" style="min-height: 220px;" data-schedule-day>
+            <div class="flex items-center justify-between mb-1.5 shrink-0">
               <span class="text-xs font-bold <?= $isToday ? 'text-cyan-300 font-black' : 'text-slate-400' ?>"><?= $day ?></span>
               <?php if ($isToday): ?>
                 <span class="text-[9px] font-black uppercase tracking-wider text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">Hoje</span>
@@ -230,74 +249,88 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
             </div>
 
             <!-- Cards de Eventos do Dia (Sem Barra de Rolagem) -->
-            <div class="schedule-events-container flex-1 overflow-hidden" style="scrollbar-width: none;">
+            <div class="schedule-events-container flex-1">
               <?php foreach ($dayEvents as $event): ?>
                 <?php
                   $isIg = ($event['kind'] ?? '') === 'instagram';
                   $timeFormatted = date('H:i', (int) $event['ts']);
                   $thumbUrl = $resolveThumbUrl($event['thumb'] ?? '');
-                  $isErr = ($event['status'] ?? '') === 'erro';
+                  $status = (string) ($event['status'] ?? '');
+                  $isErr = ($status === 'erro');
                   $overdue = $isOverdue($event);
+                  $isPublished = in_array($status, ['publicado', 'ativo'], true);
+                  $isScheduled = ($status === 'agendado') && !$overdue;
 
-                  if ($isIg) {
-                      $cardClasses = $isErr
-                          ? 'border-rose-500/60 bg-rose-950/40 text-rose-100 hover:border-rose-400'
-                          : 'border-pink-500/40 bg-[#241228]/95 hover:border-pink-400/80 text-pink-100 shadow-[0_2px_10px_rgba(236,72,153,0.08)]';
-                      $headerClass = 'text-pink-300';
-                      $iconHtml = '<i class="fa-brands fa-instagram text-pink-400 text-xs"></i>';
+                  if ($overdue || $isErr) {
+                      $cardClasses = 'border-rose-500/80 bg-rose-950/40 text-rose-100 ring-1 ring-rose-500/50 is-alert';
+                      $headerClass = 'text-rose-300';
+                      $statusIconHtml = '<i class="fa-solid fa-circle-exclamation text-rose-400 text-[10px] shrink-0" title="' . ($isErr ? 'Erro no envio' : 'Agendado vencido') . '"></i>';
+                      $statusBadgeHtml = '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[9px] font-bold"><i class="fa-solid fa-circle-exclamation text-[8px]"></i> ' . ($isErr ? 'Erro no envio' : 'Agendado vencido') . '</span>';
+                  } elseif ($isScheduled) {
+                      $cardClasses = $isIg
+                          ? 'border-pink-400/70 bg-[#1e0e22]/90 hover:border-pink-300 text-pink-100 is-scheduled'
+                          : 'border-blue-400/70 bg-[#0a1529]/90 hover:border-blue-300 text-blue-100 is-scheduled';
+                      $headerClass = $isIg ? 'text-pink-300' : 'text-blue-300';
+                      $statusIconHtml = '<i class="fa-regular fa-clock text-amber-300 text-[9px] shrink-0" title="Agendado"></i>';
+                      $statusBadgeHtml = '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-bold"><i class="fa-regular fa-clock text-[8px]"></i> Agendado</span>';
                   } else {
-                      $cardClasses = 'border-blue-500/40 bg-[#0f1d38]/95 hover:border-blue-400/80 text-blue-100 shadow-[0_2px_10px_rgba(59,130,246,0.08)]';
-                      $headerClass = 'text-blue-300';
-                      $iconHtml = '<i class="fa-regular fa-file-lines text-blue-400 text-xs"></i>';
+                      $cardClasses = $isIg
+                          ? 'border-pink-500/35 bg-[#25122a]/95 hover:border-pink-400 text-pink-100 shadow-[0_2px_10px_rgba(236,72,153,0.08)] is-published'
+                          : 'border-blue-500/35 bg-[#0f1d38]/95 hover:border-blue-400 text-blue-100 shadow-[0_2px_10px_rgba(59,130,246,0.08)] is-published';
+                      $headerClass = $isIg ? 'text-pink-300' : 'text-blue-300';
+                      $statusIconHtml = '<i class="fa-solid fa-check text-emerald-400 text-[9px] shrink-0" title="Publicado"></i>';
+                      $statusBadgeHtml = '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-bold"><i class="fa-solid fa-check text-[8px]"></i> Publicado</span>';
                   }
 
-                  if ($overdue) {
-                      $cardClasses .= ' ring-1 ring-rose-400';
-                  }
+                  $iconHtml = $isIg
+                      ? '<i class="fa-brands fa-instagram text-pink-400 text-xs shrink-0"></i>'
+                      : '<i class="fa-regular fa-file-lines text-blue-400 text-xs shrink-0"></i>';
                 ?>
-                <div data-schedule-item="<?= $e($event['kind']) ?>" class="schedule-event-card group relative rounded-xl border p-1.5 sm:p-2 text-xs transition-all <?= $cardClasses ?>">
-                  <div class="flex items-start justify-between gap-1.5">
-                    <!-- Informações do Post (Horário e Título em até 3 linhas) -->
-                    <div class="flex-1 min-w-0 pr-1">
-                      <div class="flex items-center gap-1.5 font-bold text-[11px] mb-1 <?= $headerClass ?>">
-                        <?= $iconHtml ?>
-                        <span><?= $e($timeFormatted) ?></span>
-                      </div>
-                      <a href="<?= $e($event['url']) ?>" class="schedule-card-title block font-medium text-white/95 leading-tight hover:underline text-[11px]" title="<?= $e($event['titulo']) ?>">
-                        <?= $e($event['titulo']) ?>
+                <div data-schedule-item="<?= $e($event['kind']) ?>" class="schedule-event-card group relative rounded-lg border px-2 py-1 text-xs transition-all <?= $cardClasses ?> flex items-center justify-between gap-1.5 cursor-pointer">
+                  <!-- Linha única: Ícone da Rede + Status + Horário + Título -->
+                  <a href="<?= $e($event['url']) ?>" class="flex items-center gap-1.5 flex-1 min-w-0" title="<?= $e($event['titulo']) ?>">
+                    <?= $iconHtml ?>
+                    <?= $statusIconHtml ?>
+                    <span class="font-bold text-[10px] shrink-0 <?= $headerClass ?>"><?= $e($timeFormatted) ?></span>
+                    <span class="schedule-card-title text-[11px] font-medium text-white/95 truncate">
+                      <?= $e($event['titulo']) ?>
+                    </span>
+                  </a>
+
+                  <!-- Menu de ações / editar rápido -->
+                  <div class="relative shrink-0 flex items-center" data-action-menu-wrap>
+                    <button type="button" class="w-4 h-5 flex items-center justify-center text-slate-400 hover:text-white rounded transition-colors" data-action-menu-btn title="Opções">
+                      <i class="fa-solid fa-ellipsis-vertical text-[10px]"></i>
+                    </button>
+                    <div class="hidden absolute right-0 top-full mt-1 w-28 rounded-xl border border-slate-800 bg-slate-950 p-1 shadow-2xl backdrop-blur-md z-30" data-action-menu-dropdown>
+                      <a href="<?= $e($event['url']) ?>" class="flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-slate-300 hover:bg-slate-900 hover:text-white rounded-lg transition-colors">
+                        <i class="fa-solid fa-pen text-[10px]"></i> Editar
                       </a>
-                      <?php if ($overdue || $isErr): ?>
-                        <div class="mt-1 text-[9px] font-semibold text-rose-300">
-                          <?= $isErr ? 'Erro no envio' : 'Agendado vencido' ?>
-                        </div>
-                      <?php endif; ?>
-                    </div>
-
-                    <!-- Miniatura de Capa e Menu de Ações -->
-                    <div class="flex items-center gap-1 shrink-0">
-                      <?php if ($thumbUrl !== ''): ?>
-                        <a href="<?= $e($event['url']) ?>" class="block w-9 h-9 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-slate-800" title="Ver post">
-                          <img src="<?= $e($thumbUrl) ?>" alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy">
-                        </a>
-                      <?php endif; ?>
-
-                      <!-- Menu de 3 pontinhos vertical -->
-                      <div class="relative" data-action-menu-wrap>
-                        <button type="button" class="w-5 h-7 flex items-center justify-center text-slate-400 hover:text-white rounded transition-colors" data-action-menu-btn title="Opções">
-                          <i class="fa-solid fa-ellipsis-vertical text-[10px]"></i>
-                        </button>
-                        <div class="hidden absolute right-0 top-full mt-1 w-28 rounded-xl border border-slate-800 bg-slate-950 p-1 shadow-2xl backdrop-blur-md z-30" data-action-menu-dropdown>
-                          <a href="<?= $e($event['url']) ?>" class="flex items-center gap-2 px-2.5 py-1.5 text-[11px] text-slate-300 hover:bg-slate-900 hover:text-white rounded-lg transition-colors">
-                            <i class="fa-solid fa-pen text-[10px]"></i> Editar
-                          </a>
-                        </div>
-                      </div>
                     </div>
                   </div>
+
+                  <!-- Tooltip de Hover com Imagem de Capa e Detalhes -->
+                  <?php if ($thumbUrl !== ''): ?>
+                    <div class="pointer-events-none absolute z-50 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150 <?= $day <= 7 ? 'top-full mt-1.5' : 'bottom-full mb-1.5' ?> left-1/2 -translate-x-1/2 w-48 p-2 rounded-xl bg-slate-950/95 border border-slate-700/80 shadow-[0_10px_30px_rgba(0,0,0,0.85)] backdrop-blur-xl flex flex-col gap-1.5">
+                      <div class="aspect-square w-full rounded-lg overflow-hidden bg-slate-900 border border-white/10">
+                        <img src="<?= $e($thumbUrl) ?>" alt="" class="w-full h-full object-cover">
+                      </div>
+                      <div class="flex items-center justify-between text-[10px] font-bold">
+                        <span class="flex items-center gap-1 <?= $headerClass ?>">
+                          <?= $iconHtml ?>
+                          <span><?= $e($event['kind'] === 'instagram' ? 'Instagram' : 'Blog') ?></span>
+                          <span class="text-slate-400 font-normal ml-0.5"><?= $e($timeFormatted) ?></span>
+                        </span>
+                        <?= $statusBadgeHtml ?>
+                      </div>
+                      <div class="text-[11px] font-semibold text-slate-200 leading-snug line-clamp-2">
+                        <?= $e($event['titulo']) ?>
+                      </div>
+                    </div>
+                  <?php endif; ?>
                 </div>
               <?php endforeach; ?>
             </div>
-            <button type="button" class="hidden w-full rounded-lg px-2 py-0.5 text-[11px] text-cyan-300 hover:bg-slate-800" data-schedule-more></button>
           </div>
         <?php endfor; ?>
 
@@ -308,7 +341,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
           $trailingDays = $remainder === 0 ? 0 : 7 - $remainder;
         ?>
         <?php for ($nextDay = 1; $nextDay <= $trailingDays; $nextDay++): ?>
-          <div class="schedule-day-cell rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none overflow-hidden" style="min-height: 200px; height: 200px;">
+          <div class="schedule-day-cell rounded-xl border border-slate-800/40 bg-slate-950/30 p-2 opacity-30 select-none" style="min-height: 220px;">
             <div class="text-xs font-bold text-slate-500 mb-1"><?= $nextDay ?></div>
           </div>
         <?php endfor; ?>
@@ -336,37 +369,46 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
                 $isIg = ($event['kind'] ?? '') === 'instagram';
                 $timeFormatted = date('H:i', (int) $event['ts']);
                 $thumbUrl = $resolveThumbUrl($event['thumb'] ?? '');
-                $isErr = ($event['status'] ?? '') === 'erro';
+                $status = (string) ($event['status'] ?? '');
+                $isErr = ($status === 'erro');
                 $overdue = $isOverdue($event);
+                $isPublished = in_array($status, ['publicado', 'ativo'], true);
+                $isScheduled = ($status === 'agendado') && !$overdue;
 
-                if ($isIg) {
-                    $cardClasses = $isErr
-                        ? 'border-rose-500/60 bg-rose-950/40 text-rose-100 hover:border-rose-400'
-                        : 'border-pink-500/40 bg-[#241228]/95 hover:border-pink-400/80 text-pink-100';
-                    $headerClass = 'text-pink-300';
-                    $iconHtml = '<i class="fa-brands fa-instagram text-pink-400 text-xs"></i>';
+                if ($overdue || $isErr) {
+                    $cardClasses = 'border-rose-500/80 bg-rose-950/40 text-rose-100 ring-1 ring-rose-500/50';
+                    $headerClass = 'text-rose-300';
+                    $statusBadgeHtml = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[10px] font-bold"><i class="fa-solid fa-triangle-exclamation text-[9px]"></i> ' . ($isErr ? 'Erro no envio' : 'Agendado vencido') . '</span>';
+                } elseif ($isScheduled) {
+                    $cardClasses = $isIg
+                        ? 'border-dashed border-pink-400/70 bg-[#1e0e22]/90 hover:border-pink-300 text-pink-100'
+                        : 'border-dashed border-blue-400/70 bg-[#0a1529]/90 hover:border-blue-300 text-blue-100';
+                    $headerClass = $isIg ? 'text-pink-300' : 'text-blue-300';
+                    $statusBadgeHtml = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold"><i class="fa-regular fa-clock text-[9px]"></i> Agendado</span>';
                 } else {
-                    $cardClasses = 'border-blue-500/40 bg-[#0f1d38]/95 hover:border-blue-400/80 text-blue-100';
-                    $headerClass = 'text-blue-300';
-                    $iconHtml = '<i class="fa-regular fa-file-lines text-blue-400 text-xs"></i>';
+                    $cardClasses = $isIg
+                        ? 'border-pink-500/35 bg-[#241228]/95 hover:border-pink-400 text-pink-100'
+                        : 'border-blue-500/35 bg-[#0f1d38]/95 hover:border-blue-400 text-blue-100';
+                    $headerClass = $isIg ? 'text-pink-300' : 'text-blue-300';
+                    $statusBadgeHtml = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold"><i class="fa-solid fa-check text-[9px]"></i> Publicado</span>';
                 }
 
-                if ($overdue) {
-                    $cardClasses .= ' ring-1 ring-rose-400';
-                }
+                $iconHtml = $isIg
+                    ? '<i class="fa-brands fa-instagram text-pink-400 text-xs"></i>'
+                    : '<i class="fa-regular fa-file-lines text-blue-400 text-xs"></i>';
               ?>
               <div data-schedule-item="<?= $e($event['kind']) ?>" class="group rounded-xl border p-3 text-xs transition-all <?= $cardClasses ?> flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-1.5 font-bold text-xs mb-1.5 <?= $headerClass ?>">
                     <?= $iconHtml ?>
                     <span><?= $e($timeFormatted) ?></span>
-                    <span class="text-[10px] font-normal opacity-70 ml-1">(<?= $e($event['kind']) ?>)</span>
+                    <span class="text-[10px] font-normal opacity-70 ml-1">(<?= $e($event['kind'] === 'instagram' ? 'Instagram' : 'Blog') ?>)</span>
                   </div>
                   <a href="<?= $e($event['url']) ?>" class="block font-medium text-white/95 line-clamp-2 leading-snug hover:underline text-xs" title="<?= $e($event['titulo']) ?>">
                     <?= $e($event['titulo']) ?>
                   </a>
-                  <div class="mt-2 flex items-center gap-2 text-[10px]">
-                    <span class="opacity-70"><?= $e($statusLabel($event)) ?></span>
+                  <div class="mt-2.5 flex items-center gap-2">
+                    <?= $statusBadgeHtml ?>
                   </div>
                 </div>
 

@@ -6875,6 +6875,10 @@ select.nerd-input {
     gap: 0.9rem;
 }
 
+.post-media-inline-preview.hidden {
+    display: none !important;
+}
+
 .post-media-inline-preview-head {
     display: flex;
     align-items: flex-start;
@@ -8599,9 +8603,13 @@ select.nerd-input {
 
 /* Painel de Agendamento — Quadros Uniformes do Calendário */
 .schedule-day-cell {
-  min-height: 200px !important;
-  height: 200px !important;
-  overflow: hidden !important;
+  min-height: 220px !important;
+  height: auto !important;
+  overflow: visible !important;
+  position: relative;
+}
+.schedule-day-cell:hover {
+  z-index: 30;
 }
 .schedule-day-cell * {
   scrollbar-width: none !important;
@@ -8613,20 +8621,20 @@ select.nerd-input {
 .schedule-events-container {
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
-  flex: 1 1 0% !important;
-  height: 100% !important;
+  gap: 4px !important;
+  flex: 1 1 auto !important;
   min-height: 0 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
 }
 
 .schedule-event-card {
-  flex: 1 1 calc(50% - 3px) !important;
-  max-height: calc(50% - 3px) !important;
-  min-height: 0 !important;
+  flex: 0 0 auto !important;
+  min-height: 30px !important;
+  max-height: none !important;
   display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  position: relative !important;
 }
 
 .schedule-event-card.hidden,
@@ -8634,15 +8642,31 @@ select.nerd-input {
   display: none !important;
 }
 
+.schedule-event-card.is-scheduled {
+  border-style: dashed !important;
+  border-width: 1.5px !important;
+}
+
+.schedule-event-card.is-published {
+  border-style: solid !important;
+  border-width: 1px !important;
+}
+
+.schedule-event-card.is-alert {
+  border-style: solid !important;
+  border-width: 1px !important;
+}
+
 .schedule-card-title {
-  display: -webkit-box !important;
-  -webkit-line-clamp: 3 !important;
-  -webkit-box-orient: vertical !important;
+  display: block !important;
+  white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   line-height: 1.25 !important;
-  max-height: 3.75em !important;
-  word-break: break-word !important;
+  max-height: none !important;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
 }
+
 
 

@@ -244,18 +244,154 @@ final class BlogCrosspostService
         try {
             $repo = new InstagramPostRepository($this->localPdo);
             $post = $repo->findByIdempotencyKey(self::idempotencyKey($environment, $blogPostId));
+
+            if ($post === null && $environment !== 'local') {
+                $post = $this->findLinkedByRemoteSlug($environment, $blogPostId, $repo);
+            }
+
             if ($post === null) {
                 return null;
             }
+
+            $status = (string) ($post['status'] ?? '');
+            if ($environment === 'production') {
+                if (!in_array($status, ['agendado', 'publicado'], true)) {
+                    return null;
+                }
+            } else {
+                if ($status !== 'rascunho') {
+                    return null;
+                }
+            }
+
             $medias = $repo->findMediaByPostId((int) $post['id']);
             $post['_media'] = $medias[0]['caminho'] ?? '';
             $post['_media_tipo'] = (string) ($medias[0]['tipo_arquivo'] ?? '');
             $post['_is_reels'] = self::isReels($post);
-            $post['_editable'] = !$post['_is_reels'] && in_array((string) ($post['status'] ?? ''), self::EDITABLE, true);
+            $post['_editable'] = !$post['_is_reels'] && in_array($status, self::EDITABLE, true);
 
             return $post;
         } catch (\Throwable $e) {
             error_log('[BlogCrosspostService] findLinked: ' . $e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * Todos os Reels do Instagram vinculados a um post do blog (um post pode ter varios).
+     * Segue as mesmas regras de ambiente/status do findLinked e do linkedBlogPosts.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function findLinkedReels(string $environment, int $blogPostId): array
+    {
+        if ($blogPostId <= 0) {
+            return [];
+        }
+
+        try {
+            $ids = [$blogPostId];
+            $localId = 0;
+            if ($environment !== 'local') {
+                $stmtSlug = \App\Support\TargetEnvironmentDatabase::pdo($environment)->prepare('SELECT slug FROM posts WHERE id = :id');
+                $stmtSlug->execute([':id' => $blogPostId]);
+                $slug = (string) $stmtSlug->fetchColumn();
+                if ($slug !== '') {
+                    $stmtLocal = $this->localPdo->prepare('SELECT id FROM posts WHERE slug = :slug');
+                    $stmtLocal->execute([':slug' => $slug]);
+                    $localId = (int) $stmtLocal->fetchColumn();
+                    if ($localId > 0 && $localId !== $blogPostId) {
+                        $ids[] = $localId;
+                    }
+                }
+            }
+
+            $in   = implode(',', array_map('intval', $ids));
+            $stmt = $this->localPdo->query("SELECT * FROM instagram_posts WHERE tipo = 'reels' AND post_blog_id IN ({$in}) ORDER BY id ASC");
+            $rows = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
+
+            $repo   = new InstagramPostRepository($this->localPdo);
+            $others = array_values(array_diff(['local', 'stage', 'production'], [$environment]));
+            $reels  = [];
+
+            foreach ($rows as $row) {
+                $status = (string) ($row['status'] ?? '');
+                $valid  = $environment === 'production'
+                    ? in_array($status, ['agendado', 'publicado'], true)
+                    : $status === 'rascunho';
+                if (!$valid) {
+                    continue;
+                }
+
+                $rowBlogId = (int) $row['post_blog_id'];
+                $key       = (string) ($row['idempotency_key'] ?? '');
+                if ($rowBlogId === $blogPostId) {
+                    // Chave do proprio ambiente, ou chave aleatoria/nula (vinculo manual): so fica de fora
+                    // quem tem a chave de OUTRO ambiente para este mesmo post.
+                    $belongs = true;
+                    foreach ($others as $other) {
+                        if ($key === self::idempotencyKey($other, $blogPostId)) {
+                            $belongs = false;
+                        }
+                    }
+                } else {
+                    // Vinculo feito no banco local e mapeado ao post do ambiente pelo slug.
+                    $belongs = true;
+                }
+                if (!$belongs) {
+                    continue;
+                }
+
+                $medias = $repo->findMediaByPostId((int) $row['id']);
+                $row['_media']      = $medias[0]['caminho'] ?? '';
+                $row['_media_tipo'] = (string) ($medias[0]['tipo_arquivo'] ?? '');
+                $row['_is_reels']   = true;
+                $row['_editable']   = false;
+                $reels[]            = $row;
+            }
+
+            return $reels;
+        } catch (\Throwable $e) {
+            error_log('[BlogCrosspostService] findLinkedReels: ' . $e->getMessage());
+
+            return [];
+        }
+    }
+
+    /**
+     * @return array<string,mixed>|null
+     */
+    private function findLinkedByRemoteSlug(string $environment, int $remoteBlogPostId, InstagramPostRepository $repo): ?array
+    {
+        try {
+            $remotePdo = \App\Support\TargetEnvironmentDatabase::pdo($environment);
+            $stmt = $remotePdo->prepare('SELECT slug FROM posts WHERE id = :id');
+            $stmt->execute([':id' => $remoteBlogPostId]);
+            $slug = (string) $stmt->fetchColumn();
+            if ($slug === '') {
+                return null;
+            }
+
+            $stmtLocal = $this->localPdo->prepare('SELECT id FROM posts WHERE slug = :slug');
+            $stmtLocal->execute([':slug' => $slug]);
+            $localPostId = (int) $stmtLocal->fetchColumn();
+            if ($localPostId <= 0) {
+                return null;
+            }
+
+            $post = $repo->findByIdempotencyKey(self::idempotencyKey('local', $localPostId));
+            if ($post !== null) {
+                return $post;
+            }
+
+            $stmtIg = $this->localPdo->prepare('SELECT * FROM instagram_posts WHERE post_blog_id = :id ORDER BY id DESC LIMIT 1');
+            $stmtIg->execute([':id' => $localPostId]);
+            $row = $stmtIg->fetch(\PDO::FETCH_ASSOC);
+
+            return is_array($row) ? $row : null;
+        } catch (\Throwable $e) {
+            error_log('[BlogCrosspostService] findLinkedByRemoteSlug: ' . $e->getMessage());
 
             return null;
         }
@@ -279,6 +415,17 @@ final class BlogCrosspostService
         foreach ($rows as $row) {
             $blogId = (int) $row['post_blog_id'];
             $key    = (string) ($row['idempotency_key'] ?? '');
+            $status = (string) ($row['status'] ?? '');
+
+            if ($environment === 'production') {
+                if (!in_array($status, ['agendado', 'publicado'], true)) {
+                    continue;
+                }
+            } else {
+                if ($status !== 'rascunho') {
+                    continue;
+                }
+            }
 
             $belongs = $key === self::idempotencyKey($environment, $blogId);
             if (!$belongs) {
@@ -292,11 +439,80 @@ final class BlogCrosspostService
             }
 
             if ($belongs) {
-                $linked[$blogId] ??= ['id' => (int) $row['id'], 'status' => (string) $row['status']];
+                $linked[$blogId] ??= ['id' => (int) $row['id'], 'status' => $status];
             }
         }
 
+        if ($environment !== 'local') {
+            $linked = $this->mapLinkedByRemoteSlug($environment, $linked);
+        }
+
         return $linked;
+    }
+
+    /**
+     * @param array<int,array{id:int,status:string}> $currentLinked
+     * @return array<int,array{id:int,status:string}>
+     */
+    private function mapLinkedByRemoteSlug(string $environment, array $currentLinked): array
+    {
+        try {
+            $targetPdo = \App\Support\TargetEnvironmentDatabase::pdo($environment);
+
+            $stmt = $this->localPdo->query('SELECT id, status, post_blog_id FROM instagram_posts WHERE post_blog_id IS NOT NULL');
+            $rows = $stmt !== false ? $stmt->fetchAll(\PDO::FETCH_ASSOC) : [];
+
+            $localPostIds = [];
+            $linkByLocalBlogId = [];
+            foreach ($rows as $row) {
+                $st = (string) ($row['status'] ?? '');
+                $valid = $environment === 'production'
+                    ? in_array($st, ['agendado', 'publicado'], true)
+                    : ($st === 'rascunho');
+                if ($valid) {
+                    $bId = (int) $row['post_blog_id'];
+                    $localPostIds[] = $bId;
+                    $linkByLocalBlogId[$bId] = ['id' => (int) $row['id'], 'status' => $st];
+                }
+            }
+
+            if ($localPostIds === []) {
+                return $currentLinked;
+            }
+
+            $uniqueIds = array_values(array_unique($localPostIds));
+            $inClause = implode(',', array_map('intval', $uniqueIds));
+            $stmtLocal = $this->localPdo->query("SELECT id, slug FROM posts WHERE id IN ({$inClause})");
+            $slugToLink = [];
+            while ($p = $stmtLocal->fetch(\PDO::FETCH_ASSOC)) {
+                $slug = (string) ($p['slug'] ?? '');
+                $lid = (int) ($p['id'] ?? 0);
+                if ($slug !== '' && isset($linkByLocalBlogId[$lid])) {
+                    $slugToLink[$slug] = $linkByLocalBlogId[$lid];
+                }
+            }
+
+            if ($slugToLink === []) {
+                return $currentLinked;
+            }
+
+            $slugs = array_keys($slugToLink);
+            $placeholders = implode(',', array_fill(0, count($slugs), '?'));
+            $stmtRemote = $targetPdo->prepare("SELECT id, slug FROM posts WHERE slug IN ({$placeholders})");
+            $stmtRemote->execute($slugs);
+
+            while ($r = $stmtRemote->fetch(\PDO::FETCH_ASSOC)) {
+                $remoteId = (int) $r['id'];
+                $rSlug = (string) $r['slug'];
+                if (isset($slugToLink[$rSlug])) {
+                    $currentLinked[$remoteId] = $slugToLink[$rSlug];
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log('[BlogCrosspostService] mapLinkedByRemoteSlug: ' . $e->getMessage());
+        }
+
+        return $currentLinked;
     }
 
     public function composeCaption(string $text, string $hashtags): string

@@ -305,6 +305,13 @@ final class PostsController
             $form['_ig_linked'] = null;
         }
 
+        try {
+            $form['_ig_reels'] = BlogCrosspostService::fromGlobals()->findLinkedReels(target_environment(), $id);
+        } catch (\Throwable $e) {
+            error_log('[PostsController] crosspost reels: ' . $e->getMessage());
+            $form['_ig_reels'] = [];
+        }
+
         $notice = $consumeNotice ? Session::pull(self::CROSSPOST_NOTICE) : null;
         $form['_ig_notice'] = is_array($notice) ? $notice : null;
         $viewModel['form'] = $form;

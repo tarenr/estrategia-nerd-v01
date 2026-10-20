@@ -105,6 +105,49 @@ $statusLabels = [
     </div>
   <?php endif; ?>
 
+  <?php
+    $linkedId = (int) ($linked['id'] ?? 0);
+    $reelsList = array_values(array_filter(
+        is_array($form['_ig_reels'] ?? null) ? $form['_ig_reels'] : [],
+        static fn ($r): bool => is_array($r) && (int) ($r['id'] ?? 0) !== $linkedId
+    ));
+  ?>
+  <?php if ($reelsList !== []): ?>
+    <div class="space-y-2" data-ig-reels>
+      <h3 class="text-sm font-bold text-slate-200"><?= $linked !== null ? 'Outros Reels vinculados' : 'Reels vinculados' ?> (<?= count($reelsList) ?>)</h3>
+      <?php foreach ($reelsList as $reel): ?>
+        <?php
+          $rSt = (string) ($reel['status'] ?? 'rascunho');
+          [$rLabel, $rClass] = $statusLabels[$rSt] ?? [$rSt, 'text-slate-200 border-slate-500/40'];
+          $rMedia = (string) ($reel['_media'] ?? '');
+          $rPoster = '';
+          if ($rMedia !== '' && preg_match('#\.mp4$#i', $rMedia) === 1) {
+              $rPosterRel = (string) preg_replace('#\.mp4$#i', '.jpg', $rMedia);
+              if (is_file(base_path('public/' . ltrim($rPosterRel, '/')))) {
+                  $rPoster = $rPosterRel;
+              }
+          }
+        ?>
+        <div class="flex flex-wrap gap-4 items-start rounded-xl border border-slate-700/60 p-3" data-ig-reel>
+          <?php if ($rPoster !== ''): ?>
+            <img src="<?= $e(url('/' . ltrim($rPoster, '/'))) ?>" alt="Capa do Reel vinculado" class="w-20 h-20 object-cover rounded-lg border border-slate-700">
+          <?php endif; ?>
+          <div class="flex-1 min-w-[220px] space-y-2">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="rounded-full border px-2 py-0.5 font-bold <?= $rClass ?>"><?= $e($rLabel) ?></span>
+              <span class="text-slate-400">Reel #<?= (int) ($reel['id'] ?? 0) ?></span>
+              <?php if (!empty($reel['permalink'])): ?>
+                <a href="<?= $e($reel['permalink']) ?>" target="_blank" rel="noopener" class="text-cyan-300 underline">Ver no Instagram</a>
+              <?php endif; ?>
+              <a href="<?= $e(url('/admin/instagram/posts/' . (int) ($reel['id'] ?? 0) . '/editar')) ?>" class="text-cyan-300 underline">Abrir no modulo Instagram</a>
+            </div>
+            <p class="text-sm text-slate-300 whitespace-pre-line line-clamp-3"><?= $e($reel['legenda'] ?? '') ?></p>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+
   <?php if ($editable): ?>
     <input type="hidden" name="ig_crosspost_token" id="igToken" value="<?= $e($token) ?>">
     <input type="hidden" name="ig_crosspost_form_uid" id="igFormUid" value="<?= $e($formUid) ?>">

@@ -150,7 +150,7 @@ final class InstagramPostRepository
         $stmt = $this->pdo->prepare(
             "SELECT p.id, p.status, p.tipo, p.legenda, p.agendado_para, p.publicado_em, p.origin,
                     CASE WHEN p.status = 'publicado' THEN p.publicado_em ELSE p.agendado_para END AS data_evento,
-                    (SELECT m.caminho FROM instagram_post_media m WHERE m.post_id = p.id ORDER BY m.ordem ASC LIMIT 1) AS media_caminho
+                    COALESCE(p.video_rendered_path, (SELECT m.caminho FROM instagram_post_media m WHERE m.post_id = p.id ORDER BY m.ordem ASC LIMIT 1)) AS media_caminho
                FROM instagram_posts p
               WHERE (p.status = 'publicado' AND p.publicado_em BETWEEN :s1 AND :e1)
                  OR (p.status IN ('agendado', 'publicando', 'erro') AND p.agendado_para BETWEEN :s2 AND :e2)

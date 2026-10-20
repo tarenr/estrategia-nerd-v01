@@ -62,6 +62,9 @@ $check('Container genérico de Reel também exige capa antes do POST',$blocked &
 $cover=InstagramApiService::reelCoverParams('uploads/valid.mp4',$work.'/public');
 $before=$posts;$container=$api->createVideoContainer('https://media.example.test/valid.mp4','Legenda',['media_type'=>'REELS']+$cover);
 $check('Capa válida acompanha o único POST simulado',$container==='fake-container' && $posts===$before+1 && $sent['cover_url']==='https://media.example.test/uploads/valid.jpg');
+copy($work.'/public/uploads/valid.jpg',$work.'/public/uploads/capa.jpg');
+$coverStandard=InstagramApiService::reelCoverParams('uploads/outro-nome.mp4',$work.'/public');
+$check('Suporte nativo a capa.jpg na pasta do reel',$coverStandard['cover_url']==='https://media.example.test/uploads/capa.jpg');
 $before=$posts;$api->createVideoContainer('https://media.example.test/story.mp4',null,['media_type'=>'STORIES']);
 $check('Story conserva seu fluxo sem exigência de capa',$posts===$before+1 && !isset($sent['cover_url']));
 // Existing scheduled covers are read only; never remove a real JPG to test failure.

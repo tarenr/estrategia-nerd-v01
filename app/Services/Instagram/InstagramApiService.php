@@ -370,14 +370,30 @@ final class InstagramApiService
         if ($videoRel === '' || preg_match('#^[a-z][a-z0-9+.-]*://#i', $videoRel) === 1) {
             throw new RuntimeException($error);
         }
-        $coverRel = (string) preg_replace('#\.mp4$#i', '.jpg', $videoRel);
-        if ($coverRel === $videoRel) {
+        if (!preg_match('#\.mp4$#i', $videoRel)) {
             throw new RuntimeException($error);
         }
 
+        $dirRel = dirname($videoRel);
+        $standardCover = ($dirRel === '.' || $dirRel === '/' ? '' : $dirRel . '/') . 'capa.jpg';
+        $byNameCover   = (string) preg_replace('#\.mp4$#i', '.jpg', $videoRel);
+
         $root = realpath($publicRoot);
-        $full = realpath($publicRoot . '/' . $coverRel);
-        if ($root === false || $full === false || !is_file($full) || filesize($full) === 0) {
+        if ($root === false) {
+            throw new RuntimeException($error);
+        }
+
+        // Prioridade 1: capa.jpg na mesma pasta do reel
+        $chosenCoverRel = $byNameCover;
+        $standardFull = realpath($publicRoot . '/' . $standardCover);
+        if ($standardFull !== false && is_file($standardFull) && filesize($standardFull) > 0) {
+            $chosenCoverRel = $standardCover;
+            $full = $standardFull;
+        } else {
+            $full = realpath($publicRoot . '/' . $byNameCover);
+        }
+
+        if ($full === false || !is_file($full) || filesize($full) === 0) {
             throw new RuntimeException($error);
         }
         $prefix = strtolower(str_replace('\\', '/', $root)) . '/';
@@ -392,7 +408,7 @@ final class InstagramApiService
         if (!$image instanceof \GdImage) { throw new RuntimeException($error); }
         imagedestroy($image);
 
-        return ['cover_url' => self::buildPublicMediaUrl($coverRel)];
+        return ['cover_url' => self::buildPublicMediaUrl($chosenCoverRel)];
     }
 
     /**

@@ -155,8 +155,23 @@ if ($trackUrl === '' && !empty($track['arquivo_path'])) {
           <i class="fa-solid fa-rotate"></i> Atualizar
         </button>
       </div>
-      <div id="igLocalTracksList" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+      <div class="flex flex-nowrap items-center gap-2">
+        <input type="text" id="igLocalSearch" class="nerd-input admin-filter-control flex-1 min-w-0 text-xs" placeholder="Buscar por nome, artista ou gênero..." autocomplete="off">
+        <label for="igLocalPageSize" class="text-[11px] text-slate-400 flex-none">Mostrar</label>
+        <select id="igLocalPageSize" class="nerd-input admin-filter-control text-xs" style="width:6rem;flex:none">
+          <option value="5" selected>5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+      <div id="igLocalTracksList" class="space-y-2 max-h-96 overflow-y-auto pr-1">
         <div class="text-xs text-slate-500 py-3 text-center">Carregando faixas locais...</div>
+      </div>
+      <div id="igLocalPager" class="hidden flex items-center justify-between text-[11px] text-slate-400">
+        <button type="button" id="igLocalPrev" class="admin-btn admin-btn-secondary text-[11px] py-1 px-2.5"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+        <span id="igLocalPageInfo"></span>
+        <button type="button" id="igLocalNext" class="admin-btn admin-btn-secondary text-[11px] py-1 px-2.5">Próxima <i class="fa-solid fa-chevron-right"></i></button>
       </div>
     </div>
 
@@ -448,16 +463,62 @@ if ($trackUrl === '' && !empty($track['arquivo_path'])) {
     fetch('/admin/instagram/api/audio/local')
       .then(function (res) { return res.json(); })
       .then(function (data) {
-        if (!data.ok || !data.tracks || data.tracks.length === 0) {
-          localList.innerHTML = '<div class="text-xs text-slate-500 py-3 text-center">Nenhuma faixa local encontrada. Busque no Audius para adicionar!</div>';
-          return;
-        }
-        renderTrackList(data.tracks, localList, false);
+        localTracksAll = (data.ok && data.tracks) ? data.tracks : [];
+        localPage = 1;
+        renderLocalPage();
       })
       .catch(function () {
+        localTracksAll = [];
+        document.getElementById('igLocalPager').classList.add('hidden');
         localList.innerHTML = '<div class="text-xs text-rose-400 py-3 text-center">Não foi possível carregar as faixas locais.</div>';
       });
   }
+
+  // Busca e paginação da Biblioteca Local (a lista completa vem de uma vez; o filtro é no navegador)
+  var localTracksAll = [];
+  var localPage = 1;
+  var localSearchEl = document.getElementById('igLocalSearch');
+  var localSizeEl = document.getElementById('igLocalPageSize');
+  var localPagerEl = document.getElementById('igLocalPager');
+
+  function normalizeText(s) {
+    return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
+  function renderLocalPage() {
+    var term = normalizeText(localSearchEl.value.trim());
+    var size = parseInt(localSizeEl.value, 10) || 5;
+    var filtered = localTracksAll.filter(function (t) {
+      if (term === '') return true;
+      return normalizeText((t.title || t.titulo) + ' ' + (t.artist || t.artista) + ' ' + (t.genre || t.genero)).indexOf(term) !== -1;
+    });
+
+    if (localTracksAll.length === 0) {
+      localPagerEl.classList.add('hidden');
+      localList.innerHTML = '<div class="text-xs text-slate-500 py-3 text-center">Nenhuma faixa local encontrada. Busque no Audius para adicionar!</div>';
+      return;
+    }
+    if (filtered.length === 0) {
+      localPagerEl.classList.add('hidden');
+      localList.innerHTML = '<div class="text-xs text-slate-500 py-3 text-center">Nenhuma faixa encontrada para essa busca.</div>';
+      return;
+    }
+
+    var pages = Math.max(1, Math.ceil(filtered.length / size));
+    localPage = Math.min(Math.max(1, localPage), pages);
+    var from = (localPage - 1) * size;
+    renderTrackList(filtered.slice(from, from + size), localList, false);
+
+    localPagerEl.classList.remove('hidden');
+    document.getElementById('igLocalPageInfo').textContent = (from + 1) + '–' + Math.min(from + size, filtered.length) + ' de ' + filtered.length + ' (pág. ' + localPage + '/' + pages + ')';
+    document.getElementById('igLocalPrev').disabled = localPage <= 1;
+    document.getElementById('igLocalNext').disabled = localPage >= pages;
+  }
+
+  localSearchEl.addEventListener('input', function () { localPage = 1; renderLocalPage(); });
+  localSizeEl.addEventListener('change', function () { localPage = 1; renderLocalPage(); });
+  document.getElementById('igLocalPrev').addEventListener('click', function () { localPage -= 1; renderLocalPage(); });
+  document.getElementById('igLocalNext').addEventListener('click', function () { localPage += 1; renderLocalPage(); });
 
   document.getElementById('btnRefreshLocalTracks').addEventListener('click', loadLocalTracks);
 

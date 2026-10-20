@@ -114,11 +114,17 @@ $resolveMediaUrl = static function (?string $path, int $postId = 0): string {
     // Para Reels/vídeos MP4, checa se existe a miniatura JPG gerada correspondente
     if (preg_match('#\.mp4(\?.*)?$#i', $path)) {
         $cleanPath = preg_replace('#\?.*$#', '', $path);
+        $cleanDir = dirname(ltrim($cleanPath, '/'));
+        $standardRel = ($cleanDir === '.' ? '' : $cleanDir . '/') . 'capa.jpg';
+        if (is_file(base_path('public/' . $standardRel))) {
+            return url('/' . $standardRel);
+        }
         $jpgPath = preg_replace('#\.mp4$#i', '.jpg', $cleanPath);
         $localJpg = base_path('public/' . ltrim($jpgPath, '/'));
         if (is_file($localJpg)) {
             return url('/' . ltrim($jpgPath, '/'));
         }
+        return '';
     }
     if (preg_match('#^(https?:)?//#i', $path) || str_starts_with($path, 'data:') || str_starts_with($path, 'blob:')) {
         return $path;
@@ -1113,32 +1119,32 @@ if (($endRange - $startRange) < 4) {
                 $pPermalink  = (string) ($item['permalink'] ?? '');
                 $pCurtidas   = (int) ($item['curtidas'] ?? 0);
                 $pComents    = (int) ($item['comentarios_count'] ?? 0);
-                $pDataPub    = $item['publicado_em'] ?? null;
+                $pDataPub    = !empty($item['publicado_em']) ? $item['publicado_em'] : ($item['agendado_para'] ?? null);
                 $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
                 $thumbUrl    = $resolveMediaUrl($medias[0] ?? '', $pId);
                 $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
               ?>
               <div class="rounded-2xl border border-slate-800/80 bg-slate-900/60 overflow-hidden hover:border-cyan-500/40 transition-all flex flex-col group shadow-lg">
-                <!-- Thumbnail Quadrada 1:1 -->
-                <div class="aspect-square bg-slate-800 relative overflow-hidden flex items-center justify-center">
+                <!-- Cabeçalho do Card: Tipo (esq) e Status (dir) -->
+                <div class="px-3 py-2 flex items-center justify-between gap-2 border-b border-slate-800/80 bg-slate-900/90 shrink-0">
+                  <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider <?= $tipoBadge($pTipo) ?>">
+                    <?= $esc($tipoLabel[$pTipo] ?? $pTipo) ?>
+                  </span>
+                  <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider <?= htmlspecialchars($statusClasses($pStatus), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    <?= $esc(in_array((string) ($item['publish_phase'] ?? ''), ['awaiting_confirmation','published_id_pending'], true) ? 'Aguardando confirmação' : ($statusLabel[$pStatus] ?? $pStatus)) ?>
+                  </span>
+                </div>
+
+                <!-- Capa Vertical 9:16 com Largura Total -->
+                <div class="aspect-[9/16] w-full bg-slate-950 relative overflow-hidden flex items-center justify-center shrink-0">
                   <?php if ($thumbUrl !== ''): ?>
-                    <img src="<?= $esc($thumbUrl) ?>" alt="" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
-                    <div class="hidden absolute inset-0 flex items-center justify-center bg-slate-800 text-slate-500">
+                    <img src="<?= $esc($thumbUrl) ?>" alt="" class="h-full w-full <?= in_array($pTipo, ['reels', 'story'], true) ? 'object-cover' : 'object-contain' ?> transition-transform duration-300 group-hover:scale-105" loading="lazy" onerror="this.classList.add('hidden'); if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                    <div class="hidden absolute inset-0 flex items-center justify-center bg-slate-900 text-slate-500">
                       <i class="fa-brands fa-instagram text-4xl text-slate-600" aria-hidden="true"></i>
                     </div>
                   <?php else: ?>
                     <i class="fa-brands fa-instagram text-4xl text-slate-600" aria-hidden="true"></i>
                   <?php endif; ?>
-
-                  <!-- Badges flutuantes -->
-                  <div class="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
-                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider backdrop-blur-md <?= $tipoBadge($pTipo) ?>">
-                      <?= $esc($tipoLabel[$pTipo] ?? $pTipo) ?>
-                    </span>
-                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider backdrop-blur-md <?= htmlspecialchars($statusClasses($pStatus), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
-                      <?= $esc(in_array((string) ($item['publish_phase'] ?? ''), ['awaiting_confirmation','published_id_pending'], true) ? 'Aguardando confirmação' : ($statusLabel[$pStatus] ?? $pStatus)) ?>
-                    </span>
-                  </div>
                 </div>
 
                 <!-- Conteúdo do Card -->
@@ -1148,7 +1154,7 @@ if (($endRange - $startRange) < 4) {
                   </div>
 
                   <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2.5">
                       <span class="text-pink-400 font-bold" title="Curtidas">
                         <i class="fa-solid fa-heart mr-1" aria-hidden="true"></i> <?= $fmt($pCurtidas) ?>
                       </span>
@@ -1156,8 +1162,8 @@ if (($endRange - $startRange) < 4) {
                         <i class="fa-solid fa-comment mr-1" aria-hidden="true"></i> <?= $fmt($pComents) ?>
                       </span>
                     </div>
-                    <span class="text-[11px] text-slate-500">
-                      <?= $esc($formatDate((string) $pDataPub)) ?>
+                    <span class="text-[11px] text-slate-400 font-mono" title="<?= $pStatus === 'agendado' ? 'Agendado para' : 'Publicado em' ?>">
+                      <i class="fa-regular fa-calendar mr-1 text-slate-500" aria-hidden="true"></i><?= $esc($formatDate((string) $pDataPub)) ?>
                     </span>
                   </div>
 
