@@ -118,6 +118,8 @@ final class HomeService
                 'context_links' => $this->buildContextLinks($categories),
             ],
             'site_meta' => $siteMeta,
+            // Fantasia do Echo escolhida no admin para este ambiente (FEAT-016).
+            'echo_outfit' => \App\Support\EchoFantasias::piecesForSite(),
         ];
     }
 

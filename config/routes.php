@@ -12,6 +12,7 @@ declare(strict_types=1);
 return [
     ['GET',  '/',       [\App\Controllers\Site\HomeController::class, 'index'], null],
     ['GET',  '/home-preview', [\App\Controllers\Site\HomeController::class, 'conversionPreview'], null],
+    ['GET',  '/preview/circuito-continuo', [\App\Controllers\Site\HomeController::class, 'circuitContinuousPreview'], null],
     ['GET',  '/robots.txt', [\App\Controllers\Site\SeoController::class, 'robots'], null],
     ['HEAD', '/robots.txt', [\App\Controllers\Site\SeoController::class, 'robots'], null],
     ['GET',  '/sitemap.xml', [\App\Controllers\Site\SeoController::class, 'sitemap'], null],
@@ -86,6 +87,8 @@ return [
     ['POST', '/admin/home-e-menus',        [\App\Controllers\Admin\HomeMenusController::class, 'update'], ['auth', 'capability:multi_env_menus']],
     ['GET',  '/admin/configuracoes',       [\App\Controllers\Admin\ConfiguracoesController::class, 'index'], ['auth', 'capability:multi_env_settings']],
     ['POST', '/admin/configuracoes',       [\App\Controllers\Admin\ConfiguracoesController::class, 'update'], ['auth', 'capability:multi_env_settings']],
+    ['GET',  '/admin/echo',                [\App\Controllers\Admin\EchoController::class, 'index'], ['auth', 'capability:multi_env_settings']],
+    ['POST', '/admin/echo',                [\App\Controllers\Admin\EchoController::class, 'update'], ['auth', 'capability:multi_env_settings']],
     ['GET',  '/admin/health',              [\App\Controllers\Admin\HealthCheckController::class, 'index'], ['auth', 'capability:multi_env_health']],
     ['GET',  '/admin/auditoria-geral',     [\App\Controllers\Admin\AuditController::class, 'index'], ['auth', 'capability:audit']],
     ['GET',  '/admin/testes',              [\App\Controllers\Admin\AutomatedTestsController::class, 'index'], ['auth', 'capability:operations']],

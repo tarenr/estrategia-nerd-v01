@@ -1,0 +1,558 @@
+/* FEAT-015 — Prévia do circuito contínuo, Parte 1: Hero com feixe de circuitos e camada de luz da página.
+   Os feixes são desenhados em WebGL2 por site-home-flow.js.
+   Escopo: só a página /preview/circuito-continuo (classe .en-flow-hero). */
+
+.en-flow-hero {
+  --flow-bg: #020617;
+  --flow-cyan: #22d3ee;
+  --flow-blue: #3b82f6;
+  --flow-violet: #a855f7;
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7rem 1rem 4.5rem;
+  overflow: hidden;
+  background: transparent;
+}
+
+/* Camada fixa atrás da página inteira (feixe distante e luz ambiente). */
+.en-flow-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* Fundo do Hero transparente: a luz vem da camada fixa da página (.en-flow-bg). */
+.en-flow-hero__stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Sombra atrás do texto: o feixe passa por trás com brilho baixo, como no vídeo. */
+.en-flow-hero__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(40% 36% at 50% 54%, rgba(2, 6, 23, 0.78), rgba(2, 6, 23, 0.45) 60%, transparent 100%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0.5) 0%, transparent 14%);
+}
+.en-flow-hero__content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.en-flow-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(34, 211, 238, 0.32);
+  border-radius: 9999px;
+  background: rgba(2, 6, 23, 0.55);
+  color: #67e8f9;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+
+.en-flow-hero__eyebrow-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--flow-cyan);
+  box-shadow: 0 0 10px var(--flow-cyan);
+}
+
+.en-flow-hero__title {
+  margin: 0 auto 1.1rem;
+  font-weight: 900;
+  line-height: 1.02;
+}
+
+.en-flow-hero__title-main,
+.en-flow-hero__title-accent {
+  display: block;
+  font-size: clamp(2.6rem, 7vw, 5.2rem);
+}
+
+.en-flow-hero__title-main {
+  color: #fff;
+  text-shadow: 0 0 28px rgba(34, 211, 238, 0.35), 0 4px 24px rgba(2, 6, 23, 0.9);
+}
+
+.en-flow-hero__title-accent {
+  background: linear-gradient(90deg, var(--flow-cyan), var(--flow-blue) 55%, var(--flow-violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 18px rgba(34, 211, 238, 0.45));
+}
+
+.en-flow-hero__descriptor {
+  display: block;
+  max-width: 48rem;
+  margin: 1rem auto 0;
+  color: #e2e8f0;
+  font-size: clamp(1.15rem, 2.2vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.3;
+  text-shadow: 0 2px 16px rgba(2, 6, 23, 0.95);
+}
+
+.en-flow-hero__copy {
+  max-width: 44rem;
+  margin: 0 auto 1.5rem;
+  color: #cbd5e1;
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  line-height: 1.65;
+  text-shadow: 0 2px 14px rgba(2, 6, 23, 0.95);
+}
+
+.en-flow-hero__points {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+  font-size: 0.875rem;
+  color: #e2e8f0;
+}
+
+.en-flow-hero__points span {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 9999px;
+  background: rgba(2, 6, 23, 0.62);
+  backdrop-filter: blur(6px);
+}
+
+.en-flow-hero__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .en-flow-hero__actions {
+    flex-direction: row;
+  }
+}
+
+.en-flow-hero__recent {
+  margin-top: 1rem;
+}
+
+/* Ponto de saída do barramento (base central): a Parte 2 continua o feixe daqui. */
+.en-flow-hero__bus-exit {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+}
+
+@media (max-width: 767px) {
+  .en-flow-hero {
+    padding: 6.5rem 1rem 4rem;
+  }
+
+  .en-flow-hero__shade {
+    background:
+      radial-gradient(80% 40% at 50% 50%, rgba(2, 6, 23, 0.78), rgba(2, 6, 23, 0.4) 65%, transparent 100%),
+      linear-gradient(180deg, rgba(2, 6, 23, 0.6) 0%, transparent 16%);
+  }
+}
+
+/* Fundos uniformes (FEAT-015): na prévia, as seções abaixo do Hero ficam sem
+   fundo próprio e sem as camadas decorativas de largura total, para a luz da
+   página aparecer igual em todas e as emendas sumirem. Cards e painéis mantêm
+   os fundos (é neles que o texto fica legível). */
+.site-home-hero-preview-page #sobre,
+.site-home-hero-preview-page #blog,
+.site-home-hero-preview-page #instagram-feed,
+.site-home-hero-preview-page #newsletter,
+.site-home-hero-preview-page .site-footer {
+  background: transparent;
+}
+
+.site-home-hero-preview-page #sobre .site-about-backdrop,
+.site-home-hero-preview-page #sobre .site-about-grid,
+.site-home-hero-preview-page #instagram-feed > .absolute.inset-0 {
+  display: none;
+}
+/* Faixa de Temas (largura total), degradê da Newsletter e linha superior do
+   Rodapé também formavam emendas: ficam sem fundo e sem borda na prévia. */
+.site-home-hero-preview-page .site-preview-topics-band {
+  background: transparent;
+  border-color: transparent;
+}
+
+.site-home-hero-preview-page .site-preview-topics-band::before,
+.site-home-hero-preview-page #newsletter > .absolute.inset-0,
+.site-home-hero-preview-page #instagram-feed .absolute.rounded-full.blur-3xl {
+  display: none;
+}
+
+.site-home-hero-preview-page .site-footer {
+  border-top-color: transparent;
+}
+
+/* Echo no Hero (Parte 7): posição e tamanho definidos pelo site-home-flow.js,
+   que só o mostra num lugar livre de texto e botões. Decorativo, sem clique. */
+.en-flow-echo {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  /* Invisível até a chegada começar */
+  opacity: 0;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* Depois da chegada, o mesmo canvas acompanha a navegação.
+   z-index: 1 garante que o Echo e sua propulsão Matrix passem estritamente
+   POR TRÁS de todos os cards, imagens e fotos da página (que operam com z-index >= 2). */
+.en-flow-echo.is-following {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  will-change: transform, opacity;
+  filter: brightness(1) saturate(1) drop-shadow(0 0 14px rgba(34, 211, 238, 0.25));
+  transition: opacity 300ms ease;
+}
+
+/* Camada de conteúdo e cartões: z-index 2 para que o Echo (z-index 1) passe por trás deles */
+.site-home-hero-preview-page .nerd-card,
+.site-home-hero-preview-page .site-preview-post-card,
+.site-home-hero-preview-page article,
+.site-home-hero-preview-page .en-flow-about__card,
+.site-home-hero-preview-page .site-newsletter-shell,
+.site-home-hero-preview-page .site-preview-topics-band,
+.site-home-hero-preview-page .site-about-card,
+.site-home-hero-preview-page .site-footer {
+  position: relative;
+  z-index: 2;
+}
+
+/* Ritmo único entre seções e logo do Sobre proporcional (FEAT-015, Forge #1657). */
+.site-home-hero-preview-page #sobre,
+.site-home-hero-preview-page #blog,
+.site-home-hero-preview-page #instagram-feed,
+.site-home-hero-preview-page #newsletter {
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+
+.site-home-hero-preview-page .site-footer {
+  padding-top: 56px;
+}
+
+.site-home-hero-preview-page .site-preview-topics-band {
+  margin-top: 80px;
+  /* Sem fundo nem borda, a folga interna de baixo virou vazio. */
+  padding-bottom: 0;
+}
+
+.site-home-hero-preview-page .site-preview-about-media {
+  width: 100%;
+  max-width: 340px;
+  margin-inline: auto;
+}
+
+@media (max-width: 767px) {
+  .site-home-hero-preview-page #sobre,
+  .site-home-hero-preview-page #blog,
+  .site-home-hero-preview-page #instagram-feed,
+  .site-home-hero-preview-page #newsletter {
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+
+  .site-home-hero-preview-page .site-preview-topics-band {
+    margin-top: 56px;
+  }
+
+  .site-home-hero-preview-page .site-preview-about-media {
+    max-width: 240px;
+  }
+}
+
+/* Compensação das folgas internas de cada seção, para o vazio visível entre
+   seções ficar em ~160 px no desktop (medido até a borda de textos e painéis). */
+@media (min-width: 768px) {
+  .site-home-hero-preview-page #sobre {
+    padding-bottom: 40px;
+  }
+
+  .site-home-hero-preview-page #instagram-feed {
+    padding-top: 114px;
+  }
+
+  .site-home-hero-preview-page .site-footer {
+    padding-top: 80px;
+  }
+}
+
+@media (max-width: 767px) {
+  .site-home-hero-preview-page #sobre {
+    padding-bottom: 12px;
+  }
+
+  .site-home-hero-preview-page #instagram-feed {
+    padding-top: 90px;
+  }
+}
+
+/* Portal de onde o Echo sai (só durante a chegada, ~2,2 s). */
+.en-flow-portal {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+/* Sem o "pisca" dos textos do Hero: com JavaScript, eles começam escondidos e
+   entram pela animação de entrada (site-hero-preview.js). Trava: se a entrada
+   não acontecer, aparecem sozinhos em 2,5 s. Sem JavaScript ou com movimento
+   reduzido, ficam visíveis desde o início. */
+.en-flow-js .en-flow-hero [data-hero-animate] {
+  opacity: 0;
+  animation: en-flow-hero-failsafe 0s linear 2.5s forwards;
+}
+
+@keyframes en-flow-hero-failsafe {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .en-flow-js .en-flow-hero [data-hero-animate] {
+    opacity: 1;
+    animation: none;
+  }
+}
+
+/* Rede lenta: a entrada animada não começou a tempo; os textos aparecem e o
+   estado final fica travado (vence os estilos inline da entrada atrasada). */
+.en-flow-js .en-flow-hero.en-flow-texts-ready [data-hero-animate] {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+  transition: opacity 0.6s ease;
+  animation: none;
+}
+
+/* Sobre da prévia (FEAT-015, Parte 2): card com vidro só atrás do texto e
+   pilares lado a lado com um vão central por onde o feixe passa nítido. */
+.en-flow-path {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.en-flow-about__card {
+  position: relative;
+  border-radius: 28px;
+}
+
+/* Borda do card sem "parede" no topo: some de cima para baixo nos primeiros 160 px,
+   para o feixe que vem do Hero entrar no card sem uma linha separando. */
+.en-flow-about__card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  border-radius: 28px;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 160px);
+  mask-image: linear-gradient(180deg, transparent 0, #000 160px);
+}
+
+/* O vidro (fundo translúcido + desfoque) vai sumindo antes dos pilares: a
+   folga de baixo existe só para essa transição, sem texto. */
+.en-flow-about__glass {
+  position: relative;
+  /* Contexto próprio: o vidro (::before, z-index -1) fica atrás do texto, mas
+     acima dos canvas do feixe, que estão atrás da página. */
+  isolation: isolate;
+  padding: 48px 48px 88px;
+}
+
+/* O vidro fica numa camada atrás do texto: começa transparente no topo (entrada
+   do feixe sem degrau), escurece até ~140 px e some de novo antes dos pilares.
+   A máscara fica nessa camada, então o texto não é afetado. */
+.en-flow-about__glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 28px 28px 0 0;
+  background: rgba(4, 10, 28, 0.34);
+  -webkit-backdrop-filter: blur(5px) saturate(120%);
+  backdrop-filter: blur(5px) saturate(120%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 140px, #000 78%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 140px, #000 78%, transparent 100%);
+}
+
+.en-flow-about__head {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.en-flow-about__mark {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
+  object-fit: contain;
+}
+
+.en-flow-about__title {
+  color: #fff;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.en-flow-about__lead {
+  margin-top: 0.75rem;
+  color: #a5f3fc;
+  font-size: 1.125rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.en-flow-about__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 32px;
+  color: #cbd5e1;
+  font-size: 1.05rem;
+  line-height: 1.75;
+}
+
+.en-flow-about__col p + p {
+  margin-top: 1rem;
+}
+
+.en-flow-about__links {
+  margin-top: 24px;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+/* Pilares: 2 + vão + 2. O 3º e o 4º pulam a coluna do vão. */
+.en-flow-about__pillars {
+  display: grid;
+  grid-template-columns: 1fr 1fr 56px 1fr 1fr;
+  column-gap: 20px;
+  row-gap: 20px;
+  margin-top: -40px;
+  padding: 0 48px 48px;
+}
+
+.en-flow-about__pillar:nth-child(3) {
+  grid-column: 4;
+}
+
+.en-flow-about__pillar:nth-child(4) {
+  grid-column: 5;
+}
+
+@media (max-width: 1279px) {
+  .en-flow-about__pillars {
+    grid-template-columns: 1fr 48px 1fr;
+  }
+
+  .en-flow-about__pillar:nth-child(odd) {
+    grid-column: 1;
+  }
+
+  .en-flow-about__pillar:nth-child(even) {
+    grid-column: 3;
+  }
+}
+
+@media (max-width: 767px) {
+  .en-flow-about__glass {
+    padding: 28px 22px 72px;
+  }
+
+  .en-flow-about__head {
+    gap: 16px;
+  }
+
+  .en-flow-about__mark {
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+  }
+
+  .en-flow-about__body {
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-top: 20px;
+    font-size: 1rem;
+  }
+
+  .en-flow-about__body .en-flow-about__col + .en-flow-about__col {
+    margin-top: 1rem;
+  }
+
+  .en-flow-about__pillars {
+    grid-template-columns: 1fr 24px 1fr;
+    column-gap: 10px;
+    padding: 0 16px 20px;
+  }
+}
+/* Celular estreito: os títulos dos pilares (Orbitron, espaçado) não cabem em
+   2×2; empilham em uma coluna e o feixe passa por trás deles, suave. */
+@media (max-width: 639px) {
+  .en-flow-about__pillars {
+    grid-template-columns: 1fr;
+  }
+
+  .en-flow-about__pillar:nth-child(odd),
+  .en-flow-about__pillar:nth-child(even) {
+    grid-column: auto;
+  }
+}
+/* Rio de luz (FEAT-015): o feixe passa por trás do conteúdo abaixo do Hero.
+   Uma sombra escura e suave atrás dos textos mantém a leitura sobre a luz. */
+.site-home-hero-preview-page :is(#sobre, #blog, #instagram-feed, #newsletter, .site-footer) :is(h1, h2, h3, h4, p, li, a, span, label, small) {
+  text-shadow: 0 0 3px rgba(2, 6, 23, 1), 0 0 8px rgba(2, 6, 23, 0.95), 0 0 16px rgba(2, 6, 23, 0.9), 0 0 30px rgba(2, 6, 23, 0.8);
+}
+
+/* Texto em degradê (cor recortada no texto): a sombra ficaria por cima da cor. */
+.site-home-hero-preview-page :is(#sobre, #blog, #instagram-feed, #newsletter, .site-footer) :is(.text-transparent, [class*="bg-clip-text"]) {
+  text-shadow: none;
+}

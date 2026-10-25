@@ -215,6 +215,20 @@ $videoDirectionDocUrl = url('/local/mudancas/documento?grupo=governanca&arquivo=
                 <li>&bull; <strong class="text-white">ViewModel & View:</strong> ViewModels preparam os dados no Service. Views contêm apenas renderização visual, sem queries complexas.</li>
               </ul>
             </div>
+            <div class="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-4 md:col-span-2">
+              <h3 class="font-semibold text-white flex items-center gap-2"><i class="fa-solid fa-wave-square text-xs text-cyan-400"></i> Homepage Circuito Contínuo (FEAT-015)</h3>
+              <ul class="mt-2 space-y-1.5 text-xs text-slate-300">
+                <li>&bull; No local, a home <code>/</code> já usa esta versão (<code>HomeController::index</code> mostra <code>site/home-circuito-preview</code> com o SEO oficial; a home anterior continua em <code>site/home</code> para voltar). Stage e produção seguem com a home anterior até o deploy. A rota <code>/preview/circuito-continuo</code> continua, com noindex.</li>
+                <li>&bull; Dois canvases WebGL2 fixos: fundo ambiente e o feixe principal, um "rio" de luz que nasce no Hero, serpenteia por trás do conteúdo (desviando de botões e campos) e sai pela base da página.</li>
+                <li>&bull; A fantasia do Echo é escolhida em <code>/admin/echo</code> por ambiente (chave <code>echo_fantasia</code> em <code>configuracoes</code>; lista em <code>config/echo-fantasias.php</code>; FEAT-016).</li>
+                <li>&bull; As camadas compartilham o ciclo de animação, pausam com a aba oculta e degradam para o fundo estático quando WebGL2 não está disponível.</li>
+                <li>&bull; A trajetória completa é preparada antes do primeiro quadro e reutilizada por uma assinatura da geometria da página. Portal, Echo, Hero e feixe começam no mesmo ciclo, sem substituir um caminho provisório após a abertura.</li>
+                <li>&bull; Embora a geometria já esteja pronta, o traçado visual nasce na saída do Hero e avança pela ponta até a rolagem atual. Assim, inclusive após uma recarga no meio ou no rodapé, o feixe percorre a tela em vez de surgir inteiro.</li>
+                <li>&bull; Depois da chegada, o Echo acompanha a seção ativa pelo corredor lateral com movimento amortecido, sem atravessar o conteúdo. Ele reduz de tamanho no celular e se oculta suavemente quando o menu móvel está aberto ou um campo está em edição.</li>
+                <li>&bull; O botão do menu móvel é controlado somente pelo CSS externo: oculto por padrão e visível apenas até 767 px, sem estilos inline ou JavaScript de visibilidade.</li>
+                <li>&bull; Se o navegador perder um contexto WebGL, a página agenda uma única recarga para reconstruir programas e buffers das duas camadas; uma janela de 30 segundos impede recargas em ciclo quando a GPU permanece indisponível.</li>
+              </ul>
+            </div>
           </div>
         </section>
 

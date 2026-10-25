@@ -158,6 +158,7 @@ $rawItems = [
     sidebar_item('/admin/home-e-menus', 'fa-solid fa-diagram-project', 'Home e Menus', 'multi_env_menus'),
     sidebar_item('/admin/usuarios', 'fa-solid fa-user', 'Usuarios', 'multi_env_users'),
     sidebar_item('/admin/configuracoes', 'fa-solid fa-gear', 'Configuracoes', 'multi_env_settings'),
+    sidebar_item('/admin/echo', 'fa-solid fa-robot', 'Fantasia do Echo', 'multi_env_settings'),
     sidebar_item('/admin/health', 'fa-solid fa-heart-pulse', 'Health Check', 'multi_env_health'),
     sidebar_section('Operacional'),
     sidebar_item('/admin/auditoria-geral', 'fa-solid fa-shield-heart', 'Auditoria Geral', 'audit'),

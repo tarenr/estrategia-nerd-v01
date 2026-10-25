@@ -16,7 +16,9 @@ final class HomeController
 {
     public function index(): void
     {
-        View::render('site/home', $this->service()->getViewModel());
+        // Home com o rio de luz (FEAT-015), com o SEO oficial da home. A home
+        // anterior continua em site/home: para voltar, troque a view aqui.
+        View::render('site/home-circuito-preview', $this->service()->getViewModel());
     }
 
     public function heroPreview(): void
@@ -28,6 +30,17 @@ final class HomeController
         $viewModel['structured_data'] = [];
 
         View::render('site/home-hero-preview', $viewModel);
+    }
+
+    public function circuitContinuousPreview(): void
+    {
+        $viewModel = $this->service()->getViewModel();
+        $viewModel['title'] = 'Preview Circuito Contínuo | Estratégia Nerd';
+        $viewModel['canonical_url'] = url('/preview/circuito-continuo');
+        $viewModel['meta_robots'] = 'noindex, nofollow';
+        $viewModel['structured_data'] = [];
+
+        View::render('site/home-circuito-preview', $viewModel);
     }
 
     public function conversionPreview(): void
