@@ -57,7 +57,9 @@ Risco: baixo
 
 Origem validada: local (branch feature/homepage-circuito-continuo)
 Paridade local -> stage: validada (EchoFantasias.php, config/echo-fantasias.php e robo-* idênticos por hash; HomeService = versão da stage + a linha echo_outfit)
-Paridade stage -> pacote: nao validada
+Paridade stage -> pacote: validada (publicado em produção em 25/10/2026 junto com a FEAT-015, Forge #1676)
+Validado producao: sim (home lê a fantasia; sem escolha gravada em produção, vale o padrão Jack. Para
+trocar: admin local, alvo Produção, /admin/echo, digitar PRODUCAO)
 
 Validado local: sim (25/10/2026)
 - Tela renderizada com o alvo em local, stage e produção: lê o banco de cada um sem erro; sem

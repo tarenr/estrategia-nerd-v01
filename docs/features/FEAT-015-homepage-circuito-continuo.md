@@ -221,7 +221,8 @@ Risco: baixo (código isolado na rota de prévia)
 
 Origem validada: local (branch feature/homepage-circuito-continuo)
 Paridade local -> stage: validada (25/10/2026, Forge #1675) - ver "Deploy na stage" abaixo
-Paridade stage -> pacote: nao validada
+Paridade stage -> pacote: validada (13 arquivos tirados da stage e conferidos; site.css = produção + regra do menu, exceção registrada)
+Validado producao: sim (25/10/2026, Forge #1676)
 
 Validado local: parcial (rio conferido em 1920, 1440 e 1280; tablet e celular com encostos pendentes; Echo pela página com o celular pendente, Forge #1666; FPS pendente de medição com o navegador visível)
 Validado stage: sim (25/10/2026)
@@ -246,6 +247,30 @@ Deploy na stage (25/10/2026, Forge #1675, scripts/home-rio-stage-deploy.php):
   e visível de 767 para baixo (home e blog); troca de fantasia pelo admin local com alvo Stage.
 - Pendência encontrada (já existe em produção, não causada por este deploy): em exatamente 768 px o
   botão de menu aparece junto com os links e o cabeçalho fica apertado (o logo é cortado).
+- Correção antes da produção: a versão dos assets (?v=) da view caía em "1" no servidor (procurava só
+  em public/); passou a procurar também a pasta pública acima do _app_core, como o layout. Reenviada
+  à stage (--refresh, com cópia da versão anterior) e conferida.
+
+Deploy em produção (25/10/2026, Forge #1676, scripts/home-rio-production-deploy.php):
+- Commit local c68febd na branch feature/homepage-circuito-continuo, só com esta entrega (nos arquivos
+  com mudanças de outro trabalho, só os trechos desta entrega); sem push. Conferido: 13 dos 14
+  arquivos do pacote idênticos ao commit; o HomeController do commit tem a mais só o método da rota
+  de prévia, que existe apenas no local.
+- Conferência da produção (só leitura): dependências da home iguais às da stage; bootstrap.php
+  difere só no bloco que manda noindex na stage (esperado). site.css da produção difere do que a
+  stage tinha antes: a stage tem a FIX-009 (imagens dos artigos, 12/10), nunca promovida. Por decisão
+  do dono, o site.css foi como versão da PRODUÇÃO + só a regra do botão de menu (a FIX-009 fica para
+  um plano próprio, junto com o PostService.php, que é a outra metade dela).
+- Backup antes: BS-PROD-20261025-211822 (banco, uploads e sistema), verificado como válido; cópia dos
+  4 arquivos trocados em storage/home-rio-deploy/production/before.
+- Pacote: 13 arquivos tirados da stage e conferidos com o manifesto da stage + site.css (produção +
+  menu). Envio com .tmp + rename e hash; HomeController por último. --rollback disponível.
+- Pós-check: home 200 e indexável (sem noindex no cabeçalho e nas metas); título, metas, Open Graph,
+  canonical de produção e 3 blocos ld+json; assets 200 com versão real; blog, categorias, um post,
+  central-nerd, robots.txt e sitemap.xml 200; home com rio, portal e Echo (Jack) em 1920, 1440, 1280,
+  768 e 390; console só com o aviso já existente do Tailwind por CDN; botão de menu igual à stage.
+- Paridade: 13 arquivos idênticos stage = produção; exceção registrada: site.css (FIX-009 só na stage).
+- Banco de produção não alterado (sem fantasia gravada: vale o padrão Jack).
 
 Observacoes:
 - Recuperacao do WebGL (25/10/2026): a perda de contexto de qualquer um dos dois
