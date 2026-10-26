@@ -331,4 +331,80 @@ Observacoes:
   decisão do dono.
 - Rollback da Parte 1: apagar os três arquivos criados e restaurar a view anterior a partir
   de scratch/feat-015-tentativa-anterior/ (ou remover a rota e o método da prévia).
+
+Pendencias de 25/10/2026 (texto original; as correcoes estao em "Reconciliação de 26/10/2026"):
+- Fundo ambiente compartilhado nas paginas publicas que usam o layout do site, exceto login e
+  Home. A Home preserva seus canvases exclusivos (rio, portal e ambiente), sem duplicacao.
+- [Corrigido em 26/10] A versao em Canvas 2D (site-ambient-background.js) foi descartada e
+  removida; stage e producao usam a camada de fundo WebGL2 do site-home-flow.js.
+- Cabecalho conferido em 768 px: navegacao desktop integra, sem menu movel nem overflow.
+  [26/10] A regra 768-1023 px estava so no local, sem commit; foi para a stage em 26/10.
+- Echo passou a usar movimento amortecido continuo e validacao do corredor completo. Textos,
+  titulos, cards, imagens, botoes, links de acao e formularios sao obstaculos; sem espaco livre,
+  ele se oculta suavemente. Varreduras em 1440 e 390 px, a cada 300 px, tiveram zero sobreposicoes.
+  [26/10] Essas varreduras foram so no local; as medicoes da stage estao na reconciliacao.
+- O perfil de smoke da stage registra `/admin` e `/login` como ausentes de forma deliberada e os
+  relata como SKIP, mantendo as verificacoes administrativas completas no ambiente local.
+  [26/10] Passou a conferir o 404 de `/admin` e `/login` (stage e producao) em vez de SKIP.
+- Smoke local: `SMOKE-LOCAL-20261025-233122`, 26 OK, 0 FAIL, 0 SKIP.
+- Producao permaneceu fora do escopo.
 - Tarefa no Forge: [Home Fluxo] - Parte 1: Hero com placa-mãe (#1640).
+
+Reconciliação de 26/10/2026 (Forge #1689 a #1692, #1683, #1685 e #1686):
+- Motivo: auditoria de 26/10 (docs/governanca/RELATORIO-AUDITORIA-2026-10-26.md; correções na seção
+  31). Em 25/10 às 23:43 a produção recebeu layouts/site.php, assets/css/site.css e
+  shared/ambient-background.php sem commit e sem cópia para rollback; o local carregava o motor Canvas
+  2D descartado (site-ambient-background.js, que não achava os elementos e não desenhava nada) e a
+  stage tinha esse arquivo órfão.
+- Fundo das páginas públicas: o componente site/shared/ambient-background põe o canvas .en-flow-bg
+  antes do <main> e o site-home-flow.js desenha nele só a camada de fundo WebGL2. Local e Git ficaram
+  iguais ao publicado; o site.php difere da stage e da produção só no Tailwind (compilado no Git, CDN
+  nos servidores). site-ambient-background.js removido do local e da stage, com cópias em
+  storage/home-pendencias-deploy/stage-20261026 (local-removidos/ e before/).
+- Emendas (opção A, decisão do dono: .circuit-bg e .scanline continuam, como na Home). Saíram a faixa
+  com borda e fundo do filtro e o fundo da grade do /blog, o fundo e a borda de #comentarios no post, o
+  fim escuro do degradê do Hero (blog, post, 404 e post indisponível), o fundo próprio do body e a caixa
+  borrada atrás do Hero da Central Nerd, o backdrop e a grade das páginas de política e termos e o
+  degradê de largura total da newsletter fora da Home (regra .en-flow-bg ~ main no site.css, que não
+  alcança a Home). Ficaram de propósito o fundo do rodapé e o da seção das páginas de política e
+  termos: sem eles, 24 textos perderam mais de 15% de contraste e um ficou abaixo do mínimo AA.
+- Echo (#1666) e cabeçalho 768–1023 px (#1684): código local sem alteração, levado à stage para
+  aprovação visual. A produção continua com a versão anterior de ambos.
+- Debug da stage (#1685): já desligado na prática (rota inexistente devolve a página 404 em HTML; com
+  debug seria texto com URI:). config/app.php sem edição; o padrão `?? true` fica como risco em stage
+  e produção.
+- Smoke: admin_enabled false em stage e produção, com base no public/.htaccess (commit b8bdf8c, igual
+  nos três ambientes), que responde 404 para admin, login e logout no domínio; o smoke confere esse
+  404 em vez de só marcar SKIP.
+- Rollback da produção (#1689): PREPARADO e VALIDADO, NÃO executado. scripts/home-reconciliacao-deploy.php
+  producao --check (só lê a produção) e --sandbox-test (rollback completo, interrupção e retomada, trava
+  de hash, php -l), com cópias e manifesto (SHA-256 completo) em storage/home-pendencias-deploy/production.
+  Antes = site.php do backup BS-PROD-20261025-234355 (o zip não tem public/) e site.css do pacote das
+  21:21 (produção atual = esse arquivo + bloco .en-flow-bg de 9 linhas); o componente não existia e é
+  removido. O --rollback real exige --confirmar.
+- Deploy na stage: o mesmo script, ações stage --check, --backup, --sandbox-test (deploy interrompido,
+  rollback e retomada), --deploy, --verify e --refresh. 9 arquivos enviados e 1 removido, cada escrita
+  com releitura do hash antes, .tmp + rename e conferência; o site.css foi reenviado (--refresh) depois
+  da medição de contraste. Manifesto, cópias, prints e medições em storage/home-pendencias-deploy/stage-20261026.
+- Testes: verify-changes 22 de 23 (as 2 falhas de PHPStan estão em arquivos do Instagram de outro
+  trabalho, sem commit; os arquivos desta entrega passam sem erro); smoke local 26 OK
+  (SMOKE-LOCAL-20261026-145850); smoke stage 8 OK, 0 FAIL, 1 SKIP (SMOKE-STAGE-20261026-145927);
+  stage --verify com as 9 páginas (7 em 200, 2 em 404 HTML) e noindex. Navegador headless (Chrome +
+  protocolo DevTools, sem dependência nova) em 9 páginas x 6 larguras (360, 390, 767, 768, 1024, 1440):
+  canvas ativo, camadas da Home, sem rolagem horizontal, sem erro de console nem recurso falho, antes e
+  depois; estilos da Home iguais antes e depois (a única diferença, z-index 2 num elemento oculto da
+  newsletter, vem do CSS do #1666); contraste medido por pixel em 604 textos, sem texto que ficasse abaixo
+  do AA por causa desta entrega (as variações que sobraram estão dentro do ruído do fundo animado,
+  até 15,9% entre duas medições do mesmo código). Produção conferida por hash no início e no fim:
+  14 arquivos idênticos.
+- Echo medido quadro a quadro na stage (antes = versão de produção; depois = #1666): sobreposição real
+  com títulos, textos e controles caiu de 228–364 quadros por percurso para 0 em todas as larguras; no
+  celular passou a aparecer depois do Hero (antes nunca aparecia); em 360, 390 e 767 px todas as trocas
+  de lado passam por opacidade ≤ 0,05.
+- Pendente de aprovação visual do dono na stage (tarefas #1686 e #1691 abertas): Echo em 768 e 1024 px
+  não sai do portal no Hero (só aparece ao rolar, ~4,7 s); de 768 px para cima, 4 de 8 (768), 7 de 7
+  (1024) e 6 de 7 (1440) trocas de lado caem de 1 para 0,15 de opacidade no mesmo quadro, sem fade
+  gradual; cabeçalho 768–1023 px; páginas públicas sem as emendas. A confirmação em navegador com GPU
+  real não foi feita (o painel do navegador estava oculto e a página fica pausada).
+- Pendente para a produção (plano próprio, depois da aprovação): Echo, cabeçalho, páginas sem emendas,
+  Tailwind compilado x CDN, FIX-009 e o padrão `?? true` do debug.
