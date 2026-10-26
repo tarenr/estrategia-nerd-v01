@@ -131,7 +131,7 @@ $renderHighlightedTitle = static function (string $value): string {
   ]) ?>
 
   <article class="relative pt-32 pb-16 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/10 via-transparent to-slate-950/60"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/10 via-transparent to-transparent"></div>
 
     <header class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <?php if (is_array($post_breadcrumbs ?? null)): ?>
@@ -332,7 +332,7 @@ $renderHighlightedTitle = static function (string $value): string {
     </div>
   </section>
 
-  <section id="comentarios" class="py-16 bg-slate-900/30 border-t border-cyan-500/10">
+  <section id="comentarios" class="py-16">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="font-orbitron text-3xl font-bold text-white mb-8 flex items-center gap-3">
         Comentários

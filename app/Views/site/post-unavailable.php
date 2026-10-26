@@ -39,7 +39,7 @@ $reasonLabel = match ($reason) {
   ]) ?>
 
   <section class="relative pt-32 pb-12 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/10 via-transparent to-slate-950/60"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/10 via-transparent to-transparent"></div>
 
     <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl mx-auto text-center">

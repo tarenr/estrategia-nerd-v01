@@ -1076,8 +1076,9 @@ void main() {
 
     const ctx = canvas.getContext('2d');
 
-    const PAD_X = 1.8;
-    const PAD_Y = 3.4;
+    const PAD_X = 1.05;
+    const PAD_Y = 1.48;
+    const ANCHOR_Y = 0.5;
 
     const T_OPEN = 500;
     const T_HOLE = 900;
@@ -1113,12 +1114,45 @@ void main() {
     let lastIdleAction = '';
     let footerGreeted = false;
     let idleSideOverride = null;
-    let nextIdleSideToggleAt = performance.now() + 5000;
+    let nextIdleSideToggleAt = performance.now() + 7000;
+    let currentSide = 'right';
+    let obstaclesCache = [];
+    let obstaclesDirty = true;
+    let obstaclesAt = 0;
+    let obstaclesScrollY = -1;
+    let lastScrollEventAt = 0;
 
     const follow = {
       x: 0, y: 0, tx: 0, ty: 0, vx: 0, vy: 0,
       scale: 1, opacity: 1,
     };
+
+    const OBSTACLE_SELECTOR = 'h1, h2, h3, h4, p, button, a[class*="px-"][class*="py-"], a[class*="btn"], .site-nav-cta, .site-primary-btn, .site-secondary-btn, .site-footer-social-badge, input, textarea, select, form, .site-nav, .nerd-card, .site-preview-post-card, article, figure, img';
+
+    function getObstacles(now = performance.now()) {
+      const sy = Math.round(window.scrollY);
+      const ttl = now - lastScrollEventAt < 500 ? 30 : 250;
+      if (!obstaclesDirty && sy === obstaclesScrollY && now - obstaclesAt < ttl) {
+        return obstaclesCache;
+      }
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const list = [];
+      const nodes = document.querySelectorAll(OBSTACLE_SELECTOR);
+      for (let i = 0; i < nodes.length; i += 1) {
+        const el = nodes[i];
+        const st = getComputedStyle(el);
+        if (st.display === 'none' || st.visibility === 'hidden' || parseFloat(st.opacity) < 0.05) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2 || r.right <= 0 || r.left >= vw || r.bottom <= 0 || r.top >= vh) continue;
+        list.push({ l: r.left, t: r.top, r: r.right, b: r.bottom, isNav: el.classList.contains('site-nav') });
+      }
+      obstaclesCache = list;
+      obstaclesDirty = false;
+      obstaclesAt = now;
+      obstaclesScrollY = sy;
+      return list;
+    }
 
     // Mapeamento dinâmico de seções e lados para travessia por trás das imagens
     const SECTION_CONFIGS = [
@@ -1162,10 +1196,10 @@ void main() {
       return {
         x: nozzle,
         y: 2 + Math.random() * 4,
-        vy: 105 + Math.random() * 85, // velocidade cadente suave
+        vy: 95 + Math.random() * 65, // velocidade cadente suave dentro do canvas compacto
         char: MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)],
         life: 0,
-        maxLife: 0.68 + Math.random() * 0.42,
+        maxLife: 0.46 + Math.random() * 0.24,
         size: 13 + Math.random() * 3.5, // tamanho nítido e legível
       };
     }
@@ -1180,7 +1214,7 @@ void main() {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const k = (size * dpr) / 280;
       const offX = (canvas.width - 280 * k) / 2;
-      const offY = (canvas.height * 0.36 - 280 * k / 2);
+      const offY = (canvas.height * 0.42 - 280 * k / 2);
 
       // Entra no espaço 280x280 do robô
       ctx.setTransform(k, 0, 0, k, offX, offY);
@@ -1268,13 +1302,23 @@ void main() {
       const narrow = heroRect.width < 768;
       size = narrow ? 104 : Math.round(Math.min(210, Math.max(150, heroRect.width * 0.13)));
       const blocked = blockedRects(heroRect);
-      const gap = 16;
+      const gap = 8;
+      const canvasHalf = size * 0.9;
       const free = (cx, cy, half) => {
-        const box = { l: cx - half - gap, t: cy - half - gap, r: cx + half + gap, b: cy + half + gap };
-        if (box.l < 0 || box.r > heroRect.width || box.t < 72 || box.b > heroRect.height) return false;
+        const h = Math.max(half, canvasHalf);
+        const box = { l: cx - h - gap, t: cy - h - gap, r: cx + h + gap, b: cy + h + gap };
+        if (box.l < -24 || box.r > heroRect.width + 24 || box.t < 72 || box.b > heroRect.height) return false;
         return !blocked.some((o) => box.l < o.r && box.r > o.l && box.t < o.b && box.b > o.t);
       };
-      const spots = (narrow ? SPOTS.narrow : SPOTS.wide).map(([fx, fy]) => ({ x: fx * heroRect.width, y: fy * heroRect.height }));
+      const baseSpots = (narrow ? SPOTS.narrow : SPOTS.wide).map(([fx, fy]) => ({ x: fx * heroRect.width, y: fy * heroRect.height }));
+      const spots = [];
+      baseSpots.forEach((p) => {
+        [0, 16, 28, 40, -16].forEach((dx) => {
+          [0, -24, 24, -48].forEach((dy) => {
+            spots.push({ x: p.x + (p.x > heroRect.width * 0.5 ? dx : -dx), y: p.y + dy });
+          });
+        });
+      });
       const withPortal = spots.find((p) => free(p.x, p.y, size * PORTAL_REACH));
       const spot = withPortal || spots.find((p) => free(p.x, p.y, size / 2));
       shown = !!spot;
@@ -1317,33 +1361,112 @@ void main() {
       canvas.style.height = `${cssH}px`;
       const k = (size * dpr) / 280;
       const offX = (canvas.width - 280 * k) / 2;
-      const offY = (canvas.height * 0.36 - 280 * k / 2);
+      const offY = (canvas.height * 0.42 - 280 * k / 2);
       ctx.setTransform(k, 0, 0, k, offX, offY);
+    }
+
+    function boxOverlaps(cx, cy, bw, bh, obstacles, pad) {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const l = cx - bw * 0.5;
+      const r = cx + bw * 0.5;
+      const t = cy - bh * ANCHOR_Y;
+      const b = cy + bh * (1 - ANCHOR_Y);
+      if (l < 4 || r > vw - 4 || t < 68 || b > vh - 6) return true;
+      for (let i = 0; i < obstacles.length; i += 1) {
+        const o = obstacles[i];
+        if (l < o.r + pad && r > o.l - pad && t < o.b + pad && b > o.t - pad) return true;
+      }
+      return false;
+    }
+
+    function findBestFollowSpot(preferredSide, obstacles, narrow, verticalPref, allowOtherSide = true) {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const pad = narrow ? 12 : 6;
+      const sizes = narrow ? [64, 54] : [96, 84, 72];
+      const sides = allowOtherSide
+        ? [preferredSide, preferredSide === 'left' ? 'right' : 'left']
+        : [preferredSide];
+      const idealY = vh * (narrow ? 0.74 : verticalPref);
+
+      for (let sIdx = 0; sIdx < sides.length; sIdx += 1) {
+        const side = sides[sIdx];
+        for (let zIdx = 0; zIdx < sizes.length; zIdx += 1) {
+          const candSize = sizes[zIdx];
+          const bw = candSize * PAD_X;
+          const bh = candSize * PAD_Y;
+          const halfW = bw * 0.5;
+          const offsets = narrow
+            ? [halfW + 6, halfW + 16, halfW + 30]
+            : [halfW + 18, halfW + 8, halfW + 34];
+          const minY = Math.ceil(72 + bh * ANCHOR_Y);
+          const maxY = Math.floor(vh - 8 - bh * (1 - ANCHOR_Y));
+          let best = null;
+          let bestScore = Infinity;
+
+          for (let oIdx = 0; oIdx < offsets.length; oIdx += 1) {
+            const cx = side === 'left' ? offsets[oIdx] : (vw - offsets[oIdx]);
+            for (let cy = minY; cy <= maxY; cy += 16) {
+              if (boxOverlaps(cx, cy, bw, bh, obstacles, pad)) continue;
+              const distCurrent = (!canvas.hidden && follow.opacity > 0.1 && side === currentSide)
+                ? Math.abs(cy - follow.y) * 0.65 + Math.abs(cy - idealY) * 0.35
+                : Math.abs(cy - idealY);
+              const score = distCurrent + oIdx * 8;
+              if (score < bestScore) {
+                bestScore = score;
+                best = { x: cx, y: cy, size: candSize, side, bw, bh };
+              }
+            }
+          }
+          if (best) return best;
+        }
+      }
+      return null;
+    }
+
+    function pathIsClear(fromX, fromY, spot, obstacles) {
+      const steps = 18;
+      for (let step = 1; step <= steps; step += 1) {
+        const progress = step / steps;
+        const x = fromX + (spot.x - fromX) * progress;
+        const y = fromY + (spot.y - fromY) * progress;
+        if (boxOverlaps(x, y, spot.bw, spot.bh, obstacles, 4)) return false;
+      }
+      return true;
     }
 
     function enterFollowMode(snap = false) {
       if (following) return;
       following = true;
+      const narrow = window.innerWidth < 768;
+      if (!size) size = narrow ? 104 : Math.round(Math.min(210, Math.max(150, window.innerWidth * 0.13)));
       const r = canvas.getBoundingClientRect();
-      follow.x = r.left + r.width / 2;
-      follow.y = r.top + r.height / 2;
-      follow.scale = 1;
+      follow.x = r.width > 0 ? r.left + r.width / 2 : window.innerWidth - (narrow ? 44 : 76);
+      follow.y = r.height > 0 ? r.top + r.height / 2 : window.innerHeight * 0.4;
+      const followTargetScale = (narrow ? 64 : 96) / Math.max(1, size);
+      // No desktop, preserve a escala cheia da chegada para que a transicao ao
+      // modo de acompanhamento encolha o Echo de forma visivel e continua.
+      follow.scale = narrow ? followTargetScale : 1;
+      if (narrow || snap) {
+        follow.opacity = 0;
+        follow.scale *= 0.25;
+      }
 
       sizeCanvas();
 
-      // Mantém o canvas dentro do container da página para z-index perfeito (passar atrás das imagens)
+      // Move para o container da página (<main>) para sair do stacking context isolado do Hero
+      if (hero.parentElement && canvas.parentElement !== hero.parentElement) {
+        hero.parentElement.appendChild(canvas);
+      }
       canvas.classList.add('is-following');
       canvas.style.left = '0';
       canvas.style.top = '0';
 
       equipOutfit();
       scheduleIdle();
-
-      if (snap) {
-        const narrow = window.innerWidth < 768;
-        follow.x = window.innerWidth - (narrow ? 44 : 76);
-        follow.y = window.innerHeight * 0.4;
-      }
+      obstaclesDirty = true;
+      updateFollow(0.016);
     }
 
     function scheduleIdle(now = performance.now()) {
@@ -1366,43 +1489,103 @@ void main() {
     function updateFollow(dt) {
       if (!following) return;
       const narrow = window.innerWidth < 768;
-      const baseScale = (narrow ? 82 : 124) / Math.max(1, size);
+      const now = performance.now();
 
       // Decaimento suave da inércia da rolagem
       scrollInertia *= Math.exp(-4.2 * dt);
 
-      // Identifica a seção ativa e alterna o lado se o usuário ficar parado lendo por > 5s
+      const mobileMenuEl = document.getElementById('siteMobileMenu');
+      const menuOpen = narrow && (
+        !!document.querySelector('[data-site-menu-toggle][aria-expanded="true"]') ||
+        (mobileMenuEl && !mobileMenuEl.hidden)
+      );
+      const activeTag = document.activeElement && document.activeElement.tagName;
+      const editing = /^(INPUT|TEXTAREA|SELECT)$/.test(activeTag || '');
+      const heroRect = hero.getBoundingClientRect();
+      const inMobileHero = narrow && heroRect.bottom > window.innerHeight * 0.35;
+
+      const obstacles = getObstacles(now);
+      const curSize = Math.max(1, follow.scale * size);
+      const curBw = curSize * PAD_X;
+      const curBh = curSize * PAD_Y;
+      const curCollides = boxOverlaps(follow.x, follow.y, curBw, curBh, obstacles, 2);
+
+      if (menuOpen || editing || inMobileHero) {
+        follow.opacity = 0;
+        canvas.style.opacity = '0';
+        canvas.hidden = true;
+        return;
+      }
+
       const active = getActiveTarget();
-      const now = performance.now();
       if (now >= nextIdleSideToggleAt) {
         idleSideOverride = (idleSideOverride || active.side) === 'left' ? 'right' : 'left';
         nextIdleSideToggleAt = now + 7000;
       }
-      const side = idleSideOverride || active.side;
+      const requestedSide = idleSideOverride || active.side;
+      // No celular, manter o canto atual evita travessias sobre uma coluna de
+      // texto que ocupa quase toda a largura. O movimento continua vertical.
+      const preferredSide = narrow && !canvas.hidden ? currentSide : requestedSide;
+      const preferredSpot = findBestFollowSpot(preferredSide, obstacles, narrow, active.vertical, false);
+      let spot = preferredSpot;
 
-      const currentSize = narrow ? 82 : 124;
-      const halfW = (currentSize * PAD_X) / 2;
-      const margin = halfW + (narrow ? 12 : 28);
+      // Troca de lado apenas quando todo o corredor esta livre. Enquanto houver
+      // texto ou controle no caminho, o Echo continua flutuando no lado atual.
+      if (!canvas.hidden && follow.opacity > 0.03 && preferredSide !== currentSide) {
+        const canCross = preferredSpot !== null && pathIsClear(follow.x, follow.y, preferredSpot, obstacles);
+        if (!canCross) {
+          spot = findBestFollowSpot(currentSide, obstacles, narrow, active.vertical, false);
+        }
+      }
 
-      let targetX = side === 'left' ? margin : (window.innerWidth - margin);
+      if (!spot) {
+        if (curCollides) {
+          follow.opacity = 0;
+        } else {
+          follow.opacity = Math.max(0, follow.opacity - dt * 6);
+        }
+        if (follow.opacity <= 0.03) {
+          follow.opacity = 0;
+          canvas.style.opacity = '0';
+          canvas.hidden = true;
+        } else {
+          canvas.style.opacity = String(follow.opacity);
+        }
+        return;
+      }
 
-      // Altitude de flutuação confortável + inércia ao rolar
-      const baseAltitude = window.innerHeight * (narrow ? 0.38 : active.vertical);
-      const bob = Math.sin(performance.now() * 0.0022) * 5;
-      const targetY = baseAltitude + bob + scrollInertia;
+      const targetScale = spot.size / Math.max(1, size);
 
-      follow.tx = targetX;
-      follow.ty = targetY;
+      // Se estava oculto, posiciona direto no lugar livre e surge suavemente (crescendo no mobile)
+      if (canvas.hidden || follow.opacity <= 0.03) {
+        follow.x = spot.x;
+        follow.y = spot.y;
+        follow.tx = spot.x;
+        follow.ty = spot.y;
+        follow.vx = 0;
+        follow.vy = 0;
+        currentSide = spot.side;
+        if (narrow && follow.scale < targetScale * 0.4) {
+          follow.scale = targetScale * 0.28;
+        } else if (!narrow) {
+          follow.scale = targetScale;
+        }
+        canvas.hidden = false;
+      }
 
-      // Movimento horizontal ágil e fluido (~420 px/s): cruza a tela em ~2 segundos de forma nítida
+      const bob = Math.sin(now * 0.0022) * 3;
+      const bobY = !boxOverlaps(spot.x, spot.y + bob, spot.bw, spot.bh, obstacles, narrow ? 4 : 6) ? spot.y + bob : spot.y;
+      follow.tx = spot.x;
+      follow.ty = bobY;
+
+      // Preserva a travessia flutuante da versao publicada: mudar de lado altera
+      // apenas o alvo, sem fade, salto ou reposicionamento instantaneo.
       const springX = 3.2;
       const dampingX = Math.exp(-3.4 * dt);
       follow.vx = (follow.vx + (follow.tx - follow.x) * springX * dt) * dampingX;
       if (Math.abs(follow.vx) > 420) {
         follow.vx = Math.sign(follow.vx) * 420;
       }
-
-      // Vertical responsiva à rolagem da página
       const springY = 7.5;
       const dampingY = Math.exp(-5.5 * dt);
       follow.vy = (follow.vy + (follow.ty - follow.y) * springY * dt) * dampingY;
@@ -1410,28 +1593,48 @@ void main() {
         follow.vy = Math.sign(follow.vy) * 550;
       }
 
-      follow.x += follow.vx * dt;
-      follow.y += follow.vy * dt;
+      const nextX = follow.x + follow.vx * dt;
+      const nextY = follow.y + follow.vy * dt;
+      const nextScale = follow.scale + (targetScale - follow.scale) * (1 - Math.exp(-6.5 * dt));
+      const nextSize = Math.max(1, nextScale * size);
+      if (boxOverlaps(nextX, nextY, nextSize * PAD_X, nextSize * PAD_Y, obstacles, 2)) {
+        follow.vx = 0;
+        follow.vy = 0;
+        follow.opacity = Math.max(0, follow.opacity - dt * 6);
+        canvas.style.opacity = String(follow.opacity);
+        if (follow.opacity <= 0.03) canvas.hidden = true;
+        return;
+      }
+      follow.x = nextX;
+      follow.y = nextY;
+      follow.scale = nextScale;
+      if (Math.abs(follow.x - spot.x) < 3) {
+        currentSide = spot.side;
+      }
 
-      // TRAVA DE SEGURANÇA ABSOLUTA DE VIEWPORT (o canvas inteiro fica 100% dentro da janela)
-      const minX = halfW + (narrow ? 8 : 16);
-      const maxX = window.innerWidth - halfW - (narrow ? 8 : 16);
-      const minY = 80;
-      const maxY = window.innerHeight - (narrow ? 90 : 130);
-
-      follow.x = Math.max(minX, Math.min(maxX, follow.x));
-      follow.y = Math.max(minY, Math.min(maxY, follow.y));
-
-      follow.scale += (baseScale - follow.scale) * (1 - Math.exp(-3.5 * dt));
-
-      // Visibilidade no mobile (menu aberto ou campo em foco)
-      const menuOpen = narrow && document.querySelector('[data-site-menu-toggle][aria-expanded="true"]');
-      const editing = narrow && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName);
-      const targetOpacity = menuOpen || editing ? 0 : 1;
-      follow.opacity += (targetOpacity - follow.opacity) * (1 - Math.exp(-8 * dt));
-
+      canvas.hidden = false;
+      follow.opacity = Math.min(1, follow.opacity + (1 - follow.opacity) * (1 - Math.exp(-7.5 * dt)) + 0.02);
       canvas.style.opacity = String(follow.opacity);
-      canvas.style.transform = `translate3d(${follow.x}px, ${follow.y}px, 0) translate(-50%, -36%) scale(${follow.scale})`;
+      canvas.style.transform = `translate3d(${follow.x}px, ${follow.y}px, 0) translate(-50%, -${ANCHOR_Y * 100}%) scale(${follow.scale})`;
+
+      // A geometria real do canvas e a autoridade final. Fontes responsivas e
+      // arredondamentos podem diferir alguns pixels do modelo usado na busca.
+      const rendered = canvas.getBoundingClientRect();
+      for (let index = 0; index < obstacles.length; index += 1) {
+        const obstacle = obstacles[index];
+        if (
+          rendered.left < obstacle.r + (narrow ? 8 : 2) &&
+          rendered.right > obstacle.l - (narrow ? 8 : 2) &&
+          rendered.top < obstacle.b + (narrow ? 8 : 2) &&
+          rendered.bottom > obstacle.t - (narrow ? 8 : 2)
+        ) {
+          follow.opacity = 0;
+          canvas.style.opacity = '0';
+          canvas.hidden = true;
+          break;
+        }
+      }
+
     }
 
     function render(dt, boost) {
@@ -1593,15 +1796,39 @@ void main() {
       mouseAt = performance.now();
     }, { passive: true });
 
+    document.addEventListener('focusin', () => { if (following) updateFollow(0.016); });
+    document.addEventListener('focusout', () => { if (following) updateFollow(0.016); });
+
     window.addEventListener('scroll', () => {
       const currentY = window.scrollY;
       const delta = currentY - lastScrollY;
       lastScrollY = currentY;
+      obstaclesDirty = true;
+      lastScrollEventAt = performance.now();
 
       scrollSpeed = delta;
       scrollInertia = Math.max(-120, Math.min(180, scrollInertia * 0.6 + delta * 2.5));
       idleSideOverride = null;
-      nextIdleSideToggleAt = performance.now() + 5000;
+      nextIdleSideToggleAt = performance.now() + 7000;
+
+      if (!following) {
+        const narrow = window.innerWidth < 768;
+        if (narrow) {
+          if (hero.getBoundingClientRect().bottom <= window.innerHeight * 0.35) {
+            arrived = true;
+            shown = true;
+            if (portalCanvas) portalCanvas.hidden = true;
+            enterFollowMode(true);
+          }
+        } else if (currentY > 40) {
+          arrived = true;
+          shown = true;
+          if (portalCanvas) portalCanvas.hidden = true;
+          enterFollowMode(false);
+        }
+      } else {
+        updateFollow(0.016);
+      }
 
       if (Math.abs(delta) > 3) {
         navigationLookY = delta > 0 ? 1 : -1;
@@ -1660,25 +1887,49 @@ void main() {
 
     return {
       resize() {
-        if (!following) place();
+        obstaclesDirty = true;
+        if (!following) {
+          place();
+        } else {
+          sizeCanvas();
+          updateFollow(0.016);
+        }
       },
       frame(dt) {
-        if (!shown) return;
+        if (!shown && !following) {
+          if (window.innerWidth < 768 && hero.getBoundingClientRect().bottom <= window.innerHeight * 0.35) {
+            arrived = true;
+            shown = true;
+            if (portalCanvas) portalCanvas.hidden = true;
+            enterFollowMode(true);
+          } else {
+            return;
+          }
+        }
         const now = performance.now();
         arrival(now);
         updateFollow(dt);
+        if (canvas.hidden) return;
         steer(now);
         animateIdle(now);
         const boost = 1.0 + Math.min(1.6, Math.abs(scrollInertia) / 70);
         render(dt, boost);
       },
       still() {
+        obstaclesDirty = true;
+        if (window.innerWidth < 768 && hero.getBoundingClientRect().bottom > window.innerHeight * 0.35) {
+          canvas.hidden = true;
+          if (portalCanvas) portalCanvas.hidden = true;
+          return;
+        }
         if (!shown) return;
         arrived = true;
         if (portalCanvas) portalCanvas.hidden = true;
         enterFollowMode(true);
-        canvas.style.opacity = '1';
-        render(0.016, 1.0);
+        if (!canvas.hidden) {
+          canvas.style.opacity = '1';
+          render(0.016, 1.0);
+        }
       },
     };
   }

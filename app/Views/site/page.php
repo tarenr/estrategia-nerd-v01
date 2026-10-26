@@ -67,8 +67,6 @@ $contactHref = $siteEmail !== '' ? 'mailto:' . $siteEmail : url('/') . '#newslet
   ]) ?>
 
   <section class="site-about-section min-h-screen py-28 pt-36 relative overflow-hidden">
-    <div class="site-about-backdrop" aria-hidden="true"></div>
-    <div class="site-about-grid" aria-hidden="true"></div>
 
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <header class="mb-12">

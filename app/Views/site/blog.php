@@ -134,7 +134,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $i
   ]) ?>
 
   <section class="relative pt-32 pb-20 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/10 via-transparent to-slate-900/50"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/10 via-transparent to-transparent"></div>
 
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <div class="mb-6 inline-block">
@@ -185,7 +185,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $i
     </div>
   </section>
 
-  <section class="py-8 border-y border-cyan-500/10 bg-slate-900/30">
+  <section class="py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex flex-wrap justify-center gap-3 blog-filter-list" id="category-filters">
         <a href="<?= htmlspecialchars($buildBlogUrl(['categoria' => null, 'page' => null]), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="filter-btn <?= $activeCategory === '' || $activeCategory === 'all' ? 'active bg-cyan-500/20 text-white' : 'text-gray-300' ?> px-6 py-2 rounded-full text-sm font-medium">Todos</a>
@@ -253,7 +253,7 @@ $buildBlogUrl = static function (array $extra = []) use ($q, $activeCategory, $i
     </section>
   <?php endif; ?>
 
-  <section class="py-16 bg-slate-900/30">
+  <section class="py-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <?php if ($posts !== []): ?>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 site-blog-post-grid" id="posts-grid">

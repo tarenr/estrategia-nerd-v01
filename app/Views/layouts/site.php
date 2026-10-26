@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Support\Auth;
 use App\Support\Csrf;
+use App\Support\View;
 
 $title = (string) ($title ?? (string) portal_config('meta_title_padrao', 'Estrategia Nerd'));
 $metaDescription = (string) ($meta_description ?? (string) portal_config('meta_description_padrao', portal_config('descricao_site', 'Estrategia Nerd')));
@@ -33,6 +34,10 @@ $siteJsCandidates = [
     dirname(__DIR__, 3) . '/public/assets/js/site-home.js',
     dirname(__DIR__, 4) . '/assets/js/site-home.js',
 ];
+$siteAmbientJsCandidates = [
+    dirname(__DIR__, 3) . '/public/assets/js/site-home-flow.js',
+    dirname(__DIR__, 4) . '/assets/js/site-home-flow.js',
+];
 $siteCssPath = '';
 foreach ($siteCssCandidates as $candidate) {
     if (is_file($candidate)) {
@@ -47,6 +52,13 @@ foreach ($siteJsCandidates as $candidate) {
         break;
     }
 }
+$siteAmbientJsPath = '';
+foreach ($siteAmbientJsCandidates as $candidate) {
+    if (is_file($candidate)) {
+        $siteAmbientJsPath = $candidate;
+        break;
+    }
+}
 $assetVersion = static function (string $path): string {
     if ($path === '' || !is_file($path)) {
         return '1';
@@ -57,6 +69,7 @@ $assetVersion = static function (string $path): string {
 
 $siteCssVersion = $assetVersion($siteCssPath);
 $siteHomeJsVersion = $assetVersion($siteHomeJsPath);
+$siteAmbientJsVersion = $assetVersion($siteAmbientJsPath);
 $brandLogo = (string) portal_config('logo_url', '');
 $brandSymbol = (string) portal_config('brand_symbol_url', '');
 $brandFavicon = (string) portal_config('favicon_url', '');
@@ -143,6 +156,9 @@ $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
 </head>
 
 <body class="bg-slate-950 text-slate-100 <?= htmlspecialchars($bodyClass, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+  <?php if (!$isLogin && !$homePage): ?>
+    <?= View::component('site/shared/ambient-background') ?>
+  <?php endif; ?>
   <?php if ($showSiteChrome): ?>
     <header class="border-b border-slate-800/70 bg-slate-950/70 backdrop-blur">
       <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -185,6 +201,9 @@ $siteName = (string) portal_config('nome_site', 'Estrategia Nerd');
   <?php endif; ?>
   <?php if (!$isLogin): ?>
     <script src="<?= url('/assets/js/site-home.js?v=' . $siteHomeJsVersion) ?>" defer></script>
+  <?php endif; ?>
+  <?php if (!$isLogin && !$homePage): ?>
+    <script src="<?= url('/assets/js/site-home-flow.js?v=' . $siteAmbientJsVersion) ?>" defer></script>
   <?php endif; ?>
 </body>
 </html>

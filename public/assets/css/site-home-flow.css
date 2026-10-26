@@ -80,6 +80,7 @@
 }
 
 .en-flow-hero__title {
+  width: fit-content;
   margin: 0 auto 1.1rem;
   font-weight: 900;
   line-height: 1.02;
@@ -253,6 +254,16 @@
 .site-home-hero-preview-page .site-preview-topics-band,
 .site-home-hero-preview-page .site-about-card,
 .site-home-hero-preview-page .site-footer {
+  position: relative;
+  z-index: 2;
+}
+
+/* O Echo continua visivel nos vazios entre os blocos, mas cruza por tras de
+   titulos, textos e controles de cada secao em desktop e celular. */
+.site-home-hero-preview-page #sobre > *,
+.site-home-hero-preview-page #blog > .max-w-7xl,
+.site-home-hero-preview-page #instagram-feed > *,
+.site-home-hero-preview-page #newsletter > * {
   position: relative;
   z-index: 2;
 }

@@ -46,11 +46,19 @@ final class SmokeTestService
             $tests[] = $this->skip('assets', 'Asset principal', 'Nenhum asset principal encontrado no HTML da home.');
         }
 
-        $admin = $this->checkHttp($tests, 'admin', 'Entrada do admin', $baseUrl . '/admin', [200, 302], []);
-        if ($this->hasAdminCredentials()) {
-            $this->checkAdminLoginLogout($tests, $baseUrl, $environment);
+        $adminEnabled = (bool) ($profile['admin_enabled'] ?? true);
+        if (!$adminEnabled) {
+            // Bloqueio intencional do public/.htaccess (admin, login e logout so no local): confere que segue ativo.
+            $this->checkHttp($tests, 'admin', 'Bloqueio do admin (404 esperado)', $baseUrl . '/admin', [404], []);
+            $this->checkHttp($tests, 'admin', 'Bloqueio do login (404 esperado)', $baseUrl . '/login', [404], []);
+            $tests[] = $this->skip('admin', 'Login e logout do admin', 'Login deliberadamente ausente neste ambiente.');
         } else {
-            $tests[] = $this->skip('admin', 'Login e logout do admin', 'Credenciais SMOKE_ADMIN_USER e SMOKE_ADMIN_PASSWORD nao configuradas.');
+            $this->checkHttp($tests, 'admin', 'Entrada do admin', $baseUrl . '/admin', [200, 302], []);
+            if ($this->hasAdminCredentials()) {
+                $this->checkAdminLoginLogout($tests, $baseUrl, $environment);
+            } else {
+                $tests[] = $this->skip('admin', 'Login e logout do admin', 'Credenciais SMOKE_ADMIN_USER e SMOKE_ADMIN_PASSWORD nao configuradas.');
+            }
         }
 
         $summary = $this->summarize($tests);

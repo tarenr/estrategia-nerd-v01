@@ -89,6 +89,23 @@ body {
   animation: circuitMove 24s linear infinite;
 }
 
+.en-flow-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* Paginas publicas com o fundo ambiente compartilhado (canvas .en-flow-bg do layout, antes do
+   <main>; a Home tem o canvas dentro do <main> e regras proprias): sem o degrade de largura
+   total da newsletter, como na Home. O rodape e a secao das paginas institucionais mantem o
+   fundo: sem ele o contraste dos textos caiu mais de 15% (medido em 26/10/2026). */
+.en-flow-bg ~ main #newsletter > .absolute.inset-0 {
+  display: none;
+}
+
 .scanline {
   position: fixed;
   inset: 0;
@@ -97,6 +114,12 @@ body {
   pointer-events: none;
   z-index: 40;
   opacity: 0.25;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circuit-bg {
+    animation: none;
+  }
 }
 
 .site-grid-fade {
@@ -2430,13 +2453,6 @@ body {
   box-shadow: 0 18px 42px rgba(0, 212, 255, 0.16);
 }
 
-.central-nerd-body {
-  background:
-    radial-gradient(circle at top center, rgba(34, 211, 238, 0.16), transparent 30%),
-    radial-gradient(circle at 80% 18%, rgba(59, 130, 246, 0.15), transparent 26%),
-    linear-gradient(180deg, #10111b 0%, #161722 100%);
-}
-
 .central-shell {
   width: min(100%, 34rem);
   margin: 0 auto;
@@ -2446,18 +2462,6 @@ body {
 .central-hero {
   position: relative;
   margin-bottom: 1.75rem;
-}
-
-.central-hero-backdrop {
-  position: absolute;
-  inset: 0;
-  border-radius: 2rem;
-  background:
-    radial-gradient(circle at top center, rgba(14, 165, 233, 0.22), transparent 38%),
-    radial-gradient(circle at 82% 18%, rgba(59, 130, 246, 0.16), transparent 24%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(17, 24, 39, 0.78) 100%);
-  filter: blur(24px);
-  opacity: 0.9;
 }
 
 .central-hero-panel {
@@ -4011,7 +4015,38 @@ body {
   min-width: 0 !important;
 }
 
-@media (max-width: 768px) {
+@media (min-width: 768px) and (max-width: 1023px) {
+  .site-brand-link {
+    flex: 0 0 auto;
+  }
+
+  .site-nav .site-brand-orb {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .site-nav .site-brand-title {
+    font-size: 1.18rem;
+    letter-spacing: 0.025em;
+  }
+
+  .site-nav .site-brand-kicker {
+    font-size: 0.64rem;
+    letter-spacing: 0.16em;
+  }
+
+  .site-nav-inner > .md\:flex {
+    gap: 1.1rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+  }
+
+  .site-nav .site-nav-cta {
+    padding: 0.65rem 1.1rem;
+  }
+}
+
+@media (max-width: 767px) {
   .site-brand-orb,
   .site-footer-orb {
     width: 2.8rem;
@@ -4033,7 +4068,7 @@ body {
     right: 0;
     transform: translateY(-50%);
     margin-left: 0;
-    display: inline-flex !important;
+    display: inline-flex;
     z-index: 2;
   }
 
@@ -4041,6 +4076,9 @@ body {
     max-width: calc(100% - 3.9rem);
     padding-right: 3.9rem;
   }
+}
+
+@media (max-width: 768px) {
 
   .post-category-pill,
   .reading-badge {

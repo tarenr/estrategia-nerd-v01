@@ -44,7 +44,6 @@ $quickLinks = is_array($central_quick_links ?? null) ? $central_quick_links : []
 
   <main class="central-shell">
     <section class="central-hero">
-      <div class="central-hero-backdrop" aria-hidden="true"></div>
       <div class="central-hero-panel" data-reveal>
         <div class="central-hero-logo-wrap">
           <img src="<?= htmlspecialchars($brandLogo, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?= htmlspecialchars($siteName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="central-hero-logo">

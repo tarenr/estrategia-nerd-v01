@@ -12,13 +12,17 @@ return [
             'label' => 'Local',
             'base_url' => (string) ($_ENV['SMOKE_LOCAL_URL'] ?? ($appUrl !== '' ? $appUrl : 'http://localhost/estrategia-nerd/public')),
         ],
+        // admin_enabled false: public/.htaccess responde 404 para admin, login e logout no dominio
+        // estrategianerd.com.br (commit b8bdf8c); o smoke confere esse 404 em vez de testar o login.
         'stage' => [
             'label' => 'Stage',
             'base_url' => (string) ($_ENV['SMOKE_STAGE_URL'] ?? 'https://estrategianerd.com.br/stage'),
+            'admin_enabled' => false,
         ],
         'production' => [
             'label' => 'Producao',
             'base_url' => (string) ($_ENV['SMOKE_PRODUCTION_URL'] ?? 'https://estrategianerd.com.br'),
+            'admin_enabled' => false,
         ],
     ],
     'admin' => [
