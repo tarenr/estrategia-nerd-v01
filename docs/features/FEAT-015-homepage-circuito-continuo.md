@@ -476,3 +476,42 @@ Correção do Echo (#1666) — 26/10/2026 (Forge #1693, #1694 e #1695):
   Medições e prints em storage/home-pendencias-deploy/stage-20261026/echo-correcao. Produção sem alteração
   (14 arquivos conferidos por hash no início e no fim).
 - Pendente: aprovação visual do dono na stage (#1693, #1694, #1686 e #1691 abertas); produção (#1687).
+
+Pendente: Echo teletransporta na stage e no local (27/10/2026, Forge #1697):
+- O que o dono viu: na stage e no local o Echo "teletransporta"; a produção é a única certa.
+- Causa (medida com Chrome usando a GPU real, RTX 3050, e roda do mouse real; 1920, 1440 e 1366 px):
+  desde o #1666 o Echo desvia de obstáculos escondendo-se e reaparecendo em outro lugar. Com a
+  correção de 26/10 isso passou a ser com fade (apaga ~280 ms parado, 1 quadro invisível, acende
+  ~300 ms), mas o lugar novo costuma ser o outro lado da tela: em 1920 px, 6 de 7 trocas de lugar
+  foram para o lado oposto (~1780 px, ~240 ms invisível). As trocas vêm de SECTION_CONFIGS (cada
+  seção da Home tem um lado) e da troca ociosa a cada 7 s (idleSideOverride).
+- Produção (site-home-flow.js b3e20040, createEchoLayer): o Echo fica sempre visível, flutua a uma
+  altura fixa da tela com inércia da rolagem e troca de lado voando (mola de até 420 px/s, ~1–2 s
+  atravessando), sem desviar de nada. Medido com GPU real e o JS/CSS da produção servidos no local:
+  0 saltos, todas as trocas voando, mas 119 (1920 px) e 200 (1440 px) quadros desenhado por cima dos
+  textos das seções. Com o mesmo JS e o CSS atual (regras z-index 2 do #1666 no conteúdo de Sobre,
+  Blog, Instagram e Newsletter): 0 saltos, trocas voando e 0 sobreposição real em 1920, 1440, 1366 e
+  767 px; o Echo fica atrás do conteúdo em 47% (1920 px) a 97% (1366 px) dos quadros. A produção
+  não mostra o Echo no celular nem em 768–1024 px (frame() só anima se coube o portal).
+- Correção proposta (não executada): voltar o código do Echo ao da produção (movimento, tamanho,
+  rastro da propulsão e trocas de lado) e manter só: o portal com tamanhos menores em 768–1153 px
+  (place()), o Echo no celular depois do Hero (com fade ao voltar ao Hero) e o CSS atual (conteúdo
+  por cima do Echo); sair a máquina de estados e o desvio por esconder/reposicionar.
+- Testes que ela exige: GPU real e roda do mouse em 1920, 1440, 1366, 1024, 768, 767 e 390 px e
+  movimento reduzido (0 saltos visíveis, todas as trocas de lado voando, 0 sobreposição real, portal
+  em 768–1153 px, celular só depois do Hero, movimento igual ao da produção onde ela mostra o Echo) e
+  a matriz de 23 percursos do harness. Até lá a stage e o local seguem com o Echo de 26/10.
+
+Bordas em produção (27/10/2026, Forge #1698 e #1699; correção validada na stage em 26/10, #1691):
+- Pacote: as 6 views (blog, post, central, page, error-404, post-unavailable) vão tiradas da stage
+  (iguais ao commit; a produção estava igual à stage de antes da reconciliação). O site.css vai como
+  "site.css atual da produção + só os 3 trechos das bordas" (esconder o degradê da newsletter fora
+  da Home, remover .central-nerd-body e .central-hero-backdrop), com o texto lido do site.css da
+  stage: a mesma exceção do deploy de 25/10, porque o site.css da stage tem FIX-009, o cabeçalho
+  768–1023 px (#1684) e uma regra de movimento reduzido que não fazem parte desta entrega. A
+  produção tem fins de linha misturados no site.css (bloco .en-flow-bg de 25/10 em CRLF); o patch
+  aceita os dois e mantém o resto do arquivo byte a byte.
+- Script: scripts/home-bordas-production-deploy.php (--check só leitura; --backup; --sandbox-test;
+  --deploy com o site.css primeiro; --verify com hashes, status de cada página, HTML sem as bordas,
+  produção indexável e site.css novo servido; --rollback --confirmar). Cópias e manifesto em
+  storage/home-bordas-deploy/production. Antes: backup completo com scripts/backup.php run production.
