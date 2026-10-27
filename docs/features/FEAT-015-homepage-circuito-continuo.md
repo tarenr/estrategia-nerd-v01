@@ -515,3 +515,22 @@ Bordas em produção (27/10/2026, Forge #1698 e #1699; correção validada na st
   --deploy com o site.css primeiro; --verify com hashes, status de cada página, HTML sem as bordas,
   produção indexável e site.css novo servido; --rollback --confirmar). Cópias e manifesto em
   storage/home-bordas-deploy/production. Antes: backup completo com scripts/backup.php run production.
+- Executado em 27/10/2026: backup completo BS-PROD-20261027-103630 validado por
+  verify-backup-restore (checksums, 295 arquivos de sistema e 290 de uploads sem CRC divergente,
+  19 tabelas importadas num banco temporário removido); --check, --backup e --sandbox-test PASS;
+  --deploy enviou os 7 arquivos (site.css 02d3bc2d…4fea; views iguais à stage) conferidos por hash;
+  --verify PASS (9 páginas com o status esperado, sem as bordas, indexáveis; site.css com versão
+  nova na URL e servido igual ao pacote); smoke de produção SMOKE-PRODUCTION-20261027-103925 8 OK,
+  0 FAIL, 1 SKIP. Dos 14 arquivos conferidos por hash na produção, mudaram só os 7 do pacote (Echo,
+  layout, componente do fundo, config/app.php e .htaccess iguais).
+- Antes x depois na produção (Chrome headless, 8 páginas sem posts publicados x 390 e 1440 px):
+  sem erro de console, recurso falho ou rolagem horizontal; fundo WebGL2 ativo; estilos computados
+  da Home idênticos; blog e categorias sem as faixas com fundo e borda e sem o degradê da newsletter;
+  Central sem o fundo próprio e a caixa borrada; política e termos sem o backdrop e a grade; tudo
+  igual ao medido na stage. Contraste (484 textos): só "Links e recomendações" (termos, 390 px)
+  mudou de forma estável, de 11,27 para 8,97 (acima do mínimo AA de 4,5; a mesma variação da stage
+  em 26/10). Dois textos da Home marcados numa medição voltaram aos valores de antes em 3 novas
+  medições (ruído do fundo animado). Nenhum critério de rollback foi atingido.
+- Abrir um post na produção soma 1 visualização (PostService::incrementViews): os testes evitaram
+  posts; o --verify e o smoke abriram 1 post cada.
+- Pendente: confirmação visual do dono na produção (#1691 aberta).
