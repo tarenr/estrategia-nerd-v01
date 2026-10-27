@@ -406,5 +406,73 @@ Reconciliação de 26/10/2026 (Forge #1689 a #1692, #1683, #1685 e #1686):
   (1024) e 6 de 7 (1440) trocas de lado caem de 1 para 0,15 de opacidade no mesmo quadro, sem fade
   gradual; cabeçalho 768–1023 px; páginas públicas sem as emendas. A confirmação em navegador com GPU
   real não foi feita (o painel do navegador estava oculto e a página fica pausada).
+  [26/10, noite] Os dois defeitos do Echo foram corrigidos na stage; ver "Correção do Echo (#1666)".
 - Pendente para a produção (plano próprio, depois da aprovação): Echo, cabeçalho, páginas sem emendas,
   Tailwind compilado x CDN, FIX-009 e o padrão `?? true` do debug.
+
+Correção do Echo (#1666) — 26/10/2026 (Forge #1693, #1694 e #1695):
+- Causas (public/assets/js/site-home-flow.js, versão bf16847d):
+  - Portal em 768–1153 px: em place(), o tamanho do Echo no Hero tinha piso de 150 px
+    (`Math.max(150, largura do Hero * 0.13)`); em 768 px as 4 posições passavam da borda do Hero e em
+    1024 px batiam no título, então não havia portal e o Echo só aparecia ao rolar.
+  - Troca de lado sem fade: em updateFollow(), a colisão zerava a opacidade e escondia o Echo no mesmo
+    quadro (opacity = 0 / hidden = true) e, como o evento de scroll também chamava updateFollow(), a
+    ocultação e o reposicionamento "direto" de quem estava oculto aconteciam entre dois quadros
+    desenhados (opacidade 1 num lado, 0,14 no outro). Com o caminho livre, a troca era uma travessia
+    visível de propósito ("mudar de lado altera apenas o alvo, sem fade"). A transição de opacidade de
+    300 ms do CSS deixava a opacidade desenhada atrás da que o JS definia.
+- Correção do portal: place() tenta tamanhos menores (13% da largura do Hero, 120 e 104 px) só quando o
+  tamanho-base não cabe; a regra de lugar livre é a mesma. Onde ele já cabia (1153 px para cima nos
+  testes) nada muda; abaixo de 768 px (celular) continua sem portal e o Echo aparece depois do Hero.
+- Estados (data-echo-state no canvas): moving → fading-out (parado no lugar) → repositioning (opacidade
+  desenhada ≤ 0,01, posição nova desenhada invisível num quadro próprio) → fading-in → moving; hidden
+  quando não há lugar. O fade é a própria transição do CSS (300 ms; 120 ms com ease-out quando o conteúdo
+  chega antes, classe .is-fading-fast em site-home-flow.css). Só o quadro do laço muda de estado (o
+  evento de scroll não chama mais updateFollow com animação ligada); o passo de tempo vem de
+  performance.now(). Sem timers.
+- Regras: o Echo fica onde está enquanto o lugar é seguro; faz fade-out só para sumir (menu móvel, campo
+  em edição, Hero no celular), quando o conteúdo vai alcançá-lo durante um fade, ou quando a seção pede
+  o outro lado e lá existe lugar (no mínimo 600 ms visível entre trocas). A antecipação é a distância
+  rolada nos últimos 340 ms (o tempo de um fade), com sinal; ao reaparecer durante a rolagem, só em lugar
+  com folga para ~1 s. Se o motivo some antes do fim do fade, volta no mesmo lugar (folga maior para não
+  piscar). Conteúdo com z-index ≥ 2 (CSS do #1666) passa por cima do Echo; o restante, se encostar com
+  ele visível, o esconde no mesmo quadro e conta em data-echo-emergencies (nenhum caso nos testes).
+- Movimento reduzido: sem laço; o Echo fica parado enquanto o lugar está livre e, para mudar, some no
+  mesmo quadro e reaparece parado dois quadros depois (requestAnimationFrame duplo), sem deslizar.
+- Testes na stage (Chrome headless, protocolo DevTools, sem dependência nova; antes = bf16847d, depois =
+  versão final), 23 percursos: rolagem em passos em 360, 390, 767, 768, 1023, 1024, 1153, 1154 e 1440 px;
+  rápida, alternada e leitura em 390, 1024 e 1440 px; lenta em 390 e 1440 px; redimensionamento
+  1024 → 768 → 1024; movimento reduzido em 390 e 1440 px. Registro por quadro: tempo, posição, tamanho,
+  opacidade desenhada, estado, colisão e emergências.
+  - Saltos de posição com o Echo visível: de 1–108 por percurso para 0 nos 23.
+  - Trocas de lado: 100% passando por opacidade ≤ 0,01 e pela sequência fading-out → repositioning →
+    fading-in (antes, de 768 px para cima, só 0 a 4 de 4–13 trocas por percurso tinham fade, exceto a
+    rolagem lenta em 1440 px, 7 de 7). Opacidade máxima no reposicionamento 0,002; deslocamento durante
+    o fade-out 0 px.
+  - Portal: passa a sair em 768, 1023 e 1024 px (104, ~133 e ~133 px); 767, 1153, 1154 e 1440 px
+    seguem saindo; 360 e 390 px seguem sem portal, com o Echo depois do Hero.
+  - Sobreposição real (conteúdo que não passa por cima): 0 → 0. Emergências: 0. Sem rolagem horizontal,
+    erro de console ou recurso falho; fundo WebGL2 ativo.
+  - Echo visível por trás de conteúdo (z-index 2), acompanhando a página: caiu em 21 dos 23 percursos
+    (ex.: passos 1024 px 262 → 46, lenta 1440 px 464 → 18, alternada 1024 px 553 → 104); subiu na leitura
+    em saltos grandes (30% da tela de uma vez): 390 px 49 → 157 e 1024 px 96 → 114, porque o conteúdo
+    cobre ~250 px em 5 quadros e o fade (mesmo o curto) não termina antes, enquanto a versão anterior
+    sumia no mesmo quadro. No Hero, em 768–1024 px, o quadrado do canvas do portal cruza a caixa do
+    título (não as letras: o lugar é escolhido pelas letras), 64–76 quadros por percurso.
+  - Presença (quadros com o Echo visível depois do Hero): maior em 1440 px (passos 1191 → 1475, lenta
+    3149 → 4100) e no movimento reduzido; menor na rolagem contínua no celular e de 767 a 1154 px (ex.:
+    passos 390 px 714 → 270), porque ele espera um lugar seguro em vez de ficar visível atrás do conteúdo.
+    Na leitura com pausas fica igual (390 px 1796 → 1810).
+  - Duração dos quadros (sem detecção de colisão nem prints, 390 e 1440 px): mediana 16,7 ms, p95 16,8 ms,
+    p99 16,8–16,9 ms; 5–6 quadros acima de 33 ms e 3–4 acima de 50 ms por percurso, na carga da página.
+    O headless desenha WebGL por software; em navegador com GPU real (RTX 3050) a página ficou pausada
+    porque o painel estava oculto, e a confirmação ficou para a avaliação visual do dono.
+- Deploy na stage: scripts/home-reconciliacao-deploy.php stage --refresh (agora guarda a versão
+  substituída em refresh-<data>/ e aceita o arquivo-fonte como 4º argumento). Final: site-home-flow.js
+  1526d494…981a e site-home-flow.css 58e93031…1b59, conferidos por hash; stage --verify e smoke stage
+  (8 OK, 0 FAIL, 1 SKIP). Desfazer só esta correção: stage --refresh assets/js/site-home-flow.js
+  <storage/home-pendencias-deploy/stage-20261026/refresh-20261026-235417/assets__js__site-home-flow.js> e
+  stage --refresh assets/css/site-home-flow.css <…/refresh-20261027-001613/assets__css__site-home-flow.css>.
+  Medições e prints em storage/home-pendencias-deploy/stage-20261026/echo-correcao. Produção sem alteração
+  (14 arquivos conferidos por hash no início e no fim).
+- Pendente: aprovação visual do dono na stage (#1693, #1694, #1686 e #1691 abertas); produção (#1687).
