@@ -12,7 +12,8 @@
  *                acoes: --check | --sandbox-test | --rollback --confirmar
  *              C:\xampp\php\php.exe scripts/home-reconciliacao-deploy.php stage <acao>
  *                acoes: --check | --backup | --sandbox-test | --deploy | --verify | --rollback
- *                       | --refresh <arquivo do pacote>  (reenvia um arquivo ja aplicado, conferido)
+ *                       | --refresh <arquivo do pacote> [fonte]  (reenvia um arquivo ja aplicado,
+ *                         conferido; sem fonte usa a copia local; guarda a versao substituida)
  * @notes       - producao --check e somente leitura no servidor: baixa os 3 arquivos atuais
  *                (after/), monta as versoes anteriores (before/) a partir do backup
  *                BS-PROD-20261025-234355 e do pacote do deploy das 21:21 e confere tudo pelo
@@ -43,7 +44,7 @@ $actions = [
     'stage' => ['--check', '--backup', '--sandbox-test', '--deploy', '--verify', '--rollback', '--refresh'],
 ];
 if (!isset($actions[$target]) || !in_array($action, $actions[$target], true)) {
-    fwrite(STDERR, "Use: producao --check|--sandbox-test|--rollback --confirmar\n     stage --check|--backup|--sandbox-test|--deploy|--verify|--rollback|--refresh <arquivo>\n");
+    fwrite(STDERR, "Use: producao --check|--sandbox-test|--rollback --confirmar\n     stage --check|--backup|--sandbox-test|--deploy|--verify|--rollback|--refresh <arquivo> [fonte]\n");
     exit(2);
 }
 
@@ -495,13 +496,23 @@ try {
 
     if ($action === '--refresh') {
         // Reenvia um arquivo do pacote ja aplicado (ajuste apos a medicao). before/ nao muda: o
-        // --rollback continua levando ao estado original da stage.
+        // --rollback continua levando ao estado original da stage. A versao substituida fica
+        // conferida em refresh-<data>/; passa-la como fonte (4o argumento) desfaz o refresh.
         $rel = (string) ($argv[3] ?? '');
         $entry = null;
         foreach (STAGE_FILES as $f) { if ($f['rel'] === $rel && $f['local'] !== null) { $entry = $f; } }
         if ($entry === null) { throw new RuntimeException('Arquivo fora do pacote: ' . $rel); }
-        $bytes = (string) file_get_contents($root . '/' . $entry['local']);
+        $source = (string) ($argv[4] ?? '');
+        $sourcePath = $source === '' ? $root . '/' . $entry['local'] : (preg_match('~^([A-Za-z]:)?[\\\\/]~', $source) === 1 ? $source : $root . '/' . $source);
+        if (!is_file($sourcePath)) { throw new RuntimeException('Fonte nao encontrada: ' . $sourcePath); }
+        $bytes = (string) file_get_contents($sourcePath);
         $newHash = hash('sha256', $bytes);
+        $saved = null;
+        if ($newHash !== $afterHashes[$rel]) {
+            $saved = $dir . '/refresh-' . date('Ymd-His') . '/' . storeName($rel);
+            saveVerified($saved, $package[$rel]);
+            $log('COPIA     versao substituida ' . $afterHashes[$rel] . ' em ' . $saved);
+        }
         [$stage, $ftp] = connect($config['profiles']['stage'], 'stage');
         transition($stage, [['base' => $entry['base'], 'rel' => $rel]], [$rel => $afterHashes[$rel]], [$rel => $newHash], [$rel => $bytes], $log);
         ftp_close($ftp);
@@ -509,6 +520,7 @@ try {
         foreach ($manifest['files'] as $i => $mf) {
             if ($mf['rel'] === $rel) { $manifest['files'][$i]['refreshed_from'] = $mf['after']; $manifest['files'][$i]['after'] = $newHash; }
         }
+        $manifest['refresh_history'][] = ['at' => date('c'), 'rel' => $rel, 'from' => $afterHashes[$rel], 'to' => $newHash, 'source' => $sourcePath, 'replaced_copy' => $saved];
         $manifest['refreshed_at'] = date('c');
         file_put_contents($manifestFile, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
         $log('PASS: ' . $rel . ' reenviado e conferido (' . $newHash . ').');

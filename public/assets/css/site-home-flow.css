@@ -245,6 +245,15 @@
   transition: opacity 300ms ease;
 }
 
+/* Conteúdo que vai alcançar o Echo antes do fim do fade normal (rolagem
+   retomada perto dele): o mesmo fade, mais curto e caindo já no início, para
+   ele sumir antes de ficar por trás do conteúdo. O JS liga a classe só no
+   fade-out. */
+.en-flow-echo.is-following.is-fading-fast {
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
+}
+
 /* Camada de conteúdo e cartões: z-index 2 para que o Echo (z-index 1) passe por trás deles */
 .site-home-hero-preview-page .nerd-card,
 .site-home-hero-preview-page .site-preview-post-card,

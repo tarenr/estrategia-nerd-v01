@@ -1124,8 +1124,81 @@ void main() {
 
     const follow = {
       x: 0, y: 0, tx: 0, ty: 0, vx: 0, vy: 0,
-      scale: 1, opacity: 1,
+      scale: 1, targetScale: 1, opacity: 1,
     };
+
+    // Troca de lugar sempre invisível: moving -> fading-out (parado no lugar)
+    // -> repositioning (opacidade desenhada <= 0,01) -> fading-in -> moving.
+    // O fade é a transição de opacidade do CSS (.is-following, 300 ms); as
+    // decisões leem a opacidade desenhada (estilo computado), e só o quadro do
+    // laço (frame) muda de estado, para a nova posição ser desenhada invisível
+    // num quadro próprio. Sem laço (movimento reduzido), a troca é um corte.
+    const MIN_VISIBLE_MS = 600;
+    const FADE_LEAD_MS = 340;
+    let echoState = '';
+    let stateFrame = 0;
+    let frameNo = 0;
+    let visibleSince = 0;
+    let lastFollowAt = 0;
+    const scrollTrail = [];
+    let fadeLead = 0;
+    let emergencies = 0;
+    let aboveCache = new WeakMap();
+
+    function setState(name) {
+      stateFrame = frameNo;
+      if (echoState === name) return;
+      echoState = name;
+      canvas.dataset.echoState = name;
+    }
+
+    function paintedOpacity() {
+      return canvas.hidden ? 0 : (parseFloat(getComputedStyle(canvas).opacity) || 0);
+    }
+
+    function applyTransform() {
+      canvas.style.transform = `translate3d(${follow.x}px, ${follow.y}px, 0) translate(-50%, -${ANCHOR_Y * 100}%) scale(${follow.scale})`;
+    }
+
+    // fast: o conteúdo chega antes do fim do fade normal (classe .is-fading-fast).
+    // lead: antecipação que tornou o lugar inseguro; vale para o reposicionamento.
+    function fadeOut(fast = false, lead = 0) {
+      fadeLead = lead;
+      canvas.classList.toggle('is-fading-fast', fast);
+      canvas.style.opacity = '0';
+      setState('fading-out');
+    }
+
+    function fadeIn() {
+      canvas.classList.remove('is-fading-fast');
+      canvas.style.opacity = '1';
+      setState('fading-in');
+    }
+
+    function goHidden() {
+      canvas.style.opacity = '0';
+      canvas.hidden = true;
+      follow.opacity = 0;
+      setState('hidden');
+    }
+
+    // O conteúdo com z-index >= 2 (regra do CSS do #1666) é desenhado por cima
+    // do Echo (z-index 1); o restante precisa ser evitado sem exceção.
+    function isAbove(el) {
+      let above = aboveCache.get(el);
+      if (above === undefined) {
+        above = false;
+        for (let n = el; n && n !== document.body; n = n.parentElement) {
+          const st = getComputedStyle(n);
+          if (st.position !== 'static' && parseInt(st.zIndex, 10) >= 2) {
+            above = true;
+            break;
+          }
+        }
+        aboveCache.set(el, above);
+      }
+      return above;
+    }
 
     const OBSTACLE_SELECTOR = 'h1, h2, h3, h4, p, button, a[class*="px-"][class*="py-"], a[class*="btn"], .site-nav-cta, .site-primary-btn, .site-secondary-btn, .site-footer-social-badge, input, textarea, select, form, .site-nav, .nerd-card, .site-preview-post-card, article, figure, img';
 
@@ -1145,7 +1218,7 @@ void main() {
         if (st.display === 'none' || st.visibility === 'hidden' || parseFloat(st.opacity) < 0.05) continue;
         const r = el.getBoundingClientRect();
         if (r.width < 2 || r.height < 2 || r.right <= 0 || r.left >= vw || r.bottom <= 0 || r.top >= vh) continue;
-        list.push({ l: r.left, t: r.top, r: r.right, b: r.bottom, isNav: el.classList.contains('site-nav') });
+        list.push({ l: r.left, t: r.top, r: r.right, b: r.bottom, isNav: el.classList.contains('site-nav'), above: isAbove(el) });
       }
       obstaclesCache = list;
       obstaclesDirty = false;
@@ -1300,16 +1373,15 @@ void main() {
       if (following) return;
       const heroRect = hero.getBoundingClientRect();
       const narrow = heroRect.width < 768;
-      size = narrow ? 104 : Math.round(Math.min(210, Math.max(150, heroRect.width * 0.13)));
+      const baseSize = narrow ? 104 : Math.round(Math.min(210, Math.max(150, heroRect.width * 0.13)));
+      // Em tablet (Hero de 768 a ~1150 px) o tamanho-base não cabe ao lado do
+      // título: tenta tamanhos menores antes de desistir do portal. Onde o
+      // tamanho-base cabe, ele continua sendo o usado.
+      const sizes = narrow ? [baseSize] : [...new Set([baseSize, Math.round(heroRect.width * 0.13), 120, 104])]
+        .filter((s) => s >= 104 && s <= baseSize)
+        .sort((a, b) => b - a);
       const blocked = blockedRects(heroRect);
       const gap = 8;
-      const canvasHalf = size * 0.9;
-      const free = (cx, cy, half) => {
-        const h = Math.max(half, canvasHalf);
-        const box = { l: cx - h - gap, t: cy - h - gap, r: cx + h + gap, b: cy + h + gap };
-        if (box.l < -24 || box.r > heroRect.width + 24 || box.t < 72 || box.b > heroRect.height) return false;
-        return !blocked.some((o) => box.l < o.r && box.r > o.l && box.t < o.b && box.b > o.t);
-      };
       const baseSpots = (narrow ? SPOTS.narrow : SPOTS.wide).map(([fx, fy]) => ({ x: fx * heroRect.width, y: fy * heroRect.height }));
       const spots = [];
       baseSpots.forEach((p) => {
@@ -1319,8 +1391,21 @@ void main() {
           });
         });
       });
-      const withPortal = spots.find((p) => free(p.x, p.y, size * PORTAL_REACH));
-      const spot = withPortal || spots.find((p) => free(p.x, p.y, size / 2));
+      let withPortal = null;
+      let spot = null;
+      for (let i = 0; i < sizes.length && !spot; i += 1) {
+        size = sizes[i];
+        const canvasHalf = size * 0.9;
+        const free = (cx, cy, half) => {
+          const h = Math.max(half, canvasHalf);
+          const box = { l: cx - h - gap, t: cy - h - gap, r: cx + h + gap, b: cy + h + gap };
+          if (box.l < -24 || box.r > heroRect.width + 24 || box.t < 72 || box.b > heroRect.height) return false;
+          return !blocked.some((o) => box.l < o.r && box.r > o.l && box.t < o.b && box.b > o.t);
+        };
+        withPortal = spots.find((p) => free(p.x, p.y, size * PORTAL_REACH));
+        spot = withPortal || spots.find((p) => free(p.x, p.y, size / 2));
+      }
+      if (!spot) size = baseSize;
       shown = !!spot;
       canvas.hidden = !shown;
       if (!shown) {
@@ -1365,7 +1450,10 @@ void main() {
       ctx.setTransform(k, 0, 0, k, offX, offY);
     }
 
-    function boxOverlaps(cx, cy, bw, bh, obstacles, pad) {
+    // lead: distância que o conteúdo percorre durante um fade (rolagem para
+    // baixo traz conteúdo de baixo; para cima, de cima). A caixa é estendida
+    // nessa direção só contra os obstáculos, não contra as bordas da tela.
+    function boxOverlaps(cx, cy, bw, bh, obstacles, pad, lead = 0) {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       const l = cx - bw * 0.5;
@@ -1373,14 +1461,16 @@ void main() {
       const t = cy - bh * ANCHOR_Y;
       const b = cy + bh * (1 - ANCHOR_Y);
       if (l < 4 || r > vw - 4 || t < 68 || b > vh - 6) return true;
+      const lt = t - (lead < 0 ? -lead : 0);
+      const lb = b + (lead > 0 ? lead : 0);
       for (let i = 0; i < obstacles.length; i += 1) {
         const o = obstacles[i];
-        if (l < o.r + pad && r > o.l - pad && t < o.b + pad && b > o.t - pad) return true;
+        if (l < o.r + pad && r > o.l - pad && lt < o.b + pad && lb > o.t - pad) return true;
       }
       return false;
     }
 
-    function findBestFollowSpot(preferredSide, obstacles, narrow, verticalPref, allowOtherSide = true) {
+    function findBestFollowSpot(preferredSide, obstacles, narrow, verticalPref, allowOtherSide = true, lead = 0) {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       const pad = narrow ? 12 : 6;
@@ -1408,7 +1498,7 @@ void main() {
           for (let oIdx = 0; oIdx < offsets.length; oIdx += 1) {
             const cx = side === 'left' ? offsets[oIdx] : (vw - offsets[oIdx]);
             for (let cy = minY; cy <= maxY; cy += 16) {
-              if (boxOverlaps(cx, cy, bw, bh, obstacles, pad)) continue;
+              if (boxOverlaps(cx, cy, bw, bh, obstacles, pad, lead)) continue;
               const distCurrent = (!canvas.hidden && follow.opacity > 0.1 && side === currentSide)
                 ? Math.abs(cy - follow.y) * 0.65 + Math.abs(cy - idealY) * 0.35
                 : Math.abs(cy - idealY);
@@ -1442,8 +1532,10 @@ void main() {
       const narrow = window.innerWidth < 768;
       if (!size) size = narrow ? 104 : Math.round(Math.min(210, Math.max(150, window.innerWidth * 0.13)));
       const r = canvas.getBoundingClientRect();
+      const visibleNow = !snap && !narrow && !canvas.hidden && r.width > 0;
       follow.x = r.width > 0 ? r.left + r.width / 2 : window.innerWidth - (narrow ? 44 : 76);
       follow.y = r.height > 0 ? r.top + r.height / 2 : window.innerHeight * 0.4;
+      currentSide = follow.x < window.innerWidth / 2 ? 'left' : 'right';
       const followTargetScale = (narrow ? 64 : 96) / Math.max(1, size);
       // No desktop, preserve a escala cheia da chegada para que a transicao ao
       // modo de acompanhamento encolha o Echo de forma visivel e continua.
@@ -1452,6 +1544,7 @@ void main() {
         follow.opacity = 0;
         follow.scale *= 0.25;
       }
+      follow.targetScale = follow.scale;
 
       sizeCanvas();
 
@@ -1462,11 +1555,22 @@ void main() {
       canvas.classList.add('is-following');
       canvas.style.left = '0';
       canvas.style.top = '0';
+      applyTransform();
+      // Saindo do portal visível, continua visível (completa o fade se a
+      // chegada foi interrompida pela rolagem); nos demais casos começa oculto
+      // e a máquina de estados escolhe o lugar antes de mostrar.
+      if (visibleNow) {
+        canvas.style.opacity = '1';
+        setState(paintedOpacity() >= 0.99 ? 'moving' : 'fading-in');
+        visibleSince = performance.now();
+      } else {
+        goHidden();
+      }
 
       equipOutfit();
       scheduleIdle();
       obstaclesDirty = true;
-      updateFollow(0.016);
+      if (reduceMotion) updateFollow();
     }
 
     function scheduleIdle(now = performance.now()) {
@@ -1486,14 +1590,9 @@ void main() {
       scheduleIdle(now);
     }
 
-    function updateFollow(dt) {
-      if (!following) return;
+    // O que a máquina de estados precisa saber neste instante.
+    function followContext(now) {
       const narrow = window.innerWidth < 768;
-      const now = performance.now();
-
-      // Decaimento suave da inércia da rolagem
-      scrollInertia *= Math.exp(-4.2 * dt);
-
       const mobileMenuEl = document.getElementById('siteMobileMenu');
       const menuOpen = narrow && (
         !!document.querySelector('[data-site-menu-toggle][aria-expanded="true"]') ||
@@ -1504,82 +1603,95 @@ void main() {
       const heroRect = hero.getBoundingClientRect();
       const inMobileHero = narrow && heroRect.bottom > window.innerHeight * 0.35;
 
-      const obstacles = getObstacles(now);
-      const curSize = Math.max(1, follow.scale * size);
-      const curBw = curSize * PAD_X;
-      const curBh = curSize * PAD_Y;
-      const curCollides = boxOverlaps(follow.x, follow.y, curBw, curBh, obstacles, 2);
-
-      if (menuOpen || editing || inMobileHero) {
-        follow.opacity = 0;
-        canvas.style.opacity = '0';
-        canvas.hidden = true;
-        return;
-      }
-
       const active = getActiveTarget();
       if (now >= nextIdleSideToggleAt) {
         idleSideOverride = (idleSideOverride || active.side) === 'left' ? 'right' : 'left';
         nextIdleSideToggleAt = now + 7000;
       }
       const requestedSide = idleSideOverride || active.side;
-      // No celular, manter o canto atual evita travessias sobre uma coluna de
-      // texto que ocupa quase toda a largura. O movimento continua vertical.
-      const preferredSide = narrow && !canvas.hidden ? currentSide : requestedSide;
-      const preferredSpot = findBestFollowSpot(preferredSide, obstacles, narrow, active.vertical, false);
-      let spot = preferredSpot;
+      const vh = window.innerHeight;
+      return {
+        now,
+        narrow,
+        mustHide: menuOpen || editing || inMobileHero,
+        obstacles: getObstacles(now),
+        vertical: active.vertical,
+        // No celular, manter o canto atual evita travessias sobre uma coluna de
+        // texto que ocupa quase toda a largura. O movimento continua vertical.
+        targetSide: narrow && !canvas.hidden ? currentSide : requestedSide,
+        lead: Math.max(-vh, Math.min(vh, scrollLead(now))),
+      };
+    }
 
-      // Troca de lado apenas quando todo o corredor esta livre. Enquanto houver
-      // texto ou controle no caminho, o Echo continua flutuando no lado atual.
-      if (!canvas.hidden && follow.opacity > 0.03 && preferredSide !== currentSide) {
-        const canCross = preferredSpot !== null && pathIsClear(follow.x, follow.y, preferredSpot, obstacles);
-        if (!canCross) {
-          spot = findBestFollowSpot(currentSide, obstacles, narrow, active.vertical, false);
-        }
+    // Quanto o conteúdo deve andar durante o próximo fade, com sinal: a
+    // distância rolada nos últimos FADE_LEAD_MS. Rolagem em passos (roda do
+    // mouse) conta pela distância real percorrida, não pelo pico de velocidade
+    // de cada passo, que faria o Echo sumir e voltar no mesmo lugar.
+    function scrollLead(now) {
+      let base = window.scrollY;
+      for (let i = scrollTrail.length - 1; i >= 0 && now - scrollTrail[i][0] <= FADE_LEAD_MS; i -= 1) {
+        base = scrollTrail[i][1];
       }
+      return window.scrollY - base;
+    }
 
-      if (!spot) {
-        if (curCollides) {
-          follow.opacity = 0;
-        } else {
-          follow.opacity = Math.max(0, follow.opacity - dt * 6);
-        }
-        if (follow.opacity <= 0.03) {
-          follow.opacity = 0;
-          canvas.style.opacity = '0';
-          canvas.hidden = true;
-        } else {
-          canvas.style.opacity = String(follow.opacity);
-        }
-        return;
+    // O lugar atual encosta em algo, ou o conteúdo vai alcançá-lo durante um
+    // fade (leadScale = fração da antecipação; 0,75 = em menos de ~250 ms,
+    // quando o fade-out usa a versão curta).
+    function threatened(c, pad, leadScale = 1) {
+      const curSize = Math.max(1, follow.scale * size);
+      return boxOverlaps(follow.x, follow.y, curSize * PAD_X, curSize * PAD_Y, c.obstacles, pad, c.lead * leadScale);
+    }
+
+    // Lugar para reaparecer. Com a página rolando, só um lugar com folga para
+    // ~1 s da rolagem atual (3 vezes a antecipação): uma aparição mais curta
+    // que isso seria um piscar. Parada, qualquer lugar livre.
+    function findReturnSpot(c, lead) {
+      return findBestFollowSpot(c.targetSide, c.obstacles, c.narrow, c.vertical, true, lead * 3);
+    }
+
+    // Último recurso: conteúdo que não passa por cima do Echo encostou nele
+    // ainda visível. Some no mesmo quadro e conta como falha.
+    function touchesSolid(obstacles) {
+      const rendered = canvas.getBoundingClientRect();
+      for (let i = 0; i < obstacles.length; i += 1) {
+        const o = obstacles[i];
+        if (!o.above && rendered.left < o.r && rendered.right > o.l && rendered.top < o.b && rendered.bottom > o.t) return true;
       }
+      return false;
+    }
 
-      const targetScale = spot.size / Math.max(1, size);
-
-      // Se estava oculto, posiciona direto no lugar livre e surge suavemente (crescendo no mobile)
-      if (canvas.hidden || follow.opacity <= 0.03) {
-        follow.x = spot.x;
-        follow.y = spot.y;
-        follow.tx = spot.x;
-        follow.ty = spot.y;
-        follow.vx = 0;
-        follow.vy = 0;
-        currentSide = spot.side;
-        if (narrow && follow.scale < targetScale * 0.4) {
-          follow.scale = targetScale * 0.28;
-        } else if (!narrow) {
-          follow.scale = targetScale;
-        }
-        canvas.hidden = false;
+    function reposition(spot, narrow) {
+      follow.targetScale = spot.size / Math.max(1, size);
+      follow.x = spot.x;
+      follow.y = spot.y;
+      follow.tx = spot.x;
+      follow.ty = spot.y;
+      follow.vx = 0;
+      follow.vy = 0;
+      currentSide = spot.side;
+      // No celular surge crescendo; no desktop, já no tamanho final. Nunca
+      // maior que o lugar escolhido: a caixa conferida é a do tamanho atual.
+      if (narrow && follow.scale < follow.targetScale * 0.4) {
+        follow.scale = follow.targetScale * 0.28;
+      } else if (!narrow || follow.scale > follow.targetScale) {
+        follow.scale = follow.targetScale;
       }
+      canvas.style.opacity = '0';
+      canvas.hidden = false;
+      applyTransform();
+      setState('repositioning');
+    }
 
-      const bob = Math.sin(now * 0.0022) * 3;
-      const bobY = !boxOverlaps(spot.x, spot.y + bob, spot.bw, spot.bh, obstacles, narrow ? 4 : 6) ? spot.y + bob : spot.y;
+    // Deslocamento contínuo no mesmo lado (mola). Se o próximo passo
+    // encostaria em algo, o Echo fica parado onde está.
+    function glide(spot, dt, c) {
+      const bob = Math.sin(c.now * 0.0022) * 3;
+      const bobY = !boxOverlaps(spot.x, spot.y + bob, spot.bw, spot.bh, c.obstacles, c.narrow ? 4 : 6) ? spot.y + bob : spot.y;
       follow.tx = spot.x;
       follow.ty = bobY;
+      follow.targetScale = spot.size / Math.max(1, size);
 
-      // Preserva a travessia flutuante da versao publicada: mudar de lado altera
-      // apenas o alvo, sem fade, salto ou reposicionamento instantaneo.
       const springX = 3.2;
       const dampingX = Math.exp(-3.4 * dt);
       follow.vx = (follow.vx + (follow.tx - follow.x) * springX * dt) * dampingX;
@@ -1595,46 +1707,162 @@ void main() {
 
       const nextX = follow.x + follow.vx * dt;
       const nextY = follow.y + follow.vy * dt;
-      const nextScale = follow.scale + (targetScale - follow.scale) * (1 - Math.exp(-6.5 * dt));
+      const nextScale = follow.scale + (follow.targetScale - follow.scale) * (1 - Math.exp(-6.5 * dt));
       const nextSize = Math.max(1, nextScale * size);
-      if (boxOverlaps(nextX, nextY, nextSize * PAD_X, nextSize * PAD_Y, obstacles, 2)) {
+      if (boxOverlaps(nextX, nextY, nextSize * PAD_X, nextSize * PAD_Y, c.obstacles, 2)) {
         follow.vx = 0;
         follow.vy = 0;
-        follow.opacity = Math.max(0, follow.opacity - dt * 6);
-        canvas.style.opacity = String(follow.opacity);
-        if (follow.opacity <= 0.03) canvas.hidden = true;
         return;
       }
       follow.x = nextX;
       follow.y = nextY;
       follow.scale = nextScale;
-      if (Math.abs(follow.x - spot.x) < 3) {
-        currentSide = spot.side;
+      applyTransform();
+    }
+
+    function updateFollow() {
+      if (!following) return;
+      const now = performance.now();
+      // Passo de tempo real: uma chamada extra no mesmo quadro recebe passo ~0.
+      const dt = lastFollowAt ? Math.min(0.05, (now - lastFollowAt) / 1000) : 0.016;
+      lastFollowAt = now;
+
+      // Decaimento suave da inércia da rolagem
+      scrollInertia *= Math.exp(-4.2 * dt);
+
+      const c = followContext(now);
+      const painted = paintedOpacity();
+      follow.opacity = painted;
+
+      if (reduceMotion) {
+        updateStill(c);
+        return;
       }
 
-      canvas.hidden = false;
-      follow.opacity = Math.min(1, follow.opacity + (1 - follow.opacity) * (1 - Math.exp(-7.5 * dt)) + 0.02);
-      canvas.style.opacity = String(follow.opacity);
-      canvas.style.transform = `translate3d(${follow.x}px, ${follow.y}px, 0) translate(-50%, -${ANCHOR_Y * 100}%) scale(${follow.scale})`;
+      if (painted > 0.05 && echoState !== 'hidden' && echoState !== 'repositioning' && touchesSolid(c.obstacles)) {
+        emergencies += 1;
+        canvas.dataset.echoEmergencies = String(emergencies);
+        goHidden();
+        return;
+      }
 
-      // A geometria real do canvas e a autoridade final. Fontes responsivas e
-      // arredondamentos podem diferir alguns pixels do modelo usado na busca.
-      const rendered = canvas.getBoundingClientRect();
-      for (let index = 0; index < obstacles.length; index += 1) {
-        const obstacle = obstacles[index];
-        if (
-          rendered.left < obstacle.r + (narrow ? 8 : 2) &&
-          rendered.right > obstacle.l - (narrow ? 8 : 2) &&
-          rendered.top < obstacle.b + (narrow ? 8 : 2) &&
-          rendered.bottom > obstacle.t - (narrow ? 8 : 2)
-        ) {
-          follow.opacity = 0;
-          canvas.style.opacity = '0';
-          canvas.hidden = true;
-          break;
+      if (echoState === 'hidden') {
+        if (c.mustHide) return;
+        const spot = findReturnSpot(c, c.lead);
+        if (spot) reposition(spot, c.narrow);
+        return;
+      }
+
+      if (echoState === 'repositioning') {
+        // A nova posição precisa ser desenhada invisível num quadro próprio.
+        if (frameNo <= stateFrame) return;
+        const target = Math.max(1, follow.targetScale * size);
+        if (c.mustHide || boxOverlaps(follow.x, follow.y, target * PAD_X, target * PAD_Y, c.obstacles, 2, c.lead)) {
+          goHidden();
+          return;
         }
+        fadeIn();
+        return;
       }
 
+      if (echoState === 'fading-in') {
+        if (c.mustHide || threatened(c, 2)) {
+          fadeOut(!c.mustHide && threatened(c, 2, 0.75), c.lead);
+          return;
+        }
+        follow.scale += (follow.targetScale - follow.scale) * (1 - Math.exp(-6.5 * dt));
+        applyTransform();
+        if (painted >= 0.99) {
+          setState('moving');
+          visibleSince = now;
+        }
+        return;
+      }
+
+      if (echoState === 'fading-out') {
+        // O motivo sumiu antes do fim do fade (ex.: rolagem invertida): volta
+        // no mesmo lugar, sem salto. Folga maior (24 px e antecipação 50%
+        // maior) que a usada para começar o fade, para não piscar.
+        if (painted > 0.01) {
+          if (!c.mustHide && c.targetSide === currentSide && !threatened(c, 24, 1.5)) fadeIn();
+          return;
+        }
+        if (c.mustHide) {
+          goHidden();
+          return;
+        }
+        // Rolagem na mesma direção (ou parada): mantém a antecipação que
+        // disparou o fade, para não voltar ao lugar que acabou de ser evitado.
+        const lead = Math.abs(fadeLead) > Math.abs(c.lead) && Math.sign(fadeLead) === Math.sign(c.lead || fadeLead) ? fadeLead : c.lead;
+        const spot = findReturnSpot(c, lead);
+        if (spot) reposition(spot, c.narrow);
+        else goHidden();
+        return;
+      }
+
+      // moving: fica onde está enquanto o lugar for seguro. Sai (fade) só se
+      // precisa sumir, se o conteúdo vai alcançá-lo ou se a seção pede o outro
+      // lado e lá há lugar livre. No mesmo lado, desliza até um lugar melhor
+      // quando o caminho está livre; senão continua parado.
+      if (c.mustHide || threatened(c, 2)) {
+        fadeOut(!c.mustHide && threatened(c, 2, 0.75), c.lead);
+        return;
+      }
+      if (c.targetSide !== currentSide && now - visibleSince >= MIN_VISIBLE_MS
+        && findBestFollowSpot(c.targetSide, c.obstacles, c.narrow, c.vertical, false, c.lead * 3)) {
+        fadeOut();
+        return;
+      }
+      const spot = findBestFollowSpot(currentSide, c.obstacles, c.narrow, c.vertical, false, c.lead);
+      if (spot && (Math.hypot(spot.x - follow.x, spot.y - follow.y) <= 24 || pathIsClear(follow.x, follow.y, spot, c.obstacles))) {
+        glide(spot, dt, c);
+      } else {
+        follow.vx = 0;
+        follow.vy = 0;
+      }
+    }
+
+    // Movimento reduzido (sem laço de animação): o Echo fica parado enquanto o
+    // lugar estiver livre. Para mudar de lugar some no próprio quadro, a nova
+    // posição é aplicada dois quadros depois (invisível no quadro do meio) e ele
+    // reaparece já parado, sem deslizar.
+    function updateStill(c) {
+      if (echoState === 'repositioning') return;
+      if (c.mustHide) {
+        if (echoState !== 'hidden') goHidden();
+        return;
+      }
+      if (echoState !== 'hidden') {
+        const curSize = Math.max(1, follow.scale * size);
+        const free = !boxOverlaps(follow.x, follow.y, curSize * PAD_X, curSize * PAD_Y, c.obstacles, 2);
+        if (free && (c.targetSide === currentSide || c.now - visibleSince < MIN_VISIBLE_MS)) return;
+        canvas.style.opacity = '0';
+        canvas.hidden = true;
+      }
+      setState('repositioning');
+      requestAnimationFrame(() => requestAnimationFrame(revealStill));
+    }
+
+    function revealStill() {
+      if (!following || echoState !== 'repositioning') return;
+      const c = followContext(performance.now());
+      const spot = c.mustHide ? null : findBestFollowSpot(c.targetSide, c.obstacles, c.narrow, c.vertical, true);
+      if (!spot) {
+        goHidden();
+        return;
+      }
+      follow.targetScale = spot.size / Math.max(1, size);
+      follow.scale = follow.targetScale;
+      follow.x = spot.x;
+      follow.y = spot.y;
+      currentSide = spot.side;
+      applyTransform();
+      // Saindo de display: none não há transição: aparece direto, parado.
+      canvas.hidden = false;
+      canvas.style.opacity = '1';
+      setState('moving');
+      visibleSince = c.now;
+      render(0.016, 1.0);
     }
 
     function render(dt, boost) {
@@ -1796,15 +2024,21 @@ void main() {
       mouseAt = performance.now();
     }, { passive: true });
 
-    document.addEventListener('focusin', () => { if (following) updateFollow(0.016); });
-    document.addEventListener('focusout', () => { if (following) updateFollow(0.016); });
+    // Com animação, só o quadro (frame) atualiza o Echo; sem animação, os
+    // eventos são o que o atualiza.
+    document.addEventListener('focusin', () => { if (following && reduceMotion) updateFollow(); });
+    document.addEventListener('focusout', () => { if (following && reduceMotion) updateFollow(); });
 
     window.addEventListener('scroll', () => {
       const currentY = window.scrollY;
       const delta = currentY - lastScrollY;
       lastScrollY = currentY;
       obstaclesDirty = true;
-      lastScrollEventAt = performance.now();
+      // Posição antes de cada evento recente: base da antecipação (recentScroll).
+      const eventAt = performance.now();
+      scrollTrail.push([eventAt, currentY - delta]);
+      while (scrollTrail.length && eventAt - scrollTrail[0][0] > FADE_LEAD_MS) scrollTrail.shift();
+      lastScrollEventAt = eventAt;
 
       scrollSpeed = delta;
       scrollInertia = Math.max(-120, Math.min(180, scrollInertia * 0.6 + delta * 2.5));
@@ -1826,8 +2060,8 @@ void main() {
           if (portalCanvas) portalCanvas.hidden = true;
           enterFollowMode(false);
         }
-      } else {
-        updateFollow(0.016);
+      } else if (reduceMotion) {
+        updateFollow();
       }
 
       if (Math.abs(delta) > 3) {
@@ -1888,11 +2122,12 @@ void main() {
     return {
       resize() {
         obstaclesDirty = true;
+        aboveCache = new WeakMap();
         if (!following) {
           place();
         } else {
           sizeCanvas();
-          updateFollow(0.016);
+          if (reduceMotion) updateFollow();
         }
       },
       frame(dt) {
@@ -1906,9 +2141,10 @@ void main() {
             return;
           }
         }
+        frameNo += 1;
         const now = performance.now();
         arrival(now);
-        updateFollow(dt);
+        updateFollow();
         if (canvas.hidden) return;
         steer(now);
         animateIdle(now);
