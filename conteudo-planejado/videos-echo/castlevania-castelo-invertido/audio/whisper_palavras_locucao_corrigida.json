@@ -1,0 +1,608 @@
+{
+  "modelo": "whisper base",
+  "voz": "pt-BR-AntonioNeural",
+  "audio_mp3": "locucao_corrigida.mp3",
+  "audio_wav": "locucao_corrigida.wav",
+  "texto_oficial": "Em 1997, a indústria priorizava o 3D. Castlevania fez o contrário: apostou no 2D e criou um clássico. Mas o maior segredo do jogo estava escondido depois do suposto final. Ao descobrir quem realmente controlava Richter, você liberava uma segunda versão do castelo, completamente de cabeça para baixo. As mesmas áreas ganhavam novas rotas, inimigos e chefes. Lugares que você já conhecia precisavam ser explorados de outra maneira. Essa segunda jornada ampliava o jogo e reforçava a exploração que ajudou a consolidar o estilo metroidvania. Você conseguiu chegar ao castelo invertido? Conta aí nos comentários.",
+  "duracao_total": 43.48,
+  "total_palavras": 97,
+  "texto_reconhecido": "Em 1997, a indústria priorizava 3D. Castelhevania fez o contrário, apostou no 2D e criou um clássico. Mais o maior cedredo do jogo estava escondido depois do suposto final. Ao descobrir quem realmente controlava a Richter, você liberava uma segunda versão do castelo, completamente de cabeça para baixo. As mesmas áreas ganhavam novas rotas, inimigos e chefes. Lugares que você já conhecia precisavam ser explorados de outra maneira. Essa segunda jornada ampliava o jogo e reforçava a exploração que ajudou a consolidar o estilo metrô-de-vania. Você conseguiu chegar ao castelo invertido? Conta aí nos comentários!",
+  "texto_reconhecido_corrigido": "Em 1997, a indústria priorizava o 3D. Castlevania fez o contrário: apostou no 2D e criou um clássico. Mas o maior segredo do jogo estava escondido depois do suposto final. Ao descobrir quem realmente controlava Richter, você liberava uma segunda versão do castelo, completamente de cabeça para baixo. As mesmas áreas ganhavam novas rotas, inimigos e chefes. Lugares que você já conhecia precisavam ser explorados de outra maneira. Essa segunda jornada ampliava o jogo e reforçava a exploração que ajudou a consolidar o estilo metroidvania. Você conseguiu chegar ao castelo invertido? Conta aí nos comentários.",
+  "silencios": [
+    {
+      "ini": 3.993,
+      "duracao": 0.927
+    },
+    {
+      "ini": 6.556,
+      "duracao": 0.25
+    },
+    {
+      "ini": 8.875,
+      "duracao": 0.938
+    },
+    {
+      "ini": 13.67,
+      "duracao": 0.94
+    },
+    {
+      "ini": 17.189,
+      "duracao": 0.348
+    },
+    {
+      "ini": 19.86,
+      "duracao": 0.313
+    },
+    {
+      "ini": 22.118,
+      "duracao": 0.946
+    },
+    {
+      "ini": 25.295,
+      "duracao": 0.246
+    },
+    {
+      "ini": 26.67,
+      "duracao": 0.928
+    },
+    {
+      "ini": 31.37,
+      "duracao": 0.96
+    },
+    {
+      "ini": 38.112,
+      "duracao": 0.914
+    },
+    {
+      "ini": 41.287,
+      "duracao": 0.936
+    },
+    {
+      "ini": 43.682,
+      "duracao": 0.886
+    }
+  ],
+  "palavras": [
+    {
+      "palavra": "Em",
+      "ini": 0.0,
+      "fim": 0.28
+    },
+    {
+      "palavra": "1997,",
+      "ini": 0.28,
+      "fim": 1.38
+    },
+    {
+      "palavra": "a",
+      "ini": 2.16,
+      "fim": 2.22
+    },
+    {
+      "palavra": "indústria",
+      "ini": 2.22,
+      "fim": 2.74
+    },
+    {
+      "palavra": "priorizava",
+      "ini": 2.74,
+      "fim": 3.34
+    },
+    {
+      "palavra": "3D.",
+      "ini": 3.34,
+      "fim": 3.94
+    },
+    {
+      "palavra": "Castelhevania",
+      "ini": 4.88,
+      "fim": 5.64
+    },
+    {
+      "palavra": "fez",
+      "ini": 5.64,
+      "fim": 5.84
+    },
+    {
+      "palavra": "o",
+      "ini": 5.84,
+      "fim": 6.04
+    },
+    {
+      "palavra": "contrário,",
+      "ini": 6.04,
+      "fim": 6.54
+    },
+    {
+      "palavra": "apostou",
+      "ini": 6.82,
+      "fim": 7.24
+    },
+    {
+      "palavra": "no",
+      "ini": 7.24,
+      "fim": 7.38
+    },
+    {
+      "palavra": "2D",
+      "ini": 7.38,
+      "fim": 7.8
+    },
+    {
+      "palavra": "e",
+      "ini": 7.8,
+      "fim": 7.98
+    },
+    {
+      "palavra": "criou",
+      "ini": 7.98,
+      "fim": 8.18
+    },
+    {
+      "palavra": "um",
+      "ini": 8.18,
+      "fim": 8.32
+    },
+    {
+      "palavra": "clássico.",
+      "ini": 8.32,
+      "fim": 8.88
+    },
+    {
+      "palavra": "Mais",
+      "ini": 9.68,
+      "fim": 9.98
+    },
+    {
+      "palavra": "o",
+      "ini": 9.98,
+      "fim": 10.14
+    },
+    {
+      "palavra": "maior",
+      "ini": 10.14,
+      "fim": 10.38
+    },
+    {
+      "palavra": "cedredo",
+      "ini": 10.38,
+      "fim": 10.96
+    },
+    {
+      "palavra": "do",
+      "ini": 10.96,
+      "fim": 11.08
+    },
+    {
+      "palavra": "jogo",
+      "ini": 11.08,
+      "fim": 11.32
+    },
+    {
+      "palavra": "estava",
+      "ini": 11.32,
+      "fim": 11.68
+    },
+    {
+      "palavra": "escondido",
+      "ini": 11.68,
+      "fim": 12.16
+    },
+    {
+      "palavra": "depois",
+      "ini": 12.16,
+      "fim": 12.5
+    },
+    {
+      "palavra": "do",
+      "ini": 12.5,
+      "fim": 12.76
+    },
+    {
+      "palavra": "suposto",
+      "ini": 12.76,
+      "fim": 13.24
+    },
+    {
+      "palavra": "final.",
+      "ini": 13.24,
+      "fim": 13.62
+    },
+    {
+      "palavra": "Ao",
+      "ini": 14.36,
+      "fim": 14.74
+    },
+    {
+      "palavra": "descobrir",
+      "ini": 14.74,
+      "fim": 15.22
+    },
+    {
+      "palavra": "quem",
+      "ini": 15.22,
+      "fim": 15.48
+    },
+    {
+      "palavra": "realmente",
+      "ini": 15.48,
+      "fim": 16.0
+    },
+    {
+      "palavra": "controlava",
+      "ini": 16.0,
+      "fim": 16.66
+    },
+    {
+      "palavra": "a",
+      "ini": 16.66,
+      "fim": 16.8
+    },
+    {
+      "palavra": "Richter,",
+      "ini": 16.8,
+      "fim": 17.22
+    },
+    {
+      "palavra": "você",
+      "ini": 17.58,
+      "fim": 17.76
+    },
+    {
+      "palavra": "liberava",
+      "ini": 17.76,
+      "fim": 18.22
+    },
+    {
+      "palavra": "uma",
+      "ini": 18.22,
+      "fim": 18.4
+    },
+    {
+      "palavra": "segunda",
+      "ini": 18.4,
+      "fim": 18.72
+    },
+    {
+      "palavra": "versão",
+      "ini": 18.72,
+      "fim": 19.12
+    },
+    {
+      "palavra": "do",
+      "ini": 19.12,
+      "fim": 19.34
+    },
+    {
+      "palavra": "castelo,",
+      "ini": 19.34,
+      "fim": 19.84
+    },
+    {
+      "palavra": "completamente",
+      "ini": 20.16,
+      "fim": 20.68
+    },
+    {
+      "palavra": "de",
+      "ini": 20.68,
+      "fim": 21.04
+    },
+    {
+      "palavra": "cabeça",
+      "ini": 21.04,
+      "fim": 21.38
+    },
+    {
+      "palavra": "para",
+      "ini": 21.38,
+      "fim": 21.68
+    },
+    {
+      "palavra": "baixo.",
+      "ini": 21.68,
+      "fim": 22.08
+    },
+    {
+      "palavra": "As",
+      "ini": 22.8,
+      "fim": 23.22
+    },
+    {
+      "palavra": "mesmas",
+      "ini": 23.22,
+      "fim": 23.62
+    },
+    {
+      "palavra": "áreas",
+      "ini": 23.62,
+      "fim": 23.88
+    },
+    {
+      "palavra": "ganhavam",
+      "ini": 23.88,
+      "fim": 24.38
+    },
+    {
+      "palavra": "novas",
+      "ini": 24.38,
+      "fim": 24.78
+    },
+    {
+      "palavra": "rotas,",
+      "ini": 24.78,
+      "fim": 25.26
+    },
+    {
+      "palavra": "inimigos",
+      "ini": 25.56,
+      "fim": 25.94
+    },
+    {
+      "palavra": "e",
+      "ini": 25.94,
+      "fim": 26.16
+    },
+    {
+      "palavra": "chefes.",
+      "ini": 26.16,
+      "fim": 26.7
+    },
+    {
+      "palavra": "Lugares",
+      "ini": 26.7,
+      "fim": 28.16
+    },
+    {
+      "palavra": "que",
+      "ini": 28.16,
+      "fim": 28.26
+    },
+    {
+      "palavra": "você",
+      "ini": 28.26,
+      "fim": 28.48
+    },
+    {
+      "palavra": "já",
+      "ini": 28.48,
+      "fim": 28.64
+    },
+    {
+      "palavra": "conhecia",
+      "ini": 28.64,
+      "fim": 29.12
+    },
+    {
+      "palavra": "precisavam",
+      "ini": 29.12,
+      "fim": 29.68
+    },
+    {
+      "palavra": "ser",
+      "ini": 29.68,
+      "fim": 29.9
+    },
+    {
+      "palavra": "explorados",
+      "ini": 29.9,
+      "fim": 30.46
+    },
+    {
+      "palavra": "de",
+      "ini": 30.46,
+      "fim": 30.68
+    },
+    {
+      "palavra": "outra",
+      "ini": 30.68,
+      "fim": 30.94
+    },
+    {
+      "palavra": "maneira.",
+      "ini": 30.94,
+      "fim": 31.34
+    },
+    {
+      "palavra": "Essa",
+      "ini": 32.1,
+      "fim": 32.5
+    },
+    {
+      "palavra": "segunda",
+      "ini": 32.5,
+      "fim": 32.92
+    },
+    {
+      "palavra": "jornada",
+      "ini": 32.92,
+      "fim": 33.4
+    },
+    {
+      "palavra": "ampliava",
+      "ini": 33.4,
+      "fim": 33.96
+    },
+    {
+      "palavra": "o",
+      "ini": 33.96,
+      "fim": 34.1
+    },
+    {
+      "palavra": "jogo",
+      "ini": 34.1,
+      "fim": 34.28
+    },
+    {
+      "palavra": "e",
+      "ini": 34.28,
+      "fim": 34.46
+    },
+    {
+      "palavra": "reforçava",
+      "ini": 34.46,
+      "fim": 35.02
+    },
+    {
+      "palavra": "a",
+      "ini": 35.02,
+      "fim": 35.18
+    },
+    {
+      "palavra": "exploração",
+      "ini": 35.18,
+      "fim": 35.72
+    },
+    {
+      "palavra": "que",
+      "ini": 35.72,
+      "fim": 35.88
+    },
+    {
+      "palavra": "ajudou",
+      "ini": 35.88,
+      "fim": 36.24
+    },
+    {
+      "palavra": "a",
+      "ini": 36.24,
+      "fim": 36.36
+    },
+    {
+      "palavra": "consolidar",
+      "ini": 36.36,
+      "fim": 36.84
+    },
+    {
+      "palavra": "o",
+      "ini": 36.84,
+      "fim": 36.98
+    },
+    {
+      "palavra": "estilo",
+      "ini": 36.98,
+      "fim": 37.26
+    },
+    {
+      "palavra": "metrô",
+      "ini": 37.26,
+      "fim": 37.58
+    },
+    {
+      "palavra": "-de",
+      "ini": 37.58,
+      "fim": 37.7
+    },
+    {
+      "palavra": "-vania.",
+      "ini": 37.7,
+      "fim": 38.08
+    },
+    {
+      "palavra": "Você",
+      "ini": 38.66,
+      "fim": 39.26
+    },
+    {
+      "palavra": "conseguiu",
+      "ini": 39.26,
+      "fim": 39.76
+    },
+    {
+      "palavra": "chegar",
+      "ini": 39.76,
+      "fim": 40.06
+    },
+    {
+      "palavra": "ao",
+      "ini": 40.06,
+      "fim": 40.22
+    },
+    {
+      "palavra": "castelo",
+      "ini": 40.22,
+      "fim": 40.64
+    },
+    {
+      "palavra": "invertido?",
+      "ini": 40.64,
+      "fim": 41.26
+    },
+    {
+      "palavra": "Conta",
+      "ini": 42.04,
+      "fim": 42.56
+    },
+    {
+      "palavra": "aí",
+      "ini": 42.56,
+      "fim": 42.7
+    },
+    {
+      "palavra": "nos",
+      "ini": 42.7,
+      "fim": 42.82
+    },
+    {
+      "palavra": "comentários!",
+      "ini": 42.82,
+      "fim": 43.48
+    }
+  ],
+  "segmentos": [
+    {
+      "id": 0,
+      "ini": 0.0,
+      "fim": 3.94,
+      "texto": "Em 1997, a indústria priorizava 3D."
+    },
+    {
+      "id": 1,
+      "ini": 4.88,
+      "fim": 8.88,
+      "texto": "Castelhevania fez o contrário, apostou no 2D e criou um clássico."
+    },
+    {
+      "id": 2,
+      "ini": 9.68,
+      "fim": 13.62,
+      "texto": "Mais o maior cedredo do jogo estava escondido depois do suposto final."
+    },
+    {
+      "id": 3,
+      "ini": 14.36,
+      "fim": 22.08,
+      "texto": "Ao descobrir quem realmente controlava a Richter, você liberava uma segunda versão do castelo, completamente de cabeça para baixo."
+    },
+    {
+      "id": 4,
+      "ini": 22.8,
+      "fim": 26.7,
+      "texto": "As mesmas áreas ganhavam novas rotas, inimigos e chefes."
+    },
+    {
+      "id": 5,
+      "ini": 26.7,
+      "fim": 31.34,
+      "texto": "Lugares que você já conhecia precisavam ser explorados de outra maneira."
+    },
+    {
+      "id": 6,
+      "ini": 32.1,
+      "fim": 38.08,
+      "texto": "Essa segunda jornada ampliava o jogo e reforçava a exploração que ajudou a consolidar o estilo metrô-de-vania."
+    },
+    {
+      "id": 7,
+      "ini": 38.66,
+      "fim": 41.26,
+      "texto": "Você conseguiu chegar ao castelo invertido?"
+    },
+    {
+      "id": 8,
+      "ini": 42.04,
+      "fim": 43.48,
+      "texto": "Conta aí nos comentários!"
+    }
+  ]
+}

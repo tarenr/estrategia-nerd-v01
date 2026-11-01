@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>OneTake Live Preview - Castlevania SOTN (Echo Series)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #090514;
+      color: #e2daf0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 22px;
+      color: #62f6ff;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .meta {
+      font-size: 13px;
+      color: #9d8db8;
+    }
+    .player-container {
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      background: #140d24;
+      padding: 24px;
+      border-radius: 16px;
+      border: 1px solid rgba(130, 90, 220, 0.25);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+    .phone-mockup {
+      width: 405px;
+      height: 720px;
+      background: #000;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 6px solid #24163e;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+    canvas#stage {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .panel-controls {
+      width: 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .scene-card {
+      background: #1d1334;
+      border: 1px solid #3d2766;
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .scene-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      background: #2f1754;
+      color: #62f6ff;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+    .scene-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .scene-desc {
+      font-size: 13px;
+      color: #b3a4cf;
+      line-height: 1.4;
+    }
+    .teleprompter {
+      background: #100820;
+      border: 1px solid #2c1a4d;
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .teleprompter-label {
+      font-size: 11px;
+      color: #796696;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .teleprompter-text {
+      font-size: 15px;
+      font-style: italic;
+      color: #ffe875;
+      line-height: 1.4;
+    }
+    .controls {
+      background: #190f2d;
+      border: 1px solid #331e58;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .scrubber-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    input[type=range] {
+      flex: 1;
+      accent-color: #62f6ff;
+      cursor: pointer;
+    }
+    .timecode {
+      font-family: monospace;
+      font-size: 14px;
+      color: #62f6ff;
+      min-width: 95px;
+      text-align: right;
+    }
+    .btn-row {
+      display: flex;
+      gap: 12px;
+    }
+    button.btn-play {
+      flex: 1;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #0b0617;
+      background: #62f6ff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button.btn-play:hover {
+      background: #7fe3f5;
+    }
+    button.btn-play:active {
+      transform: scale(0.98);
+    }
+    button.btn-sec {
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #d1c4e9;
+      background: #2a1a4a;
+      border: 1px solid #452b78;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button.btn-sec:hover {
+      background: #372361;
+    }
+    .shortcuts-hint {
+      font-size: 12px;
+      color: #796696;
+      text-align: center;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>ONE-TAKE LIVE PREVIEW // ECHO SERIES</h1>
+    <div class="meta">Castlevania: Symphony of the Night (Vídeo Híbrido) • 44.57s • 60 FPS Realtime • Monitor 4:3 Nativo • Zoom 3.33x (1080px) • Trilha Bloody Tears 22s</div>
+  </header>
+
+  <div class="player-container">
+    <div class="phone-mockup">
+      <canvas id="stage" width="1080" height="1920"></canvas>
+    </div>
+
+    <div class="panel-controls">
+      <div class="scene-card">
+        <span class="scene-tag" id="scene-tag">ATO 01 • QUARTO GAMER (0.0s – 3.9s)</span>
+        <div class="scene-title" id="scene-title">Echo entrega o gancho com abertura clássica na TV</div>
+        <div class="scene-desc" id="scene-desc">Plano aberto (1.0x). Echo sentado com respiração orgânica, balanço e lip-sync com controle 3D. Monitor 4:3 com a tela real aos 14s (Castlevania 1997 Konami). Trilha Bloody Tears ativa desde 0.0s.</div>
+      </div>
+
+      <div class="teleprompter">
+        <div class="teleprompter-label">Locução em Sincronia:</div>
+        <div class="teleprompter-text" id="teleprompter-text">"Em 1997, a indústria priorizava o 3D..."</div>
+      </div>
+
+      <div class="controls">
+        <div class="scrubber-row">
+          <input type="range" id="scrub" min="0" max="44.57" step="0.05" value="0">
+          <div class="timecode" id="timecode">00:00.0 / 00:44.5</div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-play" id="btn-play">▶ REPRODUZIR</button>
+          <button class="btn-sec" id="btn-restart">↺ Início</button>
+        </div>
+
+        <div class="shortcuts-hint">
+          Atalhos: <strong>Espaço</strong> (Play/Pause) • <strong>← / →</strong> (±2s)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Áudio oficial mixado com Bloody Tears pura desde 0.0s -->
+  <audio id="audio" src="assets/audio_mixado_preview.mp3" preload="auto"></audio>
+
+  <!-- Gameplay 4:3 contínuo perfeitamente encaixado no monitor retrô -->
+  <video id="video-gameplay" src="assets/gameplay_sync.mp4" muted playsinline preload="auto" style="display: none;"></video>
+
+  <!-- Módulos do motor gráfico e cenário oficial -->
+  <script src="vendor/robo-roupas.js"></script>
+  <script src="vendor/robo-motor.js"></script>
+  <script src="vendor/echo-director.js"></script>
+  <script src="vendor/setup_desenho.js"></script>
+  <script src="cenas_v2.js"></script>
+
+  <script>
+    (async function() {
+      const stage = document.getElementById('stage');
+      const ctx = stage.getContext('2d');
+      const audio = document.getElementById('audio');
+      const videoGameplay = document.getElementById('video-gameplay');
+      const btnPlay = document.getElementById('btn-play');
+      const btnRestart = document.getElementById('btn-restart');
+      const scrub = document.getElementById('scrub');
+      const timecode = document.getElementById('timecode');
+      const sceneTag = document.getElementById('scene-tag');
+      const sceneTitle = document.getElementById('scene-title');
+      const sceneDesc = document.getElementById('scene-desc');
+      const teleprompterText = document.getElementById('teleprompter-text');
+
+      const TOTAL_DUR = 44.57;
+
+      window.CenasV2.setVideoElement(videoGameplay);
+
+      const CENAS_INFO = [
+        {
+          ate: 3.94,
+          tag: 'ATO 01 • QUARTO GAMER (0.0s – 3.9s)',
+          titulo: 'Echo entrega o gancho com abertura clássica na TV',
+          desc: 'Quarto em plano aberto (1.0x). Echo vivo subindo na cadeira, apertando botões no controle. TV exibe a abertura aos 14s. Trilha Bloody Tears com riff clímax desde 0.0s.',
+          fala: '"Em 1997, a indústria priorizava o 3D."'
+        },
+        {
+          ate: 8.88,
+          tag: 'ATO 02 • PUSH-IN & ECHO OLHA PARA A TV (3.9s – 8.8s)',
+          titulo: 'Echo vira a cabeça para a tela e câmera avança',
+          desc: 'Echo vira o olhar e a cabeça direto para a TV (yaw 0.35, olhar [0.72, -0.28]) se inclinando para a mesa. Câmera dá zoom imersivo 1.0x -> 3.33x preenchendo os 1080px do celular.',
+          fala: '"Castlevania fez o contrário: apostou no 2D e criou um clássico."'
+        },
+        {
+          ate: 13.60,
+          tag: 'ATO 03 • GAMEPLAY 3.33x: PORTÕES DO CASTELO (8.8s – 13.6s)',
+          titulo: 'Alucard avança no castelo em tela cheia (1080px)',
+          desc: 'Zoom máximo 3.33x cobrindo 100% da largura útil sem cortar HUD. Alucard adentra as muralhas góticas.',
+          fala: '"Mas o maior segredo do jogo estava escondido depois do suposto final."'
+        },
+        {
+          ate: 20.30,
+          tag: 'ATO 04 • GAMEPLAY 3.33x: RICHTER BELMONT (13.6s – 20.3s)',
+          titulo: 'Batalha contra Richter Belmont dominado',
+          desc: 'Corte da luta contra Richter Belmont ("RICHTER x 00") com chicote, água benta e a grande reviravolta.',
+          fala: '"Ao descobrir quem realmente controlava Richter, você liberava uma segunda versão do castelo..."'
+        },
+        {
+          ate: 26.70,
+          tag: 'ATO 05 • GAMEPLAY 3.33x: CASTELO INVERTIDO (20.3s – 26.7s)',
+          titulo: 'Revelação do Castelo Invertido',
+          desc: 'Arquitetura de ponta-cabeça e confronto contra o Discus Lord nas câmaras invertidas.',
+          fala: '"...completamente de cabeça para baixo. As mesmas áreas ganhavam novas rotas, inimigos e chefes."'
+        },
+        {
+          ate: 31.30,
+          tag: 'ATO 06 • GAMEPLAY 3.33x: EXPLORAÇÃO VERTICAL (26.7s – 31.3s)',
+          titulo: 'Exploração e travessia com morcego',
+          desc: 'Cena inédita de GamePlay.mp4 com Alucard em saltos altos e voo de morcego desbravando novos caminhos.',
+          fala: '"Lugares que você já conhecia precisavam ser explorados de outra maneira."'
+        },
+        {
+          ate: 35.50,
+          tag: 'ATO 07 • GAMEPLAY 3.33x: MAPA & METROIDVANIA (31.3s – 35.5s)',
+          titulo: 'Mapa do Castelo e consolidação do gênero',
+          desc: 'Exibição nítida do mapa do castelo em azul profundo, consolidando a mecânica Metroidvania.',
+          fala: '"Essa segunda jornada ampliava o jogo e reforçava a exploração que ajudou a consolidar o estilo metroidvania."'
+        },
+        {
+          ate: 39.80,
+          tag: 'ATO 08 • GAMEPLAY 3.33x: CATEDRAL & INÍCIO DA PERGUNTA (35.5s – 39.8s)',
+          titulo: 'Combate na Catedral gótica em tela cheia',
+          desc: 'Gameplay em 3.33x continua dominante na tela enquanto Echo começa a pergunta final aos 38.66s: "Você conseguiu...".',
+          fala: '"Você conseguiu..."'
+        },
+        {
+          ate: 41.60,
+          tag: 'ATO 09 • RECUO SUAVE NO MEIO DA PERGUNTA (39.8s – 41.6s)',
+          titulo: 'Câmera recua no meio da frase e Echo vira para frente',
+          desc: 'Pull-back suave (3.33x -> 1.0x) durante "chegar ao castelo invertido?". Echo vira a cabeça da TV de volta para o espectador.',
+          fala: '"...chegar ao castelo invertido?"'
+        },
+        {
+          ate: 44.57,
+          tag: 'ATO 10 • CLÍMAX & CALL-TO-ACTION (41.6s – 44.57s)',
+          titulo: 'Echo frontal no quarto gamer convida a comentar',
+          desc: 'Plano aberto 1.0x estabilizado. Echo pousa o controle na mesa gamer, descola a mão esquerda gesticulando para a comunidade e sorri com olhos expressivos happy (^ ^): "Conta aí nos comentários!".',
+          fala: '"Conta aí nos comentários!"'
+        }
+      ];
+
+      function formatTime(s) {
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60);
+        const ms = Math.floor((s % 1) * 10);
+        return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${ms}`;
+      }
+
+      function atualizarUI(t) {
+        scrub.value = t;
+        timecode.innerText = `${formatTime(t)} / ${formatTime(TOTAL_DUR)}`;
+
+        for (const c of CENAS_INFO) {
+          if (t <= c.ate || c === CENAS_INFO[CENAS_INFO.length - 1]) {
+            sceneTag.innerText = c.tag;
+            sceneTitle.innerText = c.titulo;
+            sceneDesc.innerText = c.desc;
+            teleprompterText.innerText = c.fala;
+            break;
+          }
+        }
+      }
+
+      let isPlaying = false;
+
+      function renderLoop() {
+        let t = audio.currentTime;
+        if (t >= TOTAL_DUR) {
+          audio.pause();
+          videoGameplay.pause();
+          isPlaying = false;
+          btnPlay.innerText = '▶ REPRODUZIR';
+          t = TOTAL_DUR;
+        }
+
+        if (isPlaying && Math.abs(videoGameplay.currentTime - t) > 0.12) {
+          videoGameplay.currentTime = t;
+        }
+
+        window.CenasV2.renderizarQuadro(ctx, t, videoGameplay);
+        atualizarUI(t);
+
+        if (isPlaying) {
+          requestAnimationFrame(renderLoop);
+        }
+      }
+
+      function togglePlay() {
+        if (audio.paused) {
+          videoGameplay.play().catch(() => {});
+          audio.play().then(() => {
+            isPlaying = true;
+            btnPlay.innerText = '⏸ PAUSAR';
+            requestAnimationFrame(renderLoop);
+          }).catch(e => console.warn('Erro ao tocar áudio:', e));
+        } else {
+          audio.pause();
+          videoGameplay.pause();
+          isPlaying = false;
+          btnPlay.innerText = '▶ REPRODUZIR';
+        }
+      }
+
+      btnPlay.addEventListener('click', togglePlay);
+
+      btnRestart.addEventListener('click', () => {
+        audio.currentTime = 0;
+        videoGameplay.currentTime = 0;
+        window.CenasV2.renderizarQuadro(ctx, 0, videoGameplay);
+        atualizarUI(0);
+      });
+
+      scrub.addEventListener('input', (e) => {
+        const t = parseFloat(e.target.value);
+        audio.currentTime = t;
+        videoGameplay.currentTime = t;
+        window.CenasV2.renderizarQuadro(ctx, t, videoGameplay);
+        atualizarUI(t);
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlay();
+        } else if (e.code === 'ArrowRight') {
+          const nt = Math.min(TOTAL_DUR, audio.currentTime + 2);
+          audio.currentTime = nt;
+          videoGameplay.currentTime = nt;
+          window.CenasV2.renderizarQuadro(ctx, nt, videoGameplay);
+          atualizarUI(nt);
+        } else if (e.code === 'ArrowLeft') {
+          const nt = Math.max(0, audio.currentTime - 2);
+          audio.currentTime = nt;
+          videoGameplay.currentTime = nt;
+          window.CenasV2.renderizarQuadro(ctx, nt, videoGameplay);
+          atualizarUI(nt);
+        }
+      });
+
+      if (videoGameplay.readyState < 2) {
+        await new Promise((res) => {
+          videoGameplay.addEventListener('loadeddata', res, { once: true });
+          setTimeout(res, 800);
+        });
+      }
+
+      await window.CenasV2.renderizarQuadro(ctx, 0, videoGameplay);
+      atualizarUI(0);
+      console.log('OneTake Live Preview pronto com monitor 4:3 e trilha oficial.');
+    })();
+  </script>
+</body>
+</html>
