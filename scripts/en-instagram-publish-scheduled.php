@@ -45,20 +45,64 @@ function ig_log(string $level, string $message): void
 
 /**
  * Executa outro script PHP do projeto em processo separado (falha ali nunca derruba este agendador).
+ * No Windows, utiliza proc_open com CREATE_NO_WINDOW e bypass_shell para impedir que o cmd.exe
+ * abra uma janela de console visivel na tela a cada ciclo de sync/publish.
  *
  * @param list<string> $args
  */
 function ig_run_php(string $script, array $args = []): int
 {
-    $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(dirname(__DIR__) . '/' . $script);
-    foreach ($args as $arg) {
-        $command .= ' ' . escapeshellarg($arg);
+    // No Windows, sempre usar php-win.exe (subsistema GUI) para garantir que
+    // o Windows jamais aloque console ou conhost.exe visivel na area de trabalho.
+    if (PHP_OS_FAMILY === 'Windows') {
+        $phpExe = dirname(PHP_BINARY) . DIRECTORY_SEPARATOR . 'php-win.exe';
+        if (!is_file($phpExe)) {
+            $phpExe = PHP_BINARY;
+        }
+    } else {
+        $phpExe = PHP_BINARY;
     }
-    $output = [];
-    $code   = 1;
-    exec($command . ' 2>&1', $output, $code);
-    foreach (array_slice($output, -3) as $line) {
-        ig_log($code === 0 ? 'info' : 'error', '[' . basename($script) . '] ' . trim($line));
+
+    $scriptPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $script);
+    $cmd = array_merge([$phpExe, $scriptPath], $args);
+
+    $descriptors = [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ];
+
+    $options = [];
+    if (PHP_OS_FAMILY === 'Windows') {
+        $options = [
+            'bypass_shell'         => true,
+            'create_process_flags' => 0x08000000, // CREATE_NO_WINDOW
+        ];
+    }
+
+    $process = @proc_open($cmd, $descriptors, $pipes, dirname(__DIR__), null, $options);
+    if (!is_resource($process)) {
+        ig_log('error', '[' . basename($script) . '] Falha ao iniciar subprocesso via proc_open.');
+        return 1;
+    }
+
+    fclose($pipes[0]);
+    $stdout = stream_get_contents($pipes[1]);
+    fclose($pipes[1]);
+    $stderr = stream_get_contents($pipes[2]);
+    fclose($pipes[2]);
+
+    $code = proc_close($process);
+
+    $outputStr = trim((string) $stdout . "\n" . (string) $stderr);
+    $lines = $outputStr !== '' ? preg_split('/\r\n|\r|\n/', $outputStr) : [];
+    if (is_array($lines) && !empty($lines)) {
+        foreach (array_slice($lines, -3) as $line) {
+            $line = trim($line);
+            if ($line !== '') {
+                ig_log($code === 0 ? 'info' : 'error', '[' . basename($script) . '] ' . $line);
+            }
+        }
     }
 
     return $code;
@@ -151,6 +195,22 @@ if ($account === null) {
 $accountId = (int) $account['id'];
 $api = new InstagramApiService((string) ($account['access_token'] ?? ''), (string) ($account['ig_user_id'] ?? ''));
 $confirmation = new InstagramPublishConfirmationService($repo, $api);
+
+// Renovação proativa de token (blindagem contra expiração da Meta durante disparos agendados)
+$tokenExpiresAt = (string) ($account['token_expires_at'] ?? '');
+$expiresTimestamp = $tokenExpiresAt !== '' ? strtotime($tokenExpiresAt) : false;
+if ($expiresTimestamp !== false && ($expiresTimestamp - time()) < (48 * 3600)) {
+    try {
+        ig_log('info', 'Token da Meta próximo do vencimento (< 48h). Executando renovação proativa...');
+        $refreshed = $api->refreshLongLivedToken();
+        $repo->updateAccountToken($accountId, $refreshed['access_token'], $refreshed['expires_at']);
+        $api = new InstagramApiService($refreshed['access_token'], (string) ($account['ig_user_id'] ?? ''));
+        $confirmation = new InstagramPublishConfirmationService($repo, $api);
+        ig_log('info', "Token renovado com sucesso. Nova expiração: {$refreshed['expires_at']}.");
+    } catch (Throwable $e) {
+        ig_log('warn', 'Renovação proativa de token falhou: ' . $e->getMessage() . '. Prosseguindo com o token ativo.');
+    }
+}
 // Reconciliation only reads Meta; never re-sends an uncertain media_publish.
 try {
     foreach ($repo->listPublishConfirmations($accountId) as $pendingPost) {
@@ -221,11 +281,15 @@ foreach ($duePosts as $post) {
             throw new RuntimeException('Legenda inválida: ' . implode(' ', $validation['errors']));
         }
 
-        // Cria containers e publica conforme o tipo
+        // Cria containers e publica conforme o tipo (com anti-duplicação de container)
         $tipo    = (string) ($post['tipo'] ?? 'imagem');
         $isVideo = false;
 
-        if ($hasAudio) {
+        $reusedCreationId = $confirmation->reuseExistingContainerIfValid($postId);
+        if ($reusedCreationId !== null) {
+            $creationId = $reusedCreationId;
+            ig_log('info', "Post #{$postId} — reaproveitando container já existente e validado na Meta: {$creationId}");
+        } elseif ($hasAudio) {
             $renderedRel = AudioReelGeneratorService::readyVideoPath($post, base_path('public'));
             if ($renderedRel === null) {
                 $audioTrack = $repo->findAudioTrack((int) $post['audio_track_id']);
@@ -315,8 +379,12 @@ foreach ($duePosts as $post) {
             );
         }
 
-        if (!$repo->saveCreationId($postId, $creationId)) { throw new RuntimeException('Container não registrado; nada publicado.'); }
-        ig_log('info', "Post #{$postId} — container criado: {$creationId} (tipo: {$tipo})");
+        if ($reusedCreationId === null) {
+            if (!$repo->saveCreationId($postId, $creationId)) { throw new RuntimeException('Container não registrado; nada publicado.'); }
+            ig_log('info', "Post #{$postId} — container criado: {$creationId} (tipo: {$tipo})");
+        } else {
+            ig_log('info', "Post #{$postId} — container reaproveitado: {$creationId} (tipo: {$tipo})");
+        }
 
         // Polling do status do container (vídeos têm tempo limite maior: até 60s)
         $maxTries = $isVideo ? 12 : 6;

@@ -89,7 +89,7 @@ final class InstagramApiService
 
     /**
      * Retorna insights da conta para o período ou datas informadas.
-     * Suporta atalhos ('7d', '14d', '30d', '90d') ou timestamps $since e $until.
+     * Suporta atalhos ('7d', '14d', '30d') ou timestamps $since e $until.
      *
      * @param string|int $since Atalho ('7d', '30d', etc.) ou timestamp inicial
      * @param int|null   $until Timestamp final (padrão agora)
@@ -98,10 +98,9 @@ final class InstagramApiService
     public function getInsights(string|int $since = '7d', ?int $until = null): array
     {
         $now = time();
-        $minSince = strtotime('-90 days', $now); // Limite da Meta Graph API
 
         if (is_string($since) && preg_match('/^(\d+)d$/', $since, $m)) {
-            $days = min(90, max(1, (int) $m[1]));
+            $days = min(30, max(1, (int) $m[1]));
             $sinceTs = strtotime("-{$days} days", $now);
             $untilTs = $now;
         } elseif (is_numeric($since)) {
@@ -114,9 +113,6 @@ final class InstagramApiService
         }
 
         // Clamping estrito contra limites da Meta
-        if ($sinceTs < $minSince) {
-            $sinceTs = $minSince;
-        }
         if ($untilTs > $now) {
             $untilTs = $now;
         }
@@ -128,27 +124,6 @@ final class InstagramApiService
         $maxWindow = 30 * 86400;
         if (($untilTs - $sinceTs) > $maxWindow) {
             $sinceTs = $untilTs - $maxWindow;
-        }
-
-        // Se for exatamente 7d e helper local responder, usa o helper como cache rápido
-        $isExactly7d = ($since === '7d' || (abs($untilTs - $sinceTs) >= 6 * 86400 && abs($untilTs - $sinceTs) <= 8 * 86400));
-        if ($isExactly7d) {
-            $helperData = $this->fetchHelper('/insights?period=7d');
-            if ($helperData !== null) {
-                $reach = isset($helperData['reach7d']) ? (int) $helperData['reach7d'] : 0;
-                $profileViews = isset($helperData['profileViews7d']) ? (int) $helperData['profileViews7d'] : 0;
-                return [
-                    'data' => [
-                        ['name' => 'reach', 'total_value' => ['value' => $reach]],
-                        ['name' => 'views', 'total_value' => ['value' => 0]],
-                        ['name' => 'profile_views', 'total_value' => ['value' => $profileViews]],
-                        ['name' => 'total_interactions', 'total_value' => ['value' => 0]],
-                    ],
-                    '_source' => 'helper',
-                    'since' => $sinceTs,
-                    'until' => $untilTs,
-                ];
-            }
         }
 
         // Meta Graph API v21.0: exige views e metric_type=total_value
@@ -250,16 +225,26 @@ final class InstagramApiService
     public function getMediaDetails(string $mediaId): array
     {
         $media = $this->graphGet("/{$mediaId}", [
-            'fields' => 'id,media_type,media_url,thumbnail_url,permalink,caption,timestamp,like_count,comments_count',
+            'fields' => 'id,media_type,media_product_type,media_url,thumbnail_url,permalink,caption,timestamp,like_count,comments_count',
         ]);
+
+        $mediaType = strtoupper((string) ($media['media_type'] ?? ''));
+        $productType = strtoupper((string) ($media['media_product_type'] ?? ''));
+        $isReelOrVideo = $mediaType === 'VIDEO' || $productType === 'REELS';
+
+        $metric = $isReelOrVideo
+            ? 'reach,views,saved,total_interactions,ig_reels_avg_watch_time,ig_reels_video_view_total_time'
+            : 'reach,views,saved,total_interactions,impressions';
 
         try {
             $insights = $this->graphGet("/{$mediaId}/insights", [
-                'metric' => 'reach,impressions,saved,total_interactions',
+                'metric' => $metric,
             ]);
             $media['insights'] = $insights['data'] ?? [];
-        } catch (RuntimeException) {
+            $media['insights_error'] = null;
+        } catch (RuntimeException $e) {
             $media['insights'] = [];
+            $media['insights_error'] = (string) preg_replace('/([?&]access_token=)[^&]+/i', '$1[REDACTED]', $e->getMessage());
         }
 
         return $media;
@@ -555,6 +540,104 @@ final class InstagramApiService
         preg_match_all('/#\w+/u', $caption, $matches);
 
         return count($matches[0]);
+    }
+
+    // ── Inspeção e Renovação de Token (Blindagem API) ──────────────────────
+
+    /**
+     * Inspeciona a validade e a expiração do token atual via debug_token da Meta.
+     *
+     * @return array{is_valid: bool, expires_at: int|null, expires_in: int|null, scopes: list<string>, raw: array<string,mixed>}
+     */
+    public function inspectToken(): array
+    {
+        if ($this->accessToken === '') {
+            return [
+                'is_valid'   => false,
+                'expires_at' => null,
+                'expires_in' => null,
+                'scopes'     => [],
+                'raw'        => [],
+            ];
+        }
+
+        try {
+            $data = $this->graphGet('/debug_token', [
+                'input_token' => $this->accessToken,
+            ]);
+            $info = (array) ($data['data'] ?? []);
+            $isValid = (bool) ($info['is_valid'] ?? false);
+            $expiresAt = isset($info['data_access_expires_at']) && (int) $info['data_access_expires_at'] > 0
+                ? (int) $info['data_access_expires_at']
+                : (isset($info['expires_at']) && (int) $info['expires_at'] > 0 ? (int) $info['expires_at'] : null);
+            $expiresIn = $expiresAt !== null ? max(0, $expiresAt - time()) : null;
+            /** @var list<string> $scopes */
+            $scopes = is_array($info['scopes'] ?? null) ? array_values(array_map('strval', $info['scopes'])) : [];
+
+            return [
+                'is_valid'   => $isValid,
+                'expires_at' => $expiresAt,
+                'expires_in' => $expiresIn,
+                'scopes'     => $scopes,
+                'raw'        => $info,
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'is_valid'   => false,
+                'expires_at' => null,
+                'expires_in' => null,
+                'scopes'     => [],
+                'raw'        => ['error' => $e->getMessage()],
+            ];
+        }
+    }
+
+    /**
+     * Renova preventivamente um token de longa duração da Meta/Instagram.
+     *
+     * Suporta grant_type=ig_refresh_token (Instagram Graph API) e grant_type=fb_exchange_token (Meta OAuth).
+     *
+     * @param string|null $clientId
+     * @param string|null $clientSecret
+     * @return array{access_token: string, token_type: string, expires_in: int, expires_at: string}
+     */
+    public function refreshLongLivedToken(?string $clientId = null, ?string $clientSecret = null): array
+    {
+        if ($this->accessToken === '') {
+            throw new RuntimeException('Token de acesso vazio; não é possível renovar.');
+        }
+
+        if ($clientSecret !== null && $clientSecret !== '' && $clientId !== null && $clientId !== '') {
+            $url = self::GRAPH_BASE . '/oauth/access_token?' . http_build_query([
+                'grant_type'        => 'fb_exchange_token',
+                'client_id'         => $clientId,
+                'client_secret'     => $clientSecret,
+                'fb_exchange_token' => $this->accessToken,
+            ]);
+            $response = $this->httpGet($url, self::API_TIMEOUT);
+        } else {
+            // Instagram API refresh endpoint
+            $url = 'https://graph.instagram.com/refresh_access_token?' . http_build_query([
+                'grant_type'   => 'ig_refresh_token',
+                'access_token' => $this->accessToken,
+            ]);
+            $response = $this->httpGet($url, self::API_TIMEOUT);
+        }
+
+        $newToken = (string) ($response['access_token'] ?? '');
+        if ($newToken === '') {
+            throw new RuntimeException('A Meta não retornou um access_token renovado válido.');
+        }
+
+        $expiresIn = (int) ($response['expires_in'] ?? 5184000); // padrão 60 dias
+        $expiresAt = date('Y-m-d H:i:s', time() + $expiresIn);
+
+        return [
+            'access_token' => $newToken,
+            'token_type'   => (string) ($response['token_type'] ?? 'bearer'),
+            'expires_in'   => $expiresIn,
+            'expires_at'   => $expiresAt,
+        ];
     }
 
     // ── HTTP Internos ─────────────────────────────────────────────────────────

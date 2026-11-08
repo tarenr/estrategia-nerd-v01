@@ -43,9 +43,17 @@ $dir         = (string) ($dir ?? 'desc');
 $period      = (string) ($period ?? '7d');
 $start       = (string) ($start ?? date('Y-m-d', strtotime('-7 days')));
 $end         = (string) ($end ?? date('Y-m-d'));
+$minDate     = (string) ($min_date ?? '2024-11-20');
+$maxDate     = (string) ($max_date ?? date('Y-m-d'));
+$adjustedNotice = !empty($adjusted_notice) ? (string) $adjusted_notice : null;
+$alcanceModo = (string) ($alcance_modo ?? 'exato');
 $viewMode    = isset($_GET['view']) && in_array((string) $_GET['view'], ['grid', 'table'], true) ? (string) $_GET['view'] : 'table';
 $contentTypes = $content_types ?? ['total' => $totalPosts, 'items' => []];
 $dailyPerformance = $daily_performance ?? [];
+$kpiMeta = $kpi_meta ?? [
+    'deltas' => ['followers' => null, 'follows' => null, 'media' => null, 'alcance_pct' => null],
+    'series' => ['followers' => [], 'follows' => [], 'media' => [], 'alcance' => []],
+];
 
 $fmt = static fn (int $v): string => number_format($v, 0, ',', '.');
 $esc = static fn (?string $v): string => htmlspecialchars((string) $v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -290,101 +298,44 @@ if (($endRange - $startRange) < 4) {
     </section>
   <?php else: ?>
 
-    <!-- Fileira de 4 KPIs com Sparklines (Referência Visual) -->
+    <!-- Fileira de 4 KPIs com Sparklines (série real de instagram_insights_cache) -->
     <?php
     $followersCount = (int) ($account['followers_count'] ?? 0);
     $followsCount   = (int) ($account['follows_count'] ?? 0);
     $mediaCount     = (int) ($account['media_count'] ?? $totalPosts);
-    $alcanceVal     = (int) ($insights['alcance'] ?? 154);
-    $delta          = (int) ($insights['variacao_seguidores'] ?? 0);
+    $alcanceVal     = ($insights !== null && isset($insights['alcance'])) ? (int) $insights['alcance'] : null;
+    $alcanceLabel   = ($alcanceModo === 'soma_blocos') ? 'Alcance (soma dos blocos)' : 'Alcance (' . $period . ')';
+    $alcanceTitle   = ($alcanceModo === 'soma_blocos')
+        ? 'Soma dos alcances de cada bloco de até 28 dias. A mesma pessoa pode ter sido contabilizada em mais de um bloco.'
+        : 'Alcance total oficial no período selecionado (Meta Graph API).';
+
+    // Badge de variação e sparkline são preenchidos pelo JS (renderKpiExtras) a partir de $kpiMeta.
+    $kpiCards = [
+        ['key' => 'followers', 'label' => 'Seguidores', 'value' => $followersCount, 'icon' => 'fa-users',      'border' => 'border-l-sky-400',    'box' => 'bg-sky-500/10 border border-sky-500/30 text-sky-400', 'title' => 'Total de seguidores da conta'],
+        ['key' => 'follows',   'label' => 'Seguindo',   'value' => $followsCount,   'icon' => 'fa-user-plus',  'border' => 'border-l-purple-400', 'box' => 'bg-purple-500/10 border border-purple-500/30 text-purple-400', 'title' => 'Contas seguidas pelo perfil'],
+        ['key' => 'media',     'label' => 'Mídias',     'value' => $mediaCount,     'icon' => 'fa-photo-film', 'border' => 'border-l-pink-400',   'box' => 'bg-pink-500/10 border border-pink-500/30 text-pink-400', 'title' => 'Total de mídias publicadas'],
+        ['key' => 'alcance',   'label' => $alcanceLabel, 'value' => $alcanceVal,    'icon' => 'fa-eye',        'border' => 'border-l-amber-400',  'box' => 'bg-amber-500/10 border border-amber-500/30 text-amber-400', 'title' => $alcanceTitle],
+    ];
     ?>
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- KPI 1: Seguidores -->
-      <div class="admin-panel !p-4 flex items-center justify-between border-l-4 border-l-sky-400 bg-slate-900/90 shadow-lg">
-        <div class="flex items-center gap-3.5 min-w-0">
-          <div class="h-11 w-11 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 text-lg shrink-0">
-            <i class="fa-solid fa-users" aria-hidden="true"></i>
+      <?php foreach ($kpiCards as $card): ?>
+        <div class="admin-panel !p-4 flex items-center justify-between border-l-4 <?= $card['border'] ?> bg-slate-900/90 shadow-lg" title="<?= $esc($card['title']) ?>">
+          <div class="flex items-center gap-3.5 min-w-0">
+            <div class="h-11 w-11 rounded-xl <?= $card['box'] ?> flex items-center justify-center text-lg shrink-0">
+              <i class="fa-solid <?= $card['icon'] ?>" aria-hidden="true"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="text-xl font-black text-white" data-kpi-val="<?= $card['key'] ?>" data-kpi-num="<?= $card['value'] !== null ? (int) $card['value'] : '' ?>"><?= $card['value'] !== null ? $fmt((int) $card['value']) : '—' ?></div>
+              <div class="text-xs text-slate-400 font-medium truncate"<?= $card['key'] === 'alcance' ? ' data-kpi-val="alcance-label"' : '' ?>><?= $esc($card['label']) ?></div>
+            </div>
           </div>
-          <div class="min-w-0">
-            <div class="text-xl font-black text-white" data-kpi-val="followers"><?= $fmt($followersCount) ?></div>
-            <div class="text-xs text-slate-400 font-medium">Seguidores</div>
-          </div>
-        </div>
-        <div class="flex flex-col items-end gap-1 shrink-0">
-          <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold <?= $delta >= 0 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30' ?>" data-kpi-val="delta-badge">
-            <i class="fa-solid <?= $delta >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' ?> text-[8px]" data-kpi-val="delta-icon"></i>
-            <span data-kpi-val="delta-text"><?= $delta !== 0 ? abs($delta) : '12%' ?></span>
-          </span>
-          <svg class="w-16 h-6 text-sky-400/80" viewBox="0 0 100 35" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M0 28 Q 25 15, 50 22 T 100 8" stroke-linecap="round"/>
-          </svg>
-        </div>
-      </div>
-
-      <!-- KPI 2: Seguindo -->
-      <div class="admin-panel !p-4 flex items-center justify-between border-l-4 border-l-purple-400 bg-slate-900/90 shadow-lg">
-        <div class="flex items-center gap-3.5 min-w-0">
-          <div class="h-11 w-11 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-lg shrink-0">
-            <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
-          </div>
-          <div class="min-w-0">
-            <div class="text-xl font-black text-white" data-kpi-val="follows"><?= $fmt($followsCount) ?></div>
-            <div class="text-xs text-slate-400 font-medium">Seguindo</div>
+          <div class="flex flex-col items-end gap-1 shrink-0">
+            <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800/80 text-slate-400 border border-slate-700/60" data-kpi-badge="<?= $card['key'] ?>">—</span>
+            <div class="w-16 h-6" data-kpi-spark="<?= $card['key'] ?>"></div>
           </div>
         </div>
-        <div class="flex flex-col items-end gap-1 shrink-0">
-          <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-400 border border-purple-500/30">
-            <i class="fa-solid fa-arrow-up text-[8px]"></i> 5%
-          </span>
-          <svg class="w-16 h-6 text-purple-400/80" viewBox="0 0 100 35" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M0 25 Q 30 30, 60 18 T 100 12" stroke-linecap="round"/>
-          </svg>
-        </div>
-      </div>
-
-      <!-- KPI 3: Mídias -->
-      <div class="admin-panel !p-4 flex items-center justify-between border-l-4 border-l-pink-400 bg-slate-900/90 shadow-lg">
-        <div class="flex items-center gap-3.5 min-w-0">
-          <div class="h-11 w-11 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 text-lg shrink-0">
-            <i class="fa-solid fa-photo-film" aria-hidden="true"></i>
-          </div>
-          <div class="min-w-0">
-            <div class="text-xl font-black text-white" data-kpi-val="media"><?= $fmt($mediaCount) ?></div>
-            <div class="text-xs text-slate-400 font-medium">Mídias</div>
-          </div>
-        </div>
-        <div class="flex flex-col items-end gap-1 shrink-0">
-          <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-500/15 text-pink-400 border border-pink-500/30">
-            <i class="fa-solid fa-arrow-up text-[8px]"></i> 8%
-          </span>
-          <svg class="w-16 h-6 text-pink-400/80" viewBox="0 0 100 35" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M0 30 Q 35 22, 65 24 T 100 10" stroke-linecap="round"/>
-          </svg>
-        </div>
-      </div>
-
-      <!-- KPI 4: Alcance -->
-      <div class="admin-panel !p-4 flex items-center justify-between border-l-4 border-l-amber-400 bg-slate-900/90 shadow-lg">
-        <div class="flex items-center gap-3.5 min-w-0">
-          <div class="h-11 w-11 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-lg shrink-0">
-            <i class="fa-solid fa-eye" aria-hidden="true"></i>
-          </div>
-          <div class="min-w-0">
-            <div class="text-xl font-black text-white" data-kpi-val="alcance"><?= $fmt($alcanceVal) ?></div>
-            <div class="text-xs text-slate-400 font-medium" data-kpi-val="alcance-label">Alcance (<?= $esc($period) ?>)</div>
-          </div>
-        </div>
-        <div class="flex flex-col items-end gap-1 shrink-0">
-          <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-            <i class="fa-solid fa-arrow-up text-[8px]"></i> 25%
-          </span>
-          <svg class="w-16 h-6 text-amber-400/80" viewBox="0 0 100 35" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M0 28 Q 20 20, 50 25 T 100 6" stroke-linecap="round"/>
-          </svg>
-        </div>
-      </div>
+      <?php endforeach; ?>
     </section>
-
     <!-- Seção Central Dividida em 2 Colunas: Informações da Conta (60%) e Ações Rápidas (40%) -->
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- Coluna Esquerda: Informações da conta -->
@@ -569,6 +520,8 @@ if (($endRange - $startRange) < 4) {
               name="start"
               id="ig-filter-start"
               value="<?= $esc($start) ?>"
+              min="<?= $esc($minDate) ?>"
+              max="<?= $esc($maxDate) ?>"
               class="nerd-input !py-1 !px-2 rounded-lg text-xs font-bold"
               aria-label="Data inicial"
             >
@@ -578,6 +531,8 @@ if (($endRange - $startRange) < 4) {
               name="end"
               id="ig-filter-end"
               value="<?= $esc($end) ?>"
+              min="<?= $esc($minDate) ?>"
+              max="<?= $esc($maxDate) ?>"
               class="nerd-input !py-1 !px-2 rounded-lg text-xs font-bold"
               aria-label="Data final"
             >
@@ -586,6 +541,11 @@ if (($endRange - $startRange) < 4) {
             </button>
           </form>
         </div>
+      </div>
+      <!-- Aviso de ajuste de período (limites da conta) -->
+      <div id="ig-period-notice" class="mt-2 text-xs font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2 <?= !empty($adjustedNotice) ? '' : 'hidden' ?>">
+        <i class="fa-solid fa-triangle-exclamation text-amber-400" aria-hidden="true"></i>
+        <span id="ig-period-notice-text"><?= $esc($adjustedNotice ?? '') ?></span>
       </div>
     </section>
 
@@ -601,116 +561,25 @@ if (($endRange - $startRange) < 4) {
                   <i class="fa-solid fa-chart-line text-cyan-400"></i>
                   <span>Desempenho da conta</span>
                 </h4>
-                <p class="text-xs text-slate-400 mt-0.5">Evolução de seguidores, curtidas e alcance no período selecionado.</p>
+                <p class="text-xs text-slate-400 mt-0.5">Evolução de seguidores, curtidas e alcance no período selecionado.<span id="ig-perf-grouping"></span></p>
               </div>
               <!-- Legenda colorida -->
-              <div class="flex items-center gap-4 text-xs font-semibold">
-                <span class="inline-flex items-center gap-1.5 text-sky-400">
-                  <span class="h-2.5 w-2.5 rounded-full bg-sky-400"></span> Seguidores
-                </span>
+              <div class="flex flex-wrap items-center gap-4 text-xs font-semibold">
                 <span class="inline-flex items-center gap-1.5 text-pink-400">
-                  <span class="h-2.5 w-2.5 rounded-full bg-pink-400"></span> Curtidas
+                  <span class="h-2.5 w-2.5 rounded-full bg-pink-400"></span> Curtidas (posts publicados)
                 </span>
-                <span class="inline-flex items-center gap-1.5 text-amber-400">
+                <span class="inline-flex items-center gap-1.5 text-sky-400/60" title="Série histórica diária de seguidores será integrada na Fase 2 com snapshots contínuos">
+                  <span class="h-2.5 w-2.5 rounded-full bg-sky-400/40"></span> Seguidores <span class="text-[10px] text-slate-500 font-normal">(Fase 2)</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5 text-amber-400" title="Alcance da conta por ponto com cache (Meta Graph API / instagram_reach_blocks)">
                   <span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span> Alcance
                 </span>
               </div>
             </div>
 
             <!-- Gráfico Vetorial SVG Fluido Responsivo -->
-            <div class="mt-5 w-full overflow-hidden" id="ig-perf-chart-wrap">
-              <?php
-              $perfCount = count($dailyPerformance);
-              $ptsSeg = [];
-              $ptsCur = [];
-              $ptsAlc = [];
-              $maxVal = 1;
-              foreach ($dailyPerformance as $p) {
-                if ($p['seguidores'] > $maxVal) $maxVal = $p['seguidores'];
-                if ($p['curtidas'] > $maxVal)   $maxVal = $p['curtidas'];
-                if ($p['alcance'] > $maxVal)    $maxVal = $p['alcance'];
-              }
-              $maxVal = max(10, (int) ceil($maxVal * 1.15));
-
-              $chartW = 680;
-              $chartH = 200;
-              $stepX  = $perfCount > 1 ? ($chartW - 60) / ($perfCount - 1) : ($chartW - 60);
-
-              foreach ($dailyPerformance as $idx => $p) {
-                $cx = 40 + ($idx * $stepX);
-                $cySeg = $chartH - 30 - (($p['seguidores'] / $maxVal) * ($chartH - 60));
-                $cyCur = $chartH - 30 - (($p['curtidas'] / $maxVal) * ($chartH - 60));
-                $cyAlc = $chartH - 30 - (($p['alcance'] / $maxVal) * ($chartH - 60));
-                $ptsSeg[] = [$cx, $cySeg];
-                $ptsCur[] = [$cx, $cyCur];
-                $ptsAlc[] = [$cx, $cyAlc];
-              }
-
-              $polySeg = implode(' ', array_map(fn($pt) => "{$pt[0]},{$pt[1]}", $ptsSeg));
-              $polyCur = implode(' ', array_map(fn($pt) => "{$pt[0]},{$pt[1]}", $ptsCur));
-              $polyAlc = implode(' ', array_map(fn($pt) => "{$pt[0]},{$pt[1]}", $ptsAlc));
-              ?>
-              <svg class="w-full h-56" viewBox="0 0 680 210" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="gradSeg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/>
-                    <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>
-                  </linearGradient>
-                  <linearGradient id="gradAlc" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#fb923c" stop-opacity="0.25"/>
-                    <stop offset="100%" stop-color="#fb923c" stop-opacity="0.0"/>
-                  </linearGradient>
-                </defs>
-
-                <!-- Linhas Guia Horizontais -->
-                <line x1="40" y1="30" x2="660" y2="30" stroke="#334155" stroke-dasharray="3,3" stroke-width="1"/>
-                <line x1="40" y1="85" x2="660" y2="85" stroke="#334155" stroke-dasharray="3,3" stroke-width="1"/>
-                <line x1="40" y1="140" x2="660" y2="140" stroke="#334155" stroke-dasharray="3,3" stroke-width="1"/>
-                <line x1="40" y1="180" x2="660" y2="180" stroke="#475569" stroke-width="1"/>
-
-                <!-- Eixos Y -->
-                <text x="32" y="34" fill="#64748b" font-size="10" text-anchor="end"><?= $maxVal ?></text>
-                <text x="32" y="109" fill="#64748b" font-size="10" text-anchor="end"><?= (int) round($maxVal / 2) ?></text>
-                <text x="32" y="184" fill="#64748b" font-size="10" text-anchor="end">0</text>
-
-                <?php if ($perfCount > 1): ?>
-                  <!-- Área Alcance -->
-                  <polygon points="40,180 <?= $polyAlc ?> <?= $ptsAlc[count($ptsAlc)-1][0] ?>,180" fill="url(#gradAlc)" />
-                  <!-- Linha Alcance -->
-                  <polyline points="<?= $polyAlc ?>" fill="none" stroke="#fb923c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-
-                  <!-- Linha Curtidas -->
-                  <polyline points="<?= $polyCur ?>" fill="none" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-                  <!-- Área Seguidores -->
-                  <polygon points="40,180 <?= $polySeg ?> <?= $ptsSeg[count($ptsSeg)-1][0] ?>,180" fill="url(#gradSeg)" />
-                  <!-- Linha Seguidores -->
-                  <polyline points="<?= $polySeg ?>" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-
-                  <!-- Pontos e Eixos X -->
-                  <?php foreach ($dailyPerformance as $idx => $p): ?>
-                    <?php
-                    $ptS = $ptsSeg[$idx];
-                    $ptC = $ptsCur[$idx];
-                    $ptA = $ptsAlc[$idx];
-                    ?>
-                    <!-- Eixo X Label -->
-                    <text x="<?= $ptS[0] ?>" y="200" fill="#94a3b8" font-size="10" text-anchor="middle"><?= $esc($p['label']) ?></text>
-
-                    <!-- Nós interativos -->
-                    <circle cx="<?= $ptA[0] ?>" cy="<?= $ptA[1] ?>" r="3.5" fill="#fb923c" stroke="#0f172a" stroke-width="1.5">
-                      <title><?= $esc($p['label']) ?> - Alcance: <?= $p['alcance'] ?></title>
-                    </circle>
-                    <circle cx="<?= $ptC[0] ?>" cy="<?= $ptC[1] ?>" r="3" fill="#f43f5e" stroke="#0f172a" stroke-width="1.5">
-                      <title><?= $esc($p['label']) ?> - Curtidas: <?= $p['curtidas'] ?></title>
-                    </circle>
-                    <circle cx="<?= $ptS[0] ?>" cy="<?= $ptS[1] ?>" r="4" fill="#38bdf8" stroke="#0f172a" stroke-width="2">
-                      <title><?= $esc($p['label']) ?> - Seguidores: <?= $p['seguidores'] ?></title>
-                    </circle>
-                  <?php endforeach; ?>
-                <?php endif; ?>
-              </svg>
-            </div>
+            <!-- Gráfico Vetorial SVG: desenhado por renderPerfChart() (agrupamento por dia, semana ou mês) -->
+            <div class="mt-5 w-full overflow-hidden" id="ig-perf-chart-wrap" style="transition: opacity .2s ease"></div>
           </div>
         </div>
 
@@ -722,17 +591,17 @@ if (($endRange - $startRange) < 4) {
                 <i class="fa-solid fa-chart-pie text-cyan-400"></i>
                 <span>Tipos de conteúdo</span>
               </h4>
-              <p class="text-xs text-slate-400 mt-0.5">Distribuição dos seus posts no período.</p>
+              <p class="text-xs text-slate-400 mt-0.5">Distribuição das publicações no período.</p>
             </div>
 
             <!-- Gráfico Donut SVG Central -->
             <div class="mt-6 flex flex-col sm:flex-row lg:flex-col items-center justify-center gap-6" id="ig-donut-container">
               <?php
-              $totDist = max(1, (int) ($contentTypes['total'] ?? $totalPosts));
-              $pctImg  = (float) ($contentTypes['items']['imagem']['pct'] ?? 60.0);
-              $pctVid  = (float) ($contentTypes['items']['reels']['pct'] ?? 20.0);
-              $pctCar  = (float) ($contentTypes['items']['carrossel']['pct'] ?? 15.0);
-              $pctSty  = (float) ($contentTypes['items']['story']['pct'] ?? 5.0);
+              $totDist = (int) ($contentTypes['total'] ?? 0);
+              $pctImg  = (float) ($contentTypes['items']['imagem']['pct'] ?? 0.0);
+              $pctVid  = (float) ($contentTypes['items']['reels']['pct'] ?? 0.0);
+              $pctCar  = (float) ($contentTypes['items']['carrossel']['pct'] ?? 0.0);
+              $pctSty  = (float) ($contentTypes['items']['story']['pct'] ?? 0.0);
 
               // Circunferência de raio 60: 2 * PI * 60 = ~377
               $cCirc = 377;
@@ -749,23 +618,25 @@ if (($endRange - $startRange) < 4) {
               <div class="relative h-44 w-44 shrink-0 flex items-center justify-center" id="ig-donut-svg-wrap">
                 <svg class="h-full w-full -rotate-90 transform" viewBox="0 0 160 160">
                   <circle cx="80" cy="80" r="60" fill="none" stroke="#1e293b" stroke-width="18" />
-                  <!-- Imagens (Rosa) -->
-                  <circle cx="80" cy="80" r="60" fill="none" stroke="#f43f5e" stroke-width="18"
-                    stroke-dasharray="<?= $lenImg ?> <?= $cCirc - $lenImg ?>" stroke-dashoffset="<?= $offImg ?>" />
-                  <!-- Vídeos (Roxo) -->
-                  <circle cx="80" cy="80" r="60" fill="none" stroke="#a855f7" stroke-width="18"
-                    stroke-dasharray="<?= $lenVid ?> <?= $cCirc - $lenVid ?>" stroke-dashoffset="<?= $offVid ?>" />
-                  <!-- Carrossel (Ciano) -->
-                  <circle cx="80" cy="80" r="60" fill="none" stroke="#06b6d4" stroke-width="18"
-                    stroke-dasharray="<?= $lenCar ?> <?= $cCirc - $lenCar ?>" stroke-dashoffset="<?= $offCar ?>" />
-                  <!-- Stories (Âmbar) -->
-                  <circle cx="80" cy="80" r="60" fill="none" stroke="#f59e0b" stroke-width="18"
-                    stroke-dasharray="<?= $lenSty ?> <?= $cCirc - $lenSty ?>" stroke-dashoffset="<?= $offSty ?>" />
+                  <?php if ($totDist > 0): ?>
+                    <!-- Imagens (Rosa) -->
+                    <circle cx="80" cy="80" r="60" fill="none" stroke="#f43f5e" stroke-width="18"
+                      stroke-dasharray="<?= $lenImg ?> <?= $cCirc - $lenImg ?>" stroke-dashoffset="<?= $offImg ?>" />
+                    <!-- Vídeos (Roxo) -->
+                    <circle cx="80" cy="80" r="60" fill="none" stroke="#a855f7" stroke-width="18"
+                      stroke-dasharray="<?= $lenVid ?> <?= $cCirc - $lenVid ?>" stroke-dashoffset="<?= $offVid ?>" />
+                    <!-- Carrossel (Ciano) -->
+                    <circle cx="80" cy="80" r="60" fill="none" stroke="#06b6d4" stroke-width="18"
+                      stroke-dasharray="<?= $lenCar ?> <?= $cCirc - $lenCar ?>" stroke-dashoffset="<?= $offCar ?>" />
+                    <!-- Stories (Âmbar) -->
+                    <circle cx="80" cy="80" r="60" fill="none" stroke="#f59e0b" stroke-width="18"
+                      stroke-dasharray="<?= $lenSty ?> <?= $cCirc - $lenSty ?>" stroke-dashoffset="<?= $offSty ?>" />
+                  <?php endif; ?>
                 </svg>
                 <!-- Texto Central do Donut -->
                 <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
                   <span class="text-2xl font-black text-white leading-none" data-donut-total><?= $fmt($totDist) ?></span>
-                  <span class="text-[10px] uppercase tracking-wide text-slate-400 mt-1 font-bold">Total de posts</span>
+                  <span class="text-[10px] uppercase tracking-wide text-slate-400 mt-1 font-bold">Posts no período</span>
                 </div>
               </div>
 
@@ -1260,7 +1131,7 @@ if (($endRange - $startRange) < 4) {
               <i class="fa-solid fa-eye" aria-hidden="true"></i>
             </div>
             <div class="stat-value neon-text" style="color: #00d4ff;" data-insight-val="alcance">
-              <?= $fmt($alcanceVal) ?>
+              <?= $alcanceVal !== null ? $fmt($alcanceVal) : '—' ?>
             </div>
             <div class="stat-label">Alcance</div>
             <div class="admin-summary-card__hint">Contas únicas que visualizaram publicações.</div>
@@ -1271,7 +1142,7 @@ if (($endRange - $startRange) < 4) {
               <i class="fa-solid fa-chart-column" aria-hidden="true"></i>
             </div>
             <div class="stat-value neon-text" style="color: #facc15;" data-insight-val="visualizacoes">
-              <?= $fmt((int) ($insights['visualizacoes'] ?? $insights['impressoes'] ?? 0)) ?>
+              <?= ($insights !== null && (isset($insights['visualizacoes']) || isset($insights['impressoes']))) ? $fmt((int) ($insights['visualizacoes'] ?? $insights['impressoes'])) : '—' ?>
             </div>
             <div class="stat-label">Visualizações</div>
             <div class="admin-summary-card__hint">Total de exibições e reproduções no período.</div>
@@ -1282,7 +1153,7 @@ if (($endRange - $startRange) < 4) {
               <i class="fa-solid fa-user-check" aria-hidden="true"></i>
             </div>
             <div class="stat-value neon-text" style="color: #34d399;" data-insight-val="visitas_perfil">
-              <?= $fmt((int) ($insights['visitas_perfil'] ?? 0)) ?>
+              <?= ($insights !== null && isset($insights['visitas_perfil'])) ? $fmt((int) $insights['visitas_perfil']) : '—' ?>
             </div>
             <div class="stat-label">Visitas ao perfil</div>
             <div class="admin-summary-card__hint">Usuários que acessaram a página do perfil.</div>
@@ -1293,7 +1164,7 @@ if (($endRange - $startRange) < 4) {
               <i class="fa-solid fa-heart" aria-hidden="true"></i>
             </div>
             <div class="stat-value neon-text" style="color: #f472b6;" data-insight-val="interacoes">
-              <?= $fmt((int) ($insights['interacoes'] ?? 0)) ?>
+              <?= ($insights !== null && isset($insights['interacoes'])) ? $fmt((int) $insights['interacoes']) : '—' ?>
             </div>
             <div class="stat-label">Interações</div>
             <div class="admin-summary-card__hint">Curtidas, comentários, salvamentos e envios.</div>
@@ -1410,51 +1281,241 @@ if (($endRange - $startRange) < 4) {
       .replace(/'/g, '&#039;');
   }
 
-  // Renderizador dinâmico do gráfico de Desempenho SVG
-  function renderPerfChart(daily) {
+  // Dados iniciais do servidor (mesmo formato da resposta ?ajax=metrics)
+  var IG_INITIAL = <?= json_encode([
+      'daily'  => array_values($dailyPerformance),
+      'deltas' => $kpiMeta['deltas'],
+      'series' => $kpiMeta['series'],
+  ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?: 'null' ?> || {};
+
+  var reduceMotion = false;
+  try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+  // Força o navegador a aplicar o estado inicial antes da transição
+  function reflow(el) {
+    if (el && el.getBoundingClientRect) el.getBoundingClientRect();
+  }
+
+  // Conta do valor exibido até o novo valor (o atual fica em data-kpi-num)
+  function animateNumber(el, to) {
+    if (!el) return;
+    if (to === null || typeof to === 'undefined') {
+      el._igAnim = null;
+      el.textContent = '—';
+      el.setAttribute('data-kpi-num', '');
+      return;
+    }
+    to = Number(to) || 0;
+    var fromAttr = el.getAttribute('data-kpi-num');
+    var from = (fromAttr === null || fromAttr === '') ? 0 : Number(fromAttr) || 0;
+    el.setAttribute('data-kpi-num', String(to));
+    if (reduceMotion || from === to) {
+      el._igAnim = null;
+      el.textContent = formatNum(to);
+      return;
+    }
+    var token = {};
+    el._igAnim = token;
+    var t0 = null;
+    var dur = 700;
+    function step(ts) {
+      if (el._igAnim !== token) return;
+      if (t0 === null) t0 = ts;
+      var k = Math.min(1, (ts - t0) / dur);
+      var e = 1 - Math.pow(1 - k, 3);
+      el.textContent = formatNum(Math.round(from + (to - from) * e));
+      if (k < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // Badges de variação e sparklines dos 4 KPIs
+  var KPI_COLORS = { followers: '#38bdf8', follows: '#c084fc', media: '#f472b6', alcance: '#fbbf24' };
+  var BADGE_BASE = 'inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold ';
+  var BADGE_UP   = 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+  var BADGE_DOWN = 'bg-rose-500/15 text-rose-400 border border-rose-500/30';
+  var BADGE_FLAT = 'bg-slate-800/80 text-slate-400 border border-slate-700/60';
+
+  function sparkSvg(values, color) {
+    var vals = (Array.isArray(values) ? values : [])
+      .map(function (v) { return Number(v); })
+      .filter(function (v) { return isFinite(v); })
+      .slice(-30);
+    if (vals.length < 2) {
+      return '<div style="font-size:9px;line-height:24px;color:#64748b;text-align:right;white-space:nowrap" title="A curva aparece a partir do segundo registro diário">sem histórico ainda</div>';
+    }
+    var min = Math.min.apply(null, vals);
+    var max = Math.max.apply(null, vals);
+    var span = max - min;
+    var stepX = 96 / (vals.length - 1);
+    var pts = vals.map(function (v, i) {
+      var y = span === 0 ? 18 : 31 - ((v - min) / span) * 26;
+      return [2 + i * stepX, y];
+    });
+    var poly = pts.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+    var last = pts[pts.length - 1];
+    return '<svg class="w-16 h-6" viewBox="0 0 100 35" fill="none">' +
+      '<polyline points="' + poly + '" stroke="' + color + '" stroke-opacity="0.85" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>' +
+      '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="2.5" fill="' + color + '"/>' +
+      '</svg>';
+  }
+
+  function renderKpiExtras(deltas, series) {
+    deltas = deltas || {};
+    series = series || {};
+    ['followers', 'follows', 'media', 'alcance'].forEach(function (key) {
+      var badge = document.querySelector('[data-kpi-badge="' + key + '"]');
+      var d = key === 'alcance' ? deltas.alcance_pct : deltas[key];
+      if (badge) {
+        var suffix = key === 'alcance' ? '%' : '';
+        if (typeof d === 'number') {
+          if (d === 0) {
+            badge.className = BADGE_BASE + BADGE_FLAT;
+            badge.textContent = '= 0' + suffix;
+          } else {
+            badge.className = BADGE_BASE + (d > 0 ? BADGE_UP : BADGE_DOWN);
+            badge.innerHTML = '<i class="fa-solid ' + (d > 0 ? 'fa-arrow-up' : 'fa-arrow-down') + ' text-[8px]"></i> ' +
+              (d > 0 ? '+' : '−') + formatNum(Math.abs(d)) + suffix;
+          }
+          badge.title = key === 'alcance'
+            ? 'Variação do alcance em relação ao registro anterior do mesmo período'
+            : 'Variação em relação ao registro anterior';
+        } else {
+          badge.className = BADGE_BASE + BADGE_FLAT;
+          badge.textContent = '—';
+          badge.title = 'Ainda não há registro anterior para comparar';
+        }
+      }
+      var spark = document.querySelector('[data-kpi-spark="' + key + '"]');
+      if (spark) spark.innerHTML = sparkSvg(series[key], KPI_COLORS[key]);
+    });
+  }
+
+  // Agrupa os pontos de desempenho nas faixas adaptativas (FEAT-010 2.14.0)
+  var MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  function groupDaily(daily) {
+    var n = daily.length;
+    if (n === 0) return { mode: 'dia', buckets: [], labelStep: 1 };
+
+    // Se o backend já enviou os pontos particionados nas faixas com datas e alcance
+    if (daily[0].data_inicio !== undefined && daily[0].data_fim !== undefined) {
+      var s0 = new Date(daily[0].data_inicio + 'T00:00:00');
+      var e0 = new Date(daily[0].data_fim + 'T00:00:00');
+      var diffDays = Math.max(1, Math.round((e0 - s0) / 86400000) + 1);
+      var mode = diffDays <= 1 ? 'dia' : (diffDays <= 3 ? '3 dias' : (diffDays <= 7 ? 'semana' : 'blocos de 28 dias'));
+      var maxLabels = (mode === 'semana' || mode === 'blocos de 28 dias') ? 6 : 10;
+      return { mode: mode, buckets: daily, labelStep: Math.max(1, Math.ceil(daily.length / maxLabels)) };
+    }
+
+    var mode = n <= 14 ? 'dia' : (n <= 45 ? '3 dias' : (n <= 180 ? 'semana' : 'blocos de 28 dias'));
+    var buckets = [];
+
+    function pushChunk(chunk, label, tip) {
+      var sum = 0;
+      var sumAlc = 0;
+      var hasAlc = false;
+      var any = false;
+      chunk.forEach(function (d) {
+        sum += Number(d.curtidas || 0);
+        if (typeof d.alcance === 'number') { sumAlc += d.alcance; hasAlc = true; }
+        if (d.has_post) any = true;
+      });
+      buckets.push({
+        label: label,
+        tip: tip,
+        curtidas: sum,
+        alcance: hasAlc ? sumAlc : null,
+        has_post: any
+      });
+    }
+
+    if (mode === 'dia') {
+      daily.forEach(function (d) { pushChunk([d], d.label, d.label); });
+    } else if (mode === '3 dias') {
+      for (var i = 0; i < n; i += 3) {
+        var chunk = daily.slice(i, i + 3);
+        var lbl = chunk.length > 1 ? chunk[0].label + '–' + chunk[chunk.length - 1].label : chunk[0].label;
+        pushChunk(chunk, lbl, lbl);
+      }
+    } else if (mode === 'semana') {
+      var first = n % 7;
+      var starts = [];
+      if (first > 0) starts.push([0, first]);
+      for (var i = first; i < n; i += 7) starts.push([i, i + 7]);
+      starts.forEach(function (r) {
+        var chunk = daily.slice(r[0], r[1]);
+        var lbl = chunk.length > 1 ? chunk[0].label + '–' + chunk[chunk.length - 1].label : chunk[0].label;
+        pushChunk(chunk, lbl, lbl);
+      });
+    } else {
+      for (var i = 0; i < n; i += 28) {
+        var chunk = daily.slice(i, i + 28);
+        var lbl = chunk.length > 1 ? chunk[0].label + '–' + chunk[chunk.length - 1].label : chunk[0].label;
+        pushChunk(chunk, lbl, lbl);
+      }
+    }
+
+    var maxLabels = (mode === 'semana' || mode === 'blocos de 28 dias') ? 6 : 10;
+    return { mode: mode, buckets: buckets, labelStep: Math.max(1, Math.ceil(buckets.length / maxLabels)) };
+  }
+
+  // Renderizador dinâmico do gráfico de Desempenho SVG com Curtidas e Alcance
+  function renderPerfChart(daily, animate) {
     var wrap = document.getElementById('ig-perf-chart-wrap');
     if (!wrap) return;
 
-    var perfCount = daily.length;
-    var maxVal = 1;
-    for (var i = 0; i < perfCount; i++) {
-      if (daily[i].seguidores > maxVal) maxVal = daily[i].seguidores;
-      if (daily[i].curtidas > maxVal) maxVal = daily[i].curtidas;
-      if (daily[i].alcance > maxVal) maxVal = daily[i].alcance;
+    var grouped = groupDaily(Array.isArray(daily) ? daily : []);
+    var buckets = grouped.buckets;
+    var perfCount = buckets.length;
+
+    var groupingEl = document.getElementById('ig-perf-grouping');
+    if (groupingEl) {
+      groupingEl.textContent = perfCount > 0
+        ? ' Pontos agrupados por ' + (grouped.mode === 'mes' ? 'mês' : grouped.mode) + '.'
+        : '';
     }
-    maxVal = Math.max(10, Math.ceil(maxVal * 1.15));
 
-    var chartW = 680;
+    var maxVal = 1;
+    var hasPosts = false;
+    var hasReach = false;
+    for (var i = 0; i < perfCount; i++) {
+      if (buckets[i].curtidas > maxVal) maxVal = buckets[i].curtidas;
+      if (typeof buckets[i].alcance === 'number' && buckets[i].alcance > maxVal) maxVal = buckets[i].alcance;
+      if (buckets[i].has_post) hasPosts = true;
+      if (typeof buckets[i].alcance === 'number' && buckets[i].alcance > 0) hasReach = true;
+    }
+    maxVal = Math.max(5, Math.ceil(maxVal * 1.25));
+
     var chartH = 200;
-    var stepX = perfCount > 1 ? (chartW - 60) / (perfCount - 1) : (chartW - 60);
+    var inset = (grouped.mode === 'semana' || grouped.mode === 'blocos de 28 dias') ? 30 : 0;
+    var x0 = 40 + inset;
+    var x1 = 660 - inset;
+    var stepX = perfCount > 1 ? (x1 - x0) / (perfCount - 1) : 0;
 
-    var ptsSeg = [];
     var ptsCur = [];
     var ptsAlc = [];
-
     for (var j = 0; j < perfCount; j++) {
-      var cx = 40 + (j * stepX);
-      var cySeg = chartH - 30 - ((daily[j].seguidores / maxVal) * (chartH - 60));
-      var cyCur = chartH - 30 - ((daily[j].curtidas / maxVal) * (chartH - 60));
-      var cyAlc = chartH - 30 - ((daily[j].alcance / maxVal) * (chartH - 60));
-      ptsSeg.push([cx, cySeg]);
+      var cx = perfCount > 1 ? x0 + (j * stepX) : 350;
+      var cyCur = chartH - 30 - ((buckets[j].curtidas / maxVal) * (chartH - 60));
       ptsCur.push([cx, cyCur]);
+
+      var aVal = typeof buckets[j].alcance === 'number' ? buckets[j].alcance : 0;
+      var cyAlc = chartH - 30 - ((aVal / maxVal) * (chartH - 60));
       ptsAlc.push([cx, cyAlc]);
     }
 
-    var polySeg = ptsSeg.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
     var polyCur = ptsCur.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
     var polyAlc = ptsAlc.map(function (p) { return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
 
     var html = '<svg class="w-full h-56" viewBox="0 0 680 210" preserveAspectRatio="none">';
     html += '<defs>';
-    html += '<linearGradient id="gradSeg" x1="0" y1="0" x2="0" y2="1">';
-    html += '<stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/>';
-    html += '<stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>';
+    html += '<linearGradient id="gradCur" x1="0" y1="0" x2="0" y2="1">';
+    html += '<stop offset="0%" stop-color="#f43f5e" stop-opacity="0.25"/>';
+    html += '<stop offset="100%" stop-color="#f43f5e" stop-opacity="0.0"/>';
     html += '</linearGradient>';
     html += '<linearGradient id="gradAlc" x1="0" y1="0" x2="0" y2="1">';
-    html += '<stop offset="0%" stop-color="#fb923c" stop-opacity="0.25"/>';
-    html += '<stop offset="100%" stop-color="#fb923c" stop-opacity="0.0"/>';
+    html += '<stop offset="0%" stop-color="#fbbf24" stop-opacity="0.20"/>';
+    html += '<stop offset="100%" stop-color="#fbbf24" stop-opacity="0.0"/>';
     html += '</linearGradient>';
     html += '</defs>';
 
@@ -1468,42 +1529,114 @@ if (($endRange - $startRange) < 4) {
     html += '<text x="32" y="184" fill="#64748b" font-size="10" text-anchor="end">0</text>';
 
     if (perfCount > 1) {
-      var lastPtAlc = ptsAlc[ptsAlc.length - 1];
-      var lastPtSeg = ptsSeg[ptsSeg.length - 1];
-      html += '<polygon points="40,180 ' + polyAlc + ' ' + lastPtAlc[0].toFixed(1) + ',180" fill="url(#gradAlc)" />';
-      html += '<polyline points="' + polyAlc + '" fill="none" stroke="#fb923c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
-      html += '<polyline points="' + polyCur + '" fill="none" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
-      html += '<polygon points="40,180 ' + polySeg + ' ' + lastPtSeg[0].toFixed(1) + ',180" fill="url(#gradSeg)" />';
-      html += '<polyline points="' + polySeg + '" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>';
+      if (hasReach) {
+        var lastPtAlc = ptsAlc[ptsAlc.length - 1];
+        html += '<polygon data-perf-reach-area points="' + ptsAlc[0][0].toFixed(1) + ',180 ' + polyAlc + ' ' + lastPtAlc[0].toFixed(1) + ',180" fill="url(#gradAlc)" />';
+        html += '<polyline data-perf-reach-line points="' + polyAlc + '" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+      }
+
+      if (hasPosts) {
+        var lastPtCur = ptsCur[ptsCur.length - 1];
+        html += '<polygon data-perf-area points="' + ptsCur[0][0].toFixed(1) + ',180 ' + polyCur + ' ' + lastPtCur[0].toFixed(1) + ',180" fill="url(#gradCur)" />';
+        html += '<polyline data-perf-line points="' + polyCur + '" fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+      }
+
+      if (!hasPosts && !hasReach) {
+        html += '<text x="350" y="105" fill="#64748b" font-size="11" text-anchor="middle">Sem publicações ou dados de alcance registrados no período selecionado.</text>';
+      }
 
       for (var k = 0; k < perfCount; k++) {
-        var pSeg = ptsSeg[k];
         var pCur = ptsCur[k];
-        var pAlc = ptsAlc[k];
-        var item = daily[k];
-        var labelEsc = escapeHtml(item.label);
-        html += '<text x="' + pSeg[0].toFixed(1) + '" y="200" fill="#94a3b8" font-size="10" text-anchor="middle">' + labelEsc + '</text>';
-        html += '<circle cx="' + pAlc[0].toFixed(1) + '" cy="' + pAlc[1].toFixed(1) + '" r="3.5" fill="#fb923c" stroke="#0f172a" stroke-width="1.5"><title>' + labelEsc + ' - Alcance: ' + item.alcance + '</title></circle>';
-        html += '<circle cx="' + pCur[0].toFixed(1) + '" cy="' + pCur[1].toFixed(1) + '" r="3" fill="#f43f5e" stroke="#0f172a" stroke-width="1.5"><title>' + labelEsc + ' - Curtidas: ' + item.curtidas + '</title></circle>';
-        html += '<circle cx="' + pSeg[0].toFixed(1) + '" cy="' + pSeg[1].toFixed(1) + '" r="4" fill="#38bdf8" stroke="#0f172a" stroke-width="2"><title>' + labelEsc + ' - Seguidores: ' + item.seguidores + '</title></circle>';
+        var item = buckets[k];
+        if (k % grouped.labelStep === 0) {
+          html += '<text x="' + pCur[0].toFixed(1) + '" y="200" fill="#94a3b8" font-size="10" text-anchor="middle">' + escapeHtml(item.label) + '</text>';
+        }
+        if (typeof item.alcance === 'number' && item.alcance > 0) {
+          var pAlc = ptsAlc[k];
+          html += '<circle data-perf-reach-dot cx="' + pAlc[0].toFixed(1) + '" cy="' + pAlc[1].toFixed(1) + '" r="3" fill="#fbbf24" stroke="#0f172a" stroke-width="1.5"><title>' + escapeHtml(item.tip || item.label) + ' - Alcance: ' + item.alcance + '</title></circle>';
+        }
+        if (item.has_post) {
+          html += '<circle data-perf-dot cx="' + pCur[0].toFixed(1) + '" cy="' + pCur[1].toFixed(1) + '" r="3.5" fill="#f43f5e" stroke="#0f172a" stroke-width="1.5"><title>' + escapeHtml(item.tip || item.label) + ' - Curtidas: ' + item.curtidas + '</title></circle>';
+        }
       }
     }
     html += '</svg>';
     wrap.innerHTML = html;
+
+    if (!animate || reduceMotion) return;
+
+    // Linha de curtidas
+    var line = wrap.querySelector('[data-perf-line]');
+    var area = wrap.querySelector('[data-perf-area]');
+    var dots = wrap.querySelectorAll('[data-perf-dot]');
+    var len = (line && line.getTotalLength) ? line.getTotalLength() : 0;
+    if (line && len > 0) {
+      line.style.strokeDasharray = len.toFixed(1);
+      line.style.strokeDashoffset = len.toFixed(1);
+    }
+    if (area) area.style.opacity = '0';
+    dots.forEach(function (dot) { dot.style.opacity = '0'; });
+
+    // Linha de alcance
+    var rLine = wrap.querySelector('[data-perf-reach-line]');
+    var rArea = wrap.querySelector('[data-perf-reach-area]');
+    var rDots = wrap.querySelectorAll('[data-perf-reach-dot]');
+    var rLen = (rLine && rLine.getTotalLength) ? rLine.getTotalLength() : 0;
+    if (rLine && rLen > 0) {
+      rLine.style.strokeDasharray = rLen.toFixed(1);
+      rLine.style.strokeDashoffset = rLen.toFixed(1);
+    }
+    if (rArea) rArea.style.opacity = '0';
+    rDots.forEach(function (dot) { dot.style.opacity = '0'; });
+
+    reflow(wrap);
+
+    if (line && len > 0) {
+      line.style.transition = 'stroke-dashoffset .8s cubic-bezier(.22,.61,.36,1)';
+      line.style.strokeDashoffset = '0';
+    }
+    if (area) {
+      area.style.transition = 'opacity .5s ease .35s';
+      area.style.opacity = '1';
+    }
+
+    if (rLine && rLen > 0) {
+      rLine.style.transition = 'stroke-dashoffset .8s cubic-bezier(.22,.61,.36,1) .1s';
+      rLine.style.strokeDashoffset = '0';
+    }
+    if (rArea) {
+      rArea.style.transition = 'opacity .5s ease .45s';
+      rArea.style.opacity = '1';
+    }
+
+    var lastX = ptsCur.length ? ptsCur[ptsCur.length - 1][0] : 1;
+    dots.forEach(function (dot) {
+      var frac = (Number(dot.getAttribute('cx')) - x0) / Math.max(1, lastX - x0);
+      dot.style.transition = 'opacity .25s ease ' + (0.1 + 0.7 * Math.max(0, frac)).toFixed(2) + 's';
+      dot.style.opacity = '1';
+    });
+    rDots.forEach(function (dot) {
+      var frac = (Number(dot.getAttribute('cx')) - x0) / Math.max(1, lastX - x0);
+      dot.style.transition = 'opacity .25s ease ' + (0.15 + 0.7 * Math.max(0, frac)).toFixed(2) + 's';
+      dot.style.opacity = '1';
+    });
+  }
   }
 
   // Renderizador dinâmico do Donut e Legendas
-  function renderDonutChart(contentTypes) {
+  function renderDonutChart(contentTypes, animate) {
     var svgWrap = document.getElementById('ig-donut-svg-wrap');
     var legendsWrap = document.getElementById('ig-donut-legends-wrap');
     if (!svgWrap || !legendsWrap || !contentTypes) return;
 
-    var total = Math.max(1, contentTypes.total || 0);
+    var total = Math.max(0, contentTypes.total || 0);
+    var prevTotalEl = svgWrap.querySelector('[data-donut-total]');
+    var prevTotal = prevTotalEl ? (Number(prevTotalEl.getAttribute('data-kpi-num') || String(prevTotalEl.textContent).replace(/\D/g, '')) || 0) : 0;
     var items = contentTypes.items || {};
-    var pctImg = (items.imagem && items.imagem.pct) || 0;
-    var pctVid = (items.reels && items.reels.pct) || 0;
-    var pctCar = (items.carrossel && items.carrossel.pct) || 0;
-    var pctSty = (items.story && items.story.pct) || 0;
+    var pctImg = (total > 0 && items.imagem && items.imagem.pct) ? items.imagem.pct : 0;
+    var pctVid = (total > 0 && items.reels && items.reels.pct) ? items.reels.pct : 0;
+    var pctCar = (total > 0 && items.carrossel && items.carrossel.pct) ? items.carrossel.pct : 0;
+    var pctSty = (total > 0 && items.story && items.story.pct) ? items.story.pct : 0;
 
     var cCirc = 377;
     var lenImg = (pctImg / 100) * cCirc;
@@ -1518,17 +1651,34 @@ if (($endRange - $startRange) < 4) {
 
     var svgHtml = '<svg class="h-full w-full -rotate-90 transform" viewBox="0 0 160 160">';
     svgHtml += '<circle cx="80" cy="80" r="60" fill="none" stroke="#1e293b" stroke-width="18" />';
-    svgHtml += '<circle cx="80" cy="80" r="60" fill="none" stroke="#f43f5e" stroke-width="18" stroke-dasharray="' + lenImg.toFixed(1) + ' ' + (cCirc - lenImg).toFixed(1) + '" stroke-dashoffset="' + offImg.toFixed(1) + '" />';
-    svgHtml += '<circle cx="80" cy="80" r="60" fill="none" stroke="#a855f7" stroke-width="18" stroke-dasharray="' + lenVid.toFixed(1) + ' ' + (cCirc - lenVid).toFixed(1) + '" stroke-dashoffset="' + offVid.toFixed(1) + '" />';
-    svgHtml += '<circle cx="80" cy="80" r="60" fill="none" stroke="#06b6d4" stroke-width="18" stroke-dasharray="' + lenCar.toFixed(1) + ' ' + (cCirc - lenCar).toFixed(1) + '" stroke-dashoffset="' + offCar.toFixed(1) + '" />';
-    svgHtml += '<circle cx="80" cy="80" r="60" fill="none" stroke="#f59e0b" stroke-width="18" stroke-dasharray="' + lenSty.toFixed(1) + ' ' + (cCirc - lenSty).toFixed(1) + '" stroke-dashoffset="' + offSty.toFixed(1) + '" />';
+    var segs = [[lenImg, offImg, '#f43f5e'], [lenVid, offVid, '#a855f7'], [lenCar, offCar, '#06b6d4'], [lenSty, offSty, '#f59e0b']];
+    if (total > 0) {
+      segs.forEach(function (sg) {
+        svgHtml += '<circle data-donut-seg="' + sg[0].toFixed(1) + '" cx="80" cy="80" r="60" fill="none" stroke="' + sg[2] + '" stroke-width="18" stroke-dasharray="' + sg[0].toFixed(1) + ' ' + (cCirc - sg[0]).toFixed(1) + '" stroke-dashoffset="' + sg[1].toFixed(1) + '" />';
+      });
+    }
     svgHtml += '</svg>';
     svgHtml += '<div class="absolute inset-0 flex flex-col items-center justify-center text-center">';
-    svgHtml += '<span class="text-2xl font-black text-white leading-none" data-donut-total>' + formatNum(total) + '</span>';
-    svgHtml += '<span class="text-[10px] uppercase tracking-wide text-slate-400 mt-1 font-bold">Total de posts</span>';
+    svgHtml += '<span class="text-2xl font-black text-white leading-none" data-donut-total data-kpi-num="' + prevTotal + '">' + formatNum(animate ? prevTotal : total) + '</span>';
+    svgHtml += '<span class="text-[10px] uppercase tracking-wide text-slate-400 mt-1 font-bold">Posts no período</span>';
     svgHtml += '</div>';
 
     svgWrap.innerHTML = svgHtml;
+
+    if (animate) {
+      animateNumber(svgWrap.querySelector('[data-donut-total]'), total);
+      if (!reduceMotion) {
+        // Cada segmento cresce a partir do próprio início até o tamanho final
+        var segEls = svgWrap.querySelectorAll('[data-donut-seg]');
+        segEls.forEach(function (el) { el.style.strokeDasharray = '0 ' + cCirc; });
+        reflow(svgWrap);
+        segEls.forEach(function (el) {
+          var len = Number(el.getAttribute('data-donut-seg')) || 0;
+          el.style.transition = 'stroke-dasharray .8s cubic-bezier(.22,.61,.36,1)';
+          el.style.strokeDasharray = len.toFixed(1) + ' ' + (cCirc - len).toFixed(1);
+        });
+      }
+    }
 
     var countImg = (items.imagem && items.imagem.count) || 0;
     var countVid = (items.reels && items.reels.count) || 0;
@@ -1592,58 +1742,53 @@ if (($endRange - $startRange) < 4) {
       .then(function (data) {
         if (!data || !data.ok) return;
 
-        // Atualizar KPIs
+        // Atualizar KPIs (números contam até o novo valor; badges e sparklines com dados reais)
         if (data.kpis) {
           var kpis = data.kpis;
-          var elFollowers = document.querySelector('[data-kpi-val="followers"]');
-          var elFollows   = document.querySelector('[data-kpi-val="follows"]');
-          var elMedia     = document.querySelector('[data-kpi-val="media"]');
-          var elAlcance   = document.querySelector('[data-kpi-val="alcance"]');
-          var elAlcLabel  = document.querySelector('[data-kpi-val="alcance-label"]');
-
-          if (elFollowers) elFollowers.textContent = formatNum(kpis.followers);
-          if (elFollows)   elFollows.textContent   = formatNum(kpis.follows);
-          if (elMedia)     elMedia.textContent     = formatNum(kpis.media);
-          if (elAlcance)   elAlcance.textContent   = formatNum(kpis.alcance);
-          if (elAlcLabel)  elAlcLabel.textContent  = 'Alcance (' + data.period + ')';
-
-          var elDeltaText = document.querySelector('[data-kpi-val="delta-text"]');
-          var elDeltaIcon = document.querySelector('[data-kpi-val="delta-icon"]');
-          var elDeltaBadge = document.querySelector('[data-kpi-val="delta-badge"]');
-          if (elDeltaText && typeof kpis.delta !== 'undefined') {
-            elDeltaText.textContent = kpis.delta !== 0 ? Math.abs(kpis.delta) : '12%';
+          animateNumber(document.querySelector('[data-kpi-val="followers"]'), kpis.followers);
+          animateNumber(document.querySelector('[data-kpi-val="follows"]'), kpis.follows);
+          animateNumber(document.querySelector('[data-kpi-val="media"]'), kpis.media);
+          animateNumber(document.querySelector('[data-kpi-val="alcance"]'), kpis.alcance);
+          var elAlcLabel = document.querySelector('[data-kpi-val="alcance-label"]');
+          if (elAlcLabel) {
+            if (data.alcance_modo === 'soma_blocos') {
+              elAlcLabel.textContent = 'Alcance (soma dos blocos)';
+              elAlcLabel.title = 'Soma dos alcances de cada bloco de até 28 dias. A mesma pessoa pode ter sido contabilizada em mais de um bloco.';
+            } else {
+              elAlcLabel.textContent = 'Alcance (' + data.period + ')';
+              elAlcLabel.title = 'Alcance total oficial no período selecionado (Meta Graph API).';
+            }
           }
-          if (elDeltaIcon && typeof kpis.delta !== 'undefined') {
-            elDeltaIcon.className = 'fa-solid ' + (kpis.delta >= 0 ? 'fa-arrow-up' : 'fa-arrow-down') + ' text-[8px]';
-          }
-          if (elDeltaBadge && typeof kpis.delta !== 'undefined') {
-            elDeltaBadge.className = 'inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold ' +
-              (kpis.delta >= 0 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30');
-          }
+          renderKpiExtras(kpis.deltas, kpis.series);
         }
 
         // Atualizar Insights Detalhados (Aba 4)
+        var inAlc = document.querySelector('[data-insight-val="alcance"]');
+        var inVis = document.querySelector('[data-insight-val="visualizacoes"]');
+        var inPer = document.querySelector('[data-insight-val="visitas_perfil"]');
+        var inInt = document.querySelector('[data-insight-val="interacoes"]');
+
         if (data.insights) {
           var ins = data.insights;
-          var inAlc = document.querySelector('[data-insight-val="alcance"]');
-          var inVis = document.querySelector('[data-insight-val="visualizacoes"]');
-          var inPer = document.querySelector('[data-insight-val="visitas_perfil"]');
-          var inInt = document.querySelector('[data-insight-val="interacoes"]');
-
-          if (inAlc) inAlc.textContent = formatNum(ins.alcance || 0);
-          if (inVis) inVis.textContent = formatNum(ins.visualizacoes || ins.impressoes || 0);
-          if (inPer) inPer.textContent = formatNum(ins.visitas_perfil || 0);
-          if (inInt) inInt.textContent = formatNum(ins.interacoes || 0);
+          if (inAlc) inAlc.textContent = (ins.alcance !== null && typeof ins.alcance !== 'undefined') ? formatNum(ins.alcance) : '—';
+          if (inVis) inVis.textContent = (ins.visualizacoes !== null && typeof ins.visualizacoes !== 'undefined') ? formatNum(ins.visualizacoes) : '—';
+          if (inPer) inPer.textContent = (ins.visitas_perfil !== null && typeof ins.visitas_perfil !== 'undefined') ? formatNum(ins.visitas_perfil) : '—';
+          if (inInt) inInt.textContent = (ins.interacoes !== null && typeof ins.interacoes !== 'undefined') ? formatNum(ins.interacoes) : '—';
+        } else {
+          if (inAlc) inAlc.textContent = '—';
+          if (inVis) inVis.textContent = '—';
+          if (inPer) inPer.textContent = '—';
+          if (inInt) inInt.textContent = '—';
         }
 
         // Redesenhar gráfico de desempenho
         if (Array.isArray(data.daily_performance)) {
-          renderPerfChart(data.daily_performance);
+          renderPerfChart(data.daily_performance, true);
         }
 
         // Redesenhar gráfico donut
         if (data.content_types) {
-          renderDonutChart(data.content_types);
+          renderDonutChart(data.content_types, true);
         }
 
         // Atualizar campos de data se custom
@@ -1654,6 +1799,19 @@ if (($endRange - $startRange) < 4) {
         if (data.end) {
           var eInput = document.getElementById('ig-filter-end');
           if (eInput) eInput.value = data.end;
+        }
+
+        // Atualizar aviso de ajuste de datas
+        var noticeWrap = document.getElementById('ig-period-notice');
+        var noticeText = document.getElementById('ig-period-notice-text');
+        if (noticeWrap && noticeText) {
+          if (data.adjusted_notice) {
+            noticeText.textContent = data.adjusted_notice;
+            noticeWrap.classList.remove('hidden');
+          } else {
+            noticeText.textContent = '';
+            noticeWrap.classList.add('hidden');
+          }
         }
 
         // Atualizar URL limpa via History API
@@ -1767,6 +1925,10 @@ if (($endRange - $startRange) < 4) {
       window.switchIgTab(savedTab);
     }
   } catch (e) {}
+
+  // Render inicial dos KPIs e do gráfico com os dados do servidor
+  renderKpiExtras(IG_INITIAL.deltas, IG_INITIAL.series);
+  renderPerfChart(IG_INITIAL.daily, true);
 })();
 </script>
 

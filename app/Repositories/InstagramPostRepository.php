@@ -38,6 +38,25 @@ final class InstagramPostRepository
     }
 
     /**
+     * Atualiza o access_token e a data de expiração da conta.
+     */
+    public function updateAccountToken(int $accountId, string $newToken, ?string $expiresAt = null): void
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE instagram_accounts
+                SET access_token = :token,
+                    token_expires_at = :expires,
+                    atualizado_em = NOW()
+              WHERE id = :id"
+        );
+        $stmt->execute([
+            ':token'   => $newToken,
+            ':expires' => $expiresAt,
+            ':id'      => $accountId,
+        ]);
+    }
+
+    /**
      * @return array<int,array<string,mixed>>
      */
     public function listDrafts(int $accountId, int $limit = 50): array
@@ -764,8 +783,35 @@ final class InstagramPostRepository
             return;
         }
 
-        $this->pdo->beginTransaction();
+        $accountId = (int) ($data['account_id'] ?? 0);
+        $permalink = trim((string) ($data['permalink'] ?? ''));
+        $ownsTransaction = !$this->pdo->inTransaction();
+        if ($ownsTransaction) {
+            $this->pdo->beginTransaction();
+        }
         try {
+            // Instagrapi devolve o PK privado; a Graph API devolve outro ID para
+            // a mesma publicação. Vincule o ID oficial ao registro local pelo
+            // permalink antes do upsert para não criar dois cards no site.
+            if ($permalink !== '') {
+                $existing = $this->pdo->prepare(
+                    "SELECT id FROM instagram_posts
+                      WHERE account_id = :account_id
+                        AND status = 'publicado'
+                        AND origin = 'local'
+                        AND permalink = :permalink
+                      ORDER BY id DESC LIMIT 1"
+                );
+                $existing->execute([':account_id' => $accountId, ':permalink' => $permalink]);
+                $existingId = (int) $existing->fetchColumn();
+                if ($existingId > 0) {
+                    $bindGraphId = $this->pdo->prepare(
+                        'UPDATE instagram_posts SET ig_media_id = :ig_media_id, atualizado_em = NOW() WHERE id = :id'
+                    );
+                    $bindGraphId->execute([':ig_media_id' => $igMediaId, ':id' => $existingId]);
+                }
+            }
+
             $stmt = $this->pdo->prepare(
                 "INSERT INTO instagram_posts
                    (account_id, status, tipo, legenda, hashtags_count, curtidas, comentarios_count,
@@ -784,14 +830,14 @@ final class InstagramPostRepository
                    atualizado_em     = NOW()"
             );
             $stmt->execute([
-                ':account_id'        => (int) ($data['account_id'] ?? 0),
+                ':account_id'        => $accountId,
                 ':tipo'              => (string) ($data['tipo'] ?? 'imagem'),
                 ':legenda'           => $data['legenda'] ?? null,
                 ':hashtags_count'    => (int) ($data['hashtags_count'] ?? 0),
                 ':curtidas'          => (int) ($data['curtidas'] ?? 0),
                 ':comentarios_count' => (int) ($data['comentarios_count'] ?? 0),
                 ':ig_media_id'       => $igMediaId,
-                ':permalink'         => $data['permalink'] ?? null,
+                ':permalink'         => $permalink !== '' ? $permalink : null,
                 ':publicado_em'      => $data['publicado_em'] ?? null,
             ]);
 
@@ -836,9 +882,11 @@ final class InstagramPostRepository
                 }
             }
 
-            $this->pdo->commit();
+            if ($ownsTransaction) {
+                $this->pdo->commit();
+            }
         } catch (\Throwable $e) {
-            if ($this->pdo->inTransaction()) {
+            if ($ownsTransaction) {
                 $this->pdo->rollBack();
             }
             throw $e;
@@ -908,9 +956,7 @@ final class InstagramPostRepository
                 ':end_date'   => $endDate,
             ]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (is_array($row)) {
-                return $row;
-            }
+            return is_array($row) ? $row : null;
         }
 
         $stmt = $this->pdo->prepare(
@@ -1102,19 +1148,32 @@ final class InstagramPostRepository
     }
 
     /**
-     * Retorna a distribuição de posts por tipo e suas porcentagens.
+     * Retorna a distribuição de posts publicados por tipo no período selecionado.
+     * Considera somente publicações efetivamente publicadas, excluindo rascunhos e agendamentos.
      *
      * @return array{total: int, items: array<string, array{label: string, count: int, pct: float, color: string}>}
      */
-    public function getContentTypeDistribution(int $accountId): array
+    public function getContentTypeDistribution(int $accountId, ?string $startDate = null, ?string $endDate = null): array
     {
-        $stmt = $this->pdo->prepare(
-            "SELECT tipo, COUNT(*) AS total
-               FROM instagram_posts
-              WHERE account_id = :account_id
-              GROUP BY tipo"
-        );
+        $sql = "SELECT tipo, COUNT(*) AS total
+                  FROM instagram_posts
+                 WHERE account_id = :account_id
+                   AND status = 'publicado'";
+        $params = [':account_id' => $accountId];
+
+        if ($startDate !== null && $endDate !== null) {
+            $sql .= " AND publicado_em >= :start AND publicado_em <= :end";
+            $params[':start'] = $startDate . ' 00:00:00';
+            $params[':end']   = $endDate . ' 23:59:59';
+        }
+
+        $sql .= " GROUP BY tipo";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':account_id', $accountId, PDO::PARAM_INT);
+        if (isset($params[':start'], $params[':end'])) {
+            $stmt->bindValue(':start', (string) $params[':start']);
+            $stmt->bindValue(':end', (string) $params[':end']);
+        }
         $stmt->execute();
         /** @var list<array<string,mixed>> $rows */
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1151,16 +1210,108 @@ final class InstagramPostRepository
     }
 
     /**
-     * Retorna pontos diários de desempenho agregados no intervalo de datas.
-     *
-     * @return list<array{data: string, label: string, seguidores: int, curtidas: int, alcance: int}>
+     * Retorna a data do primeiro post publicado da conta (YYYY-MM-DD),
+     * ou fallback para 1 ano atrás caso não haja publicações.
      */
-    public function getDailyPerformance(int $accountId, string $startDate, string $endDate, int $currentFollowers, int $totalAlcance): array
+    public function getFirstPublishedPostDate(int $accountId): string
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT MIN(publicado_em) AS primeiro_post
+               FROM instagram_posts
+              WHERE account_id = :account_id
+                AND status = 'publicado'"
+        );
+        $stmt->execute([':account_id' => $accountId]);
+        $val = $stmt->fetchColumn();
+
+        if ($val !== false && !empty($val) && is_string($val)) {
+            $ts = strtotime($val);
+            if ($ts !== false) {
+                return date('Y-m-d', $ts);
+            }
+        }
+
+        return date('Y-m-d', strtotime('-1 year'));
+    }
+
+    /**
+     * Consulta bloco de alcance em cache local (instagram_reach_blocks).
+     * Um bloco encerrado há mais de 2 dias é considerado imutável.
+     *
+     * @return array{id: int, alcance: int, consultado_em: string, is_fresh: bool}|null
+     */
+    public function getReachBlock(int $accountId, string $startDate, string $endDate): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT id, alcance, consultado_em
+               FROM instagram_reach_blocks
+              WHERE account_id = :account_id
+                AND data_inicio = :start
+                AND data_fim = :end
+              LIMIT 1"
+        );
+        $stmt->execute([
+            ':account_id' => $accountId,
+            ':start'      => $startDate,
+            ':end'        => $endDate,
+        ]);
+        /** @var array<string,mixed>|false $row */
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row === false) {
+            return null;
+        }
+
+        $twoDaysAgo = date('Y-m-d', strtotime('-2 days'));
+        $isClosed = ($endDate < $twoDaysAgo);
+        $consultadoTs = strtotime((string) $row['consultado_em']) ?: 0;
+        $isFresh = $isClosed || ((time() - $consultadoTs) < 86400);
+
+        return [
+            'id'            => (int) $row['id'],
+            'alcance'       => (int) $row['alcance'],
+            'consultado_em' => (string) $row['consultado_em'],
+            'is_fresh'      => $isFresh,
+        ];
+    }
+
+    /**
+     * Persiste ou atualiza bloco de alcance no cache local (instagram_reach_blocks).
+     */
+    public function saveReachBlock(int $accountId, string $startDate, string $endDate, int $alcance): void
+    {
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO instagram_reach_blocks (account_id, data_inicio, data_fim, alcance, consultado_em)
+             VALUES (:account_id, :start, :end, :alcance, NOW())
+             ON DUPLICATE KEY UPDATE
+                 alcance = VALUES(alcance),
+                 consultado_em = NOW()"
+        );
+        $stmt->execute([
+            ':account_id' => $accountId,
+            ':start'      => $startDate,
+            ':end'        => $endDate,
+            ':alcance'    => max(0, $alcance),
+        ]);
+    }
+
+    /**
+     * Retorna a performance da conta dividida pelas faixas adaptativas (FEAT-010 2.14.0):
+     * - Até 14 dias: dia a dia (1 dia por ponto)
+     * - 15 a 45 dias: a cada 3 dias
+     * - 46 a 180 dias: semanal (7 dias por ponto)
+     * - Acima de 180 dias: blocos de 28 dias
+     *
+     * Cada ponto traz curtidas reais e alcance consultado em instagram_reach_blocks.
+     *
+     * @return list<array{data: string, data_inicio: string, data_fim: string, label: string, tip: string, seguidores: int|null, curtidas: int, alcance: int|null, has_post: bool, is_fresh: bool}>
+     */
+    public function getDailyPerformance(int $accountId, string $startDate, string $endDate, int $currentFollowers, ?int $totalAlcance): array
     {
         $stmt = $this->pdo->prepare(
             "SELECT DATE(publicado_em) AS dia, SUM(curtidas) AS curtidas
                FROM instagram_posts
               WHERE account_id = :account_id
+                AND status = 'publicado'
                 AND publicado_em >= :start AND publicado_em <= :end
               GROUP BY DATE(publicado_em)"
         );
@@ -1177,33 +1328,247 @@ final class InstagramPostRepository
             $likesByDay[(string) $row['dia']] = (int) $row['curtidas'];
         }
 
-        $points = [];
         $startTs = strtotime($startDate) ?: time();
         $endTs   = strtotime($endDate) ?: time();
+        if ($startTs > $endTs) {
+            [$startTs, $endTs] = [$endTs, $startTs];
+        }
         $daysCount = max(1, (int) round(($endTs - $startTs) / 86400) + 1);
 
-        $deltaFollowers = max(0, min(10, (int) round($currentFollowers * 0.05)));
-        $baseFollowers  = max(1, $currentFollowers - $deltaFollowers);
+        $step = match (true) {
+            $daysCount <= 14 => 1,
+            $daysCount <= 45 => 3,
+            $daysCount <= 180 => 7,
+            default => 28,
+        };
 
-        for ($i = 0; $i < $daysCount; $i++) {
-            $curTs  = $startTs + ($i * 86400);
-            $ymd    = date('Y-m-d', $curTs);
-            $lbl    = date('d/m', $curTs);
-            $ratio  = $daysCount > 1 ? ($i / ($daysCount - 1)) : 1.0;
+        $points = [];
+        $curStartTs = $startTs;
 
-            $curFollowers = (int) round($baseFollowers + ($deltaFollowers * $ratio));
-            $curCurtidas  = (int) ($likesByDay[$ymd] ?? (int) round(sin($i + 1) * 3 + 5));
-            $curAlcance   = (int) round(($totalAlcance / max(1, $daysCount)) * (0.8 + 0.4 * sin($i)));
+        while ($curStartTs <= $endTs) {
+            $curEndTs = min($endTs, $curStartTs + (($step - 1) * 86400));
+            $startYmd = date('Y-m-d', $curStartTs);
+            $endYmd   = date('Y-m-d', $curEndTs);
+
+            if ($startYmd === $endYmd) {
+                $label = date('d/m', $curStartTs);
+                $tip   = $label;
+            } else {
+                $startLbl = date('d/m', $curStartTs);
+                $endLbl   = date('d/m', $curEndTs);
+                $label    = $startLbl . '–' . $endLbl;
+                $tip      = $startYmd . ' a ' . $endYmd;
+            }
+
+            $chunkLikes = 0;
+            $chunkHasPost = false;
+            $probeTs = $curStartTs;
+            while ($probeTs <= $curEndTs) {
+                $probeYmd = date('Y-m-d', $probeTs);
+                if (isset($likesByDay[$probeYmd])) {
+                    $chunkLikes += $likesByDay[$probeYmd];
+                    $chunkHasPost = true;
+                }
+                $probeTs += 86400;
+            }
+
+            $cachedBlock = $this->getReachBlock($accountId, $startYmd, $endYmd);
+            $reachVal = $cachedBlock !== null ? $cachedBlock['alcance'] : null;
+            $isFresh  = $cachedBlock !== null ? $cachedBlock['is_fresh'] : false;
 
             $points[] = [
-                'data'       => $ymd,
-                'label'      => $lbl,
-                'seguidores' => $curFollowers,
-                'curtidas'   => max(0, $curCurtidas),
-                'alcance'    => max(0, $curAlcance),
+                'data'        => $startYmd,
+                'data_inicio' => $startYmd,
+                'data_fim'    => $endYmd,
+                'label'       => $label,
+                'tip'         => $tip,
+                'seguidores'  => null,
+                'curtidas'    => $chunkLikes,
+                'alcance'     => $reachVal,
+                'has_post'    => $chunkHasPost,
+                'is_fresh'    => $isFresh,
             ];
+
+            $curStartTs = $curEndTs + 86400;
         }
 
         return $points;
+    }
+
+    /**
+     * Constrói as séries históricas reais para os sparklines dos 4 KPIs e calcula
+     * os comparativos com snapshots anteriores armazenados em instagram_insights_cache.
+     *
+     * @param array<string,mixed>      $account
+     * @param array<string,mixed>|null $currentInsights
+     * @return array{
+     *   deltas: array{followers: int|null, follows: int|null, media: int|null, alcance_pct: int|null},
+     *   series: array{followers: list<int>, follows: list<int>, media: list<int>, alcance: list<int>}
+     * }
+     */
+    public function getKpiHistoryAndComparisons(
+        int $accountId,
+        string $period,
+        string $startDate,
+        string $endDate,
+        array $account,
+        ?array $currentInsights,
+    ): array {
+        $currentFollowers = (int) ($account['followers_count'] ?? 0);
+        $currentFollows   = (int) ($account['follows_count'] ?? 0);
+        $currentMedia     = (int) ($account['media_count'] ?? 0);
+        $currentAlcance   = ($currentInsights !== null && isset($currentInsights['alcance'])) ? (int) $currentInsights['alcance'] : null;
+        $refDate          = (string) ($currentInsights['data_referencia'] ?? date('Y-m-d'));
+
+        $stmt = $this->pdo->prepare(
+            "SELECT periodo, data_referencia, alcance, seguidores, payload_raw
+               FROM instagram_insights_cache
+              WHERE account_id = :account_id
+              ORDER BY data_referencia ASC, id ASC"
+        );
+        $stmt->execute([':account_id' => $accountId]);
+        /** @var list<array<string,mixed>> $rows */
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $followersByDate = [];
+        $followsByDate   = [];
+        $mediaByDate     = [];
+        $alcanceByDate   = [];
+
+        $prevFollowers = null;
+        $prevFollows   = null;
+        $prevMedia     = null;
+        $prevAlcance   = null;
+
+        foreach ($rows as $row) {
+            $d   = (string) ($row['data_referencia'] ?? '');
+            $p   = (string) ($row['periodo'] ?? '');
+            $seg = (int) ($row['seguidores'] ?? 0);
+            $alc = (int) ($row['alcance'] ?? 0);
+
+            if ($seg > 0) {
+                $followersByDate[$d] = $seg;
+                if ($d < $refDate) {
+                    $prevFollowers = $seg;
+                }
+            }
+
+            if ($p === $period && $alc >= 0) {
+                $alcanceByDate[$d] = $alc;
+                if ($d < $refDate && $alc > 0) {
+                    $prevAlcance = $alc;
+                }
+            }
+
+            $raw = isset($row['payload_raw']) && is_string($row['payload_raw'])
+                ? json_decode($row['payload_raw'], true)
+                : null;
+            if (is_array($raw) && isset($raw['_account_snapshot']) && is_array($raw['_account_snapshot'])) {
+                $snap = $raw['_account_snapshot'];
+                if (isset($snap['follows_count']) && (int) $snap['follows_count'] > 0) {
+                    $followsByDate[$d] = (int) $snap['follows_count'];
+                    if ($d < $refDate) {
+                        $prevFollows = (int) $snap['follows_count'];
+                    }
+                }
+                if (isset($snap['media_count']) && (int) $snap['media_count'] > 0) {
+                    $mediaByDate[$d] = (int) $snap['media_count'];
+                    if ($d < $refDate) {
+                        $prevMedia = (int) $snap['media_count'];
+                    }
+                }
+            }
+        }
+
+        $today = date('Y-m-d');
+        if ($currentFollowers > 0) {
+            $followersByDate[$today] = $currentFollowers;
+        }
+        if ($currentFollows > 0) {
+            $followsByDate[$today] = $currentFollows;
+        }
+        if ($currentMedia > 0) {
+            $mediaByDate[$today] = $currentMedia;
+        }
+        if ($currentAlcance !== null) {
+            $alcanceByDate[$today] = $currentAlcance;
+        }
+
+        // Série real de mídias publicadas acumuladas por dia no intervalo
+        $stmtMedia = $this->pdo->prepare(
+            "SELECT DATE(publicado_em) AS dia, COUNT(*) AS qtd
+               FROM instagram_posts
+              WHERE account_id = :account_id
+                AND status = 'publicado'
+                AND publicado_em IS NOT NULL
+              GROUP BY DATE(publicado_em)
+              ORDER BY dia ASC"
+        );
+        $stmtMedia->execute([':account_id' => $accountId]);
+        /** @var list<array<string,mixed>> $mediaRows */
+        $mediaRows = $stmtMedia->fetchAll(PDO::FETCH_ASSOC);
+
+        $mediaSeries = [];
+        if ($mediaRows !== []) {
+            $cum = 0;
+            $byDayCum = [];
+            foreach ($mediaRows as $mr) {
+                $cum += (int) ($mr['qtd'] ?? 0);
+                $byDayCum[(string) $mr['dia']] = $cum;
+            }
+            $startTs   = strtotime($startDate) ?: time();
+            $endTs     = strtotime($endDate) ?: time();
+            $daysCount = max(1, (int) round(($endTs - $startTs) / 86400) + 1);
+            $running   = 0;
+            foreach ($byDayCum as $d => $c) {
+                if ($d < $startDate) {
+                    $running = $c;
+                }
+            }
+            for ($i = 0; $i < $daysCount; $i++) {
+                $ymd = date('Y-m-d', $startTs + ($i * 86400));
+                if (isset($byDayCum[$ymd])) {
+                    $running = $byDayCum[$ymd];
+                }
+                $mediaSeries[] = $running;
+            }
+        } else {
+            $mediaSeries = array_values($mediaByDate);
+        }
+
+        $deltaFollowers = null;
+        if ($prevFollowers !== null && $currentFollowers > 0) {
+            $deltaFollowers = $currentFollowers - $prevFollowers;
+        } elseif ($currentInsights !== null && isset($currentInsights['variacao_seguidores']) && (int) $currentInsights['variacao_seguidores'] !== 0) {
+            $deltaFollowers = (int) $currentInsights['variacao_seguidores'];
+        }
+
+        $deltaFollows = ($prevFollows !== null && $currentFollows > 0)
+            ? ($currentFollows - $prevFollows)
+            : null;
+
+        $deltaMedia = ($prevMedia !== null && $currentMedia > 0)
+            ? ($currentMedia - $prevMedia)
+            : null;
+
+        // $prevAlcance só é atribuído quando > 0
+        $deltaAlcancePct = ($prevAlcance !== null && $currentAlcance !== null)
+            ? (int) round((($currentAlcance - $prevAlcance) / $prevAlcance) * 100)
+            : null;
+
+        return [
+            'deltas' => [
+                'followers'   => $deltaFollowers,
+                'follows'     => $deltaFollows,
+                'media'       => $deltaMedia,
+                'alcance_pct' => $deltaAlcancePct,
+            ],
+            'series' => [
+                'followers' => array_values($followersByDate),
+                'follows'   => array_values($followsByDate),
+                'media'     => $mediaSeries,
+                'alcance'   => array_values($alcanceByDate),
+            ],
+        ];
     }
 }

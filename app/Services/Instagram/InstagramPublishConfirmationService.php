@@ -57,6 +57,34 @@ final class InstagramPublishConfirmationService
         return ['state'=>'published','media_id'=>$mediaId];
     }
 
+    /**
+     * Verifica se o post já possui um container válido na Meta pronto para publicação,
+     * evitando upload redundante e contêineres órfãos.
+     */
+    public function reuseExistingContainerIfValid(int $postId): ?string
+    {
+        $post = $this->repo->findById($postId);
+        if ($post === null) {
+            return null;
+        }
+
+        $existingCreationId = (string) ($post['creation_id'] ?? '');
+        if (!ctype_digit($existingCreationId)) {
+            return null;
+        }
+
+        try {
+            $status = $this->api->checkContainerStatus($existingCreationId);
+            if (in_array($status, ['FINISHED', 'IN_PROGRESS'], true)) {
+                return $existingCreationId;
+            }
+        } catch (\Throwable) {
+            // Se falhou ao checar, não reaproveita cegamente
+        }
+
+        return null;
+    }
+
     public function reconcile(int $postId): void
     {
         $post = $this->repo->findById($postId);
