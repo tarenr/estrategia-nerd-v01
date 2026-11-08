@@ -504,6 +504,7 @@ $videoDirectionDocUrl = url('/local/mudancas/documento?grupo=governanca&arquivo=
                 <tr><td class="font-mono text-xs text-cyan-300">CONTENT_SYNC_CURRENT_SOURCE</td><td class="text-slate-300">Origem atual do ambiente (`local`, `stage`, etc.).</td><td class="text-xs text-amber-300">Trava operacional de integridade.</td></tr>
                 <tr><td class="font-mono text-xs text-cyan-300">CONTENT_SYNC_APPROVED_PACKAGE_SOURCE</td><td class="text-slate-300">Origem obrigatória aceita para pacotes de produção.</td><td class="text-xs text-emerald-300">Valor oficial: `stage`.</td></tr>
                 <tr><td class="font-mono text-xs text-cyan-300">INSTAGRAM_PUBLIC_MEDIA_URL</td><td class="text-slate-300">URL pública de onde a Meta baixa vídeos e capas dos Reels.</td><td class="text-xs text-slate-400">Deve responder HTTP 200 externamente (Cloudflare Tunnel).</td></tr>
+                <tr><td class="font-mono text-xs text-cyan-300">YOUTUBE_CLIENT_ID / YOUTUBE_CLIENT_SECRET / YOUTUBE_REDIRECT_URI</td><td class="text-slate-300">OAuth dedicado do módulo de vídeos em <code>/admin/youtube</code>.</td><td class="text-xs text-slate-400">Somente no `.env` local; tokens ficam em `storage/app/youtube`.</td></tr>
                 <tr><td class="font-mono text-xs text-cyan-300">GEMINI_API_KEY / GEMINI_TEXT_MODEL...</td><td class="text-slate-300">Geração de legendas em cross-posts Blog &rarr; Instagram.</td><td class="text-xs text-slate-400">Somente no `.env` local.</td></tr>
                 <tr><td class="font-mono text-xs text-cyan-300">MATOMO_URL / MATOMO_SITE_ID</td><td class="text-slate-300">Analytics de audiência e tráfego auto-hospedado.</td><td class="text-xs text-slate-400">Configurado no IMP-022.</td></tr>
               </tbody>
@@ -588,19 +589,112 @@ $videoDirectionDocUrl = url('/local/mudancas/documento?grupo=governanca&arquivo=
             </div>
           </div>
 
+          <div class="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+            <h3 class="font-orbitron text-xs font-black uppercase tracking-wider text-slate-300">Painel de Métricas (/admin/instagram)</h3>
+            <ul class="mt-2 space-y-1.5 text-xs text-slate-300 leading-relaxed">
+              <li><strong class="text-white">Cards KPI:</strong> Seguidores, Seguindo, Mídias e Alcance mostram a variação real em relação ao registro anterior (alcance em %) e uma curva com o histórico de <code class="font-mono text-cyan-300">instagram_insights_cache</code>. Sem registro anterior aparece "—" e "sem histórico ainda"; nenhum valor é inventado.</li>
+              <li><strong class="text-white">Histórico de Seguindo e Mídias:</strong> cada sincronização grava <code class="font-mono text-cyan-300">follows_count</code> e <code class="font-mono text-cyan-300">media_count</code> em <code class="font-mono text-slate-200">payload_raw._account_snapshot</code>. A curva de Seguindo aparece a partir do segundo dia com registro.</li>
+              <li><strong class="text-white">Filtro de período e alcance por ponto:</strong> calendário travado entre o primeiro post publicado (20/11/2024) e hoje, sem cortes artificiais de 30 ou 90 dias. Cada ponto traz alcance consultado na Meta e persistido em <code class="font-mono text-cyan-300">instagram_reach_blocks</code> (blocos encerrados há mais de 2 dias não são reconsultados, tornando consultas subsequentes instantâneas). Faixas adaptativas do gráfico: até 14 dias (diário), 15 a 45 dias (a cada 3 dias), 46 a 180 dias (semanal) e acima de 180 dias (blocos de 28 dias). O card de Alcance exibe o total exato da Meta em janelas de até 30 dias e a soma dos blocos acompanhada de aviso explicativo em intervalos maiores.</li>
+              <li><strong class="text-white">Troca de período:</strong> sem recarregar a página, com animação suave das linhas de curtidas e alcance, dos números e do donut (desligada quando o sistema pede menos movimento).</li>
+            </ul>
+          </div>
+
           <div class="mt-4 rounded-2xl border border-cyan-500/30 bg-slate-950/70 p-5">
-            <h3 class="font-orbitron text-xs font-black uppercase tracking-wider text-slate-300">Série de Vídeos do Echo (Molde)</h3>
-            <p class="mt-2 text-xs text-slate-300 leading-relaxed">Os vídeos em que o Echo apresenta seguem um molde com três partes separadas: o que é <strong class="text-white">igual em todo vídeo</strong> (Echo sem braços nem pernas e com a boca acompanhando a voz, 1080x1920, área segura, ordem com aprovação em cada etapa, conferências técnicas), o que <strong class="text-white">se decide em cada vídeo</strong> com o usuário (cenários, fonte e posição da legenda, música, efeitos, capa, horário) e os <strong class="text-white">erros já cometidos</strong>, com causa e prevenção. Também traz como os cenários aprovados foram feitos (Canvas 2D em 6+ camadas, objetos do assunto, textura, luz, semente fixa) e o nível mínimo de detalhe de cenário e animação.</p>
+            <h3 class="font-orbitron text-xs font-black uppercase tracking-wider text-slate-300">Série de Vídeos do Echo (Molde e Quarto Vivo em Camadas)</h3>
+            <p class="mt-2 text-xs text-slate-300 leading-relaxed">Os vídeos em que o Echo apresenta seguem um molde com três partes separadas: o que é <strong class="text-white">igual em todo vídeo</strong> (Echo sem braços nem pernas e com a boca acompanhando a voz, 1080×1920 a 60 fps, área segura das duas redes, quarto vivo em camadas como cópia do setup do operador, ordem com aprovação em cada etapa e conferências técnicas), o que <strong class="text-white">se decide em cada vídeo</strong> com o operador (cenários extras, figurino, fonte e posição da legenda, música, efeitos, capa, horário) e os <strong class="text-white">erros já cometidos</strong>, com causa e prevenção.</p>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 leading-relaxed">
+              <li><strong class="text-white">Quarto padrão oficial (<code class="font-mono text-cyan-300">_kit-quarto/quarto_setup_raster.js</code> + <code class="font-mono text-cyan-300">producao-camadas-v1/</code>):</strong> composição 1080×1920 em camadas independentes (<code class="font-mono text-slate-200">00-ambiente</code>, <code class="font-mono text-slate-200">10-quadros</code> com os 5 quadros de Yu-Gi-Oh, <code class="font-mono text-slate-200">20-mesa-equipamentos</code>, <code class="font-mono text-slate-200">30-cadeira</code> e <code class="font-mono text-slate-200">31-cadeira-frente</code> ampliadas 1,28×, <code class="font-mono text-slate-200">40-pufe</code> e <code class="font-mono text-slate-200">50-acabamento</code>), com 4 modos de oclusão (<code class="font-mono text-cyan-300">sentado</code>, <code class="font-mono text-cyan-300">frente</code>, <code class="font-mono text-cyan-300">atras-da-cadeira</code>, <code class="font-mono text-cyan-300">atras-da-mesa</code>) e área dedicada no monitor central (<code class="font-mono text-cyan-300">mainScreen</code>) para gameplay.</li>
+              <li><strong class="text-white">Iluminação viva determinística por <code class="font-mono text-cyan-300">tempo</code>:</strong> 6 painéis hexagonais LED 3D e 3 barras neon na parede (com apagamento e halo real), painel pixelado 6×6 em perspectiva sobre a mesa e gabinete RGB (3 ventoinhas frontais, cooler traseiro e memórias RAM percorrendo o espectro completo).</li>
+              <li><strong class="text-white">Atuação e encerramento padrão (60 fps):</strong> o Echo inicia sentado sobre a almofada da cadeira (<code class="font-mono text-slate-200">X=289, Y=1574, k=1.50</code>) segurando o controle 3D no colo com as mãos azuis oficiais; no fechamento, pousa o controle 3D sobre o assento (<code class="font-mono text-slate-200">X=289, Y=1558</code>), sai da cadeira em trajetória fluida e passa a flutuar no meio do quarto (<code class="font-mono text-slate-200">X=575, Y=1460, k=1.85</code>) com a Propulsão Matrix (<code class="font-mono text-cyan-300">echo-propulsao-matrix.js</code>) acesa sob a base.</li>
+            </ul>
             <div class="mt-3 flex flex-wrap gap-2">
               <a href="<?= htmlspecialchars($echoSeriesDocUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="rounded-lg border border-cyan-500/40 bg-cyan-950/30 px-3 py-1.5 text-[11px] font-semibold text-cyan-200 hover:bg-cyan-900/40">Abrir o molde da série</a>
               <a href="<?= htmlspecialchars($videoDirectionDocUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" class="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-[11px] font-semibold text-slate-200 hover:bg-slate-800">Guia de direção audiovisual</a>
             </div>
-            <p class="mt-3 text-[11px] text-slate-400">Skills: <code class="font-mono text-cyan-300">video-echo-serie</code> (produção) e <code class="font-mono text-cyan-300">agendar-reel-instagram</code> (fila). Referência completa: Manifesto Estratégia Nerd v12 (<code class="font-mono text-slate-200">scratch/manifesto-10-10/README.md</code>).</p>
+            <p class="mt-3 text-[11px] text-slate-400">Skills: <code class="font-mono text-cyan-300">video-echo-serie</code> (produção) e <code class="font-mono text-cyan-300">agendar-reel-instagram</code> (fila). Pacotes de referência: <code class="font-mono text-slate-200">conteudo-planejado/videos-echo/_kit-quarto/</code> e <code class="font-mono text-slate-200">conteudo-planejado/videos-echo/manifesto-estrategia-nerd/</code>.</p>
+          </div>
+
+          <div class="mt-4 rounded-2xl border border-purple-500/30 bg-slate-950/70 p-5">
+            <div class="flex items-center justify-between">
+              <h3 class="font-orbitron text-xs font-black uppercase tracking-wider text-purple-300">Segunda Integração: Stories e Destaques (@estrategia_nerd)</h3>
+              <span class="rounded bg-purple-900/60 px-2 py-0.5 text-[10px] font-bold text-purple-200 uppercase">instagrapi</span>
+            </div>
+            <p class="mt-2 text-xs text-slate-300 leading-relaxed">
+              Página própria em <code class="font-mono text-cyan-300">/admin/instagram-destaques</code>, no menu abaixo de Instagram. O operador adiciona imagens e links; o sistema publica os stories e monta o destaque. O assistente mostra uma etapa por vez: <strong>Configurar conta → Montar destaque → Conferir e publicar</strong>.
+            </p>
+            <ol class="mt-3 list-decimal pl-5 space-y-2 text-xs text-slate-300 leading-relaxed">
+              <li><strong class="text-white">Configurar conta:</strong> “Como conectar minha conta” exibe instruções e um comando copiável para autenticar pelo terminal. O botão não conecta sozinho. É possível preparar a montagem antes; ter uma sessão armazenada não comprova conexão válida com o Instagram.</li>
+              <li><strong class="text-white">Montar destaque:</strong> escolher novo ou existente, informar nome (até 15 caracteres, como “PC R$400”) e capa opcional. Em destaque existente, nome e capa em branco preservam os atuais. Cada story reúne imagem JPEG 1080×1920, link HTTPS e ações para ordenar ou remover; até 20 imagens, de até 8 MB cada. A figurinha de link é posicionada acima do CTA da arte em <code class="font-mono text-cyan-300">x=0.5, y=0.70</code>, com tamanho normalizado <code class="font-mono text-cyan-300">0.38×0.07</code> (cerca de 410×134 px). A capa deve ser JPEG quadrado de 320 a 2160 px.</li>
+              <li><strong class="text-white">Conferir e publicar:</strong> revisar conta, destaque, capa, imagens e links. Voltar mantém a montagem na página. A confirmação “Publicar stories e montar destaque” inicia o envio e seu progresso; um resultado incerto pede conferência no aplicativo antes de continuar.</li>
+            </ol>
+            <p class="mt-3 text-[11px] text-slate-400">A prévia aparece após adicionar conteúdo; no celular, abra “Ver como ficará”. “Publicações anteriores” fica recolhida, com consulta e retomada. A montagem ainda não revisada não é um rascunho salvo para recuperar após fechar ou recarregar a página. Links para artigos do portal usam obrigatoriamente <code class="font-mono text-slate-200">https://estrategianerd.com.br/post/{slug}</code>. Na leitura de confirmação, o motor aceita o redirecionamento seguro de <code class="font-mono text-slate-200">l.instagram.com</code> e ignora apenas o parâmetro volátil <code class="font-mono text-slate-200">fbclid</code>.</p>
+            <div class="mt-3 grid gap-3 md:grid-cols-3 text-[11px] text-slate-300">
+              <div class="rounded-lg bg-slate-900/80 p-2.5 border border-slate-800">
+                <strong class="text-white block mb-1">Ponte Isolada via CLI</strong>
+                Subprocesso Python 3.13 (<code class="font-mono text-cyan-300">cli.py</code>) via <code class="font-mono text-slate-200">proc_open</code> com argumentos estáticos, JSON via stdin e fechamento prévio de sessão PHP.
+              </div>
+              <div class="rounded-lg bg-slate-900/80 p-2.5 border border-slate-800">
+                <strong class="text-white block mb-1">Prevenção de Duplicatas</strong>
+                Adaptador single-attempt sem retentativas em timeouts. Estado incerto entra em status <code class="font-mono text-amber-300">unknown</code> e exige reconciliação manual assistida com confirmação visual no aplicativo móvel.
+              </div>
+              <div class="rounded-lg bg-slate-900/80 p-2.5 border border-slate-800">
+                <strong class="text-white block mb-1">Autenticação Segura</strong>
+                Inicialização de sessão estritamente pelo terminal (<code class="font-mono text-cyan-300">auth_cli.py</code>) com senha oculta e 2FA, gravando <code class="font-mono text-slate-200">session.json</code> com permissões restritas.
+              </div>
+            </div>
           </div>
 
           <div class="doc-callout doc-callout-warn mt-4">
-            <p class="font-semibold">Área Segura do Instagram (1080x1920)</p>
-            <p class="mt-1 text-xs">Todo texto e elemento de leitura deve permanecer estritamente entre <strong class="text-white">Y: 170 e Y: 1540</strong>, com margem direita em <strong class="text-white">X: 925</strong> para não ser encoberto pela coluna lateral de botões do app (curtir, comentar e compartilhar).</p>
+            <p class="font-semibold">Área Segura do Reels e do Shorts (1080x1920)</p>
+            <p class="mt-1 text-xs">Todo texto e elemento de leitura (incluindo o rosto do Echo) deve permanecer entre <strong class="text-white">Y: 250 e Y: 1450</strong> e entre <strong class="text-white">X: 90 e X: 990</strong>, com margem direita em <strong class="text-white">X: 925 entre Y: 970 e Y: 1450</strong> para não ser encoberto pela coluna lateral de botões dos dois apps (curtir, comentar e compartilhar). A capa segue a mesma área e cabe na grade 3:4 do Instagram (Y: 240 a 1680).</p>
+          </div>
+
+          <div class="mt-5 rounded-2xl border border-red-500/30 bg-slate-950/70 p-5">
+            <h3 class="font-orbitron text-xs font-black uppercase tracking-wider text-red-400 flex items-center gap-2">
+              <i class="fa-brands fa-youtube"></i>
+              <span>Módulo YouTube Studio (/admin/youtube — FEAT-youtube-integration)</span>
+            </h3>
+            <p class="mt-2 text-xs text-slate-300 leading-relaxed">
+              Painel com paridade operacional ao Instagram: sincronização de acervo de vídeos e Shorts, métricas de visualizações e curtidas, distribuição de formatos e fila de envio resumível em blocos com agendamento privado nativo via YouTube Data API v3.
+            </p>
+            <div class="mt-3 grid gap-3 md:grid-cols-3">
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                <span class="text-[10px] font-bold text-red-400 uppercase">Acervo & Métricas</span>
+                <p class="mt-1 text-xs text-slate-200">Sincronização em lotes de 50 itens via <code>playlistItems</code> e <code>videos.list</code> com histórico diário. Vídeos <strong>não listados</strong> (os antigos do canal, desde 31/10/2026) ficam fora da lista padrão, dos KPIs, da distribuição e do resumo do painel; o filtro <em>Privacidade</em> mostra só eles ou todos, e a lista marca cada um com o selo "Não listado" ou "Privado" (a privacidade só é relida ao apertar Sincronizar). "Agendado" (filtro e contador do painel) inclui a fila local e o vídeo já enviado ao YouTube com hora marcada (<code>agendado_remoto</code>). O card "Visualizações (fase nova)" soma as visualizações gravadas na última sincronização (sem os não listados); o total do canal informado pela API aparece embaixo, porque atrasa e não conta os não listados. Cada número aparece num lugar só (cards de cima e gráfico). O card "Vídeos e Shorts" não conta cancelados nem não listados; a lista mostra publicados, depois agendados, depois o resto, esconde os cancelados (filtro Status → "Cancelado") e, nos agendados, mostra "Agendado para" com a data marcada. O gráfico mostra as visualizações acumuladas de cada vídeo no dia da publicação (não é visualização por dia). Período, filtros, ordenação, paginação e Sincronizar atualizam sem recarregar (<code>?ajax=metrics</code> e <code>?ajax=videos</code>, parcial <code>_lista-videos.php</code>); sem JavaScript a página recarrega como antes (FEAT-youtube-revisao-pagina).</p>
+              </div>
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                <span class="text-[10px] font-bold text-cyan-400 uppercase">Upload Resumível</span>
+                <p class="mt-1 text-xs text-slate-200">Envio de MP4 em blocos de 8MB com offset persistido no banco e lock contra concorrência.</p>
+              </div>
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                <span class="text-[10px] font-bold text-purple-400 uppercase">Radar & Transcrições</span>
+                <p class="mt-1 text-xs text-slate-200">Espionagem de tendências e transcrições automáticas sem consumo de cota (FEAT-youtube-research-radar).</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-2xl border border-indigo-500/30 bg-slate-950/70 p-5">
+            <h3 class="font-orbitron text-xs font-black uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+              <i class="fa-solid fa-share-nodes"></i>
+              <span>Conectores Sociais & Blindagem de API (Frente 3 — TryPost &rarr; Estratégia Nerd)</span>
+            </h3>
+            <p class="mt-2 text-xs text-slate-300 leading-relaxed">
+              Módulos nativos em PHP para distribuição multicanal dos conteúdos do Echo e postagens do portal, com proteção defensiva contra concorrência e expiração de credenciais.
+            </p>
+            <div class="mt-3 grid gap-3 md:grid-cols-3">
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                <span class="text-[10px] font-bold text-pink-400 uppercase">Blindagem Instagram</span>
+                <p class="mt-1 text-xs text-slate-200">Renovação proativa de token de longa duração via <code>oauth/access_token</code> e <code>refresh_access_token</code> quando faltam menos de 48h para expirar. Prevenção de duplicatas com reutilização atômica de <code>creation_id</code> validado na Meta.</p>
+              </div>
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                <span class="text-[10px] font-bold text-cyan-400 uppercase">Conector TikTok</span>
+                <p class="mt-1 text-xs text-slate-200">Publicação de vídeos verticais (1080x1920) via <code>TikTokPublishService</code> utilizando Content Posting API v2 (<code>PULL_FROM_URL</code>), polling seguro de status e renovação OAuth via refresh_token.</p>
+              </div>
+              <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                <span class="text-[10px] font-bold text-indigo-300 uppercase">Conector Threads</span>
+                <p class="mt-1 text-xs text-slate-200">Publicador <code>ThreadsPublishService</code> com suporte a texto, fotos, vídeos e carrosséis via Threads API oficial, consulta de contêineres e renovação de token permanente.</p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -703,6 +797,7 @@ $videoDirectionDocUrl = url('/local/mudancas/documento?grupo=governanca&arquivo=
                 <tr><td class="font-semibold text-rose-300">Erro de sincronização no Google Drive</td><td class="text-slate-300">Token OAuth expirado ou callback divergente.</td><td class="text-xs text-cyan-300">Acessar Backup em Nuvem no painel e reautenticar a conta Google Drive.</td></tr>
                 <tr><td class="font-semibold text-rose-300">Acentos corrompidos em tarefas do Forge</td><td class="text-slate-300">Envio de JSON pelo terminal sem codificação UTF-8 explícita.</td><td class="text-xs text-cyan-300">Enviar payload JSON a partir de arquivo ou via <code class="font-mono text-slate-200">ConvertTo-Json</code> no PowerShell.</td></tr>
                 <tr><td class="font-semibold text-rose-300">Reel publicado com vídeo antigo</td><td class="text-slate-300">Caminho em <code class="font-mono text-slate-200">video_rendered_path</code> divergente.</td><td class="text-xs text-cyan-300">Mover versão anterior para <code class="font-mono text-slate-200">reels/anteriores/</code> antes de sobrescrever <code class="font-mono text-slate-200">reel.mp4</code>.</td></tr>
+                <tr><td class="font-semibold text-rose-300">Post excluído no Instagram ainda aparece no site</td><td class="text-slate-300">A Graph API pode manter temporariamente a mídia removida; publicações feitas pelo Instagrapi também usam um PK diferente do ID da Graph e podem gerar registro duplicado se forem conciliadas apenas pelo ID.</td><td class="text-xs text-cyan-300">Confirmar o shortcode pela API privada, cancelar logicamente apenas o registro ausente e executar <code class="font-mono text-slate-200">scripts/sync-instagram-feed-assets.php</code>. O upsert concilia registros locais pelo permalink antes de vincular o ID da Graph.</td></tr>
               </tbody>
             </table>
           </div>

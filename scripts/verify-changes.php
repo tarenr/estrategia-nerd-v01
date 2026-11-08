@@ -73,6 +73,13 @@ $criticalFiles = [
     'app/Controllers/Admin/DashboardController.php',
     'app/Services/Admin/DashboardService.php',
     'app/Controllers/Admin/InstagramController.php',
+    'app/Controllers/Admin/YouTubeController.php',
+    'app/Repositories/YouTubeVideoRepository.php',
+    'app/Services/YouTube/YouTubeApiService.php',
+    'app/Services/YouTube/YouTubeOAuthService.php',
+    'app/Services/YouTube/YouTubePublishService.php',
+    'scripts/en-youtube-publish-scheduled.php',
+    'app/Views/admin/youtube/index.php',
     'app/Repositories/InstagramPostRepository.php',
     'app/Services/Instagram/InstagramApiService.php',
     'app/Services/Instagram/InstagramFeedReconciler.php',
@@ -81,12 +88,16 @@ $criticalFiles = [
     'scripts/en-instagram-publish-feed.php',
     'scripts/en-instagram-publish-scheduled.php',
     'scripts/sync-instagram-feed-assets.php',
+    'scripts/verify-instagram-feed-upsert.php',
     'app/Views/admin/dashboard.php',
     'config/automated-tests.php',
     'app/Services/Site/InstagramFeedService.php',
     'app/Services/Site/HomeService.php',
     'app/Controllers/Site/HomeController.php',
     'app/Views/components/site/home/instagram-feed.php',
+    'app/Services/Social/TikTokPublishService.php',
+    'app/Services/Social/ThreadsPublishService.php',
+    'scripts/verify-social-integrations.php',
 ];
 
 foreach ($criticalFiles as $file) {
@@ -104,7 +115,7 @@ foreach ($criticalFiles as $file) {
 
 // ── 2. Análise Estática (PHPStan) ─────────────────────────────────────────────
 echo "\n2. Análise Estática (PHPStan Level 5):\n";
-$phpstanCmd = escapeshellarg($phpBinary) . ' ' . escapeshellarg($root . '/vendor/bin/phpstan') . ' analyse --level=5 --no-progress 2>&1';
+$phpstanCmd = escapeshellarg($phpBinary) . ' ' . escapeshellarg($root . '/vendor/bin/phpstan') . ' analyse --configuration=' . escapeshellarg($root . '/phpstan.neon') . ' --level=5 --no-progress 2>&1';
 $stanOutput = [];
 $stanCode = 0;
 exec($phpstanCmd, $stanOutput, $stanCode);
@@ -195,6 +206,22 @@ if (str_contains($igStdout, 'STATUS:OK')) {
 }
 
 recordResult("Dashboard Instagram (/admin/instagram)", $igOk, $igDetail);
+
+$youtubeOutput = [];
+$youtubeCode = 0;
+exec(escapeshellarg($phpBinary) . ' ' . escapeshellarg($root . '/scripts/verify-youtube-integration.php') . ' 2>&1', $youtubeOutput, $youtubeCode);
+recordResult('Integração YouTube', $youtubeCode === 0, implode(' ', $youtubeOutput));
+
+$feedUpsertOutput = [];
+$feedUpsertCode = 0;
+exec(escapeshellarg($phpBinary) . ' ' . escapeshellarg($root . '/scripts/verify-instagram-feed-upsert.php') . ' 2>&1', $feedUpsertOutput, $feedUpsertCode);
+recordResult('Reconciliação de IDs do feed Instagram', $feedUpsertCode === 0, implode(' ', $feedUpsertOutput));
+
+$socialOutput = [];
+$socialCode = 0;
+exec(escapeshellarg($phpBinary) . ' ' . escapeshellarg($root . '/scripts/verify-social-integrations.php') . ' 2>&1', $socialOutput, $socialCode);
+$socialSummary = end($socialOutput);
+recordResult('Integrações Sociais & Blindagem (TikTok, Threads, Instagram)', $socialCode === 0, is_string($socialSummary) ? $socialSummary : 'OK');
 
 // ── 5. Renderização do Portal Público (Home com Feed do Instagram) ────────────
 echo "\n5. Renderização do Portal Público (Home com Feed do Instagram):\n";
