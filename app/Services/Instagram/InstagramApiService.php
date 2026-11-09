@@ -16,13 +16,13 @@ use RuntimeException;
 /**
  * Serviço de integração com a Meta Graph API v21.0 para o Instagram.
  *
- * Suporta fallback inteligente para o helper local (porta 58772) nas
+ * Suporta fallback inteligente para o helper local (porta 7050) nas
  * operações de leitura de perfil e insights rápidos.
  */
 final class InstagramApiService
 {
     private const GRAPH_BASE     = 'https://graph.facebook.com/v21.0';
-    private const HELPER_BASE    = 'http://127.0.0.1:58772';
+    private const HELPER_BASE    = 'http://127.0.0.1:7050';
     private const HELPER_TIMEOUT = 2;
     private const API_TIMEOUT    = 15;
     private const PUBLISH_TIMEOUT = 45;
