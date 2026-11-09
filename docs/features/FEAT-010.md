@@ -142,7 +142,7 @@ Cache de métricas e histórico diário de seguidores.
 ### Métodos principais
 
 ```php
-// Perfil e Insights (fallback para helper local :58772)
+// Perfil e Insights (fallback para helper local :7050)
 getProfile(): array
 getInsights(string $period = '7d'): array
 
@@ -164,7 +164,7 @@ countHashtags(?string $caption): int
 
 ### Fallback para helper local
 
-O helper local roda em `http://127.0.0.1:58772` e é consultado com timeout
+O helper local roda em `http://127.0.0.1:7050` e é consultado com timeout
 de **2 segundos** nas operações de leitura (`getProfile`, `getInsights`).
 Em caso de falha ou timeout, o serviço cai automaticamente para a Graph API
 com timeout de **15 segundos**.
@@ -593,7 +593,7 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 | 2026-09-28 | 1.5.0 | Separação física e visual do campo de Hashtags do texto principal da Legenda em `create.php` e `edit.php` (com contadores independentes, união automática e preview sincronizado com destaque ciano), implementação da exclusão de posts rascunho/agendados/erro no repository (`deletePost`) e controller com limpeza física das mídias em `uploads/instagram/`, e modal popup customizado de confirmação no tema oficial do Estratégia Nerd integrado no dashboard e na tela de edição. |
 | 2026-09-28 | 1.5.1 | Correção do contexto de empilhamento do popup de exclusão (teleporte do modal para `document.body.appendChild` e `z-[10000]`), garantindo que o modal apareça rigorosamente centralizado na viewport visível do usuário, mesmo após rolagem profunda em páginas extensas. |
 | 2026-09-28 | 1.6.0 | Exibição completa da biografia do perfil (sem truncamento, com quebras de linha `nl2br`) e link clicável da bio (`website`) no dashboard, acompanhados de botão de ação e modal popup explicativo com a matriz detalhada de regras, permissões e limitações da Meta Graph API (segurança contra sequestro de contas e guia de sincronização). |
-| 2026-09-28 | 1.6.1 | Correção de precedência em `InstagramApiService::getProfile()`: priorização estrita da Meta Graph API v21.0 oficial como fonte autoritativa (garantindo captura integral de biografia com quebras de linha/emojis e website oficial), relegando o helper local da porta 58772 apenas como contingência offline, e sincronização dos dados no banco local. |
+| 2026-09-28 | 1.6.1 | Correção de precedência em `InstagramApiService::getProfile()`: priorização estrita da Meta Graph API v21.0 oficial como fonte autoritativa (garantindo captura integral de biografia com quebras de linha/emojis e website oficial), relegando o helper local da porta 7050 apenas como contingência offline, e sincronização dos dados no banco local. |
 | 2026-09-28 | 1.6.2 | Redimensionamento proporcional dobrado da foto de perfil no card do Dashboard de 64px para 144-160px (`h-36 w-36 sm:h-40 sm:w-40`) com moldura estilizada em ciano (`border-2 border-cyan-500/40 shadow-xl`), alinhamento responsivo pixel-perfect com a altura da biografia completa, agrupamento do bloco numérico de métricas e badge indicativo de link principal do perfil. |
 | 2026-09-28 | 1.7.0 | Reestruturação completa do Dashboard inspirada em interface profissional moderna: barra superior enxuta de sincronização, grid de 4 KPIs com sparklines SVG temáticos, divisão central em 2 colunas (Informações da Conta 60% e Ações Rápidas 2x2 40%), navegação em abas persistentes (Métricas, Posts Recentes, Agendados & Rascunhos, Insights) e gráficos vetoriais nativos em SVG (Desempenho temporal com curvas de tendência e Gráfico Donut de Tipos de Conteúdo com total e percentuais reais). |
 | 2026-09-28 | 1.8.0 | Otimização SPA e eliminação de redundâncias de UI: status de conexão e última sincronização integrados diretamente no cabeçalho de "Informações da conta" (eliminando barra superior e botões repetidos), centralização das ações no card "Ações Rápidas", filtros de período (7d, 14d, 30d e customizado) atualizados em tempo real sem recarregamento da página (Fetch API assíncrono via `?ajax=metrics` redesenhando dinamicamente os SVGs do gráfico de desempenho e do donut, além dos KPIs e cards analíticos) e URLs amigáveis e limpas via `window.history.replaceState`. |
