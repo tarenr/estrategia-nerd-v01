@@ -632,3 +632,49 @@ C:\xampp\php\php.exe vendor/bin/phpstan analyse --level=5 --no-progress
 
 
 
+
+## Renumeração de `instagram_posts` (17/11/2026)
+
+- **O que foi feito:** os 161 registros de `instagram_posts` (banco local) foram renumerados de 1 a 161, em transação, e o `AUTO_INCREMENT` foi ajustado para 162. As mídias de `instagram_post_media` seguiram o pai pela FK com `ON UPDATE CASCADE`.
+- **Mapa e backup:** `C:\Users\WINDOWS\ProjectBackup\instagram-renumber-2026-11-17\` (JSON das tabelas, `mapa-ids.json`, `checksums.json`, cópia dos recibos).
+- **Exemplos do mapa:** #67695 → 154 (Gundam Wing, status `erro`), #23397 → 147, #72306 → 155, #74271 → 156, #109982 → 161.
+- **O que não mudou:** `ig_media_id` e `idempotency_key` (conjuntos idênticos ao backup), campos de conteúdo e agendamento, e os 6 agendados (mesmas datas).
+- **Efeito colateral conhecido:** `atualizado_em` foi alterado em todas as linhas, por causa de `ON UPDATE CURRENT_TIMESTAMP`. Não foi restaurado.
+- **Recibos de publicação:** os arquivos em `storage/backups/instagram-publish/receipts/` mantêm os IDs antigos. Não foram alterados.
+- **Causa do salto dos IDs:** não identificada. Esta renumeração não impede que os IDs voltem a subir.
+
+### Reversão da renumeração (17/11/2026)
+
+- **Revertido:** `instagram_posts` e `instagram_post_media` voltaram aos IDs originais (maior 109982), `atualizado_em` restaurado do backup original, `AUTO_INCREMENT` = 111999.
+- **Validação:** todas as colunas de todas as 161 linhas iguais ao backup original; mídias idênticas por `post_id`; 0 órfãs; 6 agendados mantidos.
+- **Backups:** `ProjectBackup\instagram-renumber-2026-11-17\` (original) e `ProjectBackup\instagram-renumber-revert-2026-11-17\` (estado renumerado).
+- **Recibos:** voltam a bater com os IDs do banco.
+- **Pendente:** `storage/instagram-feed-publish/auto.disabled` mantido (feed automático pausado). Capas `post_N.jpg` e `config/instagram-feed.json` local ainda precisam ser conferidos antes de reativar o envio automático.
+- **Causa do salto dos IDs:** não identificada.
+
+### Capas do feed refeitas com o número atual dos posts (18/11/2026)
+
+- **Motivo:** as capas `post_<ID>.jpg` tinham sido geradas com os IDs antigos e a sincronização reaproveitava arquivos existentes.
+- **O que foi feito:** cada post publicado (145) teve a capa baixada de novo pelo `ig_media_id` atual e salva como `post_<ID atual>.jpg`. Leitura da Meta e do banco; nenhuma escrita no banco.
+- **Resultado técnico:** 145 de 145 com arquivo, todos JPEG válidos, nenhum temporário restante, nenhum arquivo sobrando.
+- **Movidas para sem-dono:** `post_10300.jpg` e `post_55010.jpg` (não pertencem a nenhum post publicado).
+- **Conferência visual:** pranchas com as 145 capas revisadas; os temas batem com os posts conferidos (Power Rangers #74271, Yu-Gi-Oh #72306, Darksiders #11242 a #11247, Echo #55428). Não foi conferida legenda por legenda.
+- **Backup:** `ProjectBackup\feed-capas-2026-11-17\` (capas antes, `instagram-feed.json.antes`, `sem-dono\`).
+- **Não feito:** `config/instagram-feed.json` não foi reescrito; nada foi enviado ao site; o envio automático segue pausado (`auto.disabled`).
+
+### Correção: botões da página /admin/instagram (18/11/2026)
+
+- **Sintoma:** nenhum botão da página funcionava (abas, período, modais).
+- **Causa:** `app/Views/admin/instagram/index.php` tinha uma chave `}` extra no script, na região do gráfico de desempenho. O erro de sintaxe impedia o script de carregar, então funções como `switchIgTab` não existiam. Presente no código versionado desde o commit `0169815` (08/11).
+- **Correção:** removida a linha `  }` extra (uma linha). Backup em `ProjectBackup\instagram-view-fix-2026-11-18\index.php.antes`.
+- **Verificado:** `php -l` e checagem de sintaxe do script OK; no navegador, a aba Insights Detalhados muda o conteúdo, o modal Regras da Conta abre e fecha, sem erro de script. `scripts/verify-changes.php` aprovado (0 falhas); sem resíduos de teste no banco.
+- **Não testado:** o botão "Sincronizar Agora" (grava no banco) e os seletores de período (gravam cache de insights). Não foram clicados de propósito.
+
+### Miniatura de Reels sem mídia cadastrada (18/11/2026)
+
+- **Sintoma:** os agendados #104109 e #104110 apareciam sem capa na lista.
+- **Causa:** a lista só lia a tabela de mídias. Esses posts foram cadastrados com o caminho do vídeo (`video_rendered_path`), sem linha de mídia. A capa `capa.jpg` existia na pasta.
+- **Correção:** nas duas chamadas de miniatura, quando não há mídia, usa-se o `video_rendered_path` do próprio post. Uma linha em cada chamada. Backup em `ProjectBackup\instagram-thumb-2026-11-18\`.
+- **Verificado:** `php -l` OK; as duas capas carregam na tela (1080 px); `verify-changes.php` aprovado (0 falhas); sem resíduos de teste.
+- **Não alterado:** #55010 (link da Meta expirado, 403) e a tela de detalhe `show.php`.
+- **Correção de registro:** a entrada anterior deste arquivo diz que o modal Regras da Conta "abre e fecha". Não é verdade: o fechamento falha porque `closeIgRulesModal` não existe no script. Ver plano separado.

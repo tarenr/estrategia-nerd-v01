@@ -174,7 +174,7 @@ $conteudo = <<<'HTML'
     <span style="color: #38bdf8; font-weight: bold;">→</span>
     <div style="flex: 1; min-width: 140px; padding: 0.75rem; border-radius: 0.5rem; background: #1e293b; text-align: center;">
       <span style="display: block; font-weight: 600; color: #00e5ff;">2. Despachante</span>
-      <span style="font-size: 0.8rem; color: #94a3b8;">Porta 4884 (&le; 300ms)</span>
+      <span style="font-size: 0.8rem; color: #94a3b8;">Porta 5020 (&le; 300ms)</span>
     </div>
     <span style="color: #38bdf8; font-weight: bold;">→</span>
     <div style="flex: 1; min-width: 140px; padding: 0.75rem; border-radius: 0.5rem; background: #1e293b; text-align: center;">

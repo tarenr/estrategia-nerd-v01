@@ -30,7 +30,7 @@ $statusLabels = ['rascunho' => 'Rascunho', 'agendado' => 'Agendado', 'publicando
 $statusColors = ['rascunho' => 'border-slate-600 text-slate-300', 'agendado' => 'border-amber-500/40 text-amber-200', 'publicando' => 'border-cyan-500/40 text-cyan-200', 'publicado' => 'border-emerald-500/40 text-emerald-200', 'erro' => 'border-rose-500/40 text-rose-200', 'cancelado' => 'border-slate-500/40 text-slate-400'];
 
 // $insights vem no formato bruto da Graph API: [{name, values:[{value}]}, ...]
-$insightTotals = ['reach' => null, 'impressions' => null, 'saved' => null, 'total_interactions' => null];
+$insightTotals = ['reach' => null, 'views' => null, 'impressions' => null, 'saved' => null, 'total_interactions' => null];
 foreach ($insights as $metric) {
     $name = (string) ($metric['name'] ?? '');
     if (!array_key_exists($name, $insightTotals)) {
@@ -41,6 +41,9 @@ foreach ($insights as $metric) {
         $sum += (int) ($v['value'] ?? 0);
     }
     $insightTotals[$name] = $sum;
+}
+if ($insightTotals['impressions'] === null && $insightTotals['views'] !== null) {
+    $insightTotals['impressions'] = $insightTotals['views'];
 }
 
 $firstMedia    = $medias[0] ?? null;
@@ -171,11 +174,16 @@ if ($readyPreview !== null && !empty($post['audio_track_id'])) {
       <!-- Insights -->
       <section class="admin-panel">
         <div class="admin-panel-title"><i class="fa-solid fa-chart-simple text-cyan-300" aria-hidden="true"></i><span>Insights</span></div>
-        <?php if (array_filter($insightTotals, static fn ($v) => $v !== null) === []): ?>
+        <?php if (!empty($insights_error)): ?>
+          <div class="mt-3 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 flex items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+            <span>Retorno da Meta Graph API: <?= $esc($insights_error) ?></span>
+          </div>
+        <?php elseif (array_filter($insightTotals, static fn ($v) => $v !== null) === []): ?>
           <div class="mt-3 text-sm text-slate-400">Sem dados de insights disponíveis para este post ainda.</div>
         <?php else: ?>
           <div class="grid grid-cols-2 gap-4 mt-4">
-            <?php foreach (['reach' => ['Alcance', 'fa-eye', '#00d4ff'], 'impressions' => ['Impressões', 'fa-chart-column', '#facc15'], 'saved' => ['Salvamentos', 'fa-bookmark', '#34d399'], 'total_interactions' => ['Interações', 'fa-heart', '#f472b6']] as $key => [$label, $icon, $color]): ?>
+            <?php foreach (['reach' => ['Alcance', 'fa-eye', '#00d4ff'], 'impressions' => [$firstIsVideo ? 'Visualizações' : 'Impressões', 'fa-chart-column', '#facc15'], 'saved' => ['Salvamentos', 'fa-bookmark', '#34d399'], 'total_interactions' => ['Interações', 'fa-heart', '#f472b6']] as $key => [$label, $icon, $color]): ?>
               <div class="stat-card stat-card-compact admin-summary-card">
                 <div class="stat-icon" style="background: <?= $esc($color) ?>22; color: <?= $esc($color) ?>;">
                   <i class="fa-solid <?= $esc($icon) ?>" aria-hidden="true"></i>

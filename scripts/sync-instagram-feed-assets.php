@@ -254,3 +254,4 @@ if ($feed !== null && !empty($feed['posts'])) {
 }
 
 echo "\n=== Sincronização concluída com sucesso! ===\n";
+exit(0);

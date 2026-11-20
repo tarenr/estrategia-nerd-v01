@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Story Echo 2D Oficial</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #030712;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      position: relative;
+    }
+    /* Canvas final de 1080x1920 */
+    #final-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1080px;
+      height: 1920px;
+      z-index: 10;
+    }
+    /* Canvas temporário onde o motor do robô roda */
+    #robot-source-canvas {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="robot-source-canvas" width="280" height="280"></canvas>
+  <canvas id="final-canvas" width="1080" height="1920"></canvas>
+
+  <!-- Scripts oficiais do robô -->
+  <script src="../public/assets/vendor/echo-robo/robo-roupas.js"></script>
+  <script src="../public/assets/vendor/echo-robo/robo-roupas-echo.js"></script>
+  <script src="../public/assets/vendor/echo-robo/robo-motor.js"></script>
+
+  <script>
+    (async function() {
+      const robotCanvas = document.getElementById('robot-source-canvas');
+      const finalCanvas = document.getElementById('final-canvas');
+      const ctx = finalCanvas.getContext('2d');
+
+      // 1. Inicializa o motor oficial do Echo
+      const { RoboBot } = window.RoboMotor;
+      const echo = new RoboBot(robotCanvas);
+      
+      // Configura o Echo: acenando com a mão flutuante oficial, olhos abertos e alerta
+      echo.s.hands = 1;
+      echo.waveSide = 1;
+      echo.s.open = 1;
+      echo.s.sway = 0;
+      echo.s.pitch = -0.05;
+      
+      // Força um ciclo de draw do robô
+      for (let i = 0; i < 5; i++) {
+        echo.draw();
+      }
+
+      // 2. Carrega o logo oficial
+      const logo = new Image();
+      logo.src = '../public/assets/brand/logo-horizontal.png';
+      await new Promise(res => {
+        logo.onload = res;
+        logo.onerror = res;
+      });
+
+      // 3. Composição 2D no Canvas Final (1080x1920)
+      
+      // Fundo escuro com gradiente espacial
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 1920);
+      bgGrad.addColorStop(0, '#060a14');
+      bgGrad.addColorStop(0.3, '#0b1329');
+      bgGrad.addColorStop(0.7, '#070b16');
+      bgGrad.addColorStop(1, '#020408');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1080, 1920);
+
+      // Grid sutil no fundo
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+      ctx.lineWidth = 1;
+      const step = 80;
+      for (let x = 0; x < 1080; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 1920);
+        ctx.stroke();
+      }
+      for (let y = 0; y < 1920; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(1080, y);
+        ctx.stroke();
+      }
+
+      // Glow suave azul e ciano atrás do Echo
+      const glowGrad = ctx.createRadialGradient(540, 880, 50, 540, 880, 480);
+      glowGrad.addColorStop(0, 'rgba(0, 212, 255, 0.22)');
+      glowGrad.addColorStop(0.4, 'rgba(139, 92, 246, 0.12)');
+      glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(540, 880, 480, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Círculo orbital estético ao redor do robô
+      ctx.strokeStyle = 'rgba(0, 212, 255, 0.25)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([12, 16]);
+      ctx.beginPath();
+      ctx.arc(540, 880, 360, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Topo: Badge de Identificação
+      const badgeY = 270;
+      ctx.fillStyle = 'rgba(11, 23, 48, 0.85)';
+      ctx.strokeStyle = '#00d4ff';
+      ctx.lineWidth = 1.5;
+      
+      // Pílula do badge
+      const bW = 380;
+      const bH = 48;
+      const bX = (1080 - bW) / 2;
+      ctx.beginPath();
+      ctx.roundRect(bX, badgeY, bW, bH, 24);
+      ctx.fill();
+      ctx.stroke();
+
+      // Texto do badge
+      ctx.font = '600 20px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#00d4ff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('ESTRATÉGIA NERD  •  CANAL OFICIAL', 540, badgeY + 24);
+
+      // Logo horizontal centralizado
+      if (logo.complete && logo.naturalWidth > 0) {
+        const logoTargetW = 540;
+        const logoTargetH = logoTargetW * (logo.naturalHeight / logo.naturalWidth);
+        ctx.drawImage(logo, (1080 - logoTargetW) / 2, 350, logoTargetW, logoTargetH);
+      }
+
+      // 4. DESENHO DO ECHO 2D OFICIAL (ampliado com altíssima nitidez)
+      // O Echo é renderizado a partir do canvas do motor oficial (280x280)
+      const echoTargetSize = 620;
+      const echoX = (1080 - echoTargetSize) / 2;
+      const echoY = 570;
+      
+      // Sombra projetada do Echo no chão
+      const shadowGrad = ctx.createRadialGradient(540, echoY + echoTargetSize - 35, 10, 540, echoY + echoTargetSize - 35, 200);
+      shadowGrad.addColorStop(0, 'rgba(0, 212, 255, 0.35)');
+      shadowGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0.6)');
+      shadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = shadowGrad;
+      ctx.beginPath();
+      ctx.ellipse(540, echoY + echoTargetSize - 35, 190, 35, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Desenha o robô com suavização de imagem
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(robotCanvas, echoX, echoY, echoTargetSize, echoTargetSize);
+
+      // Balão de fala futurista 2D do Echo
+      const bubbleW = 440;
+      const bubbleH = 80;
+      const bubbleX = 540 - bubbleW / 2;
+      const bubbleY = 1190;
+      
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.strokeStyle = 'rgba(0, 212, 255, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(bubbleX, bubbleY, bubbleW, bubbleH, 20);
+      ctx.fill();
+      ctx.stroke();
+
+      // Fala do Echo
+      ctx.font = '700 28px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Olá, eu sou o Echo! 🤖', 540, bubbleY + 40);
+
+      // 5. Títulos e Chamada Principal
+      ctx.font = '800 48px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('SEU HUB DIÁRIO DE', 540, 1330);
+
+      ctx.fillStyle = '#00d4ff';
+      ctx.fillText('CULTURA POP & GAMES', 540, 1390);
+
+      ctx.font = '400 26px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('Novidades, análises e tecnologia direto ao ponto.', 540, 1445);
+
+      // 6. Indicação para o Link Sticker oficial do Instagram (posicionado em y: 1530)
+      const ctaY = 1530;
+      ctx.font = '700 24px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText('👇 TOQUE NO LINK ABAIXO PARA CONHECER', 540, ctaY);
+
+      // Seta indicativa
+      ctx.fillStyle = '#00d4ff';
+      ctx.beginPath();
+      ctx.moveTo(540 - 14, ctaY + 22);
+      ctx.lineTo(540 + 14, ctaY + 22);
+      ctx.lineTo(540, ctaY + 38);
+      ctx.closePath();
+      ctx.fill();
+
+      // Borda sutil de segurança da tela
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(20, 20, 1040, 1880);
+
+      window.__RENDER_DONE = true;
+    })();
+  </script>
+</body>
+</html>

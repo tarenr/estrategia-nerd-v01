@@ -881,7 +881,7 @@ if (($endRange - $startRange) < 4) {
                     $pComents    = (int) ($item['comentarios_count'] ?? 0);
                     $pDataPub    = $item['publicado_em'] ?? null;
                     $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
-                    $thumbUrl    = $resolveMediaUrl($medias[0] ?? '', $pId);
+                    $thumbUrl    = $resolveMediaUrl($medias[0] ?? (string) ($item['video_rendered_path'] ?? ''), $pId);
                     $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
                   ?>
                   <tr class="posts-table-row">
@@ -992,7 +992,7 @@ if (($endRange - $startRange) < 4) {
                 $pComents    = (int) ($item['comentarios_count'] ?? 0);
                 $pDataPub    = !empty($item['publicado_em']) ? $item['publicado_em'] : ($item['agendado_para'] ?? null);
                 $medias      = array_values(array_filter(explode('|', (string) ($item['medias'] ?? ''))));
-                $thumbUrl    = $resolveMediaUrl($medias[0] ?? '', $pId);
+                $thumbUrl    = $resolveMediaUrl($medias[0] ?? (string) ($item['video_rendered_path'] ?? ''), $pId);
                 $editUrl     = url('/admin/instagram/posts/' . $pId . '/editar');
               ?>
               <div class="rounded-2xl border border-slate-800/80 bg-slate-900/60 overflow-hidden hover:border-cyan-500/40 transition-all flex flex-col group shadow-lg">
@@ -1620,7 +1620,6 @@ if (($endRange - $startRange) < 4) {
       dot.style.transition = 'opacity .25s ease ' + (0.15 + 0.7 * Math.max(0, frac)).toFixed(2) + 's';
       dot.style.opacity = '1';
     });
-  }
   }
 
   // Renderizador dinâmico do Donut e Legendas
