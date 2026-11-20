@@ -145,6 +145,42 @@ return [
     ['POST', '/admin/instagram/api/audio/download',      [\App\Controllers\Admin\InstagramController::class, 'audioDownload'],    'auth'],
     ['POST', '/admin/instagram/api/audio/upload',        [\App\Controllers\Admin\InstagramController::class, 'audioUpload'],      'auth'],
 
+    // ── YouTube ───────────────────────────────────────────────────────────────
+    ['GET',  '/admin/youtube',                           [\App\Controllers\Admin\YouTubeController::class, 'index'],       'auth'],
+    ['POST', '/admin/youtube/conectar',                  [\App\Controllers\Admin\YouTubeController::class, 'connect'],     'auth'],
+    ['GET',  '/admin/youtube/callback',                  [\App\Controllers\Admin\YouTubeController::class, 'callback'],    'auth'],
+    ['POST', '/admin/youtube/sincronizar',               [\App\Controllers\Admin\YouTubeController::class, 'sync'],        'auth'],
+    ['GET',  '/admin/youtube/posts/criar',               [\App\Controllers\Admin\YouTubeController::class, 'create'],      'auth'],
+    ['POST', '/admin/youtube/posts/criar',               [\App\Controllers\Admin\YouTubeController::class, 'store'],       'auth'],
+    ['GET',  '/admin/youtube/posts/{id}',                [\App\Controllers\Admin\YouTubeController::class, 'show'],        'auth'],
+    ['GET',  '/admin/youtube/radar',                     [\App\Controllers\Admin\YouTubeController::class, 'radar'],       'auth'],
+    ['GET',  '/admin/youtube/radar/transcript',          [\App\Controllers\Admin\YouTubeController::class, 'radarTranscript'], 'auth'],
+
+    // ── Instagram Stories e Destaques (@estrategia_nerd via instagrapi) ──────
+    ['GET',  '/admin/instagram-destaques',                  [\App\Controllers\Admin\InstagramHighlightsController::class, 'index'],     'auth'],
+    ['GET',  '/admin/instagram-destaques/status',           [\App\Controllers\Admin\InstagramHighlightsController::class, 'status'],    'auth'],
+    ['GET',  '/admin/instagram-destaques/job',              [\App\Controllers\Admin\InstagramHighlightsController::class, 'job'],       'auth'],
+    ['GET',  '/admin/instagram-destaques/media/{id}',       [\App\Controllers\Admin\InstagramHighlightsController::class, 'media'],     'auth'],
+    ['POST', '/admin/instagram-destaques/upload',          [\App\Controllers\Admin\InstagramHighlightsController::class, 'upload'],    'auth'],
+    ['POST', '/admin/instagram-destaques/prepare',         [\App\Controllers\Admin\InstagramHighlightsController::class, 'prepare'],   'auth'],
+    ['POST', '/admin/instagram-destaques/step',            [\App\Controllers\Admin\InstagramHighlightsController::class, 'step'],      'auth'],
+    ['POST', '/admin/instagram-destaques/catalog',         [\App\Controllers\Admin\InstagramHighlightsController::class, 'catalog'],   'auth'],
+    ['POST', '/admin/instagram-destaques/reconcile',       [\App\Controllers\Admin\InstagramHighlightsController::class, 'reconcile'], 'auth'],
+
+    // ── Instagram Studio Pro (Segundo Dashboard completo via instagrapi) ─────
+    ['GET',  '/admin/instagram-studio',                     [\App\Controllers\Admin\InstagramStudioController::class, 'index'],         'auth'],
+    ['GET',  '/admin/instagram-studio/status',              [\App\Controllers\Admin\InstagramStudioController::class, 'status'],        'auth'],
+    ['GET',  '/admin/instagram-studio/search-music',        [\App\Controllers\Admin\InstagramStudioController::class, 'searchMusic'],   'auth'],
+    ['GET',  '/admin/instagram-studio/trending-music',      [\App\Controllers\Admin\InstagramStudioController::class, 'trendingMusic'], 'auth'],
+    ['POST', '/admin/instagram-studio/upload-feed',         [\App\Controllers\Admin\InstagramStudioController::class, 'uploadFeed'],    'auth'],
+    ['GET',  '/admin/instagram-studio/profile',             [\App\Controllers\Admin\InstagramStudioController::class, 'getProfile'],    'auth'],
+    ['POST', '/admin/instagram-studio/update-profile',      [\App\Controllers\Admin\InstagramStudioController::class, 'updateProfile'], 'auth'],
+    ['POST', '/admin/instagram-studio/pin-media',           [\App\Controllers\Admin\InstagramStudioController::class, 'pinMedia'],      'auth'],
+    ['GET',  '/admin/instagram-studio/search-viral',        [\App\Controllers\Admin\InstagramStudioController::class, 'searchViral'],   'auth'],
+    ['POST', '/admin/instagram-studio/send-dm',             [\App\Controllers\Admin\InstagramStudioController::class, 'sendDm'],        'auth'],
+    ['GET',  '/admin/instagram-studio/metrics',             [\App\Controllers\Admin\InstagramStudioController::class, 'metrics'],       'auth'],
+    ['GET',  '/admin/instagram-studio/story-viewers',       [\App\Controllers\Admin\InstagramStudioController::class, 'storyViewers'],  'auth'],
+
     ['GET',  '/admin/comentarios',         [\App\Controllers\Admin\ComentariosController::class, 'index'], 'auth'],
     ['GET',  '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'reply'], 'auth'],
     ['POST', '/admin/responder-comentario',[\App\Controllers\Admin\ComentariosController::class, 'storeReply'], 'auth'],
