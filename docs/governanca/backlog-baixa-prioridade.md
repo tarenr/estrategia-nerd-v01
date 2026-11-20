@@ -68,3 +68,4 @@
 | Item | Pergunta |
 |---|---|
 | F4-T07 — integração dos posts com a Central Nerd | Nenhum commit nessa área desde maio. A Central Nerd (página de conversão) ainda é estratégica? Se sim, vira tarefa no Forge para revisar os links de saída dos posts; se não, sai desta lista. |
+| Frase marcante do personagem no fim dos vídeos do Echo (ex.: "Dark Metamorphosis" no Castlevania, "Leigan!" no Yu Yu Hakusho) | Adiada em 01/11/2026 para amadurecer. Qual frase e em quais vídeos? Cuidados já levantados: a voz sintética (Antonio) erra nomes em inglês e não grita com convicção, então ouvir uma amostra antes (fica mais viável com a voz do próprio usuário, depois do microfone); não usar áudio da dublagem nem do jogo (direitos autorais); a frase vem depois da pergunta dos comentários; o pilar de hardware não tem personagem e precisaria de uma frase fixa do Echo; padrão simples (voz, texto e olhos felizes), gesto do personagem só em vídeo especial. |

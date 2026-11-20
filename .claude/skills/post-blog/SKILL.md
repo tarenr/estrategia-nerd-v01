@@ -73,9 +73,10 @@ titulo, slug, status, destaque, categoria_post_id FROM posts WHERE status =
 - **destaque**: o post tem alcance/urgência acima da média (prazo real,
   tema muito buscado) pra justificar destaque na home? Compare com outros
   posts da mesma categoria que já são ou não destaque antes de decidir.
-- **tipo_post**: qual das 6 estruturas usadas (`comparativo`, `review`,
-  `ficha_tecnica`, `guia`, `noticia`, `lista`) - geralmente já é a mesma
-  escolhida no passo 1.
+- **tipo_post**: qual das estruturas editoriais usadas (`saga`, `comparativo`,
+  `review`, `ficha_tecnica`, `guia`, `noticia`, `lista`) - geralmente já é a mesma
+  escolhida no passo 1. Sagas narrativas com múltiplos capítulos, narração e áudio
+  devem usar `saga`.
 
 ### 5. Montar o JSON e criar o rascunho
 Monte um JSON (ver formato no cabeçalho de `scripts/en-blog-draft.php`) com:

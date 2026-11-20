@@ -1,4 +1,0 @@
-[0:a]aresample=48000,highpass=f=80,asplit=2[voz_mix][voz_side];
-[1:a]atrim=start=22:end=66.568,asetpts=PTS-STARTPTS,aresample=48000,volume=0.16[musica];
-[musica][voz_side]sidechaincompress=threshold=0.025:ratio=8:attack=18:release=280[trilha_duck];
-[voz_mix][trilha_duck]amix=inputs=2:duration=first:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11[outa]

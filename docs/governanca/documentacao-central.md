@@ -47,7 +47,7 @@ As rotas `/local/*` só abrem no próprio PC (`ensureLocalOnly`) e, pelo endere�
 
 ## 5. Tarefas: somente no Forge
 
-- Tarefas ativas ficam **somente** no Forge (`http://127.0.0.1:4477`, projeto **Estratégia Nerd**, id 4), com prefixo `[Assunto] - Descrição` (ver `the-forge/docs/integracao-outros-projetos.md`). Use `curl.exe` com o corpo JSON em arquivo UTF-8 para não corromper acentos.
+- Tarefas ativas ficam **somente** no Forge (`http://127.0.0.1:4000`, projeto **Estratégia Nerd**, id 4), com prefixo `[Assunto] - Descrição` (ver `the-forge/docs/integracao-outros-projetos.md`). Use `curl.exe` com o corpo JSON em arquivo UTF-8 para não corromper acentos.
 - Itens de **baixa prioridade** ficam em `docs/governanca/backlog-baixa-prioridade.md` até alguém decidir trazê-los para o Forge.
 - **Revisão mensal:** existe sempre uma tarefa `[Docs] - Revisão mensal da documentação central (próxima: DD/MM/AAAA)`. Ao executá-la: listar os commits do mês (`git log --since=...`), conferir se cada mudança relevante aparece nas áreas da seção 2, corrigir o que faltar, concluir a tarefa e **criar a do mês seguinte**.
 

@@ -36,10 +36,15 @@ notion-import/
 # AppFlowy Cloud (produto externo, repo próprio — fora do índice/repo)
 AppFlowy-Cloud/
 
-# Pastas de trabalho (renders de vídeo, protótipos, checagens avulsas): nunca versionar.
-# O que precisa ser guardado de cada vídeo vai para conteudo-planejado/videos-echo/<nome>/ (molde da série, seção 11).
+# Pastas de trabalho e produção de vídeos (renders, mídias e roteiros locais): nunca versionar no Git
 /scratch/
 /scripts/scratch/
+conteudo-planejado/
+public/echo-assets/
+*.mp4
+*.wav
+*.avi
+*.mkv
 
 # Python
 __pycache__/
