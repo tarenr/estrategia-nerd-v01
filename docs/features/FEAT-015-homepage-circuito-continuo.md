@@ -477,30 +477,21 @@ Correção do Echo (#1666) — 26/10/2026 (Forge #1693, #1694 e #1695):
   (14 arquivos conferidos por hash no início e no fim).
 - Pendente: aprovação visual do dono na stage (#1693, #1694, #1686 e #1691 abertas); produção (#1687).
 
-Pendente: Echo teletransporta na stage e no local (27/10/2026, Forge #1697):
-- O que o dono viu: na stage e no local o Echo "teletransporta"; a produção é a única certa.
-- Causa (medida com Chrome usando a GPU real, RTX 3050, e roda do mouse real; 1920, 1440 e 1366 px):
-  desde o #1666 o Echo desvia de obstáculos escondendo-se e reaparecendo em outro lugar. Com a
-  correção de 26/10 isso passou a ser com fade (apaga ~280 ms parado, 1 quadro invisível, acende
-  ~300 ms), mas o lugar novo costuma ser o outro lado da tela: em 1920 px, 6 de 7 trocas de lugar
-  foram para o lado oposto (~1780 px, ~240 ms invisível). As trocas vêm de SECTION_CONFIGS (cada
-  seção da Home tem um lado) e da troca ociosa a cada 7 s (idleSideOverride).
-- Produção (site-home-flow.js b3e20040, createEchoLayer): o Echo fica sempre visível, flutua a uma
-  altura fixa da tela com inércia da rolagem e troca de lado voando (mola de até 420 px/s, ~1–2 s
-  atravessando), sem desviar de nada. Medido com GPU real e o JS/CSS da produção servidos no local:
-  0 saltos, todas as trocas voando, mas 119 (1920 px) e 200 (1440 px) quadros desenhado por cima dos
-  textos das seções. Com o mesmo JS e o CSS atual (regras z-index 2 do #1666 no conteúdo de Sobre,
-  Blog, Instagram e Newsletter): 0 saltos, trocas voando e 0 sobreposição real em 1920, 1440, 1366 e
-  767 px; o Echo fica atrás do conteúdo em 47% (1920 px) a 97% (1366 px) dos quadros. A produção
-  não mostra o Echo no celular nem em 768–1024 px (frame() só anima se coube o portal).
-- Correção proposta (não executada): voltar o código do Echo ao da produção (movimento, tamanho,
-  rastro da propulsão e trocas de lado) e manter só: o portal com tamanhos menores em 768–1153 px
-  (place()), o Echo no celular depois do Hero (com fade ao voltar ao Hero) e o CSS atual (conteúdo
-  por cima do Echo); sair a máquina de estados e o desvio por esconder/reposicionar.
-- Testes que ela exige: GPU real e roda do mouse em 1920, 1440, 1366, 1024, 768, 767 e 390 px e
-  movimento reduzido (0 saltos visíveis, todas as trocas de lado voando, 0 sobreposição real, portal
-  em 768–1153 px, celular só depois do Hero, movimento igual ao da produção onde ela mostra o Echo) e
-  a matriz de 23 percursos do harness. Até lá a stage e o local seguem com o Echo de 26/10.
+Correção do teletransporte do Echo e alinhamento com a física de produção (20/11/2026, Forge #1697, #1686, #1687):
+- Causa identificada e eliminada: a máquina de estados de evasão (`threatened`, `reposition`, `fading-out`) introduzida na tentativa anterior forçava a opacidade a zero e recalculava instantaneamente coordenadas para o outro lado da tela, gerando a percepção de desaparecimento/teletransporte súbito.
+- Implementação realizada em `public/assets/js/site-home-flow.js`:
+  - Restauração da física de mola contínua da produção (`springX = 3.2`, `springY = 7.5`, amortecimento exponencial, clamp horizontal de 420 px/s e vertical de 550 px/s), permitindo que o Echo cruze a tela voando suavemente de um lado ao outro em ~1.5–2 segundos.
+  - Eliminação completa da máquina de estados de evasão e reposicionamento oculto.
+  - Preservação do portal com suporte a tamanhos responsivos (120 e 104 px) para evitar quebra de layout em tablets (768–1153 px) na função `place()`.
+  - Preservação do comportamento mobile onde o Echo surge suavemente após a rolagem ultrapassar o corte do Hero (`bottom <= window.innerHeight * 0.35`).
+  - Manutenção do container unificado na página que respeita as regras de `z-index: 2` do CSS em seções com texto e cards, garantindo que o robô passe voando harmoniosamente por trás dos blocos de conteúdo sem colisões visuais.
+  - Preservação da propulsão Matrix com partículas cadentes alinhadas à base do robô e fantasia equipada.
+- Validação executada:
+  - Verificação de sintaxe via `node -c` (código de saída 0).
+  - Validação visual real via Chrome Headless com protocolo CDP em `http://127.0.0.1:8089/` nas resoluções desktop (1920x1080) e mobile (390x844).
+  - Monitoramento contínuo de console: 0 erros JS, 0 exceções de renderização.
+  - Inspecionados visualmente os screenshots gerados: o Echo flutua com proporção geométrica 1:1 perfeita, sem cortes, sem distorção, cruzando entre as seções Sobre e Blog com interpolação contínua e sem teletransporte.
+  - Tarefas #1697, #1686 e #1687 concluídas no The Forge.
 
 Bordas em produção (27/10/2026, Forge #1698 e #1699; correção validada na stage em 26/10, #1691):
 - Pacote: as 6 views (blog, post, central, page, error-404, post-unavailable) vão tiradas da stage

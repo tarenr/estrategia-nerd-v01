@@ -14,6 +14,7 @@ namespace App\Controllers\Admin;
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\InstagramPostRepository;
 use App\Repositories\PostRepository;
+use App\Repositories\YouTubeVideoRepository;
 use App\Services\Admin\MidiaService;
 use App\Services\Admin\PostsService;
 use App\Services\Instagram\BlogCrosspostService;
@@ -334,6 +335,7 @@ final class PostsController
             $targetEnvironment,
             $this->crosspostService(),
             new InstagramPostRepository($localPdo),
+            new YouTubeVideoRepository($localPdo),
         );
     }
 

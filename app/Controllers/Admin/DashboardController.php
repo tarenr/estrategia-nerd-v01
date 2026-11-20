@@ -24,6 +24,7 @@ use App\Repositories\LinkClickRepository;
 use App\Repositories\LinkRepository;
 use App\Repositories\NewsletterRepository;
 use App\Repositories\PostRepository;
+use App\Repositories\YouTubeVideoRepository;
 use App\Services\Admin\DashboardService;
 use App\Support\TargetEnvironmentDatabase;
 use App\Support\View;
@@ -91,6 +92,7 @@ final class DashboardController
         /** @var \PDO $localPdo */
         $localPdo = $GLOBALS['pdo'];
         $instagramPosts = new InstagramPostRepository($localPdo);
+        $youtubeVideos = new YouTubeVideoRepository($localPdo);
 
         $service = new DashboardService(
             $pdo,
@@ -103,6 +105,7 @@ final class DashboardController
             $linkClicks,
             $targetEnvironment,
             $instagramPosts,
+            $youtubeVideos,
         );
 
         $payload = $service->getDashboardData($start, $end);

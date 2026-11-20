@@ -14,6 +14,7 @@ namespace App\Services\Admin;
 use App\Repositories\CategoriaPostRepository;
 use App\Repositories\InstagramPostRepository;
 use App\Repositories\PostRepository;
+use App\Repositories\YouTubeVideoRepository;
 use App\Services\Instagram\BlogCrosspostService;
 use App\Services\Site\SitemapCacheService;
 use App\Support\SystemActivityLogger;
@@ -23,7 +24,7 @@ use Throwable;
 final class PostsService
 {
     private const POST_TRASH_RETENTION_DAYS = 15;
-    private const TIPO_POST_OPTIONS = ['comparativo', 'review', 'ficha_tecnica', 'guia', 'noticia', 'lista'];
+    private const TIPO_POST_OPTIONS = ['comparativo', 'review', 'ficha_tecnica', 'guia', 'noticia', 'lista', 'saga'];
 
     public function __construct(
         private PostRepository $posts,
@@ -33,6 +34,7 @@ final class PostsService
         private string $targetEnvironment = 'local',
         private ?BlogCrosspostService $crosspost = null,
         private ?InstagramPostRepository $instagramPosts = null,
+        private ?YouTubeVideoRepository $youtubeVideos = null,
     ) {
     }
 
@@ -114,7 +116,7 @@ final class PostsService
             $postsByDay[$day][] = $post;
         }
 
-        [$events, $instagramUnavailable] = $this->scheduleEvents($posts, $year, $month);
+        [$events, $instagramUnavailable, $youtubeUnavailable] = $this->scheduleEvents($posts, $year, $month);
         $eventsByDay = [];
         foreach ($events as $event) {
             $eventsByDay[(int) date('j', (int) $event['ts'])][] = $event;
@@ -144,6 +146,7 @@ final class PostsService
             'events_by_day' => $eventsByDay,
             'events' => $events,
             'instagram_unavailable' => $instagramUnavailable,
+            'youtube_unavailable' => $youtubeUnavailable,
             'target_environment' => $this->targetEnvironment,
             'prev' => ['ano' => $prevYear, 'mes' => $prevMonth],
             'next' => ['ano' => $nextYear, 'mes' => $nextMonth],
@@ -156,7 +159,7 @@ final class PostsService
      * Junta posts do blog (ambiente alvo) e do Instagram (banco local) numa lista unica por horario.
      *
      * @param array<int,array<string,mixed>> $posts
-     * @return array{0:list<array<string,mixed>>,1:bool}
+     * @return array{0:list<array<string,mixed>>,1:bool,2:bool}
      */
     private function scheduleEvents(array $posts, int $year, int $month): array
     {
@@ -225,9 +228,35 @@ final class PostsService
             $instagramUnavailable = true;
         }
 
+        $youtubeUnavailable = false;
+        if ($this->youtubeVideos !== null) {
+            try {
+                foreach ($this->youtubeVideos->listForCalendar($year, $month) as $youtube) {
+                    $ts = strtotime((string) ($youtube['scheduled_at'] ?? ''));
+                    if ($ts === false) {
+                        continue;
+                    }
+                    $events[] = [
+                        'kind' => 'youtube',
+                        'id' => (int) $youtube['id'],
+                        'titulo' => (string) ($youtube['title'] ?? ('Vídeo #' . (int) $youtube['id'])),
+                        'status' => (string) ($youtube['status'] ?? ''),
+                        'ts' => $ts,
+                        'thumb' => (string) ($youtube['thumbnail_path'] ?? ''),
+                        'url' => url('/admin/youtube/posts/' . (int) $youtube['id']),
+                    ];
+                }
+            } catch (Throwable $exception) {
+                error_log('[PostsService] scheduleEvents youtube: ' . $exception->getMessage());
+                $youtubeUnavailable = true;
+            }
+        } else {
+            $youtubeUnavailable = true;
+        }
+
         usort($events, static fn (array $a, array $b): int => $a['ts'] <=> $b['ts']);
 
-        return [$events, $instagramUnavailable];
+        return [$events, $instagramUnavailable, $youtubeUnavailable];
     }
 
     private function monthLabel(int $month): string

@@ -1,7 +1,8 @@
 <#
 Orquestra o backup diario do Estrategia Nerd (sistemico local/stage/producao +
 editorial), enviando tudo para o Google Drive via os comandos upload-cloud dos
-scripts CLI. Pensado para rodar via Tarefa Agendada do Windows, sem depender
+scripts CLI. Pensado para rodar via Tarefa Agendada do Windows (com -WindowStyle Hidden
+e Settings.Hidden = $true para execucao invisivel sem console na tela), sem depender
 do admin. Cada etapa roda mesmo se uma anterior falhar - erros ficam no log,
 sem travar o restante da rotina.
 

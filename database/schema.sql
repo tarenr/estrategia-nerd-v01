@@ -427,6 +427,58 @@ CREATE TABLE `usuarios` (
 -- Table structure for table `v_stats_dashboard`
 --
 
+CREATE TABLE IF NOT EXISTS `youtube_accounts` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `channel_id` varchar(32) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `handle` varchar(100) DEFAULT NULL,
+  `custom_url` varchar(255) DEFAULT NULL,
+  `thumbnail_url` varchar(2048) DEFAULT NULL,
+  `scopes` json DEFAULT NULL,
+  `subscribers_count` bigint unsigned NOT NULL DEFAULT 0,
+  `video_count` bigint unsigned NOT NULL DEFAULT 0,
+  `view_count` bigint unsigned NOT NULL DEFAULT 0,
+  `synced_at` datetime DEFAULT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT 1,
+  `criado_em` datetime NOT NULL DEFAULT current_timestamp(),
+  `atualizado_em` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`), UNIQUE KEY `uq_youtube_channel_id` (`channel_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `youtube_videos` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `account_id` int unsigned NOT NULL,
+  `status` enum('rascunho','agendado','enviando','processando','agendado_remoto','publicado','erro','resultado_incerto','cancelado') NOT NULL DEFAULT 'rascunho',
+  `publish_phase` varchar(40) NOT NULL DEFAULT 'idle',
+  `title` varchar(100) NOT NULL, `description` text DEFAULT NULL, `tags` json DEFAULT NULL,
+  `category_id` varchar(8) NOT NULL DEFAULT '28', `privacy_status` enum('private','unlisted','public') NOT NULL DEFAULT 'private',
+  `made_for_kids` tinyint(1) NOT NULL DEFAULT 0, `contains_synthetic_media` tinyint(1) NOT NULL DEFAULT 0,
+  `scheduled_at` datetime DEFAULT NULL, `remote_upload_due_at` datetime DEFAULT NULL, `uploaded_at` datetime DEFAULT NULL, `published_at` datetime DEFAULT NULL,
+  `post_blog_id` int DEFAULT NULL, `video_path` varchar(2048) NOT NULL, `thumbnail_path` varchar(2048) DEFAULT NULL,
+  `source_size` bigint unsigned DEFAULT NULL, `source_sha256` char(64) DEFAULT NULL, `youtube_video_id` varchar(32) DEFAULT NULL,
+  `permalink` varchar(500) DEFAULT NULL, `resumable_session_uri` text DEFAULT NULL, `upload_offset` bigint unsigned NOT NULL DEFAULT 0,
+  `upload_attempts` smallint unsigned NOT NULL DEFAULT 0, `processing_status` varchar(32) DEFAULT NULL, `idempotency_key` varchar(64) NOT NULL,
+  `error_log` text DEFAULT NULL, `criado_por` int DEFAULT NULL, `criado_em` datetime NOT NULL DEFAULT current_timestamp(),
+  `atualizado_em` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`), UNIQUE KEY `uq_youtube_video_id` (`youtube_video_id`), UNIQUE KEY `uq_youtube_idempotency` (`idempotency_key`),
+  KEY `idx_youtube_due` (`status`,`remote_upload_due_at`), KEY `idx_youtube_scheduled` (`scheduled_at`),
+  CONSTRAINT `fk_youtube_video_account` FOREIGN KEY (`account_id`) REFERENCES `youtube_accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `youtube_metrics_cache` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT, `account_id` int unsigned NOT NULL, `video_id` int unsigned DEFAULT NULL,
+  `snapshot_at` datetime NOT NULL, `views` bigint unsigned NOT NULL DEFAULT 0, `likes` bigint unsigned NOT NULL DEFAULT 0,
+  `comments` bigint unsigned NOT NULL DEFAULT 0, `subscribers` bigint unsigned DEFAULT NULL, `payload_raw` json DEFAULT NULL,
+  `criado_em` datetime NOT NULL DEFAULT current_timestamp(), PRIMARY KEY (`id`),
+  KEY `idx_youtube_metrics_account_date` (`account_id`,`snapshot_at`), KEY `idx_youtube_metrics_video_date` (`video_id`,`snapshot_at`),
+  CONSTRAINT `fk_youtube_metrics_account` FOREIGN KEY (`account_id`) REFERENCES `youtube_accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_youtube_metrics_video` FOREIGN KEY (`video_id`) REFERENCES `youtube_videos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `v_stats_dashboard`
+--
+
 DROP TABLE IF EXISTS `v_stats_dashboard`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -459,6 +511,77 @@ CREATE TABLE `visitantes` (
   UNIQUE KEY `idx_session_data` (`session_id`,`data`),
   KEY `idx_data` (`data`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `newsletter_campaigns`
+--
+
+DROP TABLE IF EXISTS `newsletter_campaigns`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `newsletter_campaigns` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `assunto` varchar(255) NOT NULL,
+  `preheader` varchar(255) DEFAULT NULL,
+  `template_html` mediumtext NOT NULL,
+  `conteudo_texto` text DEFAULT NULL,
+  `status` enum('rascunho','agendada','enviando','enviada','cancelada') NOT NULL DEFAULT 'rascunho',
+  `total_destinatarios` int unsigned NOT NULL DEFAULT 0,
+  `total_enviados` int unsigned NOT NULL DEFAULT 0,
+  `total_falhas` int unsigned NOT NULL DEFAULT 0,
+  `agendada_para` datetime DEFAULT NULL,
+  `enviada_em` datetime DEFAULT NULL,
+  `criado_em` datetime NOT NULL DEFAULT current_timestamp(),
+  `atualizado_em` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_newsletter_campaigns_status` (`status`),
+  KEY `idx_newsletter_campaigns_agendada` (`agendada_para`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `newsletter_campaign_posts`
+--
+
+DROP TABLE IF EXISTS `newsletter_campaign_posts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `newsletter_campaign_posts` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `campaign_id` int unsigned NOT NULL,
+  `post_id` int NOT NULL,
+  `ordem` smallint unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_campaign_post` (`campaign_id`, `post_id`),
+  KEY `idx_campaign_posts_campaign` (`campaign_id`),
+  KEY `idx_campaign_posts_post` (`post_id`),
+  CONSTRAINT `fk_campaign_posts_campaign` FOREIGN KEY (`campaign_id`) REFERENCES `newsletter_campaigns` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_campaign_posts_post` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `newsletter_campaign_logs`
+--
+
+DROP TABLE IF EXISTS `newsletter_campaign_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `newsletter_campaign_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `campaign_id` int unsigned NOT NULL,
+  `subscriber_id` int DEFAULT NULL,
+  `email` varchar(190) NOT NULL,
+  `status` enum('enviado','falha') NOT NULL DEFAULT 'enviado',
+  `erro` text DEFAULT NULL,
+  `enviado_em` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_campaign_logs_campaign` (`campaign_id`),
+  KEY `idx_campaign_logs_email` (`email`),
+  KEY `idx_campaign_logs_status` (`status`),
+  CONSTRAINT `fk_campaign_logs_campaign` FOREIGN KEY (`campaign_id`) REFERENCES `newsletter_campaigns` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

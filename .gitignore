@@ -40,3 +40,8 @@ AppFlowy-Cloud/
 # O que precisa ser guardado de cada vídeo vai para conteudo-planejado/videos-echo/<nome>/ (molde da série, seção 11).
 /scratch/
 /scripts/scratch/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class

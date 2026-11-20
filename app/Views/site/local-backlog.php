@@ -14,7 +14,7 @@ $embedMode = (bool) ($embed_mode ?? false);
 $adminEmbed = (bool) ($admin_embed ?? false);
 $projectVersion = trim((string) ($project_version ?? 'local'));
 $generatedAt = trim((string) ($generated_at ?? date('Y-m-d H:i:s')));
-$forgeUrl = 'http://127.0.0.1:4477';
+$forgeUrl = 'http://127.0.0.1:4000';
 $e = static fn (string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 ?>
 <section class="<?= $adminEmbed ? 'text-slate-100' : 'min-h-screen bg-slate-950 px-4 py-8 text-slate-100' ?>">

@@ -25,6 +25,7 @@ use App\Repositories\LinkClickRepository;
 use App\Repositories\LinkRepository;
 use App\Repositories\NewsletterRepository;
 use App\Repositories\PostRepository;
+use App\Repositories\YouTubeVideoRepository;
 use DateTimeImmutable;
 use PDO;
 use Throwable;
@@ -42,6 +43,7 @@ final class DashboardService
         private LinkClickRepository $linkClicks,
         private string $targetEnvironment = 'local',
         private ?InstagramPostRepository $instagramPosts = null,
+        private ?YouTubeVideoRepository $youtubeVideos = null,
     ) {
     }
 
@@ -251,7 +253,22 @@ final class DashboardService
             'target_environment_label' => environment_label($this->targetEnvironment),
             'is_remote_target' => $this->targetEnvironment !== current_environment(),
             'instagram' => $this->buildInstagramData($todayYmd, $start, $end),
+            'youtube' => $this->buildYouTubeData(),
         ];
+    }
+
+    /** @return array<string,mixed> */
+    private function buildYouTubeData(): array
+    {
+        if ($this->youtubeVideos === null) {
+            return [];
+        }
+        try {
+            return $this->youtubeVideos->dashboardSummary();
+        } catch (Throwable $exception) {
+            error_log('[DashboardService] YouTube indisponível: ' . $exception->getMessage());
+            return [];
+        }
     }
 
     /**

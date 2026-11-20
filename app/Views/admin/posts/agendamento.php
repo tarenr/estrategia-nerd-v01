@@ -20,6 +20,7 @@ $startWeekday = (int) ($start_weekday ?? 0);
 $eventsByDay = is_array($events_by_day ?? null) ? $events_by_day : [];
 $events = is_array($events ?? null) ? $events : [];
 $instagramUnavailable = (bool) ($instagram_unavailable ?? false);
+$youtubeUnavailable = (bool) ($youtube_unavailable ?? false);
 $targetEnvironment = (string) ($target_environment ?? 'local');
 $prev = is_array($prev ?? null) ? $prev : ['ano' => $year, 'mes' => $month];
 $next = is_array($next ?? null) ? $next : ['ano' => $year, 'mes' => $month];
@@ -199,6 +200,10 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
           <i class="fa-brands fa-instagram text-pink-400 text-xs"></i>
           <span>Instagram</span>
         </button>
+        <button type="button" data-schedule-filter="youtube" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-red-300 hover:bg-slate-800/60 cursor-pointer" title="Filtrar vídeos do YouTube">
+          <i class="fa-brands fa-youtube text-red-400 text-xs"></i>
+          <span>YouTube</span>
+        </button>
         <button type="button" data-schedule-filter="blog" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-400 hover:text-blue-300 hover:bg-slate-800/60 cursor-pointer" title="Filtrar posts do Blog">
           <i class="fa-regular fa-file-lines text-blue-400 text-xs"></i>
           <span>Blog</span>
@@ -211,6 +216,12 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
     <div class="admin-panel border border-amber-500/40 mb-4 text-xs text-amber-100 flex items-center gap-2">
       <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
       <span>Não foi possível carregar os posts do Instagram no momento. Exibindo apenas a grade do blog.</span>
+    </div>
+  <?php endif; ?>
+  <?php if ($youtubeUnavailable): ?>
+    <div class="admin-panel border border-amber-500/40 mb-4 text-xs text-amber-100 flex items-center gap-2">
+      <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+      <span>Não foi possível carregar a agenda do YouTube no momento.</span>
     </div>
   <?php endif; ?>
 
@@ -253,6 +264,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
               <?php foreach ($dayEvents as $event): ?>
                 <?php
                   $isIg = ($event['kind'] ?? '') === 'instagram';
+                  $isYoutube = ($event['kind'] ?? '') === 'youtube';
                   $timeFormatted = date('H:i', (int) $event['ts']);
                   $thumbUrl = $resolveThumbUrl($event['thumb'] ?? '');
                   $status = (string) ($event['status'] ?? '');
@@ -284,7 +296,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
 
                   $iconHtml = $isIg
                       ? '<i class="fa-brands fa-instagram text-pink-400 text-xs shrink-0"></i>'
-                      : '<i class="fa-regular fa-file-lines text-blue-400 text-xs shrink-0"></i>';
+                      : ($isYoutube ? '<i class="fa-brands fa-youtube text-red-400 text-xs shrink-0"></i>' : '<i class="fa-regular fa-file-lines text-blue-400 text-xs shrink-0"></i>');
                 ?>
                 <div data-schedule-item="<?= $e($event['kind']) ?>" class="schedule-event-card group relative rounded-lg border px-2 py-1 text-xs transition-all <?= $cardClasses ?> flex items-center justify-between gap-1.5 cursor-pointer">
                   <!-- Linha única: Ícone da Rede + Status + Horário + Título -->
@@ -318,7 +330,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
                       <div class="flex items-center justify-between text-[10px] font-bold">
                         <span class="flex items-center gap-1 <?= $headerClass ?>">
                           <?= $iconHtml ?>
-                          <span><?= $e($event['kind'] === 'instagram' ? 'Instagram' : 'Blog') ?></span>
+                          <span><?= $e($event['kind'] === 'instagram' ? 'Instagram' : ($event['kind'] === 'youtube' ? 'YouTube' : 'Blog')) ?></span>
                           <span class="text-slate-400 font-normal ml-0.5"><?= $e($timeFormatted) ?></span>
                         </span>
                         <?= $statusBadgeHtml ?>
@@ -367,6 +379,7 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
             <?php foreach ($dayEvents as $event): ?>
               <?php
                 $isIg = ($event['kind'] ?? '') === 'instagram';
+                $isYoutube = ($event['kind'] ?? '') === 'youtube';
                 $timeFormatted = date('H:i', (int) $event['ts']);
                 $thumbUrl = $resolveThumbUrl($event['thumb'] ?? '');
                 $status = (string) ($event['status'] ?? '');
@@ -395,14 +408,14 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
 
                 $iconHtml = $isIg
                     ? '<i class="fa-brands fa-instagram text-pink-400 text-xs"></i>'
-                    : '<i class="fa-regular fa-file-lines text-blue-400 text-xs"></i>';
+                    : ($isYoutube ? '<i class="fa-brands fa-youtube text-red-400 text-xs"></i>' : '<i class="fa-regular fa-file-lines text-blue-400 text-xs"></i>');
               ?>
               <div data-schedule-item="<?= $e($event['kind']) ?>" class="group rounded-xl border p-3 text-xs transition-all <?= $cardClasses ?> flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-1.5 font-bold text-xs mb-1.5 <?= $headerClass ?>">
                     <?= $iconHtml ?>
                     <span><?= $e($timeFormatted) ?></span>
-                    <span class="text-[10px] font-normal opacity-70 ml-1">(<?= $e($event['kind'] === 'instagram' ? 'Instagram' : 'Blog') ?>)</span>
+                    <span class="text-[10px] font-normal opacity-70 ml-1">(<?= $e($event['kind'] === 'instagram' ? 'Instagram' : ($event['kind'] === 'youtube' ? 'YouTube' : 'Blog')) ?>)</span>
                   </div>
                   <a href="<?= $e($event['url']) ?>" class="block font-medium text-white/95 line-clamp-2 leading-snug hover:underline text-xs" title="<?= $e($event['titulo']) ?>">
                     <?= $e($event['titulo']) ?>
@@ -451,6 +464,8 @@ $prevMonthStartDay = $daysInPrevMonth - $startWeekday + 1;
         if (isCurrent) {
           if (bKind === 'instagram') {
             b.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-pink-950/70 border border-pink-500/50 text-pink-200 shadow-[0_0_12px_rgba(236,72,153,0.25)] cursor-pointer';
+          } else if (bKind === 'youtube') {
+            b.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-red-950/70 border border-red-500/50 text-red-200 shadow-[0_0_12px_rgba(239,68,68,0.25)] cursor-pointer';
           } else if (bKind === 'blog') {
             b.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-blue-950/70 border border-blue-500/50 text-blue-200 shadow-[0_0_12px_rgba(59,130,246,0.25)] cursor-pointer';
           } else {

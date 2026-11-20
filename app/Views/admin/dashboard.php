@@ -1220,4 +1220,16 @@ $categoryChartData = [
       </div>
     <?php endif; ?>
   </section>
+
+  <?php $youtubeData = is_array($youtube ?? null) ? $youtube : []; $youtubeAccount = is_array($youtubeData['account'] ?? null) ? $youtubeData['account'] : null; $youtubeCounts = is_array($youtubeData['counts'] ?? null) ? $youtubeData['counts'] : []; ?>
+  <section class="admin-panel mt-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <div class="admin-panel-title"><i class="fa-brands fa-youtube text-red-400"></i><span>YouTube</span></div>
+        <p class="mt-2 text-sm text-slate-300"><?= $youtubeAccount !== null ? e((string) ($youtubeAccount['title'] ?? 'Canal conectado')) : 'Canal ainda não conectado' ?></p>
+        <p class="mt-1 text-xs text-slate-500"><?= (int) ($youtubeCounts['scheduled'] ?? 0) ?> agendado(s) · <?= (int) ($youtubeCounts['published'] ?? 0) ?> publicado(s) · <?= (int) ($youtubeCounts['attention'] ?? 0) ?> requer atenção</p>
+      </div>
+      <a href="<?= e(url('/admin/youtube')) ?>" class="admin-btn admin-btn-secondary">Abrir YouTube</a>
+    </div>
+  </section>
 </div>

@@ -18,7 +18,7 @@ use App\Services\Admin\MidiaService;
 
 const PAUSA_MS = 3000;
 const LIMITE_SEGUNDOS = 900;
-const FORGE_TAREFAS = 'http://127.0.0.1:4477/api/projects/4/tasks/item';
+const FORGE_TAREFAS = 'http://127.0.0.1:4000/api/projects/4/tasks/item';
 
 set_time_limit(LIMITE_SEGUNDOS);
 

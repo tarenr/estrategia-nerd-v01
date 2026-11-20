@@ -21,7 +21,7 @@ Esta rotina valida:
 1. Linting de sintaxe PHP (`php -l`)
 2. Análise estática de tipos (**PHPStan Level 5**, 0 erros tolerados)
 3. Renderização multi-ambiente do Dashboard Admin (`local`, `production` e `stage`)
-4. Integridade do módulo Instagram (`/admin/instagram`)
+4. Integridade dos módulos de mídia Instagram (`/admin/instagram`) e YouTube (`/admin/youtube`)
 
 ### Análise Estática Isolada
 ```bash
@@ -67,6 +67,8 @@ Consulte [AGENTS.md](file:///C:/Users/WINDOWS/Projects/estrategia-nerd/AGENTS.md
 - **Reels do Instagram:** publicação agendada a cada 5 minutos (`EstrategiaNerd-InstagramPublicarAgendados`) e Reels em tipografia cinética produzidos com a skill motionmaxxing ([docs/features/reels-motionmaxxing.md](docs/features/reels-motionmaxxing.md)).
 - **Central Nerd e afiliados:** ofertas em `/central-nerd`; cliques por `/link/{slug}?origem=...` (`link_clicks`). O fim de cada post mostra 3 ofertas da categoria do post, sorteadas a cada visita, com origem `post-{id}`, e origens fora do padrão (scanners) não são contadas ([docs/features/FEAT-013-ofertas-nos-posts.md](docs/features/FEAT-013-ofertas-nos-posts.md)).
 - **Meta / Instagram Graph API:** Automação de publicação de mídias e instagram cards (`/admin/instagram`).
+- **YouTube Data API:** módulo local em `/admin/youtube` com OAuth dedicado, fila agendada, upload resumível, miniatura, reconciliação de processamento e métricas básicas. Consulte [docs/features/FEAT-youtube-integration.md](docs/features/FEAT-youtube-integration.md).
+- **Instagram Stories e Destaques (@estrategia_nerd):** Segunda integração via instagrapi, com página própria (`/admin/instagram-destaques`) e assistente em três etapas: configurar a conta, montar o destaque e conferir/publicar. O operador fornece imagens JPEG 1080×1920 e links HTTPS; pode preparar a montagem antes de configurar a sessão pelo terminal. A revisão reúne imagens, links e capa antes da confirmação de publicação. O motor local em Python mantém a proteção contra envio duplicado e a conferência manual quando o resultado é incerto ([documentação e limites de validação](docs/features/FEAT-instagram-highlights.md)).
 - **Home com o rio de luz e o Echo:** no local, a home `/` usa a versão com o feixe em WebGL2 e o Echo saindo de um portal ([docs/features/FEAT-015-homepage-circuito-continuo.md](docs/features/FEAT-015-homepage-circuito-continuo.md)); a fantasia do Echo é escolhida por ambiente em `/admin/echo` ([docs/features/FEAT-016-fantasia-echo-admin.md](docs/features/FEAT-016-fantasia-echo-admin.md)).
 - **FTP Deploy / Sync:** Sincronização de conteúdo e deploy entre ambientes Local, Stage e Produção.
 

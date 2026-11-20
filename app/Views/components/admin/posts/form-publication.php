@@ -12,10 +12,11 @@ $isDestaque = (int) ($form['destaque'] ?? 0) === 1;
 $currentTipoPost = trim((string) ($form['tipo_post'] ?? ''));
 $supportsTipoPost = (bool) ($supports_tipo_post ?? true);
 $tipoPostOptions = [
+    'saga' => 'Saga',
+    'guia' => 'Guia',
     'comparativo' => 'Comparativo',
     'review' => 'Review',
     'ficha_tecnica' => 'Ficha técnica',
-    'guia' => 'Guia',
     'noticia' => 'Notícia/lançamento',
     'lista' => 'Lista ranqueada',
 ];
