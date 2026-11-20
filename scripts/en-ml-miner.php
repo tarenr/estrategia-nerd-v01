@@ -119,15 +119,33 @@ foreach ($candidateUrls as $url) {
     }
 }
 
-// Filtra produtos pelo corte
+// Filtra produtos pelo corte estrito de qualidade
 $approved = [];
+$reproved = [];
 foreach ($extractedItems as $item) {
-    $hasGoodRating = $item['rating'] !== null && $item['rating'] >= $minRating;
-    $isBestSeller = in_array('Mais Vendido', (array) $item['selos'], true);
+    $rating = $item['rating'] !== null ? (float) $item['rating'] : null;
+    $hasSelos = !empty($item['selos']);
 
-    // Se nao possui rating explicito na pagina (ex. redirect), aceita se tiver selo ou for candidato analisado
-    if ($hasGoodRating || $isBestSeller || $item['rating'] === null) {
-        $approved[] = $item;
+    if ($rating !== null) {
+        // Se possui nota, DEVE atingir a nota mínima exigida
+        if ($rating >= $minRating) {
+            $approved[] = $item;
+        } else {
+            $reproved[] = [
+                'titulo' => $item['titulo'],
+                'motivo' => "Nota {$rating} abaixo do corte ({$minRating})",
+            ];
+        }
+    } else {
+        // Se a página social não exibiu nota, aprova somente se tiver selo de autoridade legítimo
+        if ($hasSelos) {
+            $approved[] = $item;
+        } else {
+            $reproved[] = [
+                'titulo' => $item['titulo'],
+                'motivo' => 'Sem avaliação e sem selos de autoridade',
+            ];
+        }
     }
 }
 
@@ -145,8 +163,11 @@ $approved = array_slice($approved, 0, $limit);
 if ($asJson) {
     echo json_encode([
         'ok' => true,
+        'corte_min_rating' => $minRating,
         'total_analisados' => count($extractedItems),
         'total_aprovados' => count($approved),
+        'total_reprovados' => count($reproved),
+        'reprovados' => $reproved,
         'produtos' => $approved,
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
     exit(0);
